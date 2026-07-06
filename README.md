@@ -112,6 +112,40 @@ npm install; npm run build --workspaces
 npx electron-builder --config apps/desktop/electron-builder.yml --win
 ```
 
+## Demo — the workflow restyling a real app
+
+The repo ships a sample target app, [`examples/xy-plot-sample`](examples/xy-plot-sample):
+an XY plot (three datasets, SVG chart, summary stats, data table) with intentionally
+plain baseline styling.
+
+| Before (plain baseline) | After (one handoff later) |
+|---|---|
+| ![XY plot sample before: plain light UI](docs/demo/xy-before.png) | ![XY plot sample after: dark-first Engineering UI Kit styling](docs/demo/xy-after.png) |
+
+The transformation is one pass of the workbench's own workflow — no hand-editing of
+the sample app:
+
+1. **+ New Project** → point it at `examples/xy-plot-sample`.
+2. **Prepare Context** → 9 files in, 64 excluded, 0 warnings.
+3. **Create Task Packet** → one click on the *Apply UI Kit standards to an existing
+   UI* template.
+4. **Apply Zip Overlay** → [`docs/demo/ui-overlay.zip`](docs/demo/ui-overlay.zip)
+   (a new `src/tokens.css` + restyled `src/styles.css`, nothing else) — inspected,
+   warning-accepted, applied.
+5. **Verify & Review** → `npm run typecheck` + `npm run build` pass inside the
+   workbench; approve.
+
+![Workbench verify screen with all checks passed](docs/demo/xy-workbench-verify.png)
+
+Behavior is untouched: dataset switching, point tooltips, stats, and the data table
+all still work — verified by the recorded checks in
+[`docs/demo/demo-results.json`](docs/demo/demo-results.json) (11/11, including a
+zero-light-surface sweep of the transformed app).
+
+Reproduce it yourself: `npm run dev --workspace xy-plot-sample`, run the workbench
+against the sample, and select the shipped overlay zip at the Apply step (or upload
+the packet to Microsoft 365 Copilot and use its overlay instead).
+
 ## Safety posture
 
 - **Strict three-file upload budget** — enforced when packets are built, with a

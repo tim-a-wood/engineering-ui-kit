@@ -1,0 +1,60 @@
+{
+  "results": [
+    {
+      "id": "DEMO-BEFORE-PLAIN",
+      "pass": true,
+      "detail": "baseline is plain light (rgb(255, 255, 255))"
+    },
+    {
+      "id": "DEMO-BEFORE-BEHAVIOR",
+      "pass": true,
+      "detail": "dataset switch works at baseline"
+    },
+    {
+      "id": "DEMO-CONTEXT",
+      "pass": true,
+      "detail": "Success: Context generated: 9 files included, 64 excluded, 0 warnings."
+    },
+    {
+      "id": "DEMO-TEMPLATE",
+      "pass": true,
+      "detail": "template filled packet"
+    },
+    {
+      "id": "DEMO-APPLIED",
+      "pass": true,
+      "detail": "overlay applied to sample app"
+    },
+    {
+      "id": "DEMO-VERIFY",
+      "pass": true,
+      "detail": "typecheck+build pass in workbench"
+    },
+    {
+      "id": "DEMO-APPROVED",
+      "pass": true,
+      "detail": "handoff approved"
+    },
+    {
+      "id": "DEMO-AFTER-DARK",
+      "pass": true,
+      "detail": "dark-first tokens live (rgb(7, 17, 31))"
+    },
+    {
+      "id": "DEMO-AFTER-BEHAVIOR",
+      "pass": true,
+      "detail": "dataset switch still works after overlay"
+    },
+    {
+      "id": "DEMO-AFTER-TOOLTIP",
+      "pass": true,
+      "detail": "point tooltips preserved"
+    },
+    {
+      "id": "DEMO-AFTER-NO-LIGHT",
+      "pass": true,
+      "detail": "light surfaces after overlay = 0"
+    }
+  ],
+  "generatedAt": "2026-07-06T12:55:14.794Z"
+}
