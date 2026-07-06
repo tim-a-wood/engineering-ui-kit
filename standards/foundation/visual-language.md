@@ -60,6 +60,10 @@ Drift includes generic light cards, arbitrary gradients, excessive glassmorphism
 | Subtle accent around active navigation or focus | Use accent/focus tokens only. |
 | Compact table with clear status text | Use density and status tokens. |
 | Inset log/code region inside a panel | Use code and inset surface tokens. |
+| Hairline-divided figure strips | Related key figures share one panel, split by 1px subtle borders, labels in small uppercase, values in tabular/mono numerals. |
+| Plot drawn on the panel surface | Series draw directly on the panel with recessive gridlines — no boxed inset chart region; a crosshair plus text readout carries exact values. |
+| Machined segmented controls | Window/filter switchers use an inset track whose active segment is raised to the panel-raised surface, not an accent-tinted pill. |
+| Status as dot plus text | Routine statuses render as a status-token dot beside plain text; tinted pills are reserved for a few prominent states such as the run state. |
 
 ## Rejected Visual Patterns
 
@@ -69,6 +73,10 @@ Drift includes generic light cards, arbitrary gradients, excessive glassmorphism
 | Arbitrary gradient hero blocks | Adds marketing tone and no engineering value. |
 | Decorative neon glow everywhere | Dilutes focus and active-state meaning. |
 | Low-fidelity placeholder components in hi-fi output | Fails the standard for polished implementation guidance. |
+| A grid of identical rounded metric cards, each with its own accent bar | Reads as template output; group related figures on one hairline-divided surface and reserve accent for state. |
+| Tinted pill badges on every status | Dilutes severity; routine statuses use a dot plus text. |
+| A marker dot on every point of a dense line series | Noise without information; markers belong on the hovered or focused point. |
+| Proportional numerals in readings, tables, or timestamps | Measured values must align digit-for-digit; use tabular numerals or the mono family. |
 
 ## Mockup Calibration Notes
 

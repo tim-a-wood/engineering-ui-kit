@@ -59,13 +59,13 @@
       "id": "BM-11",
       "description": "Crosshair tooltip shows measured, setpoint, and deviation values",
       "pass": true,
-      "detail": "t = 56 minMeasured 84.9 °CSetpoint 85.0 °CDeviation −0.1 °C"
+      "detail": "58t = 58 minMeasured 85.1 °CSetpoint 85.0 °CDeviation +0.1 °C"
     },
     {
       "id": "BM-13",
       "description": "Tooltip values are exact numbers for a real trace point",
       "pass": true,
-      "detail": "t=56 measured=84.9 setpoint=85.0"
+      "detail": "t=58 measured=85.1 setpoint=85.0"
     },
     {
       "id": "BM-14",

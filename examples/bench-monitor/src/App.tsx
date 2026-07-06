@@ -15,8 +15,9 @@ import {
 } from './data'
 
 const WIDTH = 760
-const HEIGHT = 396
-const MARGIN = { top: 18, right: 86, bottom: 42, left: 54 }
+const HEIGHT = 348
+const MARGIN = { top: 16, right: 84, bottom: 28, left: 44 }
+const RAMP_END = RUN.rampEndMin
 
 function scale(value: number, domainMin: number, domainMax: number, rangeMin: number, rangeMax: number): number {
   if (domainMax === domainMin) return (rangeMin + rangeMax) / 2
@@ -25,6 +26,17 @@ function scale(value: number, domainMin: number, domainMax: number, rangeMin: nu
 
 function formatSigned(value: number): string {
   return `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value).toFixed(1)}`
+}
+
+/** Round axis ticks to a 1/2/5×10ⁿ step so labels stay clean. */
+function niceTicks(min: number, max: number, target: number): number[] {
+  const raw = (max - min) / Math.max(1, target - 1)
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)))
+  const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? 10 * mag
+  const start = Math.ceil(min / step) * step
+  const out: number[] = []
+  for (let v = start; v <= max + 1e-9; v += step) out.push(Math.round(v * 10) / 10)
+  return out
 }
 
 function readoutFor(p: TracePoint): string {
@@ -58,11 +70,16 @@ function TraceChart({ stage }: { stage: StageId }) {
   const sy = (v: number) => scale(v, yMin, yMax, innerBottom, innerTop)
 
   const xTicks = ticks(window_.from, window_.to, 7)
-  const yTicks = ticks(yMin, yMax, 6)
+  const yTicks = niceTicks(yMin, yMax, 5)
   const measuredPath = points.map((p) => `${sx(p.t)},${sy(p.measured)}`).join(' ')
   const setpointPath = points.map((p) => `${sx(p.t)},${sy(p.setpoint)}`).join(' ')
+  const areaPath =
+    `M ${sx(points[0]!.t)} ${innerBottom} ` +
+    points.map((p) => `L ${sx(p.t)} ${sy(p.measured)}`).join(' ') +
+    ` L ${sx(points[points.length - 1]!.t)} ${innerBottom} Z`
   const last = points[points.length - 1]!
   const activePoint = active === null ? null : points[active] ?? null
+  const showStageMarker = window_.from < RAMP_END && RAMP_END < window_.to
 
   function snapToPointer(clientX: number) {
     const rect = svgRef.current?.getBoundingClientRect()
@@ -110,54 +127,57 @@ function TraceChart({ stage }: { stage: StageId }) {
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="img"
         tabIndex={0}
-        aria-label={`Chamber temperature trace, ${window_.label.toLowerCase()} window: measured temperature against the ${RUN.setpointC} degree setpoint profile, minutes ${window_.from} to ${window_.to}. Use arrow keys to step through the points.`}
+        aria-label={`Chamber temperature trace in degrees Celsius by elapsed minutes, ${window_.label.toLowerCase()} window: measured temperature against the ${RUN.setpointC} degree setpoint profile, minutes ${window_.from} to ${window_.to}. Use arrow keys to step through the points.`}
         onPointerMove={(e) => snapToPointer(e.clientX)}
         onPointerLeave={() => setActive(null)}
         onBlur={() => setActive(null)}
         onKeyDown={onKeyDown}
       >
+        <defs>
+          <linearGradient id="measured-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style={{ stopColor: 'var(--semantic-charts-series-primary)', stopOpacity: 0.16 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--semantic-charts-series-primary)', stopOpacity: 0 }} />
+          </linearGradient>
+        </defs>
+
         {yTicks.map((v) => (
           <g key={`y-${v}`}>
             <line className="gridline" x1={innerLeft} y1={sy(v)} x2={innerRight} y2={sy(v)} />
-            <text className="tick-label" x={innerLeft - 8} y={sy(v) + 4} textAnchor="end">
+            <text className="tick-label" x={innerLeft - 8} y={sy(v) + 3.5} textAnchor="end">
               {v}
             </text>
           </g>
         ))}
         {xTicks.map((t) => (
-          <text key={`x-${t}`} className="tick-label" x={sx(t)} y={innerBottom + 18} textAnchor="middle">
+          <text key={`x-${t}`} className="tick-label" x={sx(t)} y={innerBottom + 16} textAnchor="middle">
             {t}
           </text>
         ))}
-        <line className="axis" x1={innerLeft} y1={innerTop} x2={innerLeft} y2={innerBottom} />
-        <line className="axis" x1={innerLeft} y1={innerBottom} x2={innerRight} y2={innerBottom} />
-        <text className="axis-label" x={(innerLeft + innerRight) / 2} y={HEIGHT - 8} textAnchor="middle">
-          elapsed (min)
-        </text>
-        <text
-          className="axis-label"
-          x={14}
-          y={(innerTop + innerBottom) / 2}
-          textAnchor="middle"
-          transform={`rotate(-90 14 ${(innerTop + innerBottom) / 2})`}
-        >
-          temperature (°C)
-        </text>
 
+        {showStageMarker && (
+          <g className="stage-marker" aria-hidden="true">
+            <line x1={sx(RAMP_END)} y1={innerTop} x2={sx(RAMP_END)} y2={innerBottom} />
+            <text x={sx(RAMP_END) - 5} y={innerTop + 9} textAnchor="end">
+              RAMP
+            </text>
+            <text x={sx(RAMP_END) + 5} y={innerTop + 9}>
+              SOAK
+            </text>
+          </g>
+        )}
+
+        <path className="series-area" d={areaPath} fill="url(#measured-fill)" />
         <polyline className="series-setpoint" points={setpointPath} fill="none" />
         <polyline className="series-measured" points={measuredPath} fill="none" />
-        {points.map((p, i) => (
-          <circle key={p.t} className="series-point" cx={sx(p.t)} cy={sy(p.measured)} r={i === active ? 0 : 2.4} />
-        ))}
 
         {/* Direct end-of-line labels so series identity never rides on color alone. */}
-        <text className="series-label series-label-measured" x={innerRight + 8} y={sy(last.measured) + 4}>
+        <text className="series-label series-label-measured" x={innerRight + 8} y={sy(last.measured) + 3.5}>
           Measured
         </text>
         <text
           className="series-label series-label-setpoint"
           x={innerRight + 8}
-          y={sy(last.setpoint) + (Math.abs(sy(last.setpoint) - sy(last.measured)) < 14 ? 18 : 4)}
+          y={sy(last.setpoint) + (Math.abs(sy(last.setpoint) - sy(last.measured)) < 13 ? 16 : 3.5)}
         >
           Setpoint
         </text>
@@ -171,9 +191,15 @@ function TraceChart({ stage }: { stage: StageId }) {
               x2={sx(activePoint.t)}
               y2={innerBottom}
             />
-            <circle className="active-point" cx={sx(activePoint.t)} cy={sy(activePoint.measured)} r={4.5} />
+            <circle className="active-point" cx={sx(activePoint.t)} cy={sy(activePoint.measured)} r={4} />
+            <g transform={`translate(${sx(activePoint.t) - 17} ${innerBottom + 4})`} className="crosshair-time">
+              <rect width={34} height={15} rx={3} />
+              <text x={17} y={11} textAnchor="middle">
+                {activePoint.t}
+              </text>
+            </g>
             <g transform={`translate(${tip.x} ${tip.y})`}>
-              <rect className="tooltip-box" width={158} height={82} rx={6} />
+              <rect className="tooltip-box" width={158} height={82} rx={5} />
               <text className="tooltip-title" x={12} y={19}>
                 t = {activePoint.t} min
               </text>
@@ -200,11 +226,20 @@ function TraceChart({ stage }: { stage: StageId }) {
   )
 }
 
-function StatusBadge({ status }: { status: ChannelStatus | EventSeverity | 'Running' }) {
-  const tone = status === 'OK' || status === 'Info' ? 'ok' : status === 'Warning' ? 'warning' : status === 'Running' ? 'running' : 'fault'
+type Tone = 'ok' | 'warning' | 'fault' | 'info'
+
+function toneFor(status: ChannelStatus | EventSeverity): Tone {
+  if (status === 'Warning') return 'warning'
+  if (status === 'Fault') return 'fault'
+  if (status === 'Info') return 'info'
+  return 'ok'
+}
+
+/** Compact dot + text status — pills are reserved for the run state. */
+function Status({ status }: { status: ChannelStatus | EventSeverity }) {
   return (
-    <span className={`badge badge-${tone}`}>
-      <span className="badge-dot" aria-hidden="true" />
+    <span className={`status status-${toneFor(status)}`}>
+      <span className="status-dot" aria-hidden="true" />
       {status}
     </span>
   )
@@ -231,7 +266,7 @@ function buildKpis(): Kpi[] {
       label: 'Chamber temperature',
       value: lastPoint.measured.toFixed(1),
       unit: '°C',
-      context: `Setpoint ${RUN.setpointC.toFixed(1)} °C — soak hold`,
+      context: `Setpoint ${RUN.setpointC.toFixed(1)} °C · soak hold`,
       tone: 'neutral',
       spark: TRACE.slice(-26).map((p) => p.measured),
     },
@@ -239,27 +274,27 @@ function buildKpis(): Kpi[] {
       label: 'Worst channel deviation',
       value: formatSigned(worst),
       unit: '°C',
-      context: `Tolerance ±${RUN.toleranceC.toFixed(1)} °C — TC-05 closest`,
+      context: `Tolerance ±${RUN.toleranceC.toFixed(1)} °C · TC-05 closest`,
       tone: worst > RUN.toleranceC ? 'fault' : worst > RUN.toleranceC * 0.8 ? 'warning' : 'ok',
     },
     {
       label: 'Channels online',
-      value: `${online} / ${CHANNELS.length}`,
-      context: 'TC-07 open circuit — excluded from mean',
+      value: `${online}/${CHANNELS.length}`,
+      context: 'TC-07 open circuit · excluded from mean',
       tone: online === CHANNELS.length ? 'ok' : 'warning',
     },
     {
       label: 'Active alerts',
       value: String(alerts),
-      context: '1 warning · 1 fault — see event log',
+      context: '1 warning · 1 fault · see event log',
       tone: alerts === 0 ? 'ok' : 'fault',
     },
   ]
 }
 
 function Sparkline({ values }: { values: number[] }) {
-  const w = 92
-  const h = 26
+  const w = 84
+  const h = 24
   const min = Math.min(...values)
   const max = Math.max(...values)
   const pts = values
@@ -307,7 +342,7 @@ function ChannelRow({ channel }: { channel: Channel }) {
         )}
       </td>
       <td>
-        <StatusBadge status={channel.status} />
+        <Status status={channel.status} />
       </td>
       <td className="cell-note">{channel.note}</td>
     </tr>
@@ -326,14 +361,19 @@ export default function App() {
   return (
     <div className="app">
       <header className="run-header">
-        <div>
+        <div className="run-id-block">
           <div className="run-rig">{RUN.rig}</div>
           <h1>
-            {RUN.id} <span className="run-profile">· {RUN.profile}</span>
+            <span className="run-id">{RUN.id}</span>
+            <span className="run-profile">{RUN.profile}</span>
           </h1>
         </div>
         <div className="run-meta">
-          <StatusBadge status={RUN.state} />
+          <span className="badge badge-running">
+            <span className="badge-dot" aria-hidden="true" />
+            {RUN.state}
+          </span>
+          <span className="run-divider" aria-hidden="true" />
           <div className="run-elapsed">
             <span className="run-elapsed-label">Elapsed</span>
             <span className="run-elapsed-value">
@@ -350,11 +390,14 @@ export default function App() {
             <div className="kpi-value-row">
               <div className="kpi-value">
                 {kpi.value}
-                {kpi.unit && <span className="kpi-unit"> {kpi.unit}</span>}
+                {kpi.unit && <span className="kpi-unit">{kpi.unit}</span>}
               </div>
               {kpi.spark && <Sparkline values={kpi.spark} />}
             </div>
-            <div className="kpi-context">{kpi.context}</div>
+            <div className="kpi-context">
+              {kpi.tone !== 'neutral' && <span className={`status-dot dot-${kpi.tone}`} aria-hidden="true" />}
+              {kpi.context}
+            </div>
           </article>
         ))}
       </section>
@@ -364,7 +407,7 @@ export default function App() {
           <div className="panel-head">
             <div>
               <h2>Temperature trace</h2>
-              <p className="panel-sub">Chamber mean over 7 channels · °C by elapsed minutes</p>
+              <p className="panel-sub">°C by elapsed min · chamber mean of 7 channels</p>
             </div>
             <div className="stage-tabs" role="group" aria-label="Trace window">
               {STAGES.map((s) => (
@@ -387,8 +430,8 @@ export default function App() {
               </li>
             </ul>
             <p className="chart-summary">
-              Soak window mean {summary.meanC.toFixed(1)} °C · max deviation {formatSigned(summary.maxDeviationC)} °C ·{' '}
-              {summary.withinTolerance ? 'within' : 'outside'} ±{RUN.toleranceC.toFixed(1)} °C tolerance
+              soak mean {summary.meanC.toFixed(1)} °C · max dev {formatSigned(summary.maxDeviationC)} °C ·{' '}
+              {summary.withinTolerance ? 'within' : 'outside'} ±{RUN.toleranceC.toFixed(1)} °C
             </p>
           </div>
         </section>
@@ -402,8 +445,9 @@ export default function App() {
             {EVENTS.map((event) => (
               <li key={`${event.at}-${event.message}`} className={`event event-${event.severity.toLowerCase()}`}>
                 <span className="event-at">{event.at}</span>
-                <div>
-                  <StatusBadge status={event.severity} />
+                <span className={`event-dot dot-${toneFor(event.severity)}`} aria-hidden="true" />
+                <div className="event-body">
+                  {event.severity !== 'Info' && <span className={`event-severity sev-${toneFor(event.severity)}`}>{event.severity}</span>}
                   <p className="event-message">{event.message}</p>
                 </div>
               </li>
