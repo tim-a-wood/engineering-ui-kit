@@ -163,7 +163,7 @@ measured-vs-setpoint temperature trace with ramp/soak windows, a filterable
 thermocouple table, and an event log, all on the standards package's semantic
 tokens.
 
-![From a written spec to a working front end: the REQUIREMENTS.md document beside the finished Bench Monitor console](docs/demo/requirements-to-ui-hero.png)
+![The finished Bench Monitor console beside the one-page REQUIREMENTS.md it was built from](docs/demo/requirements-to-ui-hero.png)
 
 The requirements doc is the **entire specification** — no wireframes, no mockups,
 no component list. In the workbench this is the *Build a new UI from requirements
@@ -186,7 +186,7 @@ zero-light-surface sweep passes. 12/12 recorded checks in
 raw full-page capture in
 [`docs/demo/bench-monitor-full.png`](docs/demo/bench-monitor-full.png).
 
-![The Bench Monitor console driven in a real browser: trace narrowed to the soak window, channels filtered to the open-circuit fault](docs/demo/bench-monitor-driven.png)
+![The Bench Monitor console driven in a real browser: soak stage selected on the left, channel table filtered to the failed channel on the right](docs/demo/bench-monitor-driven.png)
 
 Run it yourself: `npm run dev --workspace bench-monitor` → http://127.0.0.1:5402.
 
