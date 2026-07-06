@@ -1,8 +1,8 @@
 {
   "app": "bench-monitor",
   "run": "requirements-to-ui demo verification",
-  "passed": 12,
-  "total": 12,
+  "passed": 17,
+  "total": 17,
   "checks": [
     {
       "id": "BM-01",
@@ -57,9 +57,37 @@
     },
     {
       "id": "BM-11",
-      "description": "Chart points carry exact measured/setpoint values",
+      "description": "Crosshair tooltip shows measured, setpoint, and deviation values",
       "pass": true,
-      "detail": "t=108 min — measured 85.0 °C, setpoint 85.0 °C"
+      "detail": "t = 56 minMeasured 84.9 °CSetpoint 85.0 °CDeviation −0.1 °C"
+    },
+    {
+      "id": "BM-13",
+      "description": "Tooltip values are exact numbers for a real trace point",
+      "pass": true,
+      "detail": "t=56 measured=84.9 setpoint=85.0"
+    },
+    {
+      "id": "BM-14",
+      "description": "Crosshair hides when the pointer leaves the chart",
+      "pass": true
+    },
+    {
+      "id": "BM-15",
+      "description": "Keyboard: arrows step through points, Home jumps to start, Escape clears",
+      "pass": true,
+      "detail": "ArrowLeft→108, again→106, Home→0"
+    },
+    {
+      "id": "BM-16",
+      "description": "Deviation bars scale with |deviation| and use status tones",
+      "pass": true,
+      "detail": "{\"tc05\":{\"width\":46.6667,\"cls\":\"dev-fill dev-warning\"},\"tc02\":{\"width\":10,\"cls\":\"dev-fill dev-ok\"},\"tc07\":null}"
+    },
+    {
+      "id": "BM-17",
+      "description": "Chamber temperature KPI carries a sparkline",
+      "pass": true
     },
     {
       "id": "BM-12",

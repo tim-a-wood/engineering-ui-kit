@@ -13,7 +13,7 @@ build commands → approve or iterate.
 
 | Piece | What it is |
 |---|---|
-| `standards/` | The standards package (v0.4.0): dark-first visual language, 84 semantic token leaves, 68-component manifest, reference architecture, Copilot handoff contracts, prompts, and validation checklists |
+| `standards/` | The standards package (v0.4.0): dark-first visual language, 85 semantic token leaves, 68-component manifest, reference architecture, Copilot handoff contracts, prompts, and validation checklists |
 | `packages/core` | GUI-independent workflow library + CLI: repo flatfile builder with deterministic exclusions, packet builders, zip-overlay inspector (hard blockers AI-HANDOFF-030…039), non-destructive applier, verification runner, persistence — 44 tests |
 | `apps/desktop` | Electron main + sandboxed preload exposing a narrow typed IPC bridge (no generic filesystem access) |
 | `apps/gui` | React renderer: five-step handoff workflow, task templates, recipes, component reference, projects, settings |
@@ -180,8 +180,10 @@ no component list. In the workbench this is the *Build a new UI from requirement
 The checked-in console is the demo's recorded result, and it is verified the same
 evidence-first way as everything else in the repo — built, then driven in a real
 browser: stage tabs narrow the trace window, the status filter isolates the
-open-circuit fault, chart points expose exact values, bundled fonts load, and a
-zero-light-surface sweep passes. 12/12 recorded checks in
+open-circuit fault, the chart's crosshair tooltip reports exact
+measured/setpoint/deviation values by pointer *and* by keyboard (arrow keys, Home,
+Escape), deviation bars scale with tolerance, bundled fonts load, and a
+zero-light-surface sweep passes. 17/17 recorded checks in
 [`docs/demo/bench-monitor-results.json`](docs/demo/bench-monitor-results.json);
 raw full-page capture in
 [`docs/demo/bench-monitor-full.png`](docs/demo/bench-monitor-full.png).

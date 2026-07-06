@@ -146,12 +146,22 @@ body {
   margin-bottom: var(--semantic-spacing-2);
 }
 
+.kpi-value-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-2);
+}
+
 .kpi-value {
   font-family: var(--semantic-typography-family-mono);
   font-size: 26px;
   font-weight: var(--semantic-typography-weight-semibold);
   letter-spacing: -0.01em;
 }
+
+.kpi-spark { flex: none; margin-bottom: 5px; }
+.kpi-spark polyline { stroke: var(--semantic-charts-series-primary); stroke-width: 1.5; }
 
 .kpi-unit { font-size: var(--semantic-typography-size-lg); color: var(--semantic-text-secondary); }
 
@@ -271,14 +281,52 @@ body {
   font-family: var(--semantic-typography-family-sans);
 }
 
+.trace:focus-visible { outline: 2px solid var(--semantic-border-focus); outline-offset: 2px; }
+.trace { cursor: crosshair; touch-action: none; }
+
 .trace .series-measured { stroke: var(--semantic-charts-series-primary); stroke-width: 2; }
 .trace .series-setpoint {
   stroke: var(--semantic-charts-series-secondary);
   stroke-width: 1.6;
   stroke-dasharray: 6 5;
 }
-.trace .series-point { fill: var(--semantic-accent-primary-hover); }
-.trace .series-point:hover { fill: var(--semantic-text-primary); }
+.trace .series-point { fill: var(--semantic-accent-primary-hover); pointer-events: none; }
+
+/* Hover / keyboard crosshair layer (CMP-VIZ-CHART-TOOLTIP) */
+.trace .crosshair { stroke: var(--semantic-charts-crosshair); stroke-width: 1; }
+
+.trace .active-point {
+  fill: var(--semantic-charts-series-primary);
+  stroke: var(--semantic-charts-crosshair);
+  stroke-width: 2;
+}
+
+.trace .tooltip-box {
+  fill: var(--semantic-surface-overlay);
+  stroke: var(--semantic-border-strong);
+  stroke-width: 1;
+}
+
+.trace .tooltip-title {
+  fill: var(--semantic-text-muted);
+  font-size: 10.5px;
+  font-family: var(--semantic-typography-family-mono);
+}
+
+.trace .tooltip-line {
+  fill: var(--semantic-text-secondary);
+  font-size: 11px;
+  font-family: var(--semantic-typography-family-sans);
+}
+
+.trace .tooltip-value {
+  fill: var(--semantic-text-primary);
+  font-family: var(--semantic-typography-family-mono);
+  font-weight: var(--semantic-typography-weight-semibold);
+}
+
+.trace .tooltip-swatch.swatch-measured { fill: var(--semantic-charts-series-primary); }
+.trace .tooltip-swatch.swatch-setpoint { fill: var(--semantic-charts-series-secondary); }
 
 .trace .series-label {
   font-size: 11px;
@@ -396,6 +444,37 @@ tbody tr:hover td { background: var(--semantic-surface-inset); }
 th.cell-num { font-family: var(--semantic-typography-family-sans); }
 
 .cell-note { color: var(--semantic-text-muted); }
+
+/* Deviation-vs-tolerance mini bar (the number remains the primary encoding) */
+.dev-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--semantic-spacing-2);
+}
+
+.dev-bar {
+  position: relative;
+  width: 52px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--semantic-border-subtle);
+}
+
+.dev-bar::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--semantic-border-strong);
+}
+
+.dev-fill { position: absolute; top: 0; bottom: 0; border-radius: 2px; }
+.dev-fill.dev-ok { background: var(--semantic-status-success); }
+.dev-fill.dev-warning { background: var(--semantic-status-warning); }
+.dev-fill.dev-danger { background: var(--semantic-status-danger); }
 
 .row-warning .cell-id { color: var(--semantic-status-warning); }
 .row-fault .cell-id { color: var(--semantic-status-danger); }

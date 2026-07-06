@@ -291,13 +291,13 @@ Approved variants: single-point, multi-series. Variants shall be selected by wor
 Required states: hidden, visible, pinned-reserved. Interactive implementations shall also support keyboard focus, disabled where applicable, loading where applicable, and invalid/error where applicable.
 
 ### Behavior
-The component shall preserve explicit engineering context. Consequential actions shall remain visible, predictable, and reviewable. Long-running or data-dependent behavior shall expose state rather than silently changing content.
+The component shall preserve explicit engineering context. When the tooltip follows a pointer or keyboard cursor, pair it with a crosshair rule and active-point halo drawn with `{semantic.charts.crosshair}`, snap to the nearest data point, and offer an equivalent keyboard path (arrow keys or focusable points) so hover is never the only route to the values. Consequential actions shall remain visible, predictable, and reviewable. Long-running or data-dependent behavior shall expose state rather than silently changing content.
 
 ### Accessibility
-Follow `FND-A11Y-*`. The component shall expose a semantic role, accessible name, visible focus treatment using `{semantic.focus.ring}`, sufficient contrast in the dark theme, and non-color cues for critical status.
+Follow `FND-A11Y-*`. The component shall expose a semantic role, accessible name, visible focus treatment using `{semantic.focus.ring}`, sufficient contrast in the dark theme, and non-color cues for critical status. A polite live region or visible readout shall mirror the tooltip values for assistive technology.
 
 ### Token usage
-Use semantic or component alias tokens only. Primary references: {semantic.surface.panel}, {semantic.charts.grid}, {semantic.charts.axis}, {semantic.charts.series.primary}, {semantic.charts.series.secondary}. Raw color values shall not appear in the component spec or generated implementation.
+Use semantic or component alias tokens only. Primary references: {semantic.surface.panel}, {semantic.charts.grid}, {semantic.charts.axis}, {semantic.charts.crosshair}, {semantic.charts.series.primary}, {semantic.charts.series.secondary}. Raw color values shall not appear in the component spec or generated implementation.
 
 ### Content rules
 Use stable engineering nouns and specific state labels such as `Not run`, `Running`, `Passed`, `Failed`, `Blocked`, `Needs review`, `Generated`, and `Out of date` where relevant.
@@ -306,7 +306,7 @@ Use stable engineering nouns and specific state labels such as `Not run`, `Runni
 Place the component inside the relevant shell, panel, table, form, overlay, or recipe region. It shall not create a new page layout by itself.
 
 ### Approved example
-Compliant use: `Chart Tooltip` appears in a dark engineering panel, uses manifest ID `CMP-VIZ-CHART-TOOLTIP`, uses semantic token references, exposes state text, and links status or evidence to the underlying artifact when applicable.
+Compliant use: `Chart Tooltip` appears in a dark engineering panel, uses manifest ID `CMP-VIZ-CHART-TOOLTIP`, uses semantic token references, exposes state text, and links status or evidence to the underlying artifact when applicable. The reference implementation is the crosshair tooltip in `examples/bench-monitor` (pointer and arrow-key driven, mirrored to a live readout).
 
 ### Rejected example
 Non-compliant use: `Chart Tooltip` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.

@@ -38,6 +38,7 @@
   --semantic-status-info-tint: rgba(96, 165, 250, 0.12);
   --semantic-charts-grid: rgba(148, 163, 184, 0.16);
   --semantic-charts-axis: #94a3b8;
+  --semantic-charts-crosshair: rgba(203, 213, 225, 0.42);
   --semantic-charts-series-primary: #2f5bff;
   --semantic-charts-series-secondary: #a78bfa;
   --semantic-charts-series-warning: #fbbf24;

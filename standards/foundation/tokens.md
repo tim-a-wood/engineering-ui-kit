@@ -70,7 +70,7 @@ Use `semantic.motion.*` and `semantic.zIndex.*`. Motion shall clarify state; z-i
 
 ## FND-TOK-015 — Chart tokens
 
-Use `semantic.charts.grid`, `semantic.charts.axis`, and `semantic.charts.series.*` for visualization. Chart status overlays shall still include labels or summaries.
+Use `semantic.charts.grid`, `semantic.charts.axis`, and `semantic.charts.series.*` for visualization. Use `semantic.charts.crosshair` for the hover/keyboard crosshair rule and the active-point halo; the crosshair shall always be paired with a text readout or tooltip carrying the exact values, and hover shall never be the only way to access critical data. Chart status overlays shall still include labels or summaries.
 
 ## Token Reference Syntax
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   CHANNELS,
   EVENTS,
@@ -11,6 +11,7 @@ import {
   type ChannelStatus,
   type EventSeverity,
   type StageId,
+  type TracePoint,
 } from './data'
 
 const WIDTH = 760
@@ -26,10 +27,23 @@ function formatSigned(value: number): string {
   return `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value).toFixed(1)}`
 }
 
-/** CMP-VIZ-CHART-PANEL / CMP-VIZ-LINE-CHART: measured vs setpoint trace. */
+function readoutFor(p: TracePoint): string {
+  return `t ${p.t} min: measured ${p.measured.toFixed(1)} °C, setpoint ${p.setpoint.toFixed(1)} °C, deviation ${formatSigned(p.measured - p.setpoint)} °C`
+}
+
+/**
+ * CMP-VIZ-CHART-PANEL / CMP-VIZ-LINE-CHART / CMP-VIZ-CHART-TOOLTIP:
+ * measured vs setpoint trace with a pointer/keyboard crosshair. The exact
+ * values always exist as text (tooltip, live readout, and the summary line) —
+ * hover is never the only path to the data.
+ */
 function TraceChart({ stage }: { stage: StageId }) {
-  const window = STAGES.find((s) => s.id === stage) ?? STAGES[0]!
-  const points = useMemo(() => TRACE.filter((p) => p.t >= window.from && p.t <= window.to), [window])
+  const window_ = STAGES.find((s) => s.id === stage) ?? STAGES[0]!
+  const points = useMemo(() => TRACE.filter((p) => p.t >= window_.from && p.t <= window_.to), [window_])
+  const [active, setActive] = useState<number | null>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+
+  useEffect(() => setActive(null), [stage])
 
   const values = points.flatMap((p) => [p.measured, p.setpoint])
   const yMin = Math.floor(Math.min(...values) - 2)
@@ -40,70 +54,149 @@ function TraceChart({ stage }: { stage: StageId }) {
   const innerTop = MARGIN.top
   const innerBottom = HEIGHT - MARGIN.bottom
 
-  const sx = (t: number) => scale(t, window.from, window.to, innerLeft, innerRight)
+  const sx = (t: number) => scale(t, window_.from, window_.to, innerLeft, innerRight)
   const sy = (v: number) => scale(v, yMin, yMax, innerBottom, innerTop)
 
-  const xTicks = ticks(window.from, window.to, 7)
+  const xTicks = ticks(window_.from, window_.to, 7)
   const yTicks = ticks(yMin, yMax, 6)
   const measuredPath = points.map((p) => `${sx(p.t)},${sy(p.measured)}`).join(' ')
   const setpointPath = points.map((p) => `${sx(p.t)},${sy(p.setpoint)}`).join(' ')
   const last = points[points.length - 1]!
+  const activePoint = active === null ? null : points[active] ?? null
+
+  function snapToPointer(clientX: number) {
+    const rect = svgRef.current?.getBoundingClientRect()
+    if (!rect || rect.width === 0) return
+    const vx = ((clientX - rect.left) / rect.width) * WIDTH
+    let best = 0
+    let bestDist = Infinity
+    points.forEach((p, i) => {
+      const d = Math.abs(sx(p.t) - vx)
+      if (d < bestDist) {
+        bestDist = d
+        best = i
+      }
+    })
+    setActive(best)
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<SVGSVGElement>) {
+    const lastIdx = points.length - 1
+    let next: number | null | undefined
+    if (e.key === 'ArrowLeft') next = active === null ? lastIdx : Math.max(0, active - 1)
+    else if (e.key === 'ArrowRight') next = active === null ? lastIdx : Math.min(lastIdx, active + 1)
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = lastIdx
+    else if (e.key === 'Escape') next = null
+    if (next !== undefined) {
+      e.preventDefault()
+      setActive(next)
+    }
+  }
+
+  // Tooltip geometry in viewBox units, flipped when it would leave the plot.
+  const tip = activePoint
+    ? {
+        x: sx(activePoint.t) + (sx(activePoint.t) > innerRight - 170 ? -172 : 14),
+        y: Math.max(innerTop + 4, Math.min(sy(activePoint.measured) - 40, innerBottom - 88)),
+      }
+    : null
 
   return (
-    <svg
-      className="trace"
-      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      role="img"
-      aria-label={`Chamber temperature trace, ${window.label.toLowerCase()} window: measured temperature against the ${RUN.setpointC} degree setpoint profile, minutes ${window.from} to ${window.to}.`}
-    >
-      {yTicks.map((v) => (
-        <g key={`y-${v}`}>
-          <line className="gridline" x1={innerLeft} y1={sy(v)} x2={innerRight} y2={sy(v)} />
-          <text className="tick-label" x={innerLeft - 8} y={sy(v) + 4} textAnchor="end">
-            {v}
+    <>
+      <svg
+        ref={svgRef}
+        className="trace"
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        role="img"
+        tabIndex={0}
+        aria-label={`Chamber temperature trace, ${window_.label.toLowerCase()} window: measured temperature against the ${RUN.setpointC} degree setpoint profile, minutes ${window_.from} to ${window_.to}. Use arrow keys to step through the points.`}
+        onPointerMove={(e) => snapToPointer(e.clientX)}
+        onPointerLeave={() => setActive(null)}
+        onBlur={() => setActive(null)}
+        onKeyDown={onKeyDown}
+      >
+        {yTicks.map((v) => (
+          <g key={`y-${v}`}>
+            <line className="gridline" x1={innerLeft} y1={sy(v)} x2={innerRight} y2={sy(v)} />
+            <text className="tick-label" x={innerLeft - 8} y={sy(v) + 4} textAnchor="end">
+              {v}
+            </text>
+          </g>
+        ))}
+        {xTicks.map((t) => (
+          <text key={`x-${t}`} className="tick-label" x={sx(t)} y={innerBottom + 18} textAnchor="middle">
+            {t}
           </text>
-        </g>
-      ))}
-      {xTicks.map((t) => (
-        <text key={`x-${t}`} className="tick-label" x={sx(t)} y={innerBottom + 18} textAnchor="middle">
-          {t}
+        ))}
+        <line className="axis" x1={innerLeft} y1={innerTop} x2={innerLeft} y2={innerBottom} />
+        <line className="axis" x1={innerLeft} y1={innerBottom} x2={innerRight} y2={innerBottom} />
+        <text className="axis-label" x={(innerLeft + innerRight) / 2} y={HEIGHT - 8} textAnchor="middle">
+          elapsed (min)
         </text>
-      ))}
-      <line className="axis" x1={innerLeft} y1={innerTop} x2={innerLeft} y2={innerBottom} />
-      <line className="axis" x1={innerLeft} y1={innerBottom} x2={innerRight} y2={innerBottom} />
-      <text className="axis-label" x={(innerLeft + innerRight) / 2} y={HEIGHT - 8} textAnchor="middle">
-        elapsed (min)
-      </text>
-      <text
-        className="axis-label"
-        x={14}
-        y={(innerTop + innerBottom) / 2}
-        textAnchor="middle"
-        transform={`rotate(-90 14 ${(innerTop + innerBottom) / 2})`}
-      >
-        temperature (°C)
-      </text>
+        <text
+          className="axis-label"
+          x={14}
+          y={(innerTop + innerBottom) / 2}
+          textAnchor="middle"
+          transform={`rotate(-90 14 ${(innerTop + innerBottom) / 2})`}
+        >
+          temperature (°C)
+        </text>
 
-      <polyline className="series-setpoint" points={setpointPath} fill="none" />
-      <polyline className="series-measured" points={measuredPath} fill="none" />
-      {points.map((p) => (
-        <circle key={p.t} className="series-point" cx={sx(p.t)} cy={sy(p.measured)} r={2.4}>
-          <title>{`t=${p.t} min — measured ${p.measured.toFixed(1)} °C, setpoint ${p.setpoint.toFixed(1)} °C`}</title>
-        </circle>
-      ))}
+        <polyline className="series-setpoint" points={setpointPath} fill="none" />
+        <polyline className="series-measured" points={measuredPath} fill="none" />
+        {points.map((p, i) => (
+          <circle key={p.t} className="series-point" cx={sx(p.t)} cy={sy(p.measured)} r={i === active ? 0 : 2.4} />
+        ))}
 
-      {/* Direct end-of-line labels so series identity never rides on color alone. */}
-      <text className="series-label series-label-measured" x={innerRight + 8} y={sy(last.measured) + 4}>
-        Measured
-      </text>
-      <text
-        className="series-label series-label-setpoint"
-        x={innerRight + 8}
-        y={sy(last.setpoint) + (Math.abs(sy(last.setpoint) - sy(last.measured)) < 14 ? 18 : 4)}
-      >
-        Setpoint
-      </text>
-    </svg>
+        {/* Direct end-of-line labels so series identity never rides on color alone. */}
+        <text className="series-label series-label-measured" x={innerRight + 8} y={sy(last.measured) + 4}>
+          Measured
+        </text>
+        <text
+          className="series-label series-label-setpoint"
+          x={innerRight + 8}
+          y={sy(last.setpoint) + (Math.abs(sy(last.setpoint) - sy(last.measured)) < 14 ? 18 : 4)}
+        >
+          Setpoint
+        </text>
+
+        {activePoint && tip && (
+          <g className="hover-layer" data-t={activePoint.t}>
+            <line
+              className="crosshair"
+              x1={sx(activePoint.t)}
+              y1={innerTop}
+              x2={sx(activePoint.t)}
+              y2={innerBottom}
+            />
+            <circle className="active-point" cx={sx(activePoint.t)} cy={sy(activePoint.measured)} r={4.5} />
+            <g transform={`translate(${tip.x} ${tip.y})`}>
+              <rect className="tooltip-box" width={158} height={82} rx={6} />
+              <text className="tooltip-title" x={12} y={19}>
+                t = {activePoint.t} min
+              </text>
+              <rect className="tooltip-swatch swatch-measured" x={12} y={29} width={10} height={3} rx={1.5} />
+              <text className="tooltip-line" x={28} y={35}>
+                Measured <tspan className="tooltip-value">{activePoint.measured.toFixed(1)} °C</tspan>
+              </text>
+              <rect className="tooltip-swatch swatch-setpoint" x={12} y={46} width={10} height={3} rx={1.5} />
+              <text className="tooltip-line" x={28} y={52}>
+                Setpoint <tspan className="tooltip-value">{activePoint.setpoint.toFixed(1)} °C</tspan>
+              </text>
+              <text className="tooltip-line" x={28} y={69}>
+                Deviation{' '}
+                <tspan className="tooltip-value">{formatSigned(activePoint.measured - activePoint.setpoint)} °C</tspan>
+              </text>
+            </g>
+          </g>
+        )}
+      </svg>
+      <p className="sr-only" aria-live="polite">
+        {activePoint ? readoutFor(activePoint) : ''}
+      </p>
+    </>
   )
 }
 
@@ -123,6 +216,7 @@ interface Kpi {
   unit?: string
   context: string
   tone: 'neutral' | 'ok' | 'warning' | 'fault'
+  spark?: number[]
 }
 
 function buildKpis(): Kpi[] {
@@ -139,6 +233,7 @@ function buildKpis(): Kpi[] {
       unit: '°C',
       context: `Setpoint ${RUN.setpointC.toFixed(1)} °C — soak hold`,
       tone: 'neutral',
+      spark: TRACE.slice(-26).map((p) => p.measured),
     },
     {
       label: 'Worst channel deviation',
@@ -162,13 +257,55 @@ function buildKpis(): Kpi[] {
   ]
 }
 
+function Sparkline({ values }: { values: number[] }) {
+  const w = 92
+  const h = 26
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const pts = values
+    .map((v, i) => `${(i / (values.length - 1)) * w},${h - 3 - ((v - min) / (max - min || 1)) * (h - 6)}`)
+    .join(' ')
+  return (
+    <svg className="kpi-spark" viewBox={`0 0 ${w} ${h}`} width={w} height={h} aria-hidden="true">
+      <polyline points={pts} fill="none" />
+    </svg>
+  )
+}
+
+function deviationTone(dev: number): string {
+  const a = Math.abs(dev)
+  return a > RUN.toleranceC ? 'danger' : a > RUN.toleranceC * 0.8 ? 'warning' : 'ok'
+}
+
 function ChannelRow({ channel }: { channel: Channel }) {
+  const dev = channel.deviationC
   return (
     <tr className={channel.status !== 'OK' ? `row-${channel.status.toLowerCase()}` : undefined}>
       <td className="cell-id">{channel.id}</td>
       <td className="cell-text">{channel.location}</td>
       <td className="cell-num">{channel.readingC === null ? '—' : `${channel.readingC.toFixed(1)} °C`}</td>
-      <td className="cell-num">{channel.deviationC === null ? '—' : `${formatSigned(channel.deviationC)} °C`}</td>
+      <td className="cell-num">
+        {dev === null ? (
+          '—'
+        ) : (
+          <span className="dev-cell">
+            <span
+              className="dev-bar"
+              aria-hidden="true"
+              title={`${formatSigned(dev)} °C of ±${RUN.toleranceC.toFixed(1)} °C tolerance`}
+            >
+              <span
+                className={`dev-fill dev-${deviationTone(dev)}`}
+                style={{
+                  width: `${Math.min(1, Math.abs(dev) / RUN.toleranceC) * 50}%`,
+                  [dev >= 0 ? 'left' : 'right']: '50%',
+                }}
+              />
+            </span>
+            {formatSigned(dev)} °C
+          </span>
+        )}
+      </td>
       <td>
         <StatusBadge status={channel.status} />
       </td>
@@ -210,9 +347,12 @@ export default function App() {
         {kpis.map((kpi) => (
           <article key={kpi.label} className={`kpi kpi-${kpi.tone}`}>
             <div className="kpi-label">{kpi.label}</div>
-            <div className="kpi-value">
-              {kpi.value}
-              {kpi.unit && <span className="kpi-unit"> {kpi.unit}</span>}
+            <div className="kpi-value-row">
+              <div className="kpi-value">
+                {kpi.value}
+                {kpi.unit && <span className="kpi-unit"> {kpi.unit}</span>}
+              </div>
+              {kpi.spark && <Sparkline values={kpi.spark} />}
             </div>
             <div className="kpi-context">{kpi.context}</div>
           </article>
