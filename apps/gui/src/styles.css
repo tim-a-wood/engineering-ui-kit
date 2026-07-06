@@ -7,6 +7,9 @@
  * measured; accent reserved for interaction and current state; status as
  * dot + text (pills only for a few prominent run states); toolbar-like
  * headers instead of hero titles.
+ *
+ * Control metrology (4px grid): sm 24px · md 30px · lg 36px control heights;
+ * icon buttons 28×28; 16px/1.5px-stroke icons; 6px icon-to-label gap.
  */
 
 /* ============================================================
@@ -23,12 +26,15 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  /* App shell: the content column (.main) scrolls, never the window. */
+  overflow: hidden;
   font-family: var(--semantic-typography-family-sans);
   font-size: var(--semantic-typography-size-sm);
   font-weight: var(--semantic-typography-weight-regular);
   color: var(--semantic-text-primary);
   background: var(--semantic-surface-canvas);
   line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
 }
 
 #root { min-height: 100vh; }
@@ -74,14 +80,6 @@ kbd {
   padding: 1px 5px;
 }
 
-input[type='checkbox'] {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-  accent-color: var(--semantic-accent-primary);
-  cursor: pointer;
-}
-
 :focus-visible {
   outline: 2px solid var(--semantic-border-focus);
   outline-offset: 2px;
@@ -92,6 +90,7 @@ input[type='checkbox'] {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
   }
 }
 
@@ -117,6 +116,7 @@ input[type='checkbox'] {
 .kpi-label,
 .specimen-name,
 .req-tag,
+.nav-section-label,
 .hub-progress-label {
   font-size: 10.5px;
   font-weight: var(--semantic-typography-weight-medium);
@@ -129,13 +129,78 @@ input[type='checkbox'] {
 .secondary-text { color: var(--semantic-text-secondary); }
 
 /* ============================================================
+   Pure-CSS tooltips — applied to every icon-only control
+   ============================================================ */
+
+[data-tip] { position: relative; }
+
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  translate: -50% 0;
+  background: var(--semantic-surface-panel-raised);
+  border: 1px solid var(--semantic-border-strong);
+  border-radius: 5px;
+  box-shadow: var(--semantic-shadow-md);
+  color: var(--semantic-text-primary);
+  font-size: 11.5px;
+  font-weight: var(--semantic-typography-weight-medium);
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1;
+  padding: 6px 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 950;
+  transition: opacity var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard) 0ms;
+}
+
+[data-tip]::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  translate: -50% 0;
+  rotate: 45deg;
+  width: 7px;
+  height: 7px;
+  background: var(--semantic-surface-panel-raised);
+  border-right: 1px solid var(--semantic-border-strong);
+  border-bottom: 1px solid var(--semantic-border-strong);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 951;
+  transition: opacity var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard) 0ms;
+}
+
+[data-tip]:hover::after, [data-tip]:hover::before,
+[data-tip]:focus-visible::after, [data-tip]:focus-visible::before {
+  opacity: 1;
+  transition-delay: 150ms;
+}
+
+/* Flipped variant for controls near the top edge (e.g. titlebar). */
+[data-tip][data-tip-pos='bottom']::after {
+  bottom: auto;
+  top: calc(100% + 7px);
+}
+[data-tip][data-tip-pos='bottom']::before {
+  bottom: auto;
+  top: calc(100% + 4px);
+  rotate: 225deg;
+}
+
+/* ============================================================
    App shell & titlebar
    ============================================================ */
 
 .app-frame {
   display: grid;
   grid-template-rows: auto 1fr;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .titlebar {
@@ -144,8 +209,8 @@ input[type='checkbox'] {
   display: flex;
   align-items: center;
   gap: var(--semantic-spacing-3);
-  min-height: 44px;
-  padding: 0 var(--semantic-spacing-5);
+  height: 44px;
+  padding: 0 var(--semantic-spacing-4) 0 var(--semantic-spacing-5);
   border-bottom: 1px solid var(--semantic-border-subtle);
   background: var(--semantic-surface-panel);
 }
@@ -153,14 +218,70 @@ input[type='checkbox'] {
 .brand-mark {
   display: inline-flex;
   align-items: center;
-  font-size: 17px;
   color: var(--semantic-text-primary);
 }
+.brand-mark svg { width: 18px; height: 18px; }
 
 .brand-name {
   font-weight: var(--semantic-typography-weight-semibold);
   font-size: var(--semantic-typography-size-sm);
   letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+
+/* Breadcrumb path shown while a handoff run is active. */
+.topbar-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  margin-left: var(--semantic-spacing-2);
+  padding-left: var(--semantic-spacing-3);
+  border-left: 1px solid var(--semantic-border-subtle);
+  font-size: 12px;
+  color: var(--semantic-text-muted);
+  white-space: nowrap;
+}
+.topbar-crumbs .crumb { color: var(--semantic-text-muted); }
+.topbar-crumbs .crumb-current { color: var(--semantic-text-secondary); font-weight: var(--semantic-typography-weight-medium); }
+.topbar-crumbs .crumb-sep { display: inline-flex; color: var(--semantic-text-muted); opacity: 0.7; }
+.topbar-crumbs .crumb-sep svg { width: 12px; height: 12px; }
+button.crumb {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  margin: 0 -4px 0 0;
+  border-radius: var(--semantic-radius-sm);
+  font: inherit;
+  cursor: pointer;
+}
+button.crumb:hover { color: var(--semantic-text-primary); }
+
+.titlebar-spacer { flex: 1; }
+
+/* Mock-mode chip: uppercase micro-chip, neutral chrome. */
+.mode-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: 999px;
+  background: var(--semantic-surface-inset);
+  color: var(--semantic-text-muted);
+  font-size: 10px;
+  font-weight: var(--semantic-typography-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.mode-chip .mode-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--semantic-status-warning);
+  flex: none;
 }
 
 .version-pill {
@@ -168,31 +289,12 @@ input[type='checkbox'] {
   font-size: 10.5px;
   font-variant-numeric: tabular-nums;
   color: var(--semantic-text-muted);
-  border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-sm);
-  padding: 1px 6px;
+  white-space: nowrap;
 }
-
-.titlebar-spacer { flex: 1; }
-
-.help-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 1px solid var(--semantic-border-subtle);
-  background: transparent;
-  color: var(--semantic-text-secondary);
-  cursor: pointer;
-  font-size: var(--semantic-typography-size-sm);
-}
-.help-button:hover { color: var(--semantic-text-primary); border-color: var(--semantic-border-strong); }
 
 .app-body {
   display: grid;
-  grid-template-columns: 216px 1fr;
+  grid-template-columns: 240px 1fr;
   min-height: 0;
 }
 
@@ -204,10 +306,23 @@ input[type='checkbox'] {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-spacing-5);
-  padding: var(--semantic-spacing-4) var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-4) var(--semantic-spacing-3) var(--semantic-spacing-4);
   border-right: 1px solid var(--semantic-border-subtle);
   background: var(--semantic-surface-canvas);
   min-height: 0;
+  overflow-y: auto;
+}
+
+.nav-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-5);
+}
+
+.nav-section-label {
+  display: block;
+  padding: 0 var(--semantic-spacing-2);
+  margin: 0 0 var(--semantic-spacing-1);
 }
 
 .nav-list {
@@ -226,15 +341,16 @@ input[type='checkbox'] {
   gap: var(--semantic-spacing-2);
   width: 100%;
   padding: 0 var(--semantic-spacing-2);
-  min-height: 30px;
-  border: 1px solid transparent;
-  border-radius: var(--semantic-radius-sm);
+  height: 28px;
+  border: none;
+  border-radius: 6px;
   background: transparent;
   color: var(--semantic-text-secondary);
   font-size: var(--semantic-typography-size-sm);
   font-weight: var(--semantic-typography-weight-medium);
   cursor: pointer;
   text-align: left;
+  white-space: nowrap;
   transition: background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
     color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
@@ -249,7 +365,7 @@ input[type='checkbox'] {
 .nav-item.active::before {
   content: '';
   position: absolute;
-  left: -3px;
+  left: 0;
   top: 6px;
   bottom: 6px;
   width: 2px;
@@ -261,13 +377,15 @@ input[type='checkbox'] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  text-align: center;
+  width: 16px;
+  flex: none;
 }
-.nav-glyph svg { width: 15px; height: 15px; }
+.nav-glyph svg { width: 16px; height: 16px; }
+.nav-item.active .nav-glyph { color: var(--semantic-accent-text); }
 
 .sidebar-spacer { flex: 1; }
 
+/* Compact bottom tip block. */
 .tip-card {
   border-top: 1px solid var(--semantic-border-subtle);
   padding: var(--semantic-spacing-3) var(--semantic-spacing-2) 0;
@@ -304,6 +422,7 @@ input[type='checkbox'] {
   padding: 0;
   color: var(--semantic-accent-text);
   font-size: 12px;
+  font-weight: var(--semantic-typography-weight-medium);
   cursor: pointer;
 }
 .tip-link:hover { text-decoration: underline; }
@@ -320,105 +439,163 @@ input[type='checkbox'] {
   flex-direction: column;
   gap: var(--semantic-spacing-4);
 }
+/* .main scrolls; its sections must never flex-shrink into the scroll area. */
+.main > * { flex: none; }
 
 .page-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: var(--semantic-spacing-3);
-  min-height: 52px;
+  min-height: 56px;
   padding: var(--semantic-spacing-2) var(--semantic-spacing-6);
   margin: 0 calc(-1 * var(--semantic-spacing-6));
   border-bottom: 1px solid var(--semantic-border-subtle);
+  background: var(--semantic-surface-canvas);
 }
+
+.page-header-copy { min-width: 0; }
 
 .page-header h1 {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: var(--semantic-typography-weight-semibold);
-  letter-spacing: -0.005em;
+  letter-spacing: -0.01em;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .page-subtitle {
   margin: 1px 0 0;
   color: var(--semantic-text-muted);
   font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.back-button {
-  background: none;
-  border: 1px solid transparent;
-  border-radius: var(--semantic-radius-sm);
-  color: var(--semantic-text-secondary);
-  font-size: 15px;
-  line-height: 1;
-  cursor: pointer;
-  padding: var(--semantic-spacing-1) var(--semantic-spacing-2);
+/* Small breadcrumb line above a nested page title. */
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 1px;
+  font-size: 11.5px;
+  color: var(--semantic-text-muted);
+  white-space: nowrap;
 }
-.back-button:hover { color: var(--semantic-text-primary); border-color: var(--semantic-border-subtle); }
+.crumbs .crumb-sep { display: inline-flex; opacity: 0.7; }
+.crumbs .crumb-sep svg { width: 11px; height: 11px; }
+.crumbs button.crumb { font-size: 11.5px; color: var(--semantic-text-muted); }
+.crumbs button.crumb:hover { color: var(--semantic-text-primary); }
 
-.page-header-actions { margin-left: auto; display: flex; gap: var(--semantic-spacing-2); align-items: center; }
+.page-header-actions { margin-left: auto; display: flex; gap: var(--semantic-spacing-2); align-items: center; flex: none; }
 
 /* ============================================================
-   Buttons
+   Buttons — sm 24 / md 30 / lg 36, machined depth cues
    ============================================================ */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--semantic-spacing-2);
-  min-height: 30px;
+  gap: 6px;
+  height: 30px;
   padding: 0 var(--semantic-spacing-3);
   border-radius: 6px;
   border: 1px solid transparent;
   font-size: var(--semantic-typography-size-sm);
   font-weight: var(--semantic-typography-weight-medium);
+  line-height: 1;
   cursor: pointer;
   white-space: nowrap;
+  user-select: none;
   transition: background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
     border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
-    color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+    color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    box-shadow var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
 
-.btn svg { flex-shrink: 0; }
-.btn:active { transform: translateY(0.5px); }
+.btn svg { flex-shrink: 0; width: 16px; height: 16px; }
+.btn:active:not(:disabled) { transform: translateY(0.5px); }
+.btn:disabled { cursor: not-allowed; }
 
+/* Primary: accent plate with a machined top highlight. */
 .btn-primary {
-  background: var(--semantic-accent-primary);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 45%),
+    var(--semantic-accent-primary);
   color: var(--semantic-text-inverse);
-  box-shadow: var(--semantic-shadow-sm);
+  border-color: var(--semantic-accent-primary-active);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), var(--semantic-shadow-sm);
 }
-.btn-primary:hover { background: var(--semantic-accent-primary-hover); }
-.btn-primary:active { background: var(--semantic-accent-primary-active); }
-.btn-primary:disabled {
-  background: var(--semantic-surface-inset);
-  color: var(--semantic-text-disabled);
-  cursor: not-allowed;
-  box-shadow: none;
+.btn-primary:hover:not(:disabled) {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 45%),
+    var(--semantic-accent-primary-hover);
 }
+.btn-primary:active:not(:disabled) {
+  background: var(--semantic-accent-primary-active);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.btn-primary:disabled { opacity: 0.45; }
 
+/* Secondary: raised surface, subtle border, inset top highlight. */
 .btn-secondary {
   background: var(--semantic-surface-panel-raised);
   color: var(--semantic-text-primary);
   border-color: var(--semantic-border-strong);
-  box-shadow: var(--semantic-shadow-sm);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--semantic-shadow-sm);
 }
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   border-color: var(--semantic-text-muted);
   background: var(--semantic-surface-inset);
 }
-.btn-secondary:disabled {
-  color: var(--semantic-text-disabled);
-  border-color: var(--semantic-border-subtle);
-  background: transparent;
-  box-shadow: none;
-  cursor: not-allowed;
-}
+.btn-secondary:active:not(:disabled) { box-shadow: none; }
+.btn-secondary:disabled { opacity: 0.45; box-shadow: none; }
 
-.btn-compact { min-height: 26px; padding: 0 var(--semantic-spacing-3); font-size: 12px; }
+/* Ghost / tertiary: transparent, hover tint. */
+.btn-ghost {
+  background: transparent;
+  color: var(--semantic-text-secondary);
+}
+.btn-ghost:hover:not(:disabled) { background: var(--semantic-surface-inset); color: var(--semantic-text-primary); }
+.btn-ghost:disabled { opacity: 0.45; }
+
+.btn-compact, .btn-sm { height: 24px; padding: 0 var(--semantic-spacing-2); font-size: 12px; border-radius: 5px; }
+.btn-compact svg, .btn-sm svg { width: 14px; height: 14px; }
+.btn-lg { height: 36px; padding: 0 var(--semantic-spacing-4); }
 
 .btn-danger { background: transparent; border-color: var(--semantic-border-danger); color: var(--semantic-status-danger); }
+.btn-danger:hover:not(:disabled) { background: var(--semantic-status-danger-tint); }
+
+/* Icon-only button: 28×28, 6px radius, always tooltipped at the call site. */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--semantic-text-secondary);
+  cursor: pointer;
+  transition: background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+}
+.icon-btn svg { width: 16px; height: 16px; }
+.icon-btn:hover { background: var(--semantic-surface-inset); color: var(--semantic-text-primary); }
+.icon-btn:active { transform: translateY(0.5px); }
+.icon-btn.icon-btn-outline { border-color: var(--semantic-border-subtle); }
+.icon-btn.icon-btn-outline:hover { border-color: var(--semantic-border-strong); }
 
 /* ============================================================
    Panels & surfaces
@@ -455,11 +632,17 @@ input[type='checkbox'] {
   align-items: center;
   justify-content: space-between;
   gap: var(--semantic-spacing-3);
-  padding: 0 var(--semantic-spacing-4) var(--semantic-spacing-3);
+  min-height: 44px;
+  padding: 0 var(--semantic-spacing-4);
   border-bottom: 1px solid var(--semantic-border-subtle);
-  margin: 0 calc(-1 * var(--semantic-spacing-4)) var(--semantic-spacing-3);
+  margin: calc(-1 * var(--semantic-spacing-4)) calc(-1 * var(--semantic-spacing-4)) var(--semantic-spacing-3);
 }
 .panel-head h2 { margin: 0; }
+.panel-head .panel-head-icon {
+  display: inline-flex;
+  color: var(--semantic-text-muted);
+  margin-right: calc(-1 * var(--semantic-spacing-1));
+}
 
 .inset {
   background: var(--semantic-surface-inset);
@@ -515,6 +698,7 @@ input[type='checkbox'] {
   background: var(--semantic-surface-canvas);
   flex: none;
 }
+.workflow-marker svg { width: 11px; height: 11px; }
 
 .workflow-step.complete .workflow-marker {
   background: transparent;
@@ -539,82 +723,163 @@ input[type='checkbox'] {
 .workflow-state { display: none; }
 
 /* ============================================================
-   Forms
+   Forms — inset surface, hover strengthen, tokenized focus ring
    ============================================================ */
 
 .field { display: flex; flex-direction: column; gap: var(--semantic-spacing-1); margin-bottom: var(--semantic-spacing-3); }
 
 .field label { font-weight: var(--semantic-typography-weight-medium); font-size: 12px; color: var(--semantic-text-secondary); }
 
-.field input[type='text'], .field textarea, .field select, .search-input input {
+.field input[type='text'], .field textarea, .search-input input {
   background: var(--semantic-surface-inset);
   border: 1px solid var(--semantic-border-subtle);
   border-radius: 6px;
   color: var(--semantic-text-primary);
   font-family: inherit;
   font-size: var(--semantic-typography-size-sm);
-  padding: var(--semantic-spacing-1) var(--semantic-spacing-3);
-  min-height: 30px;
+  padding: 0 var(--semantic-spacing-3);
+  height: 30px;
+  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    box-shadow var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
 
-.field textarea { resize: vertical; line-height: 1.5; padding-top: var(--semantic-spacing-2); }
+input::placeholder, textarea::placeholder { color: var(--semantic-text-muted); opacity: 1; }
 
-.field input:hover, .field textarea:hover { border-color: var(--semantic-border-strong); }
+.field textarea {
+  height: auto;
+  min-height: 60px;
+  resize: vertical;
+  line-height: 1.5;
+  padding-top: var(--semantic-spacing-2);
+  padding-bottom: var(--semantic-spacing-2);
+}
 
-.field input[type='text']:focus-visible, .field textarea:focus-visible, .select-control:focus-visible {
+.field input:hover, .field textarea:hover, .search-input input:hover { border-color: var(--semantic-border-strong); }
+
+.field input[type='text']:focus-visible, .field textarea:focus-visible,
+.search-input input:focus-visible, .select-control:focus-visible {
   outline: none;
   border-color: var(--semantic-border-focus);
   box-shadow: var(--semantic-focus-ring-offset);
 }
 
+.field input[readonly] { color: var(--semantic-text-muted); }
+
 .field .field-error { color: var(--semantic-status-danger); font-size: 12px; margin: 0; }
 .field.invalid input, .field.invalid textarea { border-color: var(--semantic-border-danger); }
 
 .field-row { display: flex; gap: var(--semantic-spacing-2); align-items: stretch; }
-.field-row input { flex: 1; }
+.field-row input { flex: 1; min-width: 0; }
+.field-row .btn { height: 30px; }
 
-.search-input { position: relative; }
+.search-input { position: relative; display: inline-flex; }
 .search-input input { width: 100%; min-width: 220px; padding-left: 30px; }
 .search-input .search-glyph {
   display: inline-flex;
   align-items: center;
   position: absolute;
-  left: 10px;
+  left: 9px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--semantic-text-muted);
+  pointer-events: none;
 }
 .search-input .search-glyph svg { width: 14px; height: 14px; }
 
+/* Selects: real chevron affordance via inline SVG (no appearance quirks). */
 .select-control {
-  background: var(--semantic-surface-inset);
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--semantic-surface-inset);
+  /* Chevron stroke %2394a3b8 mirrors --semantic-text-muted. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px 14px;
   color: var(--semantic-text-primary);
   border: 1px solid var(--semantic-border-subtle);
   border-radius: 6px;
-  min-height: 30px;
-  padding: 0 var(--semantic-spacing-3);
+  height: 30px;
+  padding: 0 30px 0 var(--semantic-spacing-3);
   font-family: inherit;
   font-size: var(--semantic-typography-size-sm);
+  cursor: pointer;
+  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
-.select-control:disabled { color: var(--semantic-text-disabled); }
+.select-control:hover:not(:disabled) { border-color: var(--semantic-border-strong); }
+.select-control:disabled { color: var(--semantic-text-disabled); cursor: not-allowed; opacity: 0.7; }
 
-/* Machined segmented controls: inset track, raised active segment. */
+/* Custom 16px checkboxes: accent fill + white check when checked. */
+input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin: 0;
+  border: 1px solid var(--semantic-border-strong);
+  border-radius: 4px;
+  background: var(--semantic-surface-inset);
+  cursor: pointer;
+  display: inline-block;
+  vertical-align: -3px;
+  transition: background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+}
+input[type='checkbox']:hover { border-color: var(--semantic-text-muted); }
+input[type='checkbox']:checked {
+  background-color: var(--semantic-accent-primary);
+  border-color: var(--semantic-accent-primary-active);
+  /* White check mirrors --semantic-text-inverse. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5.5 12.5 4 4L18.5 7.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 11px 11px;
+}
+
+/* Custom 16px radios: accent ring + dot when checked. */
+input[type='radio'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin: 0;
+  border: 1px solid var(--semantic-border-strong);
+  border-radius: 50%;
+  background: var(--semantic-surface-inset);
+  cursor: pointer;
+  display: inline-block;
+  vertical-align: -3px;
+  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    box-shadow var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+}
+input[type='radio']:hover { border-color: var(--semantic-text-muted); }
+input[type='radio']:checked {
+  border: 5px solid var(--semantic-accent-primary);
+  background: var(--semantic-text-inverse);
+}
+
+/* Machined segmented controls: inset track, raised active segment.
+   Track = md (30px): 2px padding + 24px sm segments + hairline borders. */
 .segmented, .tab-row {
   display: inline-flex;
   align-self: flex-start;
+  align-items: center;
   background: var(--semantic-surface-inset);
   border: 1px solid var(--semantic-border-subtle);
   border-radius: 6px;
   padding: 2px;
   gap: 0;
+  height: 30px;
 }
 
 .segment, .tab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--semantic-spacing-1);
-  min-height: 24px;
+  gap: 6px;
+  height: 24px;
   min-width: 32px;
   padding: 0 var(--semantic-spacing-3);
   background: transparent;
@@ -622,12 +887,14 @@ input[type='checkbox'] {
   border-radius: 4px;
   color: var(--semantic-text-muted);
   cursor: pointer;
-  font-size: var(--semantic-typography-size-sm);
+  font-size: 12px;
   font-weight: var(--semantic-typography-weight-medium);
+  line-height: 1;
   transition: color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
     background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
 .segment { padding: 0 var(--semantic-spacing-2); }
+.segment svg, .tab svg { width: 14px; height: 14px; }
 
 .segment:hover, .tab:hover { color: var(--semantic-text-primary); }
 
@@ -640,7 +907,7 @@ input[type='checkbox'] {
 .tab-row { margin-bottom: var(--semantic-spacing-3); }
 
 /* ============================================================
-   Toggle
+   Toggle — 34×18 switch with a shadowed knob
    ============================================================ */
 
 .toggle-row {
@@ -649,54 +916,65 @@ input[type='checkbox'] {
   justify-content: space-between;
   gap: var(--semantic-spacing-3);
   padding: var(--semantic-spacing-2) 0;
+  min-height: 32px;
 }
 
 .toggle-row .toggle-label { font-size: var(--semantic-typography-size-sm); color: var(--semantic-text-secondary); }
 
 .toggle {
   width: 34px;
-  height: 19px;
-  border-radius: 10px;
+  height: 18px;
+  border-radius: 9px;
   border: 1px solid var(--semantic-border-strong);
   background: var(--semantic-surface-inset);
   position: relative;
   cursor: pointer;
   flex-shrink: 0;
   padding: 0;
+  transition: background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
 
 .toggle::after {
   content: '';
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 13px;
-  height: 13px;
+  top: 1px;
+  left: 1px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--semantic-text-secondary);
-  transition: transform var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: transform var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
+
+.toggle:hover { border-color: var(--semantic-text-muted); }
 
 .toggle[aria-checked='true'] {
   background: var(--semantic-accent-primary);
-  border-color: var(--semantic-accent-primary);
+  border-color: var(--semantic-accent-primary-active);
 }
-.toggle[aria-checked='true']::after { transform: translateX(15px); background: var(--semantic-text-inverse); }
+.toggle[aria-checked='true']::after { transform: translateX(16px); background: var(--semantic-text-inverse); }
 
 /* ============================================================
-   Tables
+   Tables — toolbar row, sticky header, 32px rows
    ============================================================ */
 
 .data-table { width: 100%; border-collapse: collapse; }
 
 .data-table th {
   text-align: left;
-  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  height: 32px;
+  padding: 0 var(--semantic-spacing-3);
   border-bottom: 1px solid var(--semantic-border-subtle);
+  background: var(--semantic-surface-panel);
+  white-space: nowrap;
 }
 
 .data-table td {
-  padding: 7px var(--semantic-spacing-3);
+  height: 32px;
+  padding: var(--semantic-spacing-1) var(--semantic-spacing-3);
   font-size: var(--semantic-typography-size-sm);
   border-top: 1px solid var(--semantic-border-subtle);
   vertical-align: middle;
@@ -712,16 +990,55 @@ input[type='checkbox'] {
 .data-table td.cell-num, td.cell-num {
   font-family: var(--semantic-typography-family-mono);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
   color: var(--semantic-text-secondary);
   text-align: right;
+  white-space: nowrap;
 }
 .data-table th.cell-num { text-align: right; }
 
+/* Toolbar row attached above a table: search left, filters/count right. */
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  min-height: 46px;
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  border-bottom: 1px solid var(--semantic-border-subtle);
+}
+.table-toolbar .search-input { flex: none; }
+.table-toolbar .search-input input { min-width: 240px; }
+.table-toolbar-spacer { flex: 1; }
+.table-toolbar .toolbar-count {
+  color: var(--semantic-text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding: 0 var(--semantic-spacing-1);
+}
+
+/* Scroll region for long tables: thead pins inside the panel. */
+.table-scroll { overflow-y: auto; max-height: 480px; }
+.table-scroll .data-table th { position: sticky; top: 0; z-index: 2; box-shadow: 0 1px 0 var(--semantic-border-subtle); border-bottom: none; }
+
 /* Tables placed edge-to-edge inside a flush panel. */
-.panel-flush { padding: 0; overflow: hidden; }
-.panel-flush > .data-table th { padding-top: var(--semantic-spacing-3); }
-.panel-flush > .data-table th:first-child, .panel-flush > .data-table td:first-child { padding-left: var(--semantic-spacing-4); }
-.panel-flush > .data-table th:last-child, .panel-flush > .data-table td:last-child { padding-right: var(--semantic-spacing-4); }
+.panel-flush { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.panel-flush .table-toolbar { padding: var(--semantic-spacing-2) var(--semantic-spacing-4); flex: none; }
+.panel-flush .data-table th:first-child, .panel-flush .data-table td:first-child { padding-left: var(--semantic-spacing-4); }
+.panel-flush .data-table th:last-child, .panel-flush .data-table td:last-child { padding-right: var(--semantic-spacing-4); }
+
+/* Footer row under a flush table (pagination / row counts). */
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-3);
+  min-height: 40px;
+  padding: var(--semantic-spacing-1) var(--semantic-spacing-4);
+  border-top: 1px solid var(--semantic-border-subtle);
+  color: var(--semantic-text-muted);
+  font-size: 12px;
+}
 
 /* ============================================================
    Badges & status
@@ -733,14 +1050,18 @@ input[type='checkbox'] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  height: 20px;
   border-radius: 999px;
   border: 1px solid var(--semantic-border-subtle);
-  padding: 1px var(--semantic-spacing-3);
-  font-size: 12px;
-  line-height: 1.5;
+  padding: 0 var(--semantic-spacing-2);
+  font-size: 11.5px;
+  line-height: 1;
   font-weight: var(--semantic-typography-weight-medium);
   color: var(--semantic-text-secondary);
+  white-space: nowrap;
 }
+
+.badge svg { width: 12px; height: 12px; }
 
 .badge-dot {
   width: 6px;
@@ -797,12 +1118,16 @@ input[type='checkbox'] {
   border-radius: var(--semantic-radius-sm);
   background: var(--semantic-surface-panel);
   padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--semantic-text-secondary);
 }
+.status-line .status-line-icon { display: inline-flex; flex: none; margin-top: 1px; color: var(--semantic-text-muted); }
+.status-line .status-line-icon svg { width: 14px; height: 14px; }
 
 .status-line.status-error { border-left-color: var(--semantic-status-danger); color: var(--semantic-status-danger); }
+.status-line.status-error .status-line-icon { color: var(--semantic-status-danger); }
 .status-line.status-success { border-left-color: var(--semantic-status-success); }
+.status-line.status-success .status-line-icon { color: var(--semantic-status-success); }
 .status-line.status-info { border-left-color: var(--semantic-border-strong); }
 .status-line.status-success .status-label { color: var(--semantic-status-success); }
 
@@ -813,11 +1138,19 @@ input[type='checkbox'] {
   border-radius: var(--semantic-radius-md);
   padding: var(--semantic-spacing-3) var(--semantic-spacing-4);
 }
-.validation-summary h3 { margin: 0 0 var(--semantic-spacing-1); font-size: var(--semantic-typography-size-sm); color: var(--semantic-status-danger); }
+.validation-summary h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--semantic-spacing-1);
+  font-size: var(--semantic-typography-size-sm);
+  color: var(--semantic-status-danger);
+}
+.validation-summary h3 svg { width: 14px; height: 14px; flex: none; }
 .validation-summary ul { margin: 0; padding-left: var(--semantic-spacing-5); color: var(--semantic-status-danger); font-size: 12.5px; }
 
 /* ============================================================
-   Dialogs
+   Dialogs — fixed header / scrolling body / fixed footer
    ============================================================ */
 
 @keyframes dialog-in {
@@ -841,14 +1174,16 @@ input[type='checkbox'] {
 }
 
 .dialog {
+  display: flex;
+  flex-direction: column;
   background: var(--semantic-surface-overlay);
   border: 1px solid var(--semantic-border-strong);
   border-radius: var(--semantic-radius-lg);
   box-shadow: var(--semantic-shadow-overlay);
-  width: min(520px, calc(100vw - 64px));
+  width: min(480px, calc(100vw - 64px));
   max-height: calc(100vh - 96px);
-  overflow-y: auto;
-  padding: var(--semantic-spacing-5);
+  overflow: hidden;
+  padding: 0;
   z-index: var(--semantic-z-index-modal);
   animation: dialog-in var(--semantic-motion-duration-normal) var(--semantic-motion-easing-standard);
 }
@@ -857,53 +1192,114 @@ input[type='checkbox'] {
   .dialog, .dialog-backdrop { animation: none; }
 }
 
-.dialog-wide { width: min(760px, calc(100vw - 64px)); }
+.dialog-wide { width: min(640px, calc(100vw - 64px)); }
 
 .dialog-header {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--semantic-spacing-4);
-  padding-bottom: var(--semantic-spacing-3);
+  height: 48px;
+  padding: 0 var(--semantic-spacing-3) 0 var(--semantic-spacing-5);
   border-bottom: 1px solid var(--semantic-border-subtle);
-  margin: 0 calc(-1 * var(--semantic-spacing-5)) var(--semantic-spacing-4);
-  padding-left: var(--semantic-spacing-5);
-  padding-right: var(--semantic-spacing-5);
 }
 
-.dialog-header h2 { margin: 0; font-size: 15px; font-weight: var(--semantic-typography-weight-semibold); letter-spacing: -0.005em; }
+.dialog-header h2 { margin: 0; font-size: 14px; font-weight: var(--semantic-typography-weight-semibold); letter-spacing: -0.005em; }
 
-.dialog-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  background: none;
-  border: none;
-  border-radius: var(--semantic-radius-sm);
-  color: var(--semantic-text-secondary);
-  font-size: 14px;
-  cursor: pointer;
-  padding: var(--semantic-spacing-1);
-  transition: background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+.dialog-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--semantic-spacing-4) var(--semantic-spacing-5);
 }
-.dialog-close:hover { color: var(--semantic-text-primary); background: var(--semantic-surface-inset); }
 
 .dialog-actions {
+  flex: none;
   display: flex;
   justify-content: flex-end;
   gap: var(--semantic-spacing-2);
-  padding-top: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-3) var(--semantic-spacing-5);
   border-top: 1px solid var(--semantic-border-subtle);
-  margin: var(--semantic-spacing-4) calc(-1 * var(--semantic-spacing-5)) 0;
-  padding-left: var(--semantic-spacing-5);
-  padding-right: var(--semantic-spacing-5);
 }
+
+/* ============================================================
+   Empty states — centered icon + title + hint (+ optional action)
+   ============================================================ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--semantic-spacing-1);
+  padding: var(--semantic-spacing-8) var(--semantic-spacing-4);
+  text-align: center;
+}
+.empty-state .empty-icon {
+  display: inline-flex;
+  color: var(--semantic-text-muted);
+  margin-bottom: var(--semantic-spacing-1);
+}
+.empty-state .empty-icon svg { width: 24px; height: 24px; }
+.empty-state .empty-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--semantic-typography-weight-medium);
+  color: var(--semantic-text-primary);
+}
+.empty-state .empty-hint { margin: 0; font-size: 12px; color: var(--semantic-text-muted); }
+.empty-state .btn { margin-top: var(--semantic-spacing-2); }
 
 /* ============================================================
    Hub (Copilot Handoff landing)
    ============================================================ */
+
+/* Continue panel: the resume-your-work hero row when a run is active. */
+.hub-continue {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-4);
+  background: var(--semantic-surface-panel);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  padding: var(--semantic-spacing-4);
+}
+
+.hub-continue-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-accent-primary-tint);
+  border: 1px solid var(--semantic-accent-primary);
+  color: var(--semantic-accent-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.hub-continue-icon svg { width: 18px; height: 18px; }
+
+.hub-continue-copy { flex: 1; min-width: 0; }
+.hub-continue-copy h2 { margin: 0; font-size: var(--semantic-typography-size-md); font-weight: var(--semantic-typography-weight-semibold); }
+.hub-continue-copy p { margin: 2px 0 0; color: var(--semantic-text-muted); font-size: 12px; }
+
+.hub-continue-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--semantic-spacing-1);
+  flex: none;
+  margin-right: var(--semantic-spacing-2);
+}
+.hub-progress-track {
+  width: 140px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--semantic-surface-inset);
+  border: 1px solid var(--semantic-border-subtle);
+  overflow: hidden;
+}
+.hub-progress-fill { height: 100%; background: var(--semantic-accent-primary); }
 
 /* Workflow steps share one surface, split by hairlines — not five tiles. */
 .hub-steps {
@@ -921,7 +1317,7 @@ input[type='checkbox'] {
   border-radius: 0;
   background: transparent;
   margin: 0;
-  padding: var(--semantic-spacing-3) var(--semantic-spacing-4) var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-3) var(--semantic-spacing-4);
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -971,7 +1367,10 @@ button.hub-card:focus-visible { outline-offset: -2px; border-radius: 0; }
   border: none;
   background: transparent;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
 }
+.hub-step-marker svg { width: 12px; height: 12px; }
 
 .hub-card.complete .hub-step-marker { color: var(--semantic-status-success); }
 .hub-card.current .hub-step-marker { color: var(--semantic-accent-text); }
@@ -996,14 +1395,14 @@ button.hub-card:focus-visible { outline-offset: -2px; border-radius: 0; }
   align-items: center;
   gap: var(--semantic-spacing-3);
   padding: var(--semantic-spacing-2) 0;
-  min-height: 44px;
+  min-height: 48px;
 }
 .project-row + .project-row { border-top: 1px solid var(--semantic-border-subtle); }
 
 .project-row-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: var(--semantic-radius-sm);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   background: var(--semantic-surface-inset);
   border: 1px solid var(--semantic-border-subtle);
   display: inline-flex;
@@ -1026,20 +1425,11 @@ button.hub-card:focus-visible { outline-offset: -2px; border-radius: 0; }
 }
 .project-row .btn { flex-shrink: 0; }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--semantic-spacing-3);
-  padding: var(--semantic-spacing-6) 0;
-  text-align: center;
-}
-.empty-state p { margin: 0; color: var(--semantic-text-secondary); }
-
 /* Legacy centered project cards (Projects grid layout) */
 .recent-project { display: flex; flex-direction: column; align-items: center; gap: var(--semantic-spacing-2); }
 .recent-project .mono { color: var(--semantic-text-muted); }
-.recent-project-icon { display: inline-flex; font-size: 22px; color: var(--semantic-text-muted); }
+.recent-project-icon { display: inline-flex; color: var(--semantic-text-muted); }
+.recent-project-icon svg { width: 20px; height: 20px; }
 
 /* ============================================================
    Output format cards (Prepare Context)
@@ -1063,26 +1453,19 @@ button.hub-card:focus-visible { outline-offset: -2px; border-radius: 0; }
 .format-card p { margin: 0; color: var(--semantic-text-muted); font-size: 12px; }
 
 .format-radio {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  border: 2px solid var(--semantic-accent-primary);
+  border: 5px solid var(--semantic-accent-primary);
+  background: var(--semantic-text-inverse);
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  margin-top: 2px;
-  position: relative;
+  margin-top: 1px;
 }
-.format-radio::after {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--semantic-accent-primary);
+.format-radio.unselected {
+  border: 1px solid var(--semantic-border-strong);
+  background: var(--semantic-surface-inset);
 }
-.format-radio.unselected { border-color: var(--semantic-border-strong); }
-.format-radio.unselected::after { background: transparent; }
 
 /* ============================================================
    List rows (recipes/components/sections) & info banners
@@ -1107,7 +1490,7 @@ button.hub-card:focus-visible { outline-offset: -2px; border-radius: 0; }
 .row-item .row-icon {
   width: 28px;
   height: 28px;
-  border-radius: var(--semantic-radius-sm);
+  border-radius: 6px;
   background: var(--semantic-surface-inset);
   border: 1px solid var(--semantic-border-subtle);
   display: inline-flex;
@@ -1134,6 +1517,7 @@ button.hub-card:focus-visible { outline-offset: -2px; border-radius: 0; }
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-sm);
   padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  min-height: 36px;
   color: var(--semantic-text-muted);
   font-size: 12px;
 }
@@ -1143,7 +1527,8 @@ button.hub-card:focus-visible { outline-offset: -2px; border-radius: 0; }
   background: var(--semantic-surface-panel);
   color: var(--semantic-text-secondary);
 }
-.info-banner > span[aria-hidden] { display: inline-flex; flex-shrink: 0; }
+.info-banner > span[aria-hidden] { display: inline-flex; flex-shrink: 0; color: var(--semantic-text-muted); }
+.info-banner > span[aria-hidden] svg { width: 14px; height: 14px; }
 .info-banner-copy { flex: 1; }
 .info-banner .btn, .info-banner .info-banner-action { margin-left: auto; flex-shrink: 0; white-space: nowrap; }
 
@@ -1206,13 +1591,13 @@ button.hub-card:focus-visible { outline-offset: -2px; border-radius: 0; }
 .verify-hero-fail {
   border-color: var(--semantic-status-danger);
   color: var(--semantic-status-danger);
-  font-size: 15px;
 }
 
 .iteration-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--semantic-spacing-3); }
 .iteration-grid-intro { grid-template-columns: 1.1fr 1fr 1fr 1fr; }
 .iteration-intro { padding-right: var(--semantic-spacing-4); border-right: 1px solid var(--semantic-border-subtle); }
 .iteration-intro-icon { display: inline-flex; color: var(--semantic-text-muted); margin-bottom: var(--semantic-spacing-2); }
+.iteration-intro-icon svg { width: 20px; height: 20px; }
 .iteration-intro h2 { font-size: var(--semantic-typography-size-md); }
 
 .iteration-step-title {
@@ -1347,6 +1732,8 @@ button.hub-card:focus-visible { outline-offset: -2px; border-radius: 0; }
 .file-tree { list-style: none; margin: 0; padding: 0; font-size: 12px; }
 .file-tree li { padding: 2px 0; color: var(--semantic-text-muted); }
 .file-tree code { color: var(--semantic-text-secondary); }
+.file-tree .tree-glyph { display: inline-flex; vertical-align: -2px; margin-right: 6px; color: var(--semantic-text-muted); }
+.file-tree .tree-glyph svg { width: 13px; height: 13px; }
 
 /* ============================================================
    Context review list (Prepare Context)
@@ -1408,6 +1795,9 @@ button.hub-card:focus-visible { outline-offset: -2px; border-radius: 0; }
 }
 .specimen:nth-child(3n + 1) { border-left: none; }
 .specimen:nth-child(-n + 3) { border-top: none; }
+/* An orphan cell in the last row stretches to keep the plate rectangular. */
+.specimen:last-child:nth-child(3n + 1) { grid-column: 1 / -1; }
+.specimen:last-child:nth-child(3n + 2) { grid-column: 2 / -1; }
 
 .specimen-head {
   display: flex;

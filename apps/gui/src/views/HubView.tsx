@@ -36,6 +36,10 @@ export function HubView(props: {
   const activeProject = run ? props.projects.find((p) => p.id === run.projectId) : undefined
   const recent = props.projects.filter((p) => p.status === 'active').slice(0, 3)
 
+  const runOpen = Boolean(run && run.currentStep !== 'complete')
+  const completedSteps = run ? Math.min(stepIndex(run.currentStep), 5) : 0
+  const currentStep = currentIndex >= 0 ? WORKFLOW_STEPS[currentIndex] : undefined
+
   return (
     <>
       <PageHeader
@@ -48,6 +52,28 @@ export function HubView(props: {
         }
       />
 
+      {runOpen && activeProject && currentStep && (
+        <section className="hub-continue" aria-label="Active handoff run">
+          <span className="hub-continue-icon" aria-hidden="true">{Icon.play(18)}</span>
+          <div className="hub-continue-copy">
+            <h2>Continue where you left off</h2>
+            <p>
+              <strong style={{ color: 'var(--semantic-text-secondary)' }}>{activeProject.name}</strong>
+              {' · '}Step <span className="num">{currentIndex + 1} of 5</span> — {currentStep.short}
+            </p>
+          </div>
+          <div className="hub-continue-progress" aria-hidden="true">
+            <span className="hub-progress-label num">{completedSteps}/5 complete</span>
+            <span className="hub-progress-track">
+              <span className="hub-progress-fill" style={{ width: `${(completedSteps / 5) * 100}%`, display: 'block' }} />
+            </span>
+          </div>
+          <button type="button" className="btn btn-primary btn-lg" onClick={() => props.onOpenStep(currentStep.id)}>
+            Continue {Icon.arrowRight(14)}
+          </button>
+        </section>
+      )}
+
       <section aria-label="Workflow steps" className="hub-steps">
         {STEP_CARDS.map((card, index) => {
           const state = currentIndex === -1 ? 'upcoming' : index < currentIndex ? 'complete' : index === currentIndex ? 'current' : 'upcoming'
@@ -57,7 +83,7 @@ export function HubView(props: {
           const inner = (
             <>
               <span className="hub-card-head">
-                <span className="hub-step-marker" aria-hidden="true">{state === 'complete' ? '✓' : index + 1}</span>
+                <span className="hub-step-marker" aria-hidden="true">{state === 'complete' ? Icon.check(12) : index + 1}</span>
                 <span className="hub-card-title">{card.title}</span>
                 <span className="hub-card-icon" aria-hidden="true">{card.icon}</span>
               </span>
@@ -93,33 +119,25 @@ export function HubView(props: {
         })}
       </section>
 
-      {run && activeProject && (
-        <div className="info-banner info-accent" role="status">
-          <span className="badge badge-info">
-            <span className="badge-dot" aria-hidden="true" /> Run active
-          </span>
-          <span className="info-banner-copy">
-            Active handoff run for <code>{activeProject.name}</code> — current step:{' '}
-            {WORKFLOW_STEPS[currentIndex]?.short ?? 'Complete'}.
-          </span>
-          <button type="button" className="btn btn-secondary btn-compact" onClick={() => props.onOpenStep(WORKFLOW_STEPS[Math.min(currentIndex, 4)]!.id)}>
-            Continue
-          </button>
-        </div>
-      )}
-
       <section className="panel" aria-labelledby="recent-projects-heading">
         <div className="panel-head">
-          <h2 id="recent-projects-heading">Recent Projects</h2>
+          <div className="hstack">
+            <h2 id="recent-projects-heading">Recent Projects</h2>
+            <span className="toolbar-count num" style={{ color: 'var(--semantic-text-muted)', fontSize: 12 }}>
+              {recent.length} active
+            </span>
+          </div>
           <button type="button" className="tip-link" onClick={() => props.onOpenStep('projects')}>
             View all →
           </button>
         </div>
         {recent.length === 0 ? (
           <div className="empty-state">
-            <p>No projects yet. Create one to start your first handoff.</p>
-            <button type="button" className="btn btn-primary" onClick={() => setNewProjectOpen(true)}>
-              {Icon.plus()} New Project
+            <span className="empty-icon" aria-hidden="true">{Icon.folderBig(24)}</span>
+            <p className="empty-title">No projects yet</p>
+            <p className="empty-hint">Create a project to start your first handoff.</p>
+            <button type="button" className="btn btn-secondary" onClick={() => setNewProjectOpen(true)}>
+              {Icon.plus(14)} New Project
             </button>
           </div>
         ) : (
@@ -144,7 +162,7 @@ export function HubView(props: {
       </section>
 
       <div className="info-banner">
-        <span aria-hidden="true">ⓘ</span>
+        <span aria-hidden="true">{Icon.info(14)}</span>
         <span className="info-banner-copy">
           Primary output from Copilot should be a zip overlay of changed/new files only. After applying, run local
           verification and perform a scoped Copilot code review.

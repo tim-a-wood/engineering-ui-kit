@@ -1,7 +1,7 @@
 import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { HandoffRun, Project, Settings } from '@engineering-ui-kit/core'
 import { getBridge, type BuildPacketResult } from './bridge'
-import { NAV_ITEMS, isStepReachable, type RecipePrefill, type ViewId, WORKFLOW_STEPS } from './appState'
+import { NAV_ITEMS, isStepReachable, stepIndex, type RecipePrefill, type ViewId, WORKFLOW_STEPS } from './appState'
 import { Dialog, TipCard } from './components'
 import { Icon } from './icons'
 import { HubView } from './views/HubView'
@@ -26,6 +26,21 @@ const TIPS: Partial<Record<ViewId, string>> = {
   projects: 'Organize and manage your Engineering UI Kit projects.',
   recipes: 'You can upload a maximum of 3 files to Microsoft 365 Copilot.',
   components: 'You can upload a maximum of 3 files to Microsoft 365 Copilot.',
+}
+
+/** Sidebar structure: uppercase section labels grouping the flat NAV_ITEMS. */
+const NAV_SECTIONS: { label: string; items: ViewId[] }[] = [
+  { label: 'Workflow', items: ['copilot-handoff'] },
+  { label: 'Library', items: ['recipes', 'components'] },
+  { label: 'System', items: ['projects', 'settings'] },
+]
+
+const NAV_GLYPHS: Partial<Record<ViewId, () => ReactNode>> = {
+  'copilot-handoff': () => Icon.home(),
+  recipes: () => Icon.grid(),
+  components: () => Icon.box(),
+  projects: () => Icon.folder(),
+  settings: () => Icon.gear(),
 }
 
 class ViewErrorBoundary extends Component<{ viewKey: string; children: ReactNode }, { error: Error | null }> {
@@ -180,42 +195,67 @@ export default function App() {
     }
   }
 
+  const isRunOpen = Boolean(activeRun && activeRun.currentStep !== 'complete')
+  const currentStepShort = activeRun
+    ? WORKFLOW_STEPS[Math.min(stepIndex(activeRun.currentStep), WORKFLOW_STEPS.length - 1)]?.short ?? 'Complete'
+    : undefined
+  const versionLabel = version.replace(/^v/, '').replace(/\s*\(mock\)\s*$/, '') || '0.1.0'
+  const isMock = typeof window !== 'undefined' && window.euikMode === 'mock'
+
   return (
     <div className="app-frame">
       <div className="titlebar">
         <span className="brand-mark" aria-hidden="true">{Icon.logo()}</span>
         <span className="brand-name">Engineering UI Kit</span>
-        <span className="version-pill">v{version.replace(/^v/, '') || '0.1.0'}</span>
+        <span className="version-pill">v{versionLabel}</span>
+        {isRunOpen && activeProject && (
+          <nav className="topbar-crumbs" aria-label="Active handoff run">
+            <button type="button" className="crumb" onClick={() => navigate('copilot-handoff')}>
+              {activeProject.name}
+            </button>
+            <span className="crumb-sep" aria-hidden="true">{Icon.chevronRight(12)}</span>
+            <span className="crumb-current">{currentStepShort}</span>
+          </nav>
+        )}
         <span className="titlebar-spacer" />
-        <button type="button" className="help-button" aria-label="Help" onClick={() => setHelpOpen(true)}>
+        {isMock && (
+          <span className="mode-chip" title="Running against the in-memory mock bridge">
+            <span className="mode-dot" aria-hidden="true" />
+            Mock data
+          </span>
+        )}
+        <button type="button" className="icon-btn" aria-label="Help" data-tip="Workflow help" data-tip-pos="bottom" onClick={() => setHelpOpen(true)}>
           {Icon.help()}
         </button>
       </div>
 
       <div className="app-body">
         <aside className="sidebar">
-          <nav aria-label="Primary navigation">
-            <ul className="nav-list">
-              {NAV_ITEMS.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    className={item.id === navActive ? 'nav-item active' : 'nav-item'}
-                    aria-current={item.id === navActive ? 'page' : undefined}
-                    onClick={() => navigate(item.id)}
-                  >
-                    <span className="nav-glyph" aria-hidden="true">
-                      {item.id === 'copilot-handoff' && Icon.home()}
-                      {item.id === 'recipes' && Icon.grid()}
-                      {item.id === 'components' && Icon.box()}
-                      {item.id === 'projects' && Icon.folder()}
-                      {item.id === 'settings' && Icon.gear()}
-                    </span>
-                    <span>{item.label}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+          <nav aria-label="Primary navigation" className="nav-sections">
+            {NAV_SECTIONS.map((section) => (
+              <div key={section.label}>
+                <span className="nav-section-label">{section.label}</span>
+                <ul className="nav-list">
+                  {section.items.map((id) => {
+                    const item = NAV_ITEMS.find((n) => n.id === id)
+                    if (!item) return null
+                    return (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          className={item.id === navActive ? 'nav-item active' : 'nav-item'}
+                          aria-current={item.id === navActive ? 'page' : undefined}
+                          onClick={() => navigate(item.id)}
+                        >
+                          <span className="nav-glyph" aria-hidden="true">{NAV_GLYPHS[item.id]?.()}</span>
+                          <span>{item.label}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
           </nav>
           <span className="sidebar-spacer" />
           <TipCard

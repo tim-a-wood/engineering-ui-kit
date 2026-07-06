@@ -6,7 +6,7 @@
  */
 
 import { useMemo, useState, type ReactElement } from 'react'
-import { PageHeader } from '../components'
+import { EmptyState, PageHeader } from '../components'
 import { Icon } from '../icons'
 import type { RecipePrefill } from '../appState'
 import catalog from '../data/componentCatalog.json'
@@ -220,7 +220,7 @@ export function RecipesView(props: { hasActiveRun: boolean; onUseRecipe: (recipe
                 onClick={() => props.onUseRecipe(recipe)}
                 title={props.hasActiveRun ? 'Prefill the task packet with this recipe' : 'Starts with this recipe when you begin a handoff'}
               >
-                Use in Task Packet ›
+                Use in Task Packet {Icon.chevronRight(12)}
               </button>
             </li>
           ))}
@@ -228,13 +228,13 @@ export function RecipesView(props: { hasActiveRun: boolean; onUseRecipe: (recipe
       </section>
       {!props.hasActiveRun && (
         <div className="info-banner">
-          <span aria-hidden="true">ⓘ</span>
+          <span aria-hidden="true">{Icon.info(14)}</span>
           No handoff is in progress. Selecting a recipe stores it; start a handoff from Projects and the task packet
           will be prefilled from the recipe.
         </div>
       )}
       <div className="info-banner">
-        <span aria-hidden="true">ⓘ</span>
+        <span aria-hidden="true">{Icon.info(14)}</span>
         These recipes are used when creating task packets or starting new apps. The full recipe manifest lives in the
         standards repository.
       </div>
@@ -354,28 +354,56 @@ const CURATED: { title: string; body: string; id: string; demo: ReactElement }[]
   {
     title: 'Breadcrumbs', body: 'Hierarchical location context for nested records.', id: 'CMP-NAV-BREADCRUMBS',
     demo: (
-      <nav aria-label="Breadcrumb demo" style={{ fontSize: 12 }}>
-        <span className="muted">Projects</span> <span aria-hidden="true" className="muted">/</span>{' '}
-        <span className="muted">sample-app</span> <span aria-hidden="true" className="muted">/</span>{' '}
-        <strong className="num">Run 42</strong>
+      <nav className="crumbs" aria-label="Breadcrumb demo" style={{ margin: 0 }}>
+        <span className="crumb">Projects</span>
+        <span className="crumb-sep" aria-hidden="true">{Icon.chevronRight(11)}</span>
+        <span className="crumb">sample-app</span>
+        <span className="crumb-sep" aria-hidden="true">{Icon.chevronRight(11)}</span>
+        <span className="crumb-current num" style={{ color: 'var(--semantic-text-primary)' }}>Run 42</span>
       </nav>
     ),
   },
   {
     title: 'Empty State', body: 'Clear guidance when a panel or table has no data.', id: 'CMP-CONTENT-EMPTY-STATE',
     demo: (
-      <div className="stack" style={{ alignItems: 'center', gap: 4 }}>
-        <span aria-hidden="true" style={{ fontSize: 18, color: 'var(--semantic-text-muted)' }}>▱</span>
-        <strong style={{ fontSize: 12 }}>No runs yet</strong>
-        <span className="muted" style={{ fontSize: 11 }}>Start a handoff to see it here.</span>
+      <div className="empty-state" style={{ padding: 0 }}>
+        <span className="empty-icon" aria-hidden="true">{Icon.inbox(24)}</span>
+        <p className="empty-title">No runs yet</p>
+        <p className="empty-hint">Start a handoff to see it here.</p>
       </div>
+    ),
+  },
+  {
+    title: 'Icon Button', body: '28×28 icon-only action; the CSS tooltip carries its label.', id: 'CMP-ACTION-ICON-BUTTON',
+    demo: (
+      <span className="hstack" style={{ gap: 4 }}>
+        <button type="button" className="icon-btn" aria-label="Copy" data-tip="Copy">{Icon.copy()}</button>
+        <button type="button" className="icon-btn" aria-label="Download" data-tip="Download">{Icon.download()}</button>
+        <button type="button" className="icon-btn icon-btn-outline" aria-label="Help" data-tip="Help">{Icon.help()}</button>
+      </span>
+    ),
+  },
+  {
+    title: 'Checkbox & Radio', body: '16px selection controls: accent fill with a white check or dot.', id: 'CMP-FORM-CHECKBOX',
+    demo: (
+      <span className="stack" style={{ gap: 8, alignItems: 'flex-start' }}>
+        <label className="hstack" style={{ fontSize: 12, cursor: 'pointer' }}>
+          <input type="checkbox" defaultChecked /> Accept overwrite warnings
+        </label>
+        <label className="hstack" style={{ fontSize: 12, cursor: 'pointer' }}>
+          <input type="radio" name="demo-radio" defaultChecked /> Flat file (recommended)
+        </label>
+        <label className="hstack" style={{ fontSize: 12, cursor: 'pointer' }}>
+          <input type="radio" name="demo-radio" /> Structured (JSON)
+        </label>
+      </span>
     ),
   },
   { title: 'Switch', body: 'Immediate binary setting toggle.', id: 'CMP-FORM-SWITCH', demo: <DemoSwitch /> },
   {
     title: 'Select', body: 'Selection from a constrained list of values.', id: 'CMP-FORM-SELECT',
     demo: (
-      <div className="field" style={{ margin: 0, width: '100%' }}>
+      <div className="field" style={{ margin: 0, width: '100%', maxWidth: 260 }}>
         <select className="select-control" aria-label="Example select" defaultValue="dark">
           <option value="dark">Dark (default)</option>
           <option value="compact">Compact density</option>
@@ -426,15 +454,16 @@ export function ComponentsView() {
         </div>
       </section>
 
-      <section className="panel" aria-labelledby="manifest-heading">
-        <div className="panel-head" style={{ flexWrap: 'wrap', rowGap: 8 }}>
+      <section className="panel panel-flush" aria-labelledby="manifest-heading">
+        <div className="panel-head" style={{ margin: 0 }}>
           <div>
             <h2 id="manifest-heading">Full manifest reference</h2>
             <p className="panel-desc" style={{ marginBottom: 0 }}>
-              <span className="num">{ALL_COMPONENTS.length}</span> components across <span className="num">{CATEGORIES.length}</span> categories, generated from{' '}
-              <code>standards/component-manifest.json</code> ({catalog.standardsVersion}).
+              Generated from <code>standards/component-manifest.json</code> ({catalog.standardsVersion}).
             </p>
           </div>
+        </div>
+        <div className="table-toolbar">
           <label className="sr-only" htmlFor="category-filter">Filter by category</label>
           <select
             id="category-filter"
@@ -445,35 +474,49 @@ export function ComponentsView() {
             <option value="all">All categories</option>
             {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
+          <span className="table-toolbar-spacer" />
+          <span className="toolbar-count">
+            {manifestVisible.length} of {ALL_COMPONENTS.length} components · {CATEGORIES.length} categories
+          </span>
         </div>
-        <table className="data-table">
-          <caption className="sr-only">Component manifest</caption>
-          <thead>
-            <tr><th scope="col">ID</th><th scope="col">Name</th><th scope="col">Category</th><th scope="col">Status</th><th scope="col">Description</th></tr>
-          </thead>
-          <tbody>
-            {manifestVisible.length === 0 && (
-              <tr><td colSpan={5} className="secondary-text">No components match the current search/filter.</td></tr>
-            )}
-            {manifestVisible.map((c) => (
-              <tr key={c.id}>
-                <td><code>{c.id}</code></td>
-                <td>{c.name}</td>
-                <td className="secondary-text">{CATEGORIES.find((cat) => cat.id === c.category)?.name ?? c.category}</td>
-                <td>
-                  <span className={c.status === 'required' ? 'status status-info' : 'status status-neutral'}>
-                    <span className="status-dot" aria-hidden="true" /> {c.status}
-                  </span>
-                </td>
-                <td className="secondary-text" style={{ fontSize: 12 }}>{c.description}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="table-scroll">
+          <table className="data-table">
+            <caption className="sr-only">Component manifest</caption>
+            <thead>
+              <tr><th scope="col">ID</th><th scope="col">Name</th><th scope="col">Category</th><th scope="col">Status</th><th scope="col">Description</th></tr>
+            </thead>
+            <tbody>
+              {manifestVisible.length === 0 && (
+                <tr>
+                  <td colSpan={5} style={{ padding: 0 }}>
+                    <EmptyState
+                      icon={Icon.search(24)}
+                      title="No components match"
+                      hint="Clear the search or pick a different category."
+                    />
+                  </td>
+                </tr>
+              )}
+              {manifestVisible.map((c) => (
+                <tr key={c.id}>
+                  <td><code>{c.id}</code></td>
+                  <td>{c.name}</td>
+                  <td className="secondary-text">{CATEGORIES.find((cat) => cat.id === c.category)?.name ?? c.category}</td>
+                  <td>
+                    <span className={c.status === 'required' ? 'status status-info' : 'status status-neutral'}>
+                      <span className="status-dot" aria-hidden="true" /> {c.status}
+                    </span>
+                  </td>
+                  <td className="secondary-text" style={{ fontSize: 12 }}>{c.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <div className="info-banner">
-        <span aria-hidden="true">ⓘ</span>
+        <span aria-hidden="true">{Icon.info(14)}</span>
         These components are referenced in task packets and templates. This is a reference, not a Storybook-style
         playground.
       </div>

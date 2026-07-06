@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useEffect,
   useId,
   useRef,
@@ -9,20 +10,54 @@ import type { HandoffRun } from '@engineering-ui-kit/core'
 import { WORKFLOW_STEPS, stepStateFor, type ViewId } from './appState'
 import { Icon } from './icons'
 
+export type Crumb = { label: string; onClick?: () => void }
+
+/** Breadcrumb line: muted labels with chevron separators. */
+export function Crumbs(props: { items: Crumb[] }) {
+  return (
+    <nav className="crumbs" aria-label="Breadcrumb">
+      {props.items.map((crumb, index) => (
+        <Fragment key={`${crumb.label}-${index}`}>
+          {index > 0 && (
+            <span className="crumb-sep" aria-hidden="true">
+              {Icon.chevronRight(11)}
+            </span>
+          )}
+          {crumb.onClick ? (
+            <button type="button" className="crumb" onClick={crumb.onClick}>
+              {crumb.label}
+            </button>
+          ) : (
+            <span className="crumb">{crumb.label}</span>
+          )}
+        </Fragment>
+      ))}
+    </nav>
+  )
+}
+
 export function PageHeader(props: {
   title: string
   subtitle?: string
+  crumbs?: Crumb[]
   onBack?: () => void
   actions?: ReactNode
 }) {
   return (
     <header className="page-header">
       {props.onBack && (
-        <button type="button" className="back-button" onClick={props.onBack} aria-label="Back">
-          ←
+        <button
+          type="button"
+          className="icon-btn icon-btn-outline"
+          onClick={props.onBack}
+          aria-label="Back"
+          data-tip="Back"
+        >
+          {Icon.arrowLeft()}
         </button>
       )}
-      <div>
+      <div className="page-header-copy">
+        {props.crumbs && props.crumbs.length > 0 && <Crumbs items={props.crumbs} />}
         <h1>{props.title}</h1>
         {props.subtitle && <p className="page-subtitle">{props.subtitle}</p>}
       </div>
@@ -40,7 +75,7 @@ export function Stepper(props: { run: HandoffRun | undefined; onNavigate?: (view
         return (
           <li key={step.id} className={`workflow-step ${state}`}>
             <span className="workflow-marker" aria-hidden="true">
-              {state === 'complete' ? '✓' : step.index + 1}
+              {state === 'complete' ? Icon.check(11) : step.index + 1}
             </span>
             <span className="workflow-name">
               {step.name}
@@ -135,11 +170,17 @@ export function Dialog(props: {
       >
         <div className="dialog-header">
           <h2 id={titleId}>{props.title}</h2>
-          <button type="button" className="dialog-close" onClick={props.onClose} aria-label="Close dialog">
-            ✕
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={props.onClose}
+            aria-label="Close dialog"
+            data-tip="Close"
+          >
+            {Icon.x()}
           </button>
         </div>
-        {props.children}
+        <div className="dialog-body">{props.children}</div>
         {props.actions && <div className="dialog-actions">{props.actions}</div>}
       </div>
     </div>
@@ -150,11 +191,35 @@ export type Status = { tone: 'info' | 'error' | 'success'; text: string }
 
 export function StatusLine(props: { status: Status }) {
   const label = props.status.tone === 'error' ? 'Error' : props.status.tone === 'success' ? 'Success' : 'Status'
+  const glyph =
+    props.status.tone === 'error'
+      ? Icon.alertTriangle(14)
+      : props.status.tone === 'success'
+        ? Icon.check(14)
+        : Icon.info(14)
   return (
     <div className={`status-line status-${props.status.tone}`} role="status" aria-live="polite">
+      <span className="status-line-icon" aria-hidden="true">{glyph}</span>
       <span>
         <span className="status-label">{label}:</span> {props.status.text}
       </span>
+    </div>
+  )
+}
+
+/** Centered empty state: 24px muted icon, 13px title, 12px hint, optional action. */
+export function EmptyState(props: {
+  icon?: ReactNode
+  title: string
+  hint?: string
+  action?: ReactNode
+}) {
+  return (
+    <div className="empty-state">
+      <span className="empty-icon" aria-hidden="true">{props.icon ?? Icon.inbox(24)}</span>
+      <p className="empty-title">{props.title}</p>
+      {props.hint && <p className="empty-hint">{props.hint}</p>}
+      {props.action}
     </div>
   )
 }

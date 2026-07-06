@@ -11,7 +11,7 @@ function friendlyDate(iso: string): string {
 }
 import type { Project } from '@engineering-ui-kit/core'
 import type { EuikBridge } from '../bridge'
-import { Dialog, PageHeader, StatusLine, type Status } from '../components'
+import { Dialog, EmptyState, PageHeader, StatusLine, type Status } from '../components'
 import { Icon } from '../icons'
 
 export function ProjectsView(props: {
@@ -53,13 +53,14 @@ export function ProjectsView(props: {
         subtitle="Organize and manage your Engineering UI Kit projects."
         actions={
           <button type="button" className="btn btn-primary" onClick={() => setDialogOpen(true)}>
-            + New Project
+            {Icon.plus(14)} New Project
           </button>
         }
       />
 
-      <div className="hstack">
-        <div className="search-input" style={{ flex: 1 }}>
+      <section className="panel panel-flush" aria-label="Project list">
+      <div className="table-toolbar">
+        <div className="search-input">
           <span className="search-glyph" aria-hidden="true">{Icon.search()}</span>
           <input
             type="text"
@@ -69,6 +70,10 @@ export function ProjectsView(props: {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <span className="table-toolbar-spacer" />
+        <span className="toolbar-count">
+          {filtered.length} project{filtered.length === 1 ? '' : 's'}
+        </span>
         <label className="sr-only" htmlFor="status-filter">Filter by status</label>
         <select
           id="status-filter"
@@ -96,25 +101,33 @@ export function ProjectsView(props: {
             className={layout === 'list' ? 'segment active' : 'segment'}
             aria-pressed={layout === 'list'}
             aria-label="List view"
+            data-tip="List view"
             onClick={() => setLayout('list')}
           >
-            ≣
+            {Icon.list(14)}
           </button>
           <button
             type="button"
             className={layout === 'grid' ? 'segment active' : 'segment'}
             aria-pressed={layout === 'grid'}
             aria-label="Grid view"
+            data-tip="Grid view"
             onClick={() => setLayout('grid')}
           >
-            {Icon.grid(15)}
+            {Icon.grid(14)}
           </button>
         </div>
       </div>
 
       {layout === 'grid' ? (
-        <div className="card-grid" aria-label="Project cards">
-          {visible.length === 0 && <p className="secondary-text">No projects match. Create one with New Project.</p>}
+        <div className="card-grid" aria-label="Project cards" style={{ padding: 'var(--semantic-spacing-4)' }}>
+          {visible.length === 0 && (
+            <EmptyState
+              icon={Icon.folderBig(24)}
+              title="No projects match"
+              hint="Adjust the search or filters, or create a new project."
+            />
+          )}
           {visible.map((project) => (
             <article key={project.id} className="panel recent-project" style={{ textAlign: 'center' }}>
               <span className="recent-project-icon" aria-hidden="true">{Icon.folder()}</span>
@@ -135,7 +148,6 @@ export function ProjectsView(props: {
           ))}
         </div>
       ) : (
-      <section className="panel panel-flush" aria-label="Project list">
         <table className="data-table">
           <caption className="sr-only">Projects</caption>
           <thead>
@@ -143,13 +155,19 @@ export function ProjectsView(props: {
               <th scope="col">Name</th>
               <th scope="col">Status</th>
               <th scope="col">Last Modified</th>
-              <th scope="col">Actions</th>
+              <th scope="col" style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 && (
               <tr>
-                <td colSpan={4} className="secondary-text">No projects match. Create one with New Project.</td>
+                <td colSpan={4} style={{ padding: 0 }}>
+                  <EmptyState
+                    icon={Icon.folderBig(24)}
+                    title="No projects match"
+                    hint="Adjust the search or filters, or create a new project."
+                  />
+                </td>
               </tr>
             )}
             {visible.map((project) => (
@@ -170,7 +188,7 @@ export function ProjectsView(props: {
                 </td>
                 <td className="secondary-text num">{friendlyDate(project.updatedAt)}</td>
                 <td>
-                  <div className="hstack">
+                  <div className="hstack" style={{ justifyContent: 'flex-end' }}>
                     <button
                       type="button"
                       className="btn btn-secondary btn-compact"
@@ -191,19 +209,18 @@ export function ProjectsView(props: {
             ))}
           </tbody>
         </table>
-      </section>
       )}
 
-      <div className="hstack between">
-        <span className="secondary-text num">
+      <div className="table-footer">
+        <span className="num">
           {filtered.length === 0
             ? 'Showing 0 projects'
             : `Showing ${(currentPage - 1) * PAGE_SIZE + 1} to ${Math.min(currentPage * PAGE_SIZE, filtered.length)} of ${filtered.length} project${filtered.length === 1 ? '' : 's'}`}
         </span>
         {pageCount > 1 && (
           <nav className="hstack" aria-label="Pagination">
-            <button type="button" className="btn btn-secondary btn-compact" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} aria-label="Previous page">
-              ‹
+            <button type="button" className="icon-btn icon-btn-outline" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} aria-label="Previous page" data-tip="Previous page">
+              {Icon.chevronLeft(14)}
             </button>
             {Array.from({ length: pageCount }, (_, i) => (
               <button
@@ -216,12 +233,13 @@ export function ProjectsView(props: {
                 {i + 1}
               </button>
             ))}
-            <button type="button" className="btn btn-secondary btn-compact" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)} aria-label="Next page">
-              ›
+            <button type="button" className="icon-btn icon-btn-outline" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)} aria-label="Next page" data-tip="Next page">
+              {Icon.chevronRight(14)}
             </button>
           </nav>
         )}
       </div>
+      </section>
 
       <StatusLine status={status} />
 

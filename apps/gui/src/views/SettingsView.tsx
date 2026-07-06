@@ -153,7 +153,7 @@ export function SettingsView(props: {
       <StatusLine status={status} />
 
       <div className="info-banner">
-        <span aria-hidden="true">ⓘ</span>
+        <span aria-hidden="true">{Icon.info(14)}</span>
         These settings apply to the current workspace. Team or organization policies may override some settings. They
         are stored in the app-managed workspace, never in your repos.
       </div>

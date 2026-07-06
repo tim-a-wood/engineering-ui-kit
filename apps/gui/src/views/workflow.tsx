@@ -4,7 +4,7 @@
  * and drives the typed bridge.
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import type {
   AppliedFiles,
   HandoffRun,
@@ -69,11 +69,11 @@ function downloadText(fileName: string, text: string): void {
 
 /* ------------------------------------------------- 1. Prepare Context */
 
-const INCLUDE_ROWS = [
-  { icon: '</>', title: 'Source code', body: 'All application source files' },
-  { icon: '⚙', title: 'Configuration', body: 'Package files, configs, build scripts' },
-  { icon: '▧', title: 'Assets', body: 'Public assets, styles, resources (text only)' },
-  { icon: '▤', title: 'Documentation', body: 'README, docs, specs (if relevant)' },
+const INCLUDE_ROWS: { icon: ReactElement; title: string; body: string }[] = [
+  { icon: Icon.code(15), title: 'Source code', body: 'All application source files' },
+  { icon: Icon.gear(15), title: 'Configuration', body: 'Package files, configs, build scripts' },
+  { icon: Icon.layers(15), title: 'Assets', body: 'Public assets, styles, resources (text only)' },
+  { icon: Icon.doc(15), title: 'Documentation', body: 'README, docs, specs (if relevant)' },
 ]
 
 const EXCLUDED_CATEGORIES = [
@@ -113,6 +113,10 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
       <PageHeader
         title="Prepare Context"
         subtitle="Export your repo and standards for Copilot."
+        crumbs={[
+          { label: 'Copilot Handoff', onClick: () => props.onNavigate('copilot-handoff') },
+          { label: props.project.name },
+        ]}
         onBack={() => props.onNavigate('copilot-handoff')}
       />
       <Stepper run={props.run} />
@@ -216,7 +220,7 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
           </dl>
         </div>
         <div className="info-banner" style={{ marginTop: 'var(--semantic-spacing-4)' }}>
-          <span aria-hidden="true">ⓘ</span>
+          <span aria-hidden="true">{Icon.info(14)}</span>
           Company policy may govern what may be uploaded to Microsoft 365 Copilot. Review the flatfile before upload.
         </div>
       </section>
@@ -274,12 +278,12 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
 
 /* ------------------------------------------------- 2. Create Task Packet */
 
-const PACKET_SECTIONS: { key: keyof TaskPacketFields; title: string; description: string; icon: string; rows: number }[] = [
-  { key: 'goal', title: 'Goal', description: 'What you want to achieve', icon: '◎', rows: 3 },
-  { key: 'scope', title: 'Scope', description: 'Screens, features, or areas in scope (one per line)', icon: '□', rows: 3 },
-  { key: 'constraints', title: 'Constraints', description: 'What not to change, technical limits, etc. (one per line)', icon: '△', rows: 3 },
-  { key: 'acceptanceCriteria', title: 'Acceptance Criteria', description: 'How success will be measured (one per line)', icon: '◇', rows: 4 },
-  { key: 'references', title: 'References', description: 'Specs, designs, screenshots, examples (one per line)', icon: '⌑', rows: 2 },
+const PACKET_SECTIONS: { key: keyof TaskPacketFields; title: string; description: string; icon: ReactElement; rows: number }[] = [
+  { key: 'goal', title: 'Goal', description: 'What you want to achieve', icon: Icon.target(15), rows: 3 },
+  { key: 'scope', title: 'Scope', description: 'Screens, features, or areas in scope (one per line)', icon: Icon.box(15), rows: 3 },
+  { key: 'constraints', title: 'Constraints', description: 'What not to change, technical limits, etc. (one per line)', icon: Icon.alertTriangle(15), rows: 3 },
+  { key: 'acceptanceCriteria', title: 'Acceptance Criteria', description: 'How success will be measured (one per line)', icon: Icon.listChecks(15), rows: 4 },
+  { key: 'references', title: 'References', description: 'Specs, designs, screenshots, examples (one per line)', icon: Icon.link(15), rows: 2 },
 ]
 
 function draftPacketMarkdown(fields: TaskPacketFields): string {
@@ -360,6 +364,10 @@ export function CreateTaskPacketView(props: StepProps & {
       <PageHeader
         title="Create Task Packet"
         subtitle="Build the instruction packet Copilot will use to generate the overlay."
+        crumbs={[
+          { label: 'Copilot Handoff', onClick: () => props.onNavigate('copilot-handoff') },
+          { label: props.project.name },
+        ]}
         onBack={() => props.onNavigate('prepare-context')}
       />
       <Stepper run={props.run} />
@@ -438,7 +446,7 @@ export function CreateTaskPacketView(props: StepProps & {
 
       {showValidation && (titleMissing || emptyKeys.length > 0) && (
         <div className="validation-summary" role="alert">
-          <h3>Validation blockers</h3>
+          <h3>{Icon.alertTriangle(14)} Validation blockers</h3>
           <ul>
             {titleMissing && <li>Task title is required.</li>}
             {emptyKeys.map((k) => (
@@ -524,7 +532,7 @@ export function CreateTaskPacketView(props: StepProps & {
                       setDraft(value)
                     }}
                   >
-                    Edit ›
+                    Edit {Icon.chevronRight(12)}
                   </button>
                 )}
               </li>
@@ -575,10 +583,10 @@ function TaskPacketPreviewModal(props: { text: string; onClose: () => void }) {
               window.setTimeout(() => setCopied(false), 2000)
             }}
           >
-            {copied ? '✓ Copied' : 'Copy'}
+            {copied ? <>{Icon.check(14)} Copied</> : <>{Icon.copy(14)} Copy</>}
           </button>
           <button type="button" className="btn btn-secondary" onClick={() => downloadText('task-packet.md', props.text)}>
-            Download
+            {Icon.download(14)} Download
           </button>
           <button type="button" className="btn btn-primary" onClick={props.onClose}>
             Close
@@ -636,6 +644,10 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
       <PageHeader
         title="Run in Copilot"
         subtitle="Upload up to 3 files to Microsoft 365 Copilot and request a zip overlay."
+        crumbs={[
+          { label: 'Copilot Handoff', onClick: () => props.onNavigate('copilot-handoff') },
+          { label: props.project.name },
+        ]}
         onBack={() => props.onNavigate('create-task-packet')}
       />
       <Stepper run={run} />
@@ -646,7 +658,7 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
         <div className="upload-set">
           {files.map((f) => (
             <div key={f.file} className="upload-file">
-              <span className="row-icon" aria-hidden="true">▤</span>
+              <span className="row-icon" aria-hidden="true">{Icon.file(15)}</span>
               <div className="row-copy">
                 <h3>{f.file}</h3>
                 <p>
@@ -690,14 +702,14 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
             <p className="panel-desc" style={{ marginBottom: 0 }}>In Copilot, ask it to generate a zip overlay of changed/new files only.</p>
           </div>
           <button type="button" className="btn btn-secondary" onClick={copyPrompt}>
-            {copied ? '✓ Copied' : <>{Icon.copy(14)} Copy Recommended Prompt</>}
+            {copied ? <>{Icon.check(14)} Copied</> : <>{Icon.copy(14)} Copy Recommended Prompt</>}
           </button>
         </div>
         {props.packet && <pre className="pre" style={{ marginTop: 12 }}>{props.packet.recommendedPrompt}</pre>}
       </section>
 
       <div className="info-banner info-accent">
-        <span aria-hidden="true">ⓘ</span>
+        <span aria-hidden="true">{Icon.info(14)}</span>
         Expected output: a .zip file containing only changed/new files (optional apply-notes.md may be included).
       </div>
 
@@ -738,7 +750,8 @@ function TreeView(props: { node: TreeNode; depth?: number }) {
     <ul className="file-tree" style={depth === 0 ? undefined : { paddingLeft: 16 }}>
       {entries.map((child) => (
         <li key={child.name}>
-          <span aria-hidden="true">{child.isFile ? '▤' : '▸'}</span> <code>{child.name}</code>
+          <span className="tree-glyph" aria-hidden="true">{child.isFile ? Icon.file(13) : Icon.folder(13)}</span>
+          <code>{child.name}</code>
           {!child.isFile && <TreeView node={child} depth={depth + 1} />}
         </li>
       ))}
@@ -803,6 +816,10 @@ export function ApplyZipOverlayView(props: StepProps) {
       <PageHeader
         title="Apply Zip Overlay"
         subtitle="Inspect Copilot's zip output, review every entry, then apply it on top of your existing repo."
+        crumbs={[
+          { label: 'Copilot Handoff', onClick: () => props.onNavigate('copilot-handoff') },
+          { label: props.project.name },
+        ]}
         onBack={() => props.onNavigate('run-in-copilot')}
       />
       <Stepper run={props.run} />
@@ -829,9 +846,9 @@ export function ApplyZipOverlayView(props: StepProps) {
                 <h2 id="inspection-heading">Inspection result</h2>
                 {inspection.canApply
                   ? inspection.warnings.length > 0
-                    ? <span className="badge badge-warning">⚠ Warning — review required</span>
-                    : <span className="badge badge-success">✓ Pass</span>
-                  : <span className="badge badge-danger">✕ Blocked</span>}
+                    ? <span className="badge badge-warning"><span className="badge-dot" aria-hidden="true" /> Warning — review required</span>
+                    : <span className="badge badge-success"><span className="badge-dot" aria-hidden="true" /> Pass</span>
+                  : <span className="badge badge-danger"><span className="badge-dot" aria-hidden="true" /> Blocked</span>}
               </div>
 
               <table className="data-table">
@@ -859,7 +876,7 @@ export function ApplyZipOverlayView(props: StepProps) {
 
               {inspection.hardBlockers.length > 0 && (
                 <div className="validation-summary" role="alert" style={{ marginTop: 16 }}>
-                  <h3>Hard blockers — apply refused</h3>
+                  <h3>{Icon.alertTriangle(14)} Hard blockers — apply refused</h3>
                   <ul>
                     {inspection.hardBlockers.map((b, i) => (
                       <li key={i}><code>{b.ruleId}</code> {b.path ? <code>{b.path}</code> : null} — {b.message}</li>
@@ -1026,6 +1043,10 @@ export function VerifyReviewView(props: StepProps) {
       <PageHeader
         title="Verify & Review"
         subtitle="Test the changes and review the Copilot output before finalizing."
+        crumbs={[
+          { label: 'Copilot Handoff', onClick: () => props.onNavigate('copilot-handoff') },
+          { label: props.project.name },
+        ]}
         onBack={() => props.onNavigate('apply-zip-overlay')}
       />
       <Stepper run={props.run} />
@@ -1093,7 +1114,7 @@ export function VerifyReviewView(props: StepProps) {
           </div>
         </div>
         <div className="info-banner" style={{ marginTop: 'var(--semantic-spacing-4)' }}>
-          <span aria-hidden="true">ⓘ</span>
+          <span aria-hidden="true">{Icon.info(14)}</span>
           A new task packet will include your feedback and updated instructions for Copilot.
         </div>
       </section>
@@ -1106,7 +1127,7 @@ export function VerifyReviewView(props: StepProps) {
               className={`verify-hero ${results ? (failed === 0 ? 'verify-hero-pass' : 'verify-hero-fail') : ''}`}
               aria-hidden="true"
             >
-              {results ? (failed === 0 ? Icon.check(22) : '✕') : Icon.shieldCheck(22)}
+              {results ? (failed === 0 ? Icon.check(18) : Icon.x(18)) : Icon.shieldCheck(18)}
             </span>
             <div>
               <h3 style={{ margin: 0, fontSize: 14, color: results && failed === 0 ? 'var(--semantic-status-success)' : undefined }}>
@@ -1140,7 +1161,7 @@ export function VerifyReviewView(props: StepProps) {
               <span>Passed</span>
             </div>
             <div className={failed > 0 ? 'stat-chip stat-fail' : 'stat-chip'}>
-              <span className="stat-chip-icon" aria-hidden="true">✕</span>
+              <span className="stat-chip-icon" aria-hidden="true">{Icon.x(18)}</span>
               <strong>{failed}</strong>
               <span>Failed</span>
             </div>
@@ -1217,7 +1238,9 @@ export function VerifyReviewView(props: StepProps) {
               {history.map((event, i) => (
                 <li key={i} className="hstack between" style={{ padding: '4px 0' }}>
                   <span className="hstack">
-                    <span aria-hidden="true">{event.kind === 'feedback' ? '✎' : '✦'}</span>
+                    <span className="row-icon" style={{ width: 24, height: 24 }} aria-hidden="true">
+                      {event.kind === 'feedback' ? Icon.pencil(13) : Icon.sparkle(13)}
+                    </span>
                     <span>{event.summary}</span>
                   </span>
                   <span className="muted num" style={{ fontSize: 12 }}>{new Date(event.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
@@ -1254,7 +1277,7 @@ export function VerifyReviewView(props: StepProps) {
             disabled={!results || failed > 0 || completed}
             onClick={approve}
           >
-            {completed ? '✓ Handoff Complete' : '✓ Approve & Complete Handoff'}
+            {Icon.check(14)} {completed ? 'Handoff Complete' : 'Approve & Complete Handoff'}
           </button>
         </span>
       </div>
