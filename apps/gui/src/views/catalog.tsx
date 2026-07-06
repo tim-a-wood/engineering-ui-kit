@@ -198,28 +198,34 @@ export function RecipesView(props: { hasActiveRun: boolean; onUseRecipe: (recipe
           </div>
         }
       />
-      <ul className="row-list">
-        {visible.map((recipe) => (
-          <li key={recipe.id} className="row-item recipe-row">
-            {recipe.thumbnail}
-            <div className="row-copy">
-              <h3>{recipe.title}</h3>
-              <p>{recipe.description}</p>
-              <p className="muted" style={{ marginTop: 4, fontSize: 12 }}>
-                <code>{recipe.id}</code> · {recipe.componentsUsed.length} components
-              </p>
-            </div>
-            <button
-              type="button"
-              className="btn btn-secondary btn-compact"
-              onClick={() => props.onUseRecipe(recipe)}
-              title={props.hasActiveRun ? 'Prefill the task packet with this recipe' : 'Starts with this recipe when you begin a handoff'}
-            >
-              Use in Task Packet ›
-            </button>
-          </li>
-        ))}
-      </ul>
+      <section className="panel" aria-label="Recipe catalog">
+        <div className="panel-head">
+          <h2>Screen recipes</h2>
+          <span className="muted num" style={{ fontSize: 11.5 }}>{visible.length} of {RECIPES.length}</span>
+        </div>
+        <ul className="row-list">
+          {visible.map((recipe) => (
+            <li key={recipe.id} className="row-item recipe-row">
+              {recipe.thumbnail}
+              <div className="row-copy">
+                <h3>{recipe.title}</h3>
+                <p>{recipe.description}</p>
+                <p className="muted num" style={{ marginTop: 3, fontSize: 11.5 }}>
+                  <code>{recipe.id}</code> · {recipe.componentsUsed.length} components
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-compact"
+                onClick={() => props.onUseRecipe(recipe)}
+                title={props.hasActiveRun ? 'Prefill the task packet with this recipe' : 'Starts with this recipe when you begin a handoff'}
+              >
+                Use in Task Packet ›
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
       {!props.hasActiveRun && (
         <div className="info-banner">
           <span aria-hidden="true">ⓘ</span>
@@ -271,70 +277,77 @@ function DemoTabs() {
 }
 
 const CURATED: { title: string; body: string; id: string; demo: ReactElement }[] = [
-  { title: 'Button', body: 'Triggers actions and submits forms.', id: 'CMP-ACTION-BUTTON', demo: <button type="button" className="btn btn-primary btn-compact">Primary</button> },
   {
-    title: 'Status Badge', body: 'Conveys state or status with a compact label.', id: 'CMP-FEEDBACK-BADGE',
+    title: 'Button', body: 'Triggers actions and submits forms. Accent is reserved for the primary action.', id: 'CMP-ACTION-BUTTON',
     demo: (
-      <span className="stack" style={{ gap: 6 }}>
-        <span className="badge badge-success">✓ Success</span>
-        <span className="badge badge-warning">⚠ Warning</span>
-        <span className="badge badge-info">ⓘ Info</span>
+      <span className="hstack">
+        <button type="button" className="btn btn-primary btn-compact">Primary</button>
+        <button type="button" className="btn btn-secondary btn-compact">Secondary</button>
       </span>
     ),
   },
   {
-    title: 'Data Table', body: 'Displays structured data in rows and columns.', id: 'CMP-TABLE-DATA',
+    title: 'Status', body: 'Routine statuses are a dot plus text; tinted pills are reserved for prominent run states.', id: 'CMP-FEEDBACK-BADGE',
+    demo: (
+      <span className="stack" style={{ gap: 8, alignItems: 'flex-start' }}>
+        <span className="status status-ok"><span className="status-dot" aria-hidden="true" /> Passed</span>
+        <span className="status status-warning"><span className="status-dot" aria-hidden="true" /> Warning</span>
+        <span className="status status-danger"><span className="status-dot" aria-hidden="true" /> Blocked</span>
+        <span className="badge badge-info"><span className="badge-dot" aria-hidden="true" /> Run active</span>
+      </span>
+    ),
+  },
+  {
+    title: 'Data Table', body: 'Dense rows, hairline separators, uppercase headers, dot + text status.', id: 'CMP-TABLE-DATA',
     demo: (
       <table className="data-table" style={{ fontSize: 12 }}>
         <thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead>
         <tbody>
-          <tr><td>Jane Cooper</td><td>Owner</td><td><span className="badge badge-success">Active</span></td></tr>
-          <tr><td>Cody Fisher</td><td>Editor</td><td><span className="badge badge-info">Invited</span></td></tr>
+          <tr><td>Jane Cooper</td><td className="secondary-text">Owner</td><td><span className="status status-ok"><span className="status-dot" aria-hidden="true" /> Active</span></td></tr>
+          <tr><td>Cody Fisher</td><td className="secondary-text">Editor</td><td><span className="status status-neutral"><span className="status-dot" aria-hidden="true" /> Invited</span></td></tr>
         </tbody>
       </table>
     ),
   },
-  { title: 'Tabs', body: 'Organizes content across multiple sections.', id: 'CMP-NAV-TABS', demo: <DemoTabs /> },
+  { title: 'Tabs', body: 'Machined segmented control: inset track, raised active segment.', id: 'CMP-NAV-TABS', demo: <DemoTabs /> },
   { title: 'Input', body: 'Collects and validates user input.', id: 'CMP-FORM-INPUT', demo: <div className="field" style={{ margin: 0, width: '100%' }}><input type="text" placeholder="Enter your email" aria-label="Example input" /><p className="muted" style={{ margin: 0, fontSize: 11 }}>We'll never share your email.</p></div> },
   {
     title: 'Panel', body: 'Groups related content in a contained area.', id: 'CMP-SURFACE-PANEL',
-    demo: <div className="inset" style={{ width: '100%' }}><strong style={{ fontSize: 12 }}>Project Overview</strong><p className="muted" style={{ margin: 0, fontSize: 11 }}>This panel groups related information in a contained area for clarity and focus.</p></div>,
+    demo: <div className="panel" style={{ width: '100%', padding: 12 }}><strong style={{ fontSize: 12 }}>Project Overview</strong><p className="muted" style={{ margin: 0, fontSize: 11 }}>Bounded region on the panel surface with a hairline border.</p></div>,
   },
   {
-    title: 'Page Header', body: 'Provides context and primary navigation.', id: 'CMP-SHELL-PAGE-HEADER',
+    title: 'Page Header', body: 'Toolbar-like header row with a bottom hairline, not a hero title.', id: 'CMP-SHELL-PAGE-HEADER',
     demo: (
-      <div className="inset hstack between" style={{ width: '100%' }}>
-        <span className="hstack"><span aria-hidden="true">≡</span> <strong style={{ fontSize: 13 }}>Page Title</strong></span>
-        <span className="badge badge-info">JD</span>
+      <div style={{ width: '100%', borderBottom: '1px solid var(--semantic-border-subtle)', paddingBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span className="hstack"><strong style={{ fontSize: 13 }}>Page Title</strong><span className="muted" style={{ fontSize: 11.5 }}>Scope · context</span></span>
+        <button type="button" className="btn btn-primary btn-compact">Action</button>
       </div>
     ),
   },
   {
-    title: 'Progress', body: 'Shows completion status of a task.', id: 'CMP-FEEDBACK-PROGRESS',
+    title: 'Progress', body: 'Shows completion status of a task; the numeral is tabular.', id: 'CMP-FEEDBACK-PROGRESS',
     demo: (
       <div className="hstack" style={{ width: '100%' }} aria-label="Progress: 60 percent">
-        <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--semantic-surface-inset)' }}>
-          <div style={{ width: '60%', height: '100%', borderRadius: 4, background: 'var(--semantic-accent-primary)' }} />
+        <div className="demo-progress-track">
+          <div className="demo-progress-fill" style={{ width: '60%' }} />
         </div>
-        <span className="mono">60%</span>
+        <span className="mono num" style={{ fontSize: 11 }}>60%</span>
       </div>
     ),
   },
   {
     title: 'Alert', body: 'Prominent message for important contextual feedback.', id: 'CMP-FEEDBACK-ALERT',
     demo: (
-      <div className="inset" style={{ width: '100%', borderColor: 'var(--semantic-status-warning)' }} role="note">
-        <strong style={{ fontSize: 12, color: 'var(--semantic-status-warning)' }}>⚠ Warning</strong>
-        <p className="muted" style={{ margin: 0, fontSize: 11 }}>Review the overlay warnings before applying.</p>
+      <div className="status-line status-error" style={{ width: '100%' }} role="note">
+        <span><span className="status-label">Warning:</span> review the overlay warnings before applying.</span>
       </div>
     ),
   },
   {
     title: 'Toast', body: 'Temporary non-blocking system feedback.', id: 'CMP-FEEDBACK-TOAST',
     demo: (
-      <div className="inset hstack" style={{ borderColor: 'var(--semantic-status-success)' }} role="status">
-        <span style={{ color: 'var(--semantic-status-success)' }}>✓</span>
-        <span style={{ fontSize: 12 }}>Packet exported</span>
+      <div className="status-line status-success" style={{ width: '100%' }} role="status">
+        <span className="status status-ok"><span className="status-dot" aria-hidden="true" /> Packet exported</span>
       </div>
     ),
   },
@@ -342,9 +355,9 @@ const CURATED: { title: string; body: string; id: string; demo: ReactElement }[]
     title: 'Breadcrumbs', body: 'Hierarchical location context for nested records.', id: 'CMP-NAV-BREADCRUMBS',
     demo: (
       <nav aria-label="Breadcrumb demo" style={{ fontSize: 12 }}>
-        <span className="muted">Projects</span> <span aria-hidden="true">›</span>{' '}
-        <span className="muted">sample-app</span> <span aria-hidden="true">›</span>{' '}
-        <strong>Run 42</strong>
+        <span className="muted">Projects</span> <span aria-hidden="true" className="muted">/</span>{' '}
+        <span className="muted">sample-app</span> <span aria-hidden="true" className="muted">/</span>{' '}
+        <strong className="num">Run 42</strong>
       </nav>
     ),
   },
@@ -352,7 +365,7 @@ const CURATED: { title: string; body: string; id: string; demo: ReactElement }[]
     title: 'Empty State', body: 'Clear guidance when a panel or table has no data.', id: 'CMP-CONTENT-EMPTY-STATE',
     demo: (
       <div className="stack" style={{ alignItems: 'center', gap: 4 }}>
-        <span aria-hidden="true" style={{ fontSize: 20, color: 'var(--semantic-text-muted)' }}>▱</span>
+        <span aria-hidden="true" style={{ fontSize: 18, color: 'var(--semantic-text-muted)' }}>▱</span>
         <strong style={{ fontSize: 12 }}>No runs yet</strong>
         <span className="muted" style={{ fontSize: 11 }}>Start a handoff to see it here.</span>
       </div>
@@ -398,45 +411,42 @@ export function ComponentsView() {
         }
       />
 
-      <div className="card-grid">
-        {curatedVisible.map((component) => (
-          <article key={component.id} className="panel component-card">
-            <div className="component-demo">{component.demo}</div>
-            <h2 style={{ fontSize: 14 }}>{component.title}</h2>
-            <p className="panel-desc" style={{ marginBottom: 4 }}>{component.body}</p>
-            <code className="muted" style={{ fontSize: 11 }}>{component.id}</code>
-          </article>
-        ))}
-      </div>
+      <section className="panel specimen-panel" aria-label="Curated component specimens">
+        <div className="specimen-grid">
+          {curatedVisible.map((component) => (
+            <article key={component.id} className="specimen">
+              <div className="specimen-head">
+                <h2 className="specimen-name">{component.title}</h2>
+                <code className="specimen-id">{component.id}</code>
+              </div>
+              <div className="specimen-stage">{component.demo}</div>
+              <p className="specimen-note">{component.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="panel" aria-labelledby="manifest-heading">
-        <div className="hstack between" style={{ flexWrap: 'wrap', gap: 8 }}>
+        <div className="panel-head" style={{ flexWrap: 'wrap', rowGap: 8 }}>
           <div>
             <h2 id="manifest-heading">Full manifest reference</h2>
             <p className="panel-desc" style={{ marginBottom: 0 }}>
-              {ALL_COMPONENTS.length} components across {CATEGORIES.length} categories, generated from{' '}
+              <span className="num">{ALL_COMPONENTS.length}</span> components across <span className="num">{CATEGORIES.length}</span> categories, generated from{' '}
               <code>standards/component-manifest.json</code> ({catalog.standardsVersion}).
             </p>
           </div>
           <label className="sr-only" htmlFor="category-filter">Filter by category</label>
           <select
             id="category-filter"
+            className="select-control"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            style={{
-              background: 'var(--semantic-surface-inset)',
-              color: 'var(--semantic-text-primary)',
-              border: '1px solid var(--semantic-border-subtle)',
-              borderRadius: 'var(--semantic-radius-md)',
-              minHeight: 'var(--semantic-density-compact-control-height)',
-              padding: '0 var(--semantic-spacing-3)',
-            }}
           >
             <option value="all">All categories</option>
             {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
-        <table className="data-table" style={{ marginTop: 12 }}>
+        <table className="data-table">
           <caption className="sr-only">Component manifest</caption>
           <thead>
             <tr><th scope="col">ID</th><th scope="col">Name</th><th scope="col">Category</th><th scope="col">Status</th><th scope="col">Description</th></tr>
@@ -450,8 +460,12 @@ export function ComponentsView() {
                 <td><code>{c.id}</code></td>
                 <td>{c.name}</td>
                 <td className="secondary-text">{CATEGORIES.find((cat) => cat.id === c.category)?.name ?? c.category}</td>
-                <td><span className={c.status === 'required' ? 'badge badge-info' : 'badge badge-neutral'}>{c.status}</span></td>
-                <td className="secondary-text" style={{ fontSize: 13 }}>{c.description}</td>
+                <td>
+                  <span className={c.status === 'required' ? 'status status-info' : 'status status-neutral'}>
+                    <span className="status-dot" aria-hidden="true" /> {c.status}
+                  </span>
+                </td>
+                <td className="secondary-text" style={{ fontSize: 12 }}>{c.description}</td>
               </tr>
             ))}
           </tbody>

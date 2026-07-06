@@ -146,8 +146,8 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
                 <h3>{row.title}</h3>
                 <p>{row.body}</p>
               </div>
-              <span className="badge badge-success">
-                <span className="badge-dot" aria-hidden="true" /> Included
+              <span className="status status-ok">
+                <span className="status-dot" aria-hidden="true" /> Included
               </span>
             </li>
           ))}
@@ -224,22 +224,25 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
       {result && (
         <section className="panel" aria-labelledby="context-result-heading">
           <h2 id="context-result-heading">Context result</h2>
-          <div className="grid-2">
-            <div className="inset">
-              <p style={{ margin: 0 }}>
-                <strong>{result.inventory.includedFileCount}</strong> files included ·{' '}
-                <strong>{result.inventory.excludedFileCount}</strong> excluded ·{' '}
-                {formatBytes(result.flatfileBytes)} flatfile
-              </p>
-              <p className="mono muted" style={{ marginBottom: 0 }}>{result.flatfilePath}</p>
+          <div className="stat-chips" aria-label="Context result figures">
+            <div className="stat-chip">
+              <strong>{result.inventory.includedFileCount}</strong>
+              <span>Files included</span>
             </div>
-            <div className="inset">
-              <p style={{ margin: 0 }}>
-                <strong>Frameworks:</strong> {result.inventory.detectedFrameworks.join(', ') || 'none detected'} ·{' '}
-                <strong>Package manager:</strong> {result.inventory.detectedPackageManager}
-              </p>
+            <div className="stat-chip">
+              <strong>{result.inventory.excludedFileCount}</strong>
+              <span>Files excluded</span>
+            </div>
+            <div className="stat-chip">
+              <strong>{formatBytes(result.flatfileBytes)}</strong>
+              <span>Flatfile size</span>
+            </div>
+            <div className="stat-chip stat-text">
+              <strong>{result.inventory.detectedFrameworks.join(', ') || 'none detected'} · {result.inventory.detectedPackageManager}</strong>
+              <span>Frameworks · pkg manager</span>
             </div>
           </div>
+          <p className="mono muted" style={{ margin: 'var(--semantic-spacing-3) 0 0' }}>{result.flatfilePath}</p>
         </section>
       )}
 
@@ -469,7 +472,7 @@ export function CreateTaskPacketView(props: StepProps & {
               <li key={section.key} className="row-item" style={showError ? { borderColor: 'var(--semantic-border-danger)' } : undefined}>
                 <span className="row-icon" aria-hidden="true">{section.icon}</span>
                 <div className="row-copy">
-                  <h3>{section.title} <span className="badge badge-neutral">Required</span></h3>
+                  <h3>{section.title} <span className="req-tag">Required</span></h3>
                   <p>{section.description}</p>
                   {!isEditing && !isEmpty && <p className="mono" style={{ marginTop: 6, whiteSpace: 'pre-wrap' }}>{value}</p>}
                   {showError && (
@@ -652,7 +655,7 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
                   {f.file === 'standard-pack.md' && 'Engineering UI Kit standards and rules'}
                 </p>
               </div>
-              {f.bytes > 0 && <span className="secondary-text">{formatBytes(f.bytes)}</span>}
+              {f.bytes > 0 && <span className="cell-num muted">{formatBytes(f.bytes)}</span>}
             </div>
           ))}
           <div className="hstack between">
@@ -660,8 +663,13 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
               {Icon.refresh(14)} Replace files
             </button>
             <span className="hstack">
-              <span className="secondary-text">{files.length} of 3 files selected</span>
-              {files.length === 3 && <span className="badge badge-success">✓</span>}
+              {files.length === 3 ? (
+                <span className="status status-ok">
+                  <span className="status-dot" aria-hidden="true" /> <span className="num">3 of 3 files selected</span>
+                </span>
+              ) : (
+                <span className="secondary-text num">{files.length} of 3 files selected</span>
+              )}
             </span>
           </div>
         </div>
@@ -829,16 +837,23 @@ export function ApplyZipOverlayView(props: StepProps) {
               <table className="data-table">
                 <caption className="sr-only">Overlay entries</caption>
                 <thead>
-                  <tr><th scope="col">Path</th><th scope="col">Action</th><th scope="col">Size</th></tr>
+                  <tr><th scope="col">Path</th><th scope="col">Action</th><th scope="col" className="cell-num">Size</th></tr>
                 </thead>
                 <tbody>
-                  {inspection.normalizedEntries.filter((e) => !e.isDirectory).map((entry) => (
-                    <tr key={entry.normalizedRelativePath}>
-                      <td className="mono">{entry.normalizedRelativePath}</td>
-                      <td>{inspection.warnings.some((w) => w.ruleId === 'AI-HANDOFF-040' && w.path === entry.normalizedRelativePath) ? 'Overwrite' : 'New file'}</td>
-                      <td>{entry.sizeBytes !== undefined ? formatBytes(entry.sizeBytes) : '—'}</td>
-                    </tr>
-                  ))}
+                  {inspection.normalizedEntries.filter((e) => !e.isDirectory).map((entry) => {
+                    const overwrite = inspection.warnings.some((w) => w.ruleId === 'AI-HANDOFF-040' && w.path === entry.normalizedRelativePath)
+                    return (
+                      <tr key={entry.normalizedRelativePath}>
+                        <td className="mono">{entry.normalizedRelativePath}</td>
+                        <td>
+                          <span className={overwrite ? 'status status-warning' : 'status status-ok'}>
+                            <span className="status-dot" aria-hidden="true" /> {overwrite ? 'Overwrite' : 'New file'}
+                          </span>
+                        </td>
+                        <td className="cell-num">{entry.sizeBytes !== undefined ? formatBytes(entry.sizeBytes) : '—'}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
 
@@ -885,8 +900,8 @@ export function ApplyZipOverlayView(props: StepProps) {
                 {applied.files.map((f) => (
                   <li key={f.relativePath} className="hstack between" style={{ padding: '4px 0' }}>
                     <code>{f.relativePath}</code>
-                    <span className={`badge ${f.action === 'created' ? 'badge-success' : f.action === 'overwritten' ? 'badge-info' : 'badge-neutral'}`}>
-                      {f.action}
+                    <span className={`status ${f.action === 'created' ? 'status-ok' : f.action === 'overwritten' ? 'status-info' : 'status-neutral'}`}>
+                      <span className="status-dot" aria-hidden="true" /> {f.action}
                     </span>
                   </li>
                 ))}
@@ -1025,8 +1040,8 @@ export function VerifyReviewView(props: StepProps) {
             </p>
           </div>
           <div className="inset">
-            <h3 style={{ marginTop: 0, fontSize: 14 }}>1. Launch app</h3>
-            <p className="secondary-text" style={{ fontSize: 13 }}>Open the application to validate the changes and review behavior.</p>
+            <h3 className="iteration-step-title">1 · Launch app</h3>
+            <p className="secondary-text">Open the application to validate the changes and review behavior.</p>
             <button
               type="button"
               className="btn btn-secondary btn-compact"
@@ -1040,8 +1055,8 @@ export function VerifyReviewView(props: StepProps) {
             )}
           </div>
           <div className="inset">
-            <h3 style={{ marginTop: 0, fontSize: 14 }}>2. Add feedback</h3>
-            <p className="secondary-text" style={{ fontSize: 13 }}>Add your feedback manually, or generate a Copilot review packet to streamline the review process.</p>
+            <h3 className="iteration-step-title">2 · Add feedback</h3>
+            <p className="secondary-text">Add your feedback manually, or generate a Copilot review packet to streamline the review process.</p>
             {feedbackOpen ? (
               <div className="field" style={{ margin: 0 }}>
                 <label htmlFor="review-feedback">Review feedback</label>
@@ -1068,8 +1083,8 @@ export function VerifyReviewView(props: StepProps) {
             )}
           </div>
           <div className="inset">
-            <h3 style={{ marginTop: 0, fontSize: 14 }}>3. Generate new task packet</h3>
-            <p className="secondary-text" style={{ fontSize: 13 }}>
+            <h3 className="iteration-step-title">3 · Generate new task packet</h3>
+            <p className="secondary-text">
               Create a new task packet with updated context and feedback for the next run.
             </p>
             <button type="button" className="btn btn-secondary btn-compact" onClick={() => props.onNavigate('create-task-packet')}>
@@ -1094,7 +1109,7 @@ export function VerifyReviewView(props: StepProps) {
               {results ? (failed === 0 ? Icon.check(22) : '✕') : Icon.shieldCheck(22)}
             </span>
             <div>
-              <h3 style={{ margin: 0, fontSize: 16, color: results && failed === 0 ? 'var(--semantic-status-success)' : undefined }}>
+              <h3 style={{ margin: 0, fontSize: 14, color: results && failed === 0 ? 'var(--semantic-status-success)' : undefined }}>
                 {results ? (failed === 0 ? 'All checks passed' : `${failed} check${failed === 1 ? '' : 's'} failed`) : 'Verification status'}
               </h3>
               <p className="panel-desc" style={{ marginBottom: 0 }}>
@@ -1141,7 +1156,7 @@ export function VerifyReviewView(props: StepProps) {
           <table className="data-table" style={{ marginTop: 12 }}>
             <caption className="sr-only">Verification results</caption>
             <thead>
-              <tr><th scope="col">Check</th><th scope="col">Command</th><th scope="col">Status</th><th scope="col">Exit code</th></tr>
+              <tr><th scope="col">Check</th><th scope="col">Command</th><th scope="col">Status</th><th scope="col" className="cell-num">Exit code</th></tr>
             </thead>
             <tbody>
               {results.map((r) => (
@@ -1149,11 +1164,11 @@ export function VerifyReviewView(props: StepProps) {
                   <td>{r.commandLabel}</td>
                   <td className="mono">{r.commandText}</td>
                   <td>
-                    <span className={`badge ${r.status === 'passed' ? 'badge-success' : 'badge-danger'}`}>
-                      {r.status === 'passed' ? '✓ Passed' : `✕ ${r.status}`}
+                    <span className={`status ${r.status === 'passed' ? 'status-ok' : 'status-danger'}`}>
+                      <span className="status-dot" aria-hidden="true" /> {r.status === 'passed' ? 'Passed' : r.status}
                     </span>
                   </td>
-                  <td className="mono">{r.exitCode ?? '—'}</td>
+                  <td className="cell-num">{r.exitCode ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -1205,7 +1220,7 @@ export function VerifyReviewView(props: StepProps) {
                     <span aria-hidden="true">{event.kind === 'feedback' ? '✎' : '✦'}</span>
                     <span>{event.summary}</span>
                   </span>
-                  <span className="muted" style={{ fontSize: 12 }}>{new Date(event.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
+                  <span className="muted num" style={{ fontSize: 12 }}>{new Date(event.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
                 </li>
               ))}
             </ul>

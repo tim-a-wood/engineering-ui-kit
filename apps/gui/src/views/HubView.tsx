@@ -63,13 +63,15 @@ export function HubView(props: {
               </span>
               <p>{card.body}</p>
               <span className="hub-card-foot">
-                {state === 'complete' && <span className="badge badge-success">✓ {stateLabel}</span>}
-                {state === 'current' && (
-                  <span className="badge badge-info">
-                    <span className="badge-dot" aria-hidden="true" /> {stateLabel}
-                  </span>
+                {state === 'complete' && (
+                  <span className="status status-ok"><span className="status-dot" aria-hidden="true" /> {stateLabel}</span>
                 )}
-                {state === 'upcoming' && <span className="badge badge-neutral">{stateLabel}</span>}
+                {state === 'current' && (
+                  <span className="status status-accent"><span className="status-dot" aria-hidden="true" /> {stateLabel}</span>
+                )}
+                {state === 'upcoming' && (
+                  <span className="status status-neutral"><span className="status-dot" aria-hidden="true" /> {stateLabel}</span>
+                )}
               </span>
             </>
           )
@@ -93,7 +95,9 @@ export function HubView(props: {
 
       {run && activeProject && (
         <div className="info-banner info-accent" role="status">
-          <span aria-hidden="true">ⓘ</span>
+          <span className="badge badge-info">
+            <span className="badge-dot" aria-hidden="true" /> Run active
+          </span>
           <span className="info-banner-copy">
             Active handoff run for <code>{activeProject.name}</code> — current step:{' '}
             {WORKFLOW_STEPS[currentIndex]?.short ?? 'Complete'}.

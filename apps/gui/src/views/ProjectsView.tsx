@@ -120,8 +120,8 @@ export function ProjectsView(props: {
               <span className="recent-project-icon" aria-hidden="true">{Icon.folder()}</span>
               <strong>{project.name}</strong>
               <span className="secondary-text" style={{ fontSize: 13 }}>{project.description ?? project.repoPath}</span>
-              <span className={project.status === 'active' ? 'badge badge-success' : 'badge badge-neutral'}>
-                {project.status === 'active' ? 'Active' : 'Archived'}
+              <span className={project.status === 'active' ? 'status status-ok' : 'status status-neutral'}>
+                <span className="status-dot" aria-hidden="true" /> {project.status === 'active' ? 'Active' : 'Archived'}
               </span>
               <button
                 type="button"
@@ -135,7 +135,7 @@ export function ProjectsView(props: {
           ))}
         </div>
       ) : (
-      <section className="panel" aria-label="Project list" style={{ padding: 0 }}>
+      <section className="panel panel-flush" aria-label="Project list">
         <table className="data-table">
           <caption className="sr-only">Projects</caption>
           <thead>
@@ -156,7 +156,7 @@ export function ProjectsView(props: {
               <tr key={project.id}>
                 <td>
                   <div className="hstack">
-                    <span aria-hidden="true" style={{ color: 'var(--semantic-status-info)', display: 'inline-flex' }}>{Icon.folder()}</span>
+                    <span aria-hidden="true" style={{ color: 'var(--semantic-text-muted)', display: 'inline-flex' }}>{Icon.folder()}</span>
                     <div>
                       <strong>{project.name}</strong>
                       <p className="muted" style={{ margin: 0, fontSize: 13 }}>{project.description ?? project.repoPath}</p>
@@ -164,11 +164,11 @@ export function ProjectsView(props: {
                   </div>
                 </td>
                 <td>
-                  <span className={project.status === 'active' ? 'badge badge-success' : 'badge badge-neutral'}>
-                    {project.status === 'active' ? 'Active' : 'Archived'}
+                  <span className={project.status === 'active' ? 'status status-ok' : 'status status-neutral'}>
+                    <span className="status-dot" aria-hidden="true" /> {project.status === 'active' ? 'Active' : 'Archived'}
                   </span>
                 </td>
-                <td className="secondary-text">{friendlyDate(project.updatedAt)}</td>
+                <td className="secondary-text num">{friendlyDate(project.updatedAt)}</td>
                 <td>
                   <div className="hstack">
                     <button
@@ -195,7 +195,7 @@ export function ProjectsView(props: {
       )}
 
       <div className="hstack between">
-        <span className="secondary-text">
+        <span className="secondary-text num">
           {filtered.length === 0
             ? 'Showing 0 projects'
             : `Showing ${(currentPage - 1) * PAGE_SIZE + 1} to ${Math.min(currentPage * PAGE_SIZE, filtered.length)} of ${filtered.length} project${filtered.length === 1 ? '' : 's'}`}
