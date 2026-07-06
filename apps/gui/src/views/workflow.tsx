@@ -146,7 +146,9 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
                 <h3>{row.title}</h3>
                 <p>{row.body}</p>
               </div>
-              <span className="badge badge-neutral">Included</span>
+              <span className="badge badge-success">
+                <span className="badge-dot" aria-hidden="true" /> Included
+              </span>
             </li>
           ))}
         </ul>
@@ -248,7 +250,12 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
           Advanced options
         </button>
         <span className="right" style={{ flex: 1 }}>
-        <button type="button" className="btn btn-primary" onClick={generate} disabled={busy}>
+        <button
+          type="button"
+          className={result || props.run.repoFlatfilePath ? 'btn btn-secondary' : 'btn btn-primary'}
+          onClick={generate}
+          disabled={busy}
+        >
           {busy ? 'Generating…' : result ? 'Regenerate Context' : 'Generate Context'}
         </button>
         {(result || props.run.repoFlatfilePath) && (
@@ -525,11 +532,11 @@ export function CreateTaskPacketView(props: StepProps & {
 
       <StatusLine status={status} />
 
-      <div className="hstack" style={{ justifyContent: 'stretch', gap: 'var(--semantic-spacing-4)' }}>
-        <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={openPreview}>
+      <div className="right">
+        <button type="button" className="btn btn-secondary" onClick={openPreview}>
           Preview Task Packet
         </button>
-        <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={build}>
+        <button type="button" className={result ? 'btn btn-secondary' : 'btn btn-primary'} onClick={build}>
           {result ? 'Rebuild Task Packet' : 'Export Task Packet'}
         </button>
         {result && (

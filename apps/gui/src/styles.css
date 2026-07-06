@@ -1,5 +1,9 @@
 @import './tokens.css';
 
+/* ============================================================
+   Base & resets
+   ============================================================ */
+
 * { box-sizing: border-box; }
 
 html {
@@ -20,9 +24,48 @@ body {
 
 #root { min-height: 100vh; }
 
+button { font-family: inherit; }
+
+::selection {
+  background: var(--semantic-accent-primary);
+  color: var(--semantic-text-inverse);
+}
+
 code, .mono {
   font-family: var(--semantic-typography-family-mono);
   font-size: var(--semantic-typography-size-sm);
+}
+
+/* Inline code reads as a subtle chip; reset inside code-native contexts. */
+code {
+  background: var(--semantic-surface-inset);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  padding: 0 5px;
+}
+.file-tree code, .md-code code, .pre code, pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+kbd {
+  font-family: var(--semantic-typography-family-mono);
+  font-size: 12px;
+  color: var(--semantic-text-secondary);
+  background: var(--semantic-surface-inset);
+  border: 1px solid var(--semantic-border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--semantic-radius-sm);
+  padding: 1px 5px;
+}
+
+input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: var(--semantic-accent-primary);
+  cursor: pointer;
 }
 
 :focus-visible {
@@ -38,7 +81,21 @@ code, .mono {
   }
 }
 
-/* ---------- App shell ---------- */
+/* Scrollbars (dark theme) */
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--semantic-border-strong);
+  border-radius: 5px;
+  border: 2px solid var(--semantic-surface-canvas);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--semantic-text-muted); }
+.pre::-webkit-scrollbar, .preview-scroll::-webkit-scrollbar { width: 8px; }
+
+/* ============================================================
+   App shell & titlebar
+   ============================================================ */
 
 .app-frame {
   display: grid;
@@ -47,15 +104,20 @@ code, .mono {
 }
 
 .titlebar {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: var(--semantic-spacing-3);
-  padding: var(--semantic-spacing-3) var(--semantic-spacing-6);
+  padding: var(--semantic-spacing-4) var(--semantic-spacing-6);
   border-bottom: 1px solid var(--semantic-border-subtle);
-  background: var(--semantic-surface-canvas);
+  background: var(--semantic-surface-panel);
+  box-shadow: var(--semantic-shadow-sm);
 }
 
 .brand-mark {
+  display: inline-flex;
+  align-items: center;
   font-size: 20px;
   color: var(--semantic-text-primary);
 }
@@ -77,6 +139,9 @@ code, .mono {
 .titlebar-spacer { flex: 1; }
 
 .help-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: var(--semantic-density-compact-control-height);
   height: var(--semantic-density-compact-control-height);
   border-radius: 50%;
@@ -94,7 +159,9 @@ code, .mono {
   min-height: 0;
 }
 
-/* ---------- Sidebar ---------- */
+/* ============================================================
+   Sidebar & navigation
+   ============================================================ */
 
 .sidebar {
   display: flex;
@@ -102,6 +169,7 @@ code, .mono {
   gap: var(--semantic-spacing-6);
   padding: var(--semantic-spacing-5) var(--semantic-spacing-4);
   border-right: 1px solid var(--semantic-border-subtle);
+  background: var(--semantic-surface-canvas);
   min-height: 0;
 }
 
@@ -115,12 +183,13 @@ code, .mono {
 }
 
 .nav-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--semantic-spacing-3);
   width: 100%;
   padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
-  min-height: var(--semantic-density-comfortable-control-height);
+  min-height: 44px;
   border: 1px solid transparent;
   border-radius: var(--semantic-radius-md);
   background: transparent;
@@ -129,18 +198,35 @@ code, .mono {
   font-weight: var(--semantic-typography-weight-medium);
   cursor: pointer;
   text-align: left;
-  transition: background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+  transition: background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
 
 .nav-item:hover { background: var(--semantic-surface-panel); color: var(--semantic-text-primary); }
 
 .nav-item.active {
   background: var(--semantic-accent-primary-tint);
-  border-color: var(--semantic-accent-primary);
   color: var(--semantic-accent-text);
 }
 
-.nav-glyph { width: 18px; text-align: center; }
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--semantic-accent-primary);
+}
+
+.nav-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  text-align: center;
+}
 
 .sidebar-spacer { flex: 1; }
 
@@ -164,6 +250,12 @@ code, .mono {
   font-size: var(--semantic-typography-size-sm);
 }
 
+.tip-card .tip-icon {
+  display: inline-flex;
+  color: var(--semantic-text-secondary);
+  margin-top: 2px;
+}
+
 .tip-link {
   background: none;
   border: none;
@@ -173,7 +265,9 @@ code, .mono {
   cursor: pointer;
 }
 
-/* ---------- Main content ---------- */
+/* ============================================================
+   Main content & page header
+   ============================================================ */
 
 .main {
   padding: var(--semantic-spacing-8);
@@ -190,6 +284,7 @@ code, .mono {
   margin: 0;
   font-size: 30px;
   font-weight: var(--semantic-typography-weight-semibold);
+  letter-spacing: -0.015em;
 }
 
 .page-subtitle {
@@ -210,10 +305,11 @@ code, .mono {
 .back-button:hover { color: var(--semantic-text-primary); border-color: var(--semantic-border-subtle); }
 
 .page-header-actions { margin-left: auto; display: flex; gap: var(--semantic-spacing-3); align-items: center; }
+.page-header-actions .btn-primary { box-shadow: var(--semantic-shadow-sm); }
 
-/* ---------- Buttons ---------- */
-
-button { font-family: inherit; }
+/* ============================================================
+   Buttons
+   ============================================================ */
 
 .btn {
   display: inline-flex;
@@ -231,6 +327,9 @@ button { font-family: inherit; }
     border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
 
+.btn svg { flex-shrink: 0; }
+.btn:active { transform: translateY(0.5px); }
+
 .btn-primary {
   background: var(--semantic-accent-primary);
   color: var(--semantic-text-inverse);
@@ -244,20 +343,26 @@ button { font-family: inherit; }
   color: var(--semantic-text-primary);
   border-color: var(--semantic-border-strong);
 }
-.btn-secondary:hover { border-color: var(--semantic-accent-primary); color: var(--semantic-accent-text); }
+.btn-secondary:hover {
+  border-color: var(--semantic-accent-primary);
+  color: var(--semantic-accent-text);
+  background: var(--semantic-accent-primary-tint);
+}
 .btn-secondary:disabled { color: var(--semantic-text-disabled); border-color: var(--semantic-border-subtle); cursor: not-allowed; }
 
 .btn-compact { min-height: var(--semantic-density-compact-control-height); padding: 0 var(--semantic-spacing-4); }
 
 .btn-danger { background: transparent; border-color: var(--semantic-border-danger); color: var(--semantic-status-danger); }
 
-/* ---------- Panels ---------- */
+/* ============================================================
+   Panels & surfaces
+   ============================================================ */
 
 .panel {
   background: var(--semantic-surface-panel);
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-md);
-  padding: var(--semantic-spacing-5);
+  padding: var(--semantic-spacing-6);
 }
 
 .panel-raised {
@@ -270,6 +375,7 @@ button { font-family: inherit; }
   font-size: var(--semantic-typography-size-lg);
   font-weight: var(--semantic-typography-weight-semibold);
 }
+.panel > h2:first-child { margin-top: 0; }
 
 .panel-desc { margin: 0 0 var(--semantic-spacing-4); color: var(--semantic-text-secondary); font-size: var(--semantic-typography-size-sm); }
 
@@ -283,7 +389,9 @@ button { font-family: inherit; }
 .muted { color: var(--semantic-text-muted); }
 .secondary-text { color: var(--semantic-text-secondary); }
 
-/* ---------- Workflow stepper ---------- */
+/* ============================================================
+   Workflow stepper
+   ============================================================ */
 
 .workflow {
   list-style: none;
@@ -322,6 +430,7 @@ button { font-family: inherit; }
   border: 2px solid var(--semantic-border-strong);
   color: var(--semantic-text-secondary);
   font-weight: var(--semantic-typography-weight-semibold);
+  font-size: 15px;
   background: var(--semantic-surface-canvas);
   z-index: 1;
 }
@@ -330,6 +439,7 @@ button { font-family: inherit; }
   background: var(--semantic-status-success);
   border-color: var(--semantic-status-success);
   color: var(--semantic-text-inverse);
+  box-shadow: 0 0 0 3px var(--semantic-status-success-tint);
 }
 
 .workflow-step.current .workflow-marker {
@@ -348,7 +458,9 @@ button { font-family: inherit; }
 
 .workflow-state { display: none; }
 
-/* ---------- Forms ---------- */
+/* ============================================================
+   Forms
+   ============================================================ */
 
 .field { display: flex; flex-direction: column; gap: var(--semantic-spacing-2); margin-bottom: var(--semantic-spacing-4); }
 
@@ -369,6 +481,12 @@ button { font-family: inherit; }
 
 .field input:hover, .field textarea:hover { border-color: var(--semantic-border-strong); }
 
+.field input[type='text']:focus-visible, .field textarea:focus-visible, .select-control:focus-visible {
+  outline: none;
+  border-color: var(--semantic-border-focus);
+  box-shadow: var(--semantic-focus-ring-offset);
+}
+
 .field .field-error { color: var(--semantic-status-danger); font-size: var(--semantic-typography-size-sm); margin: 0; }
 .field.invalid input, .field.invalid textarea { border-color: var(--semantic-border-danger); }
 
@@ -377,9 +495,55 @@ button { font-family: inherit; }
 
 .search-input { position: relative; }
 .search-input input { width: 100%; padding-left: 34px; }
-.search-input .search-glyph { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--semantic-text-muted); }
+.search-input .search-glyph {
+  display: inline-flex;
+  align-items: center;
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--semantic-text-muted);
+}
 
-/* ---------- Toggle ---------- */
+.select-control {
+  background: var(--semantic-surface-inset);
+  color: var(--semantic-text-primary);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  min-height: var(--semantic-density-comfortable-control-height);
+  padding: 0 var(--semantic-spacing-3);
+  font-family: inherit;
+  font-size: var(--semantic-typography-size-md);
+}
+.select-control:disabled { color: var(--semantic-text-disabled); }
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  overflow: hidden;
+}
+.segment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  min-height: calc(var(--semantic-density-comfortable-control-height) - 2px);
+  background: transparent;
+  border: none;
+  color: var(--semantic-text-secondary);
+  cursor: pointer;
+  font-size: 15px;
+}
+.segment.active {
+  background: var(--semantic-accent-primary-tint);
+  color: var(--semantic-accent-text);
+  box-shadow: inset 0 0 0 1px var(--semantic-accent-primary);
+}
+
+/* ============================================================
+   Toggle
+   ============================================================ */
 
 .toggle-row {
   display: flex;
@@ -421,13 +585,17 @@ button { font-family: inherit; }
 }
 .toggle[aria-checked='true']::after { transform: translateX(18px); background: var(--semantic-text-inverse); }
 
-/* ---------- Tables ---------- */
+/* ============================================================
+   Tables
+   ============================================================ */
 
 .data-table { width: 100%; border-collapse: collapse; }
 
 .data-table th {
   text-align: left;
-  font-size: var(--semantic-typography-size-sm);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   font-weight: var(--semantic-typography-weight-medium);
   color: var(--semantic-text-secondary);
   padding: var(--semantic-spacing-3);
@@ -437,22 +605,39 @@ button { font-family: inherit; }
 .data-table td {
   padding: var(--semantic-spacing-3);
   border-bottom: 1px solid var(--semantic-border-subtle);
-  vertical-align: top;
+  vertical-align: middle;
 }
+.data-table td .badge { vertical-align: middle; }
 
 .data-table tr:last-child td { border-bottom: none; }
 
-/* ---------- Badges & status ---------- */
+.data-table tbody tr {
+  transition: background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+}
+.data-table tbody tr:hover { background: var(--semantic-surface-inset); }
+
+/* ============================================================
+   Badges & status
+   ============================================================ */
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: var(--semantic-spacing-1);
-  border-radius: var(--semantic-radius-sm);
+  border-radius: 999px;
   border: 1px solid var(--semantic-border-subtle);
-  padding: 2px var(--semantic-spacing-2);
-  font-size: var(--semantic-typography-size-sm);
+  padding: 2px var(--semantic-spacing-3);
+  font-size: 12px;
+  line-height: 1.4;
   font-weight: var(--semantic-typography-weight-medium);
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
 }
 
 .badge-success { color: var(--semantic-status-success); border-color: var(--semantic-status-success); background: var(--semantic-status-success-tint); }
@@ -467,14 +652,14 @@ button { font-family: inherit; }
   gap: var(--semantic-spacing-2);
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-md);
-  background: var(--semantic-surface-panel);
+  background: transparent;
   padding: var(--semantic-spacing-3) var(--semantic-spacing-4);
   font-size: var(--semantic-typography-size-sm);
   color: var(--semantic-text-secondary);
 }
 
 .status-line.status-error { border-color: var(--semantic-border-danger); color: var(--semantic-status-danger); }
-.status-line.status-success { color: var(--semantic-status-success); }
+.status-line.status-success { border-color: var(--semantic-status-success); color: var(--semantic-status-success); }
 
 .status-label { font-weight: var(--semantic-typography-weight-semibold); }
 
@@ -487,7 +672,18 @@ button { font-family: inherit; }
 .validation-summary h3 { margin: 0 0 var(--semantic-spacing-2); font-size: var(--semantic-typography-size-md); color: var(--semantic-status-danger); }
 .validation-summary ul { margin: 0; padding-left: var(--semantic-spacing-5); color: var(--semantic-status-danger); font-size: var(--semantic-typography-size-sm); }
 
-/* ---------- Dialogs ---------- */
+/* ============================================================
+   Dialogs
+   ============================================================ */
+
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
 .dialog-backdrop {
   position: fixed;
@@ -497,6 +693,7 @@ button { font-family: inherit; }
   align-items: center;
   justify-content: center;
   z-index: var(--semantic-z-index-overlay);
+  animation: backdrop-in var(--semantic-motion-duration-normal) var(--semantic-motion-easing-standard);
 }
 
 .dialog {
@@ -509,6 +706,11 @@ button { font-family: inherit; }
   overflow-y: auto;
   padding: var(--semantic-spacing-6);
   z-index: var(--semantic-z-index-modal);
+  animation: dialog-in var(--semantic-motion-duration-normal) var(--semantic-motion-easing-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog, .dialog-backdrop { animation: none; }
 }
 
 .dialog-wide { width: min(760px, calc(100vw - 64px)); }
@@ -521,53 +723,30 @@ button { font-family: inherit; }
   margin-bottom: var(--semantic-spacing-4);
 }
 
-.dialog-header h2 { margin: 0; font-size: 18px; }
+.dialog-header h2 { margin: 0; font-size: 18px; letter-spacing: -0.01em; }
 
 .dialog-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   background: none;
   border: none;
+  border-radius: var(--semantic-radius-sm);
   color: var(--semantic-text-secondary);
   font-size: 18px;
   cursor: pointer;
   padding: var(--semantic-spacing-1);
+  transition: background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
-.dialog-close:hover { color: var(--semantic-text-primary); }
+.dialog-close:hover { color: var(--semantic-text-primary); background: var(--semantic-surface-inset); }
 
 .dialog-actions { display: flex; justify-content: flex-end; gap: var(--semantic-spacing-3); margin-top: var(--semantic-spacing-5); }
 
-/* ---------- Hub cards ---------- */
-
-.hub-markers {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--semantic-spacing-4);
-  margin: 0 0 calc(-1 * var(--semantic-spacing-3));
-  padding: 0;
-}
-
-.hub-marker-step { display: flex; justify-content: center; position: relative; }
-
-.hub-marker-step:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: calc(50% + 28px);
-  width: calc(100% - 56px);
-  border-top: 1px dashed var(--semantic-border-strong);
-}
-
-.hub-marker-step.complete .workflow-marker {
-  background: var(--semantic-status-success);
-  border-color: var(--semantic-status-success);
-  color: var(--semantic-text-inverse);
-}
-
-.hub-marker-step.current .workflow-marker {
-  border-color: var(--semantic-accent-primary);
-  color: var(--semantic-accent-text);
-  box-shadow: 0 0 0 4px var(--semantic-accent-primary-tint);
-}
+/* ============================================================
+   Hub (Copilot Handoff landing)
+   ============================================================ */
 
 .hub-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--semantic-spacing-4); }
 
@@ -575,24 +754,141 @@ button { font-family: inherit; }
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-md);
   background: var(--semantic-surface-panel);
-  padding: var(--semantic-spacing-5);
+  padding: var(--semantic-spacing-4);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  gap: var(--semantic-spacing-3);
+  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    box-shadow var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+}
+
+button.hub-card { font: inherit; color: inherit; cursor: pointer; }
+button.hub-card:hover { border-color: var(--semantic-border-strong); box-shadow: var(--semantic-shadow-md); }
+button.hub-card.current:hover { border-color: var(--semantic-accent-primary-hover); }
+
+.hub-card.current {
+  border-color: var(--semantic-accent-primary);
+  background: linear-gradient(var(--semantic-accent-primary-tint), var(--semantic-accent-primary-tint)),
+    var(--semantic-surface-panel);
+}
+
+.hub-card-head { display: flex; align-items: center; gap: var(--semantic-spacing-2); min-height: 44px; }
+
+.hub-card-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--semantic-typography-size-md);
+  font-weight: var(--semantic-typography-weight-semibold);
+  color: var(--semantic-text-primary);
+}
+
+.hub-card-icon { display: inline-flex; color: var(--semantic-text-muted); flex-shrink: 0; }
+.hub-card.current .hub-card-icon { color: var(--semantic-accent-text); }
+
+.hub-step-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid var(--semantic-border-strong);
+  color: var(--semantic-text-secondary);
+  font-size: 13px;
+  font-weight: var(--semantic-typography-weight-semibold);
+  background: var(--semantic-surface-canvas);
+}
+
+.hub-card.complete .hub-step-marker {
+  background: var(--semantic-status-success);
+  border-color: var(--semantic-status-success);
+  color: var(--semantic-text-inverse);
+}
+
+.hub-card.current .hub-step-marker {
+  border-color: var(--semantic-accent-primary);
+  color: var(--semantic-accent-text);
+  background: var(--semantic-surface-panel);
+  box-shadow: 0 0 0 3px var(--semantic-accent-primary-tint);
+}
+
+.hub-card p {
+  margin: 0;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-size-sm);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.hub-card-foot { display: flex; align-items: center; }
+
+/* Recent projects list */
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-3);
+  margin-bottom: var(--semantic-spacing-2);
+}
+.panel-head h2 { margin: 0; }
+
+.project-rows { list-style: none; margin: 0; padding: 0; }
+
+.project-row {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-4);
+  padding: var(--semantic-spacing-3) var(--semantic-spacing-1);
+}
+.project-row + .project-row { border-top: 1px solid var(--semantic-border-subtle); }
+
+.project-row-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--semantic-radius-sm);
+  background: var(--semantic-surface-inset);
+  border: 1px solid var(--semantic-border-subtle);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--semantic-status-info);
+  flex-shrink: 0;
+}
+
+.project-row-copy { flex: 1; min-width: 0; }
+.project-row-copy strong { display: block; font-size: var(--semantic-typography-size-md); }
+.project-row-copy .project-meta {
+  margin: 0;
+  color: var(--semantic-text-muted);
+  font-size: var(--semantic-typography-size-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-row .btn { flex-shrink: 0; }
+
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
   gap: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-6) 0;
+  text-align: center;
 }
+.empty-state p { margin: 0; color: var(--semantic-text-secondary); }
 
-.hub-card .hub-glyph { font-size: 34px; color: var(--semantic-text-secondary); }
-.hub-card h3 { margin: 0; font-size: var(--semantic-typography-size-md); }
-.hub-card p { margin: 0; color: var(--semantic-text-secondary); font-size: var(--semantic-typography-size-sm); flex: 1; }
-
-.recent-projects { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--semantic-spacing-6); text-align: center; }
+/* Legacy centered project cards (Projects grid layout) */
 .recent-project { display: flex; flex-direction: column; align-items: center; gap: var(--semantic-spacing-2); }
 .recent-project .mono { color: var(--semantic-text-muted); }
-.recent-project-icon { font-size: 30px; color: var(--semantic-status-info); }
+.recent-project-icon { display: inline-flex; font-size: 30px; color: var(--semantic-status-info); }
 
-/* ---------- Output format cards (Prepare Context) ---------- */
+/* ============================================================
+   Output format cards (Prepare Context)
+   ============================================================ */
 
 .format-card {
   display: flex;
@@ -630,7 +926,9 @@ button { font-family: inherit; }
 .format-radio.unselected { border-color: var(--semantic-border-strong); }
 .format-radio.unselected::after { background: transparent; }
 
-/* ---------- List rows (recipes/components/sections) ---------- */
+/* ============================================================
+   List rows (recipes/components/sections) & info banners
+   ============================================================ */
 
 .row-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--semantic-spacing-3); }
 
@@ -642,7 +940,9 @@ button { font-family: inherit; }
   border-radius: var(--semantic-radius-md);
   background: var(--semantic-surface-panel);
   padding: var(--semantic-spacing-4);
+  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
+.row-item:hover { border-color: var(--semantic-border-strong); }
 
 .row-item .row-icon {
   width: 44px;
@@ -657,6 +957,9 @@ button { font-family: inherit; }
   font-size: 18px;
   flex-shrink: 0;
 }
+
+.row-icon { color: var(--semantic-text-secondary); }
+.row-icon svg { display: block; }
 
 .row-copy { flex: 1; min-width: 0; }
 .row-copy h3 { margin: 0 0 2px; font-size: var(--semantic-typography-size-md); }
@@ -676,8 +979,13 @@ button { font-family: inherit; }
 }
 
 .info-banner.info-accent { border-color: var(--semantic-status-info); color: var(--semantic-status-info); }
+.info-banner > span[aria-hidden] { display: inline-flex; flex-shrink: 0; }
+.info-banner-copy { flex: 1; }
+.info-banner .btn, .info-banner .info-banner-action { margin-left: auto; flex-shrink: 0; white-space: nowrap; }
 
-/* ---------- Upload set ---------- */
+/* ============================================================
+   Upload set (Run in Copilot)
+   ============================================================ */
 
 .upload-set { border: 1px dashed var(--semantic-border-strong); border-radius: var(--semantic-radius-md); padding: var(--semantic-spacing-4); display: flex; flex-direction: column; gap: var(--semantic-spacing-3); }
 
@@ -689,13 +997,43 @@ button { font-family: inherit; }
   border-radius: var(--semantic-radius-md);
   padding: var(--semantic-spacing-3);
   background: var(--semantic-surface-panel);
+  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
+.upload-file:hover { border-color: var(--semantic-border-strong); }
 
 .upload-file .row-copy h3 { font-family: var(--semantic-typography-family-mono); font-weight: var(--semantic-typography-weight-regular); }
 
-/* ---------- Verification stat chips & iteration grid ---------- */
+/* ============================================================
+   Verify & Review (hero, stat chips, iteration grid)
+   ============================================================ */
+
+.verify-hero {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--semantic-border-strong);
+  color: var(--semantic-text-secondary);
+  flex-shrink: 0;
+}
+.verify-hero-pass {
+  background: var(--semantic-status-success);
+  border-color: var(--semantic-status-success);
+  color: var(--semantic-text-inverse);
+}
+.verify-hero-fail {
+  border-color: var(--semantic-status-danger);
+  color: var(--semantic-status-danger);
+  font-size: 20px;
+}
 
 .iteration-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--semantic-spacing-4); }
+.iteration-grid-intro { grid-template-columns: 1.1fr 1fr 1fr 1fr; }
+.iteration-intro { padding-right: var(--semantic-spacing-4); border-right: 1px solid var(--semantic-border-subtle); }
+.iteration-intro-icon { display: inline-flex; color: var(--semantic-status-info); margin-bottom: var(--semantic-spacing-2); }
+.iteration-intro h2 { font-size: var(--semantic-typography-size-lg); }
 
 .stat-chips {
   display: grid;
@@ -708,6 +1046,7 @@ button { font-family: inherit; }
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-md);
   background: var(--semantic-surface-panel-raised);
+  box-shadow: var(--semantic-shadow-sm);
   padding: var(--semantic-spacing-4);
   display: flex;
   flex-direction: column;
@@ -720,7 +1059,13 @@ button { font-family: inherit; }
 .stat-chip.stat-pass strong { color: var(--semantic-status-success); }
 .stat-chip.stat-fail strong { color: var(--semantic-status-danger); }
 
-/* ---------- Utility ---------- */
+.stat-chip-icon { display: inline-flex; color: var(--semantic-text-muted); }
+.stat-chip.stat-pass .stat-chip-icon { color: var(--semantic-status-success); }
+.stat-chip.stat-fail .stat-chip-icon { color: var(--semantic-status-danger); }
+
+/* ============================================================
+   Utilities
+   ============================================================ */
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--semantic-spacing-6); align-items: start; }
 .stack { display: flex; flex-direction: column; gap: var(--semantic-spacing-4); }
@@ -747,7 +1092,9 @@ button { font-family: inherit; }
   border: 0;
 }
 
-/* ---------- Tabs (preview modal + component demo) ---------- */
+/* ============================================================
+   Tabs (preview modal + component demo)
+   ============================================================ */
 
 .tab-row {
   display: flex;
@@ -772,7 +1119,9 @@ button { font-family: inherit; }
   border-bottom-color: var(--semantic-accent-primary);
 }
 
-/* ---------- Markdown preview (PRD 13.4) ---------- */
+/* ============================================================
+   Markdown preview (PRD 13.4)
+   ============================================================ */
 
 .preview-scroll { max-height: 52vh; overflow-y: auto; }
 
@@ -796,7 +1145,9 @@ button { font-family: inherit; }
 }
 .md-table { margin: 0 0 var(--semantic-spacing-3); font-size: var(--semantic-typography-size-sm); }
 
-/* ---------- Apply layout (PRD 13.6: 2x apply / 1x zip preview) ---------- */
+/* ============================================================
+   Apply layout (PRD 13.6: 2x apply / 1x zip preview)
+   ============================================================ */
 
 .apply-layout { display: grid; grid-template-columns: 2fr 1fr; gap: var(--semantic-spacing-6); align-items: start; }
 
@@ -804,16 +1155,21 @@ button { font-family: inherit; }
 .file-tree li { padding: 2px 0; color: var(--semantic-text-secondary); }
 .file-tree code { color: var(--semantic-text-primary); }
 
-/* ---------- Context review list ---------- */
+/* ============================================================
+   Context review list (Prepare Context)
+   ============================================================ */
 
 .review-list { margin: 0; display: flex; flex-direction: column; gap: var(--semantic-spacing-3); }
 .review-list > div { display: flex; flex-direction: column; gap: 2px; }
 .review-list dt { font-size: var(--semantic-typography-size-sm); color: var(--semantic-text-muted); font-weight: var(--semantic-typography-weight-medium); }
 .review-list dd { margin: 0; color: var(--semantic-text-secondary); font-size: var(--semantic-typography-size-md); }
 
-/* ---------- Recipe thumbnails ---------- */
+/* ============================================================
+   Recipe thumbnails
+   ============================================================ */
 
 .recipe-thumb { width: 108px; height: 68px; flex-shrink: 0; border-radius: var(--semantic-radius-sm); border: 1px solid var(--semantic-border-subtle); }
+.recipe-row .btn { flex-shrink: 0; }
 .rt-bg { fill: var(--semantic-surface-inset); }
 .rt-panel { fill: var(--semantic-surface-panel-raised); stroke: var(--semantic-border-subtle); stroke-width: 0.5; }
 .rt-line { fill: var(--semantic-border-strong); }
@@ -824,7 +1180,9 @@ button { font-family: inherit; }
 .rt-connector { stroke: var(--semantic-border-strong); stroke-width: 1; stroke-dasharray: 2 2; }
 .rt-spark { fill: none; stroke: var(--semantic-status-info); stroke-width: 1.5; }
 
-/* ---------- Component cards ---------- */
+/* ============================================================
+   Component cards (catalog)
+   ============================================================ */
 
 .component-card { display: flex; flex-direction: column; }
 .component-demo {
@@ -834,204 +1192,4 @@ button { font-family: inherit; }
   justify-content: center;
   margin-bottom: var(--semantic-spacing-3);
   width: 100%;
-}
-
-/* ---------- Polish pass: iconography alignment, hover states, scrollbars ---------- */
-
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: var(--semantic-border-strong);
-  border-radius: 5px;
-  border: 2px solid var(--semantic-surface-canvas);
-}
-::-webkit-scrollbar-thumb:hover { background: var(--semantic-text-muted); }
-
-.brand-mark { display: inline-flex; align-items: center; color: var(--semantic-text-primary); }
-
-.titlebar { padding-top: var(--semantic-spacing-4); padding-bottom: var(--semantic-spacing-4); }
-
-.help-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-item { min-height: 44px; gap: var(--semantic-spacing-3); }
-.nav-glyph { display: inline-flex; align-items: center; justify-content: center; width: 22px; }
-
-.tip-card .tip-icon {
-  display: inline-flex;
-  color: var(--semantic-text-secondary);
-  margin-top: 2px;
-}
-
-.search-input .search-glyph { display: inline-flex; align-items: center; }
-
-.btn { gap: var(--semantic-spacing-2); }
-.btn svg { flex-shrink: 0; }
-
-.row-item {
-  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
-}
-.row-item:hover { border-color: var(--semantic-border-strong); }
-
-.data-table tbody tr {
-  transition: background var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
-}
-.data-table tbody tr:hover { background: var(--semantic-surface-inset); }
-
-.data-table th {
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 11px;
-}
-
-.hub-card {
-  padding: var(--semantic-spacing-6) var(--semantic-spacing-4);
-  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
-}
-.hub-card:hover { border-color: var(--semantic-border-strong); }
-.hub-card .hub-glyph { display: inline-flex; color: var(--semantic-text-secondary); }
-.hub-card .badge { border-radius: 999px; padding: 3px var(--semantic-spacing-3); }
-
-.recent-project-icon { display: inline-flex; color: var(--semantic-status-info); }
-
-.badge { border-radius: 999px; padding: 2px var(--semantic-spacing-3); }
-
-.workflow-marker { font-size: 15px; }
-
-.panel { padding: var(--semantic-spacing-6); }
-.panel > h2:first-child { margin-top: 0; }
-
-.dialog { border-radius: var(--semantic-radius-lg); }
-
-.status-line { background: transparent; }
-
-.info-banner > span[aria-hidden] { display: inline-flex; flex-shrink: 0; }
-
-.page-header-actions .btn-primary { box-shadow: var(--semantic-shadow-sm); }
-
-/* ---------- Audit pass: verify hero, segmented control, selects, iteration intro ---------- */
-
-.select-control {
-  background: var(--semantic-surface-inset);
-  color: var(--semantic-text-primary);
-  border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
-  min-height: var(--semantic-density-comfortable-control-height);
-  padding: 0 var(--semantic-spacing-3);
-  font-family: inherit;
-  font-size: var(--semantic-typography-size-md);
-}
-.select-control:disabled { color: var(--semantic-text-disabled); }
-
-.segmented {
-  display: inline-flex;
-  border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
-  overflow: hidden;
-}
-.segment {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  min-height: calc(var(--semantic-density-comfortable-control-height) - 2px);
-  background: transparent;
-  border: none;
-  color: var(--semantic-text-secondary);
-  cursor: pointer;
-  font-size: 15px;
-}
-.segment.active {
-  background: var(--semantic-accent-primary-tint);
-  color: var(--semantic-accent-text);
-  box-shadow: inset 0 0 0 1px var(--semantic-accent-primary);
-}
-
-.verify-hero {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--semantic-border-strong);
-  color: var(--semantic-text-secondary);
-  flex-shrink: 0;
-}
-.verify-hero-pass {
-  background: var(--semantic-status-success);
-  border-color: var(--semantic-status-success);
-  color: var(--semantic-text-inverse);
-}
-.verify-hero-fail {
-  border-color: var(--semantic-status-danger);
-  color: var(--semantic-status-danger);
-  font-size: 20px;
-}
-
-.iteration-grid-intro { grid-template-columns: 1.1fr 1fr 1fr 1fr; }
-.iteration-intro { padding-right: var(--semantic-spacing-4); border-right: 1px solid var(--semantic-border-subtle); }
-.iteration-intro-icon { display: inline-flex; color: var(--semantic-status-info); margin-bottom: var(--semantic-spacing-2); }
-.iteration-intro h2 { font-size: var(--semantic-typography-size-lg); }
-
-.stat-chip-icon { display: inline-flex; color: var(--semantic-text-muted); }
-.stat-chip.stat-pass .stat-chip-icon { color: var(--semantic-status-success); }
-.stat-chip.stat-fail .stat-chip-icon { color: var(--semantic-status-danger); }
-
-/* ---------- Polish pass 2: motion, alignment, depth ---------- */
-
-@keyframes dialog-in {
-  from { opacity: 0; transform: translateY(6px) scale(0.985); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes backdrop-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-.dialog-backdrop { animation: backdrop-in var(--semantic-motion-duration-normal) var(--semantic-motion-easing-standard); }
-.dialog { animation: dialog-in var(--semantic-motion-duration-normal) var(--semantic-motion-easing-standard); }
-
-.data-table td { vertical-align: middle; }
-.data-table td .badge { vertical-align: middle; }
-
-.badge { font-size: 12px; line-height: 1.4; }
-
-.btn-secondary:hover { background: var(--semantic-accent-primary-tint); }
-.btn:active { transform: translateY(0.5px); }
-
-.pre::-webkit-scrollbar, .preview-scroll::-webkit-scrollbar { width: 8px; }
-
-.workflow-step.complete .workflow-marker { box-shadow: 0 0 0 3px var(--semantic-status-success-tint); }
-
-.titlebar { background: var(--semantic-surface-panel); }
-.sidebar { background: var(--semantic-surface-canvas); }
-
-.panel-raised, .stat-chip { box-shadow: var(--semantic-shadow-sm); }
-
-.row-icon { color: var(--semantic-text-secondary); }
-.row-icon svg { display: block; }
-
-.hub-card p { line-height: 1.5; }
-
-.status-line.status-success { border-color: var(--semantic-status-success); }
-
-.field input[type='text']:focus-visible, .field textarea:focus-visible, .select-control:focus-visible {
-  outline: none;
-  border-color: var(--semantic-border-focus);
-  box-shadow: var(--semantic-focus-ring-offset);
-}
-
-.dialog-header h2 { letter-spacing: -0.01em; }
-.page-header h1 { letter-spacing: -0.015em; }
-
-.recipe-row .btn { flex-shrink: 0; }
-
-.upload-file { transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard); }
-.upload-file:hover { border-color: var(--semantic-border-strong); }
-
-@media (prefers-reduced-motion: reduce) {
-  .dialog, .dialog-backdrop { animation: none; }
 }

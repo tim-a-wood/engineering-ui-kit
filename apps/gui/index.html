@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
+    <!-- Inline favicon (fixes 404 on /favicon.ico). Stroke mirrors --semantic-accent-primary-hover; favicons cannot read CSS custom properties. -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235478ff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2.5 20.5 7v10L12 21.5 3.5 17V7L12 2.5Z'/%3E%3Cpath d='M3.5 7 12 11.5 20.5 7'/%3E%3Cpath d='M12 11.5V21.5'/%3E%3C/svg%3E" />
     <title>Engineering UI Kit</title>
   </head>
   <body>
