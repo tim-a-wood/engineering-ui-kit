@@ -1,0 +1,45 @@
+{
+  "results": [
+    {
+      "id": "SELF-PROJECT",
+      "pass": true,
+      "detail": "gui repo registered as project"
+    },
+    {
+      "id": "SELF-CONTEXT",
+      "pass": true,
+      "detail": "Success: Context generated: 21 files included, 87 excluded, 0 warnings."
+    },
+    {
+      "id": "SELF-PACKET",
+      "pass": true,
+      "detail": "packet built"
+    },
+    {
+      "id": "SELF-INSPECT",
+      "pass": true,
+      "detail": "inspection verdict allows apply"
+    },
+    {
+      "id": "SELF-APPLY",
+      "pass": true,
+      "detail": "Success: Overlay applied: 2 files."
+    },
+    {
+      "id": "SELF-VERIFY",
+      "pass": true,
+      "detail": "Success: All checks passed. Your repository builds and typechecks."
+    },
+    {
+      "id": "SELF-COMPLETE",
+      "pass": true,
+      "detail": "handoff approved"
+    },
+    {
+      "id": "SELF-RELAUNCH",
+      "pass": true,
+      "detail": "transformed app relaunched; console errors=0"
+    }
+  ],
+  "generatedAt": "2026-07-06T11:18:31.210Z"
+}

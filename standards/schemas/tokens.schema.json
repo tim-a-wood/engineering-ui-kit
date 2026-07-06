@@ -1,0 +1,415 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/tokens.schema.json",
+  "title": "Engineering UI Kit Tokens Contract Schema",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "meta",
+    "modes",
+    "primitives",
+    "semantic",
+    "componentAliases",
+    "validation"
+  ],
+  "$defs": {
+    "tokenObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "type",
+        "description",
+        "usage",
+        "status"
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "enum": [
+            "color",
+            "dimension",
+            "fontFamily",
+            "fontSize",
+            "fontWeight",
+            "shadow",
+            "duration",
+            "easing",
+            "zIndex",
+            "alias",
+            "number"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "usage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "stable",
+            "draft",
+            "reserved"
+          ]
+        }
+      }
+    },
+    "primitiveToken": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "type",
+        "status"
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "stable",
+            "draft",
+            "reserved"
+          ]
+        }
+      }
+    },
+    "tokenOrGroup": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/tokenObject"
+        },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenOrGroup"
+          }
+        }
+      ]
+    },
+    "primitiveOrGroup": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/primitiveToken"
+        },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/primitiveOrGroup"
+          }
+        }
+      ]
+    }
+  },
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "packageName",
+        "packageVersion",
+        "phase",
+        "status",
+        "sourcePosture",
+        "date",
+        "themePosture",
+        "mockupPosture",
+        "companyStandardsPosture"
+      ],
+      "properties": {
+        "packageName": {
+          "type": "string"
+        },
+        "packageVersion": {
+          "type": "string"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "sourcePosture": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "themePosture": {
+          "const": "dark-first"
+        },
+        "mockupPosture": {
+          "const": "app-visual-calibration-not-exhaustive-standard"
+        },
+        "companyStandardsPosture": {
+          "const": "not-claimed-unless-formally-supplied"
+        }
+      },
+      "additionalProperties": true
+    },
+    "modes": {
+      "type": "object",
+      "required": [
+        "primary",
+        "dark",
+        "light"
+      ],
+      "properties": {
+        "primary": {
+          "const": "dark"
+        },
+        "dark": {
+          "type": "object",
+          "required": [
+            "status",
+            "description"
+          ]
+        },
+        "light": {
+          "type": "object",
+          "required": [
+            "status",
+            "description"
+          ]
+        }
+      }
+    },
+    "primitives": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/primitiveOrGroup"
+      }
+    },
+    "componentAliases": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/tokenOrGroup"
+      }
+    },
+    "semantic": {
+      "type": "object",
+      "required": [
+        "surface",
+        "border",
+        "text",
+        "accent",
+        "status",
+        "focus",
+        "shadow",
+        "spacing",
+        "radius",
+        "typography",
+        "motion",
+        "zIndex",
+        "density",
+        "charts",
+        "code"
+      ],
+      "properties": {
+        "surface": {
+          "type": "object",
+          "required": [
+            "canvas",
+            "panel",
+            "panelRaised",
+            "inset",
+            "overlay",
+            "scrim"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        },
+        "border": {
+          "type": "object",
+          "required": [
+            "subtle",
+            "strong",
+            "focus",
+            "danger"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        },
+        "text": {
+          "type": "object",
+          "required": [
+            "primary",
+            "secondary",
+            "muted",
+            "disabled",
+            "inverse"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        },
+        "accent": {
+          "type": "object",
+          "required": [
+            "primary",
+            "primaryHover",
+            "primaryActive",
+            "secondary",
+            "glow"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        },
+        "status": {
+          "type": "object",
+          "required": [
+            "success",
+            "warning",
+            "danger",
+            "info",
+            "neutral",
+            "running",
+            "pending"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        },
+        "focus": {
+          "type": "object",
+          "required": [
+            "ring",
+            "ringOffset"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        },
+        "shadow": {
+          "type": "object",
+          "required": [
+            "none",
+            "sm",
+            "md",
+            "lg",
+            "overlay"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        },
+        "spacing": {
+          "type": "object",
+          "required": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "8",
+            "10",
+            "12"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        },
+        "radius": {
+          "type": "object",
+          "required": [
+            "none",
+            "sm",
+            "md",
+            "lg",
+            "xl",
+            "pill"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        },
+        "typography": {
+          "type": "object",
+          "required": [
+            "family",
+            "size",
+            "weight"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenOrGroup"
+          }
+        },
+        "motion": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        },
+        "zIndex": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        },
+        "density": {
+          "type": "object",
+          "required": [
+            "compact",
+            "comfortable"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenOrGroup"
+          }
+        },
+        "charts": {
+          "type": "object",
+          "required": [
+            "grid",
+            "axis",
+            "series"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenOrGroup"
+          }
+        },
+        "code": {
+          "type": "object",
+          "required": [
+            "background",
+            "text",
+            "border"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/tokenObject"
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "required": [
+        "referenceSyntax",
+        "componentManifestMustUseSemanticTokenReferencesOnly",
+        "darkModeNormative",
+        "noRawColorValuesInComponentManifest",
+        "requiredSemanticGroups"
+      ]
+    }
+  }
+}

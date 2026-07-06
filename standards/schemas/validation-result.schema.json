@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engineering-ui-kit.local/schemas/validation-result.schema.json",
+  "title": "Engineering UI Kit Validation Result Schema",
+  "type": "object",
+  "required": [
+    "reviewer",
+    "date",
+    "packageVersion",
+    "automatedChecksResult",
+    "manualChecksResult",
+    "finalResult"
+  ],
+  "properties": {
+    "reviewer": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string"
+    },
+    "packageVersion": {
+      "type": "string"
+    },
+    "automatedChecksResult": {
+      "type": "string"
+    },
+    "manualChecksResult": {
+      "type": "string"
+    },
+    "darkFirstConsistencyResult": {
+      "type": "string"
+    },
+    "sourceOfTruthConsistencyResult": {
+      "type": "string"
+    },
+    "defects": {
+      "type": "array"
+    },
+    "finalResult": {
+      "enum": [
+        "Pass",
+        "Pass with minor corrections",
+        "Fail \u2014 restructure required"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,27 @@
+# Dependencies and build output
+node_modules/
+dist/
+release/
+.venv/
+*.log
+.DS_Store
+
+# Local tool/workspace state (regenerable)
+.claude/
+.self-transform-workspace/
+
+# Internal planning sources — kept out of the public repository.
+# PRD, research, phase specs, decision log, and the approved hi-fi mockups
+# live outside this repo; the standards package is the public contract.
+project-sources/
+
+# Phase 2 visual-reference artifacts embed an internal mockup image.
+# The packet structure and hashes remain documented in the phase-2 README
+# and evidence records.
+trials/vertical-slice-01/phase-2/packet/visual-reference-pack.pdf
+trials/vertical-slice-01/phase-2/evidence/visual-reference-pack-page-1.png
+trials/vertical-slice-01/phase-2/source/visual-reference-pack.html
+
+# Python tooling
+__pycache__/
+*.pyc

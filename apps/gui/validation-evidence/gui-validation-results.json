@@ -1,0 +1,146 @@
+{
+  "results": [
+    {
+      "id": "GUI-SHELL",
+      "pass": true,
+      "detail": "canvas=rgb(7, 17, 31)"
+    },
+    {
+      "id": "GUI-HUB",
+      "pass": true,
+      "detail": "hub renders as home view"
+    },
+    {
+      "id": "GUI-NAV-RECIPES",
+      "pass": true,
+      "detail": "h1=\"Recipes\""
+    },
+    {
+      "id": "GUI-NAV-COMPONENTS",
+      "pass": true,
+      "detail": "h1=\"Components\""
+    },
+    {
+      "id": "GUI-NAV-SETTINGS",
+      "pass": true,
+      "detail": "h1=\"Settings\""
+    },
+    {
+      "id": "GUI-NAV-PROJECTS",
+      "pass": true,
+      "detail": "h1=\"Projects\""
+    },
+    {
+      "id": "GUI-DIALOG-A11Y",
+      "pass": true,
+      "detail": "aria-modal dialog"
+    },
+    {
+      "id": "GUI-DIALOG-VALIDATION",
+      "pass": true,
+      "detail": "empty-field errors shown"
+    },
+    {
+      "id": "GUI-DIALOG-BROWSE",
+      "pass": true,
+      "detail": "browse filled \"C:\\work\\picked-repo\""
+    },
+    {
+      "id": "GUI-PROJECT-CREATED",
+      "pass": true,
+      "detail": "project appears in table"
+    },
+    {
+      "id": "GUI-DIALOG-ESCAPE",
+      "pass": true,
+      "detail": "help dialog dismissed via Escape"
+    },
+    {
+      "id": "GUI-STEP1",
+      "pass": true,
+      "detail": "workflow starts at Prepare Context"
+    },
+    {
+      "id": "GUI-STEPPER",
+      "pass": true,
+      "detail": "states=current,upcoming,upcoming,upcoming,upcoming"
+    },
+    {
+      "id": "GUI-CONTEXT",
+      "pass": true,
+      "detail": "context generated with summary"
+    },
+    {
+      "id": "GUI-STEP2",
+      "pass": true,
+      "detail": "step 2 reached"
+    },
+    {
+      "id": "GUI-PACKET-VALIDATION",
+      "pass": true,
+      "detail": "validation blockers listed"
+    },
+    {
+      "id": "GUI-PACKET-BUILT",
+      "pass": true,
+      "detail": "packet built with verified section order"
+    },
+    {
+      "id": "GUI-STEP3",
+      "pass": true,
+      "detail": "step 3 reached"
+    },
+    {
+      "id": "GUI-UPLOAD-BUDGET",
+      "pass": true,
+      "detail": "2 upload files (≤3)"
+    },
+    {
+      "id": "GUI-STEP4",
+      "pass": true,
+      "detail": "step 4 reached"
+    },
+    {
+      "id": "GUI-WARNING-GATE",
+      "pass": true,
+      "detail": "apply disabled until warnings accepted (true→false)"
+    },
+    {
+      "id": "GUI-APPLIED",
+      "pass": true,
+      "detail": "overlay applied"
+    },
+    {
+      "id": "GUI-STEP5",
+      "pass": true,
+      "detail": "step 5 reached"
+    },
+    {
+      "id": "GUI-VERIFY",
+      "pass": true,
+      "detail": "verification passed"
+    },
+    {
+      "id": "GUI-COMPLETE",
+      "pass": true,
+      "detail": "handoff approved"
+    },
+    {
+      "id": "GUI-FOCUS-VISIBLE",
+      "pass": true,
+      "detail": "keyboard reached 14 controls (focus-visible outline via :focus-visible)"
+    },
+    {
+      "id": "GUI-DARK-FIRST",
+      "pass": true,
+      "detail": "light surfaces=0"
+    },
+    {
+      "id": "GUI-NO-CONSOLE-ERRORS",
+      "pass": true,
+      "detail": "console errors=0"
+    }
+  ],
+  "consoleErrors": [],
+  "generatedAt": "2026-07-06T06:14:02.463Z"
+}

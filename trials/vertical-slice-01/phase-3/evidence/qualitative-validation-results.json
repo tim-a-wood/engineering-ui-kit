@@ -1,0 +1,102 @@
+{
+  "results": [
+    {
+      "id": "TRIAL-AC-002",
+      "pass": true,
+      "detail": "h1=\"Create Task Packet\", consoleErrors=0"
+    },
+    {
+      "id": "TRIAL-AC-005",
+      "pass": true,
+      "detail": "body background=rgb(7, 17, 31) (expect canvas #07111f)"
+    },
+    {
+      "id": "TRIAL-AC-009",
+      "pass": true,
+      "detail": "{\"canvas\":\"#07111f\",\"accent\":\"#22d3ee\",\"focus\":\"0 0 0 2px #22d3ee\"}"
+    },
+    {
+      "id": "TRIAL-AC-006",
+      "pass": true,
+      "detail": "steps=[\"Prepare Context:Complete\",\"Create Task Packet:Current\",\"Run in Copilot:Pending\",\"Apply Zip Overlay:Pending\",\"Verify & Review:Pending\"]"
+    },
+    {
+      "id": "PB-1",
+      "pass": true,
+      "detail": "label=\"Goal\", prefilled matches committed value=true"
+    },
+    {
+      "id": "PB-2",
+      "pass": true,
+      "detail": "saved value committed=true, status=\"Success: Goal saved.\""
+    },
+    {
+      "id": "PB-3",
+      "pass": true,
+      "detail": "value after cancel=\"Updated goal text for qualitative trial ...\" unchanged=true"
+    },
+    {
+      "id": "PB-4",
+      "pass": true,
+      "detail": "summary visible=true, mentions Scope=true, preview blocked=true"
+    },
+    {
+      "id": "TRIAL-AC-012",
+      "pass": true,
+      "detail": "field error text=\"Error: Scope is required.\", summary heading present=true"
+    },
+    {
+      "id": "PB-5",
+      "pass": true,
+      "detail": "dialog aria-modal=true, labelled=true, current values shown=true"
+    },
+    {
+      "id": "TRIAL-AC-008",
+      "pass": true,
+      "detail": "five headings in preview=true"
+    },
+    {
+      "id": "PB-6",
+      "pass": true,
+      "detail": "dialog dismissed=true, focus returned to=\"Preview Task Packet\", initial dialog focus on Close=true"
+    },
+    {
+      "id": "PB-7",
+      "pass": true,
+      "detail": "focus returned to=\"Preview Task Packet\""
+    },
+    {
+      "id": "PB-8",
+      "pass": true,
+      "detail": "download filename=\"task-packet.md\""
+    },
+    {
+      "id": "PB-9",
+      "pass": true,
+      "detail": "five headings=true, current goal in export=true"
+    },
+    {
+      "id": "PB-10",
+      "pass": true,
+      "detail": "external requests=[]"
+    },
+    {
+      "id": "TRIAL-AC-010",
+      "pass": true,
+      "detail": "keyboard reached 24 interactive controls"
+    },
+    {
+      "id": "TRIAL-AC-011",
+      "pass": true,
+      "detail": "all focused controls show outline/ring=true"
+    },
+    {
+      "id": "TRIAL-AC-013",
+      "pass": true,
+      "detail": "light-mode surfaces detected=0"
+    }
+  ],
+  "consoleErrors": [],
+  "externalRequests": [],
+  "generatedAt": "2026-07-06T05:40:38.806Z"
+}

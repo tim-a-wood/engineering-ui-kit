@@ -1,0 +1,55 @@
+{
+  "results": [
+    {
+      "id": "TPL-DEFAULT",
+      "pass": true,
+      "detail": "default template = standards-refresh"
+    },
+    {
+      "id": "TPL-OPTIONS",
+      "pass": true,
+      "detail": "five templates offered"
+    },
+    {
+      "id": "TPL-FILL",
+      "pass": true,
+      "detail": "title interpolated: \"Apply Engineering UI Kit standards to template-app\""
+    },
+    {
+      "id": "TPL-ALL-SECTIONS",
+      "pass": true,
+      "detail": "all five sections filled"
+    },
+    {
+      "id": "TPL-GUARD",
+      "pass": true,
+      "detail": "dirty-form guard asks to confirm"
+    },
+    {
+      "id": "TPL-KEEP",
+      "pass": true,
+      "detail": "keep-current preserves fields"
+    },
+    {
+      "id": "TPL-EXPORT",
+      "pass": true,
+      "detail": "template-built packet exports within budget"
+    },
+    {
+      "id": "TPL-E2E",
+      "pass": true,
+      "detail": "template-driven handoff completed end to end"
+    },
+    {
+      "id": "TPL-PACKET-CONTENT",
+      "pass": true,
+      "detail": "template text landed in task-packet.md"
+    },
+    {
+      "id": "TPL-SETTINGS",
+      "pass": true,
+      "detail": "preferred template saved from Settings"
+    }
+  ],
+  "generatedAt": "2026-07-06T12:29:18.634Z"
+}

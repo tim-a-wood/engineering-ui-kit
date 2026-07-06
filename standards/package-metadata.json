@@ -1,0 +1,51 @@
+{
+  "packageName": "engineering-ui-kit-standards",
+  "packageVersion": "0.4.0",
+  "phase": "Phase 4 \u2014 Operational Revision After Evidence-First Trial",
+  "status": "operational-handoff-package-v0.1",
+  "operationalReadiness": "proven-one-vertical-slice-trial-13-of-13-acceptance-criteria",
+  "activeRoadmapPhase": "v0.1 complete \u2014 Windows installer build pending on Windows hardware",
+  "themePosture": "dark-first",
+  "mockupPosture": "app-visual-calibration-not-exhaustive-standard",
+  "companyStandardsPosture": "not-claimed-unless-formally-supplied",
+  "primaryContracts": [
+    "tokens.json",
+    "component-manifest.json"
+  ],
+  "primarySchemas": [
+    "schemas/tokens.schema.json",
+    "schemas/component-manifest.schema.json"
+  ],
+  "productSourceOfTruth": "engineering-ui-kit-prd-v7-final-contracts-incorporated.md",
+  "productSourceVersion": "v0.8 evidence-first roadmap revision",
+  "implementationReadinessSource": "engineering-ui-kit-gap-analysis-v4-final-contracts.md",
+  "deliveryPlanSource": "engineering-ui-kit-high-level-delivery-plan-v0.2.md",
+  "activePhaseSpec": "engineering-ui-kit-roadmap-phase-2-three-file-handoff-cursor-agent-spec-v0.1.md",
+  "activeAgentHandoff": "engineering-ui-kit-roadmap-phase-2-three-file-handoff-cursor-agent-spec-v0.1.md",
+  "researchSource": "engineering-ui-kit-public-reuse-research-report-v3-dark-first-hi-fi-aligned.md",
+  "visualCalibrationSource": "approved hi-fi mockup image set",
+  "sourceOfTruthHierarchy": [
+    "Product requirements and closed project decisions",
+    "Public reuse research and accessibility authorities",
+    "Approved hi-fi mockups as app-specific visual calibration",
+    "Engineering UI Kit standards package",
+    "Implementation outputs generated from the standards package"
+  ],
+  "handoffConstraint": "strict three-file Copilot upload budget",
+  "notes": [
+    "The older standards-package Phase 2 provides validated machine-readable contracts, not a completed prose standards system.",
+    "The component manifest is intentionally broader than the approved mockups.",
+    "The package does not claim formal company-wide standards authority unless such standards are supplied later.",
+    "Public design systems inform taxonomy, accessibility posture, and documentation structure; this package is not a branded derivative.",
+    "The older standards-package Phase 3 authors the core prose standards while preserving the machine-readable token and component contracts.",
+    "The mechanical standards-package Phase 3 pass does not prove visual quality, product usefulness, or implementation readiness.",
+    "The minimum implementation contract for Vertical Slice 01 is complete under trials/vertical-slice-01/.",
+    "Roadmap Phase 2 packet preparation is complete under trials/vertical-slice-01/phase-2/; user upload has not yet occurred.",
+    "Roadmap Phase 2 is distinct from the older validated machine-readable-contract Phase 2.",
+    "The active gate is Roadmap Phase 3 user-owned Copilot upload and evidence-first trial execution.",
+    "Roadmap Phase 3 vertical-slice trial complete: 13/13 blocking acceptance criteria pass with zero manual corrections; see trials/vertical-slice-01/phase-3/phase-3-trial-report.md.",
+    "Implementation agent for the trial was Claude (Fable 5) substituting for Microsoft 365 Copilot under product-owner decision PO-1; Copilot-specific behavior remains unmeasured.",
+    "Roadmap Phase 4 operational revision complete: routing standard authored (ARCH-ROUTE-001..006), visual-drift prompt completed, qualitative verification checklist added, scaffold banners retired.",
+    "Roadmap Phases 5-7 complete 2026-07-06: core library (44 tests, trial reproduced via CLI), Electron workbench (28/28 renderer, 13/13 end-to-end handoff), v0.1 validation review, release notes, and packaging configuration. See product-owner-decision-log.md."
+  ]
+}

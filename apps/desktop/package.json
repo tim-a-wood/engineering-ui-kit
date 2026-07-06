@@ -1,0 +1,21 @@
+{
+  "name": "@engineering-ui-kit/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Engineering UI Kit desktop workbench — Electron main process and preload bridge.",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.preload.json",
+    "start": "electron .",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.preload.json --noEmit"
+  },
+  "dependencies": {
+    "@engineering-ui-kit/core": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "electron": "^33.0.0",
+    "typescript": "^5.8.0"
+  }
+}

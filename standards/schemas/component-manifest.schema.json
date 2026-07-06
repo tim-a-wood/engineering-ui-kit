@@ -1,0 +1,322 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/component-manifest.schema.json",
+  "title": "Engineering UI Kit Component Manifest Schema",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "meta",
+    "coverageDefinitions",
+    "categories",
+    "components",
+    "validation"
+  ],
+  "$defs": {
+    "traceability": {
+      "type": "object",
+      "required": [
+        "mockups",
+        "prd",
+        "research"
+      ],
+      "properties": {
+        "mockups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "prd": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "research": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "accessibility": {
+      "type": "object",
+      "required": [
+        "keyboard",
+        "aria",
+        "contrast",
+        "focus"
+      ],
+      "properties": {
+        "keyboard": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aria": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contrast": {
+          "type": "string",
+          "minLength": 1
+        },
+        "focus": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "packageName",
+        "packageVersion",
+        "phase",
+        "status",
+        "sourcePosture",
+        "date",
+        "mockupPosture",
+        "companyStandardsPosture"
+      ],
+      "properties": {
+        "mockupPosture": {
+          "const": "app-visual-calibration-not-exhaustive-standard"
+        },
+        "companyStandardsPosture": {
+          "const": "not-claimed-unless-formally-supplied"
+        }
+      },
+      "additionalProperties": true
+    },
+    "coverageDefinitions": {
+      "type": "object",
+      "required": [
+        "observed-in-mockups",
+        "partially-observed-in-mockups",
+        "prd-required",
+        "reference-backed-standard",
+        "inferred-engineering-need",
+        "reserved-for-future-validation"
+      ],
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 15,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "purpose",
+          "examples",
+          "maturity"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "shell",
+              "navigation",
+              "surface",
+              "layout",
+              "forms",
+              "tables",
+              "filters",
+              "feedback",
+              "status",
+              "overlays",
+              "data-visualization",
+              "workflow",
+              "engineering-artifacts",
+              "code-and-logs",
+              "content"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "maturity": {
+            "enum": [
+              "core",
+              "supporting",
+              "reserved"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 40,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "category",
+          "status",
+          "coverage",
+          "description",
+          "useWhen",
+          "avoidWhen",
+          "variants",
+          "states",
+          "tokenReferences",
+          "accessibility",
+          "traceability",
+          "implementationNotes",
+          "validation"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^CMP-[A-Z0-9]+(-[A-Z0-9]+)+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "enum": [
+              "shell",
+              "navigation",
+              "surface",
+              "layout",
+              "forms",
+              "tables",
+              "filters",
+              "feedback",
+              "status",
+              "overlays",
+              "data-visualization",
+              "workflow",
+              "engineering-artifacts",
+              "code-and-logs",
+              "content"
+            ]
+          },
+          "status": {
+            "enum": [
+              "required",
+              "recommended",
+              "optional",
+              "reserved",
+              "deprecated"
+            ]
+          },
+          "coverage": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "observed-in-mockups",
+                "partially-observed-in-mockups",
+                "prd-required",
+                "reference-backed-standard",
+                "inferred-engineering-need",
+                "reserved-for-future-validation"
+              ]
+            }
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "useWhen": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "avoidWhen": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "states": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tokenReferences": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^\\{semantic\\.[A-Za-z0-9_.]+\\}$",
+              "not": {
+                "pattern": "#[0-9a-fA-F]{3,8}|rgb\\(|hsl\\("
+              }
+            }
+          },
+          "accessibility": {
+            "$ref": "#/$defs/accessibility"
+          },
+          "traceability": {
+            "$ref": "#/$defs/traceability"
+          },
+          "implementationNotes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "validation": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "validation": {
+      "type": "object",
+      "required": [
+        "minimumComponentCount",
+        "idPattern",
+        "allowedCoverage",
+        "componentTokenReferencesMustResolve",
+        "componentManifestMayNotContainRawColors"
+      ]
+    }
+  }
+}

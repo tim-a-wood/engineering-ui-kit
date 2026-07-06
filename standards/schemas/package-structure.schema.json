@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engineering-ui-kit.local/schemas/package-structure.schema.json",
+  "title": "Engineering UI Kit Package Structure Schema",
+  "type": "object",
+  "required": [
+    "requiredDirectories",
+    "requiredFiles"
+  ],
+  "properties": {
+    "requiredDirectories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "requiredFiles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "singleTopLevelFolder": {
+      "const": "standards"
+    }
+  },
+  "additionalProperties": true
+}

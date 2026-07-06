@@ -1,0 +1,28 @@
+{
+  "packetId": "vertical-slice-01-phase-2",
+  "packetVersion": "0.1.0",
+  "variant": "visual/mockup",
+  "baselineCommit": "c1419e8112d0fb9eb3bdca8fa0e3861a276ed867",
+  "generatedAt": "2026-07-04T13:01:07Z",
+  "uploadFileCount": 3,
+  "files": [
+    {
+      "name": "repo-flatfile.txt",
+      "sha256": "ef0261432f2ca2f511d36de55b165f6e5f559a76a6129d5c5f218004864ee287",
+      "bytes": 22426
+    },
+    {
+      "name": "task-and-standard-pack.md",
+      "sha256": "a403093ad50efd3d71760cce36df1f117a29430a4b20c9b22b268f57b1d38deb",
+      "bytes": 36516
+    },
+    {
+      "name": "visual-reference-pack.pdf",
+      "sha256": "e61d87e361da8b45ff74cbf7aed47f94cf32036e5b0b0055f40b7d2b9686925a",
+      "bytes": 377811
+    }
+  ],
+  "humanContextReviewRequired": true,
+  "copilotUploadPerformed": false,
+  "overlayReceived": false
+}

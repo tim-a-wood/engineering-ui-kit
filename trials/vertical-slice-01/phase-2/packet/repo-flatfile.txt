@@ -1,0 +1,930 @@
+# Engineering UI Kit Repo Flatfile
+# packet_id: vertical-slice-01-phase-2
+# source_repo: vertical-slice-01-target-app
+# source_root: trials/vertical-slice-01/target-app
+# baseline_commit: c1419e8112d0fb9eb3bdca8fa0e3861a276ed867
+# generated_at: 2026-07-05T14:14:46Z
+# included_files: 11
+# excluded_summary: git metadata, dependencies, lockfile, build output, caches, binaries, archives, env/secrets, and all files outside the target app
+# secrets_guarantee: none — exclusions reduce risk but are not secret detection
+
+===== FILE: index.html =====
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Engineering UI Kit Trial</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+===== END FILE: index.html =====
+
+===== FILE: package.json =====
+{
+  "name": "vertical-slice-01-target-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --pretty false",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5"
+  }
+}
+===== END FILE: package.json =====
+
+===== FILE: src/App.tsx =====
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react'
+import {
+  CURRENT_WORKFLOW_STEP,
+  NAV_ITEMS,
+  PROJECT,
+  SECTION_META,
+  WORKFLOW_STEPS,
+  createInitialTaskPacket,
+  downloadTaskPacket,
+  serializeTaskPacketMarkdown,
+  validateTaskPacket,
+  type TaskPacketState,
+  type TaskSectionKey,
+} from './taskPacket'
+
+type StatusTone = 'info' | 'error' | 'success'
+
+type StatusMessage = {
+  tone: StatusTone
+  text: string
+}
+
+export default function App() {
+  const [packet, setPacket] = useState<TaskPacketState>(createInitialTaskPacket)
+  const [editingKey, setEditingKey] = useState<TaskSectionKey | null>(null)
+  const [draftValue, setDraftValue] = useState('')
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [status, setStatus] = useState<StatusMessage>({
+    tone: 'info',
+    text: 'Ready. Edit any section, then preview or export the task packet.',
+  })
+  const [showValidation, setShowValidation] = useState(false)
+
+  const previewButtonRef = useRef<HTMLButtonElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const dialogTitleId = useId()
+  const statusId = useId()
+  const validation = validateTaskPacket(packet)
+
+  const closePreview = useCallback(() => {
+    setPreviewOpen(false)
+    window.requestAnimationFrame(() => {
+      previewButtonRef.current?.focus()
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!previewOpen) {
+      return
+    }
+
+    closeButtonRef.current?.focus()
+
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closePreview()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [previewOpen, closePreview])
+
+  const beginEdit = (key: TaskSectionKey) => {
+    setEditingKey(key)
+    setDraftValue(packet[key])
+    setStatus({
+      tone: 'info',
+      text: `Editing ${SECTION_META.find((section) => section.key === key)?.title ?? key}.`,
+    })
+  }
+
+  const cancelEdit = () => {
+    setEditingKey(null)
+    setDraftValue('')
+    setStatus({
+      tone: 'info',
+      text: 'Edit cancelled. Previous value restored.',
+    })
+  }
+
+  const saveEdit = () => {
+    if (!editingKey) {
+      return
+    }
+
+    setPacket((current) => ({
+      ...current,
+      [editingKey]: draftValue,
+    }))
+    setEditingKey(null)
+    setDraftValue('')
+    setShowValidation(false)
+    setStatus({
+      tone: 'success',
+      text: `${SECTION_META.find((section) => section.key === editingKey)?.title ?? editingKey} saved.`,
+    })
+  }
+
+  const handlePreview = () => {
+    setShowValidation(true)
+    if (!validation.valid) {
+      setStatus({
+        tone: 'error',
+        text: validation.messages.join(' '),
+      })
+      return
+    }
+
+    setPreviewOpen(true)
+    setStatus({
+      tone: 'info',
+      text: 'Preview open. Press Escape or Close to dismiss.',
+    })
+  }
+
+  const handleExport = () => {
+    setShowValidation(true)
+    if (!validation.valid) {
+      setStatus({
+        tone: 'error',
+        text: validation.messages.join(' '),
+      })
+      return
+    }
+
+    downloadTaskPacket(packet)
+    setStatus({
+      tone: 'success',
+      text: 'Exported task-packet.md in the browser.',
+    })
+  }
+
+  const onDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Tab') {
+      return
+    }
+
+    const focusable = event.currentTarget.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    )
+    if (focusable.length === 0) {
+      return
+    }
+
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar" aria-label="Primary">
+        <div className="app-title">Engineering UI Kit Trial</div>
+        <nav aria-label="Primary navigation">
+          <ul className="nav-list">
+            {NAV_ITEMS.map((item) => (
+              <li key={item}>
+                <button
+                  type="button"
+                  className={item === 'Copilot Handoff' ? 'nav-item active' : 'nav-item'}
+                  aria-current={item === 'Copilot Handoff' ? 'page' : undefined}
+                >
+                  {item}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
+
+      <main className="main">
+        <header className="page-header">
+          <h1>Create Task Packet</h1>
+          <p className="page-subtitle">
+            Build the instruction packet Copilot will use to generate the overlay.
+          </p>
+        </header>
+
+        <ol className="workflow" aria-label="Workflow steps">
+          {WORKFLOW_STEPS.map((step, index) => {
+            const state =
+              index < CURRENT_WORKFLOW_STEP
+                ? 'complete'
+                : index === CURRENT_WORKFLOW_STEP
+                  ? 'current'
+                  : 'upcoming'
+            return (
+              <li key={step} className={`workflow-step ${state}`}>
+                <span className="workflow-marker" aria-hidden="true">
+                  {state === 'complete' ? '✓' : index + 1}
+                </span>
+                <span>
+                  {step}
+                  {state === 'current' ? ' (current)' : ''}
+                  {state === 'complete' ? ' (complete)' : ''}
+                </span>
+              </li>
+            )
+          })}
+        </ol>
+
+        <section className="project-summary" aria-labelledby="project-heading">
+          <h2 id="project-heading">Project</h2>
+          <p>
+            <strong>{PROJECT.name}</strong>
+          </p>
+          <p className="muted">{PROJECT.path}</p>
+        </section>
+
+        <section className="task-sections" aria-labelledby="task-sections-heading">
+          <h2 id="task-sections-heading">Task sections</h2>
+          <ul className="section-list">
+            {SECTION_META.map((section) => {
+              const isEditing = editingKey === section.key
+              const isEmpty = packet[section.key].trim().length === 0
+              const showEmptyError =
+                showValidation && section.required && isEmpty && !isEditing
+
+              return (
+                <li
+                  key={section.key}
+                  className={showEmptyError ? 'section-row invalid' : 'section-row'}
+                >
+                  <div className="section-copy">
+                    <h3>{section.title}</h3>
+                    <p className="muted">{section.description}</p>
+                    {!isEditing && (
+                      <p className="section-value">
+                        {packet[section.key].trim() || 'No content yet.'}
+                      </p>
+                    )}
+                    {showEmptyError && (
+                      <p className="field-error" role="alert">
+                        {section.title} is required.
+                      </p>
+                    )}
+                  </div>
+
+                  {isEditing ? (
+                    <div className="editor">
+                      <label htmlFor={`section-${section.key}`}>
+                        {section.title}
+                      </label>
+                      <textarea
+                        id={`section-${section.key}`}
+                        value={draftValue}
+                        onChange={(event) => setDraftValue(event.target.value)}
+                        rows={5}
+                      />
+                      <div className="editor-actions">
+                        <button type="button" onClick={saveEdit}>
+                          Save
+                        </button>
+                        <button type="button" className="secondary" onClick={cancelEdit}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => beginEdit(section.key)}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+
+        <div
+          className={`status status-${status.tone}`}
+          id={statusId}
+          role="status"
+          aria-live="polite"
+        >
+          <span className="status-label">
+            {status.tone === 'error'
+              ? 'Error'
+              : status.tone === 'success'
+                ? 'Success'
+                : 'Status'}
+            :
+          </span>{' '}
+          {status.text}
+        </div>
+
+        <div className="actions">
+          <button
+            type="button"
+            ref={previewButtonRef}
+            className="secondary"
+            onClick={handlePreview}
+            aria-describedby={statusId}
+          >
+            Preview Task Packet
+          </button>
+          <button type="button" onClick={handleExport}>
+            Export Task Packet
+          </button>
+        </div>
+      </main>
+
+      {previewOpen && (
+        <div className="dialog-backdrop">
+          <div
+            className="dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={dialogTitleId}
+            onKeyDown={onDialogKeyDown}
+          >
+            <div className="dialog-header">
+              <h2 id={dialogTitleId}>Task packet preview</h2>
+              <button
+                type="button"
+                ref={closeButtonRef}
+                className="secondary"
+                onClick={closePreview}
+              >
+                Close
+              </button>
+            </div>
+            <pre className="preview-content">{serializeTaskPacketMarkdown(packet)}</pre>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+===== END FILE: src/App.tsx =====
+
+===== FILE: src/main.tsx =====
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App'
+import './styles.css'
+
+const rootElement = document.getElementById('root')
+
+if (!rootElement) {
+  throw new Error('Root element #root was not found.')
+}
+
+createRoot(rootElement).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+===== END FILE: src/main.tsx =====
+
+===== FILE: src/styles.css =====
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  color: #1a1a1a;
+  background: #f4f4f4;
+  line-height: 1.45;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid #555;
+  background: #2f2f2f;
+  color: #fff;
+  padding: 0.45rem 0.8rem;
+}
+
+button.secondary {
+  background: #fff;
+  color: #1a1a1a;
+}
+
+button:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #005fcc;
+  outline-offset: 2px;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  border-right: 1px solid #ccc;
+  background: #ececec;
+  padding: 1rem;
+}
+
+.app-title {
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.nav-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: #1a1a1a;
+  border-color: transparent;
+}
+
+.nav-item.active {
+  background: #ddd;
+  border-color: #999;
+  font-weight: 600;
+}
+
+.main {
+  padding: 1.25rem 1.5rem 2rem;
+  background: #fff;
+}
+
+.page-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.6rem;
+}
+
+.page-subtitle,
+.muted {
+  color: #555;
+}
+
+.workflow {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  background: #fafafa;
+}
+
+.workflow-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.workflow-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid #666;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.workflow-step.complete .workflow-marker {
+  background: #d9ead3;
+}
+
+.workflow-step.current {
+  font-weight: 700;
+}
+
+.workflow-step.current .workflow-marker {
+  background: #cfe2f3;
+}
+
+.project-summary,
+.task-sections {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+}
+
+.project-summary h2,
+.task-sections h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.section-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.section-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  background: #fcfcfc;
+}
+
+.section-row.invalid {
+  border-color: #a00;
+}
+
+.section-copy h3 {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+
+.section-value {
+  margin: 0.5rem 0 0;
+  white-space: pre-wrap;
+}
+
+.field-error {
+  margin: 0.4rem 0 0;
+  color: #a00;
+  font-weight: 600;
+}
+
+.editor {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.editor textarea {
+  width: 100%;
+  min-height: 7rem;
+  padding: 0.5rem;
+  border: 1px solid #777;
+}
+
+.editor-actions,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.actions {
+  margin-top: 1rem;
+}
+
+.status {
+  margin-top: 1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #999;
+  background: #f7f7f7;
+}
+
+.status-error {
+  border-color: #a00;
+  background: #fdecea;
+}
+
+.status-success {
+  border-color: #27632a;
+  background: #e8f5e9;
+}
+
+.status-label {
+  font-weight: 700;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.dialog {
+  width: min(720px, 100%);
+  max-height: 85vh;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #444;
+  padding: 1rem;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.preview-content {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+  background: #f7f7f7;
+  border: 1px solid #ddd;
+  padding: 0.75rem;
+}
+===== END FILE: src/styles.css =====
+
+===== FILE: src/taskPacket.ts =====
+export type TaskSectionKey =
+  | 'goal'
+  | 'scope'
+  | 'constraints'
+  | 'acceptanceCriteria'
+  | 'references'
+
+export type TaskSection = {
+  key: TaskSectionKey
+  title: string
+  description: string
+  value: string
+  required: boolean
+}
+
+export type TaskPacketState = Record<TaskSectionKey, string>
+
+export type ValidationResult = {
+  valid: boolean
+  messages: string[]
+  emptyRequiredKeys: TaskSectionKey[]
+}
+
+export const APPLICATION = {
+  name: 'UI Overlay',
+  sourceRoot: 'trials/vertical-slice-01/target-app',
+} as const
+
+// Fixed sample data shown inside UI Overlay; this is not the application identity.
+export const PROJECT = {
+  name: 'signal-analyzer-refresh',
+  path: 'C:\\work\\signal-analyzer-refresh',
+} as const
+
+export const WORKFLOW_STEPS = [
+  'Prepare Context',
+  'Create Task Packet',
+  'Run in Copilot',
+  'Apply Zip Overlay',
+  'Verify & Review',
+] as const
+
+export const CURRENT_WORKFLOW_STEP = 1
+
+export const NAV_ITEMS = [
+  'Copilot Handoff',
+  'Recipes',
+  'Components',
+  'Projects',
+  'Settings',
+] as const
+
+export const SECTION_META: Array<{
+  key: TaskSectionKey
+  title: string
+  description: string
+  required: boolean
+}> = [
+  {
+    key: 'goal',
+    title: 'Goal',
+    description: 'What you want to achieve',
+    required: true,
+  },
+  {
+    key: 'scope',
+    title: 'Scope',
+    description: 'Screens, features, or areas in scope',
+    required: true,
+  },
+  {
+    key: 'constraints',
+    title: 'Constraints',
+    description: 'What not to change, technical limits, etc.',
+    required: true,
+  },
+  {
+    key: 'acceptanceCriteria',
+    title: 'Acceptance Criteria',
+    description: 'How success will be measured',
+    required: true,
+  },
+  {
+    key: 'references',
+    title: 'References',
+    description: 'Specs, designs, screenshots, examples',
+    required: true,
+  },
+]
+
+export const SAMPLE_TASK_PACKET: TaskPacketState = {
+  goal: "Refresh UI Overlay's Create Task Packet screen to match Engineering UI Kit dark-first standards while preserving all existing domain behavior.",
+  scope: 'Only the UI Overlay Create Task Packet screen in trials/vertical-slice-01/target-app/. The displayed signal-analyzer-refresh project is fixed sample data, not the application being redesigned. Limit changes to presentation, layout, and styling files listed in the task packet.',
+  constraints: 'Do not change task-packet serialization, validation rules, export filename, or protected interactions. Do not add routers, state libraries, component libraries, or network calls.',
+  acceptanceCriteria: 'Build and typecheck pass. Edit/Save/Cancel, preview dialog, Escape/Close focus return, and export of task-packet.md continue to work. Dark-first shell, workflow stepper, semantic tokens, and keyboard accessibility are present.',
+  references: 'Primary visual reference: project-sources/visual-references/1F2214C9-D849-41CA-9435-68F0A0032EEB.jpeg. Applicable standards and component IDs are listed in trials/vertical-slice-01/target-selection.md.',
+}
+
+export function createInitialTaskPacket(): TaskPacketState {
+  return { ...SAMPLE_TASK_PACKET }
+}
+
+export function validateTaskPacket(packet: TaskPacketState): ValidationResult {
+  const emptyRequiredKeys = SECTION_META.filter(
+    (section) => section.required && packet[section.key].trim().length === 0,
+  ).map((section) => section.key)
+
+  const messages = emptyRequiredKeys.map((key) => {
+    const title = SECTION_META.find((section) => section.key === key)?.title ?? key
+    return `${title} is required.`
+  })
+
+  return {
+    valid: emptyRequiredKeys.length === 0,
+    messages,
+    emptyRequiredKeys,
+  }
+}
+
+export function serializeTaskPacketMarkdown(packet: TaskPacketState): string {
+  const lines = [
+    '# Task Packet',
+    '',
+    `Application: ${APPLICATION.name}`,
+    `Application source: ${APPLICATION.sourceRoot}`,
+    `Selected project (sample): ${PROJECT.name}`,
+    `Selected project path (sample): ${PROJECT.path}`,
+    '',
+    '## Goal',
+    '',
+    packet.goal.trim() || '_(empty)_',
+    '',
+    '## Scope',
+    '',
+    packet.scope.trim() || '_(empty)_',
+    '',
+    '## Constraints',
+    '',
+    packet.constraints.trim() || '_(empty)_',
+    '',
+    '## Acceptance Criteria',
+    '',
+    packet.acceptanceCriteria.trim() || '_(empty)_',
+    '',
+    '## References',
+    '',
+    packet.references.trim() || '_(empty)_',
+    '',
+  ]
+
+  return lines.join('\n')
+}
+
+export function downloadTaskPacket(packet: TaskPacketState): void {
+  const markdown = serializeTaskPacketMarkdown(packet)
+  const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = 'task-packet.md'
+  document.body.appendChild(anchor)
+  anchor.click()
+  document.body.removeChild(anchor)
+  URL.revokeObjectURL(url)
+}
+===== END FILE: src/taskPacket.ts =====
+
+===== FILE: src/vite-env.d.ts =====
+/// <reference types="vite/client" />
+===== END FILE: src/vite-env.d.ts =====
+
+===== FILE: tsconfig.app.json =====
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["src"]
+}
+===== END FILE: tsconfig.app.json =====
+
+===== FILE: tsconfig.json =====
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+===== END FILE: tsconfig.json =====
+
+===== FILE: tsconfig.node.json =====
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+===== END FILE: tsconfig.node.json =====
+
+===== FILE: vite.config.ts =====
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+})
+===== END FILE: vite.config.ts =====

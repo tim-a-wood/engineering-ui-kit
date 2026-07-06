@@ -1,0 +1,4125 @@
+{
+  "$schema": "./schemas/component-manifest.schema.json",
+  "meta": {
+    "packageName": "engineering-ui-kit-standards",
+    "packageVersion": "0.3.0",
+    "phase": "Phase 3 — Core Standards Authoring",
+    "status": "core-standards-authored",
+    "sourcePosture": "product-decisions-public-reuse-and-app-visual-calibration",
+    "mockupPosture": "app-visual-calibration-not-exhaustive-standard",
+    "companyStandardsPosture": "not-claimed-unless-formally-supplied",
+    "date": "2026-07-03"
+  },
+  "coverageDefinitions": {
+    "observed-in-mockups": "Directly visible in at least one approved hi-fi mockup.",
+    "partially-observed-in-mockups": "Some visual or behavioral aspects appear in the mockups, but the component is not fully specified by them.",
+    "prd-required": "Required by product or workflow scope even if not fully visible in mockups.",
+    "reference-backed-standard": "Included because mature public references support it as a standard UI component or pattern.",
+    "inferred-engineering-need": "Included because engineering UIs commonly need it, but further project validation is required.",
+    "reserved-for-future-validation": "Reserved in the manifest so later phases can define it without ID churn."
+  },
+  "categories": [
+    {
+      "id": "shell",
+      "name": "Shell",
+      "purpose": "Application frame and persistent global regions.",
+      "examples": [
+        "App shell",
+        "Top bar"
+      ],
+      "maturity": "core"
+    },
+    {
+      "id": "navigation",
+      "name": "Navigation",
+      "purpose": "Movement between app sections and workflow locations.",
+      "examples": [
+        "Primary navigation",
+        "Breadcrumbs"
+      ],
+      "maturity": "core"
+    },
+    {
+      "id": "surface",
+      "name": "Surface",
+      "purpose": "Containers, cards, panels, and visual grouping surfaces.",
+      "examples": [
+        "Panel",
+        "Raised card"
+      ],
+      "maturity": "core"
+    },
+    {
+      "id": "layout",
+      "name": "Layout",
+      "purpose": "Composition patterns and region structure.",
+      "examples": [
+        "Dashboard grid",
+        "Split panel"
+      ],
+      "maturity": "core"
+    },
+    {
+      "id": "forms",
+      "name": "Forms",
+      "purpose": "Inputs, labels, validation, and controlled data entry.",
+      "examples": [
+        "Text input",
+        "Select"
+      ],
+      "maturity": "core"
+    },
+    {
+      "id": "tables",
+      "name": "Tables",
+      "purpose": "Tabular data, grids, rows, columns, pagination, and row actions.",
+      "examples": [
+        "Data table",
+        "Data grid"
+      ],
+      "maturity": "core"
+    },
+    {
+      "id": "filters",
+      "name": "Filters",
+      "purpose": "Search, chip, and filtering controls for dense views.",
+      "examples": [
+        "Filter bar",
+        "Filter chip"
+      ],
+      "maturity": "supporting"
+    },
+    {
+      "id": "feedback",
+      "name": "Feedback",
+      "purpose": "Alerts, toasts, validation summaries, and user-facing messages.",
+      "examples": [
+        "Alert",
+        "Toast"
+      ],
+      "maturity": "core"
+    },
+    {
+      "id": "status",
+      "name": "Status",
+      "purpose": "Compact state indicators for jobs, results, and workflow state.",
+      "examples": [
+        "Status badge",
+        "Job status indicator"
+      ],
+      "maturity": "core"
+    },
+    {
+      "id": "overlays",
+      "name": "Overlays",
+      "purpose": "Dialogs, drawers, popovers, menus, and tooltips.",
+      "examples": [
+        "Dialog",
+        "Drawer"
+      ],
+      "maturity": "core"
+    },
+    {
+      "id": "data-visualization",
+      "name": "Data Visualization",
+      "purpose": "Charts and visual analysis surfaces.",
+      "examples": [
+        "Line chart",
+        "Threshold band"
+      ],
+      "maturity": "supporting"
+    },
+    {
+      "id": "workflow",
+      "name": "Workflow",
+      "purpose": "Multi-step, event, and execution workflow patterns.",
+      "examples": [
+        "Step indicator",
+        "Timeline/event log"
+      ],
+      "maturity": "supporting"
+    },
+    {
+      "id": "engineering-artifacts",
+      "name": "Engineering Artifacts",
+      "purpose": "Artifacts, evidence, requirements, traces, and test summaries.",
+      "examples": [
+        "Artifact tree",
+        "Traceability matrix"
+      ],
+      "maturity": "supporting"
+    },
+    {
+      "id": "code-and-logs",
+      "name": "Code and Logs",
+      "purpose": "Code, logs, diffs, paths, and technical text.",
+      "examples": [
+        "Code block",
+        "Log viewer"
+      ],
+      "maturity": "supporting"
+    },
+    {
+      "id": "content",
+      "name": "Content",
+      "purpose": "Text blocks, empty states, help content, and key-value summaries.",
+      "examples": [
+        "Empty state",
+        "Key-value list"
+      ],
+      "maturity": "supporting"
+    }
+  ],
+  "components": [
+    {
+      "id": "CMP-SHELL-APP",
+      "name": "App Shell",
+      "category": "shell",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "a persistent application frame for dark-first engineering workflows.",
+      "useWhen": [
+        "Use app shell when the interface needs a persistent application frame for dark-first engineering workflows."
+      ],
+      "avoidWhen": [
+        "Avoid app shell when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "desktop",
+        "wide",
+        "constrained"
+      ],
+      "states": [
+        "default",
+        "loading",
+        "error"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.canvas}",
+        "{semantic.surface.panel}",
+        "{semantic.border.subtle}",
+        "{semantic.density.compact.controlHeight}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-SHELL"
+        ],
+        "prd": [
+          "PRD-APP-SHELL"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for app shell."
+      ],
+      "validation": [
+        "Validate app shell for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-SHELL-TOP-BAR",
+      "name": "Top Bar",
+      "category": "shell",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "a persistent top region for product context, global actions, and status.",
+      "useWhen": [
+        "Use top bar when the interface needs a persistent top region for product context, global actions, and status."
+      ],
+      "avoidWhen": [
+        "Avoid top bar when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "dense"
+      ],
+      "states": [
+        "default",
+        "sticky"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.canvas}",
+        "{semantic.surface.panel}",
+        "{semantic.border.subtle}",
+        "{semantic.density.compact.controlHeight}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-SHELL"
+        ],
+        "prd": [
+          "PRD-APP-SHELL"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for top bar."
+      ],
+      "validation": [
+        "Validate top bar for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-NAV-PRIMARY",
+      "name": "Primary Navigation",
+      "category": "navigation",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required",
+        "reference-backed-standard"
+      ],
+      "description": "top-level movement between major application areas.",
+      "useWhen": [
+        "Use primary navigation when the interface needs top-level movement between major application areas."
+      ],
+      "avoidWhen": [
+        "Avoid primary navigation when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "rail",
+        "tabs",
+        "horizontal"
+      ],
+      "states": [
+        "default",
+        "active",
+        "focus",
+        "collapsed"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.text.secondary}",
+        "{semantic.accent.primary}",
+        "{semantic.border.subtle}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-SHELL"
+        ],
+        "prd": [
+          "PRD-NAVIGATION"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for primary navigation."
+      ],
+      "validation": [
+        "Validate primary navigation for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-NAV-SECONDARY",
+      "name": "Secondary Navigation",
+      "category": "navigation",
+      "status": "recommended",
+      "coverage": [
+        "partially-observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "movement within a page, workspace, or secondary workflow context.",
+      "useWhen": [
+        "Use secondary navigation when the interface needs movement within a page, workspace, or secondary workflow context."
+      ],
+      "avoidWhen": [
+        "Avoid secondary navigation when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "tabs",
+        "subnav",
+        "section-list"
+      ],
+      "states": [
+        "default",
+        "active",
+        "focus"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.text.secondary}",
+        "{semantic.accent.primary}",
+        "{semantic.border.subtle}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-DETAIL"
+        ],
+        "prd": [
+          "PRD-NAVIGATION"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for secondary navigation."
+      ],
+      "validation": [
+        "Validate secondary navigation for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-NAV-BREADCRUMBS",
+      "name": "Breadcrumbs",
+      "category": "navigation",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard",
+        "inferred-engineering-need"
+      ],
+      "description": "hierarchical location context for nested artifacts or records.",
+      "useWhen": [
+        "Use breadcrumbs when the interface needs hierarchical location context for nested artifacts or records."
+      ],
+      "avoidWhen": [
+        "Avoid breadcrumbs when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "truncated"
+      ],
+      "states": [
+        "default",
+        "focus"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.text.secondary}",
+        "{semantic.accent.primary}",
+        "{semantic.border.subtle}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-ARTIFACT-NAVIGATION"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for breadcrumbs.",
+        "Phase 2 reserves the ID and expected role; exact behavior, variants, and examples require later project validation."
+      ],
+      "validation": [
+        "Validate breadcrumbs for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-SHELL-PAGE-HEADER",
+      "name": "Page Header",
+      "category": "shell",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "a consistent title, subtitle, metadata, and page action region.",
+      "useWhen": [
+        "Use page header when the interface needs a consistent title, subtitle, metadata, and page action region."
+      ],
+      "avoidWhen": [
+        "Avoid page header when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "with-actions",
+        "with-tabs"
+      ],
+      "states": [
+        "default"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.canvas}",
+        "{semantic.surface.panel}",
+        "{semantic.border.subtle}",
+        "{semantic.density.compact.controlHeight}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-PAGE-HEADER"
+        ],
+        "prd": [
+          "PRD-PAGE-COMPOSITION"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for page header."
+      ],
+      "validation": [
+        "Validate page header for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-NAV-COMMAND-ACTION-BAR",
+      "name": "Command Action Bar",
+      "category": "navigation",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "a grouped action region for page-level commands and workflow actions.",
+      "useWhen": [
+        "Use command action bar when the interface needs a grouped action region for page-level commands and workflow actions."
+      ],
+      "avoidWhen": [
+        "Avoid command action bar when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "page",
+        "panel",
+        "inline"
+      ],
+      "states": [
+        "default",
+        "disabled",
+        "overflow"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.text.secondary}",
+        "{semantic.accent.primary}",
+        "{semantic.border.subtle}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-ACTIONS"
+        ],
+        "prd": [
+          "PRD-WORKFLOW-ACTIONS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for command action bar."
+      ],
+      "validation": [
+        "Validate command action bar for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-SURFACE-PANEL",
+      "name": "Panel",
+      "category": "surface",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "a default bounded container for related engineering UI content.",
+      "useWhen": [
+        "Use panel when the interface needs a default bounded container for related engineering UI content."
+      ],
+      "avoidWhen": [
+        "Avoid panel when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "with-header",
+        "scrolling"
+      ],
+      "states": [
+        "default",
+        "active",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.border.subtle}",
+        "{semantic.radius.lg}",
+        "{semantic.shadow.sm}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-PANELS"
+        ],
+        "prd": [
+          "PRD-LAYOUT"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for panel."
+      ],
+      "validation": [
+        "Validate panel for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-SURFACE-RAISED-CARD",
+      "name": "Raised Card",
+      "category": "surface",
+      "status": "recommended",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "a higher-emphasis surface for metrics, summaries, or selected records.",
+      "useWhen": [
+        "Use raised card when the interface needs a higher-emphasis surface for metrics, summaries, or selected records."
+      ],
+      "avoidWhen": [
+        "Avoid raised card when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "metric",
+        "summary",
+        "selectable"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "selected",
+        "focus"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.border.subtle}",
+        "{semantic.radius.lg}",
+        "{semantic.shadow.sm}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-CARDS"
+        ],
+        "prd": [
+          "PRD-LAYOUT"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for raised card."
+      ],
+      "validation": [
+        "Validate raised card for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-SURFACE-INSET-PANEL",
+      "name": "Inset Panel",
+      "category": "surface",
+      "status": "recommended",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "a recessed container nested inside a parent panel.",
+      "useWhen": [
+        "Use inset panel when the interface needs a recessed container nested inside a parent panel."
+      ],
+      "avoidWhen": [
+        "Avoid inset panel when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "code",
+        "chart",
+        "form-well"
+      ],
+      "states": [
+        "default",
+        "focus-within"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.border.subtle}",
+        "{semantic.radius.lg}",
+        "{semantic.shadow.sm}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-INSET"
+        ],
+        "prd": [
+          "PRD-LAYOUT"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for inset panel."
+      ],
+      "validation": [
+        "Validate inset panel for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-LAYOUT-SECTION-HEADER",
+      "name": "Section Header",
+      "category": "layout",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "a labeled divider for major page or panel sections.",
+      "useWhen": [
+        "Use section header when the interface needs a labeled divider for major page or panel sections."
+      ],
+      "avoidWhen": [
+        "Avoid section header when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "with-actions",
+        "with-count"
+      ],
+      "states": [
+        "default"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.canvas}",
+        "{semantic.spacing.6}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "No independent keyboard pattern unless the component contains interactive descendants.",
+        "aria": "Use semantic HTML regioning only when the component labels a meaningful section.",
+        "contrast": "All text and icon content must satisfy dark-theme contrast checks.",
+        "focus": "Do not create focus stops for decorative containers."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-SECTIONS"
+        ],
+        "prd": [
+          "PRD-PAGE-COMPOSITION"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for section header."
+      ],
+      "validation": [
+        "Validate section header for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-LAYOUT-TOOLBAR",
+      "name": "Toolbar",
+      "category": "layout",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "a compact horizontal region for controls that affect a nearby panel or table.",
+      "useWhen": [
+        "Use toolbar when the interface needs a compact horizontal region for controls that affect a nearby panel or table."
+      ],
+      "avoidWhen": [
+        "Avoid toolbar when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "table",
+        "chart",
+        "form"
+      ],
+      "states": [
+        "default",
+        "overflow",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.canvas}",
+        "{semantic.spacing.6}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-TOOLBARS"
+        ],
+        "prd": [
+          "PRD-DENSE-WORKFLOW"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for toolbar."
+      ],
+      "validation": [
+        "Validate toolbar for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-LAYOUT-SPLIT-PANEL",
+      "name": "Split Panel",
+      "category": "layout",
+      "status": "recommended",
+      "coverage": [
+        "partially-observed-in-mockups",
+        "inferred-engineering-need"
+      ],
+      "description": "side-by-side regions for comparing lists, details, artifacts, or evidence.",
+      "useWhen": [
+        "Use split panel when the interface needs side-by-side regions for comparing lists, details, artifacts, or evidence."
+      ],
+      "avoidWhen": [
+        "Avoid split panel when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "two-pane",
+        "three-pane",
+        "master-detail"
+      ],
+      "states": [
+        "default",
+        "resizing",
+        "collapsed"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.canvas}",
+        "{semantic.spacing.6}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-DETAIL"
+        ],
+        "prd": [
+          "PRD-ENGINEERING-WORKFLOWS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for split panel.",
+        "Phase 2 reserves the ID and expected role; exact behavior, variants, and examples require later project validation."
+      ],
+      "validation": [
+        "Validate split panel for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-LAYOUT-RESIZABLE-PANEL",
+      "name": "Resizable Panel",
+      "category": "layout",
+      "status": "optional",
+      "coverage": [
+        "inferred-engineering-need",
+        "reserved-for-future-validation"
+      ],
+      "description": "adjustable regions for dense technical review workflows.",
+      "useWhen": [
+        "Use resizable panel when the interface needs adjustable regions for dense technical review workflows."
+      ],
+      "avoidWhen": [
+        "Avoid resizable panel when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "horizontal",
+        "vertical"
+      ],
+      "states": [
+        "default",
+        "dragging",
+        "collapsed"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.canvas}",
+        "{semantic.spacing.6}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-ENGINEERING-WORKFLOWS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for resizable panel.",
+        "Resize handles and persistence rules are reserved for later validation."
+      ],
+      "validation": [
+        "Validate resizable panel for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-LAYOUT-DASHBOARD-GRID",
+      "name": "Dashboard Grid",
+      "category": "layout",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "a responsive grid for metrics, charts, summaries, and status panels.",
+      "useWhen": [
+        "Use dashboard grid when the interface needs a responsive grid for metrics, charts, summaries, and status panels."
+      ],
+      "avoidWhen": [
+        "Avoid dashboard grid when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "dense",
+        "responsive",
+        "fixed"
+      ],
+      "states": [
+        "default",
+        "loading"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.canvas}",
+        "{semantic.spacing.6}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "No independent keyboard pattern unless the component contains interactive descendants.",
+        "aria": "Use semantic HTML regioning only when the component labels a meaningful section.",
+        "contrast": "All text and icon content must satisfy dark-theme contrast checks.",
+        "focus": "Do not create focus stops for decorative containers."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-DASHBOARD"
+        ],
+        "prd": [
+          "PRD-DASHBOARDS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for dashboard grid."
+      ],
+      "validation": [
+        "Validate dashboard grid for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-LAYOUT-DETAIL",
+      "name": "Detail Layout",
+      "category": "layout",
+      "status": "required",
+      "coverage": [
+        "partially-observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "a structured detail page composition with summary, metadata, tabs, and related panels.",
+      "useWhen": [
+        "Use detail layout when the interface needs a structured detail page composition with summary, metadata, tabs, and related panels."
+      ],
+      "avoidWhen": [
+        "Avoid detail layout when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "record",
+        "artifact",
+        "workflow"
+      ],
+      "states": [
+        "default",
+        "loading",
+        "error"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.canvas}",
+        "{semantic.spacing.6}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "No independent keyboard pattern unless the component contains interactive descendants.",
+        "aria": "Use semantic HTML regioning only when the component labels a meaningful section.",
+        "contrast": "All text and icon content must satisfy dark-theme contrast checks.",
+        "focus": "Do not create focus stops for decorative containers."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-DETAIL"
+        ],
+        "prd": [
+          "PRD-DETAIL-PAGES"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for detail layout."
+      ],
+      "validation": [
+        "Validate detail layout for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FORM-FIELD",
+      "name": "Form Field",
+      "category": "forms",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "a label, description, control, error, and helper-text wrapper.",
+      "useWhen": [
+        "Use form field when the interface needs a label, description, control, error, and helper-text wrapper."
+      ],
+      "avoidWhen": [
+        "Avoid form field when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "required",
+        "invalid"
+      ],
+      "states": [
+        "default",
+        "focus-within",
+        "invalid",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.border.subtle}",
+        "{semantic.border.focus}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.controlHeight}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-FORMS"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for form field."
+      ],
+      "validation": [
+        "Validate form field for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FORM-TEXT-INPUT",
+      "name": "Text Input",
+      "category": "forms",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "single-line text entry.",
+      "useWhen": [
+        "Use text input when the interface needs single-line text entry."
+      ],
+      "avoidWhen": [
+        "Avoid text input when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "with-prefix",
+        "with-suffix"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "invalid",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.border.subtle}",
+        "{semantic.border.focus}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.controlHeight}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-FORMS"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for text input."
+      ],
+      "validation": [
+        "Validate text input for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FORM-NUMBER-INPUT",
+      "name": "Number Input",
+      "category": "forms",
+      "status": "required",
+      "coverage": [
+        "partially-observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "numeric entry with validation and formatting expectations.",
+      "useWhen": [
+        "Use number input when the interface needs numeric entry with validation and formatting expectations."
+      ],
+      "avoidWhen": [
+        "Avoid number input when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "integer",
+        "decimal",
+        "unit"
+      ],
+      "states": [
+        "default",
+        "focus",
+        "invalid",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.border.subtle}",
+        "{semantic.border.focus}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.controlHeight}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-FORMS"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for number input."
+      ],
+      "validation": [
+        "Validate number input for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FORM-SELECT",
+      "name": "Select",
+      "category": "forms",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "selection from a constrained list of values.",
+      "useWhen": [
+        "Use select when the interface needs selection from a constrained list of values."
+      ],
+      "avoidWhen": [
+        "Avoid select when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "single",
+        "compact"
+      ],
+      "states": [
+        "default",
+        "open",
+        "focus",
+        "invalid",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.border.subtle}",
+        "{semantic.border.focus}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.controlHeight}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-FORMS"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for select."
+      ],
+      "validation": [
+        "Validate select for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FORM-COMBOBOX",
+      "name": "Combobox",
+      "category": "forms",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard",
+        "inferred-engineering-need"
+      ],
+      "description": "searchable selection for long or dynamic option lists.",
+      "useWhen": [
+        "Use combobox when the interface needs searchable selection for long or dynamic option lists."
+      ],
+      "avoidWhen": [
+        "Avoid combobox when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "single",
+        "async",
+        "creatable-reserved"
+      ],
+      "states": [
+        "default",
+        "open",
+        "filtering",
+        "no-results",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.border.subtle}",
+        "{semantic.border.focus}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.controlHeight}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-DENSE-WORKFLOW"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for combobox.",
+        "Phase 2 reserves the ID and expected role; exact behavior, variants, and examples require later project validation."
+      ],
+      "validation": [
+        "Validate combobox for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-FORM-TEXTAREA",
+      "name": "Textarea",
+      "category": "forms",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard",
+        "prd-required"
+      ],
+      "description": "multi-line free-text entry for notes, comments, and descriptions.",
+      "useWhen": [
+        "Use textarea when the interface needs multi-line free-text entry for notes, comments, and descriptions."
+      ],
+      "avoidWhen": [
+        "Avoid textarea when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "resizable",
+        "fixed"
+      ],
+      "states": [
+        "default",
+        "focus",
+        "invalid",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.border.subtle}",
+        "{semantic.border.focus}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.controlHeight}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for textarea."
+      ],
+      "validation": [
+        "Validate textarea for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FORM-CHECKBOX",
+      "name": "Checkbox",
+      "category": "forms",
+      "status": "required",
+      "coverage": [
+        "reference-backed-standard",
+        "prd-required"
+      ],
+      "description": "binary or multi-select boolean selection.",
+      "useWhen": [
+        "Use checkbox when the interface needs binary or multi-select boolean selection."
+      ],
+      "avoidWhen": [
+        "Avoid checkbox when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "single",
+        "grouped"
+      ],
+      "states": [
+        "unchecked",
+        "checked",
+        "indeterminate",
+        "focus",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.border.subtle}",
+        "{semantic.border.focus}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.controlHeight}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for checkbox."
+      ],
+      "validation": [
+        "Validate checkbox for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FORM-RADIO-GROUP",
+      "name": "Radio Group",
+      "category": "forms",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard"
+      ],
+      "description": "exclusive selection from a small set of choices.",
+      "useWhen": [
+        "Use radio group when the interface needs exclusive selection from a small set of choices."
+      ],
+      "avoidWhen": [
+        "Avoid radio group when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "vertical",
+        "horizontal"
+      ],
+      "states": [
+        "default",
+        "focus",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.border.subtle}",
+        "{semantic.border.focus}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.controlHeight}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for radio group."
+      ],
+      "validation": [
+        "Validate radio group for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FORM-SWITCH",
+      "name": "Switch",
+      "category": "forms",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard"
+      ],
+      "description": "immediate binary setting toggle.",
+      "useWhen": [
+        "Use switch when the interface needs immediate binary setting toggle."
+      ],
+      "avoidWhen": [
+        "Avoid switch when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "compact"
+      ],
+      "states": [
+        "off",
+        "on",
+        "focus",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.border.subtle}",
+        "{semantic.border.focus}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.controlHeight}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for switch."
+      ],
+      "validation": [
+        "Validate switch for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FORM-DATE-TIME-INPUT",
+      "name": "Date Time Input",
+      "category": "forms",
+      "status": "optional",
+      "coverage": [
+        "reference-backed-standard",
+        "inferred-engineering-need"
+      ],
+      "description": "date, time, or timestamp entry for engineering records and filters.",
+      "useWhen": [
+        "Use date time input when the interface needs date, time, or timestamp entry for engineering records and filters."
+      ],
+      "avoidWhen": [
+        "Avoid date time input when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "date",
+        "time",
+        "datetime"
+      ],
+      "states": [
+        "default",
+        "focus",
+        "invalid",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.border.subtle}",
+        "{semantic.border.focus}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.controlHeight}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-FILTERING"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for date time input.",
+        "Locale, timezone, and picker behavior require later validation."
+      ],
+      "validation": [
+        "Validate date time input for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-FILTER-SEARCH-FIELD",
+      "name": "Search Field",
+      "category": "filters",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "keyword filtering across tables, artifacts, and records.",
+      "useWhen": [
+        "Use search field when the interface needs keyword filtering across tables, artifacts, and records."
+      ],
+      "avoidWhen": [
+        "Avoid search field when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "global",
+        "table",
+        "panel"
+      ],
+      "states": [
+        "default",
+        "typing",
+        "clearable",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.accent.primary}",
+        "{semantic.border.subtle}",
+        "{semantic.radius.pill}",
+        "{semantic.density.compact.controlHeight}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-FILTERS"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for search field."
+      ],
+      "validation": [
+        "Validate search field for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FILTER-BAR",
+      "name": "Filter Bar",
+      "category": "filters",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "a compact control region for filtering high-density datasets.",
+      "useWhen": [
+        "Use filter bar when the interface needs a compact control region for filtering high-density datasets."
+      ],
+      "avoidWhen": [
+        "Avoid filter bar when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "table",
+        "dashboard",
+        "artifact"
+      ],
+      "states": [
+        "default",
+        "dirty",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.accent.primary}",
+        "{semantic.border.subtle}",
+        "{semantic.radius.pill}",
+        "{semantic.density.compact.controlHeight}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-FILTERS"
+        ],
+        "prd": [
+          "PRD-FILTERING"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for filter bar."
+      ],
+      "validation": [
+        "Validate filter bar for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FILTER-CHIP",
+      "name": "Filter Chip",
+      "category": "filters",
+      "status": "recommended",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "a compact representation of an active filter.",
+      "useWhen": [
+        "Use filter chip when the interface needs a compact representation of an active filter."
+      ],
+      "avoidWhen": [
+        "Avoid filter chip when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "removable",
+        "read-only",
+        "status"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "focus",
+        "selected"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.accent.primary}",
+        "{semantic.border.subtle}",
+        "{semantic.radius.pill}",
+        "{semantic.density.compact.controlHeight}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-FILTERS"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for filter chip."
+      ],
+      "validation": [
+        "Validate filter chip for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FORM-FILE-DROPZONE",
+      "name": "File Dropzone",
+      "category": "forms",
+      "status": "optional",
+      "coverage": [
+        "prd-required",
+        "inferred-engineering-need"
+      ],
+      "description": "drag-and-drop or browse file intake for artifacts and imports.",
+      "useWhen": [
+        "Use file dropzone when the interface needs drag-and-drop or browse file intake for artifacts and imports."
+      ],
+      "avoidWhen": [
+        "Avoid file dropzone when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "single",
+        "multiple",
+        "restricted-type"
+      ],
+      "states": [
+        "default",
+        "drag-over",
+        "uploading",
+        "error",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.inset}",
+        "{semantic.border.subtle}",
+        "{semantic.border.focus}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.controlHeight}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-ARTIFACTS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for file dropzone.",
+        "Accepted file types, security posture, and upload behavior require later validation."
+      ],
+      "validation": [
+        "Validate file dropzone for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-TABLE-DATA-TABLE",
+      "name": "Data Table",
+      "category": "tables",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "structured tabular presentation of records.",
+      "useWhen": [
+        "Use data table when the interface needs structured tabular presentation of records."
+      ],
+      "avoidWhen": [
+        "Avoid data table when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "sortable",
+        "selectable"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "selected",
+        "loading",
+        "empty"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.surface.panelRaised}",
+        "{semantic.border.subtle}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.rowHeight}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-TABLES"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for data table."
+      ],
+      "validation": [
+        "Validate data table for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-TABLE-DATA-GRID",
+      "name": "Data Grid",
+      "category": "tables",
+      "status": "recommended",
+      "coverage": [
+        "partially-observed-in-mockups",
+        "reference-backed-standard",
+        "inferred-engineering-need"
+      ],
+      "description": "interactive tabular review with sorting, selection, and dense engineering metadata.",
+      "useWhen": [
+        "Use data grid when the interface needs interactive tabular review with sorting, selection, and dense engineering metadata."
+      ],
+      "avoidWhen": [
+        "Avoid data grid when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "virtualized-reserved",
+        "editable-reserved",
+        "selectable"
+      ],
+      "states": [
+        "default",
+        "focus-cell",
+        "selected",
+        "loading",
+        "error"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.surface.panelRaised}",
+        "{semantic.border.subtle}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.rowHeight}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-TABLES"
+        ],
+        "prd": [
+          "PRD-DENSE-DATA"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for data grid.",
+        "Virtualization, editing, and keyboard grid behavior need deeper Phase 3/4 specification."
+      ],
+      "validation": [
+        "Validate data grid for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-TABLE-COLUMN-HEADER",
+      "name": "Column Header",
+      "category": "tables",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "labeled table columns with sorting and alignment metadata.",
+      "useWhen": [
+        "Use column header when the interface needs labeled table columns with sorting and alignment metadata."
+      ],
+      "avoidWhen": [
+        "Avoid column header when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "sortable",
+        "numeric",
+        "resizable-reserved"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "sorted",
+        "focus"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.surface.panelRaised}",
+        "{semantic.border.subtle}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.rowHeight}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-TABLES"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for column header."
+      ],
+      "validation": [
+        "Validate column header for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-TABLE-ROW-ACTION-MENU",
+      "name": "Row Action Menu",
+      "category": "tables",
+      "status": "recommended",
+      "coverage": [
+        "partially-observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "per-row contextual actions without overcrowding the table.",
+      "useWhen": [
+        "Use row action menu when the interface needs per-row contextual actions without overcrowding the table."
+      ],
+      "avoidWhen": [
+        "Avoid row action menu when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "kebab",
+        "inline"
+      ],
+      "states": [
+        "default",
+        "open",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.surface.panelRaised}",
+        "{semantic.border.subtle}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.rowHeight}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-TABLES"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for row action menu."
+      ],
+      "validation": [
+        "Validate row action menu for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-TABLE-PAGINATION",
+      "name": "Pagination",
+      "category": "tables",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard",
+        "inferred-engineering-need"
+      ],
+      "description": "navigation across large record sets.",
+      "useWhen": [
+        "Use pagination when the interface needs navigation across large record sets."
+      ],
+      "avoidWhen": [
+        "Avoid pagination when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "page-number",
+        "cursor-reserved"
+      ],
+      "states": [
+        "default",
+        "focus",
+        "disabled"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.surface.panelRaised}",
+        "{semantic.border.subtle}",
+        "{semantic.text.primary}",
+        "{semantic.density.compact.rowHeight}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for pagination.",
+        "Phase 2 reserves the ID and expected role; exact behavior, variants, and examples require later project validation."
+      ],
+      "validation": [
+        "Validate pagination for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-CONTENT-EMPTY-STATE",
+      "name": "Empty State",
+      "category": "content",
+      "status": "required",
+      "coverage": [
+        "reference-backed-standard",
+        "prd-required"
+      ],
+      "description": "clear guidance when a panel, table, or workflow has no data.",
+      "useWhen": [
+        "Use empty state when the interface needs clear guidance when a panel, table, or workflow has no data."
+      ],
+      "avoidWhen": [
+        "Avoid empty state when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "actionable",
+        "no-results"
+      ],
+      "states": [
+        "default"
+      ],
+      "tokenReferences": [
+        "{semantic.text.primary}",
+        "{semantic.text.secondary}",
+        "{semantic.text.muted}",
+        "{semantic.spacing.4}"
+      ],
+      "accessibility": {
+        "keyboard": "No independent keyboard pattern unless the component contains interactive descendants.",
+        "aria": "Use semantic HTML regioning only when the component labels a meaningful section.",
+        "contrast": "All text and icon content must satisfy dark-theme contrast checks.",
+        "focus": "Do not create focus stops for decorative containers."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-EMPTY-LOADING-ERROR"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for empty state."
+      ],
+      "validation": [
+        "Validate empty state for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FEEDBACK-LOADING-STATE",
+      "name": "Loading State",
+      "category": "feedback",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "temporary state while content, jobs, or artifacts load.",
+      "useWhen": [
+        "Use loading state when the interface needs temporary state while content, jobs, or artifacts load."
+      ],
+      "avoidWhen": [
+        "Avoid loading state when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "spinner",
+        "skeleton",
+        "inline"
+      ],
+      "states": [
+        "loading",
+        "slow"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panelRaised}",
+        "{semantic.border.strong}",
+        "{semantic.status.info}",
+        "{semantic.status.danger}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-LOADING"
+        ],
+        "prd": [
+          "PRD-EMPTY-LOADING-ERROR"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for loading state."
+      ],
+      "validation": [
+        "Validate loading state for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FEEDBACK-ERROR-STATE",
+      "name": "Error State",
+      "category": "feedback",
+      "status": "required",
+      "coverage": [
+        "reference-backed-standard",
+        "prd-required"
+      ],
+      "description": "recoverable error presentation for failed loads, validation, or workflows.",
+      "useWhen": [
+        "Use error state when the interface needs recoverable error presentation for failed loads, validation, or workflows."
+      ],
+      "avoidWhen": [
+        "Avoid error state when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "panel",
+        "inline",
+        "page"
+      ],
+      "states": [
+        "error",
+        "retrying"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panelRaised}",
+        "{semantic.border.strong}",
+        "{semantic.status.info}",
+        "{semantic.status.danger}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-EMPTY-LOADING-ERROR"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for error state."
+      ],
+      "validation": [
+        "Validate error state for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-CONTENT-METRIC-CARD",
+      "name": "Metric Card",
+      "category": "content",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "compact summary of a key count, status, or metric.",
+      "useWhen": [
+        "Use metric card when the interface needs compact summary of a key count, status, or metric."
+      ],
+      "avoidWhen": [
+        "Avoid metric card when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "standard",
+        "trend",
+        "status"
+      ],
+      "states": [
+        "default",
+        "warning",
+        "danger",
+        "loading"
+      ],
+      "tokenReferences": [
+        "{semantic.text.primary}",
+        "{semantic.text.secondary}",
+        "{semantic.text.muted}",
+        "{semantic.spacing.4}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-METRICS"
+        ],
+        "prd": [
+          "PRD-DASHBOARDS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for metric card."
+      ],
+      "validation": [
+        "Validate metric card for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-CONTENT-KEY-VALUE-LIST",
+      "name": "Key Value List",
+      "category": "content",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "compact display of metadata pairs.",
+      "useWhen": [
+        "Use key value list when the interface needs compact display of metadata pairs."
+      ],
+      "avoidWhen": [
+        "Avoid key value list when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "two-column",
+        "dense"
+      ],
+      "states": [
+        "default"
+      ],
+      "tokenReferences": [
+        "{semantic.text.primary}",
+        "{semantic.text.secondary}",
+        "{semantic.text.muted}",
+        "{semantic.spacing.4}"
+      ],
+      "accessibility": {
+        "keyboard": "No independent keyboard pattern unless the component contains interactive descendants.",
+        "aria": "Use semantic HTML regioning only when the component labels a meaningful section.",
+        "contrast": "All text and icon content must satisfy dark-theme contrast checks.",
+        "focus": "Do not create focus stops for decorative containers."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-METADATA"
+        ],
+        "prd": [
+          "PRD-DETAIL-PAGES"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for key value list."
+      ],
+      "validation": [
+        "Validate key value list for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-STATUS-BADGE",
+      "name": "Status Badge",
+      "category": "status",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "compact visual state indication.",
+      "useWhen": [
+        "Use status badge when the interface needs compact visual state indication."
+      ],
+      "avoidWhen": [
+        "Avoid status badge when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "success",
+        "warning",
+        "danger",
+        "info",
+        "neutral",
+        "running",
+        "pending"
+      ],
+      "states": [
+        "default",
+        "active"
+      ],
+      "tokenReferences": [
+        "{semantic.status.success}",
+        "{semantic.status.warning}",
+        "{semantic.status.danger}",
+        "{semantic.status.neutral}",
+        "{semantic.radius.pill}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-STATUS"
+        ],
+        "prd": [
+          "PRD-STATUS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for status badge."
+      ],
+      "validation": [
+        "Validate status badge for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FEEDBACK-ALERT",
+      "name": "Alert",
+      "category": "feedback",
+      "status": "required",
+      "coverage": [
+        "reference-backed-standard",
+        "prd-required"
+      ],
+      "description": "prominent message for important contextual feedback.",
+      "useWhen": [
+        "Use alert when the interface needs prominent message for important contextual feedback."
+      ],
+      "avoidWhen": [
+        "Avoid alert when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "info",
+        "success",
+        "warning",
+        "danger"
+      ],
+      "states": [
+        "default",
+        "dismissible"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panelRaised}",
+        "{semantic.border.strong}",
+        "{semantic.status.info}",
+        "{semantic.status.danger}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for alert."
+      ],
+      "validation": [
+        "Validate alert for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FEEDBACK-TOAST",
+      "name": "Toast",
+      "category": "feedback",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard"
+      ],
+      "description": "temporary non-blocking system feedback.",
+      "useWhen": [
+        "Use toast when the interface needs temporary non-blocking system feedback."
+      ],
+      "avoidWhen": [
+        "Avoid toast when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "info",
+        "success",
+        "warning",
+        "danger"
+      ],
+      "states": [
+        "entering",
+        "visible",
+        "exiting"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panelRaised}",
+        "{semantic.border.strong}",
+        "{semantic.status.info}",
+        "{semantic.status.danger}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for toast."
+      ],
+      "validation": [
+        "Validate toast for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FEEDBACK-PROGRESS-INDICATOR",
+      "name": "Progress Indicator",
+      "category": "feedback",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "linear, circular, or inline indication of task progress.",
+      "useWhen": [
+        "Use progress indicator when the interface needs linear, circular, or inline indication of task progress."
+      ],
+      "avoidWhen": [
+        "Avoid progress indicator when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "linear",
+        "circular",
+        "inline"
+      ],
+      "states": [
+        "idle",
+        "running",
+        "complete",
+        "failed"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panelRaised}",
+        "{semantic.border.strong}",
+        "{semantic.status.info}",
+        "{semantic.status.danger}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-PROGRESS"
+        ],
+        "prd": [
+          "PRD-JOBS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for progress indicator."
+      ],
+      "validation": [
+        "Validate progress indicator for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-STATUS-JOB-INDICATOR",
+      "name": "Job Status Indicator",
+      "category": "status",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "job execution state for queued, running, completed, or failed work.",
+      "useWhen": [
+        "Use job status indicator when the interface needs job execution state for queued, running, completed, or failed work."
+      ],
+      "avoidWhen": [
+        "Avoid job status indicator when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "queued",
+        "running",
+        "passed",
+        "failed",
+        "cancelled"
+      ],
+      "states": [
+        "pending",
+        "running",
+        "success",
+        "danger"
+      ],
+      "tokenReferences": [
+        "{semantic.status.success}",
+        "{semantic.status.warning}",
+        "{semantic.status.danger}",
+        "{semantic.status.neutral}",
+        "{semantic.radius.pill}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-JOBS"
+        ],
+        "prd": [
+          "PRD-JOBS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for job status indicator."
+      ],
+      "validation": [
+        "Validate job status indicator for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-FEEDBACK-VALIDATION-SUMMARY",
+      "name": "Validation Summary",
+      "category": "feedback",
+      "status": "required",
+      "coverage": [
+        "prd-required",
+        "reference-backed-standard"
+      ],
+      "description": "summary of validation errors, warnings, and blocker status.",
+      "useWhen": [
+        "Use validation summary when the interface needs summary of validation errors, warnings, and blocker status."
+      ],
+      "avoidWhen": [
+        "Avoid validation summary when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "form",
+        "page",
+        "package"
+      ],
+      "states": [
+        "valid",
+        "warning",
+        "error"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panelRaised}",
+        "{semantic.border.strong}",
+        "{semantic.status.info}",
+        "{semantic.status.danger}",
+        "{semantic.radius.md}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-VALIDATION"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for validation summary."
+      ],
+      "validation": [
+        "Validate validation summary for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-WORKFLOW-STEP-INDICATOR",
+      "name": "Step Indicator",
+      "category": "workflow",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard",
+        "prd-required"
+      ],
+      "description": "visible progress through a multi-step workflow.",
+      "useWhen": [
+        "Use step indicator when the interface needs visible progress through a multi-step workflow."
+      ],
+      "avoidWhen": [
+        "Avoid step indicator when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "horizontal",
+        "vertical",
+        "compact"
+      ],
+      "states": [
+        "not-started",
+        "current",
+        "complete",
+        "error"
+      ],
+      "tokenReferences": [
+        "{semantic.accent.primary}",
+        "{semantic.status.running}",
+        "{semantic.status.pending}",
+        "{semantic.border.subtle}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-WORKFLOW"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for step indicator."
+      ],
+      "validation": [
+        "Validate step indicator for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-WORKFLOW-TIMELINE-EVENT-LOG",
+      "name": "Timeline Event Log",
+      "category": "workflow",
+      "status": "recommended",
+      "coverage": [
+        "prd-required",
+        "inferred-engineering-need"
+      ],
+      "description": "chronological activity and execution history.",
+      "useWhen": [
+        "Use timeline event log when the interface needs chronological activity and execution history."
+      ],
+      "avoidWhen": [
+        "Avoid timeline event log when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "timeline",
+        "audit-log",
+        "compact"
+      ],
+      "states": [
+        "default",
+        "filtered",
+        "empty"
+      ],
+      "tokenReferences": [
+        "{semantic.accent.primary}",
+        "{semantic.status.running}",
+        "{semantic.status.pending}",
+        "{semantic.border.subtle}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-AUDIT-LOGS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for timeline event log.",
+        "Phase 2 reserves the ID and expected role; exact behavior, variants, and examples require later project validation."
+      ],
+      "validation": [
+        "Validate timeline event log for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-OVERLAY-DIALOG",
+      "name": "Dialog",
+      "category": "overlays",
+      "status": "required",
+      "coverage": [
+        "reference-backed-standard",
+        "prd-required"
+      ],
+      "description": "blocking overlay for focused decisions or forms.",
+      "useWhen": [
+        "Use dialog when the interface needs blocking overlay for focused decisions or forms."
+      ],
+      "avoidWhen": [
+        "Avoid dialog when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "standard",
+        "large",
+        "form"
+      ],
+      "states": [
+        "closed",
+        "opening",
+        "open",
+        "closing"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.overlay}",
+        "{semantic.surface.scrim}",
+        "{semantic.shadow.overlay}",
+        "{semantic.zIndex.modal}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for dialog."
+      ],
+      "validation": [
+        "Validate dialog for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-OVERLAY-CONFIRMATION-DIALOG",
+      "name": "Confirmation Dialog",
+      "category": "overlays",
+      "status": "required",
+      "coverage": [
+        "reference-backed-standard",
+        "prd-required"
+      ],
+      "description": "explicit confirmation before destructive or irreversible actions.",
+      "useWhen": [
+        "Use confirmation dialog when the interface needs explicit confirmation before destructive or irreversible actions."
+      ],
+      "avoidWhen": [
+        "Avoid confirmation dialog when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "destructive",
+        "warning",
+        "info"
+      ],
+      "states": [
+        "open",
+        "confirming",
+        "error"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.overlay}",
+        "{semantic.surface.scrim}",
+        "{semantic.shadow.overlay}",
+        "{semantic.zIndex.modal}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for confirmation dialog."
+      ],
+      "validation": [
+        "Validate confirmation dialog for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-OVERLAY-DRAWER",
+      "name": "Drawer",
+      "category": "overlays",
+      "status": "recommended",
+      "coverage": [
+        "partially-observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "side overlay for supplemental details without full page navigation.",
+      "useWhen": [
+        "Use drawer when the interface needs side overlay for supplemental details without full page navigation."
+      ],
+      "avoidWhen": [
+        "Avoid drawer when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "right",
+        "left",
+        "wide"
+      ],
+      "states": [
+        "closed",
+        "open",
+        "loading"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.overlay}",
+        "{semantic.surface.scrim}",
+        "{semantic.shadow.overlay}",
+        "{semantic.zIndex.modal}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-DETAIL"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for drawer."
+      ],
+      "validation": [
+        "Validate drawer for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-OVERLAY-POPOVER",
+      "name": "Popover",
+      "category": "overlays",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard"
+      ],
+      "description": "small contextual overlay anchored to a control.",
+      "useWhen": [
+        "Use popover when the interface needs small contextual overlay anchored to a control."
+      ],
+      "avoidWhen": [
+        "Avoid popover when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "interactive",
+        "noninteractive"
+      ],
+      "states": [
+        "closed",
+        "open",
+        "focus-within"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.overlay}",
+        "{semantic.surface.scrim}",
+        "{semantic.shadow.overlay}",
+        "{semantic.zIndex.modal}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for popover."
+      ],
+      "validation": [
+        "Validate popover for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-OVERLAY-TOOLTIP",
+      "name": "Tooltip",
+      "category": "overlays",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard"
+      ],
+      "description": "brief non-interactive explanation for controls or data points.",
+      "useWhen": [
+        "Use tooltip when the interface needs brief non-interactive explanation for controls or data points."
+      ],
+      "avoidWhen": [
+        "Avoid tooltip when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "chart",
+        "truncated-text"
+      ],
+      "states": [
+        "hidden",
+        "visible"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.overlay}",
+        "{semantic.surface.scrim}",
+        "{semantic.shadow.overlay}",
+        "{semantic.zIndex.modal}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for tooltip."
+      ],
+      "validation": [
+        "Validate tooltip for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-OVERLAY-CONTEXT-MENU",
+      "name": "Context Menu",
+      "category": "overlays",
+      "status": "optional",
+      "coverage": [
+        "reference-backed-standard",
+        "inferred-engineering-need"
+      ],
+      "description": "contextual action menu for rows, artifacts, or panes.",
+      "useWhen": [
+        "Use context menu when the interface needs contextual action menu for rows, artifacts, or panes."
+      ],
+      "avoidWhen": [
+        "Avoid context menu when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "row",
+        "tree",
+        "editor"
+      ],
+      "states": [
+        "closed",
+        "open",
+        "keyboard-navigation"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.overlay}",
+        "{semantic.surface.scrim}",
+        "{semantic.shadow.overlay}",
+        "{semantic.zIndex.modal}",
+        "{semantic.radius.lg}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-DENSE-WORKFLOW"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for context menu.",
+        "Context menu scope and keyboard pattern require Phase 3 examples."
+      ],
+      "validation": [
+        "Validate context menu for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-VIZ-CHART-PANEL",
+      "name": "Chart Panel",
+      "category": "data-visualization",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "prd-required"
+      ],
+      "description": "a panel that frames a chart with title, legend, controls, and status.",
+      "useWhen": [
+        "Use chart panel when the interface needs a panel that frames a chart with title, legend, controls, and status."
+      ],
+      "avoidWhen": [
+        "Avoid chart panel when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "default",
+        "with-toolbar",
+        "empty"
+      ],
+      "states": [
+        "default",
+        "loading",
+        "error"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.charts.grid}",
+        "{semantic.charts.axis}",
+        "{semantic.charts.series.primary}",
+        "{semantic.charts.series.secondary}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-CHARTS"
+        ],
+        "prd": [
+          "PRD-DASHBOARDS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for chart panel."
+      ],
+      "validation": [
+        "Validate chart panel for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-VIZ-LINE-CHART",
+      "name": "Line Chart",
+      "category": "data-visualization",
+      "status": "recommended",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "time-series or ordered numeric trend visualization.",
+      "useWhen": [
+        "Use line chart when the interface needs time-series or ordered numeric trend visualization."
+      ],
+      "avoidWhen": [
+        "Avoid line chart when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "single-series",
+        "multi-series",
+        "thresholded"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "selected",
+        "empty"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.charts.grid}",
+        "{semantic.charts.axis}",
+        "{semantic.charts.series.primary}",
+        "{semantic.charts.series.secondary}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-CHARTS"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for line chart."
+      ],
+      "validation": [
+        "Validate line chart for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-VIZ-BAR-CHART",
+      "name": "Bar Chart",
+      "category": "data-visualization",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard",
+        "prd-required"
+      ],
+      "description": "categorical comparison visualization.",
+      "useWhen": [
+        "Use bar chart when the interface needs categorical comparison visualization."
+      ],
+      "avoidWhen": [
+        "Avoid bar chart when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "vertical",
+        "horizontal",
+        "stacked-reserved"
+      ],
+      "states": [
+        "default",
+        "hover",
+        "selected",
+        "empty"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.charts.grid}",
+        "{semantic.charts.axis}",
+        "{semantic.charts.series.primary}",
+        "{semantic.charts.series.secondary}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for bar chart."
+      ],
+      "validation": [
+        "Validate bar chart for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-VIZ-LEGEND",
+      "name": "Legend",
+      "category": "data-visualization",
+      "status": "required",
+      "coverage": [
+        "observed-in-mockups",
+        "reference-backed-standard"
+      ],
+      "description": "mapping between chart encodings and series meaning.",
+      "useWhen": [
+        "Use legend when the interface needs mapping between chart encodings and series meaning."
+      ],
+      "avoidWhen": [
+        "Avoid legend when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "inline",
+        "panel",
+        "interactive-reserved"
+      ],
+      "states": [
+        "default",
+        "hidden-series"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.charts.grid}",
+        "{semantic.charts.axis}",
+        "{semantic.charts.series.primary}",
+        "{semantic.charts.series.secondary}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-CHARTS"
+        ],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for legend."
+      ],
+      "validation": [
+        "Validate legend for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-VIZ-CHART-TOOLTIP",
+      "name": "Chart Tooltip",
+      "category": "data-visualization",
+      "status": "recommended",
+      "coverage": [
+        "reference-backed-standard"
+      ],
+      "description": "precise data values on hover or focus.",
+      "useWhen": [
+        "Use chart tooltip when the interface needs precise data values on hover or focus."
+      ],
+      "avoidWhen": [
+        "Avoid chart tooltip when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "single-point",
+        "multi-series"
+      ],
+      "states": [
+        "hidden",
+        "visible",
+        "pinned-reserved"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.charts.grid}",
+        "{semantic.charts.axis}",
+        "{semantic.charts.series.primary}",
+        "{semantic.charts.series.secondary}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for chart tooltip."
+      ],
+      "validation": [
+        "Validate chart tooltip for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-VIZ-THRESHOLD-BAND",
+      "name": "Threshold Band",
+      "category": "data-visualization",
+      "status": "optional",
+      "coverage": [
+        "inferred-engineering-need",
+        "reserved-for-future-validation"
+      ],
+      "description": "visual warning, tolerance, or pass/fail region in charts.",
+      "useWhen": [
+        "Use threshold band when the interface needs visual warning, tolerance, or pass/fail region in charts."
+      ],
+      "avoidWhen": [
+        "Avoid threshold band when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "warning",
+        "danger",
+        "tolerance"
+      ],
+      "states": [
+        "default",
+        "hidden"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.charts.grid}",
+        "{semantic.charts.axis}",
+        "{semantic.charts.series.primary}",
+        "{semantic.charts.series.secondary}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-ENGINEERING-VISUALIZATION"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for threshold band.",
+        "Threshold semantics and chart-library behavior require later validation."
+      ],
+      "validation": [
+        "Validate threshold band for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-ENG-ARTIFACT-TREE",
+      "name": "Artifact Tree",
+      "category": "engineering-artifacts",
+      "status": "recommended",
+      "coverage": [
+        "prd-required",
+        "inferred-engineering-need"
+      ],
+      "description": "hierarchical browsing of project, package, file, or evidence artifacts.",
+      "useWhen": [
+        "Use artifact tree when the interface needs hierarchical browsing of project, package, file, or evidence artifacts."
+      ],
+      "avoidWhen": [
+        "Avoid artifact tree when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "file-tree",
+        "package-tree",
+        "filterable"
+      ],
+      "states": [
+        "default",
+        "expanded",
+        "selected",
+        "loading"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.accent.primary}",
+        "{semantic.status.success}",
+        "{semantic.border.subtle}",
+        "{semantic.typography.family.mono}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-ARTIFACTS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for artifact tree.",
+        "Tree keyboard interaction and artifact metadata rules require deeper Phase 3 specification."
+      ],
+      "validation": [
+        "Validate artifact tree for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-ENG-TRACE-MATRIX",
+      "name": "Traceability Matrix",
+      "category": "engineering-artifacts",
+      "status": "recommended",
+      "coverage": [
+        "prd-required",
+        "inferred-engineering-need",
+        "reserved-for-future-validation"
+      ],
+      "description": "matrix view connecting requirements, tests, evidence, and outcomes.",
+      "useWhen": [
+        "Use traceability matrix when the interface needs matrix view connecting requirements, tests, evidence, and outcomes."
+      ],
+      "avoidWhen": [
+        "Avoid traceability matrix when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "requirements-tests",
+        "artifacts-evidence"
+      ],
+      "states": [
+        "default",
+        "filtered",
+        "selected",
+        "gap"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.accent.primary}",
+        "{semantic.status.success}",
+        "{semantic.border.subtle}",
+        "{semantic.typography.family.mono}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-TRACEABILITY"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for traceability matrix.",
+        "Trace relationship model and matrix density limits require later validation."
+      ],
+      "validation": [
+        "Validate traceability matrix for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-ENG-DIFF-VIEWER",
+      "name": "Diff Viewer",
+      "category": "code-and-logs",
+      "status": "optional",
+      "coverage": [
+        "inferred-engineering-need",
+        "reserved-for-future-validation"
+      ],
+      "description": "side-by-side or inline comparison of technical text, generated output, or configuration.",
+      "useWhen": [
+        "Use diff viewer when the interface needs side-by-side or inline comparison of technical text, generated output, or configuration."
+      ],
+      "avoidWhen": [
+        "Avoid diff viewer when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "side-by-side",
+        "inline",
+        "semantic-reserved"
+      ],
+      "states": [
+        "default",
+        "highlighted",
+        "collapsed"
+      ],
+      "tokenReferences": [
+        "{semantic.code.background}",
+        "{semantic.code.text}",
+        "{semantic.code.border}",
+        "{semantic.typography.family.mono}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-ENGINEERING-ARTIFACTS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for diff viewer.",
+        "Diff granularity, syntax highlighting, and accessibility behavior require later validation."
+      ],
+      "validation": [
+        "Validate diff viewer for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-ENG-LOG-VIEWER",
+      "name": "Log Viewer",
+      "category": "code-and-logs",
+      "status": "recommended",
+      "coverage": [
+        "prd-required",
+        "inferred-engineering-need"
+      ],
+      "description": "scrollable technical log output with severity, timestamp, and filtering support.",
+      "useWhen": [
+        "Use log viewer when the interface needs scrollable technical log output with severity, timestamp, and filtering support."
+      ],
+      "avoidWhen": [
+        "Avoid log viewer when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "plain",
+        "structured",
+        "filterable"
+      ],
+      "states": [
+        "default",
+        "streaming",
+        "paused",
+        "empty"
+      ],
+      "tokenReferences": [
+        "{semantic.code.background}",
+        "{semantic.code.text}",
+        "{semantic.code.border}",
+        "{semantic.typography.family.mono}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-JOBS"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for log viewer.",
+        "Streaming, retention, and virtualization behavior require later validation."
+      ],
+      "validation": [
+        "Validate log viewer for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-ENG-CODE-BLOCK",
+      "name": "Code Block",
+      "category": "code-and-logs",
+      "status": "required",
+      "coverage": [
+        "reference-backed-standard",
+        "prd-required"
+      ],
+      "description": "monospaced display of commands, IDs, paths, snippets, and structured text.",
+      "useWhen": [
+        "Use code block when the interface needs monospaced display of commands, IDs, paths, snippets, and structured text."
+      ],
+      "avoidWhen": [
+        "Avoid code block when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "inline",
+        "block",
+        "copyable"
+      ],
+      "states": [
+        "default",
+        "focus",
+        "copied"
+      ],
+      "tokenReferences": [
+        "{semantic.code.background}",
+        "{semantic.code.text}",
+        "{semantic.code.border}",
+        "{semantic.typography.family.mono}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-STANDARDS-PACKAGE",
+          "PRD-COPILOT-HANDOFF"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for code block."
+      ],
+      "validation": [
+        "Validate code block for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    },
+    {
+      "id": "CMP-ENG-EVIDENCE-CARD",
+      "name": "Evidence Card",
+      "category": "engineering-artifacts",
+      "status": "recommended",
+      "coverage": [
+        "prd-required",
+        "inferred-engineering-need"
+      ],
+      "description": "summary card for generated evidence, attachments, validation outcome, and review state.",
+      "useWhen": [
+        "Use evidence card when the interface needs summary card for generated evidence, attachments, validation outcome, and review state."
+      ],
+      "avoidWhen": [
+        "Avoid evidence card when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "artifact",
+        "test-result",
+        "report"
+      ],
+      "states": [
+        "default",
+        "selected",
+        "warning",
+        "failed"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.accent.primary}",
+        "{semantic.status.success}",
+        "{semantic.border.subtle}",
+        "{semantic.typography.family.mono}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-EVIDENCE"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for evidence card.",
+        "Evidence data model and review state taxonomy require later validation."
+      ],
+      "validation": [
+        "Validate evidence card for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-ENG-REQUIREMENT-LINK",
+      "name": "Requirement Link",
+      "category": "engineering-artifacts",
+      "status": "required",
+      "coverage": [
+        "prd-required",
+        "inferred-engineering-need"
+      ],
+      "description": "linked reference to a requirement, design item, test, or evidence artifact.",
+      "useWhen": [
+        "Use requirement link when the interface needs linked reference to a requirement, design item, test, or evidence artifact."
+      ],
+      "avoidWhen": [
+        "Avoid requirement link when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "requirement",
+        "test",
+        "artifact"
+      ],
+      "states": [
+        "default",
+        "visited",
+        "broken",
+        "focus"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.accent.primary}",
+        "{semantic.status.success}",
+        "{semantic.border.subtle}",
+        "{semantic.typography.family.mono}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [],
+        "prd": [
+          "PRD-TRACEABILITY"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for requirement link.",
+        "Phase 2 reserves the ID and expected role; exact behavior, variants, and examples require later project validation."
+      ],
+      "validation": [
+        "Validate requirement link for token usage, accessible names where applicable, dark-theme contrast, and visible focus states.",
+        "Treat as not fully standardized until Phase 3 or later prose standards define detailed behavior."
+      ]
+    },
+    {
+      "id": "CMP-ENG-RUN-TEST-RESULT-SUMMARY",
+      "name": "Run Test Result Summary",
+      "category": "engineering-artifacts",
+      "status": "required",
+      "coverage": [
+        "prd-required",
+        "observed-in-mockups"
+      ],
+      "description": "compact pass, fail, warning, not-run, and coverage summary for execution results.",
+      "useWhen": [
+        "Use run test result summary when the interface needs compact pass, fail, warning, not-run, and coverage summary for execution results."
+      ],
+      "avoidWhen": [
+        "Avoid run test result summary when a simpler native element or existing component communicates the same intent with less complexity."
+      ],
+      "variants": [
+        "package",
+        "test-set",
+        "single-run"
+      ],
+      "states": [
+        "not-run",
+        "running",
+        "passed",
+        "failed",
+        "warning"
+      ],
+      "tokenReferences": [
+        "{semantic.surface.panel}",
+        "{semantic.accent.primary}",
+        "{semantic.status.success}",
+        "{semantic.border.subtle}",
+        "{semantic.typography.family.mono}"
+      ],
+      "accessibility": {
+        "keyboard": "Keyboard access must match the native control or WAI-ARIA pattern for the rendered role.",
+        "aria": "Expose an accessible name, role, and state when the component is not a native semantic control.",
+        "contrast": "Text, icons, borders, and state indicators must meet WCAG contrast expectations for the dark theme.",
+        "focus": "Use visible focus styling based on semantic focus tokens and manage focus when opening or closing composite widgets."
+      },
+      "traceability": {
+        "mockups": [
+          "MOCK-HIFI-RESULTS"
+        ],
+        "prd": [
+          "PRD-JOBS",
+          "PRD-VALIDATION"
+        ],
+        "research": [
+          "RSRCH-COMPONENT-TAXONOMY",
+          "RSRCH-ACCESSIBILITY-POSTURE"
+        ]
+      },
+      "implementationNotes": [
+        "Use semantic token references only; do not hard-code visual values for run test result summary."
+      ],
+      "validation": [
+        "Validate run test result summary for token usage, accessible names where applicable, dark-theme contrast, and visible focus states."
+      ]
+    }
+  ],
+  "validation": {
+    "minimumComponentCount": 40,
+    "idPattern": "^CMP-[A-Z0-9]+(-[A-Z0-9]+)+$",
+    "allowedCoverage": [
+      "observed-in-mockups",
+      "partially-observed-in-mockups",
+      "prd-required",
+      "reference-backed-standard",
+      "inferred-engineering-need",
+      "reserved-for-future-validation"
+    ],
+    "componentTokenReferencesMustResolve": true,
+    "componentManifestMayNotContainRawColors": true,
+    "reservedComponentsMustRemainHonestAboutUnresolvedBehavior": true
+  }
+}

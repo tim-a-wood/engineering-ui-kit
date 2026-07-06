@@ -1,0 +1,95 @@
+{
+  "results": [
+    {
+      "id": "AUD-TIP-LINK",
+      "pass": true,
+      "detail": "tip link opens Help"
+    },
+    {
+      "id": "AUD-LEARN-MORE",
+      "pass": true,
+      "detail": "hub learn-more opens Help"
+    },
+    {
+      "id": "AUD-ADVANCED",
+      "pass": true,
+      "detail": "advanced options reveals exclusions"
+    },
+    {
+      "id": "AUD-REPO-ICON",
+      "pass": true,
+      "detail": "repository folder icon"
+    },
+    {
+      "id": "AUD-ITER-INTRO",
+      "pass": true,
+      "detail": "iteration loop intro cell"
+    },
+    {
+      "id": "AUD-VERIFY-HERO",
+      "pass": true,
+      "detail": "green hero + last-run timestamp"
+    },
+    {
+      "id": "AUD-CHIP-ICONS",
+      "pass": true,
+      "detail": "stat chip icons"
+    },
+    {
+      "id": "AUD-REPORT-BTN",
+      "pass": true,
+      "detail": "view full test report present"
+    },
+    {
+      "id": "AUD-RERUN-BOTTOM",
+      "pass": true,
+      "detail": "bottom re-run tests"
+    },
+    {
+      "id": "AUD-FEEDBACK-VIEWALL",
+      "pass": true,
+      "detail": "view-all shows notes file"
+    },
+    {
+      "id": "AUD-SORT",
+      "pass": true,
+      "detail": "sort select present"
+    },
+    {
+      "id": "AUD-GRID",
+      "pass": true,
+      "detail": "grid layout renders cards"
+    },
+    {
+      "id": "AUD-PAGINATION",
+      "pass": true,
+      "detail": "showing-count line"
+    },
+    {
+      "id": "AUD-LAUNCH-VALIDATE",
+      "pass": true,
+      "detail": "launch URL validation"
+    },
+    {
+      "id": "AUD-LAUNCH-SAVED",
+      "pass": true,
+      "detail": "launch URL persisted"
+    },
+    {
+      "id": "AUD-SETTINGS-SAVES",
+      "pass": true,
+      "detail": "4 per-panel save buttons"
+    },
+    {
+      "id": "AUD-PACKET-FORMAT",
+      "pass": true,
+      "detail": "packet format select present"
+    },
+    {
+      "id": "AUD-SETTINGS-SAVE-WORKS",
+      "pass": true,
+      "detail": "per-panel save persists"
+    }
+  ],
+  "generatedAt": "2026-07-06T12:04:35.569Z"
+}

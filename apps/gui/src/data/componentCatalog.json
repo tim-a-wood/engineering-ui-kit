@@ -1,0 +1,559 @@
+{
+  "generatedFrom": "standards/component-manifest.json",
+  "standardsVersion": "0.3.0",
+  "categories": [
+    {
+      "id": "shell",
+      "name": "Shell",
+      "purpose": "Application frame and persistent global regions."
+    },
+    {
+      "id": "navigation",
+      "name": "Navigation",
+      "purpose": "Movement between app sections and workflow locations."
+    },
+    {
+      "id": "surface",
+      "name": "Surface",
+      "purpose": "Containers, cards, panels, and visual grouping surfaces."
+    },
+    {
+      "id": "layout",
+      "name": "Layout",
+      "purpose": "Composition patterns and region structure."
+    },
+    {
+      "id": "forms",
+      "name": "Forms",
+      "purpose": "Inputs, labels, validation, and controlled data entry."
+    },
+    {
+      "id": "tables",
+      "name": "Tables",
+      "purpose": "Tabular data, grids, rows, columns, pagination, and row actions."
+    },
+    {
+      "id": "filters",
+      "name": "Filters",
+      "purpose": "Search, chip, and filtering controls for dense views."
+    },
+    {
+      "id": "feedback",
+      "name": "Feedback",
+      "purpose": "Alerts, toasts, validation summaries, and user-facing messages."
+    },
+    {
+      "id": "status",
+      "name": "Status",
+      "purpose": "Compact state indicators for jobs, results, and workflow state."
+    },
+    {
+      "id": "overlays",
+      "name": "Overlays",
+      "purpose": "Dialogs, drawers, popovers, menus, and tooltips."
+    },
+    {
+      "id": "data-visualization",
+      "name": "Data Visualization",
+      "purpose": "Charts and visual analysis surfaces."
+    },
+    {
+      "id": "workflow",
+      "name": "Workflow",
+      "purpose": "Multi-step, event, and execution workflow patterns."
+    },
+    {
+      "id": "engineering-artifacts",
+      "name": "Engineering Artifacts",
+      "purpose": "Artifacts, evidence, requirements, traces, and test summaries."
+    },
+    {
+      "id": "code-and-logs",
+      "name": "Code and Logs",
+      "purpose": "Code, logs, diffs, paths, and technical text."
+    },
+    {
+      "id": "content",
+      "name": "Content",
+      "purpose": "Text blocks, empty states, help content, and key-value summaries."
+    }
+  ],
+  "components": [
+    {
+      "id": "CMP-SHELL-APP",
+      "name": "App Shell",
+      "category": "shell",
+      "status": "required",
+      "description": "a persistent application frame for dark-first engineering workflows."
+    },
+    {
+      "id": "CMP-SHELL-TOP-BAR",
+      "name": "Top Bar",
+      "category": "shell",
+      "status": "required",
+      "description": "a persistent top region for product context, global actions, and status."
+    },
+    {
+      "id": "CMP-NAV-PRIMARY",
+      "name": "Primary Navigation",
+      "category": "navigation",
+      "status": "required",
+      "description": "top-level movement between major application areas."
+    },
+    {
+      "id": "CMP-NAV-SECONDARY",
+      "name": "Secondary Navigation",
+      "category": "navigation",
+      "status": "recommended",
+      "description": "movement within a page, workspace, or secondary workflow context."
+    },
+    {
+      "id": "CMP-NAV-BREADCRUMBS",
+      "name": "Breadcrumbs",
+      "category": "navigation",
+      "status": "recommended",
+      "description": "hierarchical location context for nested artifacts or records."
+    },
+    {
+      "id": "CMP-SHELL-PAGE-HEADER",
+      "name": "Page Header",
+      "category": "shell",
+      "status": "required",
+      "description": "a consistent title, subtitle, metadata, and page action region."
+    },
+    {
+      "id": "CMP-NAV-COMMAND-ACTION-BAR",
+      "name": "Command Action Bar",
+      "category": "navigation",
+      "status": "required",
+      "description": "a grouped action region for page-level commands and workflow actions."
+    },
+    {
+      "id": "CMP-SURFACE-PANEL",
+      "name": "Panel",
+      "category": "surface",
+      "status": "required",
+      "description": "a default bounded container for related engineering UI content."
+    },
+    {
+      "id": "CMP-SURFACE-RAISED-CARD",
+      "name": "Raised Card",
+      "category": "surface",
+      "status": "recommended",
+      "description": "a higher-emphasis surface for metrics, summaries, or selected records."
+    },
+    {
+      "id": "CMP-SURFACE-INSET-PANEL",
+      "name": "Inset Panel",
+      "category": "surface",
+      "status": "recommended",
+      "description": "a recessed container nested inside a parent panel."
+    },
+    {
+      "id": "CMP-LAYOUT-SECTION-HEADER",
+      "name": "Section Header",
+      "category": "layout",
+      "status": "required",
+      "description": "a labeled divider for major page or panel sections."
+    },
+    {
+      "id": "CMP-LAYOUT-TOOLBAR",
+      "name": "Toolbar",
+      "category": "layout",
+      "status": "required",
+      "description": "a compact horizontal region for controls that affect a nearby panel or table."
+    },
+    {
+      "id": "CMP-LAYOUT-SPLIT-PANEL",
+      "name": "Split Panel",
+      "category": "layout",
+      "status": "recommended",
+      "description": "side-by-side regions for comparing lists, details, artifacts, or evidence."
+    },
+    {
+      "id": "CMP-LAYOUT-RESIZABLE-PANEL",
+      "name": "Resizable Panel",
+      "category": "layout",
+      "status": "optional",
+      "description": "adjustable regions for dense technical review workflows."
+    },
+    {
+      "id": "CMP-LAYOUT-DASHBOARD-GRID",
+      "name": "Dashboard Grid",
+      "category": "layout",
+      "status": "required",
+      "description": "a responsive grid for metrics, charts, summaries, and status panels."
+    },
+    {
+      "id": "CMP-LAYOUT-DETAIL",
+      "name": "Detail Layout",
+      "category": "layout",
+      "status": "required",
+      "description": "a structured detail page composition with summary, metadata, tabs, and related panels."
+    },
+    {
+      "id": "CMP-FORM-FIELD",
+      "name": "Form Field",
+      "category": "forms",
+      "status": "required",
+      "description": "a label, description, control, error, and helper-text wrapper."
+    },
+    {
+      "id": "CMP-FORM-TEXT-INPUT",
+      "name": "Text Input",
+      "category": "forms",
+      "status": "required",
+      "description": "single-line text entry."
+    },
+    {
+      "id": "CMP-FORM-NUMBER-INPUT",
+      "name": "Number Input",
+      "category": "forms",
+      "status": "required",
+      "description": "numeric entry with validation and formatting expectations."
+    },
+    {
+      "id": "CMP-FORM-SELECT",
+      "name": "Select",
+      "category": "forms",
+      "status": "required",
+      "description": "selection from a constrained list of values."
+    },
+    {
+      "id": "CMP-FORM-COMBOBOX",
+      "name": "Combobox",
+      "category": "forms",
+      "status": "recommended",
+      "description": "searchable selection for long or dynamic option lists."
+    },
+    {
+      "id": "CMP-FORM-TEXTAREA",
+      "name": "Textarea",
+      "category": "forms",
+      "status": "recommended",
+      "description": "multi-line free-text entry for notes, comments, and descriptions."
+    },
+    {
+      "id": "CMP-FORM-CHECKBOX",
+      "name": "Checkbox",
+      "category": "forms",
+      "status": "required",
+      "description": "binary or multi-select boolean selection."
+    },
+    {
+      "id": "CMP-FORM-RADIO-GROUP",
+      "name": "Radio Group",
+      "category": "forms",
+      "status": "recommended",
+      "description": "exclusive selection from a small set of choices."
+    },
+    {
+      "id": "CMP-FORM-SWITCH",
+      "name": "Switch",
+      "category": "forms",
+      "status": "recommended",
+      "description": "immediate binary setting toggle."
+    },
+    {
+      "id": "CMP-FORM-DATE-TIME-INPUT",
+      "name": "Date Time Input",
+      "category": "forms",
+      "status": "optional",
+      "description": "date, time, or timestamp entry for engineering records and filters."
+    },
+    {
+      "id": "CMP-FILTER-SEARCH-FIELD",
+      "name": "Search Field",
+      "category": "filters",
+      "status": "required",
+      "description": "keyword filtering across tables, artifacts, and records."
+    },
+    {
+      "id": "CMP-FILTER-BAR",
+      "name": "Filter Bar",
+      "category": "filters",
+      "status": "required",
+      "description": "a compact control region for filtering high-density datasets."
+    },
+    {
+      "id": "CMP-FILTER-CHIP",
+      "name": "Filter Chip",
+      "category": "filters",
+      "status": "recommended",
+      "description": "a compact representation of an active filter."
+    },
+    {
+      "id": "CMP-FORM-FILE-DROPZONE",
+      "name": "File Dropzone",
+      "category": "forms",
+      "status": "optional",
+      "description": "drag-and-drop or browse file intake for artifacts and imports."
+    },
+    {
+      "id": "CMP-TABLE-DATA-TABLE",
+      "name": "Data Table",
+      "category": "tables",
+      "status": "required",
+      "description": "structured tabular presentation of records."
+    },
+    {
+      "id": "CMP-TABLE-DATA-GRID",
+      "name": "Data Grid",
+      "category": "tables",
+      "status": "recommended",
+      "description": "interactive tabular review with sorting, selection, and dense engineering metadata."
+    },
+    {
+      "id": "CMP-TABLE-COLUMN-HEADER",
+      "name": "Column Header",
+      "category": "tables",
+      "status": "required",
+      "description": "labeled table columns with sorting and alignment metadata."
+    },
+    {
+      "id": "CMP-TABLE-ROW-ACTION-MENU",
+      "name": "Row Action Menu",
+      "category": "tables",
+      "status": "recommended",
+      "description": "per-row contextual actions without overcrowding the table."
+    },
+    {
+      "id": "CMP-TABLE-PAGINATION",
+      "name": "Pagination",
+      "category": "tables",
+      "status": "recommended",
+      "description": "navigation across large record sets."
+    },
+    {
+      "id": "CMP-CONTENT-EMPTY-STATE",
+      "name": "Empty State",
+      "category": "content",
+      "status": "required",
+      "description": "clear guidance when a panel, table, or workflow has no data."
+    },
+    {
+      "id": "CMP-FEEDBACK-LOADING-STATE",
+      "name": "Loading State",
+      "category": "feedback",
+      "status": "required",
+      "description": "temporary state while content, jobs, or artifacts load."
+    },
+    {
+      "id": "CMP-FEEDBACK-ERROR-STATE",
+      "name": "Error State",
+      "category": "feedback",
+      "status": "required",
+      "description": "recoverable error presentation for failed loads, validation, or workflows."
+    },
+    {
+      "id": "CMP-CONTENT-METRIC-CARD",
+      "name": "Metric Card",
+      "category": "content",
+      "status": "required",
+      "description": "compact summary of a key count, status, or metric."
+    },
+    {
+      "id": "CMP-CONTENT-KEY-VALUE-LIST",
+      "name": "Key Value List",
+      "category": "content",
+      "status": "required",
+      "description": "compact display of metadata pairs."
+    },
+    {
+      "id": "CMP-STATUS-BADGE",
+      "name": "Status Badge",
+      "category": "status",
+      "status": "required",
+      "description": "compact visual state indication."
+    },
+    {
+      "id": "CMP-FEEDBACK-ALERT",
+      "name": "Alert",
+      "category": "feedback",
+      "status": "required",
+      "description": "prominent message for important contextual feedback."
+    },
+    {
+      "id": "CMP-FEEDBACK-TOAST",
+      "name": "Toast",
+      "category": "feedback",
+      "status": "recommended",
+      "description": "temporary non-blocking system feedback."
+    },
+    {
+      "id": "CMP-FEEDBACK-PROGRESS-INDICATOR",
+      "name": "Progress Indicator",
+      "category": "feedback",
+      "status": "required",
+      "description": "linear, circular, or inline indication of task progress."
+    },
+    {
+      "id": "CMP-STATUS-JOB-INDICATOR",
+      "name": "Job Status Indicator",
+      "category": "status",
+      "status": "required",
+      "description": "job execution state for queued, running, completed, or failed work."
+    },
+    {
+      "id": "CMP-FEEDBACK-VALIDATION-SUMMARY",
+      "name": "Validation Summary",
+      "category": "feedback",
+      "status": "required",
+      "description": "summary of validation errors, warnings, and blocker status."
+    },
+    {
+      "id": "CMP-WORKFLOW-STEP-INDICATOR",
+      "name": "Step Indicator",
+      "category": "workflow",
+      "status": "recommended",
+      "description": "visible progress through a multi-step workflow."
+    },
+    {
+      "id": "CMP-WORKFLOW-TIMELINE-EVENT-LOG",
+      "name": "Timeline Event Log",
+      "category": "workflow",
+      "status": "recommended",
+      "description": "chronological activity and execution history."
+    },
+    {
+      "id": "CMP-OVERLAY-DIALOG",
+      "name": "Dialog",
+      "category": "overlays",
+      "status": "required",
+      "description": "blocking overlay for focused decisions or forms."
+    },
+    {
+      "id": "CMP-OVERLAY-CONFIRMATION-DIALOG",
+      "name": "Confirmation Dialog",
+      "category": "overlays",
+      "status": "required",
+      "description": "explicit confirmation before destructive or irreversible actions."
+    },
+    {
+      "id": "CMP-OVERLAY-DRAWER",
+      "name": "Drawer",
+      "category": "overlays",
+      "status": "recommended",
+      "description": "side overlay for supplemental details without full page navigation."
+    },
+    {
+      "id": "CMP-OVERLAY-POPOVER",
+      "name": "Popover",
+      "category": "overlays",
+      "status": "recommended",
+      "description": "small contextual overlay anchored to a control."
+    },
+    {
+      "id": "CMP-OVERLAY-TOOLTIP",
+      "name": "Tooltip",
+      "category": "overlays",
+      "status": "recommended",
+      "description": "brief non-interactive explanation for controls or data points."
+    },
+    {
+      "id": "CMP-OVERLAY-CONTEXT-MENU",
+      "name": "Context Menu",
+      "category": "overlays",
+      "status": "optional",
+      "description": "contextual action menu for rows, artifacts, or panes."
+    },
+    {
+      "id": "CMP-VIZ-CHART-PANEL",
+      "name": "Chart Panel",
+      "category": "data-visualization",
+      "status": "required",
+      "description": "a panel that frames a chart with title, legend, controls, and status."
+    },
+    {
+      "id": "CMP-VIZ-LINE-CHART",
+      "name": "Line Chart",
+      "category": "data-visualization",
+      "status": "recommended",
+      "description": "time-series or ordered numeric trend visualization."
+    },
+    {
+      "id": "CMP-VIZ-BAR-CHART",
+      "name": "Bar Chart",
+      "category": "data-visualization",
+      "status": "recommended",
+      "description": "categorical comparison visualization."
+    },
+    {
+      "id": "CMP-VIZ-LEGEND",
+      "name": "Legend",
+      "category": "data-visualization",
+      "status": "required",
+      "description": "mapping between chart encodings and series meaning."
+    },
+    {
+      "id": "CMP-VIZ-CHART-TOOLTIP",
+      "name": "Chart Tooltip",
+      "category": "data-visualization",
+      "status": "recommended",
+      "description": "precise data values on hover or focus."
+    },
+    {
+      "id": "CMP-VIZ-THRESHOLD-BAND",
+      "name": "Threshold Band",
+      "category": "data-visualization",
+      "status": "optional",
+      "description": "visual warning, tolerance, or pass/fail region in charts."
+    },
+    {
+      "id": "CMP-ENG-ARTIFACT-TREE",
+      "name": "Artifact Tree",
+      "category": "engineering-artifacts",
+      "status": "recommended",
+      "description": "hierarchical browsing of project, package, file, or evidence artifacts."
+    },
+    {
+      "id": "CMP-ENG-TRACE-MATRIX",
+      "name": "Traceability Matrix",
+      "category": "engineering-artifacts",
+      "status": "recommended",
+      "description": "matrix view connecting requirements, tests, evidence, and outcomes."
+    },
+    {
+      "id": "CMP-ENG-DIFF-VIEWER",
+      "name": "Diff Viewer",
+      "category": "code-and-logs",
+      "status": "optional",
+      "description": "side-by-side or inline comparison of technical text, generated output, or configuration."
+    },
+    {
+      "id": "CMP-ENG-LOG-VIEWER",
+      "name": "Log Viewer",
+      "category": "code-and-logs",
+      "status": "recommended",
+      "description": "scrollable technical log output with severity, timestamp, and filtering support."
+    },
+    {
+      "id": "CMP-ENG-CODE-BLOCK",
+      "name": "Code Block",
+      "category": "code-and-logs",
+      "status": "required",
+      "description": "monospaced display of commands, IDs, paths, snippets, and structured text."
+    },
+    {
+      "id": "CMP-ENG-EVIDENCE-CARD",
+      "name": "Evidence Card",
+      "category": "engineering-artifacts",
+      "status": "recommended",
+      "description": "summary card for generated evidence, attachments, validation outcome, and review state."
+    },
+    {
+      "id": "CMP-ENG-REQUIREMENT-LINK",
+      "name": "Requirement Link",
+      "category": "engineering-artifacts",
+      "status": "required",
+      "description": "linked reference to a requirement, design item, test, or evidence artifact."
+    },
+    {
+      "id": "CMP-ENG-RUN-TEST-RESULT-SUMMARY",
+      "name": "Run Test Result Summary",
+      "category": "engineering-artifacts",
+      "status": "required",
+      "description": "compact pass, fail, warning, not-run, and coverage summary for execution results."
+    }
+  ]
+}

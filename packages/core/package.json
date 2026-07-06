@@ -1,0 +1,27 @@
+{
+  "name": "@engineering-ui-kit/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Engineering UI Kit core workflow library: repo context, packet building, overlay inspection, verification, and persistence. GUI-independent.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "euik": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^22.15.0",
+    "playwright": "^1.61.1",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}

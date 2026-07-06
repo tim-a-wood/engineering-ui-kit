@@ -1,0 +1,120 @@
+{
+  "results": [
+    {
+      "id": "FR-LAUNCH",
+      "pass": true,
+      "detail": "fresh workspace, real bridge"
+    },
+    {
+      "id": "FR-RECIPES",
+      "pass": true,
+      "detail": "5 recipe rows with thumbnails"
+    },
+    {
+      "id": "FR-RECIPE-STORED",
+      "pass": true,
+      "detail": "recipe stored pre-run with guidance banner"
+    },
+    {
+      "id": "FR-COMPONENTS",
+      "pass": true,
+      "detail": "8 curated demos, 68 manifest rows"
+    },
+    {
+      "id": "FR-COMPONENT-FILTER",
+      "pass": true,
+      "detail": "forms category filter → 11 rows"
+    },
+    {
+      "id": "FR-CONTEXT-REVIEW",
+      "pass": true,
+      "detail": "context review summary + policy reminder present"
+    },
+    {
+      "id": "FR-RECIPE-PREFILL",
+      "pass": true,
+      "detail": "task title prefilled: \"Apply recipe: Engineering App Shell\""
+    },
+    {
+      "id": "FR-RECIPE-CHIP",
+      "pass": true,
+      "detail": "recipe chip shown"
+    },
+    {
+      "id": "FR-PREVIEW-DRAFT",
+      "pass": true,
+      "detail": "draft preview renders markdown (not raw)"
+    },
+    {
+      "id": "FR-PACKET-3FILES",
+      "pass": true,
+      "detail": "three-file budget met"
+    },
+    {
+      "id": "FR-PREVIEW-RENDERED",
+      "pass": true,
+      "detail": "preview defaults to rendered mode, h1=\"Task Packet\""
+    },
+    {
+      "id": "FR-PREVIEW-CODE-TAB",
+      "pass": true,
+      "detail": "code tab shows raw markdown"
+    },
+    {
+      "id": "FR-PREVIEW-ACTIONS",
+      "pass": true,
+      "detail": "Copy/Download/Close present"
+    },
+    {
+      "id": "FR-UPLOAD-SET",
+      "pass": true,
+      "detail": "upload set: repo-flatfile.txt, task-packet.md, standard-pack.md"
+    },
+    {
+      "id": "FR-COPILOT-ACTIONS",
+      "pass": true,
+      "detail": "show-in-folder + open-copilot present"
+    },
+    {
+      "id": "FR-COPY-PROMPT",
+      "pass": true,
+      "detail": "prompt copied without error"
+    },
+    {
+      "id": "FR-APPLY-LAYOUT",
+      "pass": true,
+      "detail": "two-pane layout with zip file tree"
+    },
+    {
+      "id": "FR-APPLIED-FS",
+      "pass": true,
+      "detail": "files physically applied"
+    },
+    {
+      "id": "FR-VERIFY",
+      "pass": true,
+      "detail": "typecheck+build pass"
+    },
+    {
+      "id": "FR-STAT-CHIPS",
+      "pass": true,
+      "detail": "four stat chips shown"
+    },
+    {
+      "id": "FR-FEEDBACK",
+      "pass": true,
+      "detail": "feedback saved and listed in history"
+    },
+    {
+      "id": "FR-REVIEW-PACKET-MODAL",
+      "pass": true,
+      "detail": "review packet modal renders"
+    },
+    {
+      "id": "FR-ARTIFACTS",
+      "pass": true,
+      "detail": "run artifacts: repo-flatfile.txt, review-packet.md, standard-pack.md, task-packet.md, user-review-notes.md"
+    }
+  ],
+  "generatedAt": "2026-07-06T11:40:48.264Z"
+}

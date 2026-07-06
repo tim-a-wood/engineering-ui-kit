@@ -1,0 +1,82 @@
+{
+  "results": [
+    {
+      "id": "E2E-LAUNCH",
+      "pass": true,
+      "detail": "Electron window renders shell"
+    },
+    {
+      "id": "E2E-BRIDGE",
+      "pass": true,
+      "detail": "real preload bridge active (not mock)"
+    },
+    {
+      "id": "E2E-PROJECT",
+      "pass": true,
+      "detail": "project created against disposable repo"
+    },
+    {
+      "id": "E2E-CONTEXT",
+      "pass": true,
+      "detail": "Success: Context generated: 11 files included, 0 excluded, 0 warnings."
+    },
+    {
+      "id": "E2E-PACKET",
+      "pass": true,
+      "detail": "real pack built, section order verified"
+    },
+    {
+      "id": "E2E-UPLOAD-SET",
+      "pass": true,
+      "detail": "upload files=repo-flatfile.txt, task-and-standard-pack.md"
+    },
+    {
+      "id": "E2E-INSPECT",
+      "pass": true,
+      "detail": "inspection lists 3 entries"
+    },
+    {
+      "id": "E2E-WARNING-GATE",
+      "pass": true,
+      "detail": "apply gated on warning acceptance"
+    },
+    {
+      "id": "E2E-APPLIED-FS",
+      "pass": true,
+      "detail": "src/tokens.css physically created in target repo"
+    },
+    {
+      "id": "E2E-VERIFY",
+      "pass": true,
+      "detail": "Success: All checks passed. Your repository builds and typechecks."
+    },
+    {
+      "id": "E2E-COMPLETE",
+      "pass": true,
+      "detail": "handoff approved and completed"
+    },
+    {
+      "id": "E2E-RUN-RECORD",
+      "pass": true,
+      "detail": "handoff-run.json step=complete status=approved"
+    },
+    {
+      "id": "E2E-ARTIFACTS",
+      "pass": true,
+      "detail": "artifacts=applied-files.json, handoff-run.json, overlay-inspection-summary.json, packet-manifest.json, repo-flatfile.txt, repo-inventory.json, task-and-standard-pack.md, verification, verification-result-build.json, verification-result-typecheck.json"
+    }
+  ],
+  "dataDirArtifacts": [
+    "applied-files.json",
+    "handoff-run.json",
+    "overlay-inspection-summary.json",
+    "packet-manifest.json",
+    "repo-flatfile.txt",
+    "repo-inventory.json",
+    "task-and-standard-pack.md",
+    "verification",
+    "verification-result-build.json",
+    "verification-result-typecheck.json"
+  ],
+  "generatedAt": "2026-07-06T06:16:22.272Z"
+}

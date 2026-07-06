@@ -1,0 +1,31 @@
+{
+  "verdict": "warning",
+  "entries": [
+    {
+      "path": "src/App.tsx",
+      "status": "overwrite",
+      "size": 14272,
+      "expectedScope": true
+    },
+    {
+      "path": "src/styles.css",
+      "status": "overwrite",
+      "size": 17489,
+      "expectedScope": true
+    },
+    {
+      "path": "src/tokens.css",
+      "status": "new",
+      "size": 2487,
+      "expectedScope": true
+    }
+  ],
+  "blockers": [],
+  "warnings": [
+    "AI-HANDOFF-040 overwrite existing source: src/App.tsx",
+    "AI-HANDOFF-040 overwrite existing source: src/styles.css",
+    "AI-HANDOFF-045 dirty target working tree before apply (documented corrected-baseline state)"
+  ],
+  "packetId": "vertical-slice-01-phase-2",
+  "inspectedAt": "2026-07-06T05:34:13.123358+00:00"
+}

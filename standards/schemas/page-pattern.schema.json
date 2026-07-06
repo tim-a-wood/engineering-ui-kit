@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engineering-ui-kit.local/schemas/page-pattern.schema.json",
+  "title": "Engineering UI Kit Page Pattern Schema",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "status",
+    "ownedBy",
+    "layoutType",
+    "components",
+    "traceability"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^LAY-[A-Z0-9-]+$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "ownedBy": {
+      "type": "string"
+    },
+    "layoutType": {
+      "type": "string"
+    },
+    "components": {
+      "type": "array"
+    },
+    "traceability": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": true
+}
