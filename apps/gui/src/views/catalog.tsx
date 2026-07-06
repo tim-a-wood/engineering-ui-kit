@@ -90,7 +90,7 @@ export const RECIPES: Recipe[] = [
     ),
   },
   {
-    id: 'RCP-DETAIL-001',
+    id: 'RCP-TABLE-001',
     title: 'Data Table View',
     description: 'A sortable, filterable data table for structured information.',
     componentsUsed: ['CMP-TABLE-DATA', 'CMP-FORM-INPUT', 'CMP-FEEDBACK-BADGE', 'CMP-NAV-PAGINATION'],
@@ -98,7 +98,7 @@ export const RECIPES: Recipe[] = [
     scope: 'One table screen: toolbar (search + filter), table with sortable headers, status column, pagination.\nSample data only.',
     constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nNo new dependencies; no router or state library additions.',
     acceptanceCriteria: 'Table uses semantic headers and caption.\nRow status shown as text badges.\nKeyboard operable controls with visible focus.\nDark-first tokens only.',
-    references: 'RCP-DETAIL-001 (standards/layouts-and-recipes/workflow-pages.md)\nApproved mockup: Projects table',
+    references: 'RCP-TABLE-001 (standards/layouts-and-recipes/workflow-pages.md)\nApproved mockup: Projects table',
     thumbnail: thumb(
       <>
         <rect x="4" y="4" width="88" height="8" rx="2" className="rt-panel" />
@@ -131,6 +131,53 @@ export const RECIPES: Recipe[] = [
         <line x1="67" y1="14" x2="81" y2="14" className="rt-connector" />
         <rect x="4" y="26" width="88" height="30" rx="2" className="rt-panel" />
         <rect x="8" y="32" width="50" height="4" rx="1" className="rt-line" />
+      </>,
+    ),
+  },
+  {
+    id: 'RCP-DETAIL-001',
+    title: 'Entity Detail Page',
+    description: 'A structured detail page with summary, metadata, tabs, and related panels.',
+    componentsUsed: ['CMP-LAYOUT-DETAIL', 'CMP-SHELL-PAGE-HEADER', 'CMP-NAV-TABS', 'CMP-CONTENT-KEY-VALUE-LIST'],
+    goal: 'Implement a dark-first entity detail page: identity header, key-value metadata, tabbed sections, and related-record panels.',
+    scope: 'REPLACE: name the entity and its fields.\nOne detail view: header with title/status, metadata list, 2-3 tabbed content sections.\nRead-only in this pass; actions listed but stubbed.',
+    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nNo new dependencies; no router or state library additions unless the task explicitly allows them.\nDark-first only; semantic tokens as CSS custom properties; no raw colors outside the token entry point.',
+    acceptanceCriteria: 'npm run typecheck and npm run build pass after overlay application.\nHeader, metadata, and tabs render from the entity data with text status badges.\nComplete keyboard operation with visible focus; tabs follow the established keyboard pattern.',
+    references: 'RCP-DETAIL-001 (standards/layouts-and-recipes/workflow-pages.md)',
+    thumbnail: thumb(
+      <>
+        <rect x="4" y="4" width="88" height="12" rx="2" className="rt-panel" />
+        <rect x="8" y="8" width="30" height="4" rx="1" className="rt-line" />
+        <rect x="70" y="7" width="18" height="6" rx="3" className="rt-accent" />
+        <rect x="4" y="20" width="40" height="36" rx="2" className="rt-panel" />
+        <rect x="7" y="24" width="34" height="3" rx="1" className="rt-line" />
+        <rect x="7" y="30" width="34" height="3" rx="1" className="rt-line" />
+        <rect x="48" y="20" width="44" height="36" rx="2" className="rt-panel" />
+        <rect x="51" y="24" width="14" height="3" rx="1" className="rt-accent" />
+        <rect x="67" y="24" width="14" height="3" rx="1" className="rt-line" />
+      </>,
+    ),
+  },
+  {
+    id: 'RCP-SPLIT-002',
+    title: 'Compare & Review',
+    description: 'A side-by-side compare/review layout for diffs, evidence, and approval decisions.',
+    componentsUsed: ['CMP-LAYOUT-SPLIT-PANEL', 'CMP-ENG-DIFF-VIEWER', 'CMP-FEEDBACK-VALIDATION-SUMMARY', 'CMP-ACTION-BUTTON'],
+    goal: 'Implement a dark-first compare/review screen: two synchronized panes for before/after content with a decision bar (approve, reject, notes).',
+    scope: 'REPLACE: name the artifacts being compared.\nTwo-pane compare region, difference highlights, decision action bar with confirmation.',
+    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nNo new dependencies; no router or state library additions unless the task explicitly allows them.\nDark-first only; semantic tokens as CSS custom properties; no raw colors outside the token entry point.',
+    acceptanceCriteria: 'npm run typecheck and npm run build pass after overlay application.\nBoth panes render with clear labels; differences carry text markers, not color alone.\nDecision actions require explicit confirmation.',
+    references: 'RCP-SPLIT-002 (standards/layouts-and-recipes/workflow-pages.md)',
+    thumbnail: thumb(
+      <>
+        <rect x="4" y="4" width="42" height="44" rx="2" className="rt-panel" />
+        <rect x="50" y="4" width="42" height="44" rx="2" className="rt-panel" />
+        <rect x="7" y="9" width="36" height="3" rx="1" className="rt-line" />
+        <rect x="53" y="9" width="36" height="3" rx="1" className="rt-line" />
+        <rect x="7" y="15" width="36" height="3" rx="1" className="rt-success" />
+        <rect x="53" y="15" width="36" height="3" rx="1" className="rt-accent" />
+        <rect x="4" y="52" width="88" height="6" rx="2" className="rt-panel" />
+        <rect x="70" y="53" width="20" height="4" rx="2" className="rt-accent" />
       </>,
     ),
   },
@@ -194,6 +241,16 @@ export function RecipesView(props: { hasActiveRun: boolean; onUseRecipe: (recipe
 type CatalogComponent = { id: string; name: string; category: string; status: string; description: string }
 const ALL_COMPONENTS = catalog.components as CatalogComponent[]
 const CATEGORIES = catalog.categories as { id: string; name: string; purpose: string }[]
+
+function DemoSwitch() {
+  const [on, setOn] = useState(true)
+  return (
+    <div className="toggle-row" style={{ width: '100%' }}>
+      <span className="toggle-label" style={{ fontSize: 12 }}>Warn on dirty repo</span>
+      <button type="button" className="toggle" role="switch" aria-checked={on} aria-label="Warn on dirty repo" onClick={() => setOn(!on)} />
+    </div>
+  )
+}
 
 function DemoTabs() {
   const [tab, setTab] = useState(0)
@@ -260,6 +317,56 @@ const CURATED: { title: string; body: string; id: string; demo: ReactElement }[]
           <div style={{ width: '60%', height: '100%', borderRadius: 4, background: 'var(--semantic-accent-primary)' }} />
         </div>
         <span className="mono">60%</span>
+      </div>
+    ),
+  },
+  {
+    title: 'Alert', body: 'Prominent message for important contextual feedback.', id: 'CMP-FEEDBACK-ALERT',
+    demo: (
+      <div className="inset" style={{ width: '100%', borderColor: 'var(--semantic-status-warning)' }} role="note">
+        <strong style={{ fontSize: 12, color: 'var(--semantic-status-warning)' }}>⚠ Warning</strong>
+        <p className="muted" style={{ margin: 0, fontSize: 11 }}>Review the overlay warnings before applying.</p>
+      </div>
+    ),
+  },
+  {
+    title: 'Toast', body: 'Temporary non-blocking system feedback.', id: 'CMP-FEEDBACK-TOAST',
+    demo: (
+      <div className="inset hstack" style={{ borderColor: 'var(--semantic-status-success)' }} role="status">
+        <span style={{ color: 'var(--semantic-status-success)' }}>✓</span>
+        <span style={{ fontSize: 12 }}>Packet exported</span>
+      </div>
+    ),
+  },
+  {
+    title: 'Breadcrumbs', body: 'Hierarchical location context for nested records.', id: 'CMP-NAV-BREADCRUMBS',
+    demo: (
+      <nav aria-label="Breadcrumb demo" style={{ fontSize: 12 }}>
+        <span className="muted">Projects</span> <span aria-hidden="true">›</span>{' '}
+        <span className="muted">sample-app</span> <span aria-hidden="true">›</span>{' '}
+        <strong>Run 42</strong>
+      </nav>
+    ),
+  },
+  {
+    title: 'Empty State', body: 'Clear guidance when a panel or table has no data.', id: 'CMP-CONTENT-EMPTY-STATE',
+    demo: (
+      <div className="stack" style={{ alignItems: 'center', gap: 4 }}>
+        <span aria-hidden="true" style={{ fontSize: 20, color: 'var(--semantic-text-muted)' }}>▱</span>
+        <strong style={{ fontSize: 12 }}>No runs yet</strong>
+        <span className="muted" style={{ fontSize: 11 }}>Start a handoff to see it here.</span>
+      </div>
+    ),
+  },
+  { title: 'Switch', body: 'Immediate binary setting toggle.', id: 'CMP-FORM-SWITCH', demo: <DemoSwitch /> },
+  {
+    title: 'Select', body: 'Selection from a constrained list of values.', id: 'CMP-FORM-SELECT',
+    demo: (
+      <div className="field" style={{ margin: 0, width: '100%' }}>
+        <select className="select-control" aria-label="Example select" defaultValue="dark">
+          <option value="dark">Dark (default)</option>
+          <option value="compact">Compact density</option>
+        </select>
       </div>
     ),
   },

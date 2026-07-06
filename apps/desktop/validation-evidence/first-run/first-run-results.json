@@ -8,7 +8,7 @@
     {
       "id": "FR-RECIPES",
       "pass": true,
-      "detail": "5 recipe rows with thumbnails"
+      "detail": "7 recipe rows with thumbnails"
     },
     {
       "id": "FR-RECIPE-STORED",
@@ -18,7 +18,7 @@
     {
       "id": "FR-COMPONENTS",
       "pass": true,
-      "detail": "8 curated demos, 68 manifest rows"
+      "detail": "14 curated demos, 68 manifest rows"
     },
     {
       "id": "FR-COMPONENT-FILTER",
@@ -116,5 +116,5 @@
       "detail": "run artifacts: repo-flatfile.txt, review-packet.md, standard-pack.md, task-packet.md, user-review-notes.md"
     }
   ],
-  "generatedAt": "2026-07-06T11:40:48.264Z"
+  "generatedAt": "2026-07-06T12:48:09.938Z"
 }

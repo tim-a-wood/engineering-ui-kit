@@ -97,7 +97,6 @@ export function SettingsView(props: {
             </p>
           </div>
           <Toggle label="Include screenshots" checked={draft.includeScreenshotsByDefault} onChange={(v) => set('includeScreenshotsByDefault', v)} />
-          <Toggle label="Include build/test results" checked={draft.includeBuildTestResultsByDefault} onChange={(v) => set('includeBuildTestResultsByDefault', v)} />
           <div className="field" style={{ marginTop: 12 }}>
             <label htmlFor="s-packet-format">Preferred packet format</label>
             <select id="s-packet-format" className="select-control" disabled aria-describedby="s-packet-format-note">
@@ -111,7 +110,7 @@ export function SettingsView(props: {
         <section className="panel" aria-labelledby="review-heading">
           <h2 id="review-heading">Review &amp; verification defaults</h2>
           <p className="panel-desc">Set defaults for verifying and reviewing changes.</p>
-          <Toggle label="Run tests after applying overlay" checked={draft.includeBuildTestResultsByDefault} onChange={(v) => set('includeBuildTestResultsByDefault', v)} />
+          <Toggle label="Include build/test results in review packets" checked={draft.includeBuildTestResultsByDefault} onChange={(v) => set('includeBuildTestResultsByDefault', v)} />
           <div className="field" style={{ marginTop: 12 }}>
             <label htmlFor="s-timeout">Command timeout (minutes)</label>
             <input

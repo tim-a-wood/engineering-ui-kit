@@ -980,3 +980,58 @@ button { font-family: inherit; }
 .stat-chip-icon { display: inline-flex; color: var(--semantic-text-muted); }
 .stat-chip.stat-pass .stat-chip-icon { color: var(--semantic-status-success); }
 .stat-chip.stat-fail .stat-chip-icon { color: var(--semantic-status-danger); }
+
+/* ---------- Polish pass 2: motion, alignment, depth ---------- */
+
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.dialog-backdrop { animation: backdrop-in var(--semantic-motion-duration-normal) var(--semantic-motion-easing-standard); }
+.dialog { animation: dialog-in var(--semantic-motion-duration-normal) var(--semantic-motion-easing-standard); }
+
+.data-table td { vertical-align: middle; }
+.data-table td .badge { vertical-align: middle; }
+
+.badge { font-size: 12px; line-height: 1.4; }
+
+.btn-secondary:hover { background: var(--semantic-accent-primary-tint); }
+.btn:active { transform: translateY(0.5px); }
+
+.pre::-webkit-scrollbar, .preview-scroll::-webkit-scrollbar { width: 8px; }
+
+.workflow-step.complete .workflow-marker { box-shadow: 0 0 0 3px var(--semantic-status-success-tint); }
+
+.titlebar { background: var(--semantic-surface-panel); }
+.sidebar { background: var(--semantic-surface-canvas); }
+
+.panel-raised, .stat-chip { box-shadow: var(--semantic-shadow-sm); }
+
+.row-icon { color: var(--semantic-text-secondary); }
+.row-icon svg { display: block; }
+
+.hub-card p { line-height: 1.5; }
+
+.status-line.status-success { border-color: var(--semantic-status-success); }
+
+.field input[type='text']:focus-visible, .field textarea:focus-visible, .select-control:focus-visible {
+  outline: none;
+  border-color: var(--semantic-border-focus);
+  box-shadow: var(--semantic-focus-ring-offset);
+}
+
+.dialog-header h2 { letter-spacing: -0.01em; }
+.page-header h1 { letter-spacing: -0.015em; }
+
+.recipe-row .btn { flex-shrink: 0; }
+
+.upload-file { transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard); }
+.upload-file:hover { border-color: var(--semantic-border-strong); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog, .dialog-backdrop { animation: none; }
+}

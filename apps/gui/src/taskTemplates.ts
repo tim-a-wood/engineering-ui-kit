@@ -161,6 +161,85 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
       'standard-pack.md (attached): rule IDs, component IDs, token table.',
     ].join('\n'),
   },
+  {
+    id: 'a11y-remediation',
+    title: 'Accessibility remediation pass',
+    summary: 'Bring an existing screen to WCAG 2.2 AA: keyboard, focus, labels, status text, contrast.',
+    taskTitle: 'Accessibility remediation for {project}',
+    goal: 'Bring the existing UI of {project} to WCAG 2.2 AA without changing any domain behavior: complete keyboard operation, visible focus, accessible names, text-backed status, dialog semantics, and reduced-motion support.',
+    scope: [
+      'REPLACE: name the screen(s) in scope.',
+      'Markup semantics (landmarks, headings, labels, roles), focus management, and styling for focus/contrast only.',
+      'No layout redesign beyond what accessibility requires.',
+    ].join('\n'),
+    constraints: [
+      'Behavior, data flow, and visual identity remain unchanged apart from accessibility corrections.',
+      'Use the semantic focus tokens for focus rings; do not invent new colors.',
+      ...SHARED_CONSTRAINTS,
+    ].join('\n'),
+    acceptanceCriteria: [
+      'Every interactive control is reachable and operable by keyboard with a visible focus indicator.',
+      'All controls, inputs, dialogs, and status regions expose accessible names; validation errors are text, linked to fields.',
+      'Dialogs trap focus, support Escape, and restore focus to the invoking control.',
+      'prefers-reduced-motion is respected.',
+      'npm run typecheck and npm run build pass after overlay application.',
+    ].join('\n'),
+    references: [
+      'standard-pack.md (attached): FND-A11Y rule excerpts and focus tokens.',
+      'WCAG 2.2 AA success criteria for keyboard, focus, labels, and contrast.',
+    ].join('\n'),
+  },
+  {
+    id: 'data-viz-screen',
+    title: 'Data visualization screen from a dataset',
+    summary: 'Chart-centric screen (XY plot, series, stats) rendered from a supplied dataset — SVG, no chart library.',
+    taskTitle: 'Data visualization screen for {project}',
+    goal: 'Implement a dark-first data visualization screen for {project} that renders the supplied dataset as an accessible SVG chart with axis ticks, series legend, and summary statistics.',
+    scope: [
+      'REPLACE: describe the dataset (fields, units) and the chart type (XY scatter/line, bar, etc.).',
+      'One visualization view: chart region (inset technical surface), dataset selector, summary stats, and a data table fallback.',
+      'Hand-rolled SVG rendering; a dedicated data module supplies the dataset.',
+    ].join('\n'),
+    constraints: [
+      'No chart libraries; SVG primitives only, colors via semantic tokens (status/accent scale).',
+      'The chart must not be the only representation — provide a data table or text summary for accessibility.',
+      ...SHARED_CONSTRAINTS,
+    ].join('\n'),
+    acceptanceCriteria: [
+      ...SHARED_ACCEPTANCE,
+      'Chart renders all series from the dataset with labeled axes and readable ticks.',
+      'A text alternative (table or stats summary) conveys the same information.',
+    ].join('\n'),
+    references: [
+      'REPLACE: attach or describe the dataset.',
+      'standard-pack.md (attached): data-visualization component IDs and token table.',
+    ].join('\n'),
+  },
+  {
+    id: 'form-crud-screen',
+    title: 'Form-heavy CRUD screen',
+    summary: 'Create/edit forms with validation, list view, and non-destructive delete flows over local state.',
+    taskTitle: 'CRUD screen for {project}',
+    goal: 'Implement a dark-first create/read/update/delete screen for {project} with labeled validated forms, a records list, and confirmation before destructive actions — over local state or the documented API.',
+    scope: [
+      'REPLACE: name the record type and its fields (types, required/optional, validation rules).',
+      'List view with status badges, create/edit form (field wrapper, labels, errors, helper text), delete with confirmation dialog.',
+    ].join('\n'),
+    constraints: [
+      'Validation errors are per-field text plus a summary; never color-only.',
+      'Destructive actions require an explicit confirmation dialog.',
+      ...SHARED_CONSTRAINTS,
+    ].join('\n'),
+    acceptanceCriteria: [
+      ...SHARED_ACCEPTANCE,
+      'Create, edit, and delete flows work end to end with validation and confirmation.',
+      'Empty and error states are readable and recoverable.',
+    ].join('\n'),
+    references: [
+      'REPLACE: record schema or API documentation.',
+      'standard-pack.md (attached): CMP-FORM-* component IDs and token table.',
+    ].join('\n'),
+  },
 ]
 
 export function applyTemplate(template: TaskTemplate, projectName: string): {

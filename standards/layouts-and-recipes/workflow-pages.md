@@ -102,3 +102,30 @@ Approved: explicit steps, preview, validation, evidence, deliberate export.
 ## Rejected Workflow Patterns
 
 Rejected: hidden automation, ambiguous one-click consequential actions, and output with no review state.
+
+## RCP-TABLE-001 — Data table view
+
+### Purpose
+
+Present dense structured records with search, filters, sortable columns, text status
+badges, and pagination, following the dark-first table standards.
+
+### Required components
+
+`CMP-TABLE-DATA-TABLE`, `CMP-FILTER-SEARCH-FIELD`, `CMP-STATUS-BADGE`,
+`CMP-TABLE-PAGINATION`, `CMP-SHELL-PAGE-HEADER`.
+
+### State model
+
+Loading, ready, empty (with guidance text), and error states; sorting and filtering
+are derived, never persisted implicitly.
+
+### Accessibility notes
+
+Semantic table markup with column headers and caption; status conveyed by text
+badges; keyboard-operable controls with visible focus.
+
+### Agent transformation rules
+
+Use semantic surface and border tokens for row separation; keep row height compact
+but readable; never convey status by color alone.
