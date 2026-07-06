@@ -1,0 +1,71 @@
+{
+  "app": "bench-monitor",
+  "run": "requirements-to-ui demo verification",
+  "passed": 12,
+  "total": 12,
+  "checks": [
+    {
+      "id": "BM-01",
+      "description": "Run header shows run id and Running badge",
+      "pass": true
+    },
+    {
+      "id": "BM-02",
+      "description": "Four KPI tiles render",
+      "pass": true
+    },
+    {
+      "id": "BM-03",
+      "description": "Trace chart renders both series with accessible name",
+      "pass": true
+    },
+    {
+      "id": "BM-04",
+      "description": "Legend identifies series with text",
+      "pass": true
+    },
+    {
+      "id": "BM-05",
+      "description": "Channel table lists all 8 channels",
+      "pass": true
+    },
+    {
+      "id": "BM-06",
+      "description": "Event log lists 6 events newest-first",
+      "pass": true
+    },
+    {
+      "id": "BM-07",
+      "description": "Bundled Inter Variable + JetBrains Mono fonts active",
+      "pass": true
+    },
+    {
+      "id": "BM-08",
+      "description": "Soak stage tab narrows the trace window",
+      "pass": true,
+      "detail": "x-axis changed (full-run tick \"108\")"
+    },
+    {
+      "id": "BM-09",
+      "description": "Fault filter shows only the faulted channel",
+      "pass": true
+    },
+    {
+      "id": "BM-10",
+      "description": "All filter restores every channel",
+      "pass": true
+    },
+    {
+      "id": "BM-11",
+      "description": "Chart points carry exact measured/setpoint values",
+      "pass": true,
+      "detail": "t=108 min — measured 85.0 °C, setpoint 85.0 °C"
+    },
+    {
+      "id": "BM-12",
+      "description": "Zero light surfaces in the dark theme",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

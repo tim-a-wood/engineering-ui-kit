@@ -17,6 +17,7 @@ build commands → approve or iterate.
 | `packages/core` | GUI-independent workflow library + CLI: repo flatfile builder with deterministic exclusions, packet builders, zip-overlay inspector (hard blockers AI-HANDOFF-030…039), non-destructive applier, verification runner, persistence — 44 tests |
 | `apps/desktop` | Electron main + sandboxed preload exposing a narrow typed IPC bridge (no generic filesystem access) |
 | `apps/gui` | React renderer: five-step handoff workflow, task templates, recipes, component reference, projects, settings |
+| `examples/` | Demo target apps: `xy-plot-sample` (restyle demo) and `bench-monitor` (requirements-to-UI demo, built from its `REQUIREMENTS.md` alone) |
 | `trials/` | The evidence-first vertical-slice trial records (13/13 blocking acceptance criteria) |
 
 Front-end completeness is documented element-by-element in
@@ -112,15 +113,19 @@ npm install; npm run build --workspaces
 npx electron-builder --config apps/desktop/electron-builder.yml --win
 ```
 
-## Demo — the workflow restyling a real app
+## Demos
+
+Two recorded demos, both reproducible from what is checked into the repo. Every
+image below is composed from real captures of the running apps, and every claim
+links to machine-readable check results in [`docs/demo/`](docs/demo).
+
+### Demo 01 — restyle an existing app in one handoff
 
 The repo ships a sample target app, [`examples/xy-plot-sample`](examples/xy-plot-sample):
 an XY plot (three datasets, SVG chart, summary stats, data table) with intentionally
 plain baseline styling.
 
-| Before (plain baseline) | After (one handoff later) |
-|---|---|
-| ![XY plot sample before: plain light UI](docs/demo/xy-before.png) | ![XY plot sample after: dark-first Engineering UI Kit styling](docs/demo/xy-after.png) |
+![Before and after: the XY plot sample app, plain baseline on the left, dark-first Engineering UI Kit styling on the right](docs/demo/xy-before-after.png)
 
 The transformation is one pass of the workbench's own workflow — no hand-editing of
 the sample app:
@@ -145,6 +150,45 @@ zero-light-surface sweep of the transformed app).
 Reproduce it yourself: `npm run dev --workspace xy-plot-sample`, run the workbench
 against the sample, and select the shipped overlay zip at the Apply step (or upload
 the packet to Microsoft 365 Copilot and use its overlay instead).
+
+### Demo 02 — from written requirements to a polished front end
+
+No baseline app this time. [`examples/bench-monitor`](examples/bench-monitor)
+starts as a one-page requirements document —
+[`REQUIREMENTS.md`](examples/bench-monitor/REQUIREMENTS.md), written in plain
+product-owner language ("one page that answers: is the run healthy, is every
+channel behaving, and what happened while I was away?") — and ends as a dark-first
+test-bench monitoring console: run header, KPI tiles with tolerance context, a
+measured-vs-setpoint temperature trace with ramp/soak windows, a filterable
+thermocouple table, and an event log, all on the standards package's semantic
+tokens.
+
+![From a written spec to a working front end: the REQUIREMENTS.md document beside the finished Bench Monitor console](docs/demo/requirements-to-ui-hero.png)
+
+The requirements doc is the **entire specification** — no wireframes, no mockups,
+no component list. In the workbench this is the *Build a new UI from requirements
+(no backend)* task template:
+
+1. **Write the requirements** — the six numbered requirements in
+   `REQUIREMENTS.md` (plus the standards package) are all the UI is built from.
+2. **+ New Project** → point it at the repo that should receive the new UI.
+3. **Create Task Packet** → *Build a new UI from requirements (no backend)*
+   template, requirements pasted into the functional-scope section.
+4. **Run in Copilot → Apply Zip Overlay → Verify & Review** — same gated flow as
+   Demo 01.
+
+The checked-in console is the demo's recorded result, and it is verified the same
+evidence-first way as everything else in the repo — built, then driven in a real
+browser: stage tabs narrow the trace window, the status filter isolates the
+open-circuit fault, chart points expose exact values, bundled fonts load, and a
+zero-light-surface sweep passes. 12/12 recorded checks in
+[`docs/demo/bench-monitor-results.json`](docs/demo/bench-monitor-results.json);
+raw full-page capture in
+[`docs/demo/bench-monitor-full.png`](docs/demo/bench-monitor-full.png).
+
+![The Bench Monitor console driven in a real browser: trace narrowed to the soak window, channels filtered to the open-circuit fault](docs/demo/bench-monitor-driven.png)
+
+Run it yourself: `npm run dev --workspace bench-monitor` → http://127.0.0.1:5402.
 
 ## Safety posture
 
