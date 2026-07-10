@@ -7,6 +7,14 @@
  */
 
 /** PRD §28.1 — `project.json` */
+/** One capturable view of a target app, resolved against the project's launch URL. */
+export type EvidenceViewSpec = {
+  id: string
+  label: string
+  /** Route or path, e.g. `/` or `/settings`. */
+  path: string
+}
+
 export type Project = {
   id: string
   name: string
@@ -27,6 +35,10 @@ export type Project = {
     defaultRunFolder?: string
     explicitExportFolder?: string
   }
+  /** Target views captured as visual evidence at Prepare (before) and Verify (after). */
+  evidenceViews?: EvidenceViewSpec[]
+  /** Built-in demo project seeded by the app; badged as SAMPLE in the UI. */
+  isSample?: boolean
   settingsSchemaVersion: string
   createdAt: string
   updatedAt: string
@@ -46,6 +58,17 @@ export type HandoffRun = {
   projectId: string
   taskId?: string
   taskTitle?: string
+  /** The packet section text as last exported — prefills packet regeneration. */
+  taskPacketFields?: {
+    taskTitle: string
+    goal: string
+    scope: string
+    constraints: string
+    acceptanceCriteria: string
+    references: string
+  }
+  /** When the packet was last exported — feedback saved after this drives the iteration prefill. */
+  taskPacketBuiltAt?: string
   currentStep: HandoffStep
   uploadSetType?: 'text-only' | 'visual' | 'follow-up-text' | 'follow-up-visual'
   repoFlatfilePath?: string
@@ -57,6 +80,11 @@ export type HandoffRun = {
   followUpPacketPath?: string
   followUpAndStandardPackPath?: string
   reviewEvidencePackPath?: string
+  /** Directories holding per-view screenshots + evidence.json for each phase. */
+  evidenceBeforeDir?: string
+  evidenceAfterDir?: string
+  reviewContactSheetPath?: string
+  changesZipPath?: string
   overlayZipPath?: string
   overlayInspectionSummaryPath?: string
   appliedFilesPath?: string

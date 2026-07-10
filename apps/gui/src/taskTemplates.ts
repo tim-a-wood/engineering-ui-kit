@@ -16,7 +16,17 @@ export type TaskTemplate = {
   constraints: string
   acceptanceCriteria: string
   references: string
+  /**
+   * When set, choosing this template seeds the project's launch config (if it
+   * has none) so the finished app runs from the workbench with no manual
+   * setup. Only methods that produce a self-serving app (the monolith) declare
+   * this — the port here must match the port the template tells Copilot to use.
+   */
+  launchDefaults?: { url: string; command: string }
 }
+
+/** The port the monolithic-web-app method standardizes on (template ⇄ launch default). */
+export const MONOLITH_PORT = 4180
 
 const SHARED_CONSTRAINTS = [
   'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.',
@@ -109,6 +119,34 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     ].join('\n'),
   },
   {
+    id: 'requirements-from-brief',
+    title: 'Write the requirements (from a short brief)',
+    summary: 'Turn a few sentences of product intent into a complete REQUIREMENTS.md — run this handoff first, then build from the document it returns.',
+    taskTitle: 'Write REQUIREMENTS.md for {project}',
+    goal: 'Produce a complete, buildable requirements document for {project} from the short brief below. The next handoff will build the app from that document alone, so it must be self-sufficient.',
+    scope: [
+      'REPLACE: 3–6 sentences of product intent — who uses it, the question it answers, the 2–4 screens you imagine, and the data it manages.',
+      'Return exactly one file: REQUIREMENTS.md at the repository root (as the zip overlay).',
+      'Document structure: a one-paragraph context; numbered requirements (one per capability, each concrete enough to verify); exact input tables with types, ranges, and validation wherever forms exist; outputs and status rules with thresholds; persistence and seed-data expectations; a one-deployable run contract (npm run build, npm start, one port); an installable-PWA/offline section when offline matters; a quality bar; explicit non-goals.',
+    ].join('\n'),
+    constraints: [
+      'No implementation and no code — the requirements document only.',
+      'Invent nothing beyond the brief silently: collect anything you had to assume in an "Assumptions" section for review.',
+      'The document must stand alone: the build handoff will see only REQUIREMENTS.md plus the standard pack.',
+      'The quality-bar section shall reference the dark-first Engineering UI Kit standards (tables not card stacks, engineering charts, compact controls, text-backed status).',
+    ].join('\n'),
+    acceptanceCriteria: [
+      'Every capability in the brief appears as a numbered requirement with verifiable detail.',
+      'Input tables carry types, ranges, and validation rules; outputs carry status rules with thresholds.',
+      'Seed data, the run contract (npm run typecheck / npm run build / npm start on one port), and non-goals are specified.',
+      'Assumptions beyond the brief are listed in their own section.',
+    ].join('\n'),
+    references: [
+      'standard-pack.md (attached): the quality bar the requirements should reference.',
+      'REPLACE: any existing notes, sketches, or domain constraints worth honoring (or delete this line).',
+    ].join('\n'),
+  },
+  {
     id: 'monolithic-web-app',
     title: 'Create a monolithic web app',
     summary: 'Single deployable: React/Vite frontend plus a minimal local server in one repo.',
@@ -119,15 +157,17 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
       'Frontend: app shell (top bar, primary navigation, page header), the core screens, semantic token entry stylesheet.',
       'Backend: minimal Node server with a typed JSON API and simple file-based persistence.',
       'Shared TypeScript types between client and server in one module.',
+      'One-command run: an `npm start` script that runs the Node server, which serves the built frontend from `dist/` and the JSON API on one port — `process.env.PORT` or 4180 (reachable at http://localhost:4180). Add the `start` script to package.json (a script addition, not a dependency change).',
     ].join('\n'),
     constraints: [
       'Minimal dependencies: React, Vite, TypeScript, and the Node standard library; justify anything beyond that in response text.',
       'Frontend/backend boundary through the typed JSON API only; no server imports in the renderer.',
       'Dark-first only; semantic tokens as CSS custom properties; no raw colors outside the token entry point.',
       'No auth, telemetry, or deployment tooling in this pass.',
+      'Keep the tsconfig include limited to source directories — leave vite.config.ts out of the typecheck project (repos hosted inside a workspace/monorepo hit duplicate-vite type-identity errors otherwise).',
     ].join('\n'),
     acceptanceCriteria: [
-      'npm run typecheck and npm run build pass; the server starts and serves the built frontend.',
+      'npm run typecheck and npm run build pass; `npm run build` then `npm start` serves the built frontend and API at http://localhost:4180 (PORT overridable via process.env.PORT).',
       'Core screens perform their create/read/update flows end to end against the local API.',
       'Dark-first shell with semantic surface hierarchy; complete keyboard operation with visible focus.',
       'Loading, empty, and error states exist for every remote data region.',
@@ -136,6 +176,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
       'REPLACE: requirements or a short product description for the app.',
       'standard-pack.md (attached): rule IDs, component IDs, token table.',
     ].join('\n'),
+    launchDefaults: { url: `http://127.0.0.1:${MONOLITH_PORT}`, command: 'npm run build && npm start' },
   },
   {
     id: 'add-screen',
@@ -158,6 +199,31 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     ].join('\n'),
     references: [
       'REPLACE: requirements for the new screen (fields, data, actions).',
+      'standard-pack.md (attached): rule IDs, component IDs, token table.',
+    ].join('\n'),
+  },
+  {
+    id: 'iterate-on-feedback',
+    title: 'Iterate on the previous design (feedback-driven)',
+    summary: 'Follow-up pass on an already-applied overlay: address the reviewer feedback, change nothing else.',
+    taskTitle: 'Iterate on {project}: address review feedback',
+    goal: 'Refine the UI previously delivered for {project}: address every reviewer feedback point listed in Scope while preserving the delivered design, behavior, and file layout everywhere else.',
+    scope: [
+      'REPLACE: the reviewer feedback points to address (auto-filled from Verify & Review feedback when present).',
+    ].join('\n'),
+    constraints: [
+      'Address only the feedback points in Scope; no redesigns, rescaffolds, or unrelated refactors.',
+      'Preserve the previously delivered structure: routes, API contracts, data shapes, file layout, and naming.',
+      'Return only changed or new files — files absent from the zip remain untouched.',
+      ...SHARED_CONSTRAINTS,
+    ].join('\n'),
+    acceptanceCriteria: [
+      'Every feedback point in Scope is visibly addressed.',
+      'Screens and behaviors not named in the feedback are unchanged.',
+      'npm run typecheck and npm run build still pass after overlay application.',
+    ].join('\n'),
+    references: [
+      'The previous task packet for this run — its requirements and constraints still apply.',
       'standard-pack.md (attached): rule IDs, component IDs, token table.',
     ].join('\n'),
   },
@@ -259,6 +325,21 @@ export function applyTemplate(template: TaskTemplate, projectName: string): {
     acceptanceCriteria: fill(template.acceptanceCriteria),
     references: fill(template.references),
   }
+}
+
+/**
+ * Parse `user-review-notes.md` (append-only, `## <ISO timestamp>` headers —
+ * see the saveFeedback IPC handler) into timestamped feedback entries.
+ */
+export function parseFeedbackEntries(notes: string): { at: string; text: string }[] {
+  const entries: { at: string; text: string }[] = []
+  for (const block of notes.split(/^## /m)) {
+    const [first, ...rest] = block.split('\n')
+    const at = first?.trim() ?? ''
+    const text = rest.join('\n').trim()
+    if (!Number.isNaN(Date.parse(at)) && text) entries.push({ at, text })
+  }
+  return entries
 }
 
 export function defaultTemplateId(preferredTemplate: string): string {

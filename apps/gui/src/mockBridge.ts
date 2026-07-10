@@ -7,13 +7,20 @@
 
 import type {
   AppliedFiles,
+  EvidenceCapture,
   HandoffRun,
   OverlayInspectionSummary,
   Project,
   Settings,
   VerificationResult,
 } from '@engineering-ui-kit/core'
-import type { BuildPacketResult, EuikBridge, PrepareContextResult, TaskPacketFields } from './bridge'
+import type { BuildPacketResult, EuikBridge, PrepareContextResult, RunEvidence, TaskPacketFields } from './bridge'
+
+/* 4x3 placeholder PNGs (blue-ish before, teal-ish after) for evidence mocks. */
+const MOCK_BEFORE_PNG =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGPgF9cCAACJAFEcS6mRAAAAAElFTkSuQmCC'
+const MOCK_AFTER_PNG =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGPgndIBAAHbASoDVGnEAAAAAElFTkSuQmCC'
 
 const DEFAULT_SETTINGS: Settings = {
   defaultProjectFolder: '/workspace/projects',
@@ -37,18 +44,47 @@ export function installMockBridge(): EuikBridge {
   let lastPacketFields: TaskPacketFields | null = null
   const mockFeedback: { at: string; text: string }[] = []
 
+  const evidenceCaptured = new Map<string, { before?: string; after?: string }>()
+
   const seed = (name: string, repoPath: string, description: string, daysAgo: number, status: Project['status'] = 'active') => {
     const id = name.toLowerCase().replace(/\s+/g, '-')
     const at = new Date(Date.now() - daysAgo * 864e5).toISOString()
     projects.set(id, {
       id, name, description, repoPath, status,
       verificationCommands: { typecheck: 'npm run typecheck', build: 'npm run build' },
+      launchUrl: 'http://localhost:5173',
+      evidenceViews: [
+        { id: 'home', label: 'Dashboard', path: '/' },
+        { id: 'settings', label: 'Settings', path: '/settings' },
+      ],
       settingsSchemaVersion: '1', createdAt: at, updatedAt: at,
     })
   }
   seed('sample-analytics-app', 'C:\\work\\sample-analytics-app', 'Real-time metrics and analytics dashboard', 2)
   seed('sample-design-system', 'C:\\work\\sample-design-system', 'Shared UI components and style guide', 5)
   seed('sample-integrations', 'C:\\work\\sample-integrations', 'Manage third-party integrations', 8, 'archived')
+  // Built-in sample, mirroring the real bridge's seeded PlantOps project.
+  projects.set('plantops-sample', {
+    id: 'plantops-sample',
+    name: 'PlantOps (sample)',
+    description: 'Built-in sample: a multi-page legacy work-order app to explore the whole workflow against.',
+    repoPath: 'examples/work-orders-monolith',
+    status: 'active',
+    isSample: true,
+    launchUrl: 'http://127.0.0.1:5402',
+    launchCommand: 'npx vite --port 5402 --strictPort',
+    verificationCommands: { typecheck: 'npm run typecheck', build: 'npm run build' },
+    evidenceViews: [
+      { id: 'dashboard', label: 'Dashboard', path: '/' },
+      { id: 'orders', label: 'Work Orders', path: '#/orders' },
+      { id: 'order-form', label: 'New Order Form', path: '#/orders/new' },
+      { id: 'assets', label: 'Assets', path: '#/assets' },
+      { id: 'reports', label: 'Reports', path: '#/reports' },
+    ],
+    settingsSchemaVersion: '1',
+    createdAt: new Date(Date.now() - 864e5).toISOString(),
+    updatedAt: new Date(Date.now() - 864e5).toISOString(),
+  })
 
   let counter = 0
   const newId = (prefix: string) => `${prefix}-${++counter}`
@@ -128,6 +164,7 @@ export function installMockBridge(): EuikBridge {
         taskTitle: fields.taskTitle,
         taskPacketPath: '/mock/task-packet.md',
         standardPackPath: '/mock/standard-pack.md',
+        taskAndStandardPackPath: '/mock/task-and-standard-pack.md',
         uploadSetType: 'text-only',
       })
       lastPacketFields = { ...fields }
@@ -138,8 +175,7 @@ export function installMockBridge(): EuikBridge {
         packBytes: 73_000,
         uploadFiles: [
           { file: 'repo-flatfile.txt', bytes: 2_460_000, sha256: 'a'.repeat(64) },
-          { file: 'task-packet.md', bytes: 45_000, sha256: 'b'.repeat(64) },
-          { file: 'standard-pack.md', bytes: 28_000, sha256: 'c'.repeat(64) },
+          { file: 'task-and-standard-pack.md', bytes: 73_000, sha256: 'b'.repeat(64) },
         ],
         recommendedPrompt: `You are implementing a focused UI transformation.\n\nTask goal:\n\n${fields.goal}\n\nReturn only ui-overlay.zip containing changed and new files.`,
       }
@@ -165,10 +201,59 @@ export function installMockBridge(): EuikBridge {
       return this.updateRun(runId, { userReviewNotesPath: '/mock/user-review-notes.md' })
     },
     async buildReviewPacket(runId) {
-      await this.updateRun(runId, { reviewEvidencePackPath: '/mock/review-packet.md', uploadSetType: 'follow-up-text' })
+      const captured = evidenceCaptured.get(runId)
+      const visual = Boolean(captured?.before || captured?.after)
+      await this.updateRun(runId, {
+        reviewEvidencePackPath: '/mock/review-packet.md',
+        uploadSetType: visual ? 'follow-up-visual' : 'follow-up-text',
+      })
       return {
         reviewPacketPath: '/mock/review-packet.md',
         reviewPacketText: `# Copilot Review Packet\n\n- runId: \`${runId}\`\n\n## Reviewer Feedback\n\n${mockFeedback.map((f) => f.text).join('\n\n') || '_No manual feedback captured yet._'}\n`,
+        ...(visual ? { contactSheetPath: '/mock/review-evidence.pdf' } : {}),
+        changesZipPath: '/mock/changes.zip',
+        uploadFiles: visual
+          ? ['/mock/review-packet.md', '/mock/review-evidence.pdf', '/mock/changes.zip']
+          : ['/mock/review-packet.md', '/mock/changes.zip'],
+      }
+    },
+    async captureEvidence(runId, phase): Promise<EvidenceCapture> {
+      const run = runs.get(runId)
+      if (!run) throw new Error(`run not found: ${runId}`)
+      const project = projects.get(run.projectId)
+      const views = project?.evidenceViews ?? []
+      if (views.length === 0) throw new Error('no target views configured; add evidence views in the project settings first')
+      const record = evidenceCaptured.get(runId) ?? {}
+      record[phase] = now()
+      evidenceCaptured.set(runId, record)
+      return {
+        runId, phase, capturedAt: now(), baseUrl: project?.launchUrl ?? 'http://localhost:5173',
+        viewport: { width: 1440, height: 960 },
+        views: views.map((v) => ({
+          viewId: v.id, label: v.label, path: v.path,
+          screenshotFile: `${v.id}.png`,
+          census: phase === 'before' ? { svg: 4, img: 1, button: 6, input: 2 } : { svg: 0, img: 1, button: 6, input: 2 },
+          ok: true,
+        })),
+        ok: true,
+      }
+    },
+    async getEvidence(runId): Promise<RunEvidence> {
+      const run = runs.get(runId)
+      if (!run) throw new Error(`run not found: ${runId}`)
+      const project = projects.get(run.projectId)
+      const captured = evidenceCaptured.get(runId) ?? {}
+      const views = (project?.evidenceViews ?? []).map((v, index) => ({
+        viewId: v.id, label: v.label, path: v.path,
+        ...(captured.before ? { beforeShot: MOCK_BEFORE_PNG } : {}),
+        ...(captured.after ? { afterShot: MOCK_AFTER_PNG } : {}),
+        // First view demonstrates the loss badge once both phases exist.
+        losses: captured.before && captured.after && index === 0 ? [{ element: 'svg', before: 4, after: 0 }] : [],
+      }))
+      return {
+        ...(captured.before ? { before: { capturedAt: captured.before, ok: true } } : {}),
+        ...(captured.after ? { after: { capturedAt: captured.after, ok: true } } : {}),
+        views,
       }
     },
     async inspectOverlay(runId, zipPath): Promise<OverlayInspectionSummary> {
@@ -207,6 +292,18 @@ export function installMockBridge(): EuikBridge {
         runId, commandLabel: label, commandText: `npm run ${label}`, workingDirectory: '/mock',
         startedAt: now(), endedAt: now(), exitCode: 0, status: 'passed' as const, wasCancelledByUser: false,
       }))
+    },
+    async startUploadDrag() { /* native drag needs Electron; no-op in mock */ },
+    async launchApp(projectId, _options) {
+      const project = projects.get(projectId)
+      if (!project?.launchUrl) throw new Error('no launch URL configured for this project')
+      return { url: project.launchUrl, started: false, rebuilt: false }
+    },
+    async copyUploadSet(runId) {
+      const run = runs.get(runId)
+      if (!run) throw new Error(`run not found: ${runId}`)
+      if (!run.repoFlatfilePath) throw new Error('no upload files for this run yet — prepare context and build the task packet first')
+      return { files: 2 }
     },
     async openExternal() { /* no-op in mock */ },
     async showInFolder() { /* no-op in mock */ },

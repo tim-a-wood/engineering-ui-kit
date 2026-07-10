@@ -1,1 +1,0 @@
-{"root":["./src/App.tsx","./src/appState.ts","./src/bridge.ts","./src/components.tsx","./src/icons.tsx","./src/main.tsx","./src/markdown.tsx","./src/mockBridge.ts","./src/taskTemplates.ts","./src/views/HubView.tsx","./src/views/ProjectsView.tsx","./src/views/SettingsView.tsx","./src/views/catalog.tsx","./src/views/workflow.tsx"],"version":"5.9.3"}

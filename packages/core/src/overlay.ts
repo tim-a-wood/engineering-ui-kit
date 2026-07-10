@@ -2,9 +2,14 @@
  * Zip-overlay inspector and applier.
  *
  * Inspection implements the hard blockers AI-HANDOFF-030…039 and warnings
- * AI-HANDOFF-040…047 from `standards/copilot-handoff/overlay-safety.md`, and
+ * AI-HANDOFF-040…048 from `standards/copilot-handoff/overlay-safety.md`, and
  * emits the PRD §28.4 `OverlayInspectionSummary` shape. Application refuses
  * blocked overlays, never deletes, and records PRD §28.6 `AppliedFiles`.
+ *
+ * AI-HANDOFF-048 is the visual-fidelity gate: when an entry overwrites an
+ * existing markup-bearing file, the incoming content is censused against the
+ * current content and any element loss (svg/img/button/…) becomes a warning
+ * that must be explicitly accepted before apply.
  */
 
 import fs from 'node:fs'
@@ -12,6 +17,7 @@ import path from 'node:path'
 import AdmZip from 'adm-zip'
 import { execFileSync } from 'node:child_process'
 import type { AppliedFiles, OverlayInspectionSummary } from './types.js'
+import { assessReplacementLoss, formatLosses, isCensusableFile, isProbablyText } from './fidelity.js'
 
 export type InspectOptions = {
   runId: string
@@ -26,6 +32,9 @@ const DEFAULT_LARGE_FILE_BYTES = 200 * 1024
 const DEFAULT_FULL_REPO_THRESHOLD = 25
 
 const DEPENDENCY_DIRS = new Set(['node_modules', 'dist', 'build', 'out', 'coverage', '.cache', '.turbo', '.vite'])
+
+/** Image assets small UI overlays may legitimately ship (icons, logos). */
+const IMAGE_ASSET_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.svg'])
 
 function isAbsoluteEntry(p: string): boolean {
   return p.startsWith('/') || p.startsWith('\\\\') || /^[A-Za-z]:[\\/]/.test(p)
@@ -149,6 +158,8 @@ export function inspectOverlay(zipPath: string, options: InspectOptions): Overla
       isDirectory: false,
     })
 
+    const data = entry.getData()
+    const ext = fileName.includes('.') ? fileName.slice(fileName.lastIndexOf('.')).toLowerCase() : ''
     const exists = fs.existsSync(targetPath)
     if (exists) {
       summary.warnings.push({ ruleId: 'AI-HANDOFF-040', path: normalized, message: 'overwrites existing source file' })
@@ -165,8 +176,27 @@ export function inspectOverlay(zipPath: string, options: InspectOptions): Overla
     if (sizeBytes > largeFileBytes) {
       summary.warnings.push({ ruleId: 'AI-HANDOFF-044', path: normalized, message: `unusually large file (${sizeBytes} bytes)` })
     }
-    if (entry.getData().includes(0)) {
-      summary.warnings.push({ ruleId: 'AI-HANDOFF-047', path: normalized, message: 'introduces a binary file' })
+    if (data.includes(0)) {
+      summary.warnings.push({
+        ruleId: 'AI-HANDOFF-047',
+        path: normalized,
+        message: IMAGE_ASSET_EXTENSIONS.has(ext)
+          ? `introduces an image asset (${sizeBytes} bytes)`
+          : 'introduces a binary file',
+      })
+    } else if (exists && isCensusableFile(normalized)) {
+      // Visual-fidelity gate: does replacing this file drop rendered elements?
+      const current = fs.readFileSync(targetPath)
+      if (isProbablyText(current)) {
+        const losses = assessReplacementLoss(current.toString('utf8'), data.toString('utf8'))
+        if (losses.length > 0) {
+          summary.warnings.push({
+            ruleId: 'AI-HANDOFF-048',
+            path: normalized,
+            message: `replacing this file drops visual elements: ${formatLosses(losses)}`,
+          })
+        }
+      }
     }
   }
 

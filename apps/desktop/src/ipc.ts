@@ -3,9 +3,11 @@
  * child processes, or persistence — always through @engineering-ui-kit/core.
  */
 
-import { app, dialog, ipcMain, shell, type BrowserWindow } from 'electron'
+import { app, clipboard, dialog, ipcMain, nativeImage, shell, type BrowserWindow } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
+import { spawn, type ChildProcess } from 'node:child_process'
+import { buildCfHdropBuffer, buildFilenamesPboardPlist, buildUriList } from './uploadSetTransfer.js'
 import {
   Workspace,
   buildContext,
@@ -13,12 +15,28 @@ import {
   inspectOverlay,
   applyOverlay,
   runCommand,
+  captureEvidence,
+  loadEvidenceCapture,
+  diffCensusLosses,
+  buildReviewContactSheetHtml,
+  renderReviewContactSheetPdf,
+  buildChangesZip,
+  type AppliedFiles,
+  type EvidenceCapture,
   type OverlayInspectionSummary,
   type Project,
   type Settings,
   type VerificationResult,
 } from '@engineering-ui-kit/core'
-import { BRIDGE_CHANNELS, type BuildPacketResult, type PrepareContextResult, type TaskPacketFields } from './bridgeApi.js'
+import {
+  BRIDGE_CHANNELS,
+  type BuildPacketResult,
+  type EvidenceViewDisplay,
+  type PrepareContextResult,
+  type ReviewPacketResult,
+  type RunEvidence,
+  type TaskPacketFields,
+} from './bridgeApi.js'
 import {
   STANDARD_CONSTRAINTS,
   buildRecommendedPrompt,
@@ -33,8 +51,144 @@ function requireProject(workspace: Workspace, projectId: string): Project {
   return project
 }
 
+/** 24px file-badge shown under the cursor while dragging the upload set out. */
+const DRAG_BADGE = nativeImage.createFromDataURL(
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAT0lEQVR4nGNgQAL60f//UwMzYAPUMhyrJdQ2HMUSWhkOt2R4WvDj1x+y8AiyYOhH8pTFO4jCI9iCkRPJxATVMLVgaEUyzatMulT6tGy2AAANzMpqChPiLwAAAABJRU5ErkJggg==',
+)
+
+/**
+ * Locate the bundled PlantOps sample app: repo layout in development
+ * (apps/desktop → ../../examples), packaged resources otherwise.
+ */
+function resolveSampleAppPath(): string | undefined {
+  const candidates = [
+    path.resolve(app.getAppPath(), '..', '..', 'examples', 'work-orders-monolith'),
+    path.join(process.resourcesPath ?? '', 'examples', 'work-orders-monolith'),
+  ]
+  return candidates.find((c) => fs.existsSync(path.join(c, 'package.json')))
+}
+
+/**
+ * Seed (or repair the path of) the built-in sample project so a fresh install
+ * always has one complete, explorable project: launchable app, verification
+ * commands, and five evidence views — clearly badged as a sample.
+ */
+function seedSampleProject(workspace: Workspace): void {
+  const samplePath = resolveSampleAppPath()
+  if (!samplePath) return
+  const existing = workspace.listProjects().find((p) => p.isSample)
+  if (existing) {
+    if (existing.repoPath !== samplePath && !fs.existsSync(existing.repoPath)) {
+      workspace.updateProject(existing.id, { repoPath: samplePath })
+    }
+    return
+  }
+  workspace.createProject({
+    name: 'PlantOps (sample)',
+    description:
+      'Built-in sample: a multi-page legacy work-order app to explore the whole workflow against. Restyle it, break it, iterate — reset any time from Settings inside the app or with git.',
+    repoPath: samplePath,
+    status: 'active',
+    isSample: true,
+    launchUrl: 'http://127.0.0.1:5402',
+    launchCommand: 'npx vite --port 5402 --strictPort',
+    verificationCommands: { typecheck: 'npm run typecheck', build: 'npm run build' },
+    evidenceViews: [
+      { id: 'dashboard', label: 'Dashboard', path: '/' },
+      { id: 'orders', label: 'Work Orders', path: '#/orders' },
+      { id: 'order-form', label: 'New Order Form', path: '#/orders/new' },
+      { id: 'assets', label: 'Assets', path: '#/assets' },
+      { id: 'reports', label: 'Reports', path: '#/reports' },
+    ],
+  })
+}
+
+/* Dev servers started via Launch App, keyed by project id; killed on quit. */
+const launchedApps = new Map<string, ChildProcess>()
+
+function killLaunchedApp(child: ChildProcess): void {
+  if (child.pid === undefined) return
+  try {
+    if (process.platform === 'win32') {
+      spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
+    } else {
+      process.kill(-child.pid, 'SIGTERM')
+    }
+  } catch {
+    try { child.kill('SIGTERM') } catch { /* already gone */ }
+  }
+}
+
+async function probeUrl(url: string, timeoutMs: number): Promise<boolean> {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) })
+    return res.status < 500
+  } catch {
+    return false
+  }
+}
+
+async function waitUntilReachable(url: string, totalMs: number): Promise<void> {
+  const deadline = Date.now() + totalMs
+  while (Date.now() < deadline) {
+    if (await probeUrl(url, 2_000)) return
+    await new Promise((r) => setTimeout(r, 500))
+  }
+  throw new Error(`app did not become reachable at ${url} within ${Math.round(totalMs / 1000)}s`)
+}
+
+/**
+ * The build portion of a "build then serve" launch command (e.g. `npm run
+ * build` from `npm run build && npm start`). A single-segment command is a
+ * hot-reloading dev server with nothing to rebuild, so this returns undefined
+ * — only build-and-serve apps (whose server serves a static `dist/`) need a
+ * rebuild when relaunched over an already-running server.
+ */
+function buildStepOf(launchCommand?: string): string | undefined {
+  if (!launchCommand) return undefined
+  const segments = launchCommand.split('&&').map((s) => s.trim()).filter(Boolean)
+  if (segments.length < 2) return undefined
+  return segments.find((s) => /\bbuild\b/.test(s))
+}
+
+/** Run a one-shot command to completion; reject with tail output on non-zero exit or timeout. */
+function runOnce(command: string, cwd: string, timeoutMs: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, { cwd, shell: true, stdio: ['ignore', 'pipe', 'pipe'] })
+    let out = ''
+    child.stdout?.on('data', (d) => { out += d.toString() })
+    child.stderr?.on('data', (d) => { out += d.toString() })
+    const timer = setTimeout(() => {
+      try { child.kill('SIGTERM') } catch { /* already gone */ }
+      reject(new Error(`\`${command}\` did not finish within ${Math.round(timeoutMs / 1000)}s`))
+    }, timeoutMs)
+    child.on('error', (error) => { clearTimeout(timer); reject(error) })
+    child.on('close', (code) => {
+      clearTimeout(timer)
+      if (code === 0) resolve()
+      else reject(new Error(`\`${command}\` failed (exit ${code}):\n${out.trim().slice(-800)}`))
+    })
+  })
+}
+
+/** The files a run uploads to Copilot: flatfile + combined pack (legacy: split packs). */
+function resolveUploadSet(run: { repoFlatfilePath?: string; taskAndStandardPackPath?: string; taskPacketPath?: string; standardPackPath?: string }): string[] {
+  const candidates = run.taskAndStandardPackPath
+    ? [run.repoFlatfilePath, run.taskAndStandardPackPath]
+    : [run.repoFlatfilePath, run.taskPacketPath, run.standardPackPath]
+  const existing = candidates.filter((p): p is string => Boolean(p && fs.existsSync(p)))
+  if (existing.length === 0) {
+    throw new Error('no upload files for this run yet — prepare context and build the task packet first')
+  }
+  return existing
+}
+
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataDir?: string): Workspace {
   const workspace = new Workspace(dataDir ?? path.join(app.getPath('userData'), 'workspace'))
+  seedSampleProject(workspace)
+  app.on('will-quit', () => {
+    for (const child of launchedApps.values()) killLaunchedApp(child)
+  })
 
   ipcMain.handle(BRIDGE_CHANNELS.appVersion, () => app.getVersion())
 
@@ -131,6 +285,12 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     const generatedAt = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')
     const runDir = workspace.runDir(runId)
 
+    // Saved reviewer notes ride along on regenerated packets so the next
+    // Copilot iteration actually sees the feedback (Verify-step promise).
+    const reviewerFeedback = run.userReviewNotesPath && fs.existsSync(run.userReviewNotesPath)
+      ? fs.readFileSync(run.userReviewNotesPath, 'utf8').trim()
+      : undefined
+
     // PRD §13.5 text-only upload set: repo-flatfile.txt, task-packet.md, standard-pack.md
     const taskPacketText = buildTaskPacketMarkdown({
       packetId: runId,
@@ -143,6 +303,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       acceptanceCriteria: fields.acceptanceCriteria.split('\n').filter(Boolean),
       references: fields.references.split('\n').filter(Boolean),
       generatedAt,
+      ...(reviewerFeedback ? { reviewerFeedback } : {}),
     })
     const standardPackText = buildStandardPackMarkdown({ standardsVersion: '0.4.0', generatedAt })
 
@@ -151,7 +312,12 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     fs.writeFileSync(taskPacketPath, taskPacketText)
     fs.writeFileSync(standardPackPath, standardPackText)
 
-    const uploadPaths = [run.repoFlatfilePath, taskPacketPath, standardPackPath]
+    // Combined upload file: one drag/copy fewer, same content, and the third
+    // Copilot slot stays free for a visual reference pack.
+    const taskAndStandardPackPath = path.join(runDir, 'task-and-standard-pack.md')
+    fs.writeFileSync(taskAndStandardPackPath, `${taskPacketText}\n\n---\n\n${standardPackText}`)
+
+    const uploadPaths = [run.repoFlatfilePath, taskAndStandardPackPath]
     const manifest = buildPacketManifest(uploadPaths)
     const recommendedPrompt = buildRecommendedPrompt({
       targetApplication: project.name,
@@ -159,12 +325,19 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       goal: fields.goal,
       uploadFiles: manifest.map((m) => m.file),
     })
+    // Persisted so Open-Copilot can auto-copy the prompt on a revisit of this step.
+    fs.writeFileSync(path.join(runDir, 'recommended-prompt.txt'), recommendedPrompt)
 
     workspace.updateRun(runId, {
       currentStep: 'run-in-copilot',
       taskTitle: fields.taskTitle,
+      // Kept on the run so "Generate New Task Packet" starts from the last
+      // exported sections instead of a blank form.
+      taskPacketFields: { ...fields },
+      taskPacketBuiltAt: generatedAt,
       taskPacketPath,
       standardPackPath,
+      taskAndStandardPackPath,
       uploadSetType: 'text-only',
     })
     workspace.saveRunArtifact(runId, 'packet-manifest.json', { files: manifest })
@@ -201,10 +374,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
   })
 
   // PRD §11.3 modal: Generate Copilot Review Packet (follow-up, 3-file budget).
-  ipcMain.handle(BRIDGE_CHANNELS.buildReviewPacket, (_e, runId: string) => {
+  // With captured evidence this produces the full visual set:
+  // review-packet.md + review-evidence.pdf (before/after contact sheet) + changes.zip.
+  ipcMain.handle(BRIDGE_CHANNELS.buildReviewPacket, async (_e, runId: string): Promise<ReviewPacketResult> => {
     const run = workspace.getRun(runId)
     if (!run) throw new Error(`run not found: ${runId}`)
     const project = requireProject(workspace, run.projectId)
+    const runDir = workspace.runDir(runId)
+    const generatedAt = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')
     const feedback = run.userReviewNotesPath && fs.existsSync(run.userReviewNotesPath)
       ? fs.readFileSync(run.userReviewNotesPath, 'utf8')
       : ''
@@ -225,12 +402,144 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       acceptanceCriteria: acceptance,
       feedback,
       verificationSummary: verification,
-      generatedAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+      generatedAt,
     })
-    const reviewPath = path.join(workspace.runDir(runId), 'review-packet.md')
+    const reviewPath = path.join(runDir, 'review-packet.md')
     fs.writeFileSync(reviewPath, text)
-    workspace.updateRun(runId, { reviewEvidencePackPath: reviewPath, uploadSetType: 'follow-up-text' })
-    return { reviewPacketPath: reviewPath, reviewPacketText: text }
+
+    // Changed-file bundle for the reviewer.
+    const applied = run.appliedFilesPath && fs.existsSync(run.appliedFilesPath)
+      ? (JSON.parse(fs.readFileSync(run.appliedFilesPath, 'utf8')) as AppliedFiles)
+      : null
+    const changedFiles = (applied?.files ?? []).filter((f) => f.action !== 'unchanged')
+    let changesZipPath: string | undefined
+    if (changedFiles.length > 0) {
+      changesZipPath = path.join(runDir, 'changes.zip')
+      buildChangesZip(project.repoPath, changedFiles, changesZipPath)
+    }
+
+    // Visual contact sheet when evidence was captured for this run.
+    const before = run.evidenceBeforeDir ? loadEvidenceCapture(run.evidenceBeforeDir) : null
+    const after = run.evidenceAfterDir ? loadEvidenceCapture(run.evidenceAfterDir) : null
+    let contactSheetPath: string | undefined
+    if (before || after) {
+      const viewIds = new Map<string, { id: string; label: string; path: string }>()
+      for (const capture of [before, after]) {
+        for (const v of capture?.views ?? []) {
+          if (!viewIds.has(v.viewId)) viewIds.set(v.viewId, { id: v.viewId, label: v.label, path: v.path })
+        }
+      }
+      const sheetViews = [...viewIds.values()].map((meta) => {
+        const b = before?.views.find((v) => v.viewId === meta.id)
+        const a = after?.views.find((v) => v.viewId === meta.id)
+        const abs = (dir: string | undefined, file: string | undefined) =>
+          dir && file && fs.existsSync(path.join(dir, file)) ? path.join(dir, file) : undefined
+        const captureError = [b?.error && `before: ${b.error}`, a?.error && `after: ${a.error}`]
+          .filter(Boolean)
+          .join('; ')
+        return {
+          ...meta,
+          ...(abs(run.evidenceBeforeDir, b?.screenshotFile) ? { beforePng: abs(run.evidenceBeforeDir, b?.screenshotFile) } : {}),
+          ...(abs(run.evidenceAfterDir, a?.screenshotFile) ? { afterPng: abs(run.evidenceAfterDir, a?.screenshotFile) } : {}),
+          ...(b?.census && a?.census ? { losses: diffCensusLosses(b.census, a.census) } : {}),
+          ...(captureError ? { captureError } : {}),
+        }
+      })
+      const html = buildReviewContactSheetHtml({
+        runId,
+        projectName: project.name,
+        taskTitle: run.taskTitle ?? 'UI transformation',
+        acceptanceCriteria: acceptance,
+        standardsPackage: 'engineering-ui-kit',
+        standardsVersion: '0.4.0',
+        generatedAt,
+        views: sheetViews,
+        changedFiles: changedFiles.map((f) => ({ relativePath: f.relativePath, action: f.action, sizeBytes: f.sizeBytes })),
+        verificationSummary: verification,
+        ...(feedback ? { reviewerNotes: feedback } : {}),
+      })
+      fs.writeFileSync(path.join(runDir, 'review-evidence.html'), html)
+      contactSheetPath = path.join(runDir, 'review-evidence.pdf')
+      await renderReviewContactSheetPdf(html, contactSheetPath)
+    }
+
+    workspace.updateRun(runId, {
+      reviewEvidencePackPath: reviewPath,
+      ...(contactSheetPath ? { reviewContactSheetPath: contactSheetPath } : {}),
+      ...(changesZipPath ? { changesZipPath } : {}),
+      uploadSetType: contactSheetPath ? 'follow-up-visual' : 'follow-up-text',
+    })
+    return {
+      reviewPacketPath: reviewPath,
+      reviewPacketText: text,
+      ...(contactSheetPath ? { contactSheetPath } : {}),
+      ...(changesZipPath ? { changesZipPath } : {}),
+      uploadFiles: [reviewPath, contactSheetPath, changesZipPath].filter((p): p is string => Boolean(p)),
+    }
+  })
+
+  // Visual evidence: per-view screenshots + rendered element census, captured
+  // at Prepare (before) and Verify (after). Playwright is an optional install;
+  // the error message tells the user how to enable it.
+  ipcMain.handle(BRIDGE_CHANNELS.captureEvidence, async (_e, runId: string, phase: 'before' | 'after'): Promise<EvidenceCapture> => {
+    const run = workspace.getRun(runId)
+    if (!run) throw new Error(`run not found: ${runId}`)
+    const project = requireProject(workspace, run.projectId)
+    const views = project.evidenceViews ?? []
+    if (views.length === 0) {
+      throw new Error('no target views configured; add evidence views in the project settings first')
+    }
+    if (!project.launchUrl) {
+      throw new Error('set the project launch URL (e.g. http://localhost:5173) so views can be captured')
+    }
+    const outputDir = path.join(workspace.runDir(runId), 'evidence', phase)
+    const capture = await captureEvidence({
+      runId,
+      phase,
+      outputDir,
+      views,
+      baseUrl: project.launchUrl,
+      ...(project.launchCommand ? { serveCommand: project.launchCommand, serveCwd: project.repoPath } : {}),
+    })
+    workspace.updateRun(runId, phase === 'before' ? { evidenceBeforeDir: outputDir } : { evidenceAfterDir: outputDir })
+    return capture
+  })
+
+  // Evidence display model: screenshots come back as bounded data URIs so the
+  // renderer keeps zero filesystem access (ARCH-STATE-006).
+  ipcMain.handle(BRIDGE_CHANNELS.getEvidence, (_e, runId: string): RunEvidence => {
+    const run = workspace.getRun(runId)
+    if (!run) throw new Error(`run not found: ${runId}`)
+    const before = run.evidenceBeforeDir ? loadEvidenceCapture(run.evidenceBeforeDir) : null
+    const after = run.evidenceAfterDir ? loadEvidenceCapture(run.evidenceAfterDir) : null
+    const shotUri = (dir: string | undefined, file: string | undefined): string | undefined => {
+      if (!dir || !file) return undefined
+      const p = path.join(dir, file)
+      if (!fs.existsSync(p)) return undefined
+      return `data:image/png;base64,${fs.readFileSync(p).toString('base64')}`
+    }
+    const ids = new Map<string, EvidenceViewDisplay>()
+    for (const capture of [before, after]) {
+      for (const view of capture?.views ?? []) {
+        if (!ids.has(view.viewId)) {
+          ids.set(view.viewId, { viewId: view.viewId, label: view.label, path: view.path, losses: [] })
+        }
+      }
+    }
+    for (const display of ids.values()) {
+      const b = before?.views.find((v) => v.viewId === display.viewId)
+      const a = after?.views.find((v) => v.viewId === display.viewId)
+      display.beforeShot = shotUri(run.evidenceBeforeDir, b?.screenshotFile)
+      display.afterShot = shotUri(run.evidenceAfterDir, a?.screenshotFile)
+      if (b?.error) display.beforeError = b.error
+      if (a?.error) display.afterError = a.error
+      if (b?.census && a?.census) display.losses = diffCensusLosses(b.census, a.census)
+    }
+    return {
+      ...(before ? { before: { capturedAt: before.capturedAt, ok: before.ok } } : {}),
+      ...(after ? { after: { capturedAt: after.capturedAt, ok: after.ok } } : {}),
+      views: [...ids.values()],
+    }
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.inspectOverlay, (_e, runId: string, zipPath: string): OverlayInspectionSummary => {
@@ -264,7 +573,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       acceptWarnings,
     })
     const appliedPath = workspace.saveRunArtifact(runId, 'applied-files.json', applied)
-    workspace.updateRun(runId, { currentStep: 'verify-review', appliedFilesPath: appliedPath })
+    // Verification results describe the tree before this apply — invalidate
+    // them so the Verify step demands a fresh run instead of showing a stale
+    // green verdict (F10).
+    workspace.updateRun(runId, {
+      currentStep: 'verify-review',
+      appliedFilesPath: appliedPath,
+      verificationResultPaths: [],
+    })
     return applied
   })
 
@@ -291,6 +607,72 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     const resultPaths = results.map((r, i) => workspace.saveRunArtifact(runId, `verification-result-${labels[i]}.json`, r))
     workspace.updateRun(runId, { verificationResultPaths: resultPaths })
     return results
+  })
+
+  // A: native drag-out — the renderer's dragstart hands the drag session to
+  // the OS with the real files attached; drop lands in the Copilot chat.
+  ipcMain.handle(BRIDGE_CHANNELS.startUploadDrag, (event, runId: string) => {
+    const run = workspace.getRun(runId)
+    if (!run) throw new Error(`run not found: ${runId}`)
+    const files = resolveUploadSet(run)
+    event.sender.startDrag({ file: files[0]!, files, icon: DRAG_BADGE })
+  })
+
+  // B: put the actual files (not paths-as-text) on the OS clipboard.
+  ipcMain.handle(BRIDGE_CHANNELS.copyUploadSet, (_e, runId: string): { files: number } => {
+    const run = workspace.getRun(runId)
+    if (!run) throw new Error(`run not found: ${runId}`)
+    const files = resolveUploadSet(run)
+    clipboard.clear()
+    if (process.platform === 'darwin') {
+      clipboard.writeBuffer('NSFilenamesPboardType', buildFilenamesPboardPlist(files))
+    } else if (process.platform === 'win32') {
+      clipboard.writeBuffer('CF_HDROP', buildCfHdropBuffer(files))
+    } else {
+      clipboard.writeBuffer('text/uri-list', buildUriList(files))
+    }
+    return { files: files.length }
+  })
+
+  // Open the project's running app in the browser; if it isn't running and a
+  // launch command is configured, start the dev server first (tracked, killed
+  // on app quit).
+  ipcMain.handle(BRIDGE_CHANNELS.launchApp, async (_e, projectId: string, options?: { open?: boolean }): Promise<{ url: string; started: boolean; rebuilt: boolean }> => {
+    const project = requireProject(workspace, projectId)
+    if (!project.launchUrl) throw new Error('no launch URL configured for this project')
+    let started = false
+    let rebuilt = false
+    if (!(await probeUrl(project.launchUrl, 1_500))) {
+      if (!project.launchCommand) {
+        throw new Error(`nothing is serving ${project.launchUrl} and no launch command is configured — start your dev server first`)
+      }
+      const existing = launchedApps.get(projectId)
+      if (!existing || existing.exitCode !== null) {
+        launchedApps.set(projectId, spawn(project.launchCommand, {
+          cwd: project.repoPath,
+          shell: true,
+          detached: process.platform !== 'win32',
+          stdio: 'ignore',
+        }))
+      }
+      await waitUntilReachable(project.launchUrl, 45_000)
+      started = true
+    } else {
+      // Server already running. A build-and-serve app serves a static dist/,
+      // so after an overlay apply the running server is stale — rebuild the
+      // build step (the server picks it up from disk) instead of silently
+      // reopening the old build. Dev servers (no build step) hot-reload.
+      const build = buildStepOf(project.launchCommand)
+      if (build) {
+        const timeoutMs = workspace.getSettings().defaultCommandTimeoutMinutes * 60 * 1000
+        await runOnce(build, project.repoPath, timeoutMs)
+        rebuilt = true
+      }
+    }
+    // The embedded Verify-step preview renders in-window; only open the
+    // system browser when asked (the default, and the legacy behavior).
+    if (options?.open !== false) await shell.openExternal(project.launchUrl)
+    return { url: project.launchUrl, started, rebuilt }
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.openExternal, async (_e, url: string) => {

@@ -177,6 +177,7 @@ export function ProjectsView(props: {
                     <span aria-hidden="true" style={{ color: 'var(--semantic-text-muted)', display: 'inline-flex' }}>{Icon.folder()}</span>
                     <div>
                       <strong>{project.name}</strong>
+                      {project.isSample && <span className="sample-chip" title="Built-in sample project — explore freely">Sample</span>}
                       <p className="muted" style={{ margin: 0, fontSize: 13 }}>{project.description ?? project.repoPath}</p>
                     </div>
                   </div>
@@ -197,8 +198,25 @@ export function ProjectsView(props: {
                     >
                       Start handoff
                     </button>
+                    {project.launchUrl && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-compact"
+                        onClick={async () => {
+                          setStatus({ tone: 'info', text: `Opening ${project.name}…` })
+                          try {
+                            const result = await props.bridge.launchApp(project.id)
+                            setStatus({ tone: 'success', text: result.started ? `Dev server started — ${project.name} opened at ${result.url}.` : `${project.name} opened at ${result.url}.` })
+                          } catch (error) {
+                            setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+                          }
+                        }}
+                      >
+                        Open App
+                      </button>
+                    )}
                     <button type="button" className="btn btn-secondary btn-compact" onClick={() => setLaunchUrlProject(project)}>
-                      {project.launchUrl ? 'Launch URL…' : 'Set launch URL…'}
+                      {project.launchUrl ? 'Launch & evidence…' : 'Set launch & evidence…'}
                     </button>
                     <button type="button" className="btn btn-secondary btn-compact" onClick={() => toggleArchive(project)}>
                       {project.status === 'active' ? 'Archive' : 'Reactivate'}
@@ -259,11 +277,15 @@ export function ProjectsView(props: {
         <LaunchUrlDialog
           project={launchUrlProject}
           onClose={() => setLaunchUrlProject(null)}
-          onSave={async (url) => {
-            await props.bridge.updateProject(launchUrlProject.id, { launchUrl: url || undefined } as Partial<Project>)
+          onSave={async (url, command, views) => {
+            await props.bridge.updateProject(launchUrlProject.id, {
+              launchUrl: url || undefined,
+              launchCommand: command || undefined,
+              evidenceViews: views.length > 0 ? views : undefined,
+            } as Partial<Project>)
             await props.refreshProjects()
             setLaunchUrlProject(null)
-            setStatus({ tone: 'success', text: url ? `Launch URL saved for ${launchUrlProject.name}.` : `Launch URL cleared for ${launchUrlProject.name}.` })
+            setStatus({ tone: 'success', text: `Launch & evidence settings saved for ${launchUrlProject.name}.` })
           }}
         />
       )}
@@ -271,21 +293,57 @@ export function ProjectsView(props: {
   )
 }
 
-/** PRD §27.5 — per-project launch URL used by the Launch App button. */
-function LaunchUrlDialog(props: { project: Project; onClose: () => void; onSave: (url: string) => Promise<void> }) {
+/** PRD §27.5 + R1 — per-project launch URL, launch command, evidence views. */
+export function LaunchUrlDialog(props: {
+  project: Project
+  onClose: () => void
+  onSave: (url: string, command: string, views: { id: string; label: string; path: string }[]) => Promise<void>
+}) {
   const [url, setUrl] = useState(props.project.launchUrl ?? '')
+  const [command, setCommand] = useState(props.project.launchCommand ?? '')
+  const [viewsText, setViewsText] = useState(
+    (props.project.evidenceViews ?? []).map((v) => `${v.label} | ${v.path}`).join('\n'),
+  )
   const [error, setError] = useState<string | null>(null)
+
+  const parseViews = (): { id: string; label: string; path: string }[] | null => {
+    const views: { id: string; label: string; path: string }[] = []
+    const seen = new Set<string>()
+    for (const raw of viewsText.split('\n')) {
+      const line = raw.trim()
+      if (!line) continue
+      const [labelPart, pathPart] = line.split('|').map((s) => s.trim())
+      // Hash-routed apps use "#/screen" (or "/#/screen") paths — both valid.
+      if (!labelPart || !pathPart || !/^[/#]/.test(pathPart)) {
+        setError(`Each view line must be "Label | /path" (or "Label | #/screen" for hash-routed apps) — problem line: "${line}"`)
+        return null
+      }
+      let id = labelPart.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'view'
+      while (seen.has(id)) id = `${id}-2`
+      seen.add(id)
+      views.push({ id, label: labelPart, path: pathPart })
+    }
+    return views
+  }
+
   const save = async () => {
     const trimmed = url.trim()
     if (trimmed && !/^https?:\/\//.test(trimmed)) {
       setError('Launch URL must start with http:// or https://')
       return
     }
-    await props.onSave(trimmed)
+    const views = parseViews()
+    if (views === null) return
+    if (views.length > 0 && !trimmed) {
+      setError('Evidence views need a launch URL to capture against.')
+      return
+    }
+    await props.onSave(trimmed, command.trim(), views)
   }
+
   return (
     <Dialog
-      title={`Launch URL — ${props.project.name}`}
+      title={`Launch & evidence — ${props.project.name}`}
       onClose={props.onClose}
       actions={
         <>
@@ -303,10 +361,38 @@ function LaunchUrlDialog(props: { project: Project; onClose: () => void; onSave:
           value={url}
           onChange={(e) => { setUrl(e.target.value); setError(null) }}
         />
+        <p className="muted" style={{ margin: 0, fontSize: 12 }}>
+          Used by the Launch App button and by evidence capture.
+        </p>
+      </div>
+      <div className="field">
+        <label htmlFor="launch-command">Launch command <span className="muted">(optional)</span></label>
+        <input
+          id="launch-command"
+          type="text"
+          className="mono"
+          placeholder="npm start"
+          value={command}
+          onChange={(e) => { setCommand(e.target.value); setError(null) }}
+        />
+        <p className="muted" style={{ margin: 0, fontSize: 12 }}>
+          Run in the repo when nothing is serving the launch URL — Launch App and evidence capture
+          start it for you and stop it when the workbench quits. Leave empty to start your dev server manually.
+        </p>
+      </div>
+      <div className="field">
+        <label htmlFor="evidence-views">Evidence target views (one per line: <code>Label | /path</code>)</label>
+        <textarea
+          id="evidence-views"
+          rows={4}
+          placeholder={'Dashboard | /\nSettings | /settings'}
+          value={viewsText}
+          onChange={(e) => { setViewsText(e.target.value); setError(null) }}
+        />
         {error && <p className="field-error" role="alert">Error: {error}</p>}
         <p className="muted" style={{ margin: 0, fontSize: 12 }}>
-          Used by the Launch App button in Verify &amp; Review. Start your dev server manually, then Launch App opens
-          this URL. Leave empty to clear.
+          These views are screenshotted before and after each handoff; the pairs (plus an element-loss census)
+          go into the review evidence contact sheet.
         </p>
       </div>
     </Dialog>

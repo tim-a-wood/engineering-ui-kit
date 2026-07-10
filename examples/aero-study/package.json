@@ -1,0 +1,27 @@
+{
+  "name": "aero-study",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Requirements-only start point for the Engineering UI Kit monolithic-PWA handoff: AeroStudy, an aircraft performance trade-study workbench built from REQUIREMENTS.md via the workbench workflow.",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc -b --pretty false",
+    "build": "tsc -b --pretty false && vite build",
+    "start": "node server/main.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.2.0",
+    "@fontsource/jetbrains-mono": "^5.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.4.0",
+    "typescript": "^5.8.0",
+    "vite": "^6.3.0"
+  }
+}

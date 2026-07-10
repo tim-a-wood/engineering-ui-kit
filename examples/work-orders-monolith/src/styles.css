@@ -1,0 +1,167 @@
+/* PlantOps — intentionally plain "legacy enterprise" baseline styling.
+   This app is the BEFORE for Engineering UI Kit restyle handoffs: light,
+   boxy, default-ish. Keep it dated on purpose. */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 13px;
+  color: #222;
+  background: #ececec;
+}
+
+a { color: #1a4f9c; }
+
+/* Header + nav */
+
+.topbar {
+  background: #2c5aa0;
+  color: #fff;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbar h1 { font-size: 16px; margin: 0 16px 0 0; font-weight: bold; }
+.topbar .site { margin-left: auto; font-size: 11px; color: #cfdcf3; }
+
+.mainnav {
+  background: #3f6db3;
+  padding: 0 16px;
+  display: flex;
+  gap: 2px;
+}
+.mainnav a {
+  color: #eaf0fa;
+  text-decoration: none;
+  padding: 7px 14px;
+  font-size: 12px;
+}
+.mainnav a.active { background: #ececec; color: #1a3c6e; font-weight: bold; }
+.mainnav a:hover:not(.active) { background: #4d7bc1; }
+
+.page { padding: 16px; max-width: 1100px; margin: 0 auto; }
+.page h2 { font-size: 17px; margin: 4px 0 12px; }
+.page h3 { font-size: 13px; margin: 16px 0 6px; }
+
+/* Panels, tables, badges */
+
+.box {
+  background: #fff;
+  border: 1px solid #c9c9c9;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+table.grid { border-collapse: collapse; width: 100%; background: #fff; }
+.grid th {
+  background: #dde6f3;
+  border: 1px solid #b9c6da;
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 11px;
+}
+.grid td { border: 1px solid #d4d4d4; padding: 6px 8px; }
+.grid tr:nth-child(even) td { background: #f6f8fb; }
+.grid tr.clickable:hover td { background: #eef3fb; cursor: pointer; }
+
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid #999;
+  border-radius: 9px;
+  font-size: 11px;
+  background: #eee;
+}
+.badge.open { background: #e8f0fe; border-color: #7a9fd4; color: #1a4f9c; }
+.badge.in-progress { background: #fff6de; border-color: #d4b455; color: #7a5d00; }
+.badge.blocked { background: #fde8e8; border-color: #d48282; color: #9c1a1a; }
+.badge.done { background: #e9f6e9; border-color: #8fc48f; color: #1d6d1d; }
+.badge.low { background: #f2f2f2; }
+.badge.medium { background: #e8f0fe; border-color: #7a9fd4; }
+.badge.high { background: #fff0de; border-color: #d49a55; color: #8a5200; }
+.badge.critical { background: #fde8e8; border-color: #d48282; color: #9c1a1a; font-weight: bold; }
+
+/* KPI cards */
+
+.kpis { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.kpi {
+  background: #fff;
+  border: 1px solid #c9c9c9;
+  padding: 10px 14px;
+  min-width: 150px;
+}
+.kpi .num { font-size: 22px; font-weight: bold; }
+.kpi .lbl { font-size: 11px; color: #666; }
+
+/* Forms */
+
+.formrow { margin-bottom: 10px; display: flex; align-items: flex-start; gap: 10px; }
+.formrow label { width: 130px; padding-top: 4px; font-size: 12px; color: #444; }
+.formrow input[type='text'],
+.formrow input[type='date'],
+.formrow select,
+.formrow textarea {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid #a9a9a9;
+  width: 320px;
+  background: #fff;
+}
+.formrow textarea { width: 460px; }
+.formrow .hint { font-size: 11px; color: #777; margin: 4px 0 0; }
+
+button, .btn {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 14px;
+  border: 1px solid #7a7a7a;
+  background: linear-gradient(#fdfdfd, #dfdfdf);
+  cursor: pointer;
+}
+button:hover { background: linear-gradient(#fff, #e9e9e9); }
+button.primary { background: linear-gradient(#5d88c4, #3f6db3); color: #fff; border-color: #2c5aa0; }
+button.danger { color: #9c1a1a; }
+
+.toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.toolbar input[type='text'], .toolbar select {
+  font-family: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid #a9a9a9;
+}
+.toolbar .spacer { flex: 1; }
+
+/* Assets */
+
+.assetgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.asset {
+  background: #fff;
+  border: 1px solid #c9c9c9;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.asset .ic { color: #3f6db3; }
+.asset h4 { margin: 0; font-size: 12px; }
+.asset p { margin: 2px 0 0; font-size: 11px; color: #666; }
+.health-ok { color: #1d6d1d; }
+.health-degraded { color: #8a5200; }
+.health-down { color: #9c1a1a; font-weight: bold; }
+
+/* Reports */
+
+.chartrow { display: flex; gap: 14px; flex-wrap: wrap; }
+.chart { background: #fff; border: 1px solid #c9c9c9; padding: 10px; }
+.chart h4 { margin: 0 0 8px; font-size: 12px; }
+
+.footer {
+  padding: 10px 16px;
+  font-size: 11px;
+  color: #888;
+  border-top: 1px solid #ccc;
+  margin-top: 24px;
+}
+
+.empty { color: #777; font-style: italic; padding: 14px; }

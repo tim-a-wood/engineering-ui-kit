@@ -1,0 +1,25 @@
+{
+  "experiment": "monolith-e2e",
+  "pass": 1,
+  "date": "2026-07-09",
+  "method": "monolithic-web-app template (Create a monolithic web app)",
+  "target": "examples/gauge-lab",
+  "appBuild": "workbench @ main 5d50778 (pre-improvement baseline)",
+  "workflow": [
+    { "id": "P1-PROJECT", "pass": true, "detail": "GaugeLab project created via New Project dialog (typed path)" },
+    { "id": "P1-CONTEXT", "pass": true, "detail": "context generated: 3 files included, 45 excluded, 0 warnings, 4KB flatfile" },
+    { "id": "P1-TEMPLATE", "pass": true, "detail": "monolithic-web-app template applied; Scope/References REPLACE sections edited in UI" },
+    { "id": "P1-PACKET", "pass": true, "detail": "packet exported: repo-flatfile.txt + task-and-standard-pack.md (11.7KB), 2/3 upload slots" },
+    { "id": "P1-OVERLAY-1", "pass": true, "detail": "iteration 1: 17-file overlay inspected (verdict pass), applied; verification FAILED (duplicate-vite type clash in vite.config.ts)" },
+    { "id": "P1-FEEDBACK-LOOP", "pass": true, "detail": "feedback saved via UI; corrected delta overlay (tsconfig.json) triggered AI-HANDOFF-040 overwrite warning; gate required explicit acceptance; applied; ALL CHECKS PASSED" },
+    { "id": "P1-OVERLAY-3", "pass": true, "detail": "polish delta (nowrap dates, KPI deep links) applied via same loop; checks passed" },
+    { "id": "P1-OVERLAY-4", "pass": true, "detail": "consistency delta (status filter carried in KPI deep links) applied; checks passed" },
+    { "id": "P1-EVIDENCE", "pass": true, "detail": "Launch & evidence configured via Projects UI (workaround /#/ paths); 4 after-views captured with element census" },
+    { "id": "P1-REVIEW-PACKET", "pass": true, "detail": "review packet generated: review-packet.md + review-evidence.pdf + changes.zip" },
+    { "id": "P1-APPROVE", "pass": true, "detail": "handoff approved and completed in UI" }
+  ],
+  "sampleChecks": { "total": 15, "passed": 15, "note": "one stateful re-run false-negative (DETAIL-OVERDUE-TEXT) excluded; flows verified: dashboard KPIs, overdue list, search, due filter, log calibration with next-due recalc, form validation, duplicate tag rejection, create flow, JSON-file persistence across restart, skip link, KPI deep-link consistency" },
+  "iterationsToSaturation": 4,
+  "findings": ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"],
+  "screenshots": 45
+}

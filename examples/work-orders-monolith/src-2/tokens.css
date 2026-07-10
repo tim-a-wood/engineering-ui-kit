@@ -1,0 +1,72 @@
+:root {
+  color-scheme: dark;
+
+  --semantic-surface-canvas: #07111f;
+  --semantic-surface-panel: #0f172a;
+  --semantic-surface-panel-raised: #111827;
+  --semantic-surface-inset: #172033;
+  --semantic-surface-overlay: #0f172a;
+  --semantic-surface-scrim: rgba(2, 6, 23, 0.72);
+
+  --semantic-text-primary: #f8fafc;
+  --semantic-text-secondary: #cbd5e1;
+  --semantic-text-muted: #94a3b8;
+  --semantic-text-disabled: rgba(203, 213, 225, 0.38);
+  --semantic-text-inverse: #ffffff;
+
+  --semantic-border-subtle: rgba(148, 163, 184, 0.18);
+  --semantic-border-strong: rgba(203, 213, 225, 0.34);
+  --semantic-border-focus: #5478ff;
+  --semantic-border-danger: #ef4444;
+
+  --semantic-focus-ring: 0 0 0 2px #5478ff;
+  --semantic-focus-ring-offset: 0 0 0 4px rgba(84, 120, 255, 0.16);
+
+  --semantic-accent-primary: #2f5bff;
+  --semantic-accent-primary-hover: #5478ff;
+  --semantic-accent-primary-active: #2443cc;
+  --semantic-accent-secondary: #a78bfa;
+  --semantic-accent-glow: rgba(47, 91, 255, 0.22);
+
+  --semantic-status-success: #34d399;
+  --semantic-status-warning: #fbbf24;
+  --semantic-status-danger: #f87171;
+  --semantic-status-info: #60a5fa;
+  --semantic-status-neutral: #94a3b8;
+
+  --semantic-spacing-1: 4px;
+  --semantic-spacing-2: 8px;
+  --semantic-spacing-3: 12px;
+  --semantic-spacing-4: 16px;
+  --semantic-spacing-5: 20px;
+  --semantic-spacing-6: 24px;
+  --semantic-spacing-8: 32px;
+
+  --semantic-density-compact-control-height: 32px;
+  --semantic-density-compact-panel-padding: 16px;
+  --semantic-density-comfortable-control-height: 40px;
+
+  --semantic-radius-sm: 4px;
+  --semantic-radius-md: 8px;
+  --semantic-radius-lg: 12px;
+
+  --semantic-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.22);
+  --semantic-shadow-md: 0 10px 24px rgba(0, 0, 0, 0.28);
+  --semantic-shadow-overlay: 0 24px 72px rgba(0, 0, 0, 0.46);
+
+  --semantic-typography-family-sans: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+  --semantic-typography-family-mono: JetBrains Mono, SFMono-Regular, Consolas, Liberation Mono, monospace;
+  --semantic-typography-size-sm: 13px;
+  --semantic-typography-size-md: 14px;
+  --semantic-typography-size-lg: 16px;
+  --semantic-typography-weight-regular: 400;
+  --semantic-typography-weight-medium: 500;
+  --semantic-typography-weight-semibold: 600;
+
+  --semantic-motion-duration-fast: 120ms;
+  --semantic-motion-duration-normal: 180ms;
+  --semantic-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  --semantic-z-index-overlay: 700;
+  --semantic-z-index-modal: 800;
+}

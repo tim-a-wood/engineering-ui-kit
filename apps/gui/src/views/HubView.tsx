@@ -119,7 +119,7 @@ export function HubView(props: {
         })}
       </section>
 
-      <section className="panel" aria-labelledby="recent-projects-heading">
+      <section className="panel hub-projects" aria-labelledby="recent-projects-heading">
         <div className="panel-head">
           <div className="hstack">
             <h2 id="recent-projects-heading">Recent Projects</h2>
@@ -147,6 +147,7 @@ export function HubView(props: {
                 <span className="project-row-icon" aria-hidden="true">{Icon.folder(18)}</span>
                 <div className="project-row-copy">
                   <strong>{project.name}</strong>
+                  {project.isSample && <span className="sample-chip" title="Built-in sample project — explore freely">Sample</span>}
                   <p className="project-meta">
                     {project.description ? `${project.description} · ` : ''}
                     {lastUpdatedLabel(project.updatedAt)}

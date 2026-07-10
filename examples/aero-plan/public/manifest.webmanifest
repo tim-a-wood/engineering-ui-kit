@@ -1,0 +1,12 @@
+{
+  "name": "AeroPlan — flight-ops performance planning",
+  "short_name": "AeroPlan",
+  "description": "Planning-grade aircraft flight-ops performance planning suite. Not approved performance data.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

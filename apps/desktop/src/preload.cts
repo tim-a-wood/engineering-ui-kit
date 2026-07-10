@@ -27,6 +27,11 @@ const CHANNELS = {
   runVerification: 'verify:run',
   saveFeedback: 'review:save-feedback',
   buildReviewPacket: 'review:build-packet',
+  captureEvidence: 'evidence:capture',
+  getEvidence: 'evidence:get',
+  startUploadDrag: 'dnd:start-upload-drag',
+  copyUploadSet: 'clipboard:copy-upload-set',
+  launchApp: 'app:launch-target',
   openExternal: 'shell:open-external',
   showInFolder: 'shell:show-in-folder',
 } as const

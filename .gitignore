@@ -25,3 +25,7 @@ trials/vertical-slice-01/phase-2/source/visual-reference-pack.html
 # Python tooling
 __pycache__/
 *.pyc
+
+# macOS zip-extraction artifacts and TS incremental build state
+__MACOSX/
+*.tsbuildinfo

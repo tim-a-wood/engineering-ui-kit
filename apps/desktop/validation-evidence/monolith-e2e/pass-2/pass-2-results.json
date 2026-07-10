@@ -1,0 +1,27 @@
+{
+  "experiment": "monolith-e2e",
+  "pass": 2,
+  "date": "2026-07-09",
+  "method": "monolithic-web-app template (Create a monolithic web app)",
+  "target": "examples/gauge-lab (reset to identical start point)",
+  "appBuild": "workbench + round-1 improvements (F1–F7)",
+  "workflow": [
+    { "id": "P2-PREPARE", "pass": true, "detail": "identical start point (flatfile 4472 bytes); packet includes learned tsconfig constraint (F7)" },
+    { "id": "P2-OVERLAY-1", "pass": true, "detail": "22-file overlay: FIRST-TRY GREEN (pass 1 needed a fix iteration); warnings AI-HANDOFF-042/045 gated and accepted" },
+    { "id": "P2-F3-REGEN", "pass": true, "detail": "feedback saved; Generate New Task Packet; exported packet carries '## Reviewer Feedback (previous iteration)' verbatim" },
+    { "id": "P2-OVERLAY-2", "pass": true, "detail": "out-of-service dashboard panel delta applied; checks green" },
+    { "id": "P2-F1-F2-EVIDENCE", "pass": true, "detail": "launch command + #/ paths configured in dialog; app auto-started npm start; 3/3 views captured with census" },
+    { "id": "P2-F4-REHYDRATE", "pass": true, "detail": "Verify & Review restored stored verdict on revisit (button reads Re-run checks)" },
+    { "id": "P2-REVIEW-PACKET", "pass": true, "detail": "review packet + PDF contact sheet + changes.zip generated" },
+    { "id": "P2-APPROVE", "pass": true, "detail": "handoff approved and completed" }
+  ],
+  "sampleChecks": { "total": 12, "passed": 12 },
+  "iterationsToSaturation": 2,
+  "comparisonToPass1": {
+    "iterationsToGreen": { "pass1": 2, "pass2": 1 },
+    "iterationsToSaturation": { "pass1": 4, "pass2": 2 },
+    "sampleImprovements": "overdue row emphasis, dimmed retired rows, panel counts, larger due callout, out-of-service dashboard panel, no date wrapping, KPI deep links from the start"
+  },
+  "newFindings": ["F9", "F10", "F11", "F12"],
+  "screenshots": 31
+}

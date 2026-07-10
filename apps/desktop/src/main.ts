@@ -15,10 +15,10 @@ let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 1440,
-    height: 960,
-    minWidth: 1100,
-    minHeight: 700,
+    width: 1600,
+    height: 1000,
+    minWidth: 1200,
+    minHeight: 760,
     backgroundColor: '#07111f',
     show: false,
     webPreferences: {
@@ -26,6 +26,9 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      // Embedded app preview on Verify & Review: the renderer hosts a
+      // <webview> guest pointed only at the project's local launch URL.
+      webviewTag: true,
     },
   })
 

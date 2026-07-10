@@ -4,10 +4,11 @@ A dark-first engineering UI standard plus a local desktop workbench for preparin
 applying, and verifying **Microsoft 365 Copilot UI handoffs** — built evidence-first:
 every phase gated on a real, measured trial rather than documentation alone.
 
-**The workflow in one line:** package a repo and task into a strict three-file
-Copilot upload → receive a `ui-overlay.zip` of changed files → inspect it against
-deterministic safety rules → apply it non-destructively → verify with your own
-build commands → approve or iterate.
+**The workflow in one line:** package a repo and task into a two-file Copilot
+upload (dragged straight from the app) → receive a `ui-overlay.zip` of changed
+files → inspect it against deterministic safety rules → apply it
+non-destructively → verify with your own build commands and before/after
+screenshots → approve or iterate.
 
 ## What's in the box
 
@@ -17,7 +18,7 @@ build commands → approve or iterate.
 | `packages/core` | GUI-independent workflow library + CLI: repo flatfile builder with deterministic exclusions, packet builders, zip-overlay inspector (hard blockers AI-HANDOFF-030…039), non-destructive applier, verification runner, persistence — 44 tests |
 | `apps/desktop` | Electron main + sandboxed preload exposing a narrow typed IPC bridge (no generic filesystem access) |
 | `apps/gui` | React renderer: five-step handoff workflow, task templates, recipes, component reference, projects, settings |
-| `examples/` | Demo target apps: `xy-plot-sample` (restyle demo) and `bench-monitor` (requirements-to-UI demo, built from its `REQUIREMENTS.md` alone) |
+| `examples/` | Demo target apps: `xy-plot-sample` (restyle demo), `bench-monitor` (requirements-to-UI demo, built from its `REQUIREMENTS.md` alone), `work-orders-monolith` (PlantOps — a fully usable multi-page legacy monolith made to be restyled; ideal first target with ready-made evidence views like `#/orders`, `#/reports`), and `gauge-lab` (GaugeLab — a full monolithic web app, React frontend + Node JSON-API server with file persistence, produced end to end by the workbench's *Create a monolithic web app* handoff from its `REQUIREMENTS.md`; `npm run build` then `npm start` → http://127.0.0.1:5410) |
 | `trials/` | The evidence-first vertical-slice trial records (13/13 blocking acceptance criteria) |
 
 Front-end completeness is documented element-by-element in
@@ -74,9 +75,10 @@ React/Vite/TypeScript repo, and the handoff starts immediately:
 2. **Create Task Packet** — pick a task template (standards refresh, new UI from
    requirements, new UI on an existing API, monolithic web app, add a screen) or a
    screen recipe, tweak the sections, preview the rendered packet, export.
-3. **Run in Copilot** — Show Files in Folder, open Microsoft 365 Copilot, upload
-   the three files (strict budget), paste the recommended prompt, download
-   `ui-overlay.zip`.
+3. **Run in Copilot** — drag the upload chip (repo flatfile + combined
+   task-and-standards pack) straight onto the Copilot chat, or use Copy Files;
+   "Open Copilot" puts the recommended prompt on your clipboard. Download
+   `ui-overlay.zip` when Copilot finishes.
 4. **Apply Zip Overlay** — the inspector blocks unsafe archives outright (absolute
    paths, traversal, `.git`, dependencies, secrets, repo dumps); warnings require
    your explicit acceptance; nothing is ever deleted.
@@ -215,6 +217,11 @@ The project gates on measured trials, not claims:
 - Core library reproduces the trial GUI-free (6/6 steps)
 - Real-app end-to-end walkthroughs: first-run 23/23, audit pass 18/18, template
   flow 10/10 (JSON results beside the screenshots in `validation-evidence/`)
+- Requirements-to-monolith experiment: three full workflow passes drove the real
+  Electron app (Playwright, `apps/desktop/e2e/`) from `REQUIREMENTS.md` to the
+  working GaugeLab app — iterations-to-green converged 2 → 1 → 1 across passes as
+  workflow findings were folded back into the product
+  ([`apps/desktop/validation-evidence/monolith-e2e/IMPROVEMENTS.md`](apps/desktop/validation-evidence/monolith-e2e/IMPROVEMENTS.md))
 
 ## Repository notes
 

@@ -8,6 +8,8 @@
 
 import type {
   AppliedFiles,
+  ElementLoss,
+  EvidenceCapture,
   HandoffRun,
   OverlayInspectionSummary,
   Project,
@@ -44,6 +46,30 @@ export type BuildPacketResult = {
 export type ReviewPacketResult = {
   reviewPacketPath: string
   reviewPacketText: string
+  /** Present when captured evidence allowed a visual contact sheet to render. */
+  contactSheetPath?: string
+  /** Present when applied files could be bundled for the reviewer. */
+  changesZipPath?: string
+  /** The recommended 3-file upload set (paths). */
+  uploadFiles: string[]
+}
+
+/** Per-view display model for the evidence panel (screenshots as data URIs). */
+export type EvidenceViewDisplay = {
+  viewId: string
+  label: string
+  path: string
+  beforeShot?: string
+  afterShot?: string
+  losses: ElementLoss[]
+  beforeError?: string
+  afterError?: string
+}
+
+export type RunEvidence = {
+  before?: { capturedAt: string; ok: boolean }
+  after?: { capturedAt: string; ok: boolean }
+  views: EvidenceViewDisplay[]
 }
 
 export type EuikBridge = {
@@ -72,6 +98,14 @@ export type EuikBridge = {
   runVerification(runId: string, labels: string[]): Promise<VerificationResult[]>
   saveFeedback(runId: string, text: string): Promise<HandoffRun>
   buildReviewPacket(runId: string): Promise<ReviewPacketResult>
+  captureEvidence(runId: string, phase: 'before' | 'after'): Promise<EvidenceCapture>
+  getEvidence(runId: string): Promise<RunEvidence>
+  /** Begin a native drag of the run's Copilot upload files (call from a dragstart handler). */
+  startUploadDrag(runId: string): Promise<void>
+  /** Put the run's Copilot upload files on the OS clipboard as real file objects. */
+  copyUploadSet(runId: string): Promise<{ files: number }>
+  /** Open the project's app in the browser, starting its dev server first if needed. */
+  launchApp(projectId: string, options?: { open?: boolean }): Promise<{ url: string; started: boolean; rebuilt: boolean }>
 
   openExternal(url: string): Promise<void>
   showInFolder(path: string): Promise<void>
@@ -98,6 +132,11 @@ export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
   runVerification: 'verify:run',
   saveFeedback: 'review:save-feedback',
   buildReviewPacket: 'review:build-packet',
+  captureEvidence: 'evidence:capture',
+  getEvidence: 'evidence:get',
+  startUploadDrag: 'dnd:start-upload-drag',
+  copyUploadSet: 'clipboard:copy-upload-set',
+  launchApp: 'app:launch-target',
   openExternal: 'shell:open-external',
   showInFolder: 'shell:show-in-folder',
 }

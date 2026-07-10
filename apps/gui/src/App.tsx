@@ -2,7 +2,8 @@ import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } 
 import type { HandoffRun, Project, Settings } from '@engineering-ui-kit/core'
 import { getBridge, type BuildPacketResult } from './bridge'
 import { NAV_ITEMS, isStepReachable, stepIndex, type RecipePrefill, type ViewId, WORKFLOW_STEPS } from './appState'
-import { Dialog, TipCard } from './components'
+import { TipCard } from './components'
+import { GuideOverlay, type GuideTopicId } from './guides'
 import { Icon } from './icons'
 import { HubView } from './views/HubView'
 import { ProjectsView } from './views/ProjectsView'
@@ -81,7 +82,7 @@ export default function App() {
   const [packet, setPacket] = useState<BuildPacketResult | null>(null)
   const [recipe, setRecipe] = useState<RecipePrefill | null>(null)
   const [version, setVersion] = useState('')
-  const [helpOpen, setHelpOpen] = useState(false)
+  const [guideTopic, setGuideTopic] = useState<GuideTopicId | null>(null)
 
   const refreshProjects = useCallback(async () => {
     setProjects(await bridge.listProjects())
@@ -140,7 +141,7 @@ export default function App() {
     if (!settings) return <p className="secondary-text">Loading workspace…</p>
 
     const stepProps = activeRun && activeProject
-      ? { bridge, project: activeProject, run: activeRun, refreshRun, onNavigate: navigate }
+      ? { bridge, project: activeProject, run: activeRun, refreshRun, refreshProjects, onNavigate: navigate, onOpenGuide: setGuideTopic }
       : null
 
     switch (view) {
@@ -153,7 +154,7 @@ export default function App() {
             refreshProjects={refreshProjects}
             onStartRun={startRun}
             onOpenStep={navigate}
-            onOpenHelp={() => setHelpOpen(true)}
+            onOpenHelp={() => setGuideTopic('workflow-overview')}
           />
         )
       case 'prepare-context':
@@ -196,9 +197,13 @@ export default function App() {
   }
 
   const isRunOpen = Boolean(activeRun && activeRun.currentStep !== 'complete')
-  const currentStepShort = activeRun
-    ? WORKFLOW_STEPS[Math.min(stepIndex(activeRun.currentStep), WORKFLOW_STEPS.length - 1)]?.short ?? 'Complete'
-    : undefined
+  // Crumb names the step the user is looking at; the run's persisted step is
+  // only the fallback when a non-workflow view is open.
+  const visibleStep = WORKFLOW_STEPS.find((s) => s.id === view)
+  const currentStepShort = visibleStep?.short
+    ?? (activeRun
+      ? WORKFLOW_STEPS[Math.min(stepIndex(activeRun.currentStep), WORKFLOW_STEPS.length - 1)]?.short ?? 'Complete'
+      : undefined)
   const versionLabel = version.replace(/^v/, '').replace(/\s*\(mock\)\s*$/, '') || '0.1.0'
   const isMock = typeof window !== 'undefined' && window.euikMode === 'mock'
 
@@ -224,7 +229,7 @@ export default function App() {
             Mock data
           </span>
         )}
-        <button type="button" className="icon-btn" aria-label="Help" data-tip="Workflow help" data-tip-pos="bottom" onClick={() => setHelpOpen(true)}>
+        <button type="button" className="icon-btn" aria-label="Help" data-tip="How-to guides" data-tip-pos="bottom" onClick={() => setGuideTopic('workflow-overview')}>
           {Icon.help()}
         </button>
       </div>
@@ -261,7 +266,7 @@ export default function App() {
           <TipCard
             text={TIPS[view] ?? 'Keep handoffs small and reviewable.'}
             linkLabel="View workflow guide"
-            onLink={() => setHelpOpen(true)}
+            onLink={() => setGuideTopic('workflow-overview')}
           />
         </aside>
 
@@ -270,26 +275,8 @@ export default function App() {
         </main>
       </div>
 
-      {helpOpen && (
-        <Dialog title="Workflow help" onClose={() => setHelpOpen(false)} wide>
-          <div className="stack">
-            <p className="secondary-text">
-              The Copilot handoff workflow prepares a strict three-file packet, hands it to Microsoft 365 Copilot,
-              then inspects, applies, and verifies the returned <code>ui-overlay.zip</code>.
-            </p>
-            <ol style={{ margin: 0, paddingLeft: 20, color: 'var(--semantic-text-secondary)' }}>
-              <li><strong>Prepare Context</strong> — build the repo inventory and flatfile with deterministic exclusions.</li>
-              <li><strong>Create Task Packet</strong> — capture goal, scope, constraints, acceptance criteria, and references; the standards pack is attached automatically.</li>
-              <li><strong>Run in Copilot</strong> — upload at most three files and paste the recommended prompt.</li>
-              <li><strong>Apply Zip Overlay</strong> — inspection blocks unsafe archives; warnings need your explicit acceptance; nothing is ever deleted.</li>
-              <li><strong>Verify &amp; Review</strong> — run typecheck/build, launch the app, then approve or iterate.</li>
-            </ol>
-            <p className="muted">
-              Safety posture: dark-first standards, semantic tokens, three-file budget, previewable and manually
-              confirmed filesystem actions.
-            </p>
-          </div>
-        </Dialog>
+      {guideTopic && (
+        <GuideOverlay topic={guideTopic} onSelectTopic={setGuideTopic} onClose={() => setGuideTopic(null)} />
       )}
     </div>
   )
@@ -301,7 +288,9 @@ function CreateTaskPacketWrapper(props: {
     project: Project
     run: HandoffRun
     refreshRun: () => Promise<void>
+    refreshProjects: () => Promise<void>
     onNavigate: (view: ViewId) => void
+    onOpenGuide: (topic: GuideTopicId) => void
   }
   onPacket: (packet: BuildPacketResult | null) => void
   recipe: RecipePrefill | null

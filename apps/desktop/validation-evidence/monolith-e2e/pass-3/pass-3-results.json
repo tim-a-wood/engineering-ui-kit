@@ -1,0 +1,22 @@
+{
+  "experiment": "monolith-e2e",
+  "pass": 3,
+  "date": "2026-07-09",
+  "method": "monolithic-web-app template (Create a monolithic web app)",
+  "target": "examples/gauge-lab (reset to identical start point)",
+  "appBuild": "workbench + round-1 (F1–F7) + round-2 (F9, F10) improvements",
+  "workflow": [
+    { "id": "P3-PREPARE", "pass": true, "detail": "identical start point; packet identical to pass 2 (11924 bytes)" },
+    { "id": "P3-OVERLAY-1", "pass": true, "detail": "22-file overlay, first-try green (second consecutive pass)" },
+    { "id": "P3-F9-PREFILL", "pass": true, "detail": "Generate New Task Packet arrived prefilled; exported packet kept previous scope with zero retyping" },
+    { "id": "P3-F3-FEEDBACK", "pass": true, "detail": "regenerated packet carries reviewer feedback section" },
+    { "id": "P3-F10-INVALIDATED", "pass": true, "detail": "after applying the next overlay, Verify demands a fresh run (no stale verdict)" },
+    { "id": "P3-OVERLAY-2", "pass": true, "detail": "interval-helper-text polish delta applied; checks green" },
+    { "id": "P3-EVIDENCE", "pass": true, "detail": "3/3 views captured, app-managed server start" },
+    { "id": "P3-APPROVE", "pass": true, "detail": "handoff approved and completed" }
+  ],
+  "sampleChecks": { "total": 12, "passed": 12 },
+  "iterationsToSaturation": 2,
+  "convergence": { "iterationsToGreen": [2, 1, 1], "iterationsToSaturation": [4, 2, 2], "newWorkflowDefectsThisPass": 0 },
+  "screenshots": 23
+}

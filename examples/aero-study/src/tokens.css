@@ -1,0 +1,92 @@
+/**
+ * Semantic token entry point — the only file where raw color values live.
+ * Values are the Engineering UI Kit standard pack v0.4.0 token table.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --surface-canvas: #07111f;
+  --surface-panel: #0f172a;
+  --surface-panel-raised: #111827;
+  --surface-inset: #172033;
+  --surface-overlay: #0f172a;
+  --surface-scrim: rgba(2, 6, 23, 0.72);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-disabled: rgba(203, 213, 225, 0.38);
+  --text-inverse: #ffffff;
+
+  --border-subtle: rgba(148, 163, 184, 0.18);
+  --border-strong: rgba(203, 213, 225, 0.34);
+  --border-focus: #5478ff;
+  --border-danger: #ef4444;
+
+  --focus-ring: 0 0 0 2px #5478ff;
+  --focus-ring-offset: 0 0 0 4px rgba(84, 120, 255, 0.16);
+
+  --accent-primary: #2f5bff;
+  --accent-primary-hover: #5478ff;
+  --accent-primary-active: #2443cc;
+  --accent-secondary: #a78bfa;
+  --accent-glow: rgba(47, 91, 255, 0.22);
+
+  --status-success: #34d399;
+  --status-warning: #fbbf24;
+  --status-danger: #f87171;
+  --status-info: #60a5fa;
+  --status-neutral: #94a3b8;
+  --status-success-bg: rgba(52, 211, 153, 0.11);
+  --status-warning-bg: rgba(251, 191, 36, 0.11);
+  --status-danger-bg: rgba(248, 113, 113, 0.11);
+  --status-info-bg: rgba(96, 165, 250, 0.11);
+
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+
+  --control-height-compact: 32px;
+  --control-height-comfortable: 40px;
+  --panel-padding: 16px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.22);
+  --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.28);
+  --shadow-overlay: 0 24px 72px rgba(0, 0, 0, 0.46);
+
+  --font-sans: 'Inter Variable', Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 24px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --easing-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  --z-overlay: 700;
+  --z-modal: 800;
+
+  --chart-grid: rgba(148, 163, 184, 0.16);
+  --chart-axis: #94a3b8;
+  --chart-crosshair: rgba(203, 213, 225, 0.42);
+  --chart-series-a: #2f5bff;
+  --chart-series-b: #a78bfa;
+  --chart-series-c: #fbbf24;
+  --chart-series-d: #60a5fa;
+
+  --selection-bg: rgba(47, 91, 255, 0.12);
+}

@@ -9,6 +9,8 @@
 
 import type {
   AppliedFiles,
+  ElementLoss,
+  EvidenceCapture,
   HandoffRun,
   OverlayInspectionSummary,
   Project,
@@ -46,6 +48,26 @@ export type BuildPacketResult = {
 export type ReviewPacketResult = {
   reviewPacketPath: string
   reviewPacketText: string
+  contactSheetPath?: string
+  changesZipPath?: string
+  uploadFiles: string[]
+}
+
+export type EvidenceViewDisplay = {
+  viewId: string
+  label: string
+  path: string
+  beforeShot?: string
+  afterShot?: string
+  losses: ElementLoss[]
+  beforeError?: string
+  afterError?: string
+}
+
+export type RunEvidence = {
+  before?: { capturedAt: string; ok: boolean }
+  after?: { capturedAt: string; ok: boolean }
+  views: EvidenceViewDisplay[]
 }
 
 export type EuikBridge = {
@@ -69,6 +91,11 @@ export type EuikBridge = {
   runVerification(runId: string, labels: string[]): Promise<VerificationResult[]>
   saveFeedback(runId: string, text: string): Promise<HandoffRun>
   buildReviewPacket(runId: string): Promise<ReviewPacketResult>
+  captureEvidence(runId: string, phase: 'before' | 'after'): Promise<EvidenceCapture>
+  getEvidence(runId: string): Promise<RunEvidence>
+  startUploadDrag(runId: string): Promise<void>
+  copyUploadSet(runId: string): Promise<{ files: number }>
+  launchApp(projectId: string, options?: { open?: boolean }): Promise<{ url: string; started: boolean; rebuilt: boolean }>
   openExternal(url: string): Promise<void>
   showInFolder(path: string): Promise<void>
 }

@@ -107,6 +107,9 @@ export function buildTaskAndStandardPack(task: TaskDefinition, options: BuildPac
     '- Include no deletion semantics.',
     '- Do not return a full repository.',
     '- Do not claim the overlay was locally verified.',
+    '- Preserve every existing visual element in files you modify: inline `<svg>` markup, `<img>` references, buttons, and inputs must survive unless the task explicitly removes them.',
+    '- Never elide, summarize, or truncate icon or SVG path data when regenerating a file; copy it through verbatim.',
+    '- If a view references an asset you cannot see (listed as excluded in the repo inventory), keep the existing reference untouched; small new image assets (svg/png icons) are permitted in the overlay.',
     '',
   )
 

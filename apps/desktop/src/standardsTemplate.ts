@@ -63,13 +63,20 @@ export const STANDARD_TOKEN_ROWS: TaskDefinition['tokenRows'] = [
   { path: 'semantic.motion.easingStandard', value: 'cubic-bezier(0.2, 0, 0, 1)', requiredUse: 'Standard motion easing' },
   { path: 'semantic.zIndex.overlay', value: '700', requiredUse: 'Scrim stacking order' },
   { path: 'semantic.zIndex.modal', value: '800', requiredUse: 'Dialog stacking order' },
+  { path: 'semantic.charts.grid', value: 'rgba(148, 163, 184, 0.16)', requiredUse: 'Chart gridlines at every major tick' },
+  { path: 'semantic.charts.axis', value: '#94a3b8', requiredUse: 'Axis lines, tick labels, and axis titles' },
+  { path: 'semantic.charts.crosshair', value: 'rgba(203, 213, 225, 0.42)', requiredUse: 'Hover/keyboard crosshair rule and active-point halo' },
+  { path: 'semantic.charts.series.primary', value: '#2f5bff', requiredUse: 'First data series' },
+  { path: 'semantic.charts.series.secondary', value: '#a78bfa', requiredUse: 'Second data series' },
+  { path: 'semantic.charts.series.warning', value: '#fbbf24', requiredUse: 'Warning-classified series or points (with text label)' },
+  { path: 'semantic.charts.series.danger', value: '#f87171', requiredUse: 'Danger-classified series or points (with text label)' },
 ]
 
 export const STANDARD_APPROVED_GUIDANCE = [
   'Dark engineering workbench.',
   'Restrained technical accent.',
   'Dark canvas with bounded panel hierarchy.',
-  'Stable left navigation and visible active state.',
+  'Stable left navigation, visible active state, collapsible to a compact rail with a persisted, keyboard-accessible toggle.',
   'Concise page header.',
   'Compact but readable panels.',
   'Monospaced project paths and technical identifiers.',
@@ -78,6 +85,15 @@ export const STANDARD_APPROVED_GUIDANCE = [
   'Semantic CSS variables.',
   'Dialogs with overlay surface, scrim, focus containment, Escape, and focus return.',
   'Borders and spacing doing more hierarchy work than heavy shadows.',
+  'One page grid with shared column edges; sibling panels share padding, heading scale, and vertical rhythm — panels sitting side by side stretch to share top and bottom edges.',
+  'Structure from typography, spacing, and hairline rules — bounded panels are reserved for true surfaces (tables, charts, inset technical content, rails, dialogs, empty states); forms and prose compose directly on the canvas under small uppercase section headers.',
+  'Status summaries on working screens are one slim stat row attached to the working surface (labels with mono values at body scale); a large instrument strip is reserved for true monitoring dashboards.',
+  'Every size from the spacing scale; numeric cells right-aligned in tabular numerals.',
+  'Charts framed in a chart panel: title, units, legend, state, and a text summary or table fallback beside them.',
+  'Chart and its companion table as bounded sibling panels sharing top and bottom edges; the table scrolls internally.',
+  'Compact token-height controls on inset surfaces with the focus-ring tokens; 13px medium labels; every field keeps a persistent hint/error slot so sibling rows align.',
+  'Multi-phase tasks default to a wizard: compact numbered step indicator, one phase at a time, per-phase validation gating Next, and a review-and-commit final step — built as one reusable stepper primitive.',
+  'Round-number axis ticks with gridlines; series sorted by the x-value; discrete records as points, ordered series as lines.',
 ]
 
 export const STANDARD_REJECTED_GUIDANCE = [
@@ -93,6 +109,25 @@ export const STANDARD_REJECTED_GUIDANCE = [
   'Icon-only unlabeled controls.',
   'Raw repeated colors instead of token variables.',
   'One-click automation that hides validation or review.',
+  'Decorative KPI tile walls — status tiles only for 3–5 true peer metrics that answer an engineering question.',
+  'Billboard KPI strips on working screens — oversized stat values for counts that belong in a slim one-line summary row; process state (like a selection count) is never a stat cell.',
+  'Side-by-side panels with mismatched heights — a row of sibling panels stretches to share top and bottom edges.',
+  'Panel-heavy composition — a uniform bordered box around every region reads as generated output; a panel never nests inside another panel, and a form never lives in a heavy box when a section header and hairline rule carry the same structure.',
+  'Record lists rendered as card stacks — lists of records are data tables (dense rows, right-aligned numerics), never tiles.',
+  'Content clipped by its container — a column that cannot fit its longest value must be resized or its content abbreviated, never cut.',
+  'Default browser control chrome — native number-input spinners, oversized rounded inputs, or default focus outlines instead of token-styled compact controls.',
+  'Oversized numbered wizard boxes — multi-step flows use the compact workflow step indicator, not billboard step cards.',
+  'Sequential phases rendered side by side as parallel panels — a multi-phase task is a stepped wizard, one phase at a time.',
+  'Uniform full-width controls regardless of content — a five-digit number does not get a 600px input; size controls to what they hold.',
+  'Content stranded in a narrow strip while the viewport sits empty — compose grouped, content-sized rows to the working width.',
+  'Full-height dashed placeholder wells — empty states are bounded panels with a title, one hint line, and an optional action.',
+  'Multi-column tables squeezed into narrow rails — wrapped three-to-four-line rows forced in to keep a dashboard silhouette, instead of a compact synced readout or a detail view.',
+  'Column budgets that exceed the container — cells wrapping labels, configurations, or identifiers into multi-line lattices instead of merging into meta lines, truncating with ellipsis, or scrolling horizontally.',
+  'Misaligned panel edges, mixed sibling paddings, or arbitrary component sizes off the spacing scale.',
+  'Chart points connected in record/insertion order instead of sorted by the x-value.',
+  'Axis ticks at raw data values (min/mid/max) instead of round engineering steps.',
+  'Color-only status encoding in charts; legends detached from the chart they describe.',
+  'Large empty plot regions caused by unclamped axis ranges or missing gridlines.',
 ]
 
 export const STANDARD_ACCESSIBILITY_REQUIREMENTS = [
@@ -124,7 +159,7 @@ export const STANDARD_RULE_IDS = [
   'FND-TOK-011', 'FND-TOK-012', 'FND-TOK-013', 'FND-TOK-014',
   'FND-A11Y-001', 'FND-A11Y-002', 'FND-A11Y-003', 'FND-A11Y-004', 'FND-A11Y-005', 'FND-A11Y-006', 'FND-A11Y-007',
   'FND-A11Y-009', 'FND-A11Y-011', 'FND-A11Y-012',
-  'LAY-SHELL-001', 'RCP-WORKFLOW-001',
+  'LAY-SHELL-001', 'RCP-WORKFLOW-001', 'RCP-DASH-001',
   'ARCH-FE-001', 'ARCH-FE-002', 'ARCH-FE-003', 'ARCH-FE-004', 'ARCH-FE-005', 'ARCH-FE-007',
   'ARCH-THEME-001', 'ARCH-THEME-002', 'ARCH-THEME-003', 'ARCH-THEME-004', 'ARCH-THEME-005', 'ARCH-THEME-006', 'ARCH-THEME-007',
   'ARCH-STATE-001', 'ARCH-STATE-002', 'ARCH-STATE-003', 'ARCH-STATE-004', 'ARCH-STATE-005', 'ARCH-STATE-007',
@@ -132,7 +167,10 @@ export const STANDARD_RULE_IDS = [
 
 export const STANDARD_COMPONENT_IDS = [
   'CMP-SHELL-APP', 'CMP-NAV-PRIMARY', 'CMP-SHELL-PAGE-HEADER', 'CMP-SURFACE-PANEL', 'CMP-WORKFLOW-STEP-INDICATOR',
-  'CMP-FORM-FIELD', 'CMP-FORM-TEXTAREA', 'CMP-OVERLAY-DIALOG', 'CMP-FEEDBACK-VALIDATION-SUMMARY', 'CMP-FEEDBACK-ALERT',
+  'CMP-FORM-FIELD', 'CMP-FORM-TEXT-INPUT', 'CMP-FORM-NUMBER-INPUT', 'CMP-FORM-SELECT', 'CMP-FORM-TEXTAREA',
+  'CMP-OVERLAY-DIALOG', 'CMP-FEEDBACK-VALIDATION-SUMMARY', 'CMP-FEEDBACK-ALERT',
+  'CMP-TABLE-DATA-TABLE', 'CMP-LAYOUT-DASHBOARD-GRID',
+  'CMP-VIZ-CHART-PANEL', 'CMP-VIZ-LINE-CHART', 'CMP-VIZ-BAR-CHART', 'CMP-VIZ-LEGEND', 'CMP-VIZ-CHART-TOOLTIP',
 ]
 
 export const STANDARD_EXCERPTS: TaskDefinition['standardsExcerpts'] = [
@@ -165,6 +203,68 @@ export const STANDARD_EXCERPTS: TaskDefinition['standardsExcerpts'] = [
     title: 'What visual drift looks like',
     body: 'Drift includes generic light cards, arbitrary gradients, excessive glassmorphism, cyberpunk neon, huge marketing typography, placeholder wireframes, hidden metadata, inconsistent borders, and raw colors that bypass tokens.',
     source: 'standards/foundation/visual-language.md',
+  },
+  {
+    id: 'RCP-DASH-001',
+    title: 'Layout and composition discipline',
+    body: [
+      'Dashboards and screens shall not become decorative KPI walls. Compose every page on one grid: panel edges align to shared columns, sibling panels share padding (`semantic.density.compact.panelPadding`), heading scale, and vertical rhythm; all gaps and sizes come from the spacing scale — no arbitrary pixel values.',
+      'Status tiles are justified only for 3–5 true peer metrics that answer a standing engineering question; otherwise integrate status into the working surface (table rows, badges, callouts). A chart never floats alone: it sits in a chart panel adjacent to the data table or summary that carries the same information as text. Numeric table cells right-align in tabular numerals; date and identifier cells never wrap mid-value.',
+      'Cards may wrap responsively, but tables and charts shall remain legible; hide secondary charts before hiding status or evidence.',
+      'Boxes are not structure: reserve bounded panels for true surfaces — tables, charts, inset technical content, side rails, dialogs, and empty states. Forms, prose, and section groupings compose directly on the canvas under small uppercase section headers separated by hairline rules; a panel shall never nest inside another panel. A page that wraps every region in a uniform bordered box reads as generated output, not an engineering tool.',
+    ].join(' '),
+    source: 'standards/layouts-and-recipes/dashboard-layouts.md',
+  },
+  {
+    id: 'LAY-SHELL-001',
+    title: 'Application shell and collapsible navigation',
+    body: [
+      'The shell is a stable left primary navigation beside the working canvas — and the navigation pane is collapsible by default: a persistent, keyboard-accessible toggle at the rail edge switches it between the full pane and a compact rail (~56–64px).',
+      'Collapsed items keep an affordance (glyph or monogram), their accessible name (aria-label/title), visible focus, and the active indicator — collapse never costs state visibility. The preference persists across sessions, and the content grid reclaims the freed width.',
+    ].join(' '),
+    source: 'standards/layouts-and-recipes/application-shell.md + standards/components/navigation.md (CMP-NAV-PRIMARY, collapsed state)',
+  },
+  {
+    id: 'RCP-WORKFLOW-001',
+    title: 'Wizard flows and the step indicator',
+    body: [
+      'Any task with two or more sequential phases (define → configure → review) defaults to a wizard: a compact step indicator (numbered 20px dots with short labels; complete / current / upcoming states; completed steps are clickable to go back, never forward past validation), then ONE phase of content on the canvas at a time — phases are never rendered side by side as parallel panels.',
+      'Each phase validates before Next enables progression; Back never loses input; the final phase is a review-and-commit step that shows the consequential summary (a preview, the expanded result, the exact effect) beside the primary action. The step indicator is a slim strip under the page header spanning the full working width — steps distributed with flexible hairline connectors growing between them — never billboard step cards and never a cluster stranded at the left edge.',
+      'Build the stepper once as a reusable primitive (steps + current + furthest-reached + select handler) and reuse it for every multi-phase flow in the app.',
+    ].join(' '),
+    source: 'standards/layouts-and-recipes/workflow-pages.md + standards/components/component-specs.md (CMP-WORKFLOW-STEP-INDICATOR)',
+  },
+  {
+    id: 'CMP-TABLE-DATA-TABLE',
+    title: 'Table craft and fitting',
+    body: [
+      'Rows scan in one line, plus at most one muted meta line under the primary cell. Identifier, numeric, and date cells never wrap mid-value; long labels truncate to a single line with an ellipsis and expose the full value via title/tooltip.',
+      'Budget columns to the space they actually get: merge secondary attributes (configuration, location, family) into the meta line of the primary cell, or defer them to a detail view; prefer horizontal scroll over wrapped cells. A lattice of 3–4-line wrapped rows means the table has too many columns for its container.',
+      'A multi-column table is the right text alternative for a chart only where it genuinely fits. In a narrow side rail, use a compact synced readout list instead — primary label (one line, ellipsized), the key value pair in mono figures, and a short text status — with the full table one view away. Never squeeze a miniature table into a rail to preserve a dashboard silhouette.',
+    ].join(' '),
+    source: 'standards/components/tables.md + standards/layouts-and-recipes/dashboard-layouts.md',
+  },
+  {
+    id: 'CMP-FORM-FIELD',
+    title: 'Form and control craft',
+    body: [
+      'A form field is label + control + a persistent hint/error slot: the slot renders even when empty so sibling rows in a form grid always align; units belong in the label ("Aircraft weight (lb)"), never floating beside the control. Labels are 13px medium in `semantic.text.secondary`; hints 12px in `semantic.text.muted`; errors replace the hint in the same slot, text-first.',
+      'Controls are compact and token-styled — never default browser chrome: height `semantic.density.compact.controlHeight` (32px), background `semantic.surface.inset`, 1px `semantic.border.subtle` border, `semantic.radius.sm`, focus via the focus-ring tokens (no default outlines). Number inputs suppress native spinner chrome (`appearance: none`) unless purpose-built steppers are designed; numeric values may use the mono family with tabular figures. Selects share the input metrics with a drawn chevron.',
+      'Controls size to their expected content: numeric inputs around 10–14 characters wide, selects to their longest option, identifiers around 20 characters; only free-text names and notes span a column. Uniform full-width controls regardless of content read as generated output.',
+      'Forms beyond ~6 fields organize into labeled groups — a small uppercase group header over a hairline, related fields together in content-sized rows — and the grouped rows compose to fill the working width; never a narrow strip of stacked fields stranding the rest of the viewport. Multi-step flows use the compact workflow step indicator (numbered dots with short labels), never billboard step cards. Empty states are bounded panels — title, one hint line, optional action — sized to their content.',
+    ].join(' '),
+    source: 'standards/components/forms.md + standards/components/component-specs.md',
+  },
+  {
+    id: 'CMP-VIZ-CHART-PANEL',
+    title: 'Engineering chart craft',
+    body: [
+      'Every chart is framed by a chart panel with title, data source or scope, units, legend, explicit state (empty/loading/error/stale), and a text summary or table fallback — the chart is never the only representation.',
+      'Axes: visible titles with units; ticks at round engineering steps (never raw data min/mid/max); gridlines at every major tick using `semantic.charts.grid`; axis text in `semantic.charts.axis`; tabular numerals.',
+      'Series: line charts only for x-ordered continuous data, always sorted by the x-value before drawing; discrete or unrelated records render as scatter points, never chained into a polyline in insertion order. A family of related cases (e.g. a parameter sweep) is one named series; standalone cases are individual points. Series colors come from `semantic.charts.series.*`; status-classified points (warning/danger) additionally carry a text label or legend entry — never color alone.',
+      'Readout: pair pointer hover with a crosshair rule and active-point halo in `semantic.charts.crosshair`, snap to the nearest point, and provide an equivalent keyboard path (arrow keys or focusable points) with a visible readout mirroring the exact values. The reference implementation is the bench-monitor trace chart.',
+    ].join(' '),
+    source: 'standards/components/data-visualization.md + standards/foundation/tokens.md',
   },
 ]
 
@@ -210,6 +310,8 @@ export function buildTaskPacketMarkdown(input: {
   acceptanceCriteria: string[]
   references: string[]
   generatedAt: string
+  /** Saved reviewer notes from the previous iteration of this run, if any. */
+  reviewerFeedback?: string
 }): string {
   const lines: string[] = [
     '# Task Packet',
@@ -241,6 +343,17 @@ export function buildTaskPacketMarkdown(input: {
     '',
     ...input.references.map((s) => `- ${s}`),
     '',
+    ...(input.reviewerFeedback
+      ? [
+          '## Reviewer Feedback (previous iteration)',
+          '',
+          'The reviewer recorded the following while verifying the previous overlay.',
+          'Address every point; where it conflicts with the scope above, the feedback wins.',
+          '',
+          input.reviewerFeedback.trim(),
+          '',
+        ]
+      : []),
     '## Required Output',
     '',
     '- Return one file named `ui-overlay.zip` containing changed and new files only, with repo-relative paths.',

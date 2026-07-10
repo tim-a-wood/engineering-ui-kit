@@ -4,7 +4,7 @@
  * and drives the typed bridge.
  */
 
-import { useEffect, useState, type ReactElement } from 'react'
+import { useEffect, useRef, useState, type ReactElement } from 'react'
 import type {
   AppliedFiles,
   HandoffRun,
@@ -12,19 +12,34 @@ import type {
   Project,
   VerificationResult,
 } from '@engineering-ui-kit/core'
-import type { BuildPacketResult, EuikBridge, PrepareContextResult, TaskPacketFields } from '../bridge'
+import type { BuildPacketResult, EuikBridge, PrepareContextResult, RunEvidence, TaskPacketFields } from '../bridge'
 import { Dialog, PageHeader, StatusLine, Stepper, type Status } from '../components'
 import { Markdown } from '../markdown'
 import { Icon } from '../icons'
-import { TASK_TEMPLATES, applyTemplate, defaultTemplateId } from '../taskTemplates'
+import { TASK_TEMPLATES, applyTemplate, defaultTemplateId, parseFeedbackEntries } from '../taskTemplates'
+import { LaunchUrlDialog } from './ProjectsView'
 import type { RecipePrefill, ViewId } from '../appState'
+import type { GuideTopicId } from '../guides'
 
 type StepProps = {
   bridge: EuikBridge
   project: Project
   run: HandoffRun
   refreshRun: () => Promise<void>
+  refreshProjects: () => Promise<void>
   onNavigate: (view: ViewId) => void
+  onOpenGuide: (topic: GuideTopicId) => void
+}
+
+/** Small right-aligned entry point to the illustrated guide for this step. */
+function GuideLink(props: { topic: GuideTopicId; onOpenGuide: (topic: GuideTopicId) => void }) {
+  return (
+    <div className="guide-link-row">
+      <button type="button" className="tip-link" onClick={() => props.onOpenGuide(props.topic)}>
+        How this step works →
+      </button>
+    </div>
+  )
 }
 
 const READY: Status = { tone: 'info', text: 'Ready.' }
@@ -120,6 +135,7 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
         onBack={() => props.onNavigate('copilot-handoff')}
       />
       <Stepper run={props.run} />
+      <GuideLink topic="prepare-context" onOpenGuide={props.onOpenGuide} />
 
       <section className="panel" aria-labelledby="repository-heading">
         <div className="hstack between">
@@ -185,7 +201,7 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
           <dl className="review-list">
             <div><dt>Project / repo</dt><dd><code>{props.project.name}</code></dd></div>
             <div><dt>Task / recipe</dt><dd>{props.run.taskTitle ?? props.recipe?.title ?? 'Defined in the next step'}</dd></div>
-            <div><dt>Intended upload set</dt><dd><code>repo-flatfile.txt</code>, <code>task-packet.md</code>, <code>standard-pack.md</code> (3 of 3)</dd></div>
+            <div><dt>Intended upload set</dt><dd><code>repo-flatfile.txt</code>, <code>task-and-standard-pack.md</code> (2 of 3 slots — third free for a visual reference)</dd></div>
             <div><dt>Included categories</dt><dd>Source code, configuration, assets, documentation</dd></div>
           </dl>
           <dl className="review-list">
@@ -250,6 +266,8 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
         </section>
       )}
 
+      <EvidenceSection bridge={props.bridge} run={props.run} project={props.project} phase="before" onNavigate={props.onNavigate} />
+
       <StatusLine status={status} />
 
       <div className="hstack between">
@@ -304,14 +322,18 @@ export function CreateTaskPacketView(props: StepProps & {
   onRecipeConsumed?: () => void
   preferredTemplate?: string
 }) {
-  const [fields, setFields] = useState<TaskPacketFields>(() => ({
-    taskTitle: props.run.taskTitle ?? (props.recipe ? `Apply recipe: ${props.recipe.title}` : ''),
-    goal: props.recipe?.goal ?? '',
-    scope: props.recipe?.scope ?? '',
-    constraints: props.recipe?.constraints ?? '',
-    acceptanceCriteria: props.recipe?.acceptanceCriteria ?? '',
-    references: props.recipe?.references ?? '',
-  }))
+  // Regenerated packets start from the last exported sections (F9); a fresh
+  // run starts from the recipe prefill or blank.
+  const [fields, setFields] = useState<TaskPacketFields>(() => props.run.taskPacketFields
+    ? { ...props.run.taskPacketFields }
+    : {
+        taskTitle: props.run.taskTitle ?? (props.recipe ? `Apply recipe: ${props.recipe.title}` : ''),
+        goal: props.recipe?.goal ?? '',
+        scope: props.recipe?.scope ?? '',
+        constraints: props.recipe?.constraints ?? '',
+        acceptanceCriteria: props.recipe?.acceptanceCriteria ?? '',
+        references: props.recipe?.references ?? '',
+      })
   const [editing, setEditing] = useState<keyof TaskPacketFields | null>(null)
   const [draft, setDraft] = useState('')
   const [showValidation, setShowValidation] = useState(false)
@@ -321,6 +343,35 @@ export function CreateTaskPacketView(props: StepProps & {
   const [result, setResult] = useState<BuildPacketResult | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewText, setPreviewText] = useState('')
+
+  // F16: returning here mid-iteration (overlay applied + feedback saved since
+  // the last packet export) auto-populates the sections from that feedback and
+  // switches to the iteration category, whose constraints hold the previous
+  // design steady instead of re-requesting a full build.
+  useEffect(() => {
+    if (!props.run.appliedFilesPath || !props.run.userReviewNotesPath || props.recipe) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const notes = await props.bridge.getArtifactText(props.run.id, 'user-review-notes.md')
+        const builtAt = props.run.taskPacketBuiltAt ? Date.parse(props.run.taskPacketBuiltAt) : 0
+        const fresh = parseFeedbackEntries(notes).filter((e) => Date.parse(e.at) > builtAt)
+        const template = TASK_TEMPLATES.find((t) => t.id === 'iterate-on-feedback')
+        if (cancelled || fresh.length === 0 || !template) return
+        setFields({
+          ...applyTemplate(template, props.project.name),
+          scope: fresh.map((e) => e.text).join('\n'),
+        })
+        setTemplateId('iterate-on-feedback')
+        setStatus({
+          tone: 'info',
+          text: `Iteration packet prefilled from ${fresh.length} saved feedback note${fresh.length === 1 ? '' : 's'} — Scope carries your feedback; the constraints hold the previous design steady. Adjust and export.`,
+        })
+      } catch { /* notes unreadable — keep the regular prefill */ }
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.run.id])
 
   const emptyKeys = PACKET_SECTIONS.filter((s) => !fields[s.key].trim()).map((s) => s.title)
   const titleMissing = !fields.taskTitle.trim()
@@ -371,6 +422,7 @@ export function CreateTaskPacketView(props: StepProps & {
         onBack={() => props.onNavigate('prepare-context')}
       />
       <Stepper run={props.run} />
+      <GuideLink topic="workflow-overview" onOpenGuide={props.onOpenGuide} />
 
       <section className="panel" aria-labelledby="tp-project-heading">
         <div className="hstack between">
@@ -418,7 +470,7 @@ export function CreateTaskPacketView(props: StepProps & {
             <button
               type="button"
               className="btn btn-primary btn-compact"
-              onClick={() => {
+              onClick={async () => {
                 const template = TASK_TEMPLATES.find((t) => t.id === templateId)
                 if (!template) return
                 const dirty = Object.values(fields).some((v) => v.trim().length > 0)
@@ -430,7 +482,21 @@ export function CreateTaskPacketView(props: StepProps & {
                 setFields(applyTemplate(template, props.project.name))
                 setConfirmTemplate(false)
                 setShowValidation(false)
-                setStatus({ tone: 'success', text: `Template applied: ${template.title}. Review the REPLACE markers and tweak before export.` })
+                // Methods that produce a self-serving app (the monolith) seed the
+                // project's launch config so the finished app runs from the
+                // workbench with no manual setup — unless the user already set one.
+                let launchNote = ''
+                if (template.launchDefaults && !props.project.launchUrl) {
+                  try {
+                    await props.bridge.updateProject(props.project.id, {
+                      launchUrl: template.launchDefaults.url,
+                      launchCommand: template.launchDefaults.command,
+                    })
+                    await props.refreshProjects()
+                    launchNote = ` Launch App is pre-configured for ${template.launchDefaults.url} — after Verify builds it, open the running app from step 5.`
+                  } catch { /* non-fatal: user can still set it in the launch dialog */ }
+                }
+                setStatus({ tone: 'success', text: `Template applied: ${template.title}. Review the REPLACE markers and tweak before export.${launchNote}` })
               }}
             >
               {confirmTemplate ? 'Replace content' : 'Use template'}
@@ -615,23 +681,59 @@ function TaskPacketPreviewModal(props: { text: string; onClose: () => void }) {
 
 export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult | null }) {
   const [copied, setCopied] = useState(false)
-  const [status, setStatus] = useState<Status>({ tone: 'info', text: 'Upload the three files in Microsoft 365 Copilot, paste the prompt, then continue once you have ui-overlay.zip.' })
+  const [status, setStatus] = useState<Status>({ tone: 'info', text: 'Drag (or copy) the files into Microsoft 365 Copilot, paste the prompt, then continue once you have ui-overlay.zip.' })
   const run = props.run
-  const files = props.packet?.uploadFiles ?? [
-    ...(run.repoFlatfilePath ? [{ file: 'repo-flatfile.txt', bytes: 0, sha256: '' }] : []),
-    ...(run.taskPacketPath ? [{ file: 'task-packet.md', bytes: 0, sha256: '' }] : []),
-    ...(run.standardPackPath ? [{ file: 'standard-pack.md', bytes: 0, sha256: '' }] : []),
-  ]
+  const files = props.packet?.uploadFiles ?? (run.taskAndStandardPackPath
+    ? [
+        ...(run.repoFlatfilePath ? [{ file: 'repo-flatfile.txt', bytes: 0, sha256: '' }] : []),
+        { file: 'task-and-standard-pack.md', bytes: 0, sha256: '' },
+      ]
+    : [
+        ...(run.repoFlatfilePath ? [{ file: 'repo-flatfile.txt', bytes: 0, sha256: '' }] : []),
+        ...(run.taskPacketPath ? [{ file: 'task-packet.md', bytes: 0, sha256: '' }] : []),
+        ...(run.standardPackPath ? [{ file: 'standard-pack.md', bytes: 0, sha256: '' }] : []),
+      ])
+
+  const getPrompt = async (): Promise<string> => {
+    if (props.packet?.recommendedPrompt) return props.packet.recommendedPrompt
+    try {
+      return await props.bridge.getArtifactText(run.id, 'recommended-prompt.txt')
+    } catch {
+      return 'Inspect all uploaded files, follow the task packet and standard pack exactly, and return only ui-overlay.zip containing changed and new files with repo-relative paths.'
+    }
+  }
 
   const copyPrompt = async () => {
-    const prompt = props.packet?.recommendedPrompt ??
-      'Inspect all uploaded files, follow the task packet and standard pack exactly, and return only ui-overlay.zip containing changed and new files with repo-relative paths.'
-    const ok = await copyText(prompt)
+    const ok = await copyText(await getPrompt())
     setCopied(ok)
     setStatus(ok
       ? { tone: 'success', text: 'Recommended prompt copied to the clipboard.' }
       : { tone: 'error', text: 'Could not copy automatically — select the prompt text below and copy manually.' })
     window.setTimeout(() => setCopied(false), 2500)
+  }
+
+  const openCopilot = async () => {
+    const ok = await copyText(await getPrompt())
+    await props.bridge.openExternal(COPILOT_URL)
+    setStatus(ok
+      ? { tone: 'success', text: 'Copilot opened — the prompt is on your clipboard; attach the files, then paste.' }
+      : { tone: 'info', text: 'Copilot opened. Copy the prompt below, attach the files, then paste.' })
+  }
+
+  const dragFiles = (event: { preventDefault: () => void }) => {
+    event.preventDefault()
+    props.bridge.startUploadDrag(run.id).catch((error: unknown) => {
+      setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+    })
+  }
+
+  const copyFiles = async () => {
+    try {
+      const result = await props.bridge.copyUploadSet(run.id)
+      setStatus({ tone: 'success', text: `${result.files} file${result.files === 1 ? '' : 's'} on the clipboard — paste (Ctrl/Cmd+V) into the Copilot chat.` })
+    } catch (error) {
+      setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+    }
   }
 
   const showFiles = async () => {
@@ -651,6 +753,7 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
         onBack={() => props.onNavigate('create-task-packet')}
       />
       <Stepper run={run} />
+      <GuideLink topic="upload-run" onOpenGuide={props.onOpenGuide} />
 
       <section className="panel" aria-labelledby="upload-heading">
         <h2 id="upload-heading">Upload to Microsoft 365 Copilot (max 3 files)</h2>
@@ -663,6 +766,7 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
                 <h3>{f.file}</h3>
                 <p>
                   {f.file === 'repo-flatfile.txt' && 'Repository context (full file contents)'}
+                  {f.file === 'task-and-standard-pack.md' && 'Instructions, acceptance criteria, and standards (combined)'}
                   {f.file === 'task-packet.md' && 'Instructions and acceptance criteria'}
                   {f.file === 'standard-pack.md' && 'Engineering UI Kit standards and rules'}
                 </p>
@@ -675,22 +779,33 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
               {Icon.refresh(14)} Replace files
             </button>
             <span className="hstack">
-              {files.length === 3 ? (
-                <span className="status status-ok">
-                  <span className="status-dot" aria-hidden="true" /> <span className="num">3 of 3 files selected</span>
-                </span>
-              ) : (
-                <span className="secondary-text num">{files.length} of 3 files selected</span>
-              )}
+              <span className="status status-ok">
+                <span className="status-dot" aria-hidden="true" /> <span className="num">{files.length} of 3 upload slots used</span>
+              </span>
             </span>
           </div>
         </div>
-        <div className="hstack" style={{ marginTop: 'var(--semantic-spacing-4)' }}>
+        <div
+          className="upload-drag-chip"
+          draggable
+          onDragStart={dragFiles}
+          role="button"
+          aria-label={`Drag ${files.length} upload files out to Copilot`}
+          title="Drag this straight onto the Copilot chat's attach area"
+        >
+          <span className="drag-dots" aria-hidden="true">⣿</span>
+          <span className="hstack" aria-hidden="true">{files.map((f) => <span key={f.file} className="drag-file-chip">{Icon.file(13)} {f.file}</span>)}</span>
+          <span className="drag-hint">drag onto the Copilot chat — no folder needed</span>
+        </div>
+        <div className="hstack" style={{ marginTop: 'var(--semantic-spacing-3)' }}>
+          <button type="button" className="btn btn-secondary btn-compact" onClick={copyFiles}>
+            {Icon.copy(14)} Copy Files
+          </button>
           <button type="button" className="btn btn-secondary btn-compact" onClick={showFiles}>
             {Icon.folder(15)} Show Files in Folder
           </button>
-          <button type="button" className="btn btn-secondary btn-compact" onClick={() => props.bridge.openExternal(COPILOT_URL)}>
-            {Icon.external(14)} Open Microsoft 365 Copilot
+          <button type="button" className="btn btn-primary btn-compact" onClick={openCopilot}>
+            {Icon.external(14)} Open Copilot (copies prompt)
           </button>
         </div>
       </section>
@@ -759,12 +874,49 @@ function TreeView(props: { node: TreeNode; depth?: number }) {
   )
 }
 
+/**
+ * Paste-ready remediation prompt for a refused overlay: names every blocker
+ * the inspector found and restates the packaging contract, so a fresh
+ * Copilot session (with the upload set re-attached) can return a corrected
+ * zip without the user composing the failure report by hand.
+ */
+function buildBlockerFixPrompt(summary: OverlayInspectionSummary): string {
+  const blockers = summary.hardBlockers
+    .map((b, i) => `${i + 1}. ${b.ruleId}${b.path ? ` — \`${b.path}\`` : ''}: ${b.message}`)
+    .join('\n')
+  return [
+    'The `ui-overlay.zip` you returned was refused by our overlay inspector before a single file was extracted. Violations found:',
+    '',
+    blockers,
+    '',
+    'Return a corrected `ui-overlay.zip` that fixes every violation above:',
+    '- Keep the same intended file changes from the attached task packet — change only what the violations require.',
+    '- Include only changed or new files, at repo-relative paths (no absolute paths, no `..` traversal).',
+    '- Never include `.git/`, dependencies (`node_modules/`), build output (`dist/`, `build/`), caches, lockfiles, environment or secret files, or a dump of the whole repository.',
+    '- An optional `apply-notes.md` may describe what was fixed.',
+    '- Do not claim the overlay was locally verified.',
+    '',
+    'The original `repo-flatfile.txt` and `task-and-standard-pack.md` are attached again for full context.',
+  ].join('\n')
+}
+
 export function ApplyZipOverlayView(props: StepProps) {
   const [status, setStatus] = useState<Status>({ tone: 'info', text: 'Select the ui-overlay.zip returned by Copilot.' })
   const [inspection, setInspection] = useState<OverlayInspectionSummary | null>(null)
   const [warningsAccepted, setWarningsAccepted] = useState(false)
   const [applied, setApplied] = useState<AppliedFiles | null>(null)
   const [busy, setBusy] = useState(false)
+  const [fixCopied, setFixCopied] = useState(false)
+
+  const copyFixPrompt = async () => {
+    if (!inspection) return
+    const ok = await copyText(buildBlockerFixPrompt(inspection))
+    setFixCopied(ok)
+    setStatus(ok
+      ? { tone: 'success', text: 'Fix prompt copied — start a fresh Copilot session, re-attach the two upload files, and paste.' }
+      : { tone: 'error', text: 'Could not copy automatically — select the blocker list and copy manually.' })
+    window.setTimeout(() => setFixCopied(false), 2500)
+  }
 
   const pickAndInspect = async () => {
     const zipPath = await props.bridge.pickZipFile()
@@ -782,7 +934,7 @@ export function ApplyZipOverlayView(props: StepProps) {
           ? summary.warnings.length > 0
             ? { tone: 'info', text: `Inspection verdict: warning — ${summary.warnings.length} warnings require explicit acceptance.` }
             : { tone: 'success', text: 'Inspection verdict: pass.' }
-          : { tone: 'error', text: `Inspection verdict: blocked — ${summary.hardBlockers.length} hard blockers. This overlay cannot be applied.` },
+          : { tone: 'error', text: `Inspection verdict: blocked — ${summary.hardBlockers.length} hard blockers. This overlay can never be applied; copy the fix prompt below to get a corrected zip from Copilot.` },
       )
     } catch (error) {
       setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
@@ -823,6 +975,7 @@ export function ApplyZipOverlayView(props: StepProps) {
         onBack={() => props.onNavigate('run-in-copilot')}
       />
       <Stepper run={props.run} />
+      <GuideLink topic="apply-safely" onOpenGuide={props.onOpenGuide} />
 
       <div className="apply-layout">
         <div className="stack">
@@ -882,6 +1035,18 @@ export function ApplyZipOverlayView(props: StepProps) {
                       <li key={i}><code>{b.ruleId}</code> {b.path ? <code>{b.path}</code> : null} — {b.message}</li>
                     ))}
                   </ul>
+                  <div className="hstack" style={{ marginTop: 12, flexWrap: 'wrap' }}>
+                    <button type="button" className="btn btn-secondary btn-compact" onClick={copyFixPrompt}>
+                      {fixCopied ? <>{Icon.check(14)} Copied</> : <>{Icon.copy(14)} Copy Fix Prompt for Copilot</>}
+                    </button>
+                    <button type="button" className="tip-link" onClick={() => props.onNavigate('run-in-copilot')}>
+                      Reopen Run in Copilot to re-attach the upload files →
+                    </button>
+                  </div>
+                  <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
+                    Paste the prompt into a fresh Copilot session together with the same two upload files;
+                    it lists every violation and asks for a corrected <code>ui-overlay.zip</code>.
+                  </p>
                 </div>
               )}
 
@@ -955,28 +1120,91 @@ export function ApplyZipOverlayView(props: StepProps) {
 
 /* ------------------------------------------------- 5. Verify & Review */
 
-type FeedbackEvent = { at: string; kind: 'feedback' | 'review-packet'; summary: string }
+/** A UI element picked inside the previewed app for an anchored review comment. */
+export type PickedTarget = { selector: string; text: string; view: string; route: string }
 
 export function VerifyReviewView(props: StepProps) {
-  const [status, setStatus] = useState<Status>({ tone: 'info', text: 'Run verification commands against the applied overlay.' })
+  const [status, setStatus] = useState<Status>({ tone: 'info', text: 'Checks run automatically. Navigate the preview and comment on components as you review.' })
   const [results, setResults] = useState<VerificationResult[] | null>(null)
   const [busy, setBusy] = useState(false)
   const [completed, setCompleted] = useState(props.run.currentStep === 'complete')
-  const [feedbackOpen, setFeedbackOpen] = useState(false)
-  const [feedbackText, setFeedbackText] = useState('')
-  const [history, setHistory] = useState<FeedbackEvent[]>([])
-  const [reviewPacket, setReviewPacket] = useState<{ path: string; text: string } | null>(null)
+  const [reviewPacket, setReviewPacket] = useState<{ path: string; text: string; uploadFiles: string[]; contactSheetPath?: string } | null>(null)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [lastRunAt, setLastRunAt] = useState<string | null>(null)
-  const [allFeedback, setAllFeedback] = useState<string | null>(null)
+  const [launchConfigOpen, setLaunchConfigOpen] = useState(false)
+  const [preview, setPreview] = useState<{ status: 'idle' | 'starting' | 'ready' | 'error'; url?: string; message?: string }>({ status: 'idle' })
+  const previewStarted = useRef(false)
+  const checksStarted = useRef(false)
+  const [notes, setNotes] = useState('')
+  const [checksOpen, setChecksOpen] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(false)
+  const [evidenceOpen, setEvidenceOpen] = useState(false)
+  const [composer, setComposer] = useState<PickedTarget | null>(null)
+  const [commentText, setCommentText] = useState('')
+  const [noteDraft, setNoteDraft] = useState('')
+  const [picking, setPicking] = useState(false)
+
+  // The app under construction previews by default: start (and rebuild) it
+  // in the background on arrival, without opening the system browser.
+  const startPreview = async () => {
+    setPreview({ status: 'starting' })
+    try {
+      const result = await props.bridge.launchApp(props.project.id, { open: false })
+      setPreview({ status: 'ready', url: result.url })
+    } catch (error) {
+      setPreview({ status: 'error', message: error instanceof Error ? error.message : String(error) })
+    }
+  }
 
   useEffect(() => {
-    const seeded: FeedbackEvent[] = []
-    if (props.run.userReviewNotesPath) seeded.push({ at: props.run.updatedAt, kind: 'feedback', summary: 'Manual feedback on file' })
-    if (props.run.reviewEvidencePackPath) seeded.push({ at: props.run.updatedAt, kind: 'review-packet', summary: 'Copilot review packet generated' })
-    setHistory(seeded)
+    if (!props.project.launchUrl || previewStarted.current) return
+    previewStarted.current = true
+    void startPreview()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [props.project.id, props.project.launchUrl])
+
+  // Review notes (manual and component-anchored) live in user-review-notes.md;
+  // the toolbar chip and the notes dialog render its parsed entries.
+  const loadNotes = async () => {
+    try {
+      setNotes(await props.bridge.getArtifactText(props.run.id, 'user-review-notes.md'))
+    } catch {
+      setNotes('')
+    }
+  }
+
+  useEffect(() => {
+    void loadNotes()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.run.id])
+
+  // Rehydrate stored verification results so revisiting the step (or
+  // relaunching the app) doesn't pretend checks never ran.
+  useEffect(() => {
+    const paths = props.run.verificationResultPaths ?? []
+    if (paths.length === 0) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const restored: VerificationResult[] = []
+        for (const p of paths) {
+          const fileName = p.split(/[\\/]/).pop()
+          if (!fileName) continue
+          restored.push(JSON.parse(await props.bridge.getArtifactText(props.run.id, fileName)) as VerificationResult)
+        }
+        if (cancelled || restored.length === 0) return
+        setResults(restored)
+        const restoredFailed = restored.filter((r) => r.status !== 'passed').length
+        const last = restored[restored.length - 1]
+        if (last) setLastRunAt(new Date(last.endedAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }))
+        setStatus(restoredFailed === 0
+          ? { tone: 'success', text: 'All checks passed. Your repository builds and typechecks.' }
+          : { tone: 'error', text: `${restoredFailed} of ${restored.length} checks failed on the last run. Re-run after the next overlay.` })
+      } catch { /* artifacts pruned — user can re-run */ }
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.run.id])
 
   const runChecks = async () => {
     setBusy(true)
@@ -998,18 +1226,44 @@ export function VerifyReviewView(props: StepProps) {
     }
   }
 
-  const saveFeedback = async () => {
-    if (!feedbackText.trim()) {
-      setStatus({ tone: 'error', text: 'Feedback is empty — write a note before saving.' })
+  // Health checks run autonomously on arrival; applyOverlay invalidates the
+  // stored results, so an empty result set always means "this overlay is
+  // unverified" and triggers a fresh run.
+  useEffect(() => {
+    if (checksStarted.current) return
+    if ((props.run.verificationResultPaths ?? []).length > 0) return
+    checksStarted.current = true
+    void runChecks()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.run.id])
+
+  const saveManualNote = async () => {
+    if (!noteDraft.trim()) {
+      setStatus({ tone: 'error', text: 'Note is empty — write something before saving.' })
       return
     }
     try {
-      await props.bridge.saveFeedback(props.run.id, feedbackText)
+      await props.bridge.saveFeedback(props.run.id, noteDraft.trim())
+      setNoteDraft('')
       await props.refreshRun()
-      setHistory((h) => [{ at: new Date().toISOString(), kind: 'feedback', summary: feedbackText.trim().slice(0, 60) }, ...h])
-      setFeedbackText('')
-      setFeedbackOpen(false)
-      setStatus({ tone: 'success', text: 'Feedback saved to user-review-notes.md.' })
+      await loadNotes()
+      setStatus({ tone: 'success', text: 'Note saved to user-review-notes.md.' })
+    } catch (error) {
+      setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+    }
+  }
+
+  const saveComponentComment = async () => {
+    if (!composer || !commentText.trim()) return
+    const t = composer
+    const header = `**Component comment** — \`${t.selector}\`${t.text ? ` ("${t.text}")` : ''} — ${t.route}${t.view ? ` · ${t.view}` : ''}`
+    try {
+      await props.bridge.saveFeedback(props.run.id, `${header}\n\n${commentText.trim()}`)
+      setComposer(null)
+      setCommentText('')
+      await props.refreshRun()
+      await loadNotes()
+      setStatus({ tone: 'success', text: 'Component comment saved — it will anchor the next task packet.' })
     } catch (error) {
       setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
     }
@@ -1019,8 +1273,12 @@ export function VerifyReviewView(props: StepProps) {
     try {
       const result = await props.bridge.buildReviewPacket(props.run.id)
       await props.refreshRun()
-      setReviewPacket({ path: result.reviewPacketPath, text: result.reviewPacketText })
-      setHistory((h) => [{ at: new Date().toISOString(), kind: 'review-packet', summary: 'Copilot review packet generated' }, ...h])
+      setReviewPacket({
+        path: result.reviewPacketPath,
+        text: result.reviewPacketText,
+        uploadFiles: result.uploadFiles,
+        ...(result.contactSheetPath ? { contactSheetPath: result.contactSheetPath } : {}),
+      })
       setReviewOpen(true)
       setStatus({ tone: 'success', text: 'Copilot review packet generated.' })
     } catch (error) {
@@ -1037,12 +1295,13 @@ export function VerifyReviewView(props: StepProps) {
 
   const passed = results?.filter((r) => r.status === 'passed').length ?? 0
   const failed = results?.filter((r) => r.status !== 'passed').length ?? 0
+  const feedbackEntries = parseFeedbackEntries(notes)
 
   return (
     <>
       <PageHeader
         title="Verify & Review"
-        subtitle="Test the changes and review the Copilot output before finalizing."
+        subtitle="Navigate the app in the preview, comment on components, and generate the follow-on packet."
         crumbs={[
           { label: 'Copilot Handoff', onClick: () => props.onNavigate('copilot-handoff') },
           { label: props.project.name },
@@ -1050,216 +1309,80 @@ export function VerifyReviewView(props: StepProps) {
         onBack={() => props.onNavigate('apply-zip-overlay')}
       />
       <Stepper run={props.run} />
+      <GuideLink topic="verify-review" onOpenGuide={props.onOpenGuide} />
 
-      <section className="panel" aria-labelledby="iteration-heading">
-        <div className="iteration-grid iteration-grid-intro">
-          <div className="iteration-intro">
-            <span className="iteration-intro-icon" aria-hidden="true">{Icon.refresh(22)}</span>
-            <h2 id="iteration-heading" style={{ marginBottom: 4 }}>Iteration &amp; feedback loop</h2>
-            <p className="secondary-text" style={{ fontSize: 13, margin: 0 }}>
-              Review changes in the app, add feedback (manual or Copilot), and generate a new task packet to iterate.
-            </p>
-          </div>
-          <div className="inset">
-            <h3 className="iteration-step-title">1 · Launch app</h3>
-            <p className="secondary-text">Open the application to validate the changes and review behavior.</p>
+      <section className="panel" aria-labelledby="review-cockpit-heading">
+        <h2 id="review-cockpit-heading" className="sr-only">Review cockpit</h2>
+        <div className="hstack between review-toolbar">
+          <div className="hstack" style={{ gap: 'var(--semantic-spacing-2)' }}>
             <button
               type="button"
-              className="btn btn-secondary btn-compact"
-              disabled={!props.project.launchUrl}
-              onClick={() => props.project.launchUrl && props.bridge.openExternal(props.project.launchUrl)}
+              className={`review-chip ${busy ? 'review-chip-busy' : results ? (failed === 0 ? 'review-chip-ok' : 'review-chip-fail') : ''}`}
+              onClick={() => setChecksOpen(true)}
             >
-              {Icon.play(14)} Launch App
+              <span className="status-dot" aria-hidden="true" />
+              {busy
+                ? 'Checks · running…'
+                : results
+                  ? failed === 0 ? `Checks · ${passed}/${results.length} passed` : `Checks · ${failed} failed`
+                  : 'Checks · not run'}
             </button>
-            {!props.project.launchUrl && (
-              <p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>No launch URL configured for this project.</p>
-            )}
+            <button type="button" className="review-chip" onClick={() => setCommentsOpen(true)}>
+              {Icon.pencil(13)} Notes · {feedbackEntries.length}
+            </button>
+            <button type="button" className="review-chip" onClick={() => setEvidenceOpen(true)}>
+              {Icon.layers(13)} Evidence
+            </button>
           </div>
-          <div className="inset">
-            <h3 className="iteration-step-title">2 · Add feedback</h3>
-            <p className="secondary-text">Add your feedback manually, or generate a Copilot review packet to streamline the review process.</p>
-            {feedbackOpen ? (
-              <div className="field" style={{ margin: 0 }}>
-                <label htmlFor="review-feedback">Review feedback</label>
-                <textarea
-                  id="review-feedback"
-                  rows={3}
-                  value={feedbackText}
-                  onChange={(event) => setFeedbackText(event.target.value)}
-                />
-                <div className="hstack">
-                  <button type="button" className="btn btn-primary btn-compact" onClick={saveFeedback}>Save Feedback</button>
-                  <button type="button" className="btn btn-secondary btn-compact" onClick={() => setFeedbackOpen(false)}>Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <div className="stack" style={{ gap: 8 }}>
-                <button type="button" className="btn btn-secondary btn-compact" onClick={() => setFeedbackOpen(true)}>
-                  {Icon.pencil(14)} Add Feedback Manually
-                </button>
-                <button type="button" className="btn btn-secondary btn-compact" onClick={generateReviewPacket}>
-                  {Icon.sparkle(14)} Generate Copilot Review Packet
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="inset">
-            <h3 className="iteration-step-title">3 · Generate new task packet</h3>
-            <p className="secondary-text">
-              Create a new task packet with updated context and feedback for the next run.
-            </p>
+          <span className="hstack">
+            <button type="button" className="btn btn-secondary btn-compact" onClick={generateReviewPacket}>
+              {Icon.sparkle(14)} Review Packet
+            </button>
             <button type="button" className="btn btn-secondary btn-compact" onClick={() => props.onNavigate('create-task-packet')}>
-              {Icon.doc(15)} Generate New Task Packet
+              {Icon.doc(14)} New Task Packet
             </button>
-          </div>
-        </div>
-        <div className="info-banner" style={{ marginTop: 'var(--semantic-spacing-4)' }}>
-          <span aria-hidden="true">{Icon.info(14)}</span>
-          A new task packet will include your feedback and updated instructions for Copilot.
-        </div>
-      </section>
-
-      <section className="panel" aria-labelledby="verification-heading">
-        <h2 id="verification-heading" className="sr-only">Verification status</h2>
-        <div className="hstack between">
-          <div className="hstack" style={{ gap: 'var(--semantic-spacing-4)' }}>
-            <span
-              className={`verify-hero ${results ? (failed === 0 ? 'verify-hero-pass' : 'verify-hero-fail') : ''}`}
-              aria-hidden="true"
-            >
-              {results ? (failed === 0 ? Icon.check(18) : Icon.x(18)) : Icon.shieldCheck(18)}
-            </span>
-            <div>
-              <h3 style={{ margin: 0, fontSize: 14, color: results && failed === 0 ? 'var(--semantic-status-success)' : undefined }}>
-                {results ? (failed === 0 ? 'All checks passed' : `${failed} check${failed === 1 ? '' : 's'} failed`) : 'Verification status'}
-              </h3>
-              <p className="panel-desc" style={{ marginBottom: 0 }}>
-                {results
-                  ? failed === 0
-                    ? 'Your repository builds and typechecks.'
-                    : 'Review the output logs before approving.'
-                  : 'Run the verification commands against the applied overlay.'}
-                {lastRunAt && <span className="muted"> · Last run: Today at {lastRunAt}</span>}
-              </p>
-            </div>
-          </div>
-          <button type="button" className="btn btn-secondary btn-compact" onClick={runChecks} disabled={busy}>
-            {busy ? 'Running…' : results ? <>{Icon.refresh(14)} Re-run checks</> : 'Run checks'}
-          </button>
-        </div>
-
-        {results && (
-          <div className="stat-chips" aria-label="Verification summary">
-            <div className="stat-chip">
-              <span className="stat-chip-icon" aria-hidden="true">{Icon.doc(18)}</span>
-              <strong>{results.length}</strong>
-              <span>Checks run</span>
-            </div>
-            <div className="stat-chip stat-pass">
-              <span className="stat-chip-icon" aria-hidden="true">{Icon.check(18)}</span>
-              <strong>{passed}</strong>
-              <span>Passed</span>
-            </div>
-            <div className={failed > 0 ? 'stat-chip stat-fail' : 'stat-chip'}>
-              <span className="stat-chip-icon" aria-hidden="true">{Icon.x(18)}</span>
-              <strong>{failed}</strong>
-              <span>Failed</span>
-            </div>
-            <div className="stat-chip">
-              <span className="stat-chip-icon" aria-hidden="true">{Icon.refresh(18)}</span>
-              <strong>{durationLabel(results)}</strong>
-              <span>Duration</span>
-            </div>
-          </div>
-        )}
-
-        {results && (
-          <table className="data-table" style={{ marginTop: 12 }}>
-            <caption className="sr-only">Verification results</caption>
-            <thead>
-              <tr><th scope="col">Check</th><th scope="col">Command</th><th scope="col">Status</th><th scope="col" className="cell-num">Exit code</th></tr>
-            </thead>
-            <tbody>
-              {results.map((r) => (
-                <tr key={r.commandLabel}>
-                  <td>{r.commandLabel}</td>
-                  <td className="mono">{r.commandText}</td>
-                  <td>
-                    <span className={`status ${r.status === 'passed' ? 'status-ok' : 'status-danger'}`}>
-                      <span className="status-dot" aria-hidden="true" /> {r.status === 'passed' ? 'Passed' : r.status}
-                    </span>
-                  </td>
-                  <td className="cell-num">{r.exitCode ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        {results?.some((r) => r.combinedOutputPath) && (
-          <div style={{ marginTop: 'var(--semantic-spacing-3)' }}>
             <button
               type="button"
-              className="btn btn-secondary btn-compact"
-              onClick={() => {
-                const withLog = results.find((r) => r.combinedOutputPath)
-                if (withLog?.combinedOutputPath) void props.bridge.showInFolder(withLog.combinedOutputPath)
-              }}
+              className="btn btn-primary btn-compact"
+              disabled={!results || failed > 0 || completed}
+              onClick={approve}
             >
-              {Icon.external(14)} View full test report
+              {Icon.check(14)} {completed ? 'Handoff Complete' : 'Approve & Complete'}
+            </button>
+          </span>
+        </div>
+
+        {props.project.launchUrl ? (
+          preview.status !== 'idle' && (
+            <AppPreview
+              state={preview}
+              obscured={checksOpen || commentsOpen || evidenceOpen || reviewOpen || launchConfigOpen || Boolean(composer)}
+              picking={picking}
+              onPickStart={() => setPicking(true)}
+              onPicked={(target) => {
+                setPicking(false)
+                if (target) {
+                  setCommentText('')
+                  setComposer(target)
+                }
+              }}
+              onRetry={() => void startPreview()}
+              onOpenExternal={() => { if (preview.url) void props.bridge.openExternal(preview.url) }}
+            />
+          )
+        ) : (
+          <div className="inset">
+            <h3 className="iteration-step-title">Set up the app preview</h3>
+            <p className="secondary-text">
+              No launch URL yet. For a new app, set one (e.g. <code>http://127.0.0.1:5410</code> with a launch
+              command like <code>npm start</code>) and the app will preview here automatically.
+            </p>
+            <button type="button" className="btn btn-secondary btn-compact" onClick={() => setLaunchConfigOpen(true)}>
+              {Icon.gear(14)} Set launch URL…
             </button>
           </div>
         )}
       </section>
-
-      <div className="grid-2">
-        <section className="panel" aria-labelledby="history-heading">
-          <div className="hstack between">
-            <h2 id="history-heading">Recent feedback history</h2>
-            {props.run.userReviewNotesPath && (
-              <button
-                type="button"
-                className="tip-link"
-                onClick={async () => {
-                  try {
-                    setAllFeedback(await props.bridge.getArtifactText(props.run.id, 'user-review-notes.md'))
-                  } catch {
-                    setAllFeedback('_No feedback file found._')
-                  }
-                }}
-              >
-                View all →
-              </button>
-            )}
-          </div>
-          {history.length === 0 ? (
-            <p className="secondary-text" style={{ margin: 0 }}>No feedback captured yet for this run.</p>
-          ) : (
-            <ul className="row-list" style={{ gap: 6 }}>
-              {history.map((event, i) => (
-                <li key={i} className="hstack between" style={{ padding: '4px 0' }}>
-                  <span className="hstack">
-                    <span className="row-icon" style={{ width: 24, height: 24 }} aria-hidden="true">
-                      {event.kind === 'feedback' ? Icon.pencil(13) : Icon.sparkle(13)}
-                    </span>
-                    <span>{event.summary}</span>
-                  </span>
-                  <span className="muted num" style={{ fontSize: 12 }}>{new Date(event.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        <section className="panel" aria-labelledby="next-heading">
-          <h2 id="next-heading">What's next?</h2>
-          <p className="secondary-text" style={{ margin: 0 }}>
-            {failed > 0
-              ? 'Fix the failing checks or generate a new task packet with corrective feedback, then run Copilot again.'
-              : completed
-                ? 'Handoff complete. Start a new handoff from the hub or Projects when you have the next task.'
-                : 'If the changes look right, approve and complete the handoff. Otherwise generate a new task packet and run Copilot again with the updated context.'}
-          </p>
-        </section>
-      </div>
 
       <StatusLine status={status} />
 
@@ -1267,33 +1390,192 @@ export function VerifyReviewView(props: StepProps) {
         <button type="button" className="btn btn-secondary" onClick={() => props.onNavigate('apply-zip-overlay')}>
           Back
         </button>
-        <span className="hstack">
-          <button type="button" className="btn btn-secondary" onClick={runChecks} disabled={busy}>
-            {Icon.refresh(15)} Re-run tests
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={!results || failed > 0 || completed}
-            onClick={approve}
-          >
-            {Icon.check(14)} {completed ? 'Handoff Complete' : 'Approve & Complete Handoff'}
-          </button>
-        </span>
       </div>
 
-      {allFeedback !== null && (
+      {checksOpen && (
         <Dialog
-          title="Feedback history"
-          onClose={() => setAllFeedback(null)}
+          title="Health checks"
+          onClose={() => setChecksOpen(false)}
           wide
           actions={
-            <button type="button" className="btn btn-primary" onClick={() => setAllFeedback(null)}>
+            <>
+              <button type="button" className="btn btn-secondary" onClick={runChecks} disabled={busy}>
+                {busy ? 'Running…' : <>{Icon.refresh(14)} Re-run checks</>}
+              </button>
+              {results?.some((r) => r.combinedOutputPath) && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    const withLog = results.find((r) => r.combinedOutputPath)
+                    if (withLog?.combinedOutputPath) void props.bridge.showInFolder(withLog.combinedOutputPath)
+                  }}
+                >
+                  {Icon.external(14)} View full test report
+                </button>
+              )}
+              <button type="button" className="btn btn-primary" onClick={() => setChecksOpen(false)}>
+                Close
+              </button>
+            </>
+          }
+        >
+          <p className="secondary-text" style={{ marginTop: 0 }}>
+            Verification runs automatically when you arrive at this step; applying a new overlay invalidates the
+            results and triggers a fresh run.
+            {lastRunAt && <span className="muted"> Last run: Today at {lastRunAt}.</span>}
+          </p>
+          {results && (
+            <div className="stat-chips" aria-label="Verification summary">
+              <div className="stat-chip">
+                <span className="stat-chip-icon" aria-hidden="true">{Icon.doc(18)}</span>
+                <strong>{results.length}</strong>
+                <span>Checks run</span>
+              </div>
+              <div className="stat-chip stat-pass">
+                <span className="stat-chip-icon" aria-hidden="true">{Icon.check(18)}</span>
+                <strong>{passed}</strong>
+                <span>Passed</span>
+              </div>
+              <div className={failed > 0 ? 'stat-chip stat-fail' : 'stat-chip'}>
+                <span className="stat-chip-icon" aria-hidden="true">{Icon.x(18)}</span>
+                <strong>{failed}</strong>
+                <span>Failed</span>
+              </div>
+              <div className="stat-chip">
+                <span className="stat-chip-icon" aria-hidden="true">{Icon.refresh(18)}</span>
+                <strong>{durationLabel(results)}</strong>
+                <span>Duration</span>
+              </div>
+            </div>
+          )}
+          {results ? (
+            <table className="data-table" style={{ marginTop: 12 }}>
+              <caption className="sr-only">Verification results</caption>
+              <thead>
+                <tr><th scope="col">Check</th><th scope="col">Command</th><th scope="col">Status</th><th scope="col" className="cell-num">Exit code</th></tr>
+              </thead>
+              <tbody>
+                {results.map((r) => (
+                  <tr key={r.commandLabel}>
+                    <td>{r.commandLabel}</td>
+                    <td className="mono">{r.commandText}</td>
+                    <td>
+                      <span className={`status ${r.status === 'passed' ? 'status-ok' : 'status-danger'}`}>
+                        <span className="status-dot" aria-hidden="true" /> {r.status === 'passed' ? 'Passed' : r.status}
+                      </span>
+                    </td>
+                    <td className="cell-num">{r.exitCode ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="muted" style={{ margin: 0 }}>{busy ? 'Running verification commands…' : 'No results recorded yet.'}</p>
+          )}
+        </Dialog>
+      )}
+
+      {commentsOpen && (
+        <Dialog
+          title="Review notes"
+          onClose={() => setCommentsOpen(false)}
+          wide
+          actions={
+            <button type="button" className="btn btn-primary" onClick={() => setCommentsOpen(false)}>
               Close
             </button>
           }
         >
-          <div className="preview-scroll"><Markdown text={allFeedback} /></div>
+          <div className="field">
+            <label htmlFor="review-note">Add a general note</label>
+            <textarea
+              id="review-note"
+              rows={3}
+              value={noteDraft}
+              onChange={(event) => setNoteDraft(event.target.value)}
+            />
+            <div className="hstack">
+              <button type="button" className="btn btn-secondary btn-compact" onClick={saveManualNote}>
+                {Icon.pencil(14)} Save Note
+              </button>
+            </div>
+          </div>
+          {feedbackEntries.length === 0 ? (
+            <p className="secondary-text" style={{ margin: 0 }}>
+              No notes yet. Use <strong>Comment</strong> in the preview to anchor feedback to a specific component,
+              or add a general note above.
+            </p>
+          ) : (
+            <ul className="row-list" style={{ gap: 10 }}>
+              {[...feedbackEntries].reverse().map((entry) => (
+                <li key={entry.at} style={{ borderBottom: '1px solid var(--semantic-border-subtle)', paddingBottom: 8 }}>
+                  <div className="muted num" style={{ fontSize: 12, marginBottom: 2 }}>
+                    {new Date(entry.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  </div>
+                  <Markdown text={entry.text} />
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>
+            Notes append to <code>user-review-notes.md</code> and fold into the next task packet automatically.
+          </p>
+        </Dialog>
+      )}
+
+      {evidenceOpen && (
+        <Dialog
+          title="Visual evidence"
+          onClose={() => setEvidenceOpen(false)}
+          wide
+          actions={
+            <button type="button" className="btn btn-primary" onClick={() => setEvidenceOpen(false)}>
+              Close
+            </button>
+          }
+        >
+          <EvidenceSection
+            bridge={props.bridge}
+            run={props.run}
+            project={props.project}
+            phase="after"
+            onNavigate={props.onNavigate}
+            frameless
+          />
+        </Dialog>
+      )}
+
+      {composer && (
+        <Dialog
+          title="Comment on component"
+          onClose={() => setComposer(null)}
+          actions={
+            <>
+              <button type="button" className="btn btn-secondary" onClick={() => setComposer(null)}>
+                Cancel
+              </button>
+              <button type="button" className="btn btn-primary" disabled={!commentText.trim()} onClick={saveComponentComment}>
+                Save Comment
+              </button>
+            </>
+          }
+        >
+          <p className="secondary-text" style={{ marginTop: 0 }}>
+            <code>{composer.selector}</code>
+            {composer.text && <> — “{composer.text}”</>}
+            <br />
+            <span className="muted">{composer.route}{composer.view ? ` · ${composer.view}` : ''}</span>
+          </p>
+          <div className="field" style={{ margin: 0 }}>
+            <label htmlFor="component-comment">What should change?</label>
+            <textarea
+              id="component-comment"
+              rows={4}
+              value={commentText}
+              onChange={(event) => setCommentText(event.target.value)}
+            />
+          </div>
         </Dialog>
       )}
 
@@ -1307,6 +1589,11 @@ export function VerifyReviewView(props: StepProps) {
               <button type="button" className="btn btn-secondary" onClick={() => copyText(reviewPacket.text)}>
                 Copy
               </button>
+              {reviewPacket.contactSheetPath && (
+                <button type="button" className="btn btn-secondary" onClick={() => props.bridge.showInFolder(reviewPacket.contactSheetPath!)}>
+                  Show Evidence PDF
+                </button>
+              )}
               <button type="button" className="btn btn-secondary" onClick={() => props.bridge.showInFolder(reviewPacket.path)}>
                 Show in Folder
               </button>
@@ -1317,11 +1604,330 @@ export function VerifyReviewView(props: StepProps) {
           }
         >
           <p className="secondary-text">
-            Follow-up upload set (3-file budget): <code>review-packet.md</code> plus up to two supporting evidence files.
+            Follow-up upload set (3-file budget):{' '}
+            {reviewPacket.uploadFiles.map((f, i) => (
+              <span key={f}>{i > 0 && ' + '}<code>{f.split(/[\\/]/).pop()}</code></span>
+            ))}
+            {reviewPacket.contactSheetPath
+              ? ' — includes the before/after visual contact sheet.'
+              : ' — no visual evidence captured for this run; capture before/after screenshots to include the contact sheet.'}
           </p>
           <div className="preview-scroll"><Markdown text={reviewPacket.text} /></div>
         </Dialog>
       )}
+
+      {launchConfigOpen && (
+        <LaunchUrlDialog
+          project={props.project}
+          onClose={() => setLaunchConfigOpen(false)}
+          onSave={async (url, command, views) => {
+            await props.bridge.updateProject(props.project.id, {
+              launchUrl: url || undefined,
+              launchCommand: command || undefined,
+              evidenceViews: views.length > 0 ? views : undefined,
+            })
+            await props.refreshProjects()
+            setLaunchConfigOpen(false)
+            setStatus(url
+              ? { tone: 'success', text: `Launch URL saved. Click Launch App to open ${props.project.name}.` }
+              : { tone: 'info', text: 'Launch settings cleared.' })
+          }}
+        />
+      )}
     </>
+  )
+}
+
+/* ------------------------------------------------- Embedded app preview */
+
+/**
+ * Injected into the <webview> guest to pick a component for an anchored
+ * review comment: hover highlights the element under the cursor with a
+ * selector tag; click resolves with the element's identity; Escape cancels.
+ * Runs entirely inside the guest (our own generated app) and cleans up after
+ * itself — capture-phase listeners keep the click from activating the app.
+ */
+const PICKER_JS = `new Promise((resolve) => {
+  const hl = document.createElement('div');
+  hl.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:2px solid #5478ff;background:rgba(84,120,255,0.14);border-radius:4px;left:0;top:0;width:0;height:0';
+  const tag = document.createElement('div');
+  tag.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;background:#5478ff;color:#fff;font:600 11px system-ui;padding:2px 8px;border-radius:4px;max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  document.body.append(hl, tag);
+  let current = null;
+  const describe = (el) => {
+    const parts = [];
+    let node = el;
+    for (let i = 0; node && node !== document.body && i < 4; i += 1) {
+      let part = node.tagName.toLowerCase();
+      if (node.id) { parts.unshift(part + '#' + node.id); break; }
+      const cls = [...node.classList].slice(0, 2).join('.');
+      if (cls) part += '.' + cls;
+      const siblings = node.parentElement ? [...node.parentElement.children].filter((c) => c.tagName === node.tagName) : [];
+      if (siblings.length > 1) part += ':nth-of-type(' + (siblings.indexOf(node) + 1) + ')';
+      parts.unshift(part);
+      node = node.parentElement;
+    }
+    return parts.join(' > ');
+  };
+  const onMove = (e) => {
+    const el = e.target;
+    if (!(el instanceof Element) || el === hl || el === tag) return;
+    current = el;
+    const r = el.getBoundingClientRect();
+    hl.style.left = r.left + 'px'; hl.style.top = r.top + 'px';
+    hl.style.width = r.width + 'px'; hl.style.height = r.height + 'px';
+    tag.textContent = describe(el);
+    tag.style.left = r.left + 'px';
+    tag.style.top = (r.top > 26 ? r.top - 24 : r.bottom + 4) + 'px';
+  };
+  const cleanup = () => {
+    document.removeEventListener('mousemove', onMove, true);
+    document.removeEventListener('click', onClick, true);
+    document.removeEventListener('keydown', onKey, true);
+    hl.remove(); tag.remove();
+  };
+  const onClick = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const el = (e.target instanceof Element ? e.target : current);
+    cleanup();
+    resolve(el instanceof Element ? {
+      selector: describe(el),
+      text: (el.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 120),
+      view: document.title || '',
+      route: location.hash || location.pathname,
+    } : null);
+  };
+  const onKey = (e) => { if (e.key === 'Escape') { cleanup(); resolve(null); } };
+  document.addEventListener('mousemove', onMove, true);
+  document.addEventListener('click', onClick, true);
+  document.addEventListener('keydown', onKey, true);
+})`
+
+/**
+ * The app under construction, rendered as the centerpiece of Verify & Review:
+ * an Electron <webview> guest pointed at the project's launch URL
+ * (browser/mock mode falls back to an iframe). Comment mode injects the
+ * picker into the guest so review feedback anchors to real components.
+ */
+function AppPreview(props: {
+  state: { status: 'starting' | 'ready' | 'error' | 'idle'; url?: string; message?: string }
+  onRetry: () => void
+  onOpenExternal: () => void
+  picking?: boolean
+  onPickStart?: () => void
+  onPicked?: (target: PickedTarget | null) => void
+  /**
+   * Electron composites the <webview> guest in its own layer, so host DOM
+   * stacked above it (dialogs) bleeds through. While a dialog is open the
+   * preview hides via visibility — the guest stays alive and layout holds.
+   */
+  obscured?: boolean
+}) {
+  const webviewRef = useRef<HTMLWebViewElement | null>(null)
+  const iframeRef = useRef<HTMLIFrameElement | null>(null)
+  const isElectron = typeof window !== 'undefined' && window.euikMode === 'electron'
+
+  const reload = () => {
+    // Electron's <webview> exposes reload() at runtime; the DOM type doesn't carry it.
+    if (isElectron) (webviewRef.current as unknown as { reload?: () => void } | null)?.reload?.()
+    else if (iframeRef.current && props.state.url) iframeRef.current.src = props.state.url
+  }
+
+  const pickComponent = async () => {
+    const wv = webviewRef.current as unknown as { executeJavaScript?: (code: string) => Promise<unknown> } | null
+    if (!wv?.executeJavaScript || !props.onPicked) return
+    props.onPickStart?.()
+    try {
+      props.onPicked((await wv.executeJavaScript(PICKER_JS)) as PickedTarget | null)
+    } catch {
+      // Guest navigated or reloaded mid-pick — treat as cancelled.
+      props.onPicked(null)
+    }
+  }
+
+  return (
+    <div className="app-preview" aria-label="App preview" style={props.obscured ? { visibility: 'hidden' } : undefined}>
+      <div className="app-preview-shell">
+        <div className="hstack between app-preview-chrome">
+          <div className="hstack">
+            <span className="overline">App preview</span>
+            {props.state.url && <span className="mono app-preview-url">{props.state.url}</span>}
+          </div>
+          {props.state.status === 'ready' && (
+            <span className="hstack">
+              {isElectron && props.onPicked && (
+                <button
+                  type="button"
+                  className={`btn btn-compact ${props.picking ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => void pickComponent()}
+                  disabled={props.picking}
+                  title="Click a component in the preview to comment on it (Esc cancels)"
+                >
+                  {Icon.target(14)} {props.picking ? 'Click a component…' : 'Comment'}
+                </button>
+              )}
+              <button type="button" className="btn btn-secondary btn-compact" onClick={reload}>
+                {Icon.refresh(14)} Reload
+              </button>
+              <button type="button" className="btn btn-secondary btn-compact" onClick={props.onOpenExternal}>
+                {Icon.external(14)} Open externally
+              </button>
+            </span>
+          )}
+        </div>
+        {props.state.status === 'starting' && (
+          <div className="app-preview-frame app-preview-waiting" role="status">
+            Starting the app (rebuilding if already running)…
+          </div>
+        )}
+        {props.state.status === 'error' && (
+          <div className="app-preview-frame app-preview-waiting" role="alert">
+            <span>Couldn't start the app: {props.state.message}</span>
+            <button type="button" className="btn btn-secondary btn-compact" onClick={props.onRetry}>Retry</button>
+          </div>
+        )}
+        {props.state.status === 'ready' && props.state.url && (
+          isElectron
+            ? <webview ref={webviewRef} className="app-preview-frame" src={props.state.url} />
+            : <iframe ref={iframeRef} className="app-preview-frame" src={props.state.url} title="App preview" />
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------- Visual evidence */
+
+/**
+ * Per-run screenshot evidence (R1): baseline capture on Prepare Context,
+ * before/after pairs with rendered element-loss badges on Verify & Review.
+ */
+export function EvidenceSection(props: {
+  bridge: EuikBridge
+  run: HandoffRun
+  project: Project
+  phase: 'before' | 'after'
+  onNavigate: (view: ViewId) => void
+  /** Render without the panel frame — for embedding inside a dialog. */
+  frameless?: boolean
+}) {
+  const [evidence, setEvidence] = useState<RunEvidence | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState<Status | null>(null)
+  const configuredViews = props.project.evidenceViews?.length ?? 0
+  const configured = configuredViews > 0 && Boolean(props.project.launchUrl)
+
+  useEffect(() => {
+    let cancelled = false
+    props.bridge.getEvidence(props.run.id)
+      .then((loaded) => { if (!cancelled) setEvidence(loaded) })
+      .catch(() => { /* no captures yet */ })
+    return () => { cancelled = true }
+  }, [props.bridge, props.run.id])
+
+  const capture = async () => {
+    setBusy(true)
+    setNote({ tone: 'info', text: `Capturing ${props.phase === 'before' ? 'baseline' : 'post-apply'} screenshots…` })
+    try {
+      const result = await props.bridge.captureEvidence(props.run.id, props.phase)
+      setEvidence(await props.bridge.getEvidence(props.run.id))
+      setNote(result.ok
+        ? { tone: 'success', text: `${result.views.length} view${result.views.length === 1 ? '' : 's'} captured with rendered element census.` }
+        : { tone: 'error', text: 'Some views failed to capture — check that the target app is running at the launch URL.' })
+    } catch (error) {
+      setNote({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const hasCapture = props.phase === 'before' ? Boolean(evidence?.before) : Boolean(evidence?.after)
+  const views = evidence?.views ?? []
+
+  return (
+    <section className={props.frameless ? undefined : 'panel'} aria-labelledby={`evidence-${props.phase}-heading`}>
+      <div className="hstack between" style={{ alignItems: 'flex-start' }}>
+        <div>
+          <h2 id={`evidence-${props.phase}-heading`} className={props.frameless ? 'sr-only' : undefined}>
+            {props.phase === 'before' ? 'Baseline evidence' : 'Visual evidence — before / after'}
+          </h2>
+          <p className="panel-desc" style={{ marginBottom: 0 }}>
+            {props.phase === 'before'
+              ? 'Screenshots and a rendered element census of each target view, captured before any change. The review packet compares against these. Building a new UI from requirements? Skip this — there is no baseline for a green-field build.'
+              : 'The same views after applying the overlay. Lost elements (icons, images, buttons, inputs) are flagged per view.'}
+          </p>
+        </div>
+        <button type="button" className="btn btn-secondary btn-compact" onClick={capture} disabled={busy || !configured}>
+          {busy ? 'Capturing…' : hasCapture
+            ? <>{Icon.refresh(14)} Re-capture</>
+            : <>{Icon.play(14)} Capture {props.phase === 'before' ? 'Baseline' : 'After'}</>}
+        </button>
+      </div>
+
+      {!configured && (
+        <p className="muted" style={{ margin: 'var(--semantic-spacing-3) 0 0', fontSize: 13 }}>
+          {configuredViews === 0 ? 'No target views configured for this project. ' : 'No launch URL configured for this project. '}
+          <button type="button" className="tip-link" onClick={() => props.onNavigate('projects')}>
+            Configure in Projects →
+          </button>
+        </p>
+      )}
+
+      {configured && views.length === 0 && (
+        <p className="muted" style={{ margin: 'var(--semantic-spacing-3) 0 0', fontSize: 13 }}>
+          No captures yet for this run. {configuredViews} view{configuredViews === 1 ? '' : 's'} configured:{' '}
+          {props.project.evidenceViews!.map((v) => v.label).join(', ')}. Make sure the target app is running at{' '}
+          <code>{props.project.launchUrl}</code>, then capture.
+        </p>
+      )}
+
+      {views.length > 0 && (
+        <ul className="evidence-grid">
+          {views.map((view) => (
+            <li key={view.viewId} className="evidence-view">
+              <div className="hstack between" style={{ minHeight: 26 }}>
+                <strong style={{ fontSize: 14 }}>
+                  {view.label} <code>{view.path}</code>
+                </strong>
+                {view.losses.length > 0 ? (
+                  <span className="status status-danger">
+                    <span className="status-dot" aria-hidden="true" />{' '}
+                    lost: {view.losses.map((l) => `${l.element} ${l.before}→${l.after}`).join(', ')}
+                  </span>
+                ) : (props.phase === 'after' && view.beforeShot && view.afterShot && (
+                  <span className="status status-ok">
+                    <span className="status-dot" aria-hidden="true" /> no element loss
+                  </span>
+                ))}
+              </div>
+              <div className={props.phase === 'after' ? 'evidence-pair' : 'evidence-single'}>
+                <EvidenceShot
+                  label="Before"
+                  src={view.beforeShot}
+                  error={view.beforeError}
+                  {...(props.phase === 'after' && !view.beforeShot && !view.beforeError
+                    ? { missingLabel: 'No baseline — this run builds a new UI, so there was nothing to capture before.' }
+                    : {})}
+                />
+                {props.phase === 'after' && <EvidenceShot label="After" src={view.afterShot} error={view.afterError} />}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {note && <div style={{ marginTop: 'var(--semantic-spacing-3)' }}><StatusLine status={note} /></div>}
+    </section>
+  )
+}
+
+function EvidenceShot(props: { label: string; src?: string; error?: string; missingLabel?: string }) {
+  return (
+    <figure className="evidence-shot">
+      <figcaption className="overline">{props.label}</figcaption>
+      {props.src
+        ? <img src={props.src} alt={`${props.label} screenshot`} />
+        : <div className="evidence-missing">{props.error ? `Capture failed: ${props.error}` : props.missingLabel ?? 'Not captured yet'}</div>}
+    </figure>
   )
 }

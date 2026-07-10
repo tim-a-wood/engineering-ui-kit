@@ -1,0 +1,582 @@
+{
+  "cases": [
+    {
+      "id": "a323b09c-c363-4d11-8044-bd9dbaccccfc",
+      "label": "GL-500 KSVN RWY 10 takeoff · sweep 72,000 lb",
+      "createdAt": "2026-07-10T17:26:12.899Z",
+      "updatedAt": "2026-07-10T17:26:12.899Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 72000,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 4690,
+        "accelerateStopDistanceFt": 5350,
+        "landingDistanceFt": 3210,
+        "requiredRunwayFt": 5350,
+        "runwayMarginFt": 4001,
+        "climbGradientPct": 5.6,
+        "approachSpeedKt": 133,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "71611c33-67f7-4c67-b5d3-6417f13e5159",
+      "label": "GL-500 KSVN RWY 10 takeoff · sweep 68,000 lb",
+      "createdAt": "2026-07-10T17:26:12.889Z",
+      "updatedAt": "2026-07-10T17:26:12.889Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 68000,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 4180,
+        "accelerateStopDistanceFt": 4770,
+        "landingDistanceFt": 2940,
+        "requiredRunwayFt": 4770,
+        "runwayMarginFt": 4581,
+        "climbGradientPct": 5.7,
+        "approachSpeedKt": 129,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "136eabe2-bb16-4541-a077-cda21b48af3e",
+      "label": "GL-500 KSVN RWY 10 takeoff · sweep 64,000 lb",
+      "createdAt": "2026-07-10T17:26:12.879Z",
+      "updatedAt": "2026-07-10T17:26:12.879Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 64000,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 3700,
+        "accelerateStopDistanceFt": 4220,
+        "landingDistanceFt": 2670,
+        "requiredRunwayFt": 4220,
+        "runwayMarginFt": 5131,
+        "climbGradientPct": 5.9,
+        "approachSpeedKt": 125,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "5d8c215d-b3e0-4443-b83c-d563d42cd894",
+      "label": "GL-500 KSVN RWY 10 takeoff · sweep 60,000 lb",
+      "createdAt": "2026-07-10T17:26:12.875Z",
+      "updatedAt": "2026-07-10T17:26:12.875Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 60000,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 3260,
+        "accelerateStopDistanceFt": 3720,
+        "landingDistanceFt": 2420,
+        "requiredRunwayFt": 3720,
+        "runwayMarginFt": 5631,
+        "climbGradientPct": 6,
+        "approachSpeedKt": 121,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "bff2aa02-34ee-45f1-bef3-64bdc1809bec",
+      "label": "GL-500 KSVN RWY 10 takeoff · sweep 56,000 lb",
+      "createdAt": "2026-07-10T17:26:12.871Z",
+      "updatedAt": "2026-07-10T17:26:12.871Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 56000,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 2840,
+        "accelerateStopDistanceFt": 3240,
+        "landingDistanceFt": 2170,
+        "requiredRunwayFt": 3240,
+        "runwayMarginFt": 6111,
+        "climbGradientPct": 6.2,
+        "approachSpeedKt": 117,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "d7ac2eca-5353-4a05-b02d-c241963ce16f",
+      "label": "GL-500 KSVN RWY 10 takeoff",
+      "createdAt": "2026-07-10T17:09:27.800Z",
+      "updatedAt": "2026-07-10T17:09:27.800Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 64500,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 3760,
+        "accelerateStopDistanceFt": 4290,
+        "landingDistanceFt": 2710,
+        "requiredRunwayFt": 4290,
+        "runwayMarginFt": 5061,
+        "climbGradientPct": 5.8,
+        "approachSpeedKt": 126,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "a7c44a32-2ed0-4a3e-886c-a8f4c585c10c",
+      "label": "GL-500 KSVN RWY 10 takeoff · sweep 72,000 lb",
+      "createdAt": "2026-07-10T01:53:42.234Z",
+      "updatedAt": "2026-07-10T01:53:42.234Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 72000,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 4690,
+        "accelerateStopDistanceFt": 5350,
+        "landingDistanceFt": 3210,
+        "requiredRunwayFt": 5350,
+        "runwayMarginFt": 4001,
+        "climbGradientPct": 5.6,
+        "approachSpeedKt": 133,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "29a2fdf2-ed3b-499a-a79c-4a8f651c448f",
+      "label": "GL-500 KSVN RWY 10 takeoff · sweep 68,000 lb",
+      "createdAt": "2026-07-10T01:53:42.230Z",
+      "updatedAt": "2026-07-10T01:53:42.230Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 68000,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 4180,
+        "accelerateStopDistanceFt": 4770,
+        "landingDistanceFt": 2940,
+        "requiredRunwayFt": 4770,
+        "runwayMarginFt": 4581,
+        "climbGradientPct": 5.7,
+        "approachSpeedKt": 129,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "7c7fbcc1-5901-446b-bb84-7bc1aefa68bb",
+      "label": "GL-500 KSVN RWY 10 takeoff · sweep 64,000 lb",
+      "createdAt": "2026-07-10T01:53:42.226Z",
+      "updatedAt": "2026-07-10T01:53:42.226Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 64000,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 3700,
+        "accelerateStopDistanceFt": 4220,
+        "landingDistanceFt": 2670,
+        "requiredRunwayFt": 4220,
+        "runwayMarginFt": 5131,
+        "climbGradientPct": 5.9,
+        "approachSpeedKt": 125,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "26a88cf2-bd95-453a-a4e5-65cd1319e631",
+      "label": "GL-500 KSVN RWY 10 takeoff · sweep 60,000 lb",
+      "createdAt": "2026-07-10T01:53:42.221Z",
+      "updatedAt": "2026-07-10T01:53:42.221Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 60000,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 3260,
+        "accelerateStopDistanceFt": 3720,
+        "landingDistanceFt": 2420,
+        "requiredRunwayFt": 3720,
+        "runwayMarginFt": 5631,
+        "climbGradientPct": 6,
+        "approachSpeedKt": 121,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "186c8c2d-ac63-480b-9897-aed4b5f8d604",
+      "label": "GL-500 KSVN RWY 10 takeoff · sweep 56,000 lb",
+      "createdAt": "2026-07-10T01:53:42.215Z",
+      "updatedAt": "2026-07-10T01:53:42.215Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 56000,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 2840,
+        "accelerateStopDistanceFt": 3240,
+        "landingDistanceFt": 2170,
+        "requiredRunwayFt": 3240,
+        "runwayMarginFt": 6111,
+        "climbGradientPct": 6.2,
+        "approachSpeedKt": 117,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "32836a2b-38fb-43a5-a11c-28bb9fb62cf2",
+      "label": "GL-500 KSVN RWY 10 takeoff",
+      "createdAt": "2026-07-10T01:06:37.100Z",
+      "updatedAt": "2026-07-10T01:06:37.100Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 64500,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 3760,
+        "accelerateStopDistanceFt": 4290,
+        "landingDistanceFt": 2710,
+        "requiredRunwayFt": 4290,
+        "runwayMarginFt": 5061,
+        "climbGradientPct": 5.8,
+        "approachSpeedKt": 126,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "94e2f8cd-4c1c-40dd-918e-d634a9ddf045",
+      "label": "hbvjbh",
+      "createdAt": "2026-07-10T00:31:40.312Z",
+      "updatedAt": "2026-07-10T00:32:02.679Z",
+      "inputs": {
+        "aircraftVariant": "GL-500",
+        "mode": "takeoff",
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 64500,
+        "windComponentKt": 8,
+        "notes": ""
+      },
+      "output": {
+        "takeoffDistanceFt": 3760,
+        "accelerateStopDistanceFt": 4290,
+        "landingDistanceFt": 2710,
+        "requiredRunwayFt": 4290,
+        "runwayMarginFt": 5061,
+        "climbGradientPct": 5.8,
+        "approachSpeedKt": 126,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "b7b8dd84-5c07-461c-bd1b-d996ab37c693",
+      "label": "KSVN runway 10 — standard day dispatch check",
+      "createdAt": "2026-07-10T00:23:07.629Z",
+      "updatedAt": "2026-07-10T00:23:07.630Z",
+      "inputs": {
+        "mode": "takeoff",
+        "aircraftVariant": "GL-500",
+        "runwayId": "KSVN RWY 10",
+        "runwayLengthFt": 9351,
+        "pressureAltitudeFt": 48,
+        "oatC": 29,
+        "weightLb": 64500,
+        "windComponentKt": 8,
+        "runwayCondition": "dry",
+        "flapSetting": "15",
+        "notes": "Baseline planning case for local departure."
+      },
+      "output": {
+        "takeoffDistanceFt": 3760,
+        "accelerateStopDistanceFt": 4290,
+        "landingDistanceFt": 2710,
+        "requiredRunwayFt": 4290,
+        "runwayMarginFt": 5061,
+        "climbGradientPct": 5.8,
+        "approachSpeedKt": 126,
+        "maxAllowableWeightLb": 78000,
+        "limitingFactor": "within planning limits",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: headwind 8 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "45d7f509-de8f-47b2-af81-7839ca7c2178",
+      "label": "Mountain field warm-day assessment",
+      "createdAt": "2026-07-10T00:23:07.629Z",
+      "updatedAt": "2026-07-10T00:23:07.631Z",
+      "inputs": {
+        "mode": "takeoff",
+        "aircraftVariant": "GL-350",
+        "runwayId": "KASE RWY 33",
+        "runwayLengthFt": 8006,
+        "pressureAltitudeFt": 7820,
+        "oatC": 24,
+        "weightLb": 58400,
+        "windComponentKt": -3,
+        "runwayCondition": "dry",
+        "flapSetting": "20",
+        "notes": "High-altitude demonstration case; review against approved data before use."
+      },
+      "output": {
+        "takeoffDistanceFt": 6780,
+        "accelerateStopDistanceFt": 7730,
+        "landingDistanceFt": 5120,
+        "requiredRunwayFt": 7730,
+        "runwayMarginFt": 276,
+        "climbGradientPct": 4.7,
+        "approachSpeedKt": 123,
+        "maxAllowableWeightLb": 59400,
+        "limitingFactor": "density altitude",
+        "status": "caution",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: dry; wind component: tailwind 3 kt.",
+          "Runway margin is below 1,000 ft; review required.",
+          "High/hot condition: verify with approved source data."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    },
+    {
+      "id": "2b44c441-1723-4071-9b86-0843e45b8c02",
+      "label": "Wet runway arrival planning",
+      "createdAt": "2026-07-10T00:23:07.629Z",
+      "updatedAt": "2026-07-10T00:23:07.632Z",
+      "inputs": {
+        "mode": "landing",
+        "aircraftVariant": "GL-650",
+        "runwayId": "KCHS RWY 15",
+        "runwayLengthFt": 9001,
+        "pressureAltitudeFt": 46,
+        "oatC": 31,
+        "weightLb": 69200,
+        "windComponentKt": 5,
+        "runwayCondition": "wet",
+        "flapSetting": "20",
+        "notes": "Arrival planning sample with wet runway factor."
+      },
+      "output": {
+        "takeoffDistanceFt": 4100,
+        "accelerateStopDistanceFt": 4920,
+        "landingDistanceFt": 3060,
+        "requiredRunwayFt": 3060,
+        "runwayMarginFt": 5941,
+        "climbGradientPct": 6,
+        "approachSpeedKt": 128,
+        "maxAllowableWeightLb": 90000,
+        "limitingFactor": "wet runway factor",
+        "status": "within-limits",
+        "advisory": [
+          "Planning/demo model only — not approved AFM/OEM performance data.",
+          "Runway condition: wet; wind component: headwind 5 kt."
+        ],
+        "calculationBasis": "Deterministic planning estimate derived from weight, pressure altitude, temperature, wind, runway condition, and flap setting. Not approved performance data."
+      }
+    }
+  ]
+}

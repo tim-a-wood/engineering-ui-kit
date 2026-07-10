@@ -15,6 +15,17 @@ files:
   - package.json
   - from: ../gui/dist
     to: gui/dist
+# Ship the built-in sample project (seeded on first run). Running its dev
+# server / verification from a packaged install requires `npm install` inside
+# the copied folder; the in-app sample description says so.
+extraResources:
+  - from: ../../examples/work-orders-monolith
+    to: examples/work-orders-monolith
+    filter:
+      - '**/*'
+      - '!node_modules'
+      - '!dist'
+      - '!tsconfig.tsbuildinfo'
 extraMetadata:
   main: dist/main.js
 win:

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">AeroCalc</title>
+  <rect width="512" height="512" rx="96" fill="#07111f"/>
+  <path d="M112 354 222 112h70l108 242h-72l-22-55H204l-22 55h-70Zm116-116h54l-27-69-27 69Z" fill="#f8fafc"/>
+  <path d="M140 388h232" stroke="#2f5bff" stroke-width="28" stroke-linecap="round"/>
+</svg>
