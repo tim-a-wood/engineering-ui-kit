@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "architectureVersion": "1.0",
+  "moduleId": "mod.domain",
+  "moduleVersion": "1.0.0",
+  "moduleType": "domain",
+  "name": "Domain",
+  "responsibility": "rules",
+  "ownedConcerns": [
+    "rules"
+  ],
+  "excludedConcerns": [
+    "ui"
+  ],
+  "providedOperations": [
+    {
+      "operationId": "op.1",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [],
+  "verificationSuiteIds": [
+    "suite.domain"
+  ],
+  "runtimeAllocation": "local-embedded",
+  "events": [],
+  "ownedPaths": [
+    "capabilities/modules/mod.domain/"
+  ]
+}

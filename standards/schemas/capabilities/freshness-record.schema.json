@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/freshness-record.schema.json",
+  "title": "CAP-CONTRACT-012",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "moduleId",
+    "moduleVersion",
+    "hashes",
+    "evaluatedAt",
+    "primaryState",
+    "reasonCodes"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "moduleId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "moduleVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "specification",
+        "implementation",
+        "architecture",
+        "dependencies",
+        "adapters",
+        "bindings",
+        "verificationSuites"
+      ],
+      "properties": {
+        "specification": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "architecture": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dependencies": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adapters": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bindings": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verificationSuites": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "verificationEvidenceId": {
+      "type": "string"
+    },
+    "evaluatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "primaryState": {
+      "enum": [
+        "draft",
+        "ready",
+        "needs-review",
+        "verification-needed",
+        "connection-outdated",
+        "blocked",
+        "failed"
+      ]
+    },
+    "reasonCodes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

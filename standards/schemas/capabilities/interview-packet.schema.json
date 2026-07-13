@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/interview-packet.schema.json",
+  "title": "CAP-CONTRACT-014",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "packetId",
+    "packetVersion",
+    "projectId",
+    "interviewKind",
+    "generatedAt",
+    "inputContext",
+    "interviewBoundary",
+    "stateLabels",
+    "outputSchemaRef",
+    "outputFileName",
+    "gateId",
+    "safetyNotes"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "packetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "packetVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "interviewKind": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recordIds",
+        "revisions",
+        "hashes",
+        "facts",
+        "glossary"
+      ],
+      "properties": {
+        "recordIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "revisions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hashes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "glossary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "text"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "interviewBoundary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stateLabels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "confirmed",
+        "proposed",
+        "unresolved"
+      ],
+      "properties": {
+        "confirmed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "proposed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "outputSchemaRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outputFileName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gateId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "safetyNotes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

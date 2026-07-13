@@ -23,6 +23,8 @@ export type InspectOptions = {
   runId: string
   targetRoot: string
   expectedFiles?: string[]
+  /** Capability-run hard scope (CAP-PKT-013). Paths outside this set are hard blockers. */
+  capabilityAllowedPaths?: string[]
   largeFileBytes?: number
   fullRepoDumpThreshold?: number
   now?: () => Date
@@ -127,6 +129,21 @@ export function inspectOverlay(zipPath: string, options: InspectOptions): Overla
     if (!targetPath.startsWith(rootResolved + path.sep) && targetPath !== rootResolved) {
       summary.hardBlockers.push({ ruleId: 'AI-HANDOFF-033', path: original, message: 'normalized path escapes the target root' })
       continue
+    }
+
+    if (options.capabilityAllowedPaths && options.capabilityAllowedPaths.length > 0) {
+      const allowed = options.capabilityAllowedPaths.map((p) => p.replace(/\\/g, '/').replace(/\/+$/, ''))
+      const inScope = allowed.some(
+        (root) => normalized === root || normalized.startsWith(root + '/') || root.startsWith(normalized + '/'),
+      )
+      if (!inScope) {
+        summary.hardBlockers.push({
+          ruleId: 'CAP-OVERLAY-SCOPE-001',
+          path: normalized,
+          message: 'path outside persisted capability allowedPaths',
+        })
+        continue
+      }
     }
 
     const mode = entry.header.attr >>> 16

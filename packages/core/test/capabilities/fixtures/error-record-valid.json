@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0",
+  "code": "CAP-ERR-001",
+  "category": "validation",
+  "safeMessage": "bad input",
+  "retryability": "none",
+  "relatedIds": [],
+  "diagnosticRefs": []
+}

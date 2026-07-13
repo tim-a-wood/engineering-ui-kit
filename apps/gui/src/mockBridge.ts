@@ -6,15 +6,42 @@
  */
 
 import type {
+  ApplicationSpecification,
   AppliedFiles,
+  ArchitectureSpecification,
+  AttentionItem,
   EvidenceCapture,
+  FreshnessRecord,
+  FrontendBinding,
   HandoffRun,
+  ModuleManifest,
   OverlayInspectionSummary,
   Project,
   Settings,
   VerificationResult,
 } from '@engineering-ui-kit/core'
+import {
+  buildNeedsAttention,
+  calculateFreshness,
+  deltaQueueState,
+  assertTargetExportable,
+  evaluateBindingApprovalGate,
+  runModuleVerification,
+} from '@engineering-ui-kit/core/browser'
 import type { BuildPacketResult, EuikBridge, PrepareContextResult, RunEvidence, TaskPacketFields } from './bridge'
+
+type CapProjectState = {
+  initializedAt: string
+  applicationDraft?: ApplicationSpecification
+  applicationApproved?: ApplicationSpecification
+  architectureDraft?: ArchitectureSpecification
+  architectureApproved?: ArchitectureSpecification
+  moduleDrafts: Map<string, ModuleManifest>
+  moduleApproved: Map<string, ModuleManifest>
+  bindingDrafts: Map<string, FrontendBinding>
+  bindingApproved: Map<string, FrontendBinding>
+  freshness: Map<string, FreshnessRecord>
+}
 
 /* 4x3 placeholder PNGs (blue-ish before, teal-ish after) for evidence mocks. */
 const MOCK_BEFORE_PNG =
@@ -45,6 +72,62 @@ export function installMockBridge(): EuikBridge {
   const mockFeedback: { at: string; text: string }[] = []
 
   const evidenceCaptured = new Map<string, { before?: string; after?: string }>()
+  const capByProject = new Map<string, CapProjectState>()
+
+  function ensureCap(projectId: string): CapProjectState {
+    let state = capByProject.get(projectId)
+    if (!state) {
+      state = {
+        initializedAt: now(),
+        moduleDrafts: new Map(),
+        moduleApproved: new Map(),
+        bindingDrafts: new Map(),
+        bindingApproved: new Map(),
+        freshness: new Map(),
+      }
+      capByProject.set(projectId, state)
+    }
+    return state
+  }
+
+  function listNeedsAttentionFor(projectId: string): AttentionItem[] {
+    const state = ensureCap(projectId)
+    const arch = state.architectureApproved ?? state.architectureDraft
+    const moduleIds =
+      arch?.moduleIds?.length
+        ? arch.moduleIds
+        : [...new Set([...state.moduleDrafts.keys(), ...state.moduleApproved.keys()])].sort((a, b) =>
+            a.localeCompare(b),
+          )
+    const freshness: FreshnessRecord[] = moduleIds.map((moduleId) => {
+      const existing = state.freshness.get(moduleId)
+      if (existing) return existing
+      const approved = state.moduleApproved.get(moduleId)
+      return calculateFreshness({
+        moduleId,
+        moduleVersion: approved?.moduleVersion ?? '0.0.0',
+        specificationHash: approved ? `spec:${approved.moduleId}@${approved.moduleVersion}` : 'pending',
+        implementationHash: 'pending',
+        architectureHash: arch?.contentHash ?? 'pending',
+        dependencyHash: 'pending',
+        adapterHash: 'pending',
+        bindingHash: 'pending',
+        verificationSuiteHash: 'pending',
+        verification: null,
+      })
+    })
+    return buildNeedsAttention(freshness, {
+      schemaVersion: '1.0',
+      changeId: `attention-${projectId}`,
+      initiatingRecordId: arch?.id ?? projectId,
+      initiatingRevision: arch?.revision ?? '0',
+      classification: 'required-additive',
+      affectedModules: [],
+      unaffectedModules: [],
+      proposedPacketOrder: moduleIds,
+      recalculationEvidence: [],
+    })
+  }
 
   const seed = (name: string, repoPath: string, description: string, daysAgo: number, status: Project['status'] = 'active') => {
     const id = name.toLowerCase().replace(/\s+/g, '-')
@@ -318,5 +401,379 @@ export function installMockBridge(): EuikBridge {
     async openExternal() { /* no-op in mock */ },
     async openPath() { /* no-op in mock */ },
     async showInFolder() { /* no-op in mock */ },
+    async capabilitiesEnsureInitialized(projectId) {
+      const state = ensureCap(projectId)
+      return { schemaVersion: '1.0', initializedAt: state.initializedAt }
+    },
+    async capabilitiesGetApplication(projectId) {
+      const state = ensureCap(projectId)
+      return { draft: state.applicationDraft, approved: state.applicationApproved }
+    },
+    async capabilitiesSaveApplicationDraft(projectId, draft) {
+      ensureCap(projectId).applicationDraft = draft as ApplicationSpecification
+      return { ok: true as const }
+    },
+    async capabilitiesApproveApplication(projectId, draft) {
+      const state = ensureCap(projectId)
+      const approved = draft as ApplicationSpecification
+      state.applicationApproved = approved
+      state.applicationDraft = undefined
+      return { ok: true, approved, gate: { gateId: 'CAP-GATE-001', passed: true, diagnostics: [] } }
+    },
+    async capabilitiesEvaluateProductGate() {
+      return { gateId: 'CAP-GATE-001', passed: true, diagnostics: [] }
+    },
+    async capabilitiesBuildInterviewPacket(input) {
+      return input
+    },
+    async capabilitiesExportInterviewPacket(input) {
+      const packet = input as { packetId?: string }
+      const runId = `cap-interview-${Date.now()}`
+      const files = ['capability-packet.json', 'recommended-prompt.txt', 'capability-interview-response.json']
+        .map((name) => ({ path: `/mock/${runId}/${name}`, bytes: 100, sha256: `mock-${name}` }))
+      return { runId, packetId: packet.packetId ?? 'packet', recommendedPrompt: 'Conduct the bounded interview.', files, uploadFiles: files.map((f) => f.path) }
+    },
+    async capabilitiesExportImplementationPacket(input) {
+      const runId = `cap-implementation-${Date.now()}`
+      const files = ['capability-packet.json', 'recommended-prompt.txt', 'module-manifest.json']
+        .map((name) => ({ path: `/mock/${runId}/${name}`, bytes: 100, sha256: `mock-${name}` }))
+      return { runId, packetId: `pkt-${input.moduleId}`, recommendedPrompt: `Implement only ${input.moduleId}.`, files, uploadFiles: files.map((f) => f.path) }
+    },
+    async capabilitiesImportInterviewResponse(projectId, raw) {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+      const draft = (parsed as { draft?: ApplicationSpecification }).draft ?? (parsed as ApplicationSpecification)
+      ensureCap(projectId).applicationDraft = draft
+      return {
+        draft,
+        diagnostics: [],
+        gate: { gateId: 'CAP-GATE-001', passed: true, diagnostics: [] },
+        delta: [],
+        valid: true,
+        approvedUnchanged: ensureCap(projectId).applicationApproved,
+      }
+    },
+    async capabilitiesGetArchitecture(projectId) {
+      const state = ensureCap(projectId)
+      return { draft: state.architectureDraft, approved: state.architectureApproved }
+    },
+    async capabilitiesSaveArchitectureDraft(projectId, draft) {
+      ensureCap(projectId).architectureDraft = draft as ArchitectureSpecification
+      return { ok: true as const }
+    },
+    async capabilitiesApproveArchitecture(projectId, draft) {
+      const state = ensureCap(projectId)
+      const approved = draft as ArchitectureSpecification
+      state.architectureApproved = approved
+      state.architectureDraft = undefined
+      return { ok: true, approved, gate: { gateId: 'CAP-GATE-002', passed: true, diagnostics: [] } }
+    },
+    async capabilitiesSaveModuleDraft(projectId, draft) {
+      const manifest = draft as ModuleManifest
+      ensureCap(projectId).moduleDrafts.set(manifest.moduleId, manifest)
+      return { ok: true as const }
+    },
+    async capabilitiesApproveModule(projectId, draft) {
+      const state = ensureCap(projectId)
+      const approved = draft as ModuleManifest
+      state.moduleApproved.set(approved.moduleId, approved)
+      state.moduleDrafts.delete(approved.moduleId)
+      return { ok: true, approved, gate: { gateId: 'CAP-GATE-003', passed: true, diagnostics: [] } }
+    },
+    async capabilitiesListModules(projectId) {
+      const state = ensureCap(projectId)
+      const architecture = state.architectureApproved ?? state.architectureDraft
+      const moduleIds = [...new Set([
+        ...(architecture?.moduleIds ?? []),
+        ...state.moduleDrafts.keys(),
+        ...state.moduleApproved.keys(),
+      ])].sort((a, b) => a.localeCompare(b))
+      return moduleIds.map((moduleId) => ({
+        moduleId,
+        draft: state.moduleDrafts.get(moduleId),
+        approved: state.moduleApproved.get(moduleId),
+        freshness: state.freshness.get(moduleId),
+      }))
+    },
+    async capabilitiesListBindings(projectId) {
+      const state = ensureCap(projectId)
+      const bindingIds = [...new Set([
+        ...state.bindingDrafts.keys(),
+        ...state.bindingApproved.keys(),
+      ])].sort((a, b) => a.localeCompare(b))
+      return bindingIds.map((bindingId) => ({
+        bindingId,
+        draft: state.bindingDrafts.get(bindingId),
+        approved: state.bindingApproved.get(bindingId),
+      }))
+    },
+    async capabilitiesListRuns() {
+      return []
+    },
+    async capabilitiesCreateRun(run) {
+      const record = run as { runId?: string }
+      return { ...(run as object), runId: record.runId ?? `run-${Date.now()}`, createdAt: now() }
+    },
+    async capabilitiesInspectOverlay() {
+      return {
+        runId: 'mock',
+        zipFilename: 'ui-overlay.zip',
+        inspectedAt: now(),
+        normalizedEntries: [],
+        hardBlockers: [],
+        warnings: [],
+        canApply: false,
+      }
+    },
+    async capabilitiesApplyOverlay(input) {
+      if (!input.explicit) throw new Error('capability overlay apply requires explicit user action')
+      return { runId: input.runId, appliedAt: now(), files: [] }
+    },
+    async capabilitiesCalculateFreshness(input) {
+      return calculateFreshness(input as Parameters<typeof calculateFreshness>[0])
+    },
+    async capabilitiesFilesystemRead() {
+      return { outcome: 'success', value: { text: '' } }
+    },
+    async capabilitiesFilesystemWrite(input) {
+      if (!input.explicit) throw new Error('filesystem write requires explicit user action')
+      return { outcome: 'success', value: { relativePath: input.relativePath, bytes: input.text.length } }
+    },
+    async capabilitiesSecretPut(input) {
+      if (!input.explicit) throw new Error('secret write requires explicit user action')
+      return { outcome: 'success', value: { opaqueId: input.opaqueId, label: input.label, stored: true } }
+    },
+    async capabilitiesMatlabSessionStatus(projectId) {
+      return {
+        schemaVersion: '1.0',
+        projectId,
+        sessionId: `matlab-${projectId}-stopped`,
+        state: 'stopped',
+        toolboxReadiness: [],
+        processOwnership: 'app-owned',
+      }
+    },
+    async capabilitiesMatlabInvoke(input) {
+      if (!input.explicit) throw new Error('MATLAB operation requires explicit user action')
+      return { outcome: 'success', value: { mode: 'fake-boundary' } }
+    },
+    async capabilitiesAzureDiscover(input) {
+      if (!input.explicit) throw new Error('Azure discovery requires explicit user action')
+      return {
+        outcome: 'success',
+        value: {
+          organizations: [],
+          permissionSummary: ['organization:read', 'project:read', 'work-item:read'],
+          mode: 'fake-boundary',
+        },
+      }
+    },
+    async capabilitiesAzureImportWorkItem(input) {
+      if (!input.explicit) throw new Error('Azure import requires explicit user action')
+      return {
+        outcome: 'success',
+        value: {
+          externalId: input.externalId,
+          revision: input.revision,
+          content: input.content,
+          mode: 'fake-boundary',
+        },
+        provenance: { source: 'azure-devops', recordedAt: now() },
+      }
+    },
+    async capabilitiesInvokeOperation(input) {
+      const dataMode = input.dataMode ?? 'connected'
+      if (dataMode !== 'connected') {
+        return {
+          outcome: 'success',
+          value: { simulated: true, dataMode, operationId: input.operationId },
+          provenance: { source: 'runtime-simulated', recordedAt: new Date().toISOString() },
+        }
+      }
+      if (!input.explicit) {
+        throw new Error('connected invoke requires explicit user action')
+      }
+      return {
+        outcome: 'success',
+        value: { operationId: input.operationId, dataMode: 'connected', args: input.args ?? null },
+        provenance: { source: 'runtime', recordedAt: new Date().toISOString() },
+      }
+    },
+    async capabilitiesSaveBindingDraft(projectId, draft) {
+      const binding = draft as FrontendBinding
+      ensureCap(projectId).bindingDrafts.set(binding.bindingId, binding)
+      return { ok: true as const }
+    },
+    async capabilitiesApproveBinding(projectId, draft) {
+      const binding = draft as FrontendBinding
+      if (!binding?.selectionEvidence?.stableMarker && !binding?.selectionEvidence?.sourceTargetConfirmed) {
+        return {
+          ok: false,
+          diagnostics: [
+            {
+              code: 'CAP-BIND-001',
+              message: 'stable marker or explicit source-target confirmation is required',
+            },
+          ],
+        }
+      }
+      const gate = evaluateBindingApprovalGate(binding)
+      if (!gate.passed) {
+        return { ok: false, diagnostics: gate.diagnostics }
+      }
+      const state = ensureCap(projectId)
+      state.bindingApproved.set(binding.bindingId, binding)
+      state.bindingDrafts.delete(binding.bindingId)
+      return { ok: true, approved: binding }
+    },
+    async capabilitiesListNeedsAttention(projectId) {
+      return listNeedsAttentionFor(projectId)
+    },
+    async capabilitiesCalculateImpact(input) {
+      const state = ensureCap(input.projectId)
+      const arch = state.architectureApproved ?? state.architectureDraft
+      const affected = input.changedModuleIds.map((moduleId) => ({ moduleId, reason: 'initiating-change' }))
+      return {
+        schemaVersion: '1.0', changeId: `impact-${Date.now()}`,
+        initiatingRecordId: input.changedModuleIds[0] ?? input.projectId,
+        initiatingRevision: arch?.revision ?? '0', classification: input.classification,
+        affectedModules: affected,
+        unaffectedModules: (arch?.moduleIds ?? []).filter((id) => !input.changedModuleIds.includes(id)).map((moduleId) => ({ moduleId, reason: 'no-dependency-path' })),
+        proposedPacketOrder: input.changedModuleIds, recalculationEvidence: [],
+      }
+    },
+    async capabilitiesApproveImpact(projectId, impact) {
+      const approved = { ...impact, userApproval: { approved: true, at: now(), by: 'user' } }
+      const state = ensureCap(projectId) as CapProjectState & { impacts?: Map<string, typeof approved> }
+      state.impacts ??= new Map()
+      state.impacts.set(approved.changeId, approved)
+      return approved
+    },
+    async capabilitiesListImpacts(projectId) {
+      const state = ensureCap(projectId) as CapProjectState & { impacts?: Map<string, import('@engineering-ui-kit/core').ImpactRecord> }
+      return [...(state.impacts?.values() ?? [])]
+    },
+    async capabilitiesRunModuleVerification(input) {
+      const result = runModuleVerification(input as Parameters<typeof runModuleVerification>[0])
+      const state = ensureCap(input.projectId)
+      const hashes = input.inputHashes
+      const freshness = calculateFreshness({
+        moduleId: input.moduleId,
+        moduleVersion: input.manifest?.moduleVersion ?? '1.0.0',
+        specificationHash: hashes.specification ?? 'pending',
+        implementationHash: hashes.implementation ?? 'pending',
+        architectureHash: hashes.architecture ?? 'pending',
+        dependencyHash: hashes.dependencies ?? 'pending',
+        adapterHash: hashes.adapters ?? 'pending',
+        bindingHash: hashes.bindings ?? 'pending',
+        verificationSuiteHash: hashes.verificationSuites ?? 'pending',
+        verification: result.record,
+      })
+      state.freshness.set(input.moduleId, freshness)
+      return result
+    },
+    async capabilitiesVerifyApprovedModule(input) {
+      if (!input.explicit) throw new Error('module verification requires explicit user action')
+      const state = ensureCap(input.projectId)
+      const manifest = state.moduleApproved.get(input.moduleId)
+      if (!manifest) throw new Error(`approved module not found: ${input.moduleId}`)
+      const hashes = {
+        specification: `spec:${manifest.moduleId}@${manifest.moduleVersion}`,
+        implementation: 'mock-implementation',
+        architecture: state.architectureApproved?.contentHash ?? 'mock-architecture',
+        dependencies: 'mock-dependencies',
+        adapters: 'mock-adapters',
+        bindings: 'mock-bindings',
+        verificationSuites: 'mock-suites',
+      }
+      const result = runModuleVerification({
+        verificationId: `ver-${input.moduleId}-${Date.now()}`,
+        projectId: input.projectId,
+        moduleId: input.moduleId,
+        moduleType: manifest.moduleType,
+        manifest,
+        inputHashes: hashes,
+        currentHashes: hashes,
+        commands: [{ label: 'mock-project-check', exitCode: 0, passed: true, kind: 'technical' }],
+      })
+      state.freshness.set(
+        input.moduleId,
+        calculateFreshness({
+          moduleId: input.moduleId,
+          moduleVersion: manifest.moduleVersion,
+          specificationHash: hashes.specification,
+          implementationHash: hashes.implementation,
+          architectureHash: hashes.architecture,
+          dependencyHash: hashes.dependencies,
+          adapterHash: hashes.adapters,
+          bindingHash: hashes.bindings,
+          verificationSuiteHash: hashes.verificationSuites,
+          verification: result.record,
+        }),
+      )
+      const vstate = state as CapProjectState & {
+        verifications?: Map<string, import('@engineering-ui-kit/core').VerificationRecord>
+      }
+      vstate.verifications ??= new Map()
+      vstate.verifications.set(result.record.verificationId, result.record)
+      return result
+    },
+    async capabilitiesDeltaQueueState(input) {
+      const state = ensureCap(input.projectId) as CapProjectState & {
+        impacts?: Map<string, import('@engineering-ui-kit/core').ImpactRecord>
+        deltaProgress?: Map<string, string[]>
+      }
+      const impact = state.impacts?.get(input.changeId)
+      if (!impact) throw new Error(`impact not found: ${input.changeId}`)
+      return deltaQueueState(impact, state.deltaProgress?.get(input.changeId) ?? [])
+    },
+    async capabilitiesExportDeltaPacket(input) {
+      const state = ensureCap(input.projectId) as CapProjectState & {
+        impacts?: Map<string, import('@engineering-ui-kit/core').ImpactRecord>
+        deltaProgress?: Map<string, string[]>
+      }
+      const impact = state.impacts?.get(input.changeId)
+      if (!impact) throw new Error(`impact not found: ${input.changeId}`)
+      if (!impact.userApproval?.approved) {
+        throw new Error('impact must be explicitly approved before delta export')
+      }
+      assertTargetExportable(impact, state.deltaProgress?.get(input.changeId) ?? [], input.targetId)
+      const runId = `cap-delta-${input.targetId}-${Date.now()}`
+      const base = `runs/${runId}/handoff`
+      const files = [
+        { path: `${base}/capability-packet.json`, bytes: 512, sha256: 'mock-delta-packet' },
+        { path: `${base}/recommended-prompt.txt`, bytes: 128, sha256: 'mock-delta-prompt' },
+        { path: `${base}/delta-packet.json`, bytes: 512, sha256: 'mock-delta-companion' },
+      ]
+      return {
+        runId,
+        packetId: `pkt-delta-${input.targetId}`,
+        recommendedPrompt: `Apply only the delta for ${input.targetId} and return only ui-overlay.zip.`,
+        files,
+        uploadFiles: files.map((f) => f.path),
+      }
+    },
+    async capabilitiesMarkDeltaTargetComplete(input) {
+      if (!input.explicit) throw new Error('marking a delta target complete requires explicit user action')
+      const state = ensureCap(input.projectId) as CapProjectState & {
+        impacts?: Map<string, import('@engineering-ui-kit/core').ImpactRecord>
+        deltaProgress?: Map<string, string[]>
+        verifications?: Map<string, import('@engineering-ui-kit/core').VerificationRecord>
+      }
+      const impact = state.impacts?.get(input.changeId)
+      if (!impact) throw new Error(`impact not found: ${input.changeId}`)
+      const verification = state.verifications?.get(input.verificationId)
+      if (!verification) throw new Error(`verification not found: ${input.verificationId}`)
+      if (verification.moduleId !== input.targetId) {
+        throw new Error('verification does not match the delta target')
+      }
+      if (verification.outcome !== 'passed') {
+        throw new Error(`cannot complete target ${input.targetId}; verification outcome is ${verification.outcome}`)
+      }
+      state.deltaProgress ??= new Map()
+      const done = state.deltaProgress.get(input.changeId) ?? []
+      if (!done.includes(input.targetId)) done.push(input.targetId)
+      state.deltaProgress.set(input.changeId, done)
+      return deltaQueueState(impact, done)
+    },
   }
 }

@@ -6,6 +6,16 @@
   "description": "Engineering UI Kit core workflow library: repo context, packet building, overlay inspection, verification, and persistence. GUI-independent.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "default": "./dist/browser.js"
+    }
+  },
   "bin": {
     "euik": "dist/cli.js"
   },
@@ -20,6 +30,8 @@
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",
     "@types/node": "^22.15.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "playwright": "^1.61.1",
     "typescript": "^5.8.0",
     "vitest": "^3.1.0"

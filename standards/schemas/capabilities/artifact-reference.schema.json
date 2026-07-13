@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/artifact-reference.schema.json",
+  "title": "CAP-CONTRACT-008",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactId",
+    "projectId",
+    "mediaType",
+    "checksum",
+    "byteSize",
+    "createdAt",
+    "provenance",
+    "storageClass",
+    "opaqueStorageRef"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "artifactId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mediaType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "checksum": {
+      "type": "string",
+      "minLength": 1
+    },
+    "byteSize": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "createdAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "producingOperationId": {
+      "type": "string"
+    },
+    "producingJobId": {
+      "type": "string"
+    },
+    "producingRunId": {
+      "type": "string"
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source",
+        "recordedAt"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recordedAt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actor": {
+          "type": "string"
+        },
+        "refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "storageClass": {
+      "enum": [
+        "app-managed",
+        "project-relative",
+        "ephemeral"
+      ]
+    },
+    "opaqueStorageRef": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

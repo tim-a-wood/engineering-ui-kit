@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/matlab-session-record.schema.json",
+  "title": "CAP-CONTRACT-019",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "sessionId",
+    "state",
+    "toolboxReadiness",
+    "processOwnership"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "enum": [
+        "stopped",
+        "starting",
+        "ready",
+        "busy",
+        "unhealthy"
+      ]
+    },
+    "matlabVersion": {
+      "type": "string"
+    },
+    "toolboxReadiness": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "ready"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ready": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "processOwnership": {
+      "const": "app-owned"
+    },
+    "startedAt": {
+      "type": "string"
+    },
+    "lastUsedAt": {
+      "type": "string"
+    },
+    "initRecipeRevision": {
+      "type": "string"
+    },
+    "inMemoryStateRevision": {
+      "type": "string"
+    },
+    "currentJobId": {
+      "type": "string"
+    },
+    "lastDiagnosticId": {
+      "type": "string"
+    }
+  }
+}

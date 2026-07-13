@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/verification-record.schema.json",
+  "title": "CAP-CONTRACT-017",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "verificationId",
+    "projectId",
+    "suiteIds",
+    "suiteVersions",
+    "suiteHashes",
+    "inputHashes",
+    "commandResults",
+    "artifacts",
+    "diagnostics",
+    "startedAt",
+    "completedAt",
+    "outcome"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "verificationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "moduleId": {
+      "type": "string"
+    },
+    "connectionId": {
+      "type": "string"
+    },
+    "suiteIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "suiteVersions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "suiteHashes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "inputHashes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "commandResults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "label",
+          "exitCode",
+          "passed"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "exitCode": {
+            "type": "integer"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "outputSummary": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "relatedIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "startedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outcome": {
+      "enum": [
+        "passed",
+        "failed-setup",
+        "failed-domain",
+        "failed-technical",
+        "cancelled",
+        "unverified"
+      ]
+    }
+  }
+}

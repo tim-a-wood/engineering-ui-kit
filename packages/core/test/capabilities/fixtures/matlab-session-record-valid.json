@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "proj-1",
+  "sessionId": "sess-1",
+  "state": "ready",
+  "matlabVersion": "R2023b",
+  "toolboxReadiness": [
+    {
+      "name": "MATLAB",
+      "ready": true
+    }
+  ],
+  "processOwnership": "app-owned",
+  "startedAt": "2026-07-12T12:00:00.000Z",
+  "lastUsedAt": "2026-07-12T12:00:00.000Z"
+}

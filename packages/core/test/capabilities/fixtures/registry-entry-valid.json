@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "moduleId": "mod.domain",
+  "moduleVersion": "1.0.0",
+  "compatibleContractVersions": [
+    "1.0.0"
+  ],
+  "runtimeAllocation": "local-embedded",
+  "configReady": true,
+  "verificationState": "passed",
+  "freshnessState": "ready",
+  "evidenceRefs": [
+    "ver-1"
+  ]
+}

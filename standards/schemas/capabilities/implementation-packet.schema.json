@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/implementation-packet.schema.json",
+  "title": "CAP-CONTRACT-015",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "packetId",
+    "packetVersion",
+    "projectId",
+    "targetKind",
+    "targetId",
+    "inputHashes",
+    "architectureVersion",
+    "architectureHash",
+    "allowedPaths",
+    "expectedPaths",
+    "protectedPaths",
+    "excludedPaths",
+    "requiredTests",
+    "acceptanceCases",
+    "unchangedBehavior",
+    "requiredOutput"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "packetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "packetVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "targetKind": {
+      "enum": [
+        "module",
+        "connection"
+      ]
+    },
+    "targetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputHashes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "architectureVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "architectureHash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "allowedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expectedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "protectedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "excludedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "requiredTests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "acceptanceCases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description",
+          "expectedOutcome"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedOutcome": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "example",
+              "failure"
+            ]
+          }
+        }
+      }
+    },
+    "unchangedBehavior": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "requiredOutput": {
+      "const": "ui-overlay.zip"
+    }
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "mode": "offline-core",
+  "status": "passed",
+  "elapsedMs": 16,
+  "hardware": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpus": 10,
+    "model": "Apple M4",
+    "totalMemGb": 16
+  },
+  "restartOk": true,
+  "deferredAbsent": true,
+  "journeys": [
+    {
+      "journeyId": "CAP-JRN-001",
+      "passed": true,
+      "evidence": {
+        "applicationId": "app-inventory",
+        "revision": "1",
+        "contentHash": "0bc25c62d6c34cc290f3d5bf025cb3f8cc7d2ed3016e1875de6a71e462fcfa23",
+        "packetId": "pkt-product-1",
+        "uploadFileCount": 2
+      }
+    },
+    {
+      "journeyId": "CAP-JRN-002",
+      "passed": true,
+      "evidence": {
+        "architectureId": "arch-1",
+        "revision": "1",
+        "gatePassed": true,
+        "packetId": "pkt-arch-1"
+      }
+    },
+    {
+      "journeyId": "CAP-JRN-003",
+      "passed": true,
+      "evidence": {
+        "moduleId": "mod.domain",
+        "packetId": "pkt-impl-1",
+        "runId": "run-impl-1",
+        "verificationId": "ver-1",
+        "freshness": "ready",
+        "writeArtifact": "art-1b827fba6f5e"
+      }
+    },
+    {
+      "journeyId": "CAP-JRN-004",
+      "passed": true,
+      "evidence": {
+        "impactClassification": "required-additive",
+        "proposedPacketOrder": [
+          "mod.domain",
+          "mod.workflow"
+        ],
+        "nextActionable": "mod.domain",
+        "deltaPacketId": "pkt-delta-base"
+      }
+    },
+    {
+      "journeyId": "CAP-JRN-005",
+      "passed": true,
+      "evidence": {
+        "writeOutcome": "success",
+        "readOutcome": "success",
+        "relativePath": "artifacts/counts-result.json",
+        "artifactId": "art-5c2edaeedcda",
+        "escapeBlocked": true,
+        "hostAbsoluteAbsent": true
+      }
+    },
+    {
+      "journeyId": "CAP-JRN-006",
+      "passed": true,
+      "evidence": {
+        "sessionId": "sess-proj-journey",
+        "reused": true,
+        "snapshotId": "snap-proj-journey-1",
+        "restoredState": "ready",
+        "crossProjectRejected": true
+      }
+    },
+    {
+      "journeyId": "CAP-JRN-007",
+      "passed": true,
+      "evidence": {
+        "bindingId": "bind-approve",
+        "version": "1.0.0",
+        "connectedOutcome": "success",
+        "exampleOutcome": "success",
+        "selectionOk": true
+      }
+    },
+    {
+      "journeyId": "CAP-JRN-008",
+      "passed": true,
+      "evidence": {
+        "externalId": "42",
+        "revision": "3",
+        "contentHash": "00f82c6cc49fd79c8c3111f6fedc17dcba130b064e7463952ad961c3196c32ea",
+        "approvedUnchanged": true,
+        "draftRevision": "2",
+        "verificationId": "ver-ado-1"
+      }
+    }
+  ],
+  "packaged": {
+    "mode": "packaged-electron-playwright",
+    "attempted": false,
+    "status": "not-run",
+    "reason": "Packaged desktop UI journeys are not launched in this harness. Interview/architecture/binding GUI flows are incomplete for full Playwright driving; use offline core journeys below as the blocking CAP-TEST-040 path."
+  }
+}

@@ -12,6 +12,7 @@ import type { HandoffRun } from '@engineering-ui-kit/core'
 
 export type ViewId =
   | 'copilot-handoff'
+  | 'capabilities'
   | 'recipes'
   | 'components'
   | 'projects'
@@ -28,6 +29,7 @@ export type BuildWorkspaceState = 'handoff' | 'copilot' | 'overlay'
 
 export const NAV_ITEMS: { id: ViewId; label: string; glyph: string }[] = [
   { id: 'copilot-handoff', label: 'Build & Test', glyph: '⌂' },
+  { id: 'capabilities', label: 'Capabilities', glyph: '◈' },
   { id: 'recipes', label: 'Recipes', glyph: '▦' },
   { id: 'components', label: 'Components', glyph: '⬡' },
   { id: 'projects', label: 'Projects', glyph: '▱' },

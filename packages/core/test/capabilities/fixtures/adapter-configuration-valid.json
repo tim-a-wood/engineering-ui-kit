@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "adapterId": "adapter.filesystem",
+  "adapterContractVersion": "1.0.0",
+  "projectId": "proj-1",
+  "nonSecretSettings": {
+    "roots": [
+      "data"
+    ]
+  },
+  "secretReferenceIds": [],
+  "permissionSummary": [
+    "read",
+    "write"
+  ],
+  "readinessResult": {
+    "ready": true,
+    "diagnostics": []
+  },
+  "revision": "1",
+  "contentHash": "ch"
+}

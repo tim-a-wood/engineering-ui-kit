@@ -1,0 +1,9 @@
+{
+  "mode": "packaged-electron-playwright",
+  "status": "unavailable",
+  "launched": false,
+  "reason": "Electron did not produce a usable window: run-1: electron.launch exceeded 45000ms",
+  "startedAt": "2026-07-13T11:09:58.738Z",
+  "finishedAt": "2026-07-13T11:10:43.927Z",
+  "screenshots": []
+}

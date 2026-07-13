@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/frontend-binding.schema.json",
+  "title": "CAP-CONTRACT-013",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "bindingId",
+    "version",
+    "projectId",
+    "selectionEvidence",
+    "trigger",
+    "operationId",
+    "operationVersion",
+    "inputMappings",
+    "outputMappings",
+    "loadingBehavior",
+    "validationBehavior",
+    "domainRejectionBehavior",
+    "technicalFailureBehavior",
+    "cancellationBehavior",
+    "duplicateSubmissionBehavior",
+    "dataMode"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "bindingId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "selectionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route",
+        "documentTitle",
+        "selector",
+        "visibleText",
+        "elementTag",
+        "captureTime"
+      ],
+      "properties": {
+        "route": {
+          "type": "string",
+          "minLength": 1
+        },
+        "documentTitle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "selector": {
+          "type": "string",
+          "minLength": 1
+        },
+        "visibleText": {
+          "type": "string"
+        },
+        "elementTag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "stableMarker": {
+          "type": "string"
+        },
+        "captureTime": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceTargetConfirmed": {
+          "type": "boolean"
+        },
+        "proposedSourceTarget": {
+          "type": "string"
+        }
+      }
+    },
+    "trigger": {
+      "enum": [
+        "activate",
+        "change",
+        "submit",
+        "load"
+      ]
+    },
+    "operationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operationVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputMappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "minLength": 1
+          },
+          "to": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "outputMappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "minLength": 1
+          },
+          "to": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "loadingBehavior": {
+      "type": "string",
+      "minLength": 1
+    },
+    "validationBehavior": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domainRejectionBehavior": {
+      "type": "string",
+      "minLength": 1
+    },
+    "technicalFailureBehavior": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cancellationBehavior": {
+      "type": "string",
+      "minLength": 1
+    },
+    "duplicateSubmissionBehavior": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dataMode": {
+      "enum": [
+        "connected",
+        "approved-example",
+        "invalid-input",
+        "dependency-unavailable",
+        "timeout"
+      ]
+    }
+  }
+}

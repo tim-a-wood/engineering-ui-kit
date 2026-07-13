@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/error-record.schema.json",
+  "title": "CAP-CONTRACT-006",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "code",
+    "category",
+    "safeMessage",
+    "retryability",
+    "relatedIds",
+    "diagnosticRefs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "code": {
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "enum": [
+        "validation",
+        "domain",
+        "dependency",
+        "configuration",
+        "execution",
+        "timeout",
+        "authorization",
+        "conflict"
+      ]
+    },
+    "safeMessage": {
+      "type": "string",
+      "minLength": 1
+    },
+    "retryability": {
+      "enum": [
+        "none",
+        "immediate",
+        "delayed",
+        "manual"
+      ]
+    },
+    "relatedIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "diagnosticRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

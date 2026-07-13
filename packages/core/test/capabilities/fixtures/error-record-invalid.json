@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0",
+  "code": "x",
+  "category": "not-real",
+  "safeMessage": "m",
+  "retryability": "none",
+  "relatedIds": [],
+  "diagnosticRefs": []
+}

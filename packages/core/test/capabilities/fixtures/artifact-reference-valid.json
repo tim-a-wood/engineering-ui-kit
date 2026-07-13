@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "artifactId": "art-1",
+  "projectId": "proj-1",
+  "mediaType": "application/json",
+  "checksum": "abc",
+  "byteSize": 12,
+  "createdAt": "2026-07-12T12:00:00.000Z",
+  "provenance": {
+    "source": "fixture",
+    "recordedAt": "2026-07-12T12:00:00.000Z"
+  },
+  "storageClass": "app-managed",
+  "opaqueStorageRef": "ref-1"
+}

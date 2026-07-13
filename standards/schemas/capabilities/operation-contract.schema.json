@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/operation-contract.schema.json",
+  "title": "CAP-CONTRACT-004",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "operationId",
+    "version",
+    "behavior",
+    "inputSchemaRef",
+    "outputSchemaRef",
+    "preconditions",
+    "postconditions",
+    "domainRejections",
+    "technicalErrors",
+    "sideEffects",
+    "idempotency",
+    "timeoutClass",
+    "cancellable",
+    "artifactTypes",
+    "provenanceFields"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "operationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "behavior": {
+      "enum": [
+        "command",
+        "query",
+        "job"
+      ]
+    },
+    "inputSchemaRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outputSchemaRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "postconditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "domainRejections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "technicalErrors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sideEffects": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "idempotency": {
+      "enum": [
+        "idempotent",
+        "non-idempotent",
+        "unknown"
+      ]
+    },
+    "timeoutClass": {
+      "enum": [
+        "short",
+        "medium",
+        "long"
+      ]
+    },
+    "cancellable": {
+      "type": "boolean"
+    },
+    "artifactTypes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenanceFields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

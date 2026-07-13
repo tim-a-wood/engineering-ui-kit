@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "organization": "org",
+  "project": "proj",
+  "externalType": "work-item",
+  "externalId": "42",
+  "revision": "3",
+  "retrievedAt": "2026-07-12T12:00:00.000Z",
+  "contentHash": "h",
+  "sourceAdapterVersion": "1.0.0"
+}

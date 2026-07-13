@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "job-1",
+  "projectId": "proj-1",
+  "operationId": "op.1",
+  "operationVersion": "1.0.0",
+  "inputHash": "h",
+  "state": "queued",
+  "createdAt": "2026-07-12T12:00:00.000Z",
+  "updatedAt": "2026-07-12T12:00:00.000Z",
+  "diagnostics": [],
+  "artifactRefs": []
+}

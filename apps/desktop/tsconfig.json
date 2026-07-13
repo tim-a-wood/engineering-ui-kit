@@ -12,5 +12,12 @@
     "skipLibCheck": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["src/main.ts", "src/ipc.ts", "src/standardsTemplate.ts", "src/bridgeApi.ts"]
+  "include": [
+    "src/main.ts",
+    "src/ipc.ts",
+    "src/standardsTemplate.ts",
+    "src/bridgeApi.ts",
+    "src/uploadSetTransfer.ts",
+    "src/capabilities/**/*.ts"
+  ]
 }

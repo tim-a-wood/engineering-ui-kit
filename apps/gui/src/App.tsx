@@ -21,6 +21,7 @@ import { RecipesView, ComponentsView } from './views/catalog'
 import { SettingsView } from './views/SettingsView'
 import { BuildView } from './views/build/BuildView'
 import { VerifyReviewView } from './views/workflow'
+import { CapabilitiesView } from './views/capabilities/CapabilitiesView'
 
 const TIPS: Partial<Record<ViewId, string>> = {
   'copilot-handoff': 'Start with one screen/view for best results.',
@@ -37,13 +38,14 @@ const TIPS: Partial<Record<ViewId, string>> = {
 
 /** Sidebar structure: uppercase section labels grouping the flat NAV_ITEMS. */
 const NAV_SECTIONS: { label: string; items: ViewId[] }[] = [
-  { label: 'Workflow', items: ['copilot-handoff'] },
+  { label: 'Workflow', items: ['copilot-handoff', 'capabilities'] },
   { label: 'Library', items: ['recipes', 'components'] },
   { label: 'System', items: ['projects', 'settings'] },
 ]
 
 const NAV_GLYPHS: Partial<Record<ViewId, () => ReactNode>> = {
   'copilot-handoff': () => Icon.home(),
+  capabilities: () => Icon.box(),
   recipes: () => Icon.grid(),
   components: () => Icon.box(),
   projects: () => Icon.folder(),
@@ -187,6 +189,14 @@ export default function App() {
             refreshProjects={refreshProjects}
             onStartRun={startRun}
             onOpenStep={navigate}
+          />
+        )
+      case 'capabilities':
+        return (
+          <CapabilitiesView
+            bridge={bridge}
+            projects={projects}
+            activeProjectId={activeProject?.id}
           />
         )
       case 'build':

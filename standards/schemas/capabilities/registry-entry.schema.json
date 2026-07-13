@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/registry-entry.schema.json",
+  "title": "CAP-CONTRACT-011",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "moduleId",
+    "moduleVersion",
+    "compatibleContractVersions",
+    "runtimeAllocation",
+    "configReady",
+    "verificationState",
+    "freshnessState",
+    "evidenceRefs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "moduleId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "moduleVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operationId": {
+      "type": "string"
+    },
+    "compatibleContractVersions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "runtimeAllocation": {
+      "enum": [
+        "local-embedded",
+        "external-adapter"
+      ]
+    },
+    "configReady": {
+      "type": "boolean"
+    },
+    "verificationState": {
+      "type": "string",
+      "minLength": 1
+    },
+    "freshnessState": {
+      "enum": [
+        "draft",
+        "ready",
+        "needs-review",
+        "verification-needed",
+        "connection-outdated",
+        "blocked",
+        "failed"
+      ]
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

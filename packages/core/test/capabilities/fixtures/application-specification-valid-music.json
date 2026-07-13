@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "proj-1",
+  "id": "app-music",
+  "revision": "1",
+  "status": "approved",
+  "purpose": "music purpose",
+  "outcomes": [
+    "music outcome"
+  ],
+  "actors": [
+    {
+      "id": "a1",
+      "text": "operator"
+    }
+  ],
+  "goals": [
+    {
+      "id": "g1",
+      "text": "goal"
+    }
+  ],
+  "useCases": [
+    {
+      "id": "u1",
+      "text": "use"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "s1",
+      "text": "happy"
+    }
+  ],
+  "information": [
+    {
+      "id": "i1",
+      "text": "info"
+    }
+  ],
+  "rules": [
+    {
+      "id": "r1",
+      "text": "rule"
+    }
+  ],
+  "externalSystems": [
+    {
+      "id": "e1",
+      "text": "files"
+    }
+  ],
+  "constraints": [
+    {
+      "id": "c1",
+      "text": "local"
+    }
+  ],
+  "scope": {
+    "inScope": [
+      "x"
+    ],
+    "outOfScope": [
+      "y"
+    ]
+  },
+  "acceptanceCases": [
+    {
+      "id": "ac1",
+      "description": "works",
+      "expectedOutcome": "success",
+      "kind": "example"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src1",
+      "text": "interview"
+    }
+  ],
+  "unresolvedQuestions": [],
+  "contentHash": "hash-music",
+  "approvedAt": "2026-07-12T12:00:00.000Z",
+  "approvedBy": "user"
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "moduleId": "mod.domain",
+  "moduleVersion": "1.0.0",
+  "hashes": {
+    "specification": "a",
+    "implementation": "b",
+    "architecture": "c",
+    "dependencies": "d",
+    "adapters": "e",
+    "bindings": "f",
+    "verificationSuites": "g"
+  },
+  "evaluatedAt": "2026-07-12T12:00:00.000Z",
+  "primaryState": "ready",
+  "reasonCodes": [],
+  "verificationEvidenceId": "ver-1"
+}

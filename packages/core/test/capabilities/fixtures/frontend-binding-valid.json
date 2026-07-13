@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "bindingId": "bind-1",
+  "version": "1.0.0",
+  "projectId": "proj-1",
+  "selectionEvidence": {
+    "route": "/",
+    "documentTitle": "App",
+    "selector": "#btn",
+    "visibleText": "Go",
+    "elementTag": "button",
+    "role": "button",
+    "name": "Go",
+    "stableMarker": "data-cap-id=submit",
+    "captureTime": "2026-07-12T12:00:00.000Z"
+  },
+  "trigger": "activate",
+  "operationId": "op.1",
+  "operationVersion": "1.0.0",
+  "inputMappings": [],
+  "outputMappings": [],
+  "loadingBehavior": "spinner",
+  "validationBehavior": "inline",
+  "domainRejectionBehavior": "toast",
+  "technicalFailureBehavior": "banner",
+  "cancellationBehavior": "idle",
+  "duplicateSubmissionBehavior": "ignore",
+  "dataMode": "connected"
+}

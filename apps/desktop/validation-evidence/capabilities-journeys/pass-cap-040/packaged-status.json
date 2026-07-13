@@ -1,0 +1,6 @@
+{
+  "mode": "packaged-electron-playwright",
+  "attempted": false,
+  "status": "not-run",
+  "reason": "Packaged desktop UI journeys are not launched in this harness. Interview/architecture/binding GUI flows are incomplete for full Playwright driving; use offline core journeys below as the blocking CAP-TEST-040 path."
+}

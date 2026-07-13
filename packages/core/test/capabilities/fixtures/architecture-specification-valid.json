@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "proj-1",
+  "id": "arch-1",
+  "revision": "1",
+  "status": "approved",
+  "applicationSpecId": "app-inventory",
+  "applicationSpecRevision": "1",
+  "applicationSpecHash": "hash-inventory",
+  "capabilityProjections": [
+    {
+      "id": "cap1",
+      "name": "Primary",
+      "moduleIds": [
+        "mod.domain"
+      ]
+    }
+  ],
+  "moduleIds": [
+    "mod.domain"
+  ],
+  "dependencyEdges": [],
+  "operationAllocations": [
+    {
+      "operationId": "op.1",
+      "moduleId": "mod.domain"
+    }
+  ],
+  "adapterAllocations": [],
+  "workflowTraces": [
+    {
+      "useCaseId": "u1",
+      "moduleIds": [
+        "mod.domain"
+      ]
+    }
+  ],
+  "proposals": [],
+  "unresolvedQuestions": [],
+  "gateResult": {
+    "gateId": "CAP-GATE-002",
+    "passed": true,
+    "diagnostics": []
+  },
+  "contentHash": "arch-hash"
+}

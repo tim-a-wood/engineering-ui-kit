@@ -1,0 +1,312 @@
+/**
+ * App-managed capability definition persistence (CAP-PKT-003).
+ * Layout: <dataDir>/projects/<projectId>/capabilities/...
+ */
+
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import type {
+  ApplicationSpecification,
+  ArchitectureSpecification,
+  FrontendBinding,
+  ModuleManifest,
+} from './types.js'
+
+function atomicWriteJson(filePath: string, value: unknown): void {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true })
+  const tmp = `${filePath}.${crypto.randomUUID()}.tmp`
+  fs.writeFileSync(tmp, JSON.stringify(value, null, 2) + '\n')
+  fs.renameSync(tmp, filePath)
+}
+
+function readJson<T>(filePath: string): T | undefined {
+  if (!fs.existsSync(filePath)) return undefined
+  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T
+}
+
+import { canonicalHash } from './hash.js'
+export { canonicalHash }
+
+export type CapabilityIndex = {
+  schemaVersion: string
+  applicationDraftId?: string
+  applicationApprovedRevision?: string
+  architectureDraftId?: string
+  architectureApprovedRevision?: string
+  modules: Record<string, { draft?: boolean; approvedRevision?: string }>
+  bindings: Record<string, { draft?: boolean; approvedRevision?: string }>
+}
+
+export type SchemaMeta = {
+  schemaVersion: string
+  initializedAt: string
+}
+
+export class CapabilityWorkspace {
+  constructor(readonly dataDir: string) {}
+
+  root(projectId: string): string {
+    return path.join(this.dataDir, 'projects', projectId, 'capabilities')
+  }
+
+  ensureInitialized(projectId: string): SchemaMeta {
+    const root = this.root(projectId)
+    const metaPath = path.join(root, 'meta', 'schema-version.json')
+    const existing = readJson<SchemaMeta>(metaPath)
+    if (existing) return existing
+    const meta: SchemaMeta = { schemaVersion: '1.0', initializedAt: new Date().toISOString() }
+    atomicWriteJson(metaPath, meta)
+    atomicWriteJson(path.join(root, 'index.json'), {
+      schemaVersion: '1.0',
+      modules: {},
+      bindings: {},
+    } satisfies CapabilityIndex)
+    for (const dir of [
+      'application/drafts',
+      'application/approved',
+      'architecture/drafts',
+      'architecture/approved',
+      'modules',
+      'bindings',
+      'meta/migrations',
+    ]) {
+      fs.mkdirSync(path.join(root, dir), { recursive: true })
+    }
+    return meta
+  }
+
+  isFutureSchemaVersion(projectId: string): boolean {
+    const meta = readJson<SchemaMeta>(path.join(this.root(projectId), 'meta', 'schema-version.json'))
+    if (!meta) return false
+    return meta.schemaVersion !== '1.0'
+  }
+
+  private indexPath(projectId: string): string {
+    return path.join(this.root(projectId), 'index.json')
+  }
+
+  getIndex(projectId: string): CapabilityIndex {
+    this.ensureInitialized(projectId)
+    return (
+      readJson<CapabilityIndex>(this.indexPath(projectId)) ?? {
+        schemaVersion: '1.0',
+        modules: {},
+        bindings: {},
+      }
+    )
+  }
+
+  private saveIndex(projectId: string, index: CapabilityIndex): void {
+    atomicWriteJson(this.indexPath(projectId), index)
+  }
+
+  saveApplicationDraft(projectId: string, draft: ApplicationSpecification): void {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    atomicWriteJson(path.join(this.root(projectId), 'application', 'drafts', 'current.json'), draft)
+    const index = this.getIndex(projectId)
+    index.applicationDraftId = draft.id
+    this.saveIndex(projectId, index)
+  }
+
+  getApplicationDraft(projectId: string): ApplicationSpecification | undefined {
+    return readJson(path.join(this.root(projectId), 'application', 'drafts', 'current.json'))
+  }
+
+  approveApplication(projectId: string, draft: ApplicationSpecification): ApplicationSpecification {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    const approved: ApplicationSpecification = {
+      ...draft,
+      status: 'approved',
+      contentHash: canonicalHash({ ...draft, status: 'approved', contentHash: undefined }),
+      approvedAt: draft.approvedAt ?? new Date().toISOString(),
+    }
+    const dest = path.join(this.root(projectId), 'application', 'approved', `${approved.revision}.json`)
+    if (fs.existsSync(dest)) {
+      throw new Error(`approved application revision already exists: ${approved.revision}`)
+    }
+    atomicWriteJson(dest, approved)
+    const index = this.getIndex(projectId)
+    index.applicationApprovedRevision = approved.revision
+    this.saveIndex(projectId, index)
+    return approved
+  }
+
+  getApprovedApplication(projectId: string, revision?: string): ApplicationSpecification | undefined {
+    const rev = revision ?? this.getIndex(projectId).applicationApprovedRevision
+    if (!rev) return undefined
+    return readJson(path.join(this.root(projectId), 'application', 'approved', `${rev}.json`))
+  }
+
+  saveArchitectureDraft(projectId: string, draft: ArchitectureSpecification): void {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    atomicWriteJson(path.join(this.root(projectId), 'architecture', 'drafts', 'current.json'), draft)
+    const index = this.getIndex(projectId)
+    index.architectureDraftId = draft.id
+    this.saveIndex(projectId, index)
+  }
+
+  getArchitectureDraft(projectId: string): ArchitectureSpecification | undefined {
+    return readJson(path.join(this.root(projectId), 'architecture', 'drafts', 'current.json'))
+  }
+
+  approveArchitecture(projectId: string, draft: ArchitectureSpecification): ArchitectureSpecification {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    const approved: ArchitectureSpecification = {
+      ...draft,
+      status: 'approved',
+      contentHash: canonicalHash({ ...draft, status: 'approved', contentHash: undefined }),
+      approvedAt: draft.approvedAt ?? new Date().toISOString(),
+    }
+    const dest = path.join(this.root(projectId), 'architecture', 'approved', `${approved.revision}.json`)
+    if (fs.existsSync(dest)) {
+      throw new Error(`approved architecture revision already exists: ${approved.revision}`)
+    }
+    atomicWriteJson(dest, approved)
+    const index = this.getIndex(projectId)
+    index.architectureApprovedRevision = approved.revision
+    this.saveIndex(projectId, index)
+    return approved
+  }
+
+  getApprovedArchitecture(projectId: string, revision?: string): ArchitectureSpecification | undefined {
+    const rev = revision ?? this.getIndex(projectId).architectureApprovedRevision
+    if (!rev) return undefined
+    return readJson(path.join(this.root(projectId), 'architecture', 'approved', `${rev}.json`))
+  }
+
+  saveModuleDraft(projectId: string, draft: ModuleManifest): void {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    const dir = path.join(this.root(projectId), 'modules', draft.moduleId, 'drafts')
+    atomicWriteJson(path.join(dir, 'current.json'), draft)
+    const index = this.getIndex(projectId)
+    index.modules[draft.moduleId] = { ...index.modules[draft.moduleId], draft: true }
+    this.saveIndex(projectId, index)
+  }
+
+  getModuleDraft(projectId: string, moduleId: string): ModuleManifest | undefined {
+    return readJson(
+      path.join(this.root(projectId), 'modules', moduleId, 'drafts', 'current.json'),
+    )
+  }
+
+  approveModule(projectId: string, draft: ModuleManifest): ModuleManifest {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    const dest = path.join(
+      this.root(projectId),
+      'modules',
+      draft.moduleId,
+      'approved',
+      `${draft.moduleVersion}.json`,
+    )
+    if (fs.existsSync(dest)) {
+      throw new Error(`approved module revision already exists: ${draft.moduleId}@${draft.moduleVersion}`)
+    }
+    atomicWriteJson(dest, draft)
+    const index = this.getIndex(projectId)
+    index.modules[draft.moduleId] = {
+      draft: false,
+      approvedRevision: draft.moduleVersion,
+    }
+    this.saveIndex(projectId, index)
+    return draft
+  }
+
+  getApprovedModule(projectId: string, moduleId: string, revision?: string): ModuleManifest | undefined {
+    const rev = revision ?? this.getIndex(projectId).modules[moduleId]?.approvedRevision
+    if (!rev) return undefined
+    return readJson(path.join(this.root(projectId), 'modules', moduleId, 'approved', `${rev}.json`))
+  }
+
+  listModules(
+    projectId: string,
+    allocatedModuleIds: readonly string[] = [],
+  ): { moduleId: string; draft?: ModuleManifest; approved?: ModuleManifest }[] {
+    const index = this.getIndex(projectId)
+    const moduleIds = [...new Set([...allocatedModuleIds, ...Object.keys(index.modules)])].sort((a, b) =>
+      a.localeCompare(b),
+    )
+    return moduleIds.map((moduleId) => ({
+      moduleId,
+      draft: this.getModuleDraft(projectId, moduleId),
+      approved: this.getApprovedModule(projectId, moduleId),
+    }))
+  }
+
+  saveBindingDraft(projectId: string, draft: FrontendBinding): void {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    atomicWriteJson(
+      path.join(this.root(projectId), 'bindings', draft.bindingId, 'drafts', 'current.json'),
+      draft,
+    )
+    const index = this.getIndex(projectId)
+    index.bindings[draft.bindingId] = { ...index.bindings[draft.bindingId], draft: true }
+    this.saveIndex(projectId, index)
+  }
+
+  getBindingDraft(projectId: string, bindingId: string): FrontendBinding | undefined {
+    return readJson(
+      path.join(this.root(projectId), 'bindings', bindingId, 'drafts', 'current.json'),
+    )
+  }
+
+  approveBinding(projectId: string, draft: FrontendBinding): FrontendBinding {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    const dest = path.join(
+      this.root(projectId),
+      'bindings',
+      draft.bindingId,
+      'approved',
+      `${draft.version}.json`,
+    )
+    if (fs.existsSync(dest)) {
+      throw new Error(`approved binding revision already exists: ${draft.bindingId}@${draft.version}`)
+    }
+    atomicWriteJson(dest, draft)
+    const index = this.getIndex(projectId)
+    index.bindings[draft.bindingId] = { draft: false, approvedRevision: draft.version }
+    this.saveIndex(projectId, index)
+    return draft
+  }
+
+  getApprovedBinding(projectId: string, bindingId: string, revision?: string): FrontendBinding | undefined {
+    const rev = revision ?? this.getIndex(projectId).bindings[bindingId]?.approvedRevision
+    if (!rev) return undefined
+    return readJson(path.join(this.root(projectId), 'bindings', bindingId, 'approved', `${rev}.json`))
+  }
+
+  listBindings(projectId: string): { bindingId: string; draft?: FrontendBinding; approved?: FrontendBinding }[] {
+    const index = this.getIndex(projectId)
+    return Object.keys(index.bindings)
+      .sort((a, b) => a.localeCompare(b))
+      .map((bindingId) => ({
+        bindingId,
+        draft: this.getBindingDraft(projectId, bindingId),
+        approved: this.getApprovedBinding(projectId, bindingId),
+      }))
+  }
+}

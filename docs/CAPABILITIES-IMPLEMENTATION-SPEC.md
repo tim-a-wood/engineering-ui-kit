@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | Document ID | `CAP-SPEC-001` |
-| Status | Draft pending open decisions |
+| Status | Decisions recorded 2026-07-12; MVP implementation in progress |
 | Product | Engineering UI Kit — Capabilities |
 | Source plan | `docs/CAPABILITIES-PLAN.md` |
 | Repository observed | 2026-07-12 workspace state |
@@ -2887,6 +2887,41 @@ No packet may resolve a blocking decision silently. Record the selected option, 
 | `CAP-DEC-011` | Minimum Azure DevOps read scopes | Approved least-privilege organization/project/work-item/pipeline/test/artifact reads | Read-only minimum | CAP-PKT-026, CAP-PKT-027 |
 | `CAP-DEC-012` | Azure pipeline invocation in MVP | Read-only; explicitly approved invocation of configured pipeline | Read-only | CAP-PKT-028 |
 | `CAP-DEC-013` | MATLAB integration mechanism and support matrix | Approved engine/API, operating systems, MATLAB versions, toolbox discovery | No implementation default | CAP-PKT-020–CAP-PKT-022 |
+
+### 61.1 Recorded decisions (2026-07-12)
+
+Approver: product owner (explicit implementation authorization in CAPABILITIES MVP run). Date: 2026-07-12. All bracketed placeholders from that authorization are resolved below for repository compatibility.
+
+| Decision ID | Selected option | Rationale |
+|---|---|---|
+| `CAP-DEC-001` | **Guided** and **Design** | Matches the product plan and estimation default; progressive disclosure without renaming churn. |
+| `CAP-DEC-002` | Existing external Copilot **file export/import** workflow | Repository already implements three-file handoff; integrated chat is deferred (Section 60). |
+| `CAP-DEC-003` | **TypeScript** local modules under target-repository root **`capabilities/modules/`** | Aligns with the TypeScript/Electron monorepo and keeps generated capability source inside the user project, not app userData. |
+| `CAP-DEC-004` | Approve proposed **version 1** CAP-CONTRACT-001–022 shapes, subject only to internal-consistency or repository-compatibility corrections | Unblocks CAP-PKT-001; adapters must not invent alternate envelopes. |
+| `CAP-DEC-005` | Store capability records under **`<app-user-data>/workspace/projects/<projectId>/capabilities/`** (schema `schemaVersion` files, drafts, approved revisions, indexes, runs, jobs, artifacts metadata). Use **atomic writes**; **no automatic pruning**; **backup/export** is explicit user-initiated export of capability records/packets only (no silent cloud backup). | Extends existing Workspace layout; callers use portable IDs, not absolute host paths. |
+| `CAP-DEC-006` | Architecture diagram is **read-only** with selection and focus; **no direct graph editing** | Graph remains a derived projection from approved architecture/module manifests. |
+| `CAP-DEC-007` | Manual change to a manifest-owned source file produces **`verification-needed`**; it does **not** automatically require definition review | Freshness is hash-driven; definition review stays a separate user action. |
+| `CAP-DEC-008` | Prefer **stable element markers**; when absent, require **user confirmation** of a proposed source target | DOM selectors alone are not source identity. |
+| `CAP-DEC-009` | Use the **desktop bridge** as the single target-application runtime transport; do **not** implement local HTTP | TypeScript modules + existing Electron Preview/`webview` already use named bridge methods (CAP-AR-007). |
+| `CAP-DEC-010` | Use Electron **`safeStorage`** (OS-backed encryption) as the credential store provider; require **explicit user action** for consequential operations (filesystem writes, MATLAB allowlisted eval, snapshot restore, Azure credential use) | Fits macOS/Windows/Linux Electron apps without a third-party secret daemon; secrets never enter renderer state. |
+| `CAP-DEC-011` | Azure DevOps MVP uses **minimum read-only** scopes for organization, project, repository metadata, work items, pipelines, tests, and referenced artifacts | Least privilege for provenance journeys. |
+| `CAP-DEC-012` | Azure DevOps remains **read-only**; **do not invoke pipelines** | Invocation stays deferred; evidence retrieval is sufficient for MVP. |
+| `CAP-DEC-013` | MATLAB integration: desktop-owned **MATLAB Engine API via Python** (`matlab.engine`) bridged from the Electron main process; supported OSes **macOS, Windows, Linux**; MATLAB versions **R2021b and later**; toolbox discovery via Engine `ver` / installed-products query | One serialized app-owned session per project; fake boundary tests remain mandatory when MATLAB is unavailable. |
+
+**Resolved placeholders used by implementation packets**
+
+| Placeholder | Resolved value |
+|---|---|
+| `[LANGUAGE/RUNTIME]` | TypeScript (local-embedded modules) |
+| `[REPOSITORY MODULE ROOT]` | `capabilities/modules/` (relative to `Project.repoPath`) |
+| `[APP-MANAGED STORAGE LAYOUT]` | `<userData>/workspace/projects/<projectId>/capabilities/` |
+| `[BACKUP/EXPORT POLICY]` | No automatic pruning; explicit user-initiated export only |
+| `[DESKTOP BRIDGE OR LOCAL HTTP]` | Desktop bridge only |
+| `[CREDENTIAL STORE PROVIDER]` | Electron `safeStorage` |
+| `[MATLAB INTEGRATION MECHANISM]` | MATLAB Engine API via Python (`matlab.engine`) from desktop main |
+| `[SUPPORTED OPERATING SYSTEMS]` | macOS, Windows, Linux |
+| `[MATLAB VERSIONS]` | R2021b and later |
+| `[TOOLBOX DISCOVERY METHOD]` | Engine `ver` / installed-products query |
 
 ## 62. Definition of MVP completion
 

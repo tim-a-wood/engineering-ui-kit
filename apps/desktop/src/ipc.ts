@@ -44,6 +44,7 @@ import {
   buildStandardPackMarkdown,
   buildTaskPacketMarkdown,
 } from './standardsTemplate.js'
+import { registerCapabilityIpcHandlers } from './capabilities/ipc.js'
 
 function requireProject(workspace: Workspace, projectId: string): Project {
   const project = workspace.getProject(projectId)
@@ -841,6 +842,8 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     if (!fs.existsSync(target)) throw new Error('path does not exist')
     shell.showItemInFolder(target)
   })
+
+  registerCapabilityIpcHandlers(workspace, workspaceRoot)
 
   return workspace
 }

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "verificationId": "ver-1",
+  "projectId": "proj-1",
+  "moduleId": "mod.domain",
+  "suiteIds": [
+    "suite.domain"
+  ],
+  "suiteVersions": [
+    "1"
+  ],
+  "suiteHashes": [
+    "sh"
+  ],
+  "inputHashes": {
+    "impl": "b"
+  },
+  "commandResults": [
+    {
+      "label": "test",
+      "exitCode": 0,
+      "passed": true
+    }
+  ],
+  "artifacts": [],
+  "diagnostics": [],
+  "startedAt": "2026-07-12T12:00:00.000Z",
+  "completedAt": "2026-07-12T12:00:00.000Z",
+  "outcome": "passed"
+}

@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/adapter-configuration.schema.json",
+  "title": "CAP-CONTRACT-018",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "adapterId",
+    "adapterContractVersion",
+    "projectId",
+    "nonSecretSettings",
+    "secretReferenceIds",
+    "permissionSummary",
+    "readinessResult",
+    "revision",
+    "contentHash"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "adapterId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adapterContractVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nonSecretSettings": {
+      "type": "object"
+    },
+    "secretReferenceIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "permissionSummary": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "readinessResult": {
+      "type": "object",
+      "required": [
+        "ready",
+        "diagnostics"
+      ],
+      "properties": {
+        "ready": {
+          "type": "boolean"
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "code",
+              "message"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "relatedIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contentHash": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

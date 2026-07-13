@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "outcome": "not-a-real-outcome",
+  "diagnostics": [],
+  "artifacts": [],
+  "provenance": {
+    "source": "fixture",
+    "recordedAt": "2026-07-12T12:00:00.000Z"
+  }
+}

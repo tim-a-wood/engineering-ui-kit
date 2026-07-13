@@ -25,10 +25,17 @@ function run(patch: Partial<HandoffRun>): HandoffRun {
 }
 
 describe('workflow structure', () => {
-  it('exposes two user-facing steps and five nav items', () => {
+  it('exposes two user-facing steps and six nav items including Capabilities', () => {
     expect(WORKFLOW_STEPS.map((s) => s.index)).toEqual([0, 1])
     expect(WORKFLOW_STEPS.map((s) => s.short)).toEqual(['Build', 'Test'])
-    expect(NAV_ITEMS.map((n) => n.id)).toEqual(['copilot-handoff', 'recipes', 'components', 'projects', 'settings'])
+    expect(NAV_ITEMS.map((n) => n.id)).toEqual([
+      'copilot-handoff',
+      'capabilities',
+      'recipes',
+      'components',
+      'projects',
+      'settings',
+    ])
   })
 
   it('orders legacy step indices monotonically', () => {

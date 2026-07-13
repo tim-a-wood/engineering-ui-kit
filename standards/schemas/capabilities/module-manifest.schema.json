@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/module-manifest.schema.json",
+  "title": "CAP-CONTRACT-003",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "architectureVersion",
+    "moduleId",
+    "moduleVersion",
+    "moduleType",
+    "name",
+    "responsibility",
+    "ownedConcerns",
+    "excludedConcerns",
+    "providedOperations",
+    "requiredOperations",
+    "verificationSuiteIds",
+    "runtimeAllocation",
+    "events",
+    "ownedPaths"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "architectureVersion": {
+      "const": "1.0"
+    },
+    "moduleId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "moduleVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "moduleType": {
+      "enum": [
+        "domain",
+        "workflow",
+        "experience",
+        "connection",
+        "platform"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "responsibility": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ownedConcerns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "excludedConcerns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "providedOperations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "operationId",
+          "contractVersion"
+        ],
+        "properties": {
+          "operationId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "contractVersion": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "requiredOperations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "operationId",
+          "acceptedContractRange",
+          "reason"
+        ],
+        "properties": {
+          "operationId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "acceptedContractRange": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "configurationSchemaRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "verificationSuiteIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "runtimeAllocation": {
+      "enum": [
+        "local-embedded",
+        "external-adapter"
+      ]
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ownedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

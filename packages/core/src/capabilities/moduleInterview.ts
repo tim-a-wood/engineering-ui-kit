@@ -1,0 +1,351 @@
+/**
+ * Type-specific module interviews — CAP-PKT-011 / CAP-GATE-003.
+ * One bounded interview depth and one ModuleManifest schema across types.
+ */
+
+import { diagnostic, sortDiagnostics, type CapDiagnostic } from './diagnostics.js'
+import { evaluateModuleGate, type GateResult } from './gates.js'
+import { buildInterviewPacket } from './packets.js'
+import type { CapabilityWorkspace } from './persistence.js'
+import { validateContractRecord } from './validation.js'
+import type {
+  ArchitectureSpecification,
+  InterviewPacket,
+  ModuleManifest,
+  ModuleType,
+} from './types.js'
+
+export type ModuleInterviewAnswer = {
+  id: string
+  text: string
+  status: 'confirmed' | 'proposed' | 'unresolved'
+}
+
+export type ModuleInterviewResponse = {
+  moduleId: string
+  moduleType: ModuleType
+  name: string
+  moduleVersion?: string
+  responsibility: string
+  ownedConcerns: string[]
+  excludedConcerns: string[]
+  providedOperations: ModuleManifest['providedOperations']
+  requiredOperations?: ModuleManifest['requiredOperations']
+  verificationSuiteIds: string[]
+  runtimeAllocation: ModuleManifest['runtimeAllocation']
+  events?: string[]
+  ownedPaths?: string[]
+  configurationSchemaRef?: string | null
+  /** Type-specific applicable detail answers */
+  answers: ModuleInterviewAnswer[]
+  acceptanceCases?: { id: string; description: string; expectedOutcome: string }[]
+  rules?: { id: string; text: string }[]
+}
+
+export type ModuleInterviewEvaluation = GateResult & {
+  missingApplicableDetailIds: string[]
+  unresolvedDomainQuestionIds: string[]
+  manifest?: ModuleManifest
+}
+
+export type ModuleImportResult = {
+  ok: boolean
+  response?: ModuleInterviewResponse
+  manifest?: ModuleManifest
+  evaluation?: ModuleInterviewEvaluation
+  diagnostics: CapDiagnostic[]
+}
+
+/** Single interview depth — applicable detail IDs per module type. */
+export const MODULE_APPLICABLE_DETAILS: Record<ModuleType, readonly string[]> = {
+  domain: [
+    'responsibility',
+    'exclusions',
+    'vocabulary',
+    'inputs-outputs',
+    'units-ranges',
+    'rules-invariants',
+    'preconditions-postconditions',
+    'exceptional-outcomes',
+    'worked-examples',
+    'sources-assumptions',
+    'required-capabilities',
+  ],
+  workflow: [
+    'responsibility',
+    'exclusions',
+    'trigger-actors',
+    'main-sequence',
+    'alternative-paths',
+    'state-transitions',
+    'cancellation',
+    'partial-failure',
+    'recovery',
+    'permissions',
+    'success-guarantee',
+  ],
+  connection: [
+    'responsibility',
+    'exclusions',
+    'external-system',
+    'available-operations',
+    'io-translation',
+    'environment',
+    'authentication-secrets',
+    'timeouts-cancellation',
+    'failure-behavior',
+    'version-compatibility',
+    'execution-locality',
+    'verification-approach',
+  ],
+  platform: [
+    'responsibility',
+    'exclusions',
+    'storage-location',
+    'retention',
+    'access',
+    'execution-mode',
+    'recovery',
+    'configuration',
+  ],
+  experience: [
+    'responsibility',
+    'exclusions',
+    'supported-workflows',
+    'required-information',
+    'actions-results',
+    'loading-empty-error',
+    'responsive-a11y',
+    'capability-bindings',
+  ],
+} as const
+
+export function applicableDetailsFor(moduleType: ModuleType): readonly string[] {
+  return MODULE_APPLICABLE_DETAILS[moduleType]
+}
+
+export function buildModuleInterviewPacket(input: {
+  packetId: string
+  projectId: string
+  architecture: ArchitectureSpecification
+  moduleId: string
+  moduleType: ModuleType
+  dependencyContractIds?: string[]
+}): InterviewPacket {
+  const details = applicableDetailsFor(input.moduleType)
+  return buildInterviewPacket({
+    packetId: input.packetId,
+    projectId: input.projectId,
+    interviewKind: 'module',
+    gateId: 'CAP-GATE-003',
+    interviewBoundary: `module:${input.moduleType}`,
+    stateLabels: {
+      confirmed: ['architectureAllocation'],
+      proposed: [...details],
+      unresolved: [],
+    },
+    inputContext: {
+      recordIds: [input.architecture.id, input.moduleId],
+      revisions: [input.architecture.revision],
+      hashes: [input.architecture.contentHash],
+      facts: [
+        `moduleType:${input.moduleType}`,
+        `architecture:${input.architecture.id}@${input.architecture.revision}`,
+        ...details.map((d) => `detail:${d}`),
+        ...(input.dependencyContractIds ?? []).map((id) => `contract:${id}`),
+      ],
+      glossary: [],
+    },
+  })
+}
+
+export function missingApplicableDetails(
+  moduleType: ModuleType,
+  answers: ModuleInterviewAnswer[],
+): string[] {
+  const required = applicableDetailsFor(moduleType)
+  const present = new Set(
+    answers.filter((a) => a.status !== 'unresolved' && a.text.trim()).map((a) => a.id),
+  )
+  return required.filter((id) => !present.has(id))
+}
+
+export function unresolvedDomainQuestions(answers: ModuleInterviewAnswer[]): string[] {
+  return answers.filter((a) => a.status === 'unresolved').map((a) => a.id).sort((a, b) => a.localeCompare(b))
+}
+
+export function draftManifestFromResponse(
+  response: ModuleInterviewResponse,
+  architectureVersion: '1.0' = '1.0',
+): ModuleManifest {
+  return {
+    schemaVersion: '1.0',
+    architectureVersion,
+    moduleId: response.moduleId,
+    moduleVersion: response.moduleVersion ?? '1.0.0',
+    moduleType: response.moduleType,
+    name: response.name,
+    responsibility: response.responsibility,
+    ownedConcerns: response.ownedConcerns,
+    excludedConcerns: response.excludedConcerns,
+    providedOperations: response.providedOperations,
+    requiredOperations: response.requiredOperations ?? [],
+    configurationSchemaRef: response.configurationSchemaRef ?? null,
+    verificationSuiteIds: response.verificationSuiteIds,
+    runtimeAllocation: response.runtimeAllocation,
+    events: response.events ?? [],
+    ownedPaths: response.ownedPaths ?? [`capabilities/modules/${response.moduleId}/`],
+  }
+}
+
+export function evaluateModuleInterview(response: ModuleInterviewResponse): ModuleInterviewEvaluation {
+  const missingApplicableDetailIds = missingApplicableDetails(response.moduleType, response.answers)
+  const unresolvedDomainQuestionIds = unresolvedDomainQuestions(response.answers)
+  const manifest = draftManifestFromResponse(response)
+  const gate = evaluateModuleGate(manifest, {
+    unresolvedDomainQuestions: unresolvedDomainQuestionIds,
+    acceptanceCases: response.acceptanceCases,
+    rules: response.rules,
+  })
+
+  const extras: CapDiagnostic[] = []
+  for (const id of missingApplicableDetailIds) {
+    extras.push(
+      diagnostic('CAP-GATE-003-APPLICABLE', 'applicable module interview detail is required', {
+        ruleId: 'CAP-GATE-003',
+        fieldPath: id,
+        relatedIds: [response.moduleId],
+      }),
+    )
+  }
+
+  const diagnostics = sortDiagnostics([...gate.diagnostics, ...extras])
+  return {
+    gateId: 'CAP-GATE-003',
+    passed: diagnostics.length === 0,
+    diagnostics,
+    missingApplicableDetailIds,
+    unresolvedDomainQuestionIds,
+    manifest,
+  }
+}
+
+export function parseModuleInterviewResponse(raw: unknown): {
+  response?: ModuleInterviewResponse
+  diagnostics: CapDiagnostic[]
+} {
+  if (!raw || typeof raw !== 'object') {
+    return {
+      diagnostics: [
+        diagnostic('CAP-MOD-IMPORT-SHAPE', 'module interview response must be a JSON object', {
+          fieldPath: '$',
+        }),
+      ],
+    }
+  }
+  const r = raw as Record<string, unknown>
+  const moduleType = r.moduleType as ModuleType
+  if (!moduleType || !(moduleType in MODULE_APPLICABLE_DETAILS)) {
+    return {
+      diagnostics: [
+        diagnostic('CAP-MOD-IMPORT-TYPE', 'moduleType must be one of domain|workflow|connection|platform|experience', {
+          fieldPath: 'moduleType',
+        }),
+      ],
+    }
+  }
+  if (typeof r.moduleId !== 'string' || !r.moduleId.trim()) {
+    return {
+      diagnostics: [
+        diagnostic('CAP-MOD-IMPORT-ID', 'moduleId is required', { fieldPath: 'moduleId' }),
+      ],
+    }
+  }
+  const response: ModuleInterviewResponse = {
+    moduleId: r.moduleId,
+    moduleType,
+    name: typeof r.name === 'string' ? r.name : r.moduleId,
+    moduleVersion: typeof r.moduleVersion === 'string' ? r.moduleVersion : '1.0.0',
+    responsibility: typeof r.responsibility === 'string' ? r.responsibility : '',
+    ownedConcerns: Array.isArray(r.ownedConcerns) ? (r.ownedConcerns as string[]) : [],
+    excludedConcerns: Array.isArray(r.excludedConcerns) ? (r.excludedConcerns as string[]) : [],
+    providedOperations: Array.isArray(r.providedOperations)
+      ? (r.providedOperations as ModuleManifest['providedOperations'])
+      : [],
+    requiredOperations: Array.isArray(r.requiredOperations)
+      ? (r.requiredOperations as ModuleManifest['requiredOperations'])
+      : [],
+    verificationSuiteIds: Array.isArray(r.verificationSuiteIds)
+      ? (r.verificationSuiteIds as string[])
+      : [],
+    runtimeAllocation:
+      r.runtimeAllocation === 'external-adapter' ? 'external-adapter' : 'local-embedded',
+    events: Array.isArray(r.events) ? (r.events as string[]) : [],
+    ownedPaths: Array.isArray(r.ownedPaths) ? (r.ownedPaths as string[]) : undefined,
+    configurationSchemaRef:
+      r.configurationSchemaRef === null || typeof r.configurationSchemaRef === 'string'
+        ? (r.configurationSchemaRef as string | null)
+        : null,
+    answers: Array.isArray(r.answers) ? (r.answers as ModuleInterviewAnswer[]) : [],
+    acceptanceCases: Array.isArray(r.acceptanceCases)
+      ? (r.acceptanceCases as ModuleInterviewResponse['acceptanceCases'])
+      : undefined,
+    rules: Array.isArray(r.rules) ? (r.rules as ModuleInterviewResponse['rules']) : undefined,
+  }
+  return { response, diagnostics: [] }
+}
+
+export function importModuleInterviewResponse(raw: unknown): ModuleImportResult {
+  const parsed = parseModuleInterviewResponse(raw)
+  if (!parsed.response) {
+    return { ok: false, diagnostics: parsed.diagnostics }
+  }
+  const evaluation = evaluateModuleInterview(parsed.response)
+  const schemaDiagnostics = validateContractRecord('CAP-CONTRACT-003', evaluation.manifest!).map((d) =>
+    diagnostic(d.code, d.message, { fieldPath: d.fieldPath, relatedIds: d.relatedIds }),
+  )
+  const diagnostics = sortDiagnostics([
+    ...parsed.diagnostics,
+    ...evaluation.diagnostics,
+    ...(evaluation.passed ? schemaDiagnostics : []),
+  ])
+  const schemaFailed = evaluation.passed && schemaDiagnostics.length > 0
+  return {
+    ok: evaluation.passed && !schemaFailed,
+    response: parsed.response,
+    manifest: evaluation.manifest,
+    evaluation: schemaFailed
+      ? { ...evaluation, passed: false, diagnostics }
+      : evaluation,
+    diagnostics,
+  }
+}
+
+export function approveModuleIfReady(
+  workspace: CapabilityWorkspace,
+  projectId: string,
+  response: ModuleInterviewResponse,
+):
+  | { ok: true; approved: ModuleManifest; evaluation: ModuleInterviewEvaluation }
+  | { ok: false; evaluation: ModuleInterviewEvaluation } {
+  const evaluation = evaluateModuleInterview(response)
+  if (!evaluation.passed || !evaluation.manifest) return { ok: false, evaluation }
+  const schemaDiagnostics = validateContractRecord('CAP-CONTRACT-003', evaluation.manifest)
+  if (schemaDiagnostics.length) {
+    return {
+      ok: false,
+      evaluation: {
+        ...evaluation,
+        passed: false,
+        diagnostics: sortDiagnostics([
+          ...evaluation.diagnostics,
+          ...schemaDiagnostics.map((d) =>
+            diagnostic(d.code, d.message, { fieldPath: d.fieldPath, relatedIds: d.relatedIds }),
+          ),
+        ]),
+      },
+    }
+  }
+  const approved = workspace.approveModule(projectId, evaluation.manifest)
+  return { ok: true, approved, evaluation }
+}

@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/architecture-specification.schema.json",
+  "title": "CAP-CONTRACT-002",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "id",
+    "revision",
+    "status",
+    "applicationSpecId",
+    "applicationSpecRevision",
+    "applicationSpecHash",
+    "capabilityProjections",
+    "moduleIds",
+    "dependencyEdges",
+    "operationAllocations",
+    "adapterAllocations",
+    "workflowTraces",
+    "proposals",
+    "unresolvedQuestions",
+    "gateResult",
+    "contentHash"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "proposed",
+        "approved",
+        "superseded"
+      ]
+    },
+    "applicationSpecId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "applicationSpecRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "applicationSpecHash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capabilityProjections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "moduleIds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "moduleIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "moduleIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dependencyEdges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "fromModuleId",
+          "toModuleId",
+          "reason"
+        ],
+        "properties": {
+          "fromModuleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "toModuleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "operationAllocations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "operationId",
+          "moduleId"
+        ],
+        "properties": {
+          "operationId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "moduleId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "adapterAllocations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "adapterId",
+          "moduleId",
+          "portId"
+        ],
+        "properties": {
+          "adapterId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "moduleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "portId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "workflowTraces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "useCaseId",
+          "moduleIds"
+        ],
+        "properties": {
+          "useCaseId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "moduleIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "proposals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "unresolvedQuestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "gateResult": {
+      "type": "object",
+      "required": [
+        "gateId",
+        "passed",
+        "diagnostics"
+      ],
+      "properties": {
+        "gateId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "code",
+              "message"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "relatedIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "approvedAt": {
+      "type": "string"
+    },
+    "approvedBy": {
+      "type": "string"
+    },
+    "contentHash": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run-1",
+  "kind": "implementation",
+  "projectId": "proj-1",
+  "targetOwnerId": "mod.domain",
+  "lifecycleState": "packet-exported",
+  "inputRevisions": {},
+  "inputHashes": {},
+  "allowedPaths": [
+    "capabilities/modules/mod.domain/"
+  ],
+  "expectedPaths": [],
+  "protectedPaths": [],
+  "packetRefs": [
+    "pkt-impl"
+  ],
+  "artifactRefs": [],
+  "transitionHistory": [
+    {
+      "at": "2026-07-12T12:00:00.000Z",
+      "actor": "user",
+      "fromState": "ready",
+      "toState": "packet-exported"
+    }
+  ],
+  "createdAt": "2026-07-12T12:00:00.000Z",
+  "updatedAt": "2026-07-12T12:00:00.000Z"
+}

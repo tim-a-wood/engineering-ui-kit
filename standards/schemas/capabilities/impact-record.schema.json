@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/impact-record.schema.json",
+  "title": "CAP-CONTRACT-022",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "changeId",
+    "initiatingRecordId",
+    "initiatingRevision",
+    "classification",
+    "affectedModules",
+    "unaffectedModules",
+    "proposedPacketOrder",
+    "recalculationEvidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "changeId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "initiatingRecordId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "initiatingRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "classification": {
+      "enum": [
+        "implementation-only",
+        "optional-additive",
+        "required-additive",
+        "breaking"
+      ]
+    },
+    "affectedModules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "moduleId",
+          "reason"
+        ],
+        "properties": {
+          "moduleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "unaffectedModules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "moduleId",
+          "reason"
+        ],
+        "properties": {
+          "moduleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "proposedPacketOrder": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "userApproval": {
+      "type": "object",
+      "properties": {
+        "approved": {
+          "type": "boolean"
+        },
+        "at": {
+          "type": "string"
+        },
+        "by": {
+          "type": "string"
+        }
+      }
+    },
+    "recalculationEvidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

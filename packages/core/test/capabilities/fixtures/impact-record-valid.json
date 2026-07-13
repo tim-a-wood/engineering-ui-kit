@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "changeId": "chg-1",
+  "initiatingRecordId": "mod.domain",
+  "initiatingRevision": "2",
+  "classification": "required-additive",
+  "affectedModules": [
+    {
+      "moduleId": "mod.workflow",
+      "reason": "depends"
+    }
+  ],
+  "unaffectedModules": [
+    {
+      "moduleId": "mod.other",
+      "reason": "no edge"
+    }
+  ],
+  "proposedPacketOrder": [
+    "mod.domain",
+    "mod.workflow"
+  ],
+  "recalculationEvidence": [
+    "hash-recalc"
+  ]
+}

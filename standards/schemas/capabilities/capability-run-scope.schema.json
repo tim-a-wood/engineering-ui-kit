@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/capability-run-scope.schema.json",
+  "title": "CAP-CONTRACT-021",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "kind",
+    "projectId",
+    "targetOwnerId",
+    "lifecycleState",
+    "inputRevisions",
+    "inputHashes",
+    "allowedPaths",
+    "expectedPaths",
+    "protectedPaths",
+    "packetRefs",
+    "artifactRefs",
+    "transitionHistory",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "enum": [
+        "interview",
+        "implementation",
+        "delta",
+        "connection",
+        "verification"
+      ]
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "targetOwnerId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lifecycleState": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputRevisions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "inputHashes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "allowedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expectedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "protectedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "packetRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "artifactRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "inspectionRef": {
+      "type": "string"
+    },
+    "applicationRef": {
+      "type": "string"
+    },
+    "verificationRef": {
+      "type": "string"
+    },
+    "transitionHistory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "at",
+          "actor",
+          "fromState",
+          "toState"
+        ],
+        "properties": {
+          "at": {
+            "type": "string",
+            "minLength": 1
+          },
+          "actor": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fromState": {
+            "type": "string",
+            "minLength": 1
+          },
+          "toState": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceRevision": {
+            "type": "string"
+          },
+          "resultRevision": {
+            "type": "string"
+          },
+          "evidenceIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completedAt": {
+      "type": "string"
+    }
+  }
+}

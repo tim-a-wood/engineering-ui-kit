@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "packetId": "pkt-impl",
+  "packetVersion": "1.0",
+  "projectId": "proj-1",
+  "targetKind": "module",
+  "targetId": "mod.domain",
+  "inputHashes": {
+    "spec": "a"
+  },
+  "architectureVersion": "1.0",
+  "architectureHash": "h",
+  "allowedPaths": [
+    "capabilities/modules/mod.domain/"
+  ],
+  "expectedPaths": [
+    "capabilities/modules/mod.domain/module.yaml"
+  ],
+  "protectedPaths": [],
+  "excludedPaths": [
+    "node_modules/"
+  ],
+  "requiredTests": [
+    "suite.domain"
+  ],
+  "acceptanceCases": [
+    {
+      "id": "ac1",
+      "description": "works",
+      "expectedOutcome": "success",
+      "kind": "example"
+    }
+  ],
+  "unchangedBehavior": [
+    "other modules"
+  ],
+  "requiredOutput": "ui-overlay.zip"
+}

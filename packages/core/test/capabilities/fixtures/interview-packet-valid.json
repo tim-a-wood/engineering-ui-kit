@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "packetId": "pkt-i1",
+  "packetVersion": "1.0",
+  "projectId": "proj-1",
+  "interviewKind": "product",
+  "generatedAt": "2026-07-12T12:00:00.000Z",
+  "inputContext": {
+    "recordIds": [],
+    "revisions": [],
+    "hashes": [],
+    "facts": [],
+    "glossary": []
+  },
+  "interviewBoundary": "product",
+  "stateLabels": {
+    "confirmed": [],
+    "proposed": [],
+    "unresolved": []
+  },
+  "outputSchemaRef": "CAP-CONTRACT-001",
+  "outputFileName": "capability-interview-response.json",
+  "gateId": "CAP-GATE-001",
+  "safetyNotes": [
+    "no credentials"
+  ]
+}

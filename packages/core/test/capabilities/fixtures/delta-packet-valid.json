@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "packetId": "pkt-delta",
+  "packetVersion": "1.0",
+  "projectId": "proj-1",
+  "targetKind": "module",
+  "targetId": "mod.domain",
+  "inputHashes": {
+    "spec": "a"
+  },
+  "architectureVersion": "1.0",
+  "architectureHash": "h",
+  "allowedPaths": [
+    "capabilities/modules/mod.domain/"
+  ],
+  "expectedPaths": [],
+  "protectedPaths": [],
+  "excludedPaths": [],
+  "requiredTests": [],
+  "acceptanceCases": [
+    {
+      "id": "ac1",
+      "description": "works",
+      "expectedOutcome": "success",
+      "kind": "example"
+    }
+  ],
+  "unchangedBehavior": [],
+  "requiredOutput": "ui-overlay.zip",
+  "changeReason": "contract bump",
+  "impactRecordId": "imp-1",
+  "previousContractVersions": {
+    "op.1": "1.0.0"
+  },
+  "targetContractVersions": {
+    "op.1": "1.1.0"
+  },
+  "preserveBehavior": [],
+  "addBehavior": [],
+  "changeBehavior": [
+    "output"
+  ],
+  "newTests": [],
+  "unchangedModuleIds": [
+    "mod.other"
+  ]
+}

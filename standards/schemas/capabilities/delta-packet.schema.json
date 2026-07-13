@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/delta-packet.schema.json",
+  "title": "CAP-CONTRACT-016",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "packetId",
+    "packetVersion",
+    "projectId",
+    "targetKind",
+    "targetId",
+    "inputHashes",
+    "architectureVersion",
+    "architectureHash",
+    "allowedPaths",
+    "expectedPaths",
+    "protectedPaths",
+    "excludedPaths",
+    "requiredTests",
+    "acceptanceCases",
+    "unchangedBehavior",
+    "requiredOutput",
+    "changeReason",
+    "impactRecordId",
+    "previousContractVersions",
+    "targetContractVersions",
+    "preserveBehavior",
+    "addBehavior",
+    "changeBehavior",
+    "newTests",
+    "unchangedModuleIds"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "packetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "packetVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "targetKind": {
+      "enum": [
+        "module",
+        "connection"
+      ]
+    },
+    "targetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputHashes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "architectureVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "architectureHash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "allowedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expectedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "protectedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "excludedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "requiredTests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "acceptanceCases": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "unchangedBehavior": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "requiredOutput": {
+      "const": "ui-overlay.zip"
+    },
+    "changeReason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "impactRecordId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "previousContractVersions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "targetContractVersions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "preserveBehavior": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "addBehavior": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "changeBehavior": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "newTests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unchangedModuleIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
