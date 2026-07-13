@@ -22,7 +22,7 @@ function createWindow(): void {
     backgroundColor: '#07111f',
     show: false,
     webPreferences: {
-      preload: path.join(here, 'preload.cjs'),
+      preload: path.join(here, 'preload', 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
