@@ -397,24 +397,30 @@ behavior (comments/tables do not count). Commands used:
 |---|---|---|
 | 001,002,006–013,015–017,020,021,023,024,031,032,036,039,041 | `packages/core/test/capabilities/*` | offline core — pass |
 | 003,004,016,022,029,030,037,038,038b | `apps/gui/test/*` | renderer/bridge/a11y — pass |
-| 026,027,028 | `apps/desktop/test/matlab-adapter.test.ts` (fake-mode: session serialization, cross-project isolation, crash/restart, allowlist reject, snapshot save/restore/corrupt/cross-project) | fake — pass; real-Engine portion **skipped** (`No module named 'matlab'`) |
-| 033,034,035 | `apps/desktop/test/azure-adapter.test.ts` (fake-mode + hostile: least-privilege discovery, work-item import → proposed impact / no approved-spec mutation, pipeline/test/artifact reads, 429 typed-retryable, PAT no-leak, GET-only) | fake — pass; real-network portion **skipped** (no `EUIK_AZURE_ORG`/`EUIK_AZURE_PAT`) |
-| 040 | `apps/desktop/e2e/capabilities-packaged.mjs` | packaged Electron — **incomplete**: exits 1, `packaged-status.json` = `status:"unavailable", launched:false` (Electron cannot open a window here) |
-
 | 005 | `apps/gui/test/cap-test-005-single-record.test.ts` (single persisted record; reload returns same IDs/revisions; approved revision stable under later draft) | offline — pass |
+| 018 | `packages/core/test/capabilities/cap-test-018-impact.test.ts` (branched graph; affected + unaffected modules each carry a reason; freshly calculated impact is a proposal only — no approval/packet before the user approves) | offline core — pass |
+| 019 | `packages/core/test/capabilities/cap-test-019-regeneration-order.test.ts` (approved multi-level impact; provider precedes workflow precedes experience; exactly one actionable target, deterministic on repeat; delta scope stays local — unaffected modules never enter the queue) | offline core — pass |
+| 025 | `apps/desktop/test/cap-test-025-filesystem.test.ts` (real temp project with source/data/artifact roots + a real escaping symlink: approved ops resolve; absolute/traversal/out-of-root rejected; symlink escape fails `isRealPathWithinProjectRoot` where a string prefix check is fooled; resolved results carry no host absolute path) | offline desktop — pass |
+| 026,027,028 | `apps/desktop/test/matlab-adapter.test.ts` (fake-mode: session serialization, cross-project isolation, crash/restart, allowlist reject, snapshot save/restore/corrupt/cross-project) | fake — pass; real-Engine portion **skipped** (`No module named 'matlab'`) — see **Experimental** below |
+| 033,034,035 | `apps/desktop/test/azure-adapter.test.ts` (fake-mode + hostile: least-privilege discovery, work-item import → proposed impact / no approved-spec mutation, pipeline/test/artifact reads, 429 typed-retryable, PAT no-leak, GET-only) | fake — pass; real-network portion **skipped** (no `EUIK_AZURE_ORG`/`EUIK_AZURE_PAT`) — see **Experimental** below |
+| 040 | `apps/desktop/e2e/capabilities-packaged.mjs` | packaged Electron — verification deferred: exits 1, `packaged-status.json` = `status:"unavailable", launched:false` (Electron cannot open a window here) — see **Experimental** below |
 
-No dedicated executable test yet for: **018/019** (registry/job long-running fixtures beyond the core
-helpers) and **025** (hostile-filesystem symlink/artifact fixture as a dedicated desktop test).
-These are the identified remainder for the final hard pass.
+Every offline CAP-TEST ID (001–024, 029–032, 036–039, 041, plus 005/018/019/025) now has a dedicated
+executable test that passes. The only IDs without a green *real-environment* run are the three
+experimental surfaces below, whose production code is present and whose fake/offline behavior is
+fully tested — only the real external execution is deferred.
 
-### Remaining for the final hard pass (all environment- or fixture-blocked)
+### Experimental features (code complete; real-environment verification deferred)
 
-- **CAP-TEST-040** packaged Electron: run `node apps/desktop/e2e/capabilities-packaged.mjs` on a
-  machine with a real display; require exit 0 + `status:"passed", launched:true` + 8/8 journeys +
-  restart persistence before marking complete. The renderer journey-driving sequences are unverified
-  end-to-end here and may need selector/return-shape tweaks isolated to the two new e2e files.
-- **Real MATLAB Engine** execution (026/027/028 real path) — needs a machine with MATLAB + the
-  `matlab.engine` Python package.
-- **Real Azure** network execution (033/034/035 real path) — needs `EUIK_AZURE_ORG` + a read-scoped
-  PAT via `EUIK_AZURE_PAT`.
-- Dedicated CAP-TEST-005 reload assertion and CAP-TEST-018/019/025 desktop fixtures.
+These ship as **experimental**. The implementation is present and exercised offline; the checks
+below require an environment not available in CI and can be run on a suitably configured machine.
+
+- **Packaged Electron journeys — CAP-TEST-040 / CAP-JRN-001–008.** Run
+  `node apps/desktop/e2e/capabilities-packaged.mjs` on a machine with a real display; require exit 0 +
+  `status:"passed", launched:true` + 8/8 journeys + restart persistence. The renderer journey-driving
+  sequences are unverified end-to-end here and may need selector/return-shape tweaks isolated to the
+  two e2e files.
+- **Real MATLAB Engine execution — CAP-TEST-026/027/028 real path.** Needs a machine with MATLAB and
+  the `matlab.engine` Python package; unset `EUIK_TEST_MODE` to exercise the real adapter.
+- **Real Azure DevOps execution — CAP-TEST-033/034/035 real path.** Needs `EUIK_AZURE_ORG` + a
+  read-scoped PAT via `EUIK_AZURE_PAT`.

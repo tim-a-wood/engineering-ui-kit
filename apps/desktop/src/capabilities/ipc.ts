@@ -33,6 +33,7 @@ import {
   rebuildRegistry,
   resolveProvider,
   resolveProjectRelativePath,
+  isRealPathWithinProjectRoot,
   successResult,
   technicalFailureResult,
   sanitizeBoundaryError,
@@ -935,7 +936,7 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
         ) satisfies ResultEnvelope
       }
       const abs = path.resolve(project.repoPath, resolved.relativePath)
-      if (!abs.startsWith(path.resolve(project.repoPath) + path.sep)) {
+      if (!isRealPathWithinProjectRoot(project.repoPath, abs)) {
         throw new Error('path escaped project root')
       }
       const content = fs.readFileSync(abs)
@@ -986,7 +987,13 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
         )
       }
       const abs = path.resolve(project.repoPath, resolved.relativePath)
+      if (!isRealPathWithinProjectRoot(project.repoPath, abs)) {
+        throw new Error('path escaped project root')
+      }
       fs.mkdirSync(path.dirname(abs), { recursive: true })
+      if (!isRealPathWithinProjectRoot(project.repoPath, abs)) {
+        throw new Error('path escaped project root')
+      }
       fs.writeFileSync(abs, input.text)
       return successResult(
         { relativePath: resolved.relativePath },

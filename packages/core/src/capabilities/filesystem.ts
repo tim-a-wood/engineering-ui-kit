@@ -2,6 +2,7 @@
  * Project-relative filesystem policy helpers (CAP-PKT-019 core portion).
  */
 
+import fs from 'node:fs'
 import path from 'node:path'
 import { diagnostic, sortDiagnostics, type CapDiagnostic } from './diagnostics.js'
 
@@ -64,9 +65,37 @@ export function resolveProjectRelativePath(
   return { ok: false, diagnostics: sortDiagnostics(diagnostics) }
 }
 
-/** Ensure a resolved real path stays within projectRoot (symlink-safe check helper). */
+/** Ensure a resolved real path stays within projectRoot (string prefix check helper). */
 export function isWithinProjectRoot(projectRoot: string, resolvedPath: string): boolean {
   const root = path.resolve(projectRoot)
   const target = path.resolve(resolvedPath)
   return target === root || target.startsWith(root + path.sep)
+}
+
+/**
+ * Symlink-safe containment (CAP-TEST-025). Resolves the on-disk real path of `absPath` — or, when
+ * the leaf does not yet exist, its nearest existing ancestor — and confirms it stays within the
+ * real project root. A pure string prefix check (see `isWithinProjectRoot`) passes a symlink that
+ * points outside the project because `path.resolve` does not follow links; this does not.
+ */
+export function isRealPathWithinProjectRoot(projectRoot: string, absPath: string): boolean {
+  let realRoot: string
+  try {
+    realRoot = fs.realpathSync(path.resolve(projectRoot))
+  } catch {
+    return false
+  }
+  let probe = path.resolve(absPath)
+  while (!fs.existsSync(probe)) {
+    const parent = path.dirname(probe)
+    if (parent === probe) return false
+    probe = parent
+  }
+  let realTarget: string
+  try {
+    realTarget = fs.realpathSync(probe)
+  } catch {
+    return false
+  }
+  return realTarget === realRoot || realTarget.startsWith(realRoot + path.sep)
 }
