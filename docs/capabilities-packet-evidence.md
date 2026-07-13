@@ -386,8 +386,35 @@ Executable evidence (2026-07-13):
 Note: remaining `fake-boundary` string matches in the repo are confined to the adapters' explicit
 fake-worker code and the renderer mock double — the real desktop handlers no longer return it.
 
-Still not complete (require unavailable environment):
+## Executable-test audit (2026-07-13)
 
-- Packaged Electron CAP-TEST-040 / CAP-JRN-001–008 (packaged Electron launch not available here).
-- Real MATLAB Engine execution (no MATLAB install) and real Azure network execution (no org/PAT) —
-  production code present; real integration tests skip with exact reasons.
+A CAP-TEST ID is counted below only when an actual executable test exercises the required
+behavior (comments/tables do not count). Commands used:
+`npm test -w packages/core`, `npm test -w apps/gui`, `npx vitest run apps/desktop/test/`,
+`node apps/desktop/e2e/capabilities-packaged.mjs`.
+
+| ID | Executable evidence | Kind |
+|---|---|---|
+| 001,002,006–013,015–017,020,021,023,024,031,032,036,039,041 | `packages/core/test/capabilities/*` | offline core — pass |
+| 003,004,016,022,029,030,037,038,038b | `apps/gui/test/*` | renderer/bridge/a11y — pass |
+| 026,027,028 | `apps/desktop/test/matlab-adapter.test.ts` (fake-mode: session serialization, cross-project isolation, crash/restart, allowlist reject, snapshot save/restore/corrupt/cross-project) | fake — pass; real-Engine portion **skipped** (`No module named 'matlab'`) |
+| 033,034,035 | `apps/desktop/test/azure-adapter.test.ts` (fake-mode + hostile: least-privilege discovery, work-item import → proposed impact / no approved-spec mutation, pipeline/test/artifact reads, 429 typed-retryable, PAT no-leak, GET-only) | fake — pass; real-network portion **skipped** (no `EUIK_AZURE_ORG`/`EUIK_AZURE_PAT`) |
+| 040 | `apps/desktop/e2e/capabilities-packaged.mjs` | packaged Electron — **incomplete**: exits 1, `packaged-status.json` = `status:"unavailable", launched:false` (Electron cannot open a window here) |
+
+| 005 | `apps/gui/test/cap-test-005-single-record.test.ts` (single persisted record; reload returns same IDs/revisions; approved revision stable under later draft) | offline — pass |
+
+No dedicated executable test yet for: **018/019** (registry/job long-running fixtures beyond the core
+helpers) and **025** (hostile-filesystem symlink/artifact fixture as a dedicated desktop test).
+These are the identified remainder for the final hard pass.
+
+### Remaining for the final hard pass (all environment- or fixture-blocked)
+
+- **CAP-TEST-040** packaged Electron: run `node apps/desktop/e2e/capabilities-packaged.mjs` on a
+  machine with a real display; require exit 0 + `status:"passed", launched:true` + 8/8 journeys +
+  restart persistence before marking complete. The renderer journey-driving sequences are unverified
+  end-to-end here and may need selector/return-shape tweaks isolated to the two new e2e files.
+- **Real MATLAB Engine** execution (026/027/028 real path) — needs a machine with MATLAB + the
+  `matlab.engine` Python package.
+- **Real Azure** network execution (033/034/035 real path) — needs `EUIK_AZURE_ORG` + a read-scoped
+  PAT via `EUIK_AZURE_PAT`.
+- Dedicated CAP-TEST-005 reload assertion and CAP-TEST-018/019/025 desktop fixtures.
