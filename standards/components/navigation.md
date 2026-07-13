@@ -26,7 +26,7 @@ The command action bar shall group task actions by consequence. Primary, seconda
 
 ## Tabs and Local Navigation
 
-Tabs may switch local panels inside a page. Tabs shall expose selected state and shall not be used for workflow steps that require completion state; use a step indicator for that.
+Tabs may switch local panels inside a page. Tabs shall expose selected state. Do not add a step indicator when a workflow has only two named modes and the page title already identifies the current mode; use a quiet labeled arrow transition in the page header.
 
 ## Navigation State
 
@@ -41,6 +41,8 @@ Use landmarks, lists, buttons, links, or tabs according to behavior. Do not rend
 - Persistent primary navigation with a clear active item.
 - Page header with title, metadata, and command bar.
 - Breadcrumbs on detail pages with deep hierarchy.
+- Canvas-first project lists where the full row navigates.
+- Page title with one unboxed semantic icon and a quiet paired-mode transition.
 
 ## Rejected Navigation Patterns
 
@@ -48,6 +50,8 @@ Use landmarks, lists, buttons, links, or tabs according to behavior. Do not rend
 - Duplicate navigation regions with conflicting active states.
 - Icon-only navigation with no accessible names.
 - Hidden primary commands inside unrelated menus.
+- Duplicate Build/Test controls in both global and page navigation.
+- Redundant Continue buttons inside already-clickable project rows.
 
 
 ## CMP-SHELL-APP — App Shell

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAVE</title>
+  <link rel="manifest" href="/ApplicationManifest.webmanifest">
+  <link rel="stylesheet" href="/static/styles/tokens.css?v=euik-visual-2">
+  <link rel="stylesheet" href="/ApplicationStyles.css?v=euik-visual-2">
+  <link rel="stylesheet" href="/ParameterOverridesModal.css?v=pave-param-overrides-modal-20260621-4">
+  <link rel="stylesheet" href="/SignalResultsExecutionOverlay.css?v=pave-signal-results-execution-20260621-1">
+  <style>#app{min-height:60vh}</style>
+</head>
+<body data-testid="app-shell">
+  <noscript>JavaScript is required to configure custom permutations.</noscript>
+  <div id="app" data-testid="app-shell"></div>
+  <section id="error-panel" data-testid="global-error" hidden></section>
+  <aside id="shell-bridge-mounts" class="shell-bridge-mounts visually-hidden" aria-hidden="true">
+    <h1 id="app-title">PAVE</h1>
+    <div id="server-status" data-testid="matlab-worker-status"></div>
+    <div id="package-context" data-testid="package-summary">No Test Package Open</div>
+    <button id="create-package-button" type="button" hidden></button>
+    <button id="action-refresh-summary" type="button" hidden></button>
+    <button id="action-create-test-set" type="button" data-testid="test-set-create-button" hidden></button>
+    <button id="action-duplicate-test-set" type="button" data-testid="test-set-duplicate-button" hidden></button>
+    <button id="action-rename-test-set" type="button" data-testid="test-set-rename-button" hidden></button>
+    <button id="action-delete-test-set" type="button" data-testid="test-set-delete-button" hidden></button>
+    <section id="package-summary-panel" data-testid="package-summary"></section>
+    <section id="test-set-list-panel" data-testid="test-set-list"></section>
+    <section id="job-panel" hidden></section>
+  </aside>
+  <div id="custom-permutation-modal" hidden>
+    <div id="parameter-selection-list"></div>
+    <table id="import-test-inputs-preview-table" class="permutation-preview-table"></table>
+    <button id="apply-custom-permutations-button" type="button">Apply Generated Inputs</button>
+  </div>
+  <script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      regs.forEach(function(reg) { reg.unregister(); });
+    }).catch(function() {});
+  }
+  </script>
+  <script src="/ApplicationController.js?v=pave-app-controller-context-20260623-1"></script>
+  <script src="/ParameterOverridesModal.js?v=pave-param-overrides-modal-20260621-4"></script>
+  <script src="/SignalResultsExecutionOverlay.js?v=pave-signal-results-execution-20260621-1"></script>
+</body>
+</html>

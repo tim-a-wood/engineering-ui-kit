@@ -83,20 +83,25 @@ export type EuikBridge = {
   updateRun(runId: string, patch: Partial<HandoffRun>): Promise<HandoffRun>
   pickDirectory(): Promise<string | undefined>
   pickZipFile(): Promise<string | undefined>
+  addReferenceFile(runId: string, sourcePath?: string): Promise<{ path: string; name: string } | undefined>
+  getDroppedFilePath(file: File): string
   prepareContext(runId: string): Promise<PrepareContextResult>
   buildPacket(runId: string, fields: TaskPacketFields): Promise<BuildPacketResult>
   getArtifactText(runId: string, fileName: string): Promise<string>
   inspectOverlay(runId: string, zipPath: string): Promise<OverlayInspectionSummary>
   applyOverlay(runId: string, acceptWarnings: boolean): Promise<AppliedFiles>
   runVerification(runId: string, labels: string[]): Promise<VerificationResult[]>
+  installDependencies(runId: string): Promise<VerificationResult>
   saveFeedback(runId: string, text: string): Promise<HandoffRun>
   buildReviewPacket(runId: string): Promise<ReviewPacketResult>
   captureEvidence(runId: string, phase: 'before' | 'after'): Promise<EvidenceCapture>
   getEvidence(runId: string): Promise<RunEvidence>
+  captureProjectThumbnail(projectId: string): Promise<string | undefined>
   startUploadDrag(runId: string): Promise<void>
   copyUploadSet(runId: string): Promise<{ files: number }>
   launchApp(projectId: string, options?: { open?: boolean }): Promise<{ url: string; started: boolean; rebuilt: boolean }>
   openExternal(url: string): Promise<void>
+  openPath(path: string): Promise<void>
   showInFolder(path: string): Promise<void>
 }
 

@@ -37,7 +37,7 @@ Dark mode is normative. Implementations shall begin from the dark semantic token
 
 ## FND-PRI-003 — Dense but readable
 
-The UI shall support compact engineering information without becoming cramped. Density shall be created with predictable spacing, bounded panels, hierarchy, tables, and concise labels, not by shrinking text until metadata becomes unreadable.
+The UI shall support compact engineering information without becoming cramped. Density shall be created with predictable spacing, typography, hairline dividers, selectively bounded tools, tables, and concise labels—not by shrinking text or placing every region in a panel.
 
 ## FND-PRI-004 — Stable contracts over one-off styling
 

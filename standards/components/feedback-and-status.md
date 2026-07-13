@@ -498,10 +498,10 @@ Implementation agents shall keep `CMP-STATUS-JOB-INDICATOR` stable, preserve dar
 CMP-WORKFLOW-STEP-INDICATOR defines visible progress through a multi-step workflow. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
 
 ### When to use
-Use step indicator when the interface needs visible progress through a multi-step workflow.
+Use a step indicator when the interface has three or more genuinely sequential, validation-gated phases and visible completion state materially aids orientation.
 
 ### When not to use
-Avoid step indicator when a simpler native element or existing component communicates the same intent with less complexity.
+Avoid a step indicator for two related modes, simple pages, local tabs, or when page titles and a labeled transition communicate the state with less complexity.
 
 ### Anatomy
 Use the smallest anatomy that preserves clarity: a visible label or heading where applicable, a bounded content region, explicit state indicators, and actions grouped by consequence. Icon-only affordances shall have accessible names.

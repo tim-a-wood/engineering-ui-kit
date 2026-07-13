@@ -5,7 +5,7 @@
  * the new feedback and iteration constraints in place — and the exported
  * packet must carry all of it.
  *
- * Run against a workspace whose newest open run sits at Verify & Review
+ * Run against a workspace whose newest open run sits at Test
  * (e.g. EXPERIMENT=launch-fix PASS=launch-fix).
  */
 
@@ -21,7 +21,7 @@ const { app, page, shot, waitForStatus } = await launchWorkbench()
 
 await page.getByRole('heading', { name: 'Copilot Handoff Hub' }).waitFor()
 await page.getByRole('button', { name: /^Continue/ }).click()
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 
 // ---- save fresh feedback ----------------------------------------------------
 await page.getByRole('button', { name: 'Add Feedback Manually' }).click()

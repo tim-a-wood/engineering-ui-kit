@@ -10,7 +10,7 @@ const { app, page, shot, waitForStatus } = await launchWorkbench()
 
 await page.getByRole('heading', { name: 'Copilot Handoff Hub' }).waitFor()
 await page.getByRole('button', { name: /^Continue/ }).click()
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 
 await page.getByRole('button', { name: /^(Run checks|Re-run checks)$/ }).click()
 await waitForStatus(/All checks passed/, { timeout: 300_000 })

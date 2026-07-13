@@ -1,5 +1,5 @@
 /**
- * Validate F29: the Verify & Review step rebuilt as a preview-centric cockpit.
+ * Validate F29: the Test step rebuilt as a preview-centric cockpit.
  *
  * Asserts the full loop the redesign promises:
  *  1. Health checks run autonomously on arrival (no clicks) and the toolbar
@@ -42,7 +42,7 @@ console.log(`pinned run ${path.basename(path.dirname(aeroPlan.p))} (project ${ae
 const { app, page, shot } = await launchWorkbench()
 await page.getByRole('heading', { name: 'Copilot Handoff Hub' }).waitFor()
 await page.getByRole('button', { name: /^Continue/ }).first().click()
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 
 // 1 · Autonomous health checks: the chip must reach a verdict without clicks.
 const checksChip = page.locator('.review-chip', { hasText: /^Checks/ })

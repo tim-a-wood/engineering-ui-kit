@@ -2847,10 +2847,10 @@
       ],
       "description": "visible progress through a multi-step workflow.",
       "useWhen": [
-        "Use step indicator when the interface needs visible progress through a multi-step workflow."
+        "Use a step indicator for three or more genuinely sequential, validation-gated phases when visible completion state materially aids orientation."
       ],
       "avoidWhen": [
-        "Avoid step indicator when a simpler native element or existing component communicates the same intent with less complexity."
+        "Avoid step indicators for two related modes, simple pages, local tabs, or when page titles and a labeled transition communicate state with less complexity."
       ],
       "variants": [
         "horizontal",

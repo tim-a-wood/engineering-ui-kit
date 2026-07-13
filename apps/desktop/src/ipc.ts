@@ -3,7 +3,7 @@
  * child processes, or persistence — always through @engineering-ui-kit/core.
  */
 
-import { app, clipboard, dialog, ipcMain, nativeImage, shell, type BrowserWindow } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawn, type ChildProcess } from 'node:child_process'
@@ -172,9 +172,9 @@ function runOnce(command: string, cwd: string, timeoutMs: number): Promise<void>
 }
 
 /** The files a run uploads to Copilot: flatfile + combined pack (legacy: split packs). */
-function resolveUploadSet(run: { repoFlatfilePath?: string; taskAndStandardPackPath?: string; taskPacketPath?: string; standardPackPath?: string }): string[] {
+function resolveUploadSet(run: { repoFlatfilePath?: string; taskAndStandardPackPath?: string; taskPacketPath?: string; standardPackPath?: string; visualReferencePackPath?: string }): string[] {
   const candidates = run.taskAndStandardPackPath
-    ? [run.repoFlatfilePath, run.taskAndStandardPackPath]
+    ? [run.repoFlatfilePath, run.taskAndStandardPackPath, run.visualReferencePackPath]
     : [run.repoFlatfilePath, run.taskPacketPath, run.standardPackPath]
   const existing = candidates.filter((p): p is string => Boolean(p && fs.existsSync(p)))
   if (existing.length === 0) {
@@ -184,7 +184,8 @@ function resolveUploadSet(run: { repoFlatfilePath?: string; taskAndStandardPackP
 }
 
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataDir?: string): Workspace {
-  const workspace = new Workspace(dataDir ?? path.join(app.getPath('userData'), 'workspace'))
+  const workspaceRoot = dataDir ?? path.join(app.getPath('userData'), 'workspace')
+  const workspace = new Workspace(workspaceRoot)
   seedSampleProject(workspace)
   app.on('will-quit', () => {
     for (const child of launchedApps.values()) killLaunchedApp(child)
@@ -203,10 +204,20 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     if (!input.repoPath?.trim() || !fs.existsSync(input.repoPath)) {
       throw new Error('repository path does not exist')
     }
+    const usedPorts = new Set(workspace.listProjects().flatMap((project) => {
+      try {
+        const port = new URL(project.launchUrl ?? '').port
+        return port ? [Number(port)] : []
+      } catch { return [] }
+    }))
+    let previewPort = 4180
+    while (usedPorts.has(previewPort)) previewPort += 1
     return workspace.createProject({
       name: input.name.trim(),
       repoPath: input.repoPath,
       status: 'active',
+      launchUrl: `http://127.0.0.1:${previewPort}`,
+      launchCommand: 'npm run build && npm start',
       ...(input.description ? { description: input.description } : {}),
       verificationCommands: { typecheck: 'npm run typecheck', build: 'npm run build' },
     })
@@ -242,6 +253,26 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       filters: [{ name: 'Zip overlay', extensions: ['zip'] }],
     })
     return result.canceled ? undefined : result.filePaths[0]
+  })
+  ipcMain.handle(BRIDGE_CHANNELS.addReferenceFile, async (_event, runId: string, sourcePath?: string) => {
+    if (!workspace.getRun(runId)) throw new Error(`run not found: ${runId}`)
+    let selected = sourcePath
+    if (!selected) {
+      if (testMode) selected = process.env['EUIK_TEST_PICK_REFERENCE']
+      else {
+        const window = getWindow()
+        if (!window) return undefined
+        const result = await dialog.showOpenDialog(window, { properties: ['openFile'] })
+        selected = result.canceled ? undefined : result.filePaths[0]
+      }
+    }
+    if (!selected) return undefined
+    if (!fs.existsSync(selected) || !fs.statSync(selected).isFile()) throw new Error('reference must be an existing file')
+    const name = path.basename(selected)
+    const target = path.join(workspace.runDir(runId), `reference-${name}`)
+    fs.copyFileSync(selected, target)
+    workspace.updateRun(runId, { visualReferencePackPath: target, uploadSetType: 'visual' })
+    return { path: target, name }
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.prepareContext, (_e, runId: string): PrepareContextResult => {
@@ -279,6 +310,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       throw new Error('prepare context before building the task packet')
     }
     for (const [key, value] of Object.entries(fields)) {
+      if (key === 'references') continue
       if (!String(value ?? '').trim()) throw new Error(`required packet field is empty: ${key}`)
     }
 
@@ -305,7 +337,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       generatedAt,
       ...(reviewerFeedback ? { reviewerFeedback } : {}),
     })
-    const standardPackText = buildStandardPackMarkdown({ standardsVersion: '0.4.0', generatedAt })
+    const standardPackText = buildStandardPackMarkdown({ standardsVersion: '0.5.0', generatedAt })
 
     const taskPacketPath = path.join(runDir, 'task-packet.md')
     const standardPackPath = path.join(runDir, 'standard-pack.md')
@@ -317,7 +349,8 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     const taskAndStandardPackPath = path.join(runDir, 'task-and-standard-pack.md')
     fs.writeFileSync(taskAndStandardPackPath, `${taskPacketText}\n\n---\n\n${standardPackText}`)
 
-    const uploadPaths = [run.repoFlatfilePath, taskAndStandardPackPath]
+    const uploadPaths = [run.repoFlatfilePath, taskAndStandardPackPath, run.visualReferencePackPath]
+      .filter((filePath): filePath is string => Boolean(filePath))
     const manifest = buildPacketManifest(uploadPaths)
     const recommendedPrompt = buildRecommendedPrompt({
       targetApplication: project.name,
@@ -352,11 +385,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     }
   })
 
-  // Read a named artifact from a run directory (basename only — no path escape).
+  // Read a run artifact, including safe nested verification logs.
   ipcMain.handle(BRIDGE_CHANNELS.getArtifactText, (_e, runId: string, fileName: string): string => {
     if (!workspace.getRun(runId)) throw new Error(`run not found: ${runId}`)
-    if (path.basename(fileName) !== fileName) throw new Error('artifact name must be a bare filename')
-    const filePath = path.join(workspace.runDir(runId), fileName)
+    const normalized = path.normalize(fileName)
+    if (path.isAbsolute(normalized) || normalized.startsWith('..') || normalized.includes(`..${path.sep}`)) {
+      throw new Error('artifact path must stay inside the run directory')
+    }
+    const filePath = path.join(workspace.runDir(runId), normalized)
     if (!fs.existsSync(filePath)) throw new Error(`artifact not found: ${fileName}`)
     return fs.readFileSync(filePath, 'utf8')
   })
@@ -451,7 +487,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
         taskTitle: run.taskTitle ?? 'UI transformation',
         acceptanceCriteria: acceptance,
         standardsPackage: 'engineering-ui-kit',
-        standardsVersion: '0.4.0',
+        standardsVersion: '0.5.0',
         generatedAt,
         views: sheetViews,
         changedFiles: changedFiles.map((f) => ({ relativePath: f.relativePath, action: f.action, sizeBytes: f.sizeBytes })),
@@ -542,6 +578,40 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     }
   })
 
+  ipcMain.handle(BRIDGE_CHANNELS.captureProjectThumbnail, async (_e, projectId: string): Promise<string | undefined> => {
+    const project = requireProject(workspace, projectId)
+    if (!project.launchUrl) return undefined
+    const thumbnailDir = path.join(workspaceRoot, 'thumbnails')
+    const thumbnailPath = path.join(thumbnailDir, `${projectId}.png`)
+    const cached = (): string | undefined => fs.existsSync(thumbnailPath)
+      ? `data:image/png;base64,${fs.readFileSync(thumbnailPath).toString('base64')}`
+      : undefined
+    try {
+      const fresh = fs.existsSync(thumbnailPath) && Date.now() - fs.statSync(thumbnailPath).mtimeMs < 30 * 60 * 1000
+      if (fresh) return cached()
+      if (!(await probeUrl(project.launchUrl, 1_500))) return cached()
+      const previewWindow = new BrowserWindow({
+        show: false,
+        width: 960,
+        height: 600,
+        webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true },
+      })
+      try {
+        await previewWindow.loadURL(project.launchUrl)
+        await new Promise((resolve) => setTimeout(resolve, 600))
+        const image = await previewWindow.webContents.capturePage()
+        const resized = image.resize({ width: 480, height: 300, quality: 'good' })
+        fs.mkdirSync(thumbnailDir, { recursive: true })
+        fs.writeFileSync(thumbnailPath, resized.toPNG())
+        return `data:image/png;base64,${resized.toPNG().toString('base64')}`
+      } finally {
+        previewWindow.destroy()
+      }
+    } catch {
+      return cached()
+    }
+  })
+
   ipcMain.handle(BRIDGE_CHANNELS.inspectOverlay, (_e, runId: string, zipPath: string): OverlayInspectionSummary => {
     const run = workspace.getRun(runId)
     if (!run) throw new Error(`run not found: ${runId}`)
@@ -592,7 +662,38 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     const settings = workspace.getSettings()
     const results: VerificationResult[] = []
     const outputDir = path.join(workspace.runDir(runId), 'verification')
-    for (const label of labels) {
+    fs.mkdirSync(outputDir, { recursive: true })
+    const packagePath = path.join(project.repoPath, 'package.json')
+    const nodeModulesPath = path.join(project.repoPath, 'node_modules')
+    const readinessIssues: string[] = []
+    if (!fs.existsSync(packagePath)) readinessIssues.push('package.json is missing from the selected project folder.')
+    if (fs.existsSync(packagePath) && !fs.existsSync(nodeModulesPath)) readinessIssues.push('Project dependencies are not installed (node_modules is missing).')
+    if (readinessIssues.length > 0) {
+      const now = new Date().toISOString()
+      const logPath = path.join(outputDir, 'project-setup.combined.log')
+      fs.writeFileSync(logPath, [
+        'Project setup required',
+        '',
+        ...readinessIssues.map((issue) => `- ${issue}`),
+        '',
+        fs.existsSync(packagePath)
+          ? 'Install dependencies with the package manager for this project, then run the checks again.'
+          : 'Choose the application project folder rather than an extracted overlay or archive folder.',
+      ].join('\n'))
+      results.push({
+        runId,
+        commandLabel: 'project-setup',
+        commandText: 'Project readiness check',
+        workingDirectory: project.repoPath,
+        startedAt: now,
+        endedAt: now,
+        exitCode: null,
+        status: 'failed',
+        combinedOutputPath: logPath,
+        wasCancelledByUser: false,
+      })
+    }
+    for (const label of readinessIssues.length > 0 ? [] : labels) {
       const commandText = commands[label as keyof typeof commands]
       if (!commandText) continue
       results.push(await runCommand({
@@ -604,9 +705,35 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
         outputDir,
       }))
     }
-    const resultPaths = results.map((r, i) => workspace.saveRunArtifact(runId, `verification-result-${labels[i]}.json`, r))
+    const resultPaths = results.map((r) => workspace.saveRunArtifact(runId, `verification-result-${r.commandLabel}.json`, r))
     workspace.updateRun(runId, { verificationResultPaths: resultPaths })
     return results
+  })
+
+  ipcMain.handle(BRIDGE_CHANNELS.installDependencies, async (_e, runId: string): Promise<VerificationResult> => {
+    const run = workspace.getRun(runId)
+    if (!run) throw new Error(`run not found: ${runId}`)
+    const project = requireProject(workspace, run.projectId)
+    if (!fs.existsSync(path.join(project.repoPath, 'package.json'))) {
+      throw new Error('Cannot install dependencies because package.json is missing from the selected project folder.')
+    }
+    const commandText = fs.existsSync(path.join(project.repoPath, 'pnpm-lock.yaml'))
+      ? 'pnpm install --frozen-lockfile'
+      : fs.existsSync(path.join(project.repoPath, 'yarn.lock'))
+        ? 'yarn install --frozen-lockfile'
+        : fs.existsSync(path.join(project.repoPath, 'package-lock.json'))
+          ? 'npm ci'
+          : 'npm install'
+    const result = await runCommand({
+      runId,
+      commandLabel: 'install-dependencies',
+      commandText,
+      workingDirectory: project.repoPath,
+      timeoutMs: workspace.getSettings().defaultCommandTimeoutMinutes * 60 * 1000,
+      outputDir: path.join(workspace.runDir(runId), 'verification'),
+    })
+    workspace.saveRunArtifact(runId, 'dependency-install-result.json', result)
+    return result
   })
 
   // A: native drag-out — the renderer's dragstart hands the drag session to
@@ -640,22 +767,43 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
   ipcMain.handle(BRIDGE_CHANNELS.launchApp, async (_e, projectId: string, options?: { open?: boolean }): Promise<{ url: string; started: boolean; rebuilt: boolean }> => {
     const project = requireProject(workspace, projectId)
     if (!project.launchUrl) throw new Error('no launch URL configured for this project')
+    if (fs.existsSync(path.join(project.repoPath, 'package.json')) && !fs.existsSync(path.join(project.repoPath, 'node_modules'))) {
+      throw new Error('Project setup required: dependencies are not installed. Install them with the project package manager, then retry the preview.')
+    }
     let started = false
     let rebuilt = false
-    if (!(await probeUrl(project.launchUrl, 1_500))) {
+    let launchUrl = project.launchUrl
+    const managedProcess = launchedApps.get(projectId)
+    const sharesUrl = workspace.listProjects().some((candidate) => candidate.id !== projectId && candidate.launchUrl === launchUrl)
+    const defaultManagedLaunch = project.launchCommand === 'npm run build && npm start'
+    if (defaultManagedLaunch && sharesUrl && (!managedProcess || managedProcess.exitCode !== null)) {
+      const configuredPorts = new Set(workspace.listProjects().flatMap((candidate) => {
+        try {
+          const port = new URL(candidate.launchUrl ?? '').port
+          return port ? [Number(port)] : []
+        } catch { return [] }
+      }))
+      let port = 4180
+      while (configuredPorts.has(port) || await probeUrl(`http://127.0.0.1:${port}`, 250)) port += 1
+      launchUrl = `http://127.0.0.1:${port}`
+      workspace.updateProject(projectId, { launchUrl })
+    }
+    if (!(await probeUrl(launchUrl, 1_500))) {
       if (!project.launchCommand) {
         throw new Error(`nothing is serving ${project.launchUrl} and no launch command is configured — start your dev server first`)
       }
       const existing = launchedApps.get(projectId)
       if (!existing || existing.exitCode !== null) {
+        const launchPort = new URL(launchUrl).port
         launchedApps.set(projectId, spawn(project.launchCommand, {
           cwd: project.repoPath,
           shell: true,
           detached: process.platform !== 'win32',
           stdio: 'ignore',
+          env: { ...process.env, ...(launchPort ? { PORT: launchPort } : {}) },
         }))
       }
-      await waitUntilReachable(project.launchUrl, 45_000)
+      await waitUntilReachable(launchUrl, 45_000)
       started = true
     } else {
       // Server already running. A build-and-serve app serves a static dist/,
@@ -671,8 +819,8 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     }
     // The embedded Verify-step preview renders in-window; only open the
     // system browser when asked (the default, and the legacy behavior).
-    if (options?.open !== false) await shell.openExternal(project.launchUrl)
-    return { url: project.launchUrl, started, rebuilt }
+    if (options?.open !== false) await shell.openExternal(launchUrl)
+    return { url: launchUrl, started, rebuilt }
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.openExternal, async (_e, url: string) => {
@@ -681,6 +829,12 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       throw new Error('only http(s) URLs may be opened')
     }
     await shell.openExternal(url)
+  })
+
+  ipcMain.handle(BRIDGE_CHANNELS.openPath, async (_e, target: string) => {
+    if (!path.isAbsolute(target) || !fs.existsSync(target)) throw new Error('file does not exist')
+    const error = await shell.openPath(target)
+    if (error) throw new Error(error)
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.showInFolder, async (_e, target: string) => {

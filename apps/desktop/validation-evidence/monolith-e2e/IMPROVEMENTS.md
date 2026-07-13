@@ -296,6 +296,63 @@ and listed; repair packet prefilled with the anchored comment and the
 template auto-switched to the iteration category. Evidence:
 `pass-3/100-cockpit-composer.png` … `104-cockpit-repair-prefill.png`.
 
+## F30 — the workbench through its own workflow (self-alignment dogfood, 2026-07-10)
+
+The workbench GUI itself ran the full 5-step loop as a project
+("Workbench (self)", repo `apps/gui`, standards-refresh template) and was
+brought into line with its own standard pack. Audit before the run
+(`validation-evidence/self-align/pass-1/01–06`) found four violations of
+rules the workbench imposes on the apps it generates:
+
+1. **LAY-SHELL-001** — its own nav rail was not collapsible (zero collapse
+   affordances). Fixed: « Collapse at the rail foot → 64px icon rail with
+   tooltips, persisted in localStorage, expanded by default.
+2. **CMP-TABLE-DATA-TABLE** — the Projects table wrapped descriptions and
+   timestamps across lines and stacked four wide buttons per row. Fixed:
+   one-line ellipsis meta, nowrap time cells, primary action + a compact
+   "More actions" overflow menu; the filler status banner only renders when
+   an action produced feedback.
+3. **RCP-DASH-001** — `.grid-2` used `align-items: start`, so Settings
+   sibling panels never stretched and Save buttons floated at four heights.
+   Fixed: stretch + flex-column panels + `.panel-actions` pinned to the
+   panel foot (app-wide).
+4. **CMP-FORM-FIELD** — audit claim of oversized inputs was wrong on
+   inspection (fields are 30px); only the disabled select gained a proper
+   disabled surface tint.
+
+Process: project + context + packet built in-app (`self-align-run.mjs`,
+25.5KB packet), overlay authored from the packet, applied through Apply Zip
+Overlay (5 files, overwrite warnings accepted), verified green by the
+cockpit's autonomous checks (typecheck + build of the workbench itself,
+`self-align-apply.mjs`). After-audit `self-align-after.mjs` 7/7 PASS:
+rail 264px → 64px with labels hidden, tallest Projects row 50px, ≤2 visible
+buttons per row, Settings panel heights 364=364 | 329=329. Evidence:
+`validation-evidence/self-align/pass-1/`.
+
+## F31 — resume at the last-worked step + free step navigation (2026-07-10, user-directed)
+
+Opening a project now resumes its open run at the step the user was at:
+`startRun` looks up the project's open runs and picks furthest progress
+first, then most recently touched (so an accidentally created empty run can
+never hijack resume from the run with real work), creating a fresh run only
+when none is open. Rows in the hub and Projects list say **Continue** when a
+project has an open run, **Start handoff** only when it does not.
+
+The workflow stepper is now the navigation spine: visited steps and
+artifact-reachable forward steps are clickable (guarded by the existing
+`isStepReachable` gate — a fresh run exposes no jumps until artifacts
+exist), and the step being *viewed* renders static while the run's persisted
+step stays clickable from elsewhere. Hub step cards now use the same
+artifact-aware reachability.
+
+Found en route: stray empty runs (created but never touched) polluted the
+pass-3 workspace and hijacked createdAt-based resume — 7 removed; the
+progress-first rule makes future strays harmless. Validated by
+`e2e/validate-step-navigation.mjs` (6/6 PASS): Continue label, resume at
+run-in-copilot, 4 clickable steps with current static, back-jump, forward
+re-entry, and 0 clickable steps on a fresh run
+(`validation-evidence/self-align/pass-1/21–23`).
+
 ## AeroPlan — the single-pass capstone (2026-07-10)
 
 Fresh project + the **refined next-iteration requirements** (`examples/aero-plan`):

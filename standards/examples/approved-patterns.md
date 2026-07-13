@@ -11,14 +11,14 @@ Use examples as implementation and review references. Match the rule intent, com
 ## EX-APPROVED-001 — Dark engineering app shell
 
 **Demonstrates:** `LAY-SHELL-001`, `FND-VIS-001`, `CMP-SHELL-APP`, `CMP-NAV-PRIMARY`, `CMP-SHELL-PAGE-HEADER`.  
-**Why compliant:** The screen uses a dark canvas, bounded panels, active navigation, concise page metadata, and visible command/status regions.  
-**Agent notes:** Preserve shell regions and use semantic surface tokens.
+**Why compliant:** The screen uses a dark canvas, restrained containment, active navigation, concise icon-supported page metadata, and contextual commands.
+**Agent notes:** Preserve shell regions, prefer whitespace and hairlines for ordinary grouping, and use semantic surface tokens.
 
-## EX-APPROVED-002 — Panel-based workflow page
+## EX-APPROVED-002 — Canvas-first workflow page
 
 **Demonstrates:** `RCP-WORKFLOW-001`, `FND-INT-002`, `CMP-WORKFLOW-STEP-INDICATOR`, `CMP-FEEDBACK-VALIDATION-SUMMARY`.  
-**Why compliant:** Inputs, preview, validation, and export are separate. Consequential output is reviewed before apply/export.  
-**Agent notes:** Keep generation status persistent and mark stale previews.
+**Why compliant:** Primary inputs and handoff actions remain on the canvas; panels appear only around bounded preview, validation, or apply regions. Consequential output is reviewed before apply/export.
+**Agent notes:** Keep generation status persistent, mark stale previews, and avoid wrapping every phase in a card.
 
 ## EX-APPROVED-003 — Dense data table with status
 
@@ -48,7 +48,19 @@ Use examples as implementation and review references. Match the rule intent, com
 
 **Demonstrates:** `CMP-CONTENT-EMPTY-STATE`, state recipe, and content rules.  
 **Why compliant:** The state explains why no content exists and offers a scoped next action without implying success.  
-**Agent notes:** Place the empty state inside the affected panel or table.
+**Agent notes:** Preserve the affected region's dimensions. Use an explicit placeholder label when showing a future preview; an empty state does not require its own panel when the canvas already provides context.
+
+## EX-APPROVED-008 — Minimal project chooser
+
+**Demonstrates:** `FND-VIS-011`, `FND-INT-011`, `CMP-NAV-PRIMARY`.
+**Why compliant:** A concise header and one primary `New Project` action sit above a hairline-divided project list. Each full row is clickable and keyboard focusable; there are no duplicate Continue buttons or workflow-summary cards.
+**Agent notes:** Use subtle hover and focus, not raised cards, for ordinary project rows.
+
+## EX-APPROVED-009 — Placeholder app preview
+
+**Demonstrates:** `FND-VIS-012`, `FND-INT-013`, `CMP-CONTENT-EMPTY-STATE`.
+**Why compliant:** The preview keeps its final footprint, shows the intended local URL, renders a subdued mock application shell, and labels itself `Placeholder preview` until the real app is reachable.
+**Agent notes:** Expected first-run absence is not a failure banner. Include retry and replace the placeholder automatically when the app starts.
 
 ## Traceability
 

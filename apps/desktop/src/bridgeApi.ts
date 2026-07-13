@@ -89,6 +89,8 @@ export type EuikBridge = {
 
   pickDirectory(): Promise<string | undefined>
   pickZipFile(): Promise<string | undefined>
+  addReferenceFile(runId: string, sourcePath?: string): Promise<{ path: string; name: string } | undefined>
+  getDroppedFilePath(file: File): string
 
   prepareContext(runId: string): Promise<PrepareContextResult>
   buildPacket(runId: string, fields: TaskPacketFields): Promise<BuildPacketResult>
@@ -96,10 +98,12 @@ export type EuikBridge = {
   inspectOverlay(runId: string, zipPath: string): Promise<OverlayInspectionSummary>
   applyOverlay(runId: string, acceptWarnings: boolean): Promise<AppliedFiles>
   runVerification(runId: string, labels: string[]): Promise<VerificationResult[]>
+  installDependencies(runId: string): Promise<VerificationResult>
   saveFeedback(runId: string, text: string): Promise<HandoffRun>
   buildReviewPacket(runId: string): Promise<ReviewPacketResult>
   captureEvidence(runId: string, phase: 'before' | 'after'): Promise<EvidenceCapture>
   getEvidence(runId: string): Promise<RunEvidence>
+  captureProjectThumbnail(projectId: string): Promise<string | undefined>
   /** Begin a native drag of the run's Copilot upload files (call from a dragstart handler). */
   startUploadDrag(runId: string): Promise<void>
   /** Put the run's Copilot upload files on the OS clipboard as real file objects. */
@@ -108,6 +112,7 @@ export type EuikBridge = {
   launchApp(projectId: string, options?: { open?: boolean }): Promise<{ url: string; started: boolean; rebuilt: boolean }>
 
   openExternal(url: string): Promise<void>
+  openPath(path: string): Promise<void>
   showInFolder(path: string): Promise<void>
 }
 
@@ -124,19 +129,24 @@ export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
   updateRun: 'runs:update',
   pickDirectory: 'dialog:pick-directory',
   pickZipFile: 'dialog:pick-zip',
+  addReferenceFile: 'workflow:add-reference-file',
+  getDroppedFilePath: 'file:get-dropped-path',
   prepareContext: 'workflow:prepare-context',
   buildPacket: 'workflow:build-packet',
   getArtifactText: 'workflow:get-artifact-text',
   inspectOverlay: 'overlay:inspect',
   applyOverlay: 'overlay:apply',
   runVerification: 'verify:run',
+  installDependencies: 'project:install-dependencies',
   saveFeedback: 'review:save-feedback',
   buildReviewPacket: 'review:build-packet',
   captureEvidence: 'evidence:capture',
   getEvidence: 'evidence:get',
+  captureProjectThumbnail: 'project:capture-thumbnail',
   startUploadDrag: 'dnd:start-upload-drag',
   copyUploadSet: 'clipboard:copy-upload-set',
   launchApp: 'app:launch-target',
   openExternal: 'shell:open-external',
+  openPath: 'shell:open-path',
   showInFolder: 'shell:show-in-folder',
 }

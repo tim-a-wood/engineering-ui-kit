@@ -19,7 +19,7 @@ const { app, page, shot, waitForStatus } = await launchWorkbench()
 
 await page.getByRole('heading', { name: 'Copilot Handoff Hub' }).waitFor()
 await page.getByRole('button', { name: /^Continue/ }).click()
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 
 const launchCard = page.locator('.inset', { has: page.getByRole('heading', { name: '1 · Launch app' }) })
 await launchCard.scrollIntoViewIfNeeded()

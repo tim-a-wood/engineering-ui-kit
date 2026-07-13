@@ -20,13 +20,13 @@ Use where users must select inputs, generate/preview output, validate results, a
 Do not use for simple one-screen settings or read-only detail views.
 
 ### Required regions
-Step indicator, current step content, preview/review region, command/action region, and status/evidence region.
+Current workflow content, preview/review region, command/action region, and status/evidence region. A step indicator is required only for three or more genuinely sequential, validation-gated phases.
 
 ### Optional regions
 Timeline event log, generated output preview, validation summary, side evidence drawer.
 
 ### Required components
-`CMP-WORKFLOW-STEP-INDICATOR`, `CMP-FEEDBACK-PROGRESS-INDICATOR`, `CMP-FEEDBACK-VALIDATION-SUMMARY`, `CMP-NAV-COMMAND-ACTION-BAR`, and relevant form/table/evidence components.
+`CMP-FEEDBACK-VALIDATION-SUMMARY`, `CMP-NAV-COMMAND-ACTION-BAR`, and relevant form/table/evidence components. Add `CMP-WORKFLOW-STEP-INDICATOR` only when the phase-count and gating rule above applies.
 
 ### Allowed actions
 Select input, preview, validate, apply, export, copy, cancel, and open evidence.
@@ -50,7 +50,7 @@ Mark previews and generated packets as stale when source inputs change.
 Stack preview below current step at narrow widths while keeping actions near their step.
 
 ### Accessibility notes
-Step indicators shall expose current step and completion state. Review/preview regions shall be reachable by keyboard.
+When present, step indicators shall expose current step and completion state. Paired modes shall expose their current page through the title and provide a labeled transition. Review/preview regions shall be reachable by keyboard.
 
 ### Approved example
 A handoff preparation workflow: choose scope, preview generated pack, validate, then export after review.
@@ -69,7 +69,7 @@ Preserve manual control. Do not auto-apply generated output or hide validation f
 
 ## Step Indicator Use
 
-Use step indicators for ordered workflow state, not for tab-like local navigation.
+Use step indicators for three or more ordered, gated phases—not for tab-like local navigation or a two-mode Build/Test relationship.
 
 ## Current Step Region
 

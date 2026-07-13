@@ -213,10 +213,10 @@ for rel in ['package-metadata.json', 'tokens.json', 'component-manifest.json', '
 
 try:
     metadata = json.loads(read('package-metadata.json'))
-    if metadata.get('packageVersion') != '0.4.0':
-        errors.append('package-metadata.json packageVersion is not 0.4.0')
-    if metadata.get('phase') != 'Phase 4 — Operational Revision After Evidence-First Trial':
-        errors.append('package-metadata.json phase is not Phase 4 — Operational Revision After Evidence-First Trial')
+    if metadata.get('packageVersion') != '0.5.0':
+        errors.append('package-metadata.json packageVersion is not 0.5.0')
+    if metadata.get('phase') != 'Phase 5 — Product Visual Language Alignment':
+        errors.append('package-metadata.json phase is not Phase 5 — Product Visual Language Alignment')
     if metadata.get('status') != 'operational-handoff-package-v0.1':
         errors.append('package-metadata.json status is not operational-handoff-package-v0.1')
     if metadata.get('themePosture') != 'dark-first':

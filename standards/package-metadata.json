@@ -1,10 +1,10 @@
 {
   "packageName": "engineering-ui-kit-standards",
-  "packageVersion": "0.4.0",
-  "phase": "Phase 4 \u2014 Operational Revision After Evidence-First Trial",
+  "packageVersion": "0.5.0",
+  "phase": "Phase 5 \u2014 Product Visual Language Alignment",
   "status": "operational-handoff-package-v0.1",
   "operationalReadiness": "proven-one-vertical-slice-trial-13-of-13-acceptance-criteria",
-  "activeRoadmapPhase": "v0.1 complete \u2014 Windows installer build pending on Windows hardware",
+  "activeRoadmapPhase": "v0.5 visual language aligned to the production workbench",
   "themePosture": "dark-first",
   "mockupPosture": "app-visual-calibration-not-exhaustive-standard",
   "companyStandardsPosture": "not-claimed-unless-formally-supplied",
@@ -46,6 +46,7 @@
     "Roadmap Phase 3 vertical-slice trial complete: 13/13 blocking acceptance criteria pass with zero manual corrections; see trials/vertical-slice-01/phase-3/phase-3-trial-report.md.",
     "Implementation agent for the trial was Claude (Fable 5) substituting for Microsoft 365 Copilot under product-owner decision PO-1; Copilot-specific behavior remains unmeasured.",
     "Roadmap Phase 4 operational revision complete: routing standard authored (ARCH-ROUTE-001..006), visual-drift prompt completed, qualitative verification checklist added, scaffold banners retired.",
-    "Roadmap Phases 5-7 complete 2026-07-06: core library (44 tests, trial reproduced via CLI), Electron workbench (28/28 renderer, 13/13 end-to-end handoff), v0.1 validation review, release notes, and packaging configuration. See product-owner-decision-log.md."
+    "Roadmap Phases 5-7 complete 2026-07-06: core library (44 tests, trial reproduced via CLI), Electron workbench (28/28 renderer, 13/13 end-to-end handoff), v0.1 validation review, release notes, and packaging configuration. See product-owner-decision-log.md.",
+    "Visual language revision 0.5.0 aligns generated apps with the evolved production workbench: canvas-first composition, restrained containment, integrated title icons, full-row navigation, native file handoff, proportional workflow navigation, and explicit preview placeholders."
   ]
 }

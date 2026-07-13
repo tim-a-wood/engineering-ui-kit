@@ -1,7 +1,7 @@
 /**
  * Phase B of a workflow pass: relaunch the workbench (resume the open run),
  * Apply Zip Overlay (inspection → warning acceptance → apply), then
- * Verify & Review (typecheck + build). The overlay zip must already exist
+ * Test (typecheck + build). The overlay zip must already exist
  * at the OVERLAY_ZIP path (see config.mjs) — authored from the exported
  * packet, playing the Copilot role.
  */
@@ -44,10 +44,10 @@ if (await gate.count() > 0) {
 await page.getByRole('button', { name: 'Apply Overlay' }).click()
 await waitForStatus(/Overlay applied/)
 await shot('overlay-applied')
-await page.getByRole('button', { name: 'Continue to Verify & Review' }).click()
+await page.getByRole('button', { name: 'Continue to Test' }).click()
 
 // ---- 4. Verify ---------------------------------------------------------------
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 await shot('verify-review')
 await page.getByRole('button', { name: /^(Run checks|Re-run checks)$/ }).click()
 // Rehydrated results may already show a verdict; wait for the fresh run first.

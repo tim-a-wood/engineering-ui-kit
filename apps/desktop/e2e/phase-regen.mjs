@@ -20,7 +20,7 @@ const { app, page, shot, waitForStatus } = await launchWorkbench()
 
 await page.getByRole('heading', { name: 'Copilot Handoff Hub' }).waitFor()
 await page.getByRole('button', { name: /^Continue/ }).click()
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 
 // ---- 1. Feedback, then regenerate ------------------------------------------
 await page.getByRole('button', { name: 'Add Feedback Manually' }).click()

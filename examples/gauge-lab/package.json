@@ -4,12 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "description": "Requirements-only start point for the Engineering UI Kit monolithic-web-app handoff: the UI and server are produced by the workbench workflow from REQUIREMENTS.md.",
-  "scripts": {
-    "dev": "vite",
-    "typecheck": "tsc -b --pretty false",
-    "build": "tsc -b --pretty false && vite build",
-    "start": "node server/main.mjs"
-  },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.0",
     "@fontsource/jetbrains-mono": "^5.2.0",

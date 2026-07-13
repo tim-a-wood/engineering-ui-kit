@@ -53,7 +53,7 @@ Collapse secondary panels before removing core actions. Primary navigation may c
 Use landmarks for shell regions. Focus order shall move from navigation to page header to main content to local actions. Skip-to-content support should be provided where practical.
 
 ### Approved example
-A dark shell with top bar, left navigation, page header, command bar, and panel-based content using `semantic.surface.canvas` and `semantic.surface.panel`.
+A dark shell with a quiet top bar, collapsible left navigation, concise page header, integrated title icon, contextual actions, and canvas-first content using panels only where containment is meaningful.
 
 ### Rejected example
 A generic admin template with white cards, marketing hero header, unlabeled icon navigation, and hidden workflow status.
@@ -73,7 +73,7 @@ Persistent regions shall contain stable orientation and app-level status. They s
 
 ## Page Header Rules
 
-Page headers shall include title, short description or metadata, stale/generated state where relevant, and task actions.
+Page headers shall include a title and short description or metadata. A major workflow may include one unboxed semantic icon beside the title. Put only page-level actions in the header; do not repeat global help, breadcrumbs, workflow indicators, or commands already present in the body. For paired modes such as Build and Test, use a quiet text-and-arrow transition rather than a stepper or segmented state control.
 
 ## Navigation Region Rules
 
@@ -81,7 +81,7 @@ Navigation shall show active state and shall not duplicate page tabs or command 
 
 ## Main Content Region Rules
 
-Main content shall be panel-based and should keep primary workflow content visually dominant over supporting metadata.
+Main content shall be canvas-first and keep the primary workflow visually dominant. Use panels only for bounded tools, previews, complex forms, or consequential review. Project lists, resume rows, ordinary metadata, and simple groups should use whitespace and hairline dividers.
 
 ## Command and Status Regions
 
@@ -101,8 +101,8 @@ Use semantic landmarks, headings, focus order, and keyboard navigation. Do not r
 
 ## Approved Shell Pattern
 
-Approved: dark frame, bounded panels, active navigation, concise page header, visible command/status region, and predictable feedback placement.
+Approved: dark frame, restrained surfaces, active navigation, concise icon-supported page header, full-row project navigation, visible local feedback, and predictable command placement.
 
 ## Rejected Shell Patterns
 
-Rejected: landing-page shell, generic SaaS admin shell, missing active state, floating command buttons with no context, and navigation sprawl.
+Rejected: marketing landing page, generic SaaS card dashboard, panel around every section, duplicated workflow navigation, missing active state, floating commands with no context, and navigation sprawl.

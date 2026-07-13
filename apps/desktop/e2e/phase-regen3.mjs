@@ -22,7 +22,7 @@ const { app, page, shot, waitForStatus } = await launchWorkbench()
 
 await page.getByRole('heading', { name: 'Copilot Handoff Hub' }).waitFor()
 await page.getByRole('button', { name: /^Continue/ }).click()
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 
 // ---- feedback, then regenerate ----------------------------------------------
 await page.getByRole('button', { name: 'Add Feedback Manually' }).click()
@@ -57,8 +57,8 @@ const gate = page.locator('input[type="checkbox"]')
 if (await gate.count() > 0) await gate.check()
 await page.getByRole('button', { name: 'Apply Overlay' }).click()
 await waitForStatus(/Overlay applied/)
-await page.getByRole('button', { name: 'Continue to Verify & Review' }).click()
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('button', { name: 'Continue to Test' }).click()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 
 // F10: stale verdict must be gone — the step demands a fresh run.
 await page.waitForTimeout(600)

@@ -10,7 +10,7 @@ The rules apply to commands, previews, overlays, validation, selection, loading,
 
 ## FND-INT-001 — Manual control for consequential actions
 
-Verification commands, generation, export, destructive actions, and overlay application shall require an explicit user action. The UI shall not silently apply consequential changes.
+Generation, export, destructive actions, and overlay application shall require an explicit user action. Non-mutating health checks and preview startup may run automatically when entering the relevant view, provided their activity and results are visible and a manual retry is available. The UI shall never silently apply consequential changes.
 
 ## FND-INT-002 — Preview before apply
 
@@ -47,6 +47,18 @@ Copy/export actions shall identify exactly what was copied/exported and where ou
 ## FND-INT-010 — Toasts, alerts, and persistent feedback
 
 Use toasts for transient confirmations, alerts for important but local issues, and persistent panels for consequential validation, generation, or failure state.
+
+## FND-INT-011 — Full-row navigation
+
+When a list row has one destination, make the full row the accessible target. Do not add a redundant `Open`, `Continue`, or arrow button inside it. Provide hover and visible keyboard focus without turning the row into a raised card.
+
+## FND-INT-012 — Native file handoff
+
+File-oriented workflows should provide both browse and drag-and-drop intake. Prepared outbound files should support native drag-out and an equivalent copy action. Drop zones shall state accepted content, show the selected filename, and remain keyboard operable.
+
+## FND-INT-013 — Preview before implementation exists
+
+When a preview target is not yet running, preserve the preview region with a clearly labeled placeholder canvas. Show the intended local URL and a retry action. Do not present the expected absence of an app as a primary error state.
 
 ## Interaction Anti-Patterns
 

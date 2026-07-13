@@ -41,26 +41,41 @@ const panel = 'var(--semantic-surface-panel-raised)'
 const inset = 'var(--semantic-surface-inset)'
 
 function StepsArt() {
-  const steps = ['Prepare', 'Packet', 'Copilot', 'Apply', 'Verify']
   return (
-    <svg viewBox="0 0 460 170" role="img" aria-label="The five workflow steps with an iterate loop">
-      {steps.map((label, i) => {
-        const x = 50 + i * 90
-        return (
-          <g key={label}>
-            {i < steps.length - 1 && <line x1={x + 20} y1="70" x2={x + 70} y2="70" stroke={stroke} strokeWidth="1.5" />}
-            <circle cx={x} cy="70" r="20" fill={i === 2 ? accent : panel} stroke={i === 2 ? accent : stroke} strokeWidth="1.5" />
-            <text x={x} y="75" textAnchor="middle" fontSize="13" fontWeight="600" fill={i === 2 ? '#fff' : accentText}>{i + 1}</text>
-            <text x={x} y="110" textAnchor="middle" fontSize="11" fill={muted}>{label}</text>
-          </g>
-        )
-      })}
-      <path d="M 410 90 C 410 140, 140 140, 140 92" fill="none" stroke={warn} strokeWidth="1.5" strokeDasharray="4 4" markerEnd="url(#guide-arrow)" />
-      <text x="275" y="152" textAnchor="middle" fontSize="10.5" fill={warn}>iterate: feedback becomes the next packet</text>
+    <svg viewBox="0 0 520 220" role="img" aria-label="The current Build and Test workflow">
+      <rect x="18" y="20" width="300" height="164" rx="12" fill={panel} stroke={accent} strokeWidth="1.5" />
+      <circle cx="42" cy="43" r="12" fill={accent} />
+      <text x="42" y="47" textAnchor="middle" fontSize="10" fontWeight="700" fill="#fff">1</text>
+      <text x="62" y="47" fontSize="13" fontWeight="700" fill="var(--semantic-text-primary)">Build</text>
+      <text x="34" y="69" fontSize="9.5" fill={muted}>WHAT ARE YOU BUILDING?</text>
+      {[0, 1, 2, 3, 4].map((i) => <rect key={i} x={34 + i * 38} y="79" width="30" height="30" rx="6" fill={i === 1 ? 'var(--semantic-accent-primary-tint)' : inset} stroke={i === 1 ? accent : stroke} />)}
+      <rect x="34" y="121" width="126" height="35" rx="6" fill={inset} stroke={stroke} />
+      <line x1="44" y1="132" x2="96" y2="132" stroke={muted} strokeWidth="3" strokeLinecap="round" />
+      <line x1="44" y1="143" x2="133" y2="143" stroke={stroke} strokeWidth="3" strokeLinecap="round" />
+      <rect x="174" y="121" width="60" height="25" rx="6" fill={accent} />
+      <text x="204" y="137" textAnchor="middle" fontSize="9" fontWeight="600" fill="#fff">Generate</text>
+      <rect x="246" y="121" width="56" height="25" rx="6" fill={inset} stroke={stroke} />
+      <text x="274" y="137" textAnchor="middle" fontSize="8.5" fill="var(--semantic-text-secondary)">Apply zip</text>
+      <path d="M326 101 H370" stroke={accent} strokeWidth="1.8" markerEnd="url(#guide-arrow)" />
+      <rect x="382" y="20" width="120" height="164" rx="12" fill={panel} stroke={stroke} />
+      <circle cx="406" cy="43" r="12" fill={inset} stroke={accent} />
+      <text x="406" y="47" textAnchor="middle" fontSize="10" fontWeight="700" fill={accentText}>2</text>
+      <text x="426" y="47" fontSize="13" fontWeight="700" fill="var(--semantic-text-primary)">Test</text>
+      <rect x="398" y="67" width="88" height="16" rx="8" fill={inset} stroke={ok} />
+      <text x="442" y="78" textAnchor="middle" fontSize="7.5" fill={ok}>Checks · passed</text>
+      <rect x="398" y="92" width="88" height="52" rx="6" fill={inset} stroke={stroke} />
+      <rect x="406" y="100" width="72" height="5" rx="2" fill={stroke} />
+      <rect x="406" y="112" width="45" height="20" rx="3" fill="var(--semantic-accent-primary-tint)" />
+      <rect x="408" y="153" width="76" height="20" rx="6" fill={accent} />
+      <text x="446" y="166" textAnchor="middle" fontSize="8" fontWeight="600" fill="#fff">Approve</text>
+      <path d="M442 190 C442 214, 126 214, 126 188" fill="none" stroke={warn} strokeWidth="1.5" strokeDasharray="4 4" markerEnd="url(#guide-arrow-warn)" />
+      <rect x="174" y="188" width="220" height="22" rx="11" fill={panel} stroke={warn} strokeWidth="1" />
+      <text x="284" y="202.5" textAnchor="middle" fontSize="9" fontWeight="600" fill={warn}>Feedback returns to Build for the next iteration</text>
       <defs>
         <marker id="guide-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-          <path d="M0 0 L8 4 L0 8 z" fill={warn} />
+          <path d="M0 0 L8 4 L0 8 z" fill={accent} />
         </marker>
+        <marker id="guide-arrow-warn" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={warn} /></marker>
       </defs>
     </svg>
   )
@@ -196,15 +211,12 @@ export const GUIDE_TOPICS: GuideTopic[] = [
   {
     id: 'workflow-overview',
     label: 'The workflow',
-    title: 'The five-step handoff, in one picture',
-    blurb: 'You package your repo and task, Microsoft 365 Copilot returns a zip of changed files, and the workbench inspects, applies, and proves the result — nothing lands in your repo without passing the safety and fidelity gates.',
+    title: 'Build and Test, in one picture',
+    blurb: 'The current app has two main work areas. Build defines the change, prepares the Copilot handoff, and safely applies the returned zip. Test shows the result, captures feedback, and completes or repeats the loop.',
     art: <StepsArt />,
     steps: [
-      { title: 'Prepare Context', body: 'The workbench turns your repo into an uploadable flatfile with secrets, binaries, and build output deterministically excluded — and captures baseline screenshots of your target views.' },
-      { title: 'Create Task Packet', body: 'Pick a template, describe goal, scope, constraints, and acceptance criteria. The standards pack rides along automatically.' },
-      { title: 'Run in Copilot', body: 'Drag the two upload files straight onto the Copilot chat and paste the prompt (already on your clipboard). Copilot returns ui-overlay.zip.' },
-      { title: 'Apply Zip Overlay', body: 'The inspector hard-blocks unsafe archives and flags anything that would lose icons, images, or controls. Warnings apply only with your explicit OK.' },
-      { title: 'Verify & Review', body: 'Run your own typecheck/build, capture after-screenshots, and generate a review packet with before/after proof. Approve, or iterate with your feedback.' },
+      { title: 'Build', body: 'Choose a use-case tile, describe what should change, and optionally add a reference. Generate the handoff, send its files and prompt to Copilot, then inspect and apply ui-overlay.zip in the same panel.' },
+      { title: 'Test', body: 'Run checks, inspect the live preview, add notes and evidence, then approve the result or turn your feedback into the next Build iteration.' },
     ],
   },
   {
@@ -222,26 +234,26 @@ export const GUIDE_TOPICS: GuideTopic[] = [
   },
   {
     id: 'prepare-context',
-    label: 'Prepare Context',
-    title: 'What leaves your machine (and what never does)',
-    blurb: 'Copilot only sees text that survives the exclusion rules. The same step records what your app looks like before any change.',
+    label: 'Define the change',
+    title: 'Use “What are you building?” to define the work',
+    blurb: 'The Build panel now brings the use case, requirements, reference material, project context, and handoff generation together in one place.',
     art: <ContextArt />,
     steps: [
-      { title: 'Generate the context', body: 'One click builds repo-flatfile.txt (full text contents) and repo-inventory.json (what was included, what was excluded, and why).' },
-      { title: 'Excluded, always', body: 'Git metadata, dependencies, build output, binaries, and anything secret-shaped (.env, keys, credential-named files). Content that merely looks secret raises a warning for your review.' },
-      { title: 'Capture the baseline', body: 'With your dev server running, hit Capture Baseline. Each target view gets a screenshot plus an element census (how many svg/img/button/input elements rendered) — the "before" your review packet compares against.' },
+      { title: 'Choose a use case', body: 'Select the square tile that best matches the work. The guidance underneath updates to show the information that task needs.' },
+      { title: 'Describe and reference', body: 'Write the project-specific requirements and add a document, mockup, PDF, or image when it will help Copilot understand the intended result.' },
+      { title: 'Generate safely', body: 'Generate screens the project context, excludes dependencies, build output, Git data, and secret-shaped files, then prepares the handoff packet.' },
     ],
   },
   {
     id: 'upload-run',
     label: 'Run in Copilot',
-    title: 'Two files, one drag, one paste',
+    title: 'Attach the files, then paste the prompt',
     blurb: 'No folder digging: the upload set is a chip you drag straight into the chat, and the prompt is on your clipboard the moment Copilot opens.',
     art: <UploadArt />,
     steps: [
       { title: 'Drag the chip', body: 'Grab the dashed strip (repo-flatfile.txt + task-and-standard-pack.md) and drop it on the Copilot attach area. Prefer keyboard? Copy Files puts the same files on your OS clipboard for Ctrl/Cmd+V.' },
       { title: 'Open Copilot (copies prompt)', body: 'The button opens the chat and drops the recommended prompt onto your clipboard — attach, paste, send.' },
-      { title: 'Get the overlay back', body: 'Copilot must return one file: ui-overlay.zip, containing only changed and new files with repo-relative paths. Download it and hit Continue.' },
+      { title: 'Get the overlay back', body: 'Copilot must return one file: ui-overlay.zip, containing only changed and new files with repo-relative paths. Download it and return to the Apply area in Build.' },
     ],
   },
   {
@@ -258,9 +270,9 @@ export const GUIDE_TOPICS: GuideTopic[] = [
   },
   {
     id: 'verify-review',
-    label: 'Verify & review',
-    title: 'Prove what the handoff actually did',
-    blurb: 'Compiles-fine is not the same as looks-right. This step pairs your build checks with visual evidence and packages both for review.',
+    label: 'Test and review',
+    title: 'Use “What changes are needed?” to judge the result',
+    blurb: 'Test brings checks, the live application preview, feedback notes, evidence, and final approval into one review panel.',
     art: <EvidenceArt />,
     steps: [
       { title: 'Run your checks', body: 'Typecheck and build run with your project’s own commands; output is captured into the run folder.' },

@@ -20,9 +20,9 @@ Implementations shall use semantic surface tokens to create hierarchy: `semantic
 
 Accent color shall identify primary actions, focus, active navigation, selected state, or important technical affordances. `semantic.accent.glow` may be used sparingly around active or focused regions; it shall not become decorative neon styling.
 
-## FND-VIS-003 — Panel and card discipline
+## FND-VIS-003 — Surface and containment discipline
 
-Panels shall group related engineering content with clear headers, borders, and spacing. Raised cards shall be used for summaries or key decisions. Inset panels shall be used for code, logs, tabular subregions, or technical data that belongs inside a parent panel.
+The canvas shall remain visually quiet. Use spacing, alignment, headings, and hairline dividers before adding a panel. Panels are reserved for genuinely bounded tools, previews, forms, or consequential review regions; they shall not wrap every section, row, empty state, or navigation choice. Raised cards are reserved for key decisions or temporary emphasis. Inset surfaces are for code, logs, file-drop targets, preview chrome, or technical data nested inside a bounded region.
 
 ## FND-VIS-004 — Typography posture
 
@@ -50,7 +50,15 @@ Status colors shall be used with text labels and icons or shapes where useful. P
 
 ## FND-VIS-010 — What visual drift looks like
 
-Drift includes generic light cards, arbitrary gradients, excessive glassmorphism, cyberpunk neon, huge marketing typography, placeholder wireframes, hidden metadata, inconsistent borders, and raw colors that bypass tokens.
+Drift includes generic light cards, a page made from stacked rounded panels, arbitrary gradients, excessive glassmorphism, cyberpunk neon, huge marketing typography, unlabeled placeholder wireframes, hidden metadata, inconsistent borders, and raw colors that bypass tokens.
+
+## FND-VIS-011 — Quiet workspace composition
+
+Landing views and project choosers should resemble a native workbench rather than a dashboard: concise page header, generous canvas, one obvious primary action, and full-row navigation separated by hairlines. Avoid summary cards that merely repeat destinations or workflow stages already available elsewhere.
+
+## FND-VIS-012 — Integrated page identity
+
+Major workflow pages may pair the title with one unboxed semantic icon. The icon shall sit directly in the title bar without a card, tile, glow, or decorative container. A short text-and-arrow transition may appear opposite the title when moving between two closely related modes.
 
 ## Approved Visual Patterns
 
@@ -64,6 +72,9 @@ Drift includes generic light cards, arbitrary gradients, excessive glassmorphism
 | Plot drawn on the panel surface | Series draw directly on the panel with recessive gridlines — no boxed inset chart region; a crosshair plus text readout carries exact values. |
 | Machined segmented controls | Window/filter switchers use an inset track whose active segment is raised to the panel-raised surface, not an accent-tinted pill. |
 | Status as dot plus text | Routine statuses render as a status-token dot beside plain text; tinted pills are reserved for a few prominent states such as the run state. |
+| Quiet clickable project row | The entire row is the target; use a hairline divider, subtle hover, visible focus, and at most a quiet chevron. Do not add a redundant Continue button. |
+| Integrated workflow title icon | One unboxed icon sits beside the page title; the title and subtitle remain the primary orientation. |
+| Clearly labeled preview placeholder | Before an app exists, preview chrome contains a subdued mock shell and explicit `Placeholder preview` label rather than an error slab or ambiguous blank region. |
 
 ## Rejected Visual Patterns
 
@@ -77,6 +88,8 @@ Drift includes generic light cards, arbitrary gradients, excessive glassmorphism
 | Tinted pill badges on every status | Dilutes severity; routine statuses use a dot plus text. |
 | A marker dot on every point of a dense line series | Noise without information; markers belong on the hovered or focused point. |
 | Proportional numerals in readings, tables, or timestamps | Measured values must align digit-for-digit; use tabular numerals or the mono family. |
+| A rounded panel around every section | Creates visual noise and weakens hierarchy; use the canvas and hairline dividers for ordinary grouping. |
+| Destination card plus button for the same action | Duplicates interaction; make the row or card itself the accessible target. |
 
 ## Mockup Calibration Notes
 

@@ -1,7 +1,17 @@
 import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { HandoffRun, Project, Settings } from '@engineering-ui-kit/core'
 import { getBridge, type BuildPacketResult } from './bridge'
-import { NAV_ITEMS, isStepReachable, stepIndex, type RecipePrefill, type ViewId, WORKFLOW_STEPS } from './appState'
+import {
+  NAV_ITEMS,
+  isStepReachable,
+  isWorkflowView,
+  resolveWorkflowNavigation,
+  stepIndex,
+  viewForRunStep,
+  type BuildWorkspaceState,
+  type RecipePrefill,
+  type ViewId,
+} from './appState'
 import { TipCard } from './components'
 import { GuideOverlay, type GuideTopicId } from './guides'
 import { Icon } from './icons'
@@ -9,21 +19,17 @@ import { HubView } from './views/HubView'
 import { ProjectsView } from './views/ProjectsView'
 import { RecipesView, ComponentsView } from './views/catalog'
 import { SettingsView } from './views/SettingsView'
-import {
-  ApplyZipOverlayView,
-  CreateTaskPacketView,
-  PrepareContextView,
-  RunInCopilotView,
-  VerifyReviewView,
-} from './views/workflow'
+import { BuildView } from './views/build/BuildView'
+import { VerifyReviewView } from './views/workflow'
 
 const TIPS: Partial<Record<ViewId, string>> = {
   'copilot-handoff': 'Start with one screen/view for best results.',
+  build: 'Prepare the handoff, run it in Copilot, inspect the overlay, then apply it safely.',
   'prepare-context': 'Start with one screen/view for best results.',
   'create-task-packet': 'Be specific about the goal, acceptance criteria, and constraints.',
   'run-in-copilot': 'You can upload a maximum of 3 files to Microsoft 365 Copilot.',
   'apply-zip-overlay': 'Review every entry before applying. Blocked overlays can never be applied.',
-  'verify-review': 'Review results carefully. If changes are needed, apply feedback and iterate.',
+  'verify-review': 'Review results carefully. If changes are needed, apply feedback and iterate from Build.',
   projects: 'Organize and manage your Engineering UI Kit projects.',
   recipes: 'You can upload a maximum of 3 files to Microsoft 365 Copilot.',
   components: 'You can upload a maximum of 3 files to Microsoft 365 Copilot.',
@@ -76,11 +82,22 @@ class ViewErrorBoundary extends Component<{ viewKey: string; children: ReactNode
 export default function App() {
   const bridge = useMemo(() => getBridge(), [])
   const [view, setView] = useState<ViewId>('copilot-handoff')
+  // LAY-SHELL-001: the nav rail collapses to a 64px icon rail, persisted.
+  const [navCollapsed, setNavCollapsed] = useState(() => {
+    try { return localStorage.getItem('euik-nav-collapsed') === '1' } catch { return false }
+  })
+  const toggleNav = useCallback(() => {
+    setNavCollapsed((collapsed) => {
+      try { localStorage.setItem('euik-nav-collapsed', collapsed ? '0' : '1') } catch { /* private mode */ }
+      return !collapsed
+    })
+  }, [])
   const [projects, setProjects] = useState<Project[]>([])
   const [settings, setSettings] = useState<Settings | null>(null)
   const [activeRun, setActiveRun] = useState<HandoffRun | undefined>(undefined)
   const [packet, setPacket] = useState<BuildPacketResult | null>(null)
   const [recipe, setRecipe] = useState<RecipePrefill | null>(null)
+  const [buildWorkspace, setBuildWorkspace] = useState<BuildWorkspaceState>('handoff')
   const [version, setVersion] = useState('')
   const [guideTopic, setGuideTopic] = useState<GuideTopicId | null>(null)
 
@@ -106,28 +123,44 @@ export default function App() {
 
   const startRun = useCallback(
     async (projectId: string) => {
-      if (activeRun && activeRun.projectId === projectId && activeRun.currentStep !== 'complete') {
-        const stepView = WORKFLOW_STEPS.find((s, i) => i === Math.min(WORKFLOW_STEPS.length - 1, ['prepare-context', 'create-task-packet', 'run-in-copilot', 'apply-zip-overlay', 'verify-review', 'complete'].indexOf(activeRun.currentStep)))
-        setView(stepView?.id ?? 'prepare-context')
+      // Opening a project resumes its open run at the step the user was at —
+      // a fresh run is created only when none is open. Furthest progress
+      // first, then most recently touched, so an accidentally created empty
+      // run can never hijack resume from the run with real work in it.
+      const open = (await bridge.listRuns(projectId))
+        .filter((r) => r.currentStep !== 'complete')
+        .sort((a, b) =>
+          (stepIndex(b.currentStep) - stepIndex(a.currentStep))
+          || b.updatedAt.localeCompare(a.updatedAt))[0]
+      if (open) {
+        if (open.id !== activeRun?.id) setPacket(null)
+        setActiveRun(open)
+        const resume = resolveWorkflowNavigation(viewForRunStep(open.currentStep))
+        setView(resume.view)
+        if (resume.workspace) setBuildWorkspace(resume.workspace)
         return
       }
       const run = await bridge.createRun(projectId)
       setActiveRun(run)
       setPacket(null)
-      setView('prepare-context')
+      setBuildWorkspace('handoff')
+      setView('build')
     },
     [bridge, activeRun],
   )
 
   const navigate = useCallback(
     (next: ViewId) => {
-      const isWorkflow = WORKFLOW_STEPS.some((s) => s.id === next)
-      if (isWorkflow) {
+      if (isWorkflowView(next)) {
         if (!activeRun) {
           setView('copilot-handoff')
           return
         }
         if (!isStepReachable(activeRun, next)) return
+        const resolved = resolveWorkflowNavigation(next)
+        setView(resolved.view)
+        if (resolved.workspace) setBuildWorkspace(resolved.workspace)
+        return
       }
       setView(next)
     },
@@ -135,7 +168,7 @@ export default function App() {
   )
 
   const activeProject = activeRun ? projects.find((p) => p.id === activeRun.projectId) : undefined
-  const navActive: ViewId = WORKFLOW_STEPS.some((s) => s.id === view) ? 'copilot-handoff' : view
+  const navActive: ViewId = isWorkflowView(view) ? 'copilot-handoff' : view
 
   const renderView = (): ReactNode => {
     if (!settings) return <p className="secondary-text">Loading workspace…</p>
@@ -154,25 +187,24 @@ export default function App() {
             refreshProjects={refreshProjects}
             onStartRun={startRun}
             onOpenStep={navigate}
-            onOpenHelp={() => setGuideTopic('workflow-overview')}
           />
         )
+      case 'build':
       case 'prepare-context':
-        return stepProps ? <PrepareContextView {...stepProps} recipe={recipe} /> : <MissingRun onBack={() => setView('copilot-handoff')} />
       case 'create-task-packet':
+      case 'run-in-copilot':
+      case 'apply-zip-overlay':
         return stepProps ? (
-          <CreateTaskPacketWrapper
-            stepProps={stepProps}
-            onPacket={setPacket}
+          <BuildView
+            {...stepProps}
             recipe={recipe}
             onRecipeConsumed={() => setRecipe(null)}
             preferredTemplate={settings.preferredTemplate}
+            packet={packet}
+            onPacket={setPacket}
+            initialWorkspace={buildWorkspace}
           />
         ) : <MissingRun onBack={() => setView('copilot-handoff')} />
-      case 'run-in-copilot':
-        return stepProps ? <RunInCopilotView {...stepProps} packet={packet} /> : <MissingRun onBack={() => setView('copilot-handoff')} />
-      case 'apply-zip-overlay':
-        return stepProps ? <ApplyZipOverlayView {...stepProps} /> : <MissingRun onBack={() => setView('copilot-handoff')} />
       case 'verify-review':
         return stepProps ? <VerifyReviewView {...stepProps} /> : <MissingRun onBack={() => setView('copilot-handoff')} />
       case 'projects':
@@ -184,7 +216,7 @@ export default function App() {
             onUseRecipe={(selected) => {
               setRecipe(selected)
               if (activeRun && activeRun.currentStep !== 'complete' && isStepReachable(activeRun, 'create-task-packet')) {
-                setView('create-task-packet')
+                navigate('create-task-packet')
               }
             }}
           />
@@ -197,13 +229,6 @@ export default function App() {
   }
 
   const isRunOpen = Boolean(activeRun && activeRun.currentStep !== 'complete')
-  // Crumb names the step the user is looking at; the run's persisted step is
-  // only the fallback when a non-workflow view is open.
-  const visibleStep = WORKFLOW_STEPS.find((s) => s.id === view)
-  const currentStepShort = visibleStep?.short
-    ?? (activeRun
-      ? WORKFLOW_STEPS[Math.min(stepIndex(activeRun.currentStep), WORKFLOW_STEPS.length - 1)]?.short ?? 'Complete'
-      : undefined)
   const versionLabel = version.replace(/^v/, '').replace(/\s*\(mock\)\s*$/, '') || '0.1.0'
   const isMock = typeof window !== 'undefined' && window.euikMode === 'mock'
 
@@ -213,13 +238,13 @@ export default function App() {
         <span className="brand-mark" aria-hidden="true">{Icon.logo()}</span>
         <span className="brand-name">Engineering UI Kit</span>
         <span className="version-pill">v{versionLabel}</span>
-        {isRunOpen && activeProject && (
+        {isRunOpen && activeProject && isWorkflowView(view) && (
           <nav className="topbar-crumbs" aria-label="Active handoff run">
             <button type="button" className="crumb" onClick={() => navigate('copilot-handoff')}>
-              {activeProject.name}
+              Build &amp; Test
             </button>
             <span className="crumb-sep" aria-hidden="true">{Icon.chevronRight(12)}</span>
-            <span className="crumb-current">{currentStepShort}</span>
+            <span className="crumb-current">{activeProject.name}</span>
           </nav>
         )}
         <span className="titlebar-spacer" />
@@ -234,7 +259,7 @@ export default function App() {
         </button>
       </div>
 
-      <div className="app-body">
+      <div className={navCollapsed ? 'app-body nav-collapsed' : 'app-body'}>
         <aside className="sidebar">
           <nav aria-label="Primary navigation" className="nav-sections">
             {NAV_SECTIONS.map((section) => (
@@ -250,10 +275,11 @@ export default function App() {
                           type="button"
                           className={item.id === navActive ? 'nav-item active' : 'nav-item'}
                           aria-current={item.id === navActive ? 'page' : undefined}
+                          title={navCollapsed ? item.label : undefined}
                           onClick={() => navigate(item.id)}
                         >
                           <span className="nav-glyph" aria-hidden="true">{NAV_GLYPHS[item.id]?.()}</span>
-                          <span>{item.label}</span>
+                          <span className="nav-label">{item.label}</span>
                         </button>
                       </li>
                     )
@@ -263,6 +289,18 @@ export default function App() {
             ))}
           </nav>
           <span className="sidebar-spacer" />
+          <button
+            type="button"
+            className="nav-item nav-collapse"
+            aria-expanded={!navCollapsed}
+            title={navCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+            onClick={toggleNav}
+          >
+            <span className="nav-glyph" aria-hidden="true">
+              {navCollapsed ? Icon.chevronRight(16) : Icon.chevronLeft(16)}
+            </span>
+            <span className="nav-label">Collapse</span>
+          </button>
           <TipCard
             text={TIPS[view] ?? 'Keep handoffs small and reviewable.'}
             linkLabel="View workflow guide"
@@ -282,50 +320,13 @@ export default function App() {
   )
 }
 
-function CreateTaskPacketWrapper(props: {
-  stepProps: {
-    bridge: ReturnType<typeof getBridge>
-    project: Project
-    run: HandoffRun
-    refreshRun: () => Promise<void>
-    refreshProjects: () => Promise<void>
-    onNavigate: (view: ViewId) => void
-    onOpenGuide: (topic: GuideTopicId) => void
-  }
-  onPacket: (packet: BuildPacketResult | null) => void
-  recipe: RecipePrefill | null
-  onRecipeConsumed: () => void
-  preferredTemplate: string
-}) {
-  // CreateTaskPacketView owns its own build result; mirror the latest packet up
-  // so Run in Copilot can show upload files and the recommended prompt.
-  const originalBuild = props.stepProps.bridge.buildPacket.bind(props.stepProps.bridge)
-  const bridge = useMemo(() => ({
-    ...props.stepProps.bridge,
-    buildPacket: async (runId: string, fields: Parameters<typeof originalBuild>[1]) => {
-      const result = await originalBuild(runId, fields)
-      props.onPacket(result)
-      return result
-    },
-  }), [props.stepProps.bridge]) // eslint-disable-line react-hooks/exhaustive-deps
-  return (
-    <CreateTaskPacketView
-      {...props.stepProps}
-      bridge={bridge}
-      recipe={props.recipe}
-      onRecipeConsumed={props.onRecipeConsumed}
-      preferredTemplate={props.preferredTemplate}
-    />
-  )
-}
-
 function MissingRun(props: { onBack: () => void }) {
   return (
     <div className="panel" role="alert">
       <h2>No active handoff run</h2>
-      <p className="secondary-text">Start a handoff from the Copilot Handoff hub or the Projects view first.</p>
+      <p className="secondary-text">Start from Build &amp; Test or Projects first.</p>
       <button type="button" className="btn btn-primary" onClick={props.onBack}>
-        Go to Copilot Handoff
+        Go to Build &amp; Test
       </button>
     </div>
   )

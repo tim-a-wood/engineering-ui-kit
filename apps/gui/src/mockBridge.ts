@@ -99,6 +99,7 @@ export function installMockBridge(): EuikBridge {
       if (!input.repoPath.trim()) throw new Error('repository path does not exist')
       const project: Project = {
         id: newId('project'), name: input.name.trim(), repoPath: input.repoPath, status: 'active',
+        launchUrl: 'http://127.0.0.1:4180', launchCommand: 'npm run build && npm start',
         ...(input.description ? { description: input.description } : {}),
         verificationCommands: { typecheck: 'npm run typecheck', build: 'npm run build' },
         settingsSchemaVersion: '1', createdAt: now(), updatedAt: now(),
@@ -132,6 +133,8 @@ export function installMockBridge(): EuikBridge {
     },
     async pickDirectory() { return 'C:\\work\\picked-repo' },
     async pickZipFile() { return 'C:\\work\\Downloads\\ui-overlay.zip' },
+    async addReferenceFile() { return { path: '/tmp/reference-example.pdf', name: 'example.pdf' } },
+    getDroppedFilePath(file) { return file.name },
     async prepareContext(runId): Promise<PrepareContextResult> {
       const run = runs.get(runId)
       if (!run) throw new Error(`run not found: ${runId}`)
@@ -256,6 +259,7 @@ export function installMockBridge(): EuikBridge {
         views,
       }
     },
+    async captureProjectThumbnail() { return undefined },
     async inspectOverlay(runId, zipPath): Promise<OverlayInspectionSummary> {
       const blocked = zipPath.toLowerCase().includes('blocked')
       const summary: OverlayInspectionSummary = {
@@ -293,6 +297,12 @@ export function installMockBridge(): EuikBridge {
         startedAt: now(), endedAt: now(), exitCode: 0, status: 'passed' as const, wasCancelledByUser: false,
       }))
     },
+    async installDependencies(runId): Promise<VerificationResult> {
+      return {
+        runId, commandLabel: 'install-dependencies', commandText: 'npm install', workingDirectory: '/mock',
+        startedAt: now(), endedAt: now(), exitCode: 0, status: 'passed', wasCancelledByUser: false,
+      }
+    },
     async startUploadDrag() { /* native drag needs Electron; no-op in mock */ },
     async launchApp(projectId, _options) {
       const project = projects.get(projectId)
@@ -306,6 +316,7 @@ export function installMockBridge(): EuikBridge {
       return { files: 2 }
     },
     async openExternal() { /* no-op in mock */ },
+    async openPath() { /* no-op in mock */ },
     async showInFolder() { /* no-op in mock */ },
   }
 }

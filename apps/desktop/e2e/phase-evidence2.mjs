@@ -30,7 +30,7 @@ await waitForStatus(/Launch & evidence settings saved/)
 
 await page.getByRole('button', { name: 'Copilot Handoff' }).click()
 await page.getByRole('button', { name: /^Continue/ }).click()
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 
 const evidenceSection = page.locator('section', { has: page.getByRole('heading', { name: 'Visual evidence — before / after' }) })
 await evidenceSection.scrollIntoViewIfNeeded()

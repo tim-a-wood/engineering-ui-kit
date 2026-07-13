@@ -24,8 +24,9 @@ export function SettingsView(props: {
     }
   }
 
+  // Pinned to the panel foot (RCP-DASH-001) so sibling panels' actions align.
   const SaveButton = (props2: { panel: string }) => (
-    <div className="right" style={{ marginTop: 'var(--semantic-spacing-3)' }}>
+    <div className="panel-actions">
       <button type="button" className="btn btn-secondary btn-compact" onClick={() => save(props2.panel)}>
         {Icon.doc(14)} Save changes
       </button>

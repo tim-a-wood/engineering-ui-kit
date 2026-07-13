@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 function friendlyDate(iso: string): string {
   const date = new Date(iso)
@@ -27,7 +27,19 @@ export function ProjectsView(props: {
   const [page, setPage] = useState(1)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [launchUrlProject, setLaunchUrlProject] = useState<Project | null>(null)
-  const [status, setStatus] = useState<Status>({ tone: 'info', text: 'Manage your Engineering UI Kit projects.' })
+  // Null until an action produces feedback — no filler status banner.
+  const [status, setStatus] = useState<Status | null>(null)
+  // Projects with an open run resume at their persisted step — label them so.
+  const [openProjects, setOpenProjects] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    let cancelled = false
+    props.bridge.listRuns()
+      .then((runs) => {
+        if (!cancelled) setOpenProjects(new Set(runs.filter((r) => r.currentStep !== 'complete').map((r) => r.projectId)))
+      })
+      .catch(() => { /* labels fall back to Start handoff */ })
+    return () => { cancelled = true }
+  }, [props.bridge, props.projects])
 
   const PAGE_SIZE = 8
   const filtered = useMemo(() => {
@@ -142,7 +154,7 @@ export function ProjectsView(props: {
                 disabled={project.status !== 'active'}
                 onClick={() => props.onStartRun(project.id)}
               >
-                Start handoff
+                {openProjects.has(project.id) ? 'Continue' : 'Start handoff'}
               </button>
             </article>
           ))}
@@ -178,7 +190,7 @@ export function ProjectsView(props: {
                     <div>
                       <strong>{project.name}</strong>
                       {project.isSample && <span className="sample-chip" title="Built-in sample project — explore freely">Sample</span>}
-                      <p className="muted" style={{ margin: 0, fontSize: 13 }}>{project.description ?? project.repoPath}</p>
+                      <p className="row-meta" title={project.description ?? project.repoPath}>{project.description ?? project.repoPath}</p>
                     </div>
                   </div>
                 </td>
@@ -187,7 +199,7 @@ export function ProjectsView(props: {
                     <span className="status-dot" aria-hidden="true" /> {project.status === 'active' ? 'Active' : 'Archived'}
                   </span>
                 </td>
-                <td className="secondary-text num">{friendlyDate(project.updatedAt)}</td>
+                <td className="secondary-text num cell-time">{friendlyDate(project.updatedAt)}</td>
                 <td>
                   <div className="hstack" style={{ justifyContent: 'flex-end' }}>
                     <button
@@ -196,31 +208,34 @@ export function ProjectsView(props: {
                       disabled={project.status !== 'active'}
                       onClick={() => props.onStartRun(project.id)}
                     >
-                      Start handoff
+                      {openProjects.has(project.id) ? 'Continue' : 'Start handoff'}
                     </button>
-                    {project.launchUrl && (
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-compact"
-                        onClick={async () => {
-                          setStatus({ tone: 'info', text: `Opening ${project.name}…` })
-                          try {
-                            const result = await props.bridge.launchApp(project.id)
-                            setStatus({ tone: 'success', text: result.started ? `Dev server started — ${project.name} opened at ${result.url}.` : `${project.name} opened at ${result.url}.` })
-                          } catch (error) {
-                            setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
-                          }
-                        }}
-                      >
-                        Open App
-                      </button>
-                    )}
-                    <button type="button" className="btn btn-secondary btn-compact" onClick={() => setLaunchUrlProject(project)}>
-                      {project.launchUrl ? 'Launch & evidence…' : 'Set launch & evidence…'}
-                    </button>
-                    <button type="button" className="btn btn-secondary btn-compact" onClick={() => toggleArchive(project)}>
-                      {project.status === 'active' ? 'Archive' : 'Reactivate'}
-                    </button>
+                    <RowMenu
+                      items={[
+                        ...(project.launchUrl
+                          ? [{
+                              label: 'Open App',
+                              onSelect: async () => {
+                                setStatus({ tone: 'info', text: `Opening ${project.name}…` })
+                                try {
+                                  const result = await props.bridge.launchApp(project.id)
+                                  setStatus({ tone: 'success', text: result.started ? `Dev server started — ${project.name} opened at ${result.url}.` : `${project.name} opened at ${result.url}.` })
+                                } catch (error) {
+                                  setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+                                }
+                              },
+                            }]
+                          : []),
+                        {
+                          label: project.launchUrl ? 'Launch & evidence…' : 'Set launch & evidence…',
+                          onSelect: () => setLaunchUrlProject(project),
+                        },
+                        {
+                          label: project.status === 'active' ? 'Archive' : 'Reactivate',
+                          onSelect: () => void toggleArchive(project),
+                        },
+                      ]}
+                    />
                   </div>
                 </td>
               </tr>
@@ -259,7 +274,7 @@ export function ProjectsView(props: {
       </div>
       </section>
 
-      <StatusLine status={status} />
+      {status && <StatusLine status={status} />}
 
       {dialogOpen && (
         <NewProjectDialog
@@ -290,6 +305,53 @@ export function ProjectsView(props: {
         />
       )}
     </>
+  )
+}
+
+/**
+ * Compact per-row overflow menu (CMP-TABLE-DATA-TABLE): one primary action
+ * stays visible in the row; secondary actions live behind "More actions".
+ */
+function RowMenu(props: { items: { label: string; onSelect: () => void }[] }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div
+      className="row-menu"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false)
+      }}
+    >
+      <button
+        type="button"
+        className="icon-btn icon-btn-outline"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="More actions"
+        data-tip="More actions"
+        onClick={() => setOpen((o) => !o)}
+      >
+        {Icon.dots(14)}
+      </button>
+      {open && (
+        <ul className="row-menu-list" role="menu">
+          {props.items.map((item) => (
+            <li key={item.label} role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="row-menu-item"
+                onClick={() => {
+                  setOpen(false)
+                  item.onSelect()
+                }}
+              >
+                {item.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 

@@ -1,0 +1,58 @@
+{
+  "runId": "19380b8a-cc5e-4ec2-9c4a-c550126aeff6",
+  "zipFilename": "ui-overlay.zip",
+  "inspectedAt": "2026-07-12T18:07:32.565Z",
+  "normalizedEntries": [
+    {
+      "originalPath": "ApplicationShell.html",
+      "normalizedRelativePath": "ApplicationShell.html",
+      "targetPath": "/Users/timwood/Desktop/pave/web-client/ApplicationShell.html",
+      "sizeBytes": 3057,
+      "isDirectory": false
+    },
+    {
+      "originalPath": "ApplicationStyles.css",
+      "normalizedRelativePath": "ApplicationStyles.css",
+      "targetPath": "/Users/timwood/Desktop/pave/web-client/ApplicationStyles.css",
+      "sizeBytes": 95366,
+      "isDirectory": false
+    },
+    {
+      "originalPath": "index.html",
+      "normalizedRelativePath": "index.html",
+      "targetPath": "/Users/timwood/Desktop/pave/web-client/index.html",
+      "sizeBytes": 3057,
+      "isDirectory": false
+    },
+    {
+      "originalPath": "tokens.css",
+      "normalizedRelativePath": "tokens.css",
+      "targetPath": "/Users/timwood/Desktop/pave/web-client/tokens.css",
+      "sizeBytes": 2385,
+      "isDirectory": false
+    }
+  ],
+  "hardBlockers": [],
+  "warnings": [
+    {
+      "ruleId": "AI-HANDOFF-040",
+      "path": "ApplicationShell.html",
+      "message": "overwrites existing source file"
+    },
+    {
+      "ruleId": "AI-HANDOFF-040",
+      "path": "ApplicationStyles.css",
+      "message": "overwrites existing source file"
+    },
+    {
+      "ruleId": "AI-HANDOFF-040",
+      "path": "index.html",
+      "message": "overwrites existing source file"
+    },
+    {
+      "ruleId": "AI-HANDOFF-045",
+      "message": "target working tree has uncommitted changes before apply"
+    }
+  ],
+  "canApply": true
+}

@@ -1,5 +1,5 @@
 /**
- * An iteration turn inside Verify & Review: record reviewer feedback on the
+ * An iteration turn inside Test: record reviewer feedback on the
  * open run, walk back to Apply Zip Overlay, select the corrected overlay
  * (EUIK_TEST_PICK_ZIP), accept any overwrite warnings, apply, and re-verify.
  *
@@ -14,7 +14,7 @@ const { app, page, shot, waitForStatus } = await launchWorkbench()
 
 await page.getByRole('heading', { name: 'Copilot Handoff Hub' }).waitFor()
 await page.getByRole('button', { name: /^Continue/ }).click()
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 
 // ---- 1. Record what the iteration is fixing --------------------------------
 if (FEEDBACK) {
@@ -41,10 +41,10 @@ if (await gate.count() > 0) {
 await page.getByRole('button', { name: 'Apply Overlay' }).click()
 await waitForStatus(/Overlay applied/)
 await shot('iteration-applied')
-await page.getByRole('button', { name: 'Continue to Verify & Review' }).click()
+await page.getByRole('button', { name: 'Continue to Test' }).click()
 
 // ---- 3. Re-verify ------------------------------------------------------------
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 await page.getByRole('button', { name: /^(Run checks|Re-run checks)$/ }).click()
 // Rehydrated results may already show a verdict; wait for the fresh run first.
 await waitForStatus(/Running verification commands/, { timeout: 30_000 })

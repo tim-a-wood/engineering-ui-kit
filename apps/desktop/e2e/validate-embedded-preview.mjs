@@ -13,7 +13,7 @@ const record = (id, pass, detail) => { results.push({ id, pass, detail }); conso
 const { app, page, shot } = await launchWorkbench()
 await page.getByRole('heading', { name: 'Copilot Handoff Hub' }).waitFor()
 await page.getByRole('button', { name: /^Continue/ }).first().click()
-await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+await page.getByRole('heading', { name: 'Test' }).waitFor()
 
 // The preview must appear on its own — no clicks past this point.
 const webview = page.locator('webview.app-preview-frame')

@@ -57,7 +57,7 @@ try {
   // ---- 2. Into the run: capture after-evidence -------------------------------
   await page.getByRole('button', { name: 'Copilot Handoff' }).click()
   await page.getByRole('button', { name: /^Continue/ }).click()
-  await page.getByRole('heading', { name: 'Verify & Review' }).waitFor()
+  await page.getByRole('heading', { name: 'Test' }).waitFor()
 
   const evidenceSection = page.locator('section', { has: page.getByRole('heading', { name: 'Visual evidence — before / after' }) })
   await evidenceSection.scrollIntoViewIfNeeded()

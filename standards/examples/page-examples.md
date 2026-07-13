@@ -10,7 +10,7 @@ Regions: app shell, page header, metric cards, validation status summary, compon
 
 ## Workflow Page
 
-Regions: step indicator, input form, preview panel, validation summary, command action bar, timeline log. Components: `CMP-WORKFLOW-STEP-INDICATOR`, `CMP-FORM-FIELD`, `CMP-FEEDBACK-VALIDATION-SUMMARY`, `CMP-NAV-COMMAND-ACTION-BAR`, `CMP-WORKFLOW-TIMELINE-EVENT-LOG`.
+Regions: icon-supported page header, primary input region on the canvas, bounded preview where needed, validation summary, contextual command bar, and evidence. Components: `CMP-SHELL-PAGE-HEADER`, `CMP-FORM-FIELD`, `CMP-FEEDBACK-VALIDATION-SUMMARY`, `CMP-NAV-COMMAND-ACTION-BAR`. Add `CMP-WORKFLOW-STEP-INDICATOR` only for three or more genuinely sequential gated phases.
 
 ## Detail Page
 

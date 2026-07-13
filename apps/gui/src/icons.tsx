@@ -206,6 +206,12 @@ export const Icon = {
     </>, size),
   list: (size = 16) => svg(
     <path d="M4 6.5h16M4 12h16M4 17.5h16" />, size),
+  dots: (size = 16) => svg(
+    <>
+      <circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" />
+    </>, size),
   inbox: (size = 16) => svg(
     <>
       <path d="M4 4.5h16v15H4v-15Z" />

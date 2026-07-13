@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { HandoffRun } from '@engineering-ui-kit/core'
-import { WORKFLOW_STEPS, stepStateFor, type ViewId } from './appState'
+import { WORKFLOW_STEPS, isStepReachable, stepStateFor, type ViewId } from './appState'
 import { Icon } from './icons'
 
 export type Crumb = { label: string; onClick?: () => void }
@@ -38,6 +38,7 @@ export function Crumbs(props: { items: Crumb[] }) {
 
 export function PageHeader(props: {
   title: string
+  icon?: ReactNode
   subtitle?: string
   crumbs?: Crumb[]
   onBack?: () => void
@@ -56,6 +57,7 @@ export function PageHeader(props: {
           {Icon.arrowLeft()}
         </button>
       )}
+      {props.icon && <span className="page-header-icon" aria-hidden="true">{props.icon}</span>}
       <div className="page-header-copy">
         {props.crumbs && props.crumbs.length > 0 && <Crumbs items={props.crumbs} />}
         <h1>{props.title}</h1>
@@ -66,24 +68,52 @@ export function PageHeader(props: {
   )
 }
 
-export function Stepper(props: { run: HandoffRun | undefined; onNavigate?: (view: ViewId) => void }) {
+export function Stepper(props: {
+  run: HandoffRun | undefined
+  onNavigate?: (view: ViewId) => void
+  activeView?: ViewId
+}) {
+  const active = props.activeView === 'build'
+    || props.activeView === 'prepare-context'
+    || props.activeView === 'create-task-packet'
+    || props.activeView === 'run-in-copilot'
+    || props.activeView === 'apply-zip-overlay'
+    ? 'build'
+    : props.activeView === 'verify-review'
+      ? 'verify-review'
+      : props.activeView
+
   return (
-    <ol className="workflow" aria-label="Workflow steps">
+    <ol className="workflow workflow-two-step" aria-label="Workflow steps">
       {WORKFLOW_STEPS.map((step) => {
         const state = stepStateFor(props.run, step.index)
         const stateLabel = state === 'complete' ? 'Complete' : state === 'current' ? 'Current' : 'Pending'
-        return (
-          <li key={step.id} className={`workflow-step ${state}`}>
+        const isActive = step.id === active
+        const content = (
+          <>
             <span className="workflow-marker" aria-hidden="true">
-              {state === 'complete' ? Icon.check(11) : step.index + 1}
+              {step.id === 'build' ? Icon.box(14) : Icon.shieldCheck(14)}
             </span>
             <span className="workflow-name">
-              {step.name}
+              <span className="workflow-short">{step.short}</span>
+              <span className="workflow-supporting">{step.supporting}</span>
               <span className="sr-only">, {stateLabel}</span>
             </span>
             <span className="workflow-state" aria-hidden="true">
               {stateLabel}
             </span>
+          </>
+        )
+        // Visited (and artifact-reachable) steps navigate on click; the step
+        // being viewed and locked future steps render statically.
+        const clickable = Boolean(props.onNavigate) && !isActive && isStepReachable(props.run, step.id)
+        return (
+          <li key={step.id} className={`workflow-step ${state}${isActive ? ' viewing' : ''}`}>
+            {clickable ? (
+              <button type="button" className="workflow-step-link" onClick={() => props.onNavigate!(step.id)}>
+                {content}
+              </button>
+            ) : content}
           </li>
         )
       })}

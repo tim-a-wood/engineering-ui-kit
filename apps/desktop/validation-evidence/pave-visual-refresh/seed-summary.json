@@ -1,0 +1,61 @@
+{
+  "checkout": {
+    "branch": "remediation/0",
+    "tip": "909c143 Gate runner: silence-kill watchdog + hang-proof Chromium probe (frontend gate freeze)."
+  },
+  "projectId": "43953f14-aeaa-47ed-877d-2cdc33111472",
+  "repoPath": "/Users/timwood/Desktop/pave/web-client",
+  "runId": "19380b8a-cc5e-4ec2-9c4a-c550126aeff6",
+  "context": {
+    "includedFileCount": 71,
+    "excludedFileCount": 0,
+    "warnings": []
+  },
+  "inspection": {
+    "canApply": true,
+    "warnings": [
+      {
+        "ruleId": "AI-HANDOFF-040",
+        "path": "ApplicationShell.html",
+        "message": "overwrites existing source file"
+      },
+      {
+        "ruleId": "AI-HANDOFF-040",
+        "path": "ApplicationStyles.css",
+        "message": "overwrites existing source file"
+      },
+      {
+        "ruleId": "AI-HANDOFF-040",
+        "path": "index.html",
+        "message": "overwrites existing source file"
+      },
+      {
+        "ruleId": "AI-HANDOFF-045",
+        "message": "target working tree has uncommitted changes before apply"
+      }
+    ],
+    "hardBlockers": []
+  },
+  "applied": [
+    {
+      "relativePath": "ApplicationShell.html",
+      "action": "overwritten",
+      "sizeBytes": 3057
+    },
+    {
+      "relativePath": "ApplicationStyles.css",
+      "action": "overwritten",
+      "sizeBytes": 95366
+    },
+    {
+      "relativePath": "index.html",
+      "action": "overwritten",
+      "sizeBytes": 3057
+    },
+    {
+      "relativePath": "tokens.css",
+      "action": "created",
+      "sizeBytes": 2385
+    }
+  ]
+}

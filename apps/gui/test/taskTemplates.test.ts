@@ -47,7 +47,7 @@ describe('applyTemplate', () => {
   it('interpolates the project name everywhere', () => {
     const t = TASK_TEMPLATES.find((x) => x.id === 'standards-refresh')!
     const filled = applyTemplate(t, 'acme-console')
-    expect(filled.taskTitle).toBe('Apply Engineering UI Kit standards to acme-console')
+    expect(filled.taskTitle).toBe('Visual refresh for acme-console')
     expect(filled.goal).toContain('acme-console')
     expect(JSON.stringify(filled)).not.toContain('{project}')
   })
@@ -85,7 +85,7 @@ describe('parseFeedbackEntries', () => {
 describe('defaultTemplateId', () => {
   it('matches by exact title, case-insensitively', () => {
     expect(defaultTemplateId('Apply UI Kit standards to an existing UI')).toBe('standards-refresh')
-    expect(defaultTemplateId('create a monolithic web app'.toUpperCase())).toBe('monolithic-web-app')
+    expect(defaultTemplateId('self-contained app'.toUpperCase())).toBe('monolithic-web-app')
   })
 
   it('matches by id and falls back to standards-refresh', () => {

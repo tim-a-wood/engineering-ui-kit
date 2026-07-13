@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "source": "/Users/timwood/Desktop/pave/web-client",
+  "branch": "remediation/0",
+  "tip": "909c143",
+  "liveUrl": "http://127.0.0.1:8765/",
+  "styles": {
+    "canvas": "#07111f",
+    "accent": "",
+    "paveBg": "#07111f",
+    "bodyBg": "rgb(7, 17, 31)",
+    "bodyColor": "rgb(248, 250, 252)"
+  }
+}

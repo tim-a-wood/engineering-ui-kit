@@ -43,10 +43,10 @@ const SHARED_ACCEPTANCE = [
 export const TASK_TEMPLATES: TaskTemplate[] = [
   {
     id: 'standards-refresh',
-    title: 'Apply UI Kit standards to an existing UI',
-    summary: 'Restyle an existing screen or app to Engineering UI Kit dark-first standards while preserving all behavior.',
-    taskTitle: 'Apply Engineering UI Kit standards to {project}',
-    goal: 'Refresh the existing UI of {project} to Engineering UI Kit dark-first standards while preserving all existing domain behavior, data flow, and interactions.',
+    title: 'Visual refresh',
+    summary: 'Restyle an existing screen or app visually while preserving all behavior.',
+    taskTitle: 'Visual refresh for {project}',
+    goal: 'Refresh the existing UI of {project} visually while preserving all existing domain behavior, data flow, and interactions.',
     scope: [
       'Presentation, layout, and styling only: stylesheets, the semantic token entry point, and view markup where presentation requires.',
       'Existing component structure may be reorganized only where necessary for the presentation change.',
@@ -68,10 +68,10 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   },
   {
     id: 'new-ui-from-requirements',
-    title: 'Build a new UI from requirements (no backend)',
-    summary: 'Green-field screen or small app from a written description, using sample data only.',
-    taskTitle: 'Build new UI for {project} from requirements',
-    goal: 'Implement a new dark-first UI for {project} from the requirements below, using local sample data only — no backend, network, or filesystem access.',
+    title: 'From spec',
+    summary: 'New screen or small app from a written spec, using sample data only.',
+    taskTitle: 'Build {project} from spec',
+    goal: 'Implement a new dark-first UI for {project} from the spec below, using local sample data only — no backend, network, or filesystem access.',
     scope: [
       'REPLACE: one-paragraph description of the screen(s) to build and the user problem they solve.',
       'New view components, a single token entry stylesheet, and sample data modules.',
@@ -148,10 +148,10 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   },
   {
     id: 'monolithic-web-app',
-    title: 'Create a monolithic web app',
+    title: 'Self-contained app',
     summary: 'Single deployable: React/Vite frontend plus a minimal local server in one repo.',
-    taskTitle: 'Create monolithic web app: {project}',
-    goal: 'Scaffold and implement a small monolithic web application for {project}: a React + Vite + TypeScript frontend and a minimal local Node server in one repository, one deployable.',
+    taskTitle: 'Create self-contained app: {project}',
+    goal: 'Scaffold and implement a self-contained web application for {project}: a React + Vite + TypeScript frontend and a minimal local Node server in one repository, one deployable.',
     scope: [
       'REPLACE: describe the app, its 2–4 core screens, and the data it manages.',
       'Frontend: app shell (top bar, primary navigation, page header), the core screens, semantic token entry stylesheet.',
@@ -229,10 +229,10 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   },
   {
     id: 'a11y-remediation',
-    title: 'Accessibility remediation pass',
-    summary: 'Bring an existing screen to WCAG 2.2 AA: keyboard, focus, labels, status text, contrast.',
-    taskTitle: 'Accessibility remediation for {project}',
-    goal: 'Bring the existing UI of {project} to WCAG 2.2 AA without changing any domain behavior: complete keyboard operation, visible focus, accessible names, text-backed status, dialog semantics, and reduced-motion support.',
+    title: 'UI/UX issue finder',
+    summary: 'Find and fix UI/UX issues: clarity, keyboard, focus, labels, status text, contrast.',
+    taskTitle: 'UI/UX issue pass for {project}',
+    goal: 'Find and fix UI/UX issues in {project} without changing domain behavior: clarity problems, complete keyboard operation, visible focus, accessible names, text-backed status, dialog semantics, and reduced-motion support.',
     scope: [
       'REPLACE: name the screen(s) in scope.',
       'Markup semantics (landmarks, headings, labels, roles), focus management, and styling for focus/contrast only.',
