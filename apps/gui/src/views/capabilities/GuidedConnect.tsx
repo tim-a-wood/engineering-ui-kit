@@ -61,6 +61,32 @@ const emptyEvidence: SelectionEvidence = {
   captureTime: '1970-01-01T00:00:00.000Z',
 }
 
+function bindingFromCanonical(
+  projectId: string,
+  evidence: SelectionEvidence,
+  initial?: Partial<FrontendBinding>,
+): FrontendBinding {
+  return {
+    schemaVersion: '1.0',
+    bindingId: initial?.bindingId ?? 'binding.draft',
+    version: initial?.version ?? '1.0.0',
+    projectId,
+    selectionEvidence: evidence,
+    trigger: initial?.trigger ?? 'activate',
+    operationId: initial?.operationId ?? '',
+    operationVersion: initial?.operationVersion ?? '',
+    inputMappings: initial?.inputMappings ?? [],
+    outputMappings: initial?.outputMappings ?? [],
+    loadingBehavior: initial?.loadingBehavior ?? '',
+    validationBehavior: initial?.validationBehavior ?? '',
+    domainRejectionBehavior: initial?.domainRejectionBehavior ?? '',
+    technicalFailureBehavior: initial?.technicalFailureBehavior ?? '',
+    cancellationBehavior: initial?.cancellationBehavior ?? '',
+    duplicateSubmissionBehavior: initial?.duplicateSubmissionBehavior ?? '',
+    dataMode: initial?.dataMode ?? 'connected',
+  }
+}
+
 type Props = {
   bridge: EuikBridge
   projectId: string
@@ -101,30 +127,27 @@ export function GuidedConnect(props: Props) {
   )
 
   const evidence = props.selectionEvidence ?? props.initialBinding?.selectionEvidence ?? emptyEvidence
-  const [binding, setBinding] = useState<FrontendBinding>(() => ({
-    schemaVersion: '1.0',
-    bindingId: props.initialBinding?.bindingId ?? 'binding.draft',
-    version: props.initialBinding?.version ?? '1.0.0',
-    projectId,
-    selectionEvidence: evidence,
-    trigger: props.initialBinding?.trigger ?? 'activate',
-    operationId: props.initialBinding?.operationId ?? '',
-    operationVersion: props.initialBinding?.operationVersion ?? '',
-    inputMappings: props.initialBinding?.inputMappings ?? [],
-    outputMappings: props.initialBinding?.outputMappings ?? [],
-    loadingBehavior: props.initialBinding?.loadingBehavior ?? '',
-    validationBehavior: props.initialBinding?.validationBehavior ?? '',
-    domainRejectionBehavior: props.initialBinding?.domainRejectionBehavior ?? '',
-    technicalFailureBehavior: props.initialBinding?.technicalFailureBehavior ?? '',
-    cancellationBehavior: props.initialBinding?.cancellationBehavior ?? '',
-    duplicateSubmissionBehavior: props.initialBinding?.duplicateSubmissionBehavior ?? '',
-    dataMode: props.initialBinding?.dataMode ?? 'connected',
-  }))
+  const [binding, setBinding] = useState<FrontendBinding>(() => bindingFromCanonical(projectId, evidence, props.initialBinding))
   const [attempted, setAttempted] = useState(false)
   const [busy, setBusy] = useState(false)
   const busyRef = useRef(false) // synchronous guard: blocks a second click in the same tick
   const [status, setStatus] = useState<Status | null>(null)
   const [ranOutcome, setRanOutcome] = useState<{ label: string; outcome: string; connected: boolean } | null>(null)
+
+  // A canonical refresh may replace a draft without changing its id/version. Mirror the
+  // record itself rather than relying on the component key, and clear results derived from it.
+  useEffect(() => {
+    setBinding(bindingFromCanonical(
+      projectId,
+      props.selectionEvidence ?? props.initialBinding?.selectionEvidence ?? emptyEvidence,
+      props.initialBinding,
+    ))
+    setAttempted(false)
+    setStatus(null)
+    setRanOutcome(null)
+    busyRef.current = false
+    setBusy(false)
+  }, [projectId, props.initialBinding])
 
   useEffect(() => {
     if (props.selectionEvidence) setBinding((prev) => ({ ...prev, selectionEvidence: props.selectionEvidence!, projectId }))

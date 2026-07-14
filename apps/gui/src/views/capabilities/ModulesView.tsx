@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type {
   ArchitectureSpecification,
+  CapabilityRunScope,
   CapabilityModuleRecord,
   CapDiagnostic,
   InterviewPacket,
@@ -173,27 +174,36 @@ function ModuleWorkspace(props: {
   const [busy, setBusy] = useState(false)
   const [implementationExport, setImplementationExport] = useState<CapabilityPacketExportResult>()
   const [implementationRunId, setImplementationRunId] = useState('')
-  const [hasPersistedRun, setHasPersistedRun] = useState(false)
+  const [persistedLifecycleState, setPersistedLifecycleState] = useState('')
   const [zipPath, setZipPath] = useState('')
   const [inspection, setInspection] = useState<OverlayInspectionSummary>()
   const [warningsAccepted, setWarningsAccepted] = useState(false)
   const [applied, setApplied] = useState(false)
-  const mounted = useRef(true)
-  useEffect(() => () => { mounted.current = false }, [])
+  const mounted = useRef(false)
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
 
   // Resume any persisted implementation run for this module (lifecycle survives remount/reload).
   useEffect(() => {
     if (!projectId || !moduleId) return
-    void bridge.capabilitiesListRuns(projectId).then((values) => {
-      if (!mounted.current) return
-      const matching = (values as { runId: string; targetOwnerId: string; kind: string; createdAt: string }[])
-        .filter((run) => run.targetOwnerId === moduleId && run.kind === 'implementation')
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
-      if (matching) {
-        setImplementationRunId(matching.runId)
-        setHasPersistedRun(true)
-      }
-    })
+    let cancelled = false
+    void bridge.capabilitiesListRuns(projectId)
+      .then((values) => {
+        if (cancelled || !mounted.current) return
+        const matching = (values as CapabilityRunScope[])
+          .filter((run) => run.targetOwnerId === moduleId && run.kind === 'implementation')
+          .sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt))[0]
+        setImplementationRunId(matching?.runId ?? '')
+        setPersistedLifecycleState(matching?.lifecycleState ?? '')
+      })
+      .catch((error) => {
+        if (!cancelled && mounted.current) {
+          setMessage(guided ? 'Implementation progress could not be loaded.' : error instanceof Error ? error.message : String(error))
+        }
+      })
+    return () => { cancelled = true }
   }, [bridge, projectId, moduleId])
 
   const belongsToActiveModule = (candidateModuleId: string) =>
@@ -297,7 +307,7 @@ function ModuleWorkspace(props: {
       if (!mounted.current) return
       setImplementationExport(exported)
       setImplementationRunId(exported.runId)
-      setHasPersistedRun(true)
+      setPersistedLifecycleState('packet-exported')
       setInspection(undefined)
       setWarningsAccepted(false)
       setApplied(false)
@@ -340,6 +350,7 @@ function ModuleWorkspace(props: {
       })
       if (!mounted.current) return
       setApplied(true)
+      setPersistedLifecycleState('overlay-applied')
       setMessage(`Applied ${result.files.length} file(s); verification is now required.`)
       await props.onChanged()
     } catch (error) {
@@ -365,10 +376,12 @@ function ModuleWorkspace(props: {
   }
 
   type BuildStep = 'interview' | 'import' | 'approve' | 'handoff' | 'inspect' | 'accept' | 'apply' | 'verify'
+  const implementationStarted = Boolean(implementationExport) || ['packet-exported', 'overlay-inspected', 'overlay-applied'].includes(persistedLifecycleState)
+  const implementationApplied = applied || persistedLifecycleState === 'overlay-applied'
   const buildStep: BuildStep = !isApproved
     ? draft ? 'approve' : interviewExport ? 'import' : 'interview'
-    // Persisted run (or a fresh export) means implementation is already underway — resume at inspect.
-    : !implementationExport && !hasPersistedRun ? 'handoff'
+    : implementationApplied ? 'verify'
+      : !implementationStarted ? 'handoff'
       : !inspection ? 'inspect'
         : inspection.warnings.length > 0 && !warningsAccepted ? 'accept'
           : inspection.canApply && !applied ? 'apply'

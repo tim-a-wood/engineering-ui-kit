@@ -120,9 +120,11 @@ async function assertNoOverflow(page, label) {
     const vw = document.documentElement.clientWidth
     const main = document.querySelector('.main')
     const past = [...document.querySelectorAll('.capabilities-view *')].filter((e) => e.getBoundingClientRect().right > vw + 1).length
-    return { colOverflow: main ? main.scrollWidth - main.clientWidth : 0, past }
+    const documentOverflow = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - vw
+    return { colOverflow: main ? main.scrollWidth - main.clientWidth : 0, documentOverflow, past }
   })
   assert(info.colOverflow <= 1, `${label}: content column has horizontal overflow (${info.colOverflow}px)`)
+  assert(info.documentOverflow <= 1, `${label}: document has horizontal overflow (${info.documentOverflow}px)`)
   assert(info.past === 0, `${label}: ${info.past} element(s) extend past the viewport`)
 }
 async function shot(page, name) {

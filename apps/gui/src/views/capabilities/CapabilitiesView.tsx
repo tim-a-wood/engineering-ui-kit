@@ -88,6 +88,9 @@ export function CapabilitiesView({
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const [loadError, setLoadError] = useState('')
   const loadGenRef = useRef(0)
+  // Updated synchronously on selection so callbacks retained by an unmounted child
+  // can never refresh their former project into the newly active workspace.
+  const activeProjectRef = useRef('')
   const previewRef = useRef<CapabilityPreviewHandle | null>(null)
   const projectSelectRef = useRef<HTMLSelectElement | null>(null)
   const stageHeadingRef = useRef<HTMLHeadingElement | null>(null)
@@ -133,7 +136,7 @@ export function CapabilitiesView({
         // Lazy initialization only on explicit selection.
         await bridge.capabilitiesEnsureInitialized(id)
         const d = await fetchWorkspace(id)
-        if (gen !== loadGenRef.current) return // stale — a newer selection won
+        if (gen !== loadGenRef.current || id !== activeProjectRef.current) return
         setApplication(d.application)
         setArchitecture(d.architecture)
         setAttentionItems(d.attention)
@@ -144,7 +147,7 @@ export function CapabilitiesView({
         setDesignSection(stageToDesignSection(derived.firstIncompleteStageId))
         setLoadState('ready')
       } catch (error) {
-        if (gen !== loadGenRef.current) return
+        if (gen !== loadGenRef.current || id !== activeProjectRef.current) return
         setLoadError(error instanceof Error ? error.message : String(error))
         setLoadState('error') // never fall back to the previous project's records
       }
@@ -156,6 +159,7 @@ export function CapabilitiesView({
     async (id: string) => {
       // Invalidate any in-flight load immediately so stale records can never render.
       loadGenRef.current++
+      activeProjectRef.current = id
       setProjectId(id)
       clearRecords()
       if (!id) {
@@ -176,10 +180,11 @@ export function CapabilitiesView({
 
   /** Background refresh after a child mutation — gen-guarded so it cannot clobber a switch. */
   const refresh = useCallback(async () => {
-    if (!projectId) return
+    const expectedProjectId = projectId
+    if (!expectedProjectId || expectedProjectId !== activeProjectRef.current) return
     const gen = loadGenRef.current
-    const d = await fetchWorkspace(projectId)
-    if (gen !== loadGenRef.current) return
+    const d = await fetchWorkspace(expectedProjectId)
+    if (gen !== loadGenRef.current || expectedProjectId !== activeProjectRef.current) return
     setApplication(d.application)
     setArchitecture(d.architecture)
     setAttentionItems(d.attention)

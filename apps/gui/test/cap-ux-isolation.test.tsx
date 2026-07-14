@@ -8,6 +8,7 @@
  * survived selection changes) and pass because of the implementation.
  */
 
+import { StrictMode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { CapabilityModuleRecord, Project } from '@engineering-ui-kit/core'
@@ -15,6 +16,7 @@ import type { EuikBridge } from '../src/bridge'
 import { CapabilitiesView } from '../src/views/capabilities/CapabilitiesView'
 import { ModulesView } from '../src/views/capabilities/ModulesView'
 import { GuidedConnect } from '../src/views/capabilities/GuidedConnect'
+import { GuidedBuild } from '../src/views/capabilities/GuidedBuild'
 import { GuideOverlay } from '../src/guides'
 
 afterEach(cleanup)
@@ -123,6 +125,39 @@ describe('project isolation', () => {
     await waitFor(() => expect(screen.getByText('Not started.')).toBeTruthy())
     expect(screen.queryByText('Definition approved.')).toBeNull()
   })
+
+  it('ignores a refresh invoked by an unmounted Project A child after switching to B', async () => {
+    const gate = deferred<{ passed: boolean; diagnostics: never[] }>()
+    const draft = {
+      schemaVersion: '1.0', id: 'app.a', revision: '1', name: 'A', purpose: 'A',
+      outcomes: [], userRoles: [], domainTerms: [], constraints: [], successMeasures: [], useCases: [],
+      contentHash: 'a', status: 'draft',
+    }
+    let approvedA = false
+    const approveApplication = vi.fn(async () => {
+      approvedA = true
+      return { ok: true, gate: { passed: true, diagnostics: [] }, approved: { ...draft, status: 'approved' } }
+    })
+    const bridge = makeBridge({
+      capabilitiesGetApplication: (async (pid: string) =>
+        pid === 'A' ? (approvedA ? { approved: { ...draft, status: 'approved' } } : { draft }) : {}) as never,
+      capabilitiesEvaluateProductGate: (async () => gate.promise) as never,
+      capabilitiesApproveApplication: approveApplication as never,
+    })
+    render(<CapabilitiesView bridge={bridge} projects={projects} />)
+
+    selectProject('A')
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Approve definition' }) as HTMLButtonElement).disabled).toBe(false))
+    fireEvent.click(screen.getByRole('button', { name: 'Approve definition' }))
+    selectProject('B')
+    await waitFor(() => expect(screen.getByText('Not started.')).toBeTruthy())
+
+    gate.resolve({ passed: true, diagnostics: [] })
+    await waitFor(() => expect(approveApplication).toHaveBeenCalledTimes(1))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(screen.getByText('Not started.')).toBeTruthy()
+    expect(screen.queryByText('Definition approved.')).toBeNull()
+  })
 })
 
 describe('module isolation', () => {
@@ -145,7 +180,7 @@ describe('module isolation', () => {
   })
 
   it('resumes a persisted implementation lifecycle instead of restarting at handoff', async () => {
-    const runs = [{ runId: 'run-1', targetOwnerId: 'mod.orders', kind: 'implementation', createdAt: 't' }]
+    const runs = [{ runId: 'run-1', targetOwnerId: 'mod.orders', kind: 'implementation', lifecycleState: 'packet-exported', createdAt: 't', updatedAt: 't' }]
     const bridge = makeBridge({
       capabilitiesGetArchitecture: (async () => arch) as never,
       capabilitiesListRuns: (async () => runs) as never,
@@ -155,6 +190,64 @@ describe('module isolation', () => {
 
     await waitFor(() => expect(screen.getByRole('button', { name: /Select and inspect overlay/i })).toBeTruthy())
     expect(screen.queryByRole('button', { name: /Create implementation handoff/i })).toBeNull()
+  })
+
+  it('resumes persisted module state under the app StrictMode wrapper', async () => {
+    const runs = [{ runId: 'run-1', targetOwnerId: 'mod.orders', kind: 'implementation', lifecycleState: 'packet-exported', createdAt: 't', updatedAt: 't' }]
+    const bridge = makeBridge({
+      capabilitiesGetArchitecture: (async () => arch) as never,
+      capabilitiesListRuns: (async () => runs) as never,
+    })
+    const approvedRecords: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: { moduleId: 'mod.orders' } as never }]
+    render(
+      <StrictMode>
+        <ModulesView bridge={bridge} projectId="p1" architectureApproved projection="guided" records={approvedRecords} hideModuleList progressive externalSelectedModuleId="mod.orders" />
+      </StrictMode>,
+    )
+    await waitFor(() => expect(screen.getByRole('button', { name: /Select and inspect overlay/i })).toBeTruthy())
+  })
+
+  it('resumes an overlay-applied implementation run at verification', async () => {
+    const runs = [{ runId: 'run-1', targetOwnerId: 'mod.orders', kind: 'implementation', lifecycleState: 'overlay-applied', createdAt: 't', updatedAt: 't' }]
+    const bridge = makeBridge({
+      capabilitiesGetArchitecture: (async () => arch) as never,
+      capabilitiesListRuns: (async () => runs) as never,
+    })
+    const approvedRecords: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: { moduleId: 'mod.orders' } as never }]
+    render(<ModulesView bridge={bridge} projectId="p1" architectureApproved projection="guided" records={approvedRecords} hideModuleList progressive externalSelectedModuleId="mod.orders" />)
+    await waitFor(() => expect(screen.getByRole('button', { name: /Run verification/i })).toBeTruthy())
+  })
+
+  it('clears an imported module draft when the user selects another module', async () => {
+    const twoModuleArch = { approved: { schemaVersion: '1.0', id: 'arch', revision: '1', moduleIds: ['mod.orders', 'mod.other'] } }
+    const bridge = makeBridge({
+      capabilitiesGetArchitecture: (async () => twoModuleArch) as never,
+      capabilitiesSaveModuleDraft: (async () => ({ ok: true })) as never,
+    })
+    const twoRecords: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders' }, { moduleId: 'mod.other' }]
+    render(<ModulesView bridge={bridge} projectId="p1" architectureApproved projection="design" records={twoRecords} />)
+    await waitFor(() => expect(screen.getByLabelText('Interview response JSON')).toBeTruthy())
+    const response = JSON.stringify({ moduleId: 'mod.orders', moduleType: 'domain', name: 'Orders', moduleVersion: '1.0.0', responsibility: 'orders', ownedConcerns: [], excludedConcerns: [], providedOperations: [], requiredOperations: [], verificationSuiteIds: [], runtimeAllocation: 'local-embedded', events: [], ownedPaths: [], answers: [], acceptanceCases: [], rules: [] })
+    fireEvent.change(screen.getByLabelText('Interview response JSON'), { target: { value: response } })
+    fireEvent.click(screen.getByRole('button', { name: 'Import module interview response' }))
+    await waitFor(() => expect(screen.getByText(/Manifest draft mod\.orders/i)).toBeTruthy())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select module mod.other' }))
+    await waitFor(() => expect(screen.queryByText(/Manifest draft mod\.orders/i)).toBeNull())
+    expect((screen.getByRole('button', { name: 'Approve module' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('auto-advances Guided Build to the next incomplete module', async () => {
+    const architecture = { schemaVersion: '1.0', id: 'arch', revision: '1', moduleIds: ['mod.orders', 'mod.other'] }
+    const bridge = makeBridge({ capabilitiesGetArchitecture: (async () => ({ approved: architecture })) as never })
+    const initial: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders' }, { moduleId: 'mod.other' }]
+    const { rerender } = render(<GuidedBuild bridge={bridge} projectId="p1" archSpec={architecture as never} records={initial} onChanged={() => {}} />)
+    expect(screen.getByRole('button', { name: /Orders, Not started/i }).getAttribute('aria-current')).toBe('true')
+
+    const afterApproval: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: { moduleId: 'mod.orders' } as never }, { moduleId: 'mod.other' }]
+    rerender(<GuidedBuild bridge={bridge} projectId="p1" archSpec={architecture as never} records={afterApproval} onChanged={() => {}} />)
+    await waitFor(() => expect(screen.getByRole('button', { name: /Other, Not started/i }).getAttribute('aria-current')).toBe('true'))
+    expect(screen.getByText('Create the module interview')).toBeTruthy()
   })
 })
 
@@ -211,6 +304,21 @@ describe('guided connect isolation', () => {
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
     expect((screen.getByLabelText('While it runs') as HTMLInputElement).value).toBe('')
   })
+
+  it('reflects a refreshed canonical binding when its id and version are unchanged', async () => {
+    const canonical = (loadingBehavior: string) => ({
+      bindingId: 'binding.same', version: '1.0.0', projectId: 'p1', selectionEvidence: evidence,
+      trigger: 'activate' as const, operationId: 'op.placeOrder', operationVersion: '2.0',
+      inputMappings: [], outputMappings: [], loadingBehavior, validationBehavior: 'v',
+      domainRejectionBehavior: 'd', technicalFailureBehavior: 't', cancellationBehavior: 'c',
+      duplicateSubmissionBehavior: 'x', dataMode: 'connected' as const,
+    })
+    const props = { bridge: makeBridge(), projectId: 'p1', records, selectionEvidence: evidence, onSelectionEvidence: () => {}, previewRef: { current: null }, onChanged: () => {} }
+    const { rerender } = render(<GuidedConnect {...props} initialBinding={canonical('old behavior')} />)
+    expect((screen.getByLabelText('While it runs') as HTMLInputElement).value).toBe('old behavior')
+    rerender(<GuidedConnect {...props} initialBinding={canonical('canonical refreshed behavior')} />)
+    await waitFor(() => expect((screen.getByLabelText('While it runs') as HTMLInputElement).value).toBe('canonical refreshed behavior'))
+  })
 })
 
 describe('help modal accessibility', () => {
@@ -227,6 +335,17 @@ describe('help modal accessibility', () => {
 
     // Initial focus enters the dialog (close button).
     await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close guides' })))
+
+    const dialog = screen.getByRole('dialog')
+    const focusable = dialog.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    const first = focusable[0]!
+    const last = focusable[focusable.length - 1]!
+    last.focus()
+    fireEvent.keyDown(last, { key: 'Tab' })
+    expect(document.activeElement).toBe(first)
+    first.focus()
+    fireEvent.keyDown(first, { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(last)
 
     // The Capabilities overview is the first topic in its group -> no Previous action.
     expect(screen.queryByRole('button', { name: /←/ })).toBeNull()

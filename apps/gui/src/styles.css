@@ -198,6 +198,19 @@ kbd {
   rotate: 225deg;
 }
 
+/* The title-bar Help control sits against the right edge. Anchor its tooltip to
+   that edge so the invisible pseudo-element does not widen the document. */
+.titlebar [data-tip][data-tip-pos='bottom']::after {
+  left: auto;
+  right: 0;
+  translate: 0 0;
+}
+.titlebar [data-tip][data-tip-pos='bottom']::before {
+  left: auto;
+  right: 9px;
+  translate: 0 0;
+}
+
 /* ============================================================
    App shell & titlebar
    ============================================================ */
