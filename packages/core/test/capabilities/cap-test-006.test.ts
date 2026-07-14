@@ -131,4 +131,38 @@ describe('CAP-TEST-006 product interview packet and gate', () => {
     expect(imported.draft.status).toBe('draft')
     expect(imported.gate.passed).toBe(false)
   })
+
+  it('recovers a rich Copilot product-interview envelope without losing its answers', () => {
+    const imported = importProductInterviewResponse({
+      schemaVersion: '1.0',
+      productDefinition: {
+        purpose: 'Calculate approved aircraft performance data',
+        primaryUser: 'Flight crew',
+        secondaryUsers: ['Dispatch'],
+        approvedCalculationBasis: 'Approved analytical models',
+        operationalAuthority: 'Primary operational means',
+        systemBoundary: { liveWeatherDatabaseConnections: false },
+      },
+      confirmedRequirements: {
+        calculationScope: ['Takeoff performance'],
+        requiredOutputs: ['V1', 'V2'],
+        preflightWorkflow: ['Enter inputs', 'Calculate'],
+        operatingEnvironments: ['Flight deck'],
+        mandatoryOperationalInputsWhereApplicable: ['Aircraft weight'],
+        operationalControls: ['Block invalid inputs'],
+        firstReleaseAcceptanceCriteriaConfirmed: ['Produces traceable results'],
+        firstReleaseExclusions: ['Live weather database'],
+      },
+      proposedRequirements: [],
+      unresolvedRequirements: [{ id: 'UNRES-1', statement: 'Define response time' }],
+    }, { projectId: 'proj-1' })
+
+    expect(imported.valid).toBe(true)
+    expect(imported.draft.purpose).toMatch(/aircraft performance/)
+    expect(imported.draft.actors.map((actor) => actor.text)).toEqual(['Flight crew', 'Dispatch'])
+    expect(imported.draft.useCases).toHaveLength(2)
+    expect(imported.draft.acceptanceCases).toHaveLength(1)
+    expect(imported.draft.unresolvedQuestions[0]?.text).toBe('Define response time')
+    expect(imported.gate.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(['CAP-GATE-001-UNRESOLVED'])
+  })
 })

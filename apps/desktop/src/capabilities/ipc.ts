@@ -44,6 +44,7 @@ import {
   type FreshnessRecord,
   type FrontendBinding,
   type JobRecord,
+  type InterviewPacket,
   type ModuleManifest,
   type ResultEnvelope,
 } from '@engineering-ui-kit/core'
@@ -147,6 +148,58 @@ function implementationHash(repoRoot: string, ownedPaths: readonly string[]): st
   return canonicalHash(entries)
 }
 
+function factValue(packet: InterviewPacket, prefix: string): string | undefined {
+  return packet.inputContext.facts.find((fact) => fact.startsWith(prefix))?.slice(prefix.length)
+}
+
+/** Exact importer-facing starter, embedded in the one-file interview handoff. */
+function interviewResponseStarter(packet: InterviewPacket): unknown {
+  if (packet.outputSchemaRef === 'CAP-CONTRACT-002') {
+    const applicationId = packet.inputContext.recordIds[0] ?? 'app.current'
+    return {
+      architecture: {
+        schemaVersion: '1.0', projectId: packet.projectId, id: 'arch.proposed', revision: '1', status: 'proposed',
+        applicationSpecId: applicationId,
+        applicationSpecRevision: packet.inputContext.revisions[0] ?? '1',
+        applicationSpecHash: packet.inputContext.hashes[0] ?? 'pending',
+        capabilityProjections: [{ id: 'capability.example', name: 'Replace with a capability', moduleIds: ['mod.example'] }],
+        moduleIds: ['mod.example'], dependencyEdges: [], operationAllocations: [], adapterAllocations: [],
+        workflowTraces: [{ useCaseId: 'replace-with-use-case-id', moduleIds: ['mod.example'] }],
+        proposals: [], unresolvedQuestions: [],
+        gateResult: { gateId: 'CAP-GATE-002', passed: false, diagnostics: [] }, contentHash: 'pending',
+      },
+      moduleNeedTraces: [{ moduleId: 'mod.example', needIds: ['replace-with-use-case-id'] }],
+      moduleJustifications: [{ moduleId: 'mod.example', justification: 'distinct-rules' }],
+    }
+  }
+  if (packet.outputSchemaRef === 'CAP-CONTRACT-003') {
+    const moduleId = packet.inputContext.recordIds[1] ?? 'mod.example'
+    const moduleType = factValue(packet, 'moduleType:') ?? 'domain'
+    return {
+      moduleId, moduleType, name: 'Replace with module name', moduleVersion: '1.0.0',
+      responsibility: 'Replace with one clear responsibility', ownedConcerns: [], excludedConcerns: [],
+      providedOperations: [], requiredOperations: [], verificationSuiteIds: [], runtimeAllocation: 'local-embedded',
+      events: [], ownedPaths: [`capabilities/modules/${moduleId}/`], configurationSchemaRef: null,
+      answers: packet.inputContext.facts.filter((fact) => fact.startsWith('detail:')).map((fact) => ({
+        id: fact.slice('detail:'.length), text: 'Replace with a concrete answer', status: 'proposed',
+      })),
+      acceptanceCases: [{ id: 'ac-1', description: 'Replace with an acceptance case', expectedOutcome: 'Replace with the expected outcome' }],
+      rules: [],
+    }
+  }
+  return {
+    schemaVersion: '1.0', projectId: packet.projectId, id: 'app.proposed', revision: '1', status: 'proposed',
+    purpose: 'Replace with the application purpose', outcomes: ['Replace with a measurable outcome'],
+    actors: [{ id: 'actor-1', text: 'Replace with an actor' }],
+    goals: [{ id: 'goal-1', text: 'Replace with an actor goal' }],
+    useCases: [{ id: 'use-case-1', text: 'Replace with a complete use case' }], scenarios: [],
+    information: [], rules: [], externalSystems: [], constraints: [],
+    scope: { inScope: ['Replace with an in-scope item'], outOfScope: [] },
+    acceptanceCases: [{ id: 'ac-1', description: 'Replace with an acceptance case', expectedOutcome: 'Replace with the expected outcome' }],
+    sources: [], unresolvedQuestions: [], contentHash: 'pending',
+  }
+}
+
 function exportCapabilityPacketFiles(input: {
   caps: CapabilityWorkspace
   runs: CapabilityRunStore
@@ -173,6 +226,14 @@ This is the complete handoff. Follow the request, use the embedded records as co
 ## Request
 
 ${input.recommendedPrompt}
+
+## Output rules
+
+- Return only the JSON file named ${input.companion.fileName}.
+- Use exactly the top-level shape shown in the required response template below.
+- Replace every "Replace with…" placeholder with interview content.
+- Do not invent wrapper keys such as productDefinition, confirmedRequirements, or gate.
+- Do not omit required keys. Use empty arrays only when the interview confirms there are no items.
 
 ## Capability packet
 
@@ -365,10 +426,7 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
       },
       packet,
       recommendedPrompt: `Conduct the interview defined by the embedded capability packet and stay within its interview boundary. Return a new ${packet.outputFileName}; do not implement source code or approve proposals.`,
-      companion: {
-        fileName: packet.outputFileName,
-        value: { schemaVersion: '1.0', packetId: packet.packetId, status: 'proposed' },
-      },
+      companion: { fileName: packet.outputFileName, value: interviewResponseStarter(packet) },
     })
   })
 

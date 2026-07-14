@@ -129,6 +129,79 @@ function emptyDraft(projectId: string): ApplicationSpecification {
   }
 }
 
+function namedFrom(values: unknown, prefix: string): NamedText[] {
+  if (!Array.isArray(values)) return []
+  return values.flatMap((value, index) => {
+    if (typeof value === 'string' && value.trim()) return [{ id: `${prefix}-${index + 1}`, text: value }]
+    const record = asObject(value)
+    const text = record && typeof record.statement === 'string'
+      ? record.statement
+      : record && typeof record.text === 'string'
+        ? record.text
+        : ''
+    return text.trim() ? [{ id: typeof record?.id === 'string' ? record.id : `${prefix}-${index + 1}`, text }] : []
+  })
+}
+
+/**
+ * Recover the rich envelope older handoffs allowed Copilot to invent. Keeping
+ * this compatibility path means a completed interview is not discarded merely
+ * because its fields were nested under productDefinition/confirmedRequirements.
+ */
+function normalizeProductInterviewEnvelope(value: unknown, projectId: string): unknown {
+  const root = asObject(value)
+  const product = asObject(root?.productDefinition)
+  const confirmed = asObject(root?.confirmedRequirements)
+  if (!root || (!product && !confirmed)) return value
+
+  const primaryUser = typeof product?.primaryUser === 'string' ? [product.primaryUser] : []
+  const secondaryUsers = Array.isArray(product?.secondaryUsers) ? product.secondaryUsers : []
+  const calculationScope = asStringList(confirmed?.calculationScope)
+  const requiredOutputs = asStringList(confirmed?.requiredOutputs)
+  const firstReleaseExclusions = asStringList(confirmed?.firstReleaseExclusions)
+  const acceptance = asStringList(confirmed?.firstReleaseAcceptanceCriteriaConfirmed)
+  const systemBoundary = asObject(product?.systemBoundary)
+  const externalSystems = systemBoundary
+    ? Object.entries(systemBoundary).map(([key, enabled], index) => ({ id: `external-${index + 1}`, text: `${key}: ${String(enabled)}` }))
+    : []
+  const proposed = namedFrom(root.proposedRequirements, 'proposed')
+  const unresolved = namedFrom(root.unresolvedRequirements, 'unresolved')
+
+  return {
+    schemaVersion: '1.0',
+    projectId,
+    id: 'app.proposed',
+    revision: '1',
+    status: 'proposed',
+    purpose: typeof product?.purpose === 'string' ? product.purpose : '',
+    outcomes: requiredOutputs.length ? requiredOutputs : calculationScope,
+    actors: namedFrom([...primaryUser, ...secondaryUsers], 'actor'),
+    goals: namedFrom(calculationScope, 'goal'),
+    useCases: namedFrom(confirmed?.preflightWorkflow, 'use-case'),
+    scenarios: namedFrom(confirmed?.operatingEnvironments, 'scenario'),
+    information: namedFrom([
+      ...asStringList(confirmed?.mandatoryOperationalInputsWhereApplicable),
+      ...requiredOutputs,
+    ], 'information'),
+    rules: namedFrom(confirmed?.operationalControls, 'rule'),
+    externalSystems,
+    constraints: namedFrom([
+      typeof product?.approvedCalculationBasis === 'string' ? product.approvedCalculationBasis : '',
+      typeof product?.operationalAuthority === 'string' ? product.operationalAuthority : '',
+    ].filter(Boolean), 'constraint'),
+    scope: { inScope: calculationScope, outOfScope: firstReleaseExclusions },
+    acceptanceCases: acceptance.map((text, index) => ({
+      id: `ac-${index + 1}`, description: text, expectedOutcome: text,
+    })),
+    sources: namedFrom(
+      typeof product?.approvedCalculationBasis === 'string' ? [product.approvedCalculationBasis] : [],
+      'source',
+    ),
+    unresolvedQuestions: [...proposed, ...unresolved],
+    contentHash: 'pending',
+  } satisfies ApplicationSpecification
+}
+
 /**
  * Coerce an interview response (or partial object) into an ApplicationSpecification draft.
  * Invalid input is preserved as a draft with diagnostics — never throws for shape errors.
@@ -369,7 +442,8 @@ export function importProductInterviewResponse(
   },
 ): ProductInterviewImportResult {
   const parsed = parseRawJson(raw)
-  const { draft, diagnostics } = coerceApplicationDraft(parsed.value, {
+  const normalized = normalizeProductInterviewEnvelope(parsed.value, options.projectId)
+  const { draft, diagnostics } = coerceApplicationDraft(normalized, {
     projectId: options.projectId,
     previousApproved: options.approved,
   })

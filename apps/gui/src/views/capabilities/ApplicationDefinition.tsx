@@ -75,10 +75,14 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
     setBusy(true)
     setMessage('')
     try {
+      const currentDefinition = draft ?? approved
       const built = buildProductInterviewPacket({
         packetId: `pkt-product-${projectId}-${Date.now()}`,
         projectId,
-        approved,
+        approved: currentDefinition,
+        facts: currentDefinition
+          ? [`currentApplicationSpecification:${JSON.stringify(currentDefinition)}`]
+          : undefined,
       })
       const exported = await bridge.capabilitiesExportInterviewPacket({
         packetId: built.packetId,
@@ -116,9 +120,12 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
 
       await bridge.capabilitiesImportInterviewResponse(projectId, result.rawText)
       await bridge.capabilitiesSaveApplicationDraft(projectId, imported.draft)
+      const unresolvedCount = imported.draft.unresolvedQuestions.length
       setMessage(
         imported.valid
-          ? 'Imported draft. Review field delta before approval.'
+          ? unresolvedCount
+            ? `Interview imported. ${unresolvedCount} open question${unresolvedCount === 1 ? '' : 's'} remain — continue in Copilot to finish the plan.`
+            : 'Interview imported. Review the definition, then approve it.'
           : 'Imported invalid response as draft with diagnostics. Approval remains blocked.',
       )
       onChanged?.()
@@ -185,7 +192,9 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
       <div className="capabilities-toolbar" role="group" aria-label="Application definition actions">
         <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>
           {guided
-            ? exportResult ? 'Restart in Copilot' : 'Start in Copilot'
+            ? exportResult
+              ? draft?.unresolvedQuestions?.length ? 'Continue in Copilot' : 'Restart in Copilot'
+              : draft?.unresolvedQuestions?.length ? 'Continue in Copilot' : 'Start in Copilot'
             : exportResult ? 'Recreate interview handoff' : 'Create interview handoff'}
         </button>
         <button
