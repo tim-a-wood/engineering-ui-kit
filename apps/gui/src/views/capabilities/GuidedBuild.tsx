@@ -11,7 +11,7 @@ import type { ArchitectureSpecification, CapabilityModuleRecord } from '@enginee
 import type { EuikBridge } from '../../bridge'
 import { Icon } from '../../icons'
 import { ModulesView } from './ModulesView'
-import { humanizeIdentifier } from './capabilityPresentation'
+import { humanizeIdentifier, moduleTypeLabel } from './capabilityPresentation'
 
 type Props = {
   bridge: EuikBridge
@@ -23,6 +23,10 @@ type Props = {
 
 export function GuidedBuild(props: Props) {
   const moduleIds = props.archSpec?.moduleIds ?? []
+  const moduleDefinitions = useMemo(
+    () => new Map((props.archSpec?.moduleDefinitions ?? []).map((definition) => [definition.moduleId, definition])),
+    [props.archSpec?.moduleDefinitions],
+  )
   const approvedIds = useMemo(
     () => new Set(props.records.filter((r) => r.approved).map((r) => r.moduleId)),
     [props.records],
@@ -61,18 +65,21 @@ export function GuidedBuild(props: Props) {
           {moduleIds.length === 0 ? <li className="capabilities-note">The architecture allocates no modules.</li> : null}
           {moduleIds.map((id) => {
             const s = stateOf(id)
+            const definition = moduleDefinitions.get(id)
+            const displayName = definition?.name || humanizeIdentifier(id)
+            const typeLabel = definition ? moduleTypeLabel(definition.moduleType) : undefined
             return (
               <li key={id}>
                 <button
                   type="button"
                   className={`cap-build-module ${s.cls}${selected === id ? ' active' : ''}`}
                   aria-current={selected === id ? 'true' : undefined}
-                  aria-label={`${humanizeIdentifier(id)}, ${s.label}`}
+                  aria-label={`${displayName}${typeLabel ? `, ${typeLabel}` : ''}, ${s.label}`}
                   onClick={() => setSelected(id)}
                 >
                   <span className="cap-build-module-glyph" aria-hidden="true">{s.glyph}</span>
-                  <span className="cap-build-module-name">{humanizeIdentifier(id)}</span>
-                  <span className="cap-build-module-state">{s.label}</span>
+                  <span className="cap-build-module-name">{displayName}</span>
+                  <span className="cap-build-module-state">{typeLabel ? `${typeLabel} · ` : ''}{s.label}</span>
                 </button>
               </li>
             )

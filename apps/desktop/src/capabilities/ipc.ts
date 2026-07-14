@@ -155,7 +155,9 @@ function factValue(packet: InterviewPacket, prefix: string): string | undefined 
 function interactiveInterviewPrompt(packet: InterviewPacket): string {
   const completionRule = packet.outputSchemaRef === 'CAP-CONTRACT-003'
     ? 'Every required answer must contain a concrete answer and no answer may have status "unresolved".'
-    : 'The final response must contain an empty unresolvedQuestions array. Do not leave proposals or assumptions awaiting confirmation.'
+    : packet.outputSchemaRef === 'CAP-CONTRACT-002'
+      ? 'The final response must assign every module a name, moduleType, and responsibility; give every dependency edge a concrete reason; cover every module in a workflow trace and moduleNeedTrace; and contain an empty unresolvedQuestions array.'
+      : 'The final response must contain an empty unresolvedQuestions array. Do not leave proposals or assumptions awaiting confirmation.'
   return `Run the interview defined by the embedded capability packet as a live conversation with the user.
 
 Interview protocol:
@@ -163,7 +165,7 @@ Interview protocol:
 2. Ask at most three closely related questions in one message, then stop and wait for the user's answers.
 3. Continue in further question-and-answer rounds until every blocking gap has been answered, explicitly accepted as a reasonable default, or deliberately removed from scope.
 4. If the user is unsure, offer a concrete default and ask them to accept or change it. Never silently invent approval.
-5. Do not emit the final JSON while any approval-blocking item remains. A per-turn question limit is not a total interview limit.
+5. Before emitting JSON, silently audit the response against the completion rule, repair mechanical omissions, and do not emit while any approval-blocking item remains. A per-turn question limit is not a total interview limit.
 6. Never mark the interview complete and never return a response that merely records questions the user has not answered.
 7. ${completionRule}
 
@@ -181,7 +183,13 @@ function interviewResponseStarter(packet: InterviewPacket): unknown {
         applicationSpecRevision: packet.inputContext.revisions[0] ?? '1',
         applicationSpecHash: packet.inputContext.hashes[0] ?? 'pending',
         capabilityProjections: [{ id: 'capability.example', name: 'Replace with a capability', moduleIds: ['mod.example'] }],
-        moduleIds: ['mod.example'], dependencyEdges: [], operationAllocations: [], adapterAllocations: [],
+        moduleIds: ['mod.example'],
+        moduleDefinitions: [{
+          moduleId: 'mod.example', name: 'Replace with a clear module name', moduleType: 'domain',
+          responsibility: 'Replace with the single responsibility owned by this module',
+        }],
+        dependencyEdges: [],
+        operationAllocations: [], adapterAllocations: [],
         workflowTraces: [{ useCaseId: 'replace-with-use-case-id', moduleIds: ['mod.example'] }],
         proposals: [], unresolvedQuestions: [],
         gateResult: { gateId: 'CAP-GATE-002', passed: false, diagnostics: [] }, contentHash: 'pending',

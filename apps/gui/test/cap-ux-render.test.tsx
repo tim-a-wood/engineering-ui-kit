@@ -226,6 +226,8 @@ describe('Guided Build (two-region, single next action)', () => {
   it('right region shows only the next relevant action, not every lifecycle button', () => {
     // First-incomplete module (mod.b) -> "Create interview" only.
     expect(html).toContain('Create interview')
+    expect(html).toContain('Assigned during Design')
+    expect(html).not.toContain('Module interview type')
     expect(html).not.toContain('Export implementation packet')
     expect(html).not.toContain('Apply reviewed overlay')
     expect(html).not.toContain('Verify module')

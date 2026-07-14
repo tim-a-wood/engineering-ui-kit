@@ -200,7 +200,7 @@ describe('CAP-TEST-008 architecture proposal gate', () => {
     )
   })
 
-  it('reports incomplete Copilot fields instead of throwing during import', () => {
+  it('repairs common Copilot omissions so a completed interview is approval-ready', () => {
     const incomplete = minimalProposal()
     incomplete.architecture = baseArch({
       moduleIds: ['mod.domain', 'mod.workflow'],
@@ -211,19 +211,11 @@ describe('CAP-TEST-008 architecture proposal gate', () => {
           reason: undefined as unknown as string,
         },
       ],
-      workflowTraces: [{ useCaseId: 'u1', moduleIds: ['mod.workflow', 'mod.domain'] }],
+      workflowTraces: [{ useCaseId: 'u1', moduleIds: ['mod.workflow'] }],
       capabilityProjections: [
         { id: 'cap1', name: 'Primary', moduleIds: ['mod.workflow', 'mod.domain'] },
       ],
     })
-    incomplete.manifests = [
-      domainManifest(),
-      {
-        ...domainManifest('mod.workflow'),
-        responsibility: undefined as unknown as string,
-        excludedConcerns: undefined as unknown as string[],
-      },
-    ]
     incomplete.moduleNeedTraces = [
       { moduleId: 'mod.domain', needIds: ['u1'] },
       { moduleId: 'mod.workflow', needIds: ['u1'] },
@@ -231,11 +223,28 @@ describe('CAP-TEST-008 architecture proposal gate', () => {
 
     expect(() => importArchitectureProposal(product, incomplete)).not.toThrow()
     const imported = importArchitectureProposal(product, incomplete)
+    expect(imported.ok).toBe(true)
+    expect(imported.draft).toBeDefined()
+    expect(imported.diagnostics).toEqual([])
+    expect(imported.draft?.dependencyEdges[0]?.reason).toContain('Workflow uses Domain')
+    expect(imported.draft?.workflowTraces[0]?.moduleIds).toEqual(['mod.workflow', 'mod.domain'])
+    expect(imported.draft?.moduleDefinitions).toEqual([
+      expect.objectContaining({ moduleId: 'mod.domain', moduleType: 'domain', name: 'Domain' }),
+      expect.objectContaining({ moduleId: 'mod.workflow', moduleType: 'workflow', name: 'Workflow' }),
+    ])
+  })
+
+  it('still reports unsafe partial manifests without throwing', () => {
+    const incomplete = minimalProposal()
+    incomplete.manifests = [{
+      ...domainManifest(),
+      responsibility: undefined as unknown as string,
+      excludedConcerns: undefined as unknown as string[],
+    }]
+    const imported = importArchitectureProposal(product, incomplete)
     expect(imported.ok).toBe(false)
     expect(imported.draft).toBeDefined()
-    expect(imported.diagnostics.map((d) => d.code)).toEqual(
-      expect.arrayContaining(['CAP-GATE-002-DEP-REASON', 'CAP-GATE-002-RESP']),
-    )
+    expect(imported.diagnostics.map((diagnostic) => diagnostic.code)).toContain('CAP-GATE-002-RESP')
   })
 
   it('imports response and approves only when gate passes', () => {

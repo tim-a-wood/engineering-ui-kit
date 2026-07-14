@@ -19,10 +19,12 @@ import type { CapabilityWorkspace } from './persistence.js'
 import { validateContractRecord } from './validation.js'
 import type {
   ApplicationSpecification,
+  ArchitectureModuleDefinition,
   ArchitectureSpecification,
   InterviewPacket,
   ModuleManifest,
 } from './types.js'
+import { MODULE_TYPES } from './parity.js'
 
 export type ArchitectureProposalInput = {
   architecture: ArchitectureSpecification
@@ -68,6 +70,97 @@ const PRODUCT_NEED_IDS = (spec: ApplicationSpecification): Set<string> => {
   return ids
 }
 
+const VALID_MODULE_TYPES = new Set<string>(MODULE_TYPES)
+
+function titleFromModuleId(moduleId: string): string {
+  const value = moduleId.replace(/^mod[.\-_]?/i, '').replace(/[._-]+/g, ' ').trim()
+  return value ? value.replace(/\b\w/g, (character) => character.toUpperCase()) : moduleId
+}
+
+/** A compatibility fallback for legacy responses; new handoffs ask the LLM to assign this explicitly. */
+export function inferModuleType(moduleId: string, name = ''): ArchitectureModuleDefinition['moduleType'] {
+  const text = `${moduleId} ${name}`.toLowerCase()
+  if (/\b(ui|ux|view|screen|interface|presentation|experience|frontend)\b/.test(text)) return 'experience'
+  if (/\b(adapter|integration|connector|client|gateway|api|external|matlab)\b/.test(text)) return 'connection'
+  if (/\b(workflow|orchestrat|process|coordinat|use.?case|application)\b/.test(text)) return 'workflow'
+  if (/\b(platform|storage|database|repository|infrastructure|runtime|config|cache)\b/.test(text)) return 'platform'
+  return 'domain'
+}
+
+function normalizeModuleDefinitions(
+  architecture: ArchitectureSpecification,
+  manifests: ModuleManifest[],
+): ArchitectureModuleDefinition[] {
+  const existing = new Map((architecture.moduleDefinitions ?? []).map((definition) => [definition.moduleId, definition]))
+  const manifestById = new Map(manifests.map((manifest) => [manifest.moduleId, manifest]))
+  return (architecture.moduleIds ?? []).map((moduleId) => {
+    const definition = existing.get(moduleId)
+    const manifest = manifestById.get(moduleId)
+    const name = typeof definition?.name === 'string' && definition.name.trim()
+      ? definition.name.trim()
+      : manifest?.name?.trim() || titleFromModuleId(moduleId)
+    const moduleType = VALID_MODULE_TYPES.has(definition?.moduleType ?? '')
+      ? definition!.moduleType
+      : manifest?.moduleType ?? inferModuleType(moduleId, name)
+    const responsibility = typeof definition?.responsibility === 'string' && definition.responsibility.trim()
+      ? definition.responsibility.trim()
+      : manifest?.responsibility?.trim() || `${name} owns its allocated capability and exposes it through explicit contracts.`
+    return { moduleId, name, moduleType, responsibility }
+  })
+}
+
+/**
+ * Repair safe, mechanical omissions commonly produced by interview clients.
+ * This does not invent modules or dependencies; it only describes declared edges,
+ * classifies declared modules, and connects declared module need traces to workflows.
+ */
+export function normalizeArchitectureProposal(
+  product: ApplicationSpecification,
+  proposal: ArchitectureProposalInput,
+): ArchitectureProposalInput {
+  const architecture = proposal.architecture
+  const moduleDefinitions = normalizeModuleDefinitions(architecture, proposal.manifests ?? [])
+  const definitionById = new Map(moduleDefinitions.map((definition) => [definition.moduleId, definition]))
+  const dependencyEdges = (architecture.dependencyEdges ?? []).map((edge) => {
+    if (typeof edge.reason === 'string' && edge.reason.trim()) return { ...edge, reason: edge.reason.trim() }
+    const from = definitionById.get(edge.fromModuleId)?.name ?? titleFromModuleId(edge.fromModuleId)
+    const to = definitionById.get(edge.toModuleId)?.name ?? titleFromModuleId(edge.toModuleId)
+    return { ...edge, reason: `${from} uses ${to} to fulfill its allocated responsibility.` }
+  })
+
+  const traces = new Map(
+    (architecture.workflowTraces ?? []).map((trace) => [trace.useCaseId, new Set(trace.moduleIds ?? [])]),
+  )
+  const useCaseIds = new Set(product.useCases.map((useCase) => useCase.id))
+  const needsByModule = new Map((proposal.moduleNeedTraces ?? []).map((trace) => [trace.moduleId, trace.needIds ?? []]))
+  const tracedModules = new Set([...traces.values()].flatMap((moduleIds) => [...moduleIds]))
+  for (const moduleId of architecture.moduleIds ?? []) {
+    if (tracedModules.has(moduleId)) continue
+    const matchingUseCases = (needsByModule.get(moduleId) ?? []).filter((needId) => useCaseIds.has(needId))
+    const targetUseCases = matchingUseCases.length
+      ? matchingUseCases
+      : traces.size ? [[...traces.keys()][0]!] : product.useCases[0] ? [product.useCases[0].id] : []
+    for (const useCaseId of targetUseCases) {
+      const modules = traces.get(useCaseId) ?? new Set<string>()
+      modules.add(moduleId)
+      traces.set(useCaseId, modules)
+    }
+  }
+
+  return {
+    ...proposal,
+    architecture: {
+      ...architecture,
+      moduleDefinitions,
+      dependencyEdges,
+      workflowTraces: [...traces.entries()].map(([useCaseId, moduleIds]) => ({
+        useCaseId,
+        moduleIds: [...moduleIds],
+      })),
+    },
+  }
+}
+
 export function buildArchitectureInterviewPacket(input: {
   packetId: string
   projectId: string
@@ -92,7 +185,13 @@ export function buildArchitectureInterviewPacket(input: {
       hashes: [input.application.contentHash],
       facts: [
         `purpose:${input.application.purpose}`,
-        ...input.application.useCases.map((u) => `useCase:${u.id}`),
+        ...input.application.outcomes.map((outcome) => `outcome:${outcome}`),
+        ...input.application.useCases.map((u) => `useCase:${u.id}:${u.text}`),
+        ...input.application.externalSystems.map((system) => `externalSystem:${system.id}:${system.text}`),
+        ...input.application.constraints.map((constraint) => `constraint:${constraint.id}:${constraint.text}`),
+        'architectureCompletion:assign each module a name, moduleType, and single responsibility',
+        'architectureCompletion:every dependency edge must include a concrete reason',
+        'architectureCompletion:every module must appear in at least one workflow trace and module need trace',
         ...(input.reusableModuleIds ?? []).map((id) => `reusable:${id}`),
         ...(input.availableAdapterIds ?? ['adapter.filesystem', 'adapter.matlab', 'adapter.azure-devops']).map(
           (id) => `adapter:${id}`,
@@ -268,20 +367,21 @@ export function importArchitectureProposal(
   if (!parsed.proposal) {
     return { ok: false, diagnostics: parsed.diagnostics }
   }
+  const normalized = normalizeArchitectureProposal(product, parsed.proposal)
   const draft: ArchitectureSpecification = {
-    ...parsed.proposal.architecture,
+    ...normalized.architecture,
     status: 'proposed',
     applicationSpecId: product.id,
     applicationSpecRevision: product.revision,
     applicationSpecHash: product.contentHash,
     projectId: product.projectId,
     contentHash: canonicalHash({
-      ...parsed.proposal.architecture,
+      ...normalized.architecture,
       status: 'proposed',
       contentHash: undefined,
     }),
   }
-  const proposal: ArchitectureProposalInput = { ...parsed.proposal, architecture: draft }
+  const proposal: ArchitectureProposalInput = { ...normalized, architecture: draft }
   const evaluation = evaluateArchitectureProposal(product, proposal)
   draft.gateResult = {
     gateId: evaluation.gateId,

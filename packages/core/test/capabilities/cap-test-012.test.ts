@@ -141,7 +141,7 @@ describe('CAP-TEST-012 architecture diagram and list projection', () => {
     for (const node of guided.nodes) {
       expect(node.statusLabel.length).toBeGreaterThan(0)
       expect(node.statusIcon.length).toBeGreaterThan(0)
-      expect(node.moduleType).toBeUndefined()
+      expect(node.moduleType).toBeTruthy()
     }
     for (const node of design.nodes) {
       expect(node.moduleType).toBeTruthy()
@@ -170,5 +170,21 @@ describe('CAP-TEST-012 architecture diagram and list projection', () => {
     const projection = projectArchitecture(proposed, manifests, {}, { mode: 'guided' })
     expect(projection.nodes.every((n) => n.proposed && n.status === 'proposed')).toBe(true)
     expect(projection.edges.every((e) => e.suggested)).toBe(true)
+  })
+
+  it('uses design-time module definitions before module manifests exist', () => {
+    const { architecture } = buildTwentyNodeFixture()
+    const firstId = architecture.moduleIds[0]!
+    architecture.moduleDefinitions = [{
+      moduleId: firstId,
+      name: 'Flight Planner',
+      moduleType: 'workflow',
+      responsibility: 'Coordinates the planning workflow.',
+    }]
+    const projection = projectArchitecture(architecture, [], {}, { mode: 'guided' })
+    expect(projection.nodes[0]).toEqual(expect.objectContaining({
+      name: 'Flight Planner', moduleType: 'workflow', responsibility: 'Coordinates the planning workflow.',
+      status: 'planned', statusLabel: 'Planned',
+    }))
   })
 })

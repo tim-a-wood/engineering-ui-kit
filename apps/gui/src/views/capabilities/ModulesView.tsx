@@ -16,14 +16,13 @@ import type {
   CapDiagnostic,
   InterviewPacket,
   ModuleManifest,
-  ModuleType,
   OverlayInspectionSummary,
 } from '@engineering-ui-kit/core'
 import {
   applicableDetailsFor,
   buildModuleInterviewPacket,
+  inferModuleType,
   importModuleInterviewResponse,
-  MODULE_APPLICABLE_DETAILS,
   type ModuleInterviewResponse,
 } from '@engineering-ui-kit/core/browser'
 import type { CapabilityPacketExportResult, EuikBridge } from '../../bridge'
@@ -48,8 +47,6 @@ type Props = {
   progressive?: boolean
   onOpenArchitecture?: () => void
 }
-
-const MODULE_TYPES = Object.keys(MODULE_APPLICABLE_DETAILS) as ModuleType[]
 
 function asArch(value: unknown): ArchitectureSpecification | undefined {
   if (!value || typeof value !== 'object') return undefined
@@ -178,7 +175,8 @@ function ModuleWorkspace(props: {
 }) {
   const { bridge, projectId, moduleId, architecture, isApproved, projection, progressive } = props
   const guided = projection === 'guided'
-  const [selectedType, setSelectedType] = useState<ModuleType>('domain')
+  const architectureModule = architecture?.moduleDefinitions?.find((definition) => definition.moduleId === moduleId)
+  const selectedType = architectureModule?.moduleType ?? inferModuleType(moduleId, architectureModule?.name)
   const [packet, setPacket] = useState<InterviewPacket | undefined>()
   const [interviewExport, setInterviewExport] = useState<CapabilityPacketExportResult>()
   const [draft, setDraft] = useState<ModuleManifest | undefined>()
@@ -421,11 +419,7 @@ function ModuleWorkspace(props: {
       <p className="cap-build-step-label"><span className="badge">Next</span> {BUILD_STEP_LABEL[buildStep]}</p>
       {buildStep === 'interview' && (
         <>
-          <label className="cap-connect-field">Kind of module
-            <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as ModuleType)} aria-label="Module interview type" disabled={busy}>
-              {MODULE_TYPES.map((type) => <option key={type} value={type}>{moduleTypeLabel(type)}</option>)}
-            </select>
-          </label>
+          <p className="capabilities-note cap-assigned-module-type"><span className="badge">{moduleTypeLabel(selectedType)}</span> Assigned during Design</p>
           <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>Create interview</button>
         </>
       )}
@@ -485,12 +479,7 @@ function ModuleWorkspace(props: {
         progressiveNextAction
       ) : (
         <>
-          <label>
-            Module type
-            <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as ModuleType)} aria-label="Module interview type" disabled={busy}>
-              {MODULE_TYPES.map((type) => <option key={type} value={type}>{guided ? moduleTypeLabel(type) : type}</option>)}
-            </select>
-          </label>
+          <p className="capabilities-note cap-assigned-module-type"><span className="badge">{guided ? moduleTypeLabel(selectedType) : selectedType}</span> Assigned by the approved architecture</p>
 
           {projection === 'design' ? (
             <p className="capabilities-note">Applicable details ({selectedType}): {applicableDetailsFor(selectedType).join(', ')}</p>

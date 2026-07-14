@@ -4211,73 +4211,208 @@ code.path-wrap {
 
 .architecture-view {
   display: grid;
-  gap: var(--semantic-spacing-3);
-  margin-top: var(--semantic-spacing-4);
+  gap: var(--semantic-spacing-4);
+  margin-top: var(--semantic-spacing-5);
+}
+.architecture-heading,
+.architecture-directory-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-4);
+}
+.architecture-heading h3,
+.architecture-directory-heading h4 { margin: 0; }
+.architecture-eyebrow {
+  margin: 0 0 0.2rem;
+  color: var(--semantic-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.architecture-revision {
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  color: var(--semantic-text-secondary);
+  background: var(--semantic-surface-inset);
+  font-size: 0.75rem;
+  font-family: var(--semantic-font-mono, ui-monospace, monospace);
+}
+.architecture-map-shell {
+  overflow: hidden;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-lg);
+  background: var(--semantic-surface-panel);
+  box-shadow: 0 18px 42px color-mix(in srgb, #000 14%, transparent);
+}
+.architecture-map-toolbar {
+  display: flex;
+  gap: var(--semantic-spacing-4);
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--semantic-border-subtle);
+  color: var(--semantic-text-secondary);
+  background: var(--semantic-surface-panel-raised);
+  font-size: 0.75rem;
+  font-weight: 650;
 }
 .architecture-diagram {
-  border: 1px solid var(--semantic-color-border, #ccc);
-  border-radius: 4px;
-  padding: var(--semantic-spacing-2);
   outline: none;
   overflow: auto;
-  max-height: 28rem;
+  max-height: 38rem;
+  min-height: 19rem;
 }
 .architecture-diagram:focus {
-  outline: 2px solid var(--semantic-color-border-strong, #333);
+  box-shadow: inset 0 0 0 2px var(--semantic-accent-primary);
+}
+.architecture-map-background { fill: color-mix(in srgb, var(--semantic-surface-inset) 85%, #08101f); }
+.architecture-grid-line { fill: none; stroke: color-mix(in srgb, var(--semantic-border-subtle) 42%, transparent); stroke-width: 0.65; }
+.architecture-group-label {
+  fill: var(--semantic-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .architecture-edge {
-  stroke: var(--semantic-color-border-strong, #444);
-  stroke-width: 1.5;
+  fill: none;
+  stroke: color-mix(in srgb, var(--semantic-accent-primary) 68%, var(--semantic-border-strong));
+  stroke-width: 2;
+  opacity: 0.72;
 }
 .architecture-edge.suggested {
-  stroke: var(--semantic-color-border, #888);
+  stroke-dasharray: 7 6;
+  opacity: 0.58;
 }
-.architecture-node rect {
-  fill: var(--semantic-color-surface, #f7f7f5);
-  stroke: var(--semantic-color-border-strong, #333);
-  stroke-width: 1.5;
-  cursor: pointer;
+.architecture-arrow { fill: var(--semantic-accent-primary); }
+.architecture-node { cursor: pointer; }
+.architecture-node rect:first-of-type {
+  fill: color-mix(in srgb, var(--semantic-surface-panel-raised) 94%, transparent);
+  stroke: var(--semantic-border-subtle);
+  stroke-width: 1;
+  filter: drop-shadow(0 7px 9px color-mix(in srgb, #000 15%, transparent));
+  transition: stroke 120ms ease, filter 120ms ease, transform 120ms ease;
 }
-.architecture-node.proposed rect {
-  fill: var(--semantic-color-surface, #fafafa);
+.architecture-node:hover rect:first-of-type,
+.architecture-node.in-focus rect:first-of-type { stroke: color-mix(in srgb, var(--semantic-accent-primary) 50%, var(--semantic-border-strong)); }
+.architecture-node.selected rect:first-of-type {
+  stroke: var(--semantic-accent-primary);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 9px 13px color-mix(in srgb, var(--semantic-accent-primary) 24%, transparent));
 }
-.architecture-node.selected rect {
-  stroke-width: 3;
+.architecture-node.proposed rect:first-of-type { stroke-dasharray: 7 4; }
+.architecture-node-accent { stroke: none !important; fill: #8391a8; filter: none !important; }
+.architecture-node.type-domain .architecture-node-accent { fill: #8b7cf6; }
+.architecture-node.type-workflow .architecture-node-accent { fill: #3f9df3; }
+.architecture-node.type-experience .architecture-node-accent { fill: #e66bb2; }
+.architecture-node.type-connection .architecture-node-accent { fill: #e99942; }
+.architecture-node.type-platform .architecture-node-accent { fill: #42b99a; }
+.architecture-node-kicker {
+  fill: var(--semantic-text-secondary);
+  font-size: 8.5px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
 }
-.architecture-node.in-focus rect {
-  stroke: var(--semantic-color-border-strong, #222);
+.architecture-node-title {
+  fill: var(--semantic-text-primary);
+  font-size: 13px;
+  font-weight: 700;
 }
-.architecture-node-title,
 .architecture-node-status {
-  font-size: 11px;
-  fill: var(--semantic-color-text, #111);
-  pointer-events: none;
+  fill: var(--semantic-text-secondary);
+  font-size: 10px;
 }
+.architecture-node-open { fill: var(--semantic-text-secondary); font-size: 13px; }
+.architecture-node text { pointer-events: none; }
 .architecture-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
-  gap: var(--semantic-spacing-2);
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--semantic-spacing-3);
 }
 .architecture-list button {
   display: grid;
-  gap: 0.25rem;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.75rem;
   width: 100%;
-  text-align: left;
-  padding: var(--semantic-spacing-2);
+  min-height: 4.5rem;
+  padding: 0.75rem;
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
-  background: var(--semantic-surface-inset);
+  border-radius: var(--semantic-radius-lg);
+  background: var(--semantic-surface-panel-raised);
   color: var(--semantic-text-primary);
+  text-align: left;
   cursor: pointer;
-  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
-    background-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
-.architecture-list button:hover { border-color: var(--semantic-border-strong); background: var(--semantic-surface-panel-raised); }
-.architecture-list button.active {
-  border-color: var(--semantic-accent-primary);
-  outline: 2px solid color-mix(in srgb, var(--semantic-accent-primary) 28%, transparent);
+.architecture-list button:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--semantic-accent-primary) 55%, var(--semantic-border-strong));
+  box-shadow: 0 8px 22px color-mix(in srgb, #000 11%, transparent);
+}
+.architecture-list button.active { border-color: var(--semantic-accent-primary); }
+.architecture-list-icon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.7rem;
+  color: #fff;
+  background: #8391a8;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.architecture-type-domain { background: #705de8; }
+.architecture-type-workflow { background: #247fcf; }
+.architecture-type-experience { background: #c94b96; }
+.architecture-type-connection { background: #c87624; }
+.architecture-type-platform { background: #268f75; }
+.architecture-list-copy { display: grid; min-width: 0; gap: 0.15rem; }
+.architecture-list-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.architecture-list-copy span,
+.architecture-list-status { color: var(--semantic-text-secondary); font-size: 0.74rem; }
+.architecture-list-status { white-space: nowrap; }
+.architecture-list-open { color: var(--semantic-text-secondary); font-size: 1rem; }
+.architecture-detail-hero { display: flex; align-items: center; gap: 0.55rem; margin-bottom: var(--semantic-spacing-3); }
+.architecture-type,
+.architecture-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.architecture-status { color: var(--semantic-text-primary); background: var(--semantic-surface-inset); border: 1px solid var(--semantic-border-subtle); }
+.architecture-responsibility { max-width: 62rem; font-size: 1rem; line-height: 1.6; }
+.architecture-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--semantic-spacing-3);
+  margin: var(--semantic-spacing-4) 0;
+}
+.architecture-detail-grid > div { padding: 0.75rem; border-radius: var(--semantic-radius-md); background: var(--semantic-surface-inset); }
+.architecture-detail-grid dt { color: var(--semantic-text-secondary); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.architecture-detail-grid dd { margin: 0.35rem 0 0; }
+.architecture-detail-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--semantic-spacing-5); }
+.architecture-connection-list,
+.architecture-chip-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--semantic-spacing-2); }
+.architecture-connection-list li { padding: 0.75rem; border: 1px solid var(--semantic-border-subtle); border-radius: var(--semantic-radius-md); }
+.architecture-connection-list p { margin: 0.35rem 0 0; color: var(--semantic-text-secondary); font-size: 0.82rem; }
+.architecture-direction { display: block; margin-bottom: 0.2rem; color: var(--semantic-accent-primary); font-size: 0.68rem; font-weight: 750; letter-spacing: 0.06em; text-transform: uppercase; }
+.architecture-chip-list { display: flex; flex-wrap: wrap; }
+.architecture-chip-list li { padding: 0.35rem 0.55rem; border-radius: 999px; background: var(--semantic-surface-inset); color: var(--semantic-text-secondary); font-size: 0.75rem; }
+@media (max-width: 760px) {
+  .architecture-detail-columns { grid-template-columns: 1fr; }
+  .architecture-heading,
+  .architecture-directory-heading { align-items: flex-start; flex-direction: column; }
 }
 .binding-editor-grid {
   display: grid;

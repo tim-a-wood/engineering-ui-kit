@@ -87,6 +87,13 @@ export type DependencyEdge = {
   reason: string
 }
 
+export type ArchitectureModuleDefinition = {
+  moduleId: string
+  name: string
+  moduleType: ModuleType
+  responsibility: string
+}
+
 /** CAP-CONTRACT-002 */
 export type ArchitectureSpecification = {
   schemaVersion: '1.0'
@@ -99,6 +106,8 @@ export type ArchitectureSpecification = {
   applicationSpecHash: string
   capabilityProjections: { id: string; name: string; moduleIds: string[] }[]
   moduleIds: string[]
+  /** Design-time identity and classification, assigned by the architecture interview. */
+  moduleDefinitions?: ArchitectureModuleDefinition[]
   dependencyEdges: DependencyEdge[]
   operationAllocations: { operationId: string; moduleId: string }[]
   adapterAllocations: { adapterId: string; moduleId: string; portId: string }[]

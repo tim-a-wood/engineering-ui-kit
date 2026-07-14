@@ -261,11 +261,11 @@ describe('CAP-TEST-038b Capabilities accessibility (behavioral)', () => {
     // Status is conveyed by glyph + text label, not color alone.
     expect(html).toContain('Ready')
     expect(html).toContain('Blocked')
-    expect(html).toMatch(/[●■]/)
+    expect(html).toMatch(/[✓!]/)
     expect(html).toContain('role="note"')
     expect(html).toMatch(/color is redundant/i)
     // Diagram is a single tab stop with roving -1 children (focus entry semantics).
-    expect(html).toContain('aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End"')
+    expect(html).toContain('aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Enter"')
     expect(html).toMatch(/role="application"[^>]*tabindex="0"|tabindex="0"[^>]*role="application"/i)
     expect(html).toContain('tabindex="-1"')
   })

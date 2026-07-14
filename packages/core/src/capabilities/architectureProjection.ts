@@ -12,7 +12,7 @@ import type {
 
 export type ArchitectureProjectionMode = 'guided' | 'design'
 
-export type ArchitectureNodeStatus = FreshnessState | 'proposed' | 'unknown'
+export type ArchitectureNodeStatus = FreshnessState | 'planned' | 'proposed' | 'unknown'
 
 export type ArchitectureNodeProjection = {
   id: string
@@ -26,6 +26,7 @@ export type ArchitectureNodeProjection = {
   proposed: boolean
   neighborIds: string[]
   toolsAndData: string[]
+  responsibility?: string
   layout: { x: number; y: number; column: number; row: number }
   moduleType?: string
   moduleVersion?: string
@@ -56,6 +57,8 @@ export type ArchitectureListItem = {
   purposeGroup: string
   statusLabel: string
   statusIcon: ArchitectureNodeProjection['statusIcon']
+  moduleType?: string
+  responsibility?: string
   neighborIds: string[]
   edgeSummaries: string[]
   designSummary?: string
@@ -79,6 +82,7 @@ const STATUS_LABEL: Record<ArchitectureNodeStatus, string> = {
   blocked: 'Blocked',
   failed: 'Failed',
   draft: 'Draft',
+  planned: 'Planned',
   proposed: 'Proposed',
   unknown: 'Unknown',
 }
@@ -91,6 +95,7 @@ const STATUS_ICON: Record<ArchitectureNodeStatus, ArchitectureNodeProjection['st
   blocked: 'blocked',
   failed: 'failed',
   draft: 'draft',
+  planned: 'proposed',
   proposed: 'proposed',
   unknown: 'unknown',
 }
@@ -139,16 +144,16 @@ function layoutNodes(
   }
   const groups = [...byGroup.keys()].sort((a, b) => a.localeCompare(b))
   const layout = new Map<string, { x: number; y: number; column: number; row: number }>()
-  const colWidth = 180
-  const rowHeight = 90
+  const colWidth = 248
+  const rowHeight = 126
   groups.forEach((group, column) => {
     const ids = byGroup.get(group)!.slice().sort((a, b) => a.localeCompare(b))
     ids.forEach((id, row) => {
       layout.set(id, {
         column,
         row,
-        x: 40 + column * colWidth,
-        y: 40 + row * rowHeight,
+        x: 52 + column * colWidth,
+        y: 58 + row * rowHeight,
       })
     })
   })
@@ -167,6 +172,7 @@ export function projectArchitecture(
 ): ArchitectureProjection {
   const mode = options.mode ?? 'guided'
   const byId = new Map(manifests.map((m) => [m.moduleId, m]))
+  const definitionById = new Map((architecture.moduleDefinitions ?? []).map((definition) => [definition.moduleId, definition]))
   const moduleIds = architecture.moduleIds.slice().sort((a, b) => a.localeCompare(b))
   const proposedArchitecture =
     architecture.status === 'proposed' || architecture.status === 'draft'
@@ -191,14 +197,15 @@ export function projectArchitecture(
 
   const nodes: ArchitectureNodeProjection[] = moduleIds.map((id) => {
     const manifest = byId.get(id)
+    const definition = definitionById.get(id)
     const freshness = freshnessByModule[id]
     const status: ArchitectureNodeStatus = proposedArchitecture
       ? 'proposed'
-      : (freshness?.primaryState ?? (manifest ? 'draft' : 'unknown'))
+      : (freshness?.primaryState ?? (manifest ? 'draft' : 'planned'))
     const neighborIds = neighborsOf(id, edges)
     const base: ArchitectureNodeProjection = {
       id,
-      name: mode === 'guided' ? (manifest?.name ?? id) : id,
+      name: manifest?.name || definition?.name || id,
       purposeGroup: purposeGroupFor(id, architecture),
       status,
       statusLabel: STATUS_LABEL[status],
@@ -206,10 +213,11 @@ export function projectArchitecture(
       proposed: proposedArchitecture,
       neighborIds,
       toolsAndData: toolsAndDataFor(id, architecture, manifest),
+      responsibility: manifest?.responsibility || definition?.responsibility,
       layout: layouts.get(id)!,
+      moduleType: manifest?.moduleType ?? definition?.moduleType,
     }
     if (mode === 'design') {
-      base.moduleType = manifest?.moduleType
       base.moduleVersion = manifest?.moduleVersion
       base.runtimeAllocation = manifest?.runtimeAllocation
       base.providedOperations = manifest?.providedOperations.slice() ?? []
@@ -233,6 +241,8 @@ export function projectArchitecture(
       purposeGroup: node.purposeGroup,
       statusLabel: node.statusLabel,
       statusIcon: node.statusIcon,
+      moduleType: node.moduleType,
+      responsibility: node.responsibility,
       neighborIds: node.neighborIds.slice(),
       edgeSummaries,
     }

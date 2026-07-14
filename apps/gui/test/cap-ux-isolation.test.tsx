@@ -18,6 +18,8 @@ import { ModulesView } from '../src/views/capabilities/ModulesView'
 import { GuidedConnect } from '../src/views/capabilities/GuidedConnect'
 import { GuidedBuild } from '../src/views/capabilities/GuidedBuild'
 import { ArchitectureInterview } from '../src/views/capabilities/ArchitectureInterview'
+import { ArchitectureView } from '../src/views/capabilities/ArchitectureView'
+import { projectArchitecture } from '@engineering-ui-kit/core/browser'
 import { GuideOverlay } from '../src/guides'
 
 afterEach(cleanup)
@@ -173,7 +175,7 @@ describe('project isolation', () => {
 })
 
 describe('architecture import recovery', () => {
-  it('shows an actionable finding for an incomplete dependency and accepts a corrected re-import', async () => {
+  it('repairs mechanical interview omissions and enables approval without a follow-up interview', async () => {
     const saveDraft = vi.fn(async () => ({ ok: true as const }))
     const bridge = makeBridge({
       capabilitiesGetApplication: (async () => ({ approved: ARCH_PRODUCT })) as never,
@@ -221,17 +223,43 @@ describe('architecture import recovery', () => {
     fireEvent.change(paste, { target: { value: JSON.stringify(response) } })
     fireEvent.click(importButtons[1]!)
 
-    await waitFor(() => expect(screen.getByText('dependency edges require a reason')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Imported architecture proposal as draft. Review cycles and findings, then approve.')).toBeTruthy())
     expect(screen.queryByText(/Cannot read properties of undefined/)).toBeNull()
     expect(saveDraft).toHaveBeenCalledTimes(1)
-    expect((screen.getByRole('button', { name: 'Approve architecture' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Approve architecture' }) as HTMLButtonElement).disabled).toBe(false)
+    const saved = saveDraft.mock.calls[0]![1] as ArchitectureSpecification
+    expect(saved.dependencyEdges[0]?.reason).toContain('Workflow uses Domain')
+    expect(saved.moduleDefinitions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ moduleId: 'mod.workflow', moduleType: 'workflow' }),
+      expect.objectContaining({ moduleId: 'mod.domain', moduleType: 'domain' }),
+    ]))
+  })
+})
 
-    response.architecture.dependencyEdges[0]!.reason = 'Coordinates the domain calculation'
-    fireEvent.change(paste, { target: { value: JSON.stringify(response) } })
-    fireEvent.click(importButtons[1]!)
+describe('architecture exploration', () => {
+  it('opens polished module details from the diagram', () => {
+    const architecture: ArchitectureSpecification = {
+      schemaVersion: '1.0', projectId: 'p1', id: 'arch.p1', revision: '1', status: 'approved',
+      applicationSpecId: 'app.p1', applicationSpecRevision: '1', applicationSpecHash: 'app-hash',
+      capabilityProjections: [{ id: 'cap.plan', name: 'Planning', moduleIds: ['mod.planner'] }],
+      moduleIds: ['mod.planner'], moduleDefinitions: [{
+        moduleId: 'mod.planner', name: 'Flight Planner', moduleType: 'workflow',
+        responsibility: 'Coordinates a complete flight planning workflow.',
+      }],
+      dependencyEdges: [], operationAllocations: [], adapterAllocations: [],
+      workflowTraces: [{ useCaseId: 'usecase.main', moduleIds: ['mod.planner'] }],
+      proposals: [], unresolvedQuestions: [],
+      gateResult: { gateId: 'CAP-GATE-002', passed: true, diagnostics: [] }, contentHash: 'arch-hash',
+    }
+    render(<ArchitectureView projection={projectArchitecture(architecture, [], {}, { mode: 'guided' })} mode="guided" />)
 
-    await waitFor(() => expect((screen.getByRole('button', { name: 'Approve architecture' }) as HTMLButtonElement).disabled).toBe(false))
-    expect(saveDraft).toHaveBeenCalledTimes(2)
+    fireEvent.click(screen.getByRole('button', { name: 'Flight Planner, Workflow, Planned. Open details' }))
+
+    expect(screen.getByRole('dialog', { name: 'Flight Planner' })).toBeTruthy()
+    expect(screen.getByText('Coordinates a complete flight planning workflow.')).toBeTruthy()
+    expect(screen.getByText('Workflow')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 })
 

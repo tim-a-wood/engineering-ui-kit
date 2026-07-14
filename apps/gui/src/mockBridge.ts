@@ -463,7 +463,7 @@ export function installMockBridge(): EuikBridge {
     },
     async capabilitiesApproveArchitecture(projectId, draft) {
       const state = ensureCap(projectId)
-      const approved = draft as ArchitectureSpecification
+      const approved = { ...(draft as ArchitectureSpecification), status: 'approved' as const }
       state.architectureApproved = approved
       state.architectureDraft = undefined
       return { ok: true, approved, gate: { gateId: 'CAP-GATE-002', passed: true, diagnostics: [] } }
