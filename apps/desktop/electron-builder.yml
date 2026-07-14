@@ -15,9 +15,7 @@ files:
   - package.json
   - from: ../gui/dist
     to: gui/dist
-# Ship the built-in sample project (seeded on first run). Running its dev
-# server / verification from a packaged install requires `npm install` inside
-# the copied folder; the in-app sample description says so.
+# Ship the built-in sample projects seeded on first run.
 extraResources:
   - from: ../../examples/work-orders-monolith
     to: examples/work-orders-monolith
@@ -26,6 +24,12 @@ extraResources:
       - '!node_modules'
       - '!dist'
       - '!tsconfig.tsbuildinfo'
+  - from: ../../examples/aircraft-performance-sample
+    to: examples/aircraft-performance-sample
+    filter:
+      - '**/*'
+      - '!node_modules'
+      - '!dist'
 extraMetadata:
   main: dist/main.js
 win:

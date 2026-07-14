@@ -10,6 +10,8 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { buildCfHdropBuffer, buildFilenamesPboardPlist, buildUriList } from './uploadSetTransfer.js'
 import {
   Workspace,
+  CapabilityWorkspace,
+  canonicalHash,
   buildContext,
   buildPacketManifest,
   inspectOverlay,
@@ -22,6 +24,7 @@ import {
   renderReviewContactSheetPdf,
   buildChangesZip,
   type AppliedFiles,
+  type ApplicationSpecification,
   type EvidenceCapture,
   type OverlayInspectionSummary,
   type Project,
@@ -58,37 +61,38 @@ const DRAG_BADGE = nativeImage.createFromDataURL(
 )
 
 /**
- * Locate the bundled PlantOps sample app: repo layout in development
+ * Locate a bundled sample app: repo layout in development
  * (apps/desktop → ../../examples), packaged resources otherwise.
  */
-function resolveSampleAppPath(): string | undefined {
+function resolveSampleAppPath(exampleName: string): string | undefined {
   const candidates = [
-    path.resolve(app.getAppPath(), '..', '..', 'examples', 'work-orders-monolith'),
-    path.join(process.resourcesPath ?? '', 'examples', 'work-orders-monolith'),
+    path.resolve(app.getAppPath(), '..', '..', 'examples', exampleName),
+    path.join(process.resourcesPath ?? '', 'examples', exampleName),
   ]
   return candidates.find((c) => fs.existsSync(path.join(c, 'package.json')))
 }
 
-/**
- * Seed (or repair the path of) the built-in sample project so a fresh install
- * always has one complete, explorable project: launchable app, verification
- * commands, and five evidence views — clearly badged as a sample.
- */
-function seedSampleProject(workspace: Workspace): void {
-  const samplePath = resolveSampleAppPath()
-  if (!samplePath) return
-  const existing = workspace.listProjects().find((p) => p.isSample)
+function seedProject(workspace: Workspace, input: Parameters<Workspace['createProject']>[0]): Project {
+  const existing = workspace.getProject(input.id ?? '')
+    ?? workspace.listProjects().find((project) => project.isSample && project.name === input.name)
   if (existing) {
-    if (existing.repoPath !== samplePath && !fs.existsSync(existing.repoPath)) {
-      workspace.updateProject(existing.id, { repoPath: samplePath })
+    if (existing.repoPath !== input.repoPath && !fs.existsSync(existing.repoPath)) {
+      return workspace.updateProject(existing.id, { repoPath: input.repoPath })
     }
-    return
+    return existing
   }
-  workspace.createProject({
+  return workspace.createProject(input)
+}
+
+/** Seed both repo-backed examples without overwriting user-edited sample data. */
+function seedSampleProjects(workspace: Workspace): void {
+  const plantOpsPath = resolveSampleAppPath('work-orders-monolith')
+  if (plantOpsPath) seedProject(workspace, {
+    id: 'plantops-sample',
     name: 'PlantOps (sample)',
     description:
       'Built-in sample: a multi-page legacy work-order app to explore the whole workflow against. Restyle it, break it, iterate — reset any time from Settings inside the app or with git.',
-    repoPath: samplePath,
+    repoPath: plantOpsPath,
     status: 'active',
     isSample: true,
     launchUrl: 'http://127.0.0.1:5402',
@@ -102,6 +106,36 @@ function seedSampleProject(workspace: Workspace): void {
       { id: 'reports', label: 'Reports', path: '#/reports' },
     ],
   })
+
+  const aircraftPath = resolveSampleAppPath('aircraft-performance-sample')
+  if (!aircraftPath) return
+  const aircraft = seedProject(workspace, {
+    id: 'aircraft-performance-sample',
+    name: 'Aircraft Performance (sample)',
+    description:
+      'Built-in sample: define, review, and connect a generic aircraft-performance workflow using a completed, no-brand application brief.',
+    repoPath: aircraftPath,
+    status: 'active',
+    isSample: true,
+    launchUrl: 'http://127.0.0.1:5403',
+    launchCommand: 'npx vite --port 5403 --strictPort',
+    verificationCommands: { build: 'npm run build' },
+    evidenceViews: [{ id: 'calculator', label: 'Performance calculator', path: '/' }],
+  })
+
+  const capabilities = new CapabilityWorkspace(workspace.dataDir)
+  if (capabilities.getApplicationDraft(aircraft.id) || capabilities.getApprovedApplication(aircraft.id)) return
+
+  const specificationPath = path.join(aircraftPath, 'capabilities', 'application-specification.json')
+  if (!fs.existsSync(specificationPath)) return
+  const source = JSON.parse(fs.readFileSync(specificationPath, 'utf8')) as ApplicationSpecification
+  const draft: ApplicationSpecification = {
+    ...source,
+    projectId: aircraft.id,
+    status: 'draft',
+    contentHash: canonicalHash({ ...source, projectId: aircraft.id, status: 'draft', contentHash: undefined }),
+  }
+  capabilities.saveApplicationDraft(aircraft.id, draft)
 }
 
 /* Dev servers started via Launch App, keyed by project id; killed on quit. */
@@ -187,7 +221,7 @@ function resolveUploadSet(run: { repoFlatfilePath?: string; taskAndStandardPackP
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataDir?: string): Workspace {
   const workspaceRoot = dataDir ?? path.join(app.getPath('userData'), 'workspace')
   const workspace = new Workspace(workspaceRoot)
-  seedSampleProject(workspace)
+  seedSampleProjects(workspace)
   app.on('will-quit', () => {
     for (const child of launchedApps.values()) killLaunchedApp(child)
   })

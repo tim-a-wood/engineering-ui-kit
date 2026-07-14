@@ -1,0 +1,126 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "aircraft-performance-sample",
+  "id": "app.aircraft-performance-sample",
+  "revision": "2",
+  "status": "proposed",
+  "purpose": "Calculate approved takeoff and landing performance for a generic long-range business jet for operational preflight use, using controlled aircraft-specific analytical models and data.",
+  "outcomes": [
+    "Produce takeoff speeds V1, VR, and V2",
+    "Produce approach and landing reference speeds",
+    "Calculate takeoff, accelerate-stop, and landing distances",
+    "Calculate takeoff, approach, landing, and obstacle-clearance climb performance",
+    "Determine maximum allowable takeoff and landing weight",
+    "Identify the limiting performance constraint and remaining margins",
+    "Block operational acceptance for invalid or non-approved conditions",
+    "Create a traceable operational calculation record"
+  ],
+  "actors": [
+    { "id": "actor-flight-crew", "text": "Flight crew" },
+    { "id": "actor-dispatch", "text": "Dispatch personnel" },
+    { "id": "actor-performance", "text": "Performance engineers" },
+    { "id": "actor-sales", "text": "Sales engineers" }
+  ],
+  "goals": [
+    { "id": "goal-safe-departure", "text": "Confirm the aircraft can safely depart from the selected runway and conditions" },
+    { "id": "goal-safe-arrival", "text": "Confirm the aircraft can safely land at the destination or alternate" },
+    { "id": "goal-limiting-factor", "text": "Understand the limiting weight, distance, climb, or obstacle constraint" },
+    { "id": "goal-compare-options", "text": "Compare runways, configurations, weights, and environmental scenarios" },
+    { "id": "goal-audit", "text": "Retain an auditable record of the accepted operational calculation" }
+  ],
+  "useCases": [
+    { "id": "usecase-load-aircraft", "text": "Select the generic aircraft variant and operator configuration" },
+    { "id": "usecase-enter-flight", "text": "Enter flight, loading, airport, runway, weather, and obstacle data" },
+    { "id": "usecase-takeoff", "text": "Calculate takeoff speeds, distances, climb limits, and maximum allowable weight" },
+    { "id": "usecase-landing", "text": "Calculate landing speeds, distance, climb limits, and maximum allowable weight" },
+    { "id": "usecase-compare", "text": "Compare multiple runways, intersections, configurations, weights, and weather scenarios" },
+    { "id": "usecase-revise", "text": "Revise an input and recalculate before operational acceptance" },
+    { "id": "usecase-review", "text": "Review inputs, assumptions, warnings, margins, model version, and data version" },
+    { "id": "usecase-accept", "text": "Formally accept a valid calculation for operational use" },
+    { "id": "usecase-export", "text": "Save, print, or export the accepted calculation record" },
+    { "id": "usecase-offline", "text": "Perform the complete workflow offline using the locally installed approved data package" }
+  ],
+  "scenarios": [
+    { "id": "scenario-normal", "text": "Normal dry-runway departure and arrival" },
+    { "id": "scenario-contaminated", "text": "Wet or contaminated runway with wind and slope corrections" },
+    { "id": "scenario-obstacle", "text": "Obstacle-limited departure requiring a specified climb gradient" },
+    { "id": "scenario-mel", "text": "MEL- or CDL-affected aircraft configuration supported by the approved data package" },
+    { "id": "scenario-hot-high", "text": "Hot-and-high airport near the approved operating-envelope boundary" },
+    { "id": "scenario-offline", "text": "Flight-deck preflight calculation with no network connectivity" },
+    { "id": "scenario-invalid", "text": "Required input is missing, stale, outside approved limits, or unavailable" }
+  ],
+  "information": [
+    { "id": "info-aircraft", "text": "Aircraft variant, serial applicability, operator configuration, and approved data-package version" },
+    { "id": "info-loading", "text": "Aircraft weight, center of gravity, flap, thrust, anti-ice, bleed, braking, MEL, and CDL configuration" },
+    { "id": "info-runway", "text": "Airport, runway, intersection, slope, available distances, surface condition, and contamination" },
+    { "id": "info-weather", "text": "Pressure altitude or pressure, temperature, wind, and manually recorded weather source time" },
+    { "id": "info-obstacles", "text": "Obstacle profile and required climb gradient" },
+    { "id": "info-takeoff-output", "text": "V1, VR, V2, takeoff distance, accelerate-stop distance, climb performance, limiting factor, and margins" },
+    { "id": "info-landing-output", "text": "Approach and landing speeds, landing distance, climb performance, limiting factor, and margins" },
+    { "id": "info-record", "text": "Inputs, outputs, assumptions, warnings, model version, data version, user, calculation time, and acceptance time" }
+  ],
+  "rules": [
+    { "id": "rule-approved-model", "text": "Calculations use the aircraft-specific approved analytical model and controlled performance data for the selected generic aircraft configuration." },
+    { "id": "rule-envelope-validation", "text": "First-release acceptance requires demonstrated agreement with the approved analytical model across the full supported operating envelope." },
+    { "id": "rule-block-outside-envelope", "text": "The application must not produce an operationally acceptable result when any required input is missing, stale, invalid, unavailable, or outside approved limits." },
+    { "id": "rule-update-control", "text": "Model and performance-data updates require versioning, integrity verification, regression evidence, performance-engineering approval, and controlled release before use." },
+    { "id": "rule-availability", "text": "The connected service target is 99.9 percent monthly availability, while the installed offline calculation path remains available without a network." },
+    { "id": "rule-response-time", "text": "A normal single-scenario calculation should complete within 5 seconds and a supported worst-case comparison within 15 seconds on the reference workstation." },
+    { "id": "rule-offline", "text": "Offline operation supports the full calculation, review, acceptance, save, print, and export workflow using the latest locally installed approved data package." },
+    { "id": "rule-operational-approval", "text": "For this sample, designation as the primary operational means requires operator performance-engineering approval, chief-pilot acceptance, completed validation evidence, and any applicable authority authorization." },
+    { "id": "rule-customer-config", "text": "The first release supports the baseline generic aircraft plus operator-specific configurations delivered in a controlled configuration package." },
+    { "id": "rule-numerical-tolerance", "text": "Approved interpolation and numerical tolerances are allowed; results need not reproduce the display rounding of another publication exactly when they remain within the approved validation tolerance." },
+    { "id": "rule-data-supply", "text": "Weather and runway inputs are entered manually or imported from a signed, timestamped operator data package; the first release has no live weather or runway database connection." },
+    { "id": "rule-accepted-record", "text": "An accepted calculation becomes an immutable retained operational record." },
+    { "id": "rule-recalculation", "text": "Changing an operational input after acceptance creates a new calculation that must be reviewed and accepted separately." },
+    { "id": "rule-limiting-condition", "text": "The application automatically identifies the most restrictive distance, climb, obstacle, weight, or configuration constraint." }
+  ],
+  "externalSystems": [
+    { "id": "external-aircraft-data", "text": "Signed local aircraft model and performance-data package" },
+    { "id": "external-operator-data", "text": "Signed local operator runway and weather import package" },
+    { "id": "external-record-export", "text": "Local PDF and JSON operational-record export" }
+  ],
+  "constraints": [
+    { "id": "constraint-aircraft", "text": "Sample aircraft is a generic long-range business jet with controlled variant and operator configuration data." },
+    { "id": "constraint-regulatory", "text": "Performance content and operating limitations are aligned with the applicable approved flight-manual and AC 25.1581-style presentation basis for this sample." },
+    { "id": "constraint-isolated", "text": "The first release is an isolated application with no direct aircraft-system communication and no live weather or runway database connection." },
+    { "id": "constraint-offline", "text": "The operational calculation path must remain fully usable offline." },
+    { "id": "constraint-traceability", "text": "Every accepted result must be reproducible from its retained inputs, configurations, model version, data version, warnings, user, and timestamps." }
+  ],
+  "scope": {
+    "inScope": [
+      "Takeoff and landing speeds",
+      "Takeoff, accelerate-stop, and landing distances",
+      "Takeoff, approach, landing, and obstacle-clearance climb performance",
+      "Wind, slope, temperature, pressure-altitude, runway-condition, and contamination corrections",
+      "Maximum allowable takeoff and landing weights",
+      "Runway, configuration, weight, and environmental comparison",
+      "Controlled operator-specific aircraft configurations",
+      "Offline calculation and auditable operational records"
+    ],
+    "outOfScope": [
+      "Direct communication with aircraft systems",
+      "Live weather database connections",
+      "Live runway database connections",
+      "Aircraft families other than the generic sample aircraft family",
+      "In-flight performance replanning"
+    ]
+  },
+  "acceptanceCases": [
+    { "id": "accept-normal", "description": "Calculate a normal dry-runway takeoff for a supported aircraft configuration.", "expectedOutcome": "The application returns speeds, distances, climb results, limiting condition, margins, and a reviewable input summary within 5 seconds.", "kind": "example" },
+    { "id": "accept-landing", "description": "Calculate a wet-runway landing with wind and slope corrections.", "expectedOutcome": "The application returns corrected landing speeds and distance, identifies the limiting condition, and shows all applied assumptions.", "kind": "example" },
+    { "id": "accept-envelope", "description": "Run the approved validation set across the supported operating envelope.", "expectedOutcome": "Every result agrees with the approved analytical model within the approved numerical tolerance.", "kind": "example" },
+    { "id": "accept-invalid", "description": "Enter a weight or environmental condition outside the approved envelope.", "expectedOutcome": "The application clearly identifies the invalid input and blocks operational acceptance.", "kind": "failure" },
+    { "id": "accept-stale", "description": "Attempt acceptance with stale or incomplete required weather or runway data.", "expectedOutcome": "The application blocks acceptance and identifies what must be refreshed or completed.", "kind": "failure" },
+    { "id": "accept-update", "description": "Install a newly released signed model and data package.", "expectedOutcome": "The application verifies integrity and approval metadata, retains the previous version for record reproducibility, and uses the new version only after controlled activation.", "kind": "example" },
+    { "id": "accept-offline", "description": "Complete and accept a representative calculation with all network connections unavailable.", "expectedOutcome": "Calculation, review, acceptance, save, print, and export all remain available using the approved local data package.", "kind": "example" },
+    { "id": "accept-record", "description": "Accept a calculation and later inspect its retained record.", "expectedOutcome": "The record contains the complete inputs, outputs, warnings, assumptions, versions, user, calculation time, and acceptance time and cannot be silently changed.", "kind": "example" }
+  ],
+  "sources": [
+    { "id": "source-prior-interview", "text": "Imported product interview response from the previous workflow pass" },
+    { "id": "source-sample-model", "text": "Assumed approved analytical model and controlled data package for a generic long-range business jet" },
+    { "id": "source-regulatory-basis", "text": "Applicable approved flight-manual performance basis and AC 25.1581-style operating-information guidance" }
+  ],
+  "unresolvedQuestions": [],
+  "contentHash": "pending"
+}

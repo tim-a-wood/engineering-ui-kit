@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aircraft Performance Sample</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; background: #07111f; color: #e8eef8; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 75% 0%, #17264a 0, transparent 34%), #07111f; }
+      header { display: flex; justify-content: space-between; align-items: center; padding: 24px 32px; border-bottom: 1px solid #24324a; }
+      header p, h1, h2 { margin: 0; }
+      header p { margin-top: 5px; color: #91a0b8; }
+      .status { padding: 7px 11px; border: 1px solid #2a8b75; border-radius: 999px; color: #5dd6b6; font-size: 13px; }
+      main { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 20px; padding: 24px 32px; }
+      .panel { border: 1px solid #24324a; border-radius: 12px; background: #101b2f; box-shadow: 0 16px 40px #02071155; }
+      .panel h2 { padding: 18px 20px; border-bottom: 1px solid #24324a; font-size: 16px; }
+      form, .results { display: grid; gap: 15px; padding: 20px; }
+      label { display: grid; gap: 6px; color: #aab6c8; font-size: 13px; }
+      input, select { width: 100%; padding: 10px 11px; border: 1px solid #34435e; border-radius: 7px; color: #e8eef8; background: #0b1527; }
+      button { padding: 11px 14px; border: 0; border-radius: 7px; color: white; background: #3567ff; font-weight: 650; cursor: pointer; }
+      .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .metric { padding: 16px; border: 1px solid #283854; border-radius: 9px; background: #0b1527; }
+      .metric span { display: block; color: #8290a8; font-size: 12px; }
+      .metric strong { display: block; margin-top: 7px; font-size: 22px; }
+      .notice { padding: 14px; border-left: 3px solid #e0a84c; border-radius: 6px; color: #d8c39a; background: #2b2417; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { padding: 12px; border-bottom: 1px solid #24324a; text-align: left; }
+      th { color: #8290a8; font-size: 12px; }
+      @media (max-width: 800px) { main { grid-template-columns: 1fr; padding: 18px; } header { padding: 20px; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div><h1>Aircraft performance</h1><p>Illustrative preflight calculation workspace</p></div>
+      <span class="status">Sample data</span>
+    </header>
+    <main>
+      <section class="panel">
+        <h2>Flight conditions</h2>
+        <form id="performance-form">
+          <label>Takeoff weight (lb)<input id="weight" type="number" value="82000" min="50000" max="100000" /></label>
+          <label>Runway length (ft)<input id="runway" type="number" value="7800" min="3000" max="15000" /></label>
+          <label>Outside temperature (°C)<input id="temperature" type="number" value="24" min="-50" max="55" /></label>
+          <label>Runway condition<select id="condition"><option>Dry</option><option>Wet</option><option>Contaminated</option></select></label>
+          <button type="submit" data-cap-id="calculate-performance">Calculate sample</button>
+        </form>
+      </section>
+      <section class="panel">
+        <h2>Performance result</h2>
+        <div class="results">
+          <div class="metrics">
+            <div class="metric"><span>V1</span><strong id="v1">128 kt</strong></div>
+            <div class="metric"><span>VR</span><strong id="vr">133 kt</strong></div>
+            <div class="metric"><span>V2</span><strong id="v2">139 kt</strong></div>
+          </div>
+          <div class="notice">Illustrative values only — not approved for operational use.</div>
+          <table>
+            <thead><tr><th>Constraint</th><th>Result</th><th>Margin</th></tr></thead>
+            <tbody><tr><td>Takeoff distance</td><td id="distance">5,940 ft</td><td id="margin">1,860 ft</td></tr><tr><td>Climb limit</td><td>Within sample envelope</td><td>6.2%</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script>
+      document.querySelector('#performance-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const weight = Number(document.querySelector('#weight').value);
+        const runway = Number(document.querySelector('#runway').value);
+        const condition = document.querySelector('#condition').value;
+        const penalty = condition === 'Dry' ? 0 : condition === 'Wet' ? 450 : 900;
+        const distance = Math.round(4200 + (weight - 50000) * 0.05 + penalty);
+        document.querySelector('#v1').textContent = `${Math.round(112 + (weight - 50000) / 2000)} kt`;
+        document.querySelector('#vr').textContent = `${Math.round(117 + (weight - 50000) / 2000)} kt`;
+        document.querySelector('#v2').textContent = `${Math.round(123 + (weight - 50000) / 2000)} kt`;
+        document.querySelector('#distance').textContent = `${distance.toLocaleString()} ft`;
+        document.querySelector('#margin').textContent = `${Math.max(0, runway - distance).toLocaleString()} ft`;
+      });
+    </script>
+  </body>
+</html>
