@@ -515,3 +515,65 @@ real MATLAB or Azure execution was performed or claimed in this pass.
   guided-cleaned reuse of the existing stage components rather than bespoke rebuilds; the gating,
   disclosure, handoff card, and IA are new, the inner form layouts are largely preserved.
 - Live visual validation and packaged-journey verification remain environment-blocked (above).
+
+## Capabilities UX hard pass — continuation (2026-07-14)
+
+Completes the items the first pass left open: progressive Guided Connect, two-region
+Guided Build, real visual validation, and the test-failure investigation.
+
+### Guided Connect — now a progressive four-substep flow
+
+`apps/gui/src/views/capabilities/GuidedConnect.tsx` replaces the reused editor:
+Select element → Choose capability → Define visible behavior → Test & approve. No Binding
+ID/version; operation names humanized (no `id @ version`); input/output mappings behind an
+Advanced disclosure; behavior fields render only after element + capability are chosen;
+diagnostics only after an interaction or approval attempt; plain-language issues (no CAP codes);
+element selection honestly disabled with an explanation outside packaged Electron. Design keeps the
+full `BindingEditor`.
+
+### Guided Build — now a two-region workspace
+
+`GuidedBuild.tsx` + a controlled/progressive mode on `ModulesView`. Left: allocated modules with
+per-module state, `x of y approved` progress, first-incomplete selection. Right: the selected module
+and ONLY its next lifecycle action (interview → import → approve → implementation handoff → inspect →
+accept warnings → apply → verify). Both interview and implementation exports use the reusable handoff
+card.
+
+### Real visual validation (Chromium 1194, mock bridge)
+
+`scripts/capabilities-ux-visual.mjs` serves the built GUI, seeds each state through the real
+`window.euik` bridge API, and screenshots the running app. 17 screenshots retained under
+`apps/gui/validation-evidence/capabilities-ux/`: no-project, empty Define, handoff-ready, Define
+draft, Architecture draft, two-region Build, active Connect, completed journey, all six Design areas,
+grouped Help + stage help, and a narrow viewport. Inspecting them found and fixed real defects
+(Build controlled-selection override; header clipping Help; over-tall Connect preview; the raw JSON
+textarea; Verify suite-ID leak; missing Escape-to-close on the guide). Header alignment, gutters,
+button hierarchy, panels, typography and empty states match Build & Test.
+
+States NOT captured as live seeded app views, disclosed honestly: "imported draft with unresolved
+items" (needs a valid Copilot response through the import parser) and "verification failure" (the
+mock's verifier returns a passing outcome) — the underlying components exist and are covered by unit
+tests, but these two exact runtime states are not reproducible through the mock without hand-crafted
+fixtures. Live element selection in Connect requires packaged Electron (shown disabled with the
+honest note).
+
+### Test discrepancy resolved
+
+- `packages/core/test/commandRunner.test.ts > times out runaway commands` — **real bug, fixed.**
+  `runCommand` used `shell:true` and killed only the shell; a runaway grandchild kept the stdio
+  pipes open so `'close'` never fired. Now the shell runs detached and the whole process group is
+  killed on timeout. The test resolves in ~0.5s. (macOS kill semantics masked this locally; Linux
+  exposed it.)
+- `packages/core/test/fidelity.test.ts > captureEvidence (integration, real browser)` —
+  **environment-blocked, with evidence.** `playwright-core@1.61.1` requires Chromium build **1228**;
+  only build **1194** is provisioned under `/opt/pw-browsers`, and this environment's directive
+  forbids `playwright install`. The test is authored by the repo owner (`ca833d2`), tagged
+  "(integration, real browser)", and is untouched by this pass. Core is otherwise 138/139 green.
+
+### Required commands (this run)
+
+`npm run typecheck -w packages/core` (0), `npm test -w packages/core` (138 pass, 1 env-blocked),
+`npm run typecheck -w apps/desktop` (0), `npx vitest run apps/desktop/test/` (46 pass, 1 skip),
+`npm run typecheck -w apps/gui` (0), `npm test -w apps/gui` (125 pass), `npm run build -w apps/gui`
+(clean), `npm run build` (all workspaces clean). Packaged Electron harness: still **unavailable**
+(Electron binary not installable here) — CAP-TEST-040 remains incomplete, not claimed.
