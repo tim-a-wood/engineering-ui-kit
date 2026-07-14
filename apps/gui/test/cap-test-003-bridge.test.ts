@@ -17,6 +17,7 @@ const CANONICAL_CAP_METHODS = [
   'capabilitiesBuildInterviewPacket',
   'capabilitiesExportInterviewPacket',
   'capabilitiesExportImplementationPacket',
+  'capabilitiesStartHandoffDrag',
   'capabilitiesImportInterviewResponse',
   'capabilitiesGetArchitecture',
   'capabilitiesSaveArchitectureDraft',

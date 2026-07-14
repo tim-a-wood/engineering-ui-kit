@@ -46,6 +46,7 @@ const CHANNELS = {
   capabilitiesBuildInterviewPacket: 'capabilities:build-interview-packet',
   capabilitiesExportInterviewPacket: 'capabilities:export-interview-packet',
   capabilitiesExportImplementationPacket: 'capabilities:export-implementation-packet',
+  capabilitiesStartHandoffDrag: 'capabilities:start-handoff-drag',
   capabilitiesImportInterviewResponse: 'capabilities:import-interview-response',
   capabilitiesGetArchitecture: 'capabilities:get-architecture',
   capabilitiesSaveArchitectureDraft: 'capabilities:save-architecture-draft',

@@ -1,20 +1,20 @@
 /**
  * Reusable "Handoff ready" card for capability interviews and implementation
- * packets. Consumes CapabilityPacketExportResult. Guided mode shows filenames,
- * compact sizes and one natural transfer instruction; Design mode adds packet/run IDs,
- * full paths, bytes and SHA-256. No drag affordance is offered for capability
- * run IDs (the desktop bridge does not support it).
+ * packets. Each export is one self-contained file with the same native drag-out
+ * affordance used by Build & Test. Design mode also exposes packet/run IDs,
+ * the full path, bytes and SHA-256.
  */
 
 import { useState } from 'react'
 import type { EuikBridge, CapabilityPacketExportResult } from '../../bridge'
 import { StatusLine, type Status } from '../../components'
 import { Icon } from '../../icons'
-import { COPILOT_URL, copyText } from '../workflowShared'
+import { COPILOT_URL } from '../workflowShared'
 import { fileNameOf, formatBytes } from './capabilityPresentation'
 
 export function CapabilityHandoffCard(props: {
   bridge: EuikBridge
+  projectId: string
   result: CapabilityPacketExportResult
   projection: 'guided' | 'design'
   onHelp?: () => void
@@ -26,19 +26,17 @@ export function CapabilityHandoffCard(props: {
   async function openCopilot() {
     try {
       await bridge.openExternal(COPILOT_URL)
-      setStatus({ tone: 'success', text: 'Copilot opened — attach the files, then paste the prompt.' })
+      setStatus({ tone: 'success', text: 'Copilot opened — drag the handoff below directly into the chat.' })
     } catch {
       setStatus({ tone: 'error', text: 'Could not open Copilot. Open m365.cloud.microsoft/chat manually.' })
     }
   }
 
-  async function copyPrompt() {
-    const ok = await copyText(result.recommendedPrompt)
-    setStatus(
-      ok
-        ? { tone: 'success', text: 'Recommended prompt copied to the clipboard.' }
-        : { tone: 'error', text: 'Could not copy the prompt. Select and copy it manually.' },
-    )
+  function dragHandoff(event: { preventDefault: () => void }) {
+    event.preventDefault()
+    bridge.capabilitiesStartHandoffDrag({ projectId: props.projectId, runId: result.runId }).catch((error: unknown) => {
+      setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+    })
   }
 
   async function showFiles() {
@@ -67,28 +65,32 @@ export function CapabilityHandoffCard(props: {
       </header>
 
       <p className="cap-handoff-instruction">
-        Open Copilot, attach these files, and paste the copied prompt. Bring its response back into the importer below.
+        Open Copilot, then drag this single handoff into the chat. It already contains the prompt, context, and required response format.
       </p>
 
-      <ul className="cap-handoff-files" aria-label="Handoff files">
-        {result.files.map((f) => (
-          <li key={f.path}>
-            <span className="cap-handoff-file-icon" aria-hidden="true">{Icon.file(14)}</span>
-            <span className="cap-handoff-file-name">{fileNameOf(f.path)}</span>
-            <span className="cap-handoff-file-size">{formatBytes(f.bytes)}</span>
-          </li>
-        ))}
-      </ul>
+      {result.files[0] ? (
+        <div
+          className="upload-drag-chip cap-handoff-drag"
+          draggable
+          onDragStart={dragHandoff}
+          role="button"
+          aria-label={`Drag ${fileNameOf(result.files[0].path)} out to Copilot`}
+          title="Drag this straight onto the Copilot chat's attach area"
+        >
+          <span className="drag-dots" aria-hidden="true">⣿</span>
+          <span className="drag-file-chip" aria-hidden="true">
+            {Icon.file(13)} {fileNameOf(result.files[0].path)} · {formatBytes(result.files[0].bytes)}
+          </span>
+          <span className="drag-hint">drag onto the Copilot chat — everything is included</span>
+        </div>
+      ) : null}
 
       <div className="cap-handoff-actions" role="group" aria-label="Handoff actions">
         <button type="button" className="btn btn-primary btn-compact" onClick={openCopilot}>
           {Icon.external(14)} Open Copilot
         </button>
-        <button type="button" className="btn btn-secondary btn-compact" onClick={copyPrompt}>
-          {Icon.copy(14)} Copy prompt
-        </button>
         <button type="button" className="btn btn-secondary btn-compact" onClick={showFiles}>
-          {Icon.folder(14)} Show files
+          {Icon.folder(14)} Show file
         </button>
       </div>
 

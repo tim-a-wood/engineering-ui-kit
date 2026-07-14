@@ -130,6 +130,7 @@ export type EuikBridge = {
     projectId: string
     moduleId: string
   }): Promise<CapabilityPacketExportResult>
+  capabilitiesStartHandoffDrag(input: { projectId: string; runId: string }): Promise<{ files: number }>
   capabilitiesImportInterviewResponse(
     projectId: string,
     raw: string | object,

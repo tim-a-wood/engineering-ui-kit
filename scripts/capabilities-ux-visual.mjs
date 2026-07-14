@@ -153,6 +153,9 @@ const run = async () => {
   // 3. Copilot transfer ready
   await page.getByRole('button', { name: /Start in Copilot/i }).click()
   await page.waitForTimeout(250)
+  if (await page.locator('.cap-handoff-drag').count() !== 1) throw new Error('expected one draggable capability handoff')
+  if (!await page.getByText('capability-interview-handoff.md', { exact: false }).isVisible()) throw new Error('combined handoff filename missing')
+  if (await page.getByRole('button', { name: /Copy prompt/i }).count()) throw new Error('redundant prompt action is still visible')
   await shot(page, '03-handoff-ready')
 
   // Helper to re-seed a fresh page for a scenario.

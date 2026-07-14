@@ -429,16 +429,17 @@ export function installMockBridge(): EuikBridge {
     async capabilitiesExportInterviewPacket(input) {
       const packet = input as { packetId?: string }
       const runId = `cap-interview-${Date.now()}`
-      const files = ['capability-packet.json', 'recommended-prompt.txt', 'capability-interview-response.json']
+      const files = ['capability-interview-handoff.md']
         .map((name) => ({ path: `/mock/${runId}/${name}`, bytes: 100, sha256: `mock-${name}` }))
       return { runId, packetId: packet.packetId ?? 'packet', recommendedPrompt: 'Conduct the bounded interview.', files, uploadFiles: files.map((f) => f.path) }
     },
     async capabilitiesExportImplementationPacket(input) {
       const runId = `cap-implementation-${Date.now()}`
-      const files = ['capability-packet.json', 'recommended-prompt.txt', 'module-manifest.json']
+      const files = ['capability-implementation-handoff.md']
         .map((name) => ({ path: `/mock/${runId}/${name}`, bytes: 100, sha256: `mock-${name}` }))
       return { runId, packetId: `pkt-${input.moduleId}`, recommendedPrompt: `Implement only ${input.moduleId}.`, files, uploadFiles: files.map((f) => f.path) }
     },
+    async capabilitiesStartHandoffDrag() { return { files: 1 } },
     async capabilitiesImportInterviewResponse(projectId, raw) {
       const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
       const draft = (parsed as { draft?: ApplicationSpecification }).draft ?? (parsed as ApplicationSpecification)
@@ -740,9 +741,7 @@ export function installMockBridge(): EuikBridge {
       const runId = `cap-delta-${input.targetId}-${Date.now()}`
       const base = `runs/${runId}/handoff`
       const files = [
-        { path: `${base}/capability-packet.json`, bytes: 512, sha256: 'mock-delta-packet' },
-        { path: `${base}/recommended-prompt.txt`, bytes: 128, sha256: 'mock-delta-prompt' },
-        { path: `${base}/delta-packet.json`, bytes: 512, sha256: 'mock-delta-companion' },
+        { path: `${base}/capability-delta-handoff.md`, bytes: 1152, sha256: 'mock-delta-handoff' },
       ]
       return {
         runId,

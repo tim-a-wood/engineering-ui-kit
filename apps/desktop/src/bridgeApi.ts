@@ -143,6 +143,7 @@ export type EuikBridge = {
     projectId: string
     moduleId: string
   }): Promise<CapabilityPacketExportResult>
+  capabilitiesStartHandoffDrag(input: { projectId: string; runId: string }): Promise<{ files: number }>
   capabilitiesImportInterviewResponse(
     projectId: string,
     raw: string | object,
@@ -287,6 +288,7 @@ export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
   capabilitiesBuildInterviewPacket: 'capabilities:build-interview-packet',
   capabilitiesExportInterviewPacket: 'capabilities:export-interview-packet',
   capabilitiesExportImplementationPacket: 'capabilities:export-implementation-packet',
+  capabilitiesStartHandoffDrag: 'capabilities:start-handoff-drag',
   capabilitiesImportInterviewResponse: 'capabilities:import-interview-response',
   capabilitiesGetArchitecture: 'capabilities:get-architecture',
   capabilitiesSaveArchitectureDraft: 'capabilities:save-architecture-draft',

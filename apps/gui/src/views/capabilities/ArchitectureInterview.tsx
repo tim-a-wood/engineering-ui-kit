@@ -220,7 +220,7 @@ export function ArchitectureInterview({
       </div>
 
       {guided && exportResult ? (
-        <CapabilityHandoffCard bridge={bridge} result={exportResult} projection="guided" />
+        <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={exportResult} projection="guided" />
       ) : null}
 
       {packet && !guided ? (

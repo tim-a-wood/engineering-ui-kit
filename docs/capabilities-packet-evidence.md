@@ -309,7 +309,7 @@ and binding drafts/approvals reload through `capabilitiesListBindings` rather th
 
 Additional product seams completed in this pass:
 
-- Interview exports now write a real three-file app-managed handoff set with run ID, paths, byte
+- Interview exports now write one self-contained app-managed Markdown handoff with run ID, path, byte
   sizes, SHA-256 values, prompt, and persisted CAP-CONTRACT-021 packet lifecycle.
 - Approved modules export real implementation handoff files and restore the latest persisted run.
 - The module flow now selects/inspects a zip, renders blockers/warnings, requires separate warning
@@ -330,7 +330,7 @@ Delivered:
 - `packages/core/src/capabilities/runs.ts` — persisted per-impact completed targets
   (`getDeltaProgress`, `markDeltaTargetComplete`) under `evidence/impact/<changeId>.progress.json`.
 - `apps/desktop/src/capabilities/ipc.ts` — `deltaQueueState`, `exportDeltaPacket` (writes a real
-  three-file delta handoff set with all CAP-CONTRACT-016 fields: impact record ID, one target,
+  single-file delta handoff with all CAP-CONTRACT-016 fields embedded: impact record ID, one target,
   change reason, previous/target contract versions, preserve/add/change behavior, new tests,
   unchanged neighbor IDs, allowed/expected/protected paths, `ui-overlay.zip` required output),
   and `markDeltaTargetComplete` (gated on a real passing verification for that exact target).

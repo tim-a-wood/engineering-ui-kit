@@ -6,7 +6,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
-import { ipcMain, safeStorage } from 'electron'
+import { ipcMain, nativeImage, safeStorage } from 'electron'
 import {
   CapabilityRunStore,
   CapabilityWorkspace,
@@ -69,6 +69,7 @@ const CAP_CHANNELS = {
   buildInterviewPacket: 'capabilities:build-interview-packet',
   exportInterviewPacket: 'capabilities:export-interview-packet',
   exportImplementationPacket: 'capabilities:export-implementation-packet',
+  startHandoffDrag: 'capabilities:start-handoff-drag',
   importInterviewResponse: 'capabilities:import-interview-response',
   buildImplementationPacket: 'capabilities:build-implementation-packet',
   listCapabilityRuns: 'capabilities:list-runs',
@@ -102,6 +103,9 @@ export type CapabilityBridgeChannels = typeof CAP_CHANNELS
 
 const jobs = new Map<string, JobRecord>()
 const secretIndex = new Map<string, { label: string; providerKind: string; createdAt: string }>()
+const CAPABILITY_DRAG_BADGE = nativeImage.createFromDataURL(
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAT0lEQVR4nGNgQAL60f//UwMzYAPUMhyrJdQ2HMUSWhkOt2R4WvDj1x+y8AiyYOhH8pTFO4jCI9iCkRPJxATVMLVgaEUyzatMulT6tGy2AAANzMpqChPiLwAAAABJRU5ErkJggg==',
+)
 
 type PersistedOverlayReview = {
   archiveSha256: string
@@ -147,28 +151,42 @@ function exportCapabilityPacketFiles(input: {
   caps: CapabilityWorkspace
   runs: CapabilityRunStore
   run: CapabilityRunScope
-  packet: { packetId: string }
+  packet: { packetId: string; outputFileName?: string }
   recommendedPrompt: string
   companion: { fileName: string; value: unknown }
 }) {
   input.runs.createRun(input.run)
   const handoffDir = path.join(input.caps.root(input.run.projectId), 'runs', input.run.runId, 'handoff')
   fs.mkdirSync(handoffDir, { recursive: true })
-  const values: { fileName: string; content: string }[] = [
-    { fileName: 'capability-packet.json', content: JSON.stringify(input.packet, null, 2) + '\n' },
-    { fileName: 'recommended-prompt.txt', content: input.recommendedPrompt + '\n' },
-    { fileName: input.companion.fileName, content: JSON.stringify(input.companion.value, null, 2) + '\n' },
-  ]
-  const files = values.map(({ fileName, content }) => {
-    const filePath = path.join(handoffDir, fileName)
-    fs.writeFileSync(filePath, content)
-    return {
-      path: filePath,
-      bytes: Buffer.byteLength(content),
-      sha256: crypto.createHash('sha256').update(content).digest('hex'),
-    }
-  })
-  if (files.length > 3) throw new Error('capability packet exceeds the three-file upload budget')
+  const packetJson = JSON.stringify(input.packet, null, 2)
+  const companionJson = JSON.stringify(input.companion.value, null, 2)
+  const companionHeading = input.companion.fileName === input.packet.outputFileName
+    ? `Required response starter: ${input.companion.fileName}`
+    : `Supporting record: ${input.companion.fileName}`
+  const supportingSection = companionJson === packetJson
+    ? ''
+    : `\n## ${companionHeading}\n\n\`\`\`json\n${companionJson}\n\`\`\`\n`
+  const content = `# Copilot capability handoff
+
+This is the complete handoff. Follow the request, use the embedded records as context, and return only the requested output.
+
+## Request
+
+${input.recommendedPrompt}
+
+## Capability packet
+
+\`\`\`json
+${packetJson}
+\`\`\`
+${supportingSection}`
+  const filePath = path.join(handoffDir, `capability-${input.run.kind}-handoff.md`)
+  fs.writeFileSync(filePath, content)
+  const files = [{
+    path: filePath,
+    bytes: Buffer.byteLength(content),
+    sha256: crypto.createHash('sha256').update(content).digest('hex'),
+  }]
   const packetRefs = files.map((file) => path.relative(input.caps.root(input.run.projectId), file.path).replace(/\\/g, '/'))
   input.runs.updateRun(input.run.projectId, input.run.runId, {
     packetRefs,
@@ -346,13 +364,30 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
         transitionHistory: [], createdAt: now, updatedAt: now,
       },
       packet,
-      recommendedPrompt: `Use capability-packet.json to conduct only the ${packet.interviewBoundary} interview. Return ${packet.outputFileName}; do not implement source code or approve proposals.`,
+      recommendedPrompt: `Conduct the interview defined by the embedded capability packet and stay within its interview boundary. Return a new ${packet.outputFileName}; do not implement source code or approve proposals.`,
       companion: {
         fileName: packet.outputFileName,
         value: { schemaVersion: '1.0', packetId: packet.packetId, status: 'proposed' },
       },
     })
   })
+
+  ipcMain.handle(
+    CAP_CHANNELS.startHandoffDrag,
+    (event, input: { projectId: string; runId: string }): { files: number } => {
+      const projectId = requireString(input.projectId, 'projectId')
+      const runId = requireString(input.runId, 'runId')
+      const run = runs.getRun(projectId, runId)
+      if (!run) throw new Error('capability run not found')
+      const root = caps.root(projectId)
+      const files = run.packetRefs.map((ref) => path.resolve(root, ref))
+      if (files.length !== 1 || !files.every((file) => file.startsWith(root + path.sep) && fs.existsSync(file))) {
+        throw new Error('capability handoff file is missing')
+      }
+      event.sender.startDrag({ file: files[0]!, files, icon: CAPABILITY_DRAG_BADGE })
+      return { files: files.length }
+    },
+  )
 
   ipcMain.handle(
     CAP_CHANNELS.exportImplementationPacket,
@@ -397,7 +432,7 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
           packetRefs: [], artifactRefs: [], transitionHistory: [], createdAt: now, updatedAt: now,
         },
         packet,
-        recommendedPrompt: `Implement only ${moduleId} within the allowed paths in capability-packet.json. Preserve unchanged behavior, run the required tests, and return only ${packet.requiredOutput}.`,
+        recommendedPrompt: `Implement only ${moduleId} within the allowed paths in the embedded capability packet. Preserve unchanged behavior, run the required tests, and return only ${packet.requiredOutput}.`,
         companion: { fileName: 'module-manifest.json', value: manifest },
       })
     },
@@ -738,7 +773,7 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
           packetRefs: [], artifactRefs: [], transitionHistory: [], createdAt: now, updatedAt: now,
         },
         packet: delta,
-        recommendedPrompt: `Apply only the delta for ${targetId} described in capability-packet.json. Preserve the listed behavior, change only what is required, add the new tests, leave unchanged modules untouched, and return only ${delta.requiredOutput}.`,
+        recommendedPrompt: `Apply only the delta for ${targetId} described in the embedded capability packet. Preserve the listed behavior, change only what is required, add the new tests, leave unchanged modules untouched, and return only ${delta.requiredOutput}.`,
         companion: { fileName: 'delta-packet.json', value: delta },
       })
     },

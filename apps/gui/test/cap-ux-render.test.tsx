@@ -212,22 +212,24 @@ describe('CapabilityHandoffCard', () => {
     uploadFiles: ['/Users/tim/app/capabilities/generated/product-interview.md'],
   }
 
-  it('Guided shows filenames + compact size and the three actions, no full path or sha', () => {
-    const html = renderToStaticMarkup(<CapabilityHandoffCard bridge={bridge()} result={result} projection="guided" />)
+  it('Guided shows one draggable handoff and no redundant prompt action, full path, or sha', () => {
+    const html = renderToStaticMarkup(<CapabilityHandoffCard bridge={bridge()} projectId="p1" result={result} projection="guided" />)
     expect(html).toContain('Ready for Copilot')
     expect(html).toContain('product-interview.md')
     expect(html).toContain('2 KB')
     expect(html).toContain('Open Copilot')
-    expect(html).toContain('Copy prompt')
-    expect(html).toContain('Show files')
-    expect(html).toContain('Bring its response back into the importer below')
+    expect(html).toContain('Show file')
+    expect(html).toContain('everything is included')
+    expect(html).toContain('draggable="true"')
+    expect(html).toContain('Drag product-interview.md out to Copilot')
+    expect(html).not.toContain('Copy prompt')
     expect(html).not.toContain('cap-handoff-num')
     expect(html).not.toContain('/Users/tim/app')
     expect(html).not.toContain('deadbeef')
   })
 
   it('Design adds packet id, run id, full path and sha', () => {
-    const html = renderToStaticMarkup(<CapabilityHandoffCard bridge={bridge()} result={result} projection="design" />)
+    const html = renderToStaticMarkup(<CapabilityHandoffCard bridge={bridge()} projectId="p1" result={result} projection="design" />)
     expect(html).toContain('pkt-abc')
     expect(html).toContain('run-123')
     expect(html).toContain('/Users/tim/app')

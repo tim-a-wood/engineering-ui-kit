@@ -199,7 +199,7 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
       </div>
 
       {guided && exportResult ? (
-        <CapabilityHandoffCard bridge={bridge} result={exportResult} projection="guided" onHelp={onHelp} />
+        <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={exportResult} projection="guided" onHelp={onHelp} />
       ) : null}
 
       {!guided && packet ? (

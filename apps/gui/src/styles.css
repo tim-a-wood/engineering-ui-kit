@@ -3573,6 +3573,10 @@ code.path-wrap {
   color: var(--semantic-text-secondary);
   line-height: 1.5;
 }
+.cap-handoff-drag {
+  min-width: 0;
+  margin-top: 0;
+}
 .cap-handoff-files {
   display: grid;
   gap: var(--semantic-spacing-1);
@@ -3902,6 +3906,9 @@ code.path-wrap {
   .cap-plan-progress { width: 100%; align-items: stretch; flex-direction: column; }
   .cap-plan-milestone { white-space: normal; }
   .cap-plan-divider { display: none; }
+  .cap-handoff-drag { flex-wrap: wrap; }
+  .cap-handoff-drag .drag-file-chip { max-width: calc(100% - 2rem); overflow: hidden; text-overflow: ellipsis; }
+  .cap-handoff-drag .drag-hint { width: 100%; margin-left: 0; white-space: normal; }
 
   /* Design area tabs scroll horizontally inside their own row rather than the body. */
   .cap-design .tab-row { overflow-x: auto; }

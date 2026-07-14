@@ -61,7 +61,7 @@ describe('CAP-TEST-022 delta lifecycle', () => {
     expect(queue.nextTarget).toBe('mod.a')
 
     const packet = await bridge.capabilitiesExportDeltaPacket({ projectId: 'p1', changeId: 'impact-1', targetId: 'mod.a' })
-    expect(packet.uploadFiles.length).toBe(3)
+    expect(packet.uploadFiles.length).toBe(1)
 
     await expect(
       bridge.capabilitiesExportDeltaPacket({ projectId: 'p1', changeId: 'impact-1', targetId: 'mod.b' }),

@@ -431,7 +431,7 @@ function ModuleWorkspace(props: {
       )}
       {buildStep === 'import' && (
         <>
-          {interviewExport ? <CapabilityHandoffCard bridge={bridge} result={interviewExport} projection="guided" /> : null}
+          {interviewExport ? <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={interviewExport} projection="guided" /> : null}
           <InterviewImport label="Import module interview response" onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
         </>
       )}
@@ -446,7 +446,7 @@ function ModuleWorkspace(props: {
       )}
       {buildStep === 'inspect' && (
         <>
-          {implementationExport ? <CapabilityHandoffCard bridge={bridge} result={implementationExport} projection="guided" /> : null}
+          {implementationExport ? <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={implementationExport} projection="guided" /> : null}
           <button type="button" className="btn btn-primary btn-compact" onClick={() => void selectAndInspectOverlay()} disabled={busy || !implementationRunId}>Select and inspect overlay</button>
         </>
       )}
@@ -517,7 +517,7 @@ function ModuleWorkspace(props: {
             </div>
             {implementationExport ? (
               guided ? (
-                <CapabilityHandoffCard bridge={bridge} result={implementationExport} projection="guided" />
+                <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={implementationExport} projection="guided" />
               ) : (
                 <ul aria-label="Implementation handoff files">
                   {implementationExport.files.map((file) => <li key={file.path}><code>{file.path}</code> — {file.bytes} bytes — {file.sha256.slice(0, 12)}…</li>)}
