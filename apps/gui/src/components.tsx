@@ -43,6 +43,7 @@ export function PageHeader(props: {
   crumbs?: Crumb[]
   onBack?: () => void
   actions?: ReactNode
+  badge?: ReactNode
 }) {
   return (
     <header className="page-header">
@@ -60,7 +61,14 @@ export function PageHeader(props: {
       {props.icon && <span className="page-header-icon" aria-hidden="true">{props.icon}</span>}
       <div className="page-header-copy">
         {props.crumbs && props.crumbs.length > 0 && <Crumbs items={props.crumbs} />}
-        <h1>{props.title}</h1>
+        {props.badge ? (
+          <div className="page-header-title-row">
+            <h1>{props.title}</h1>
+            {props.badge}
+          </div>
+        ) : (
+          <h1>{props.title}</h1>
+        )}
         {props.subtitle && <p className="page-subtitle">{props.subtitle}</p>}
       </div>
       {props.actions && <div className="page-header-actions">{props.actions}</div>}

@@ -320,6 +320,7 @@ export function CapabilitiesView({
       <PageHeader
         title="Capabilities"
         icon={Icon.box()}
+        badge={<span className="badge badge-warning">Experimental</span>}
         subtitle={
           projection === 'guided'
             ? 'Turn what the application must do into approved, verified modules.'

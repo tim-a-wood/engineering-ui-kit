@@ -491,6 +491,12 @@ button.crumb:hover { color: var(--semantic-text-primary); }
 }
 
 .page-header-copy { min-width: 0; }
+.page-header-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-2);
+}
 .page-header-icon {
   display: grid;
   place-items: center;
