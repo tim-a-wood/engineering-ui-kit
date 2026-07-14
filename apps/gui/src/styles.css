@@ -4050,20 +4050,64 @@ code.path-wrap {
   grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
   margin: var(--semantic-spacing-3) 0;
 }
+.binding-editor {
+  max-width: 80rem;
+}
+.binding-editor > .capabilities-ids {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.binding-editor > .capabilities-ids > div {
+  grid-template-columns: minmax(8rem, 10rem) minmax(0, 1fr);
+}
+.binding-behavior-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 80rem;
+  gap: var(--semantic-spacing-3);
+}
 .binding-editor-grid label {
   display: grid;
   gap: 0.25rem;
 }
 .cap-field-label {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--semantic-spacing-2);
+  display: grid;
+  align-content: start;
+  gap: 1px;
+  min-height: 2.9rem;
 }
 .cap-field-label code {
+  justify-self: start;
   color: var(--semantic-text-muted);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 400;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.binding-mapping-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--semantic-spacing-3);
+  margin-block: var(--semantic-spacing-4);
+}
+.binding-mappings {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: var(--semantic-spacing-2);
+  min-width: 0;
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-inset);
+}
+.binding-mappings h3,
+.binding-mappings p { margin: 0; }
+.binding-mapping-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  width: 100%;
 }
 .cap-diagnostic-list {
   display: grid;
@@ -4160,6 +4204,19 @@ code.path-wrap {
   background: var(--semantic-surface-inset);
 }
 .capabilities-state-columns h3 { margin-top: 0; }
+
+@media (max-width: 1000px) {
+  .binding-behavior-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .binding-behavior-grid,
+  .binding-mapping-groups,
+  .binding-editor > .capabilities-ids { grid-template-columns: 1fr; }
+  .binding-editor > .capabilities-ids > div { grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr); }
+  .binding-mapping-row { grid-template-columns: 1fr; }
+  .binding-mapping-row > span { display: none; }
+}
 
 .capabilities-delta-table {
   width: 100%;

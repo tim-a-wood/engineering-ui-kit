@@ -254,6 +254,36 @@ const run = async () => {
   await narrowShot(500, 'connect-active', '12-narrow-connect')
   await narrowShot(640, 'complete', '13-reflow-640-complete')
 
+  // Ultra-wide Design binding editor — guards against auto-fill creating a row
+  // of cramped fields with colliding human labels and technical keys.
+  const wide = await browser.newContext({ viewport: { width: 2048, height: 1152 } })
+  await wide.addInitScript(SEED)
+  const wp = await wide.newPage()
+  await wp.goto('http://localhost:' + PORT + '/', { waitUntil: 'networkidle' })
+  await wp.waitForFunction(() => !!window.euik)
+  await wp.evaluate(() => window.__seed('connect-active'))
+  await wp.getByRole('button', { name: 'Capabilities' }).first().click()
+  await wp.waitForTimeout(120)
+  const wpid = await wp.evaluate(() => window.__pid())
+  await wp.selectOption('select[aria-label="Capabilities project"]', wpid)
+  await wp.getByRole('button', { name: 'Design' }).click()
+  await wp.getByRole('tab', { name: 'Connections' }).click()
+  await wp.waitForTimeout(250)
+  const wideLayout = await wp.evaluate(() => {
+    const behavior = document.querySelector('.binding-behavior-grid')
+    const evidence = document.querySelector('.binding-editor > .capabilities-ids')
+    return {
+      behaviorColumns: behavior ? getComputedStyle(behavior).gridTemplateColumns.split(' ').filter(Boolean).length : 0,
+      evidenceColumns: evidence ? getComputedStyle(evidence).gridTemplateColumns.split(' ').filter(Boolean).length : 0,
+    }
+  })
+  assert(wideLayout.behaviorColumns === 3, `14-wide-connections: behavior grid has ${wideLayout.behaviorColumns} columns, expected 3`)
+  assert(wideLayout.evidenceColumns === 2, `14-wide-connections: evidence grid has ${wideLayout.evidenceColumns} columns, expected 2`)
+  await wp.locator('.binding-behavior-grid').evaluate((element) => element.scrollIntoView({ block: 'start' }))
+  await wp.waitForTimeout(100)
+  await shot(wp, '14-wide-connections')
+  await wide.close()
+
   await browser.close()
   server.close()
   console.log('\\nCaptured ' + shots.length + ' screenshots to ' + outDir)

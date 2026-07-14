@@ -445,7 +445,7 @@ export function BindingEditor({
       ) : null}
 
       <h3>{guided ? 'Visible behavior' : 'Behavior mappings'}</h3>
-      <div className="binding-editor-grid">
+      <div className="binding-editor-grid binding-behavior-grid">
         {BINDING_BEHAVIOR_FIELDS.map((field) => (
           <label key={field}>
             <span className="cap-field-label">
@@ -462,43 +462,45 @@ export function BindingEditor({
         ))}
       </div>
 
-      {(['inputMappings', 'outputMappings'] as const).map((side) => {
-        const label = side === 'inputMappings' ? 'Input mappings' : 'Output mappings'
-        return (
-          <div key={side} className="binding-mappings" role="group" aria-label={label}>
-            <h3>{label}</h3>
-            {binding[side].length === 0 ? <p className="capabilities-note">None.</p> : null}
-            {binding[side].map((m, i) => (
-              <div key={i} className="binding-mapping-row">
-                <input
-                  value={m.from}
-                  aria-label={`${label} ${i + 1} from`}
-                  placeholder="from"
-                  onChange={(e) => updateMapping(side, i, 'from', e.target.value)}
-                />
-                <span aria-hidden="true">→</span>
-                <input
-                  value={m.to}
-                  aria-label={`${label} ${i + 1} to`}
-                  placeholder="to"
-                  onChange={(e) => updateMapping(side, i, 'to', e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-compact"
-                  aria-label={`Remove ${label} ${i + 1}`}
-                  onClick={() => removeMapping(side, i)}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-            <button type="button" className="btn btn-secondary btn-compact" onClick={() => addMapping(side)}>
-              Add {side === 'inputMappings' ? 'input' : 'output'} mapping
-            </button>
-          </div>
-        )
-      })}
+      <div className="binding-mapping-groups">
+        {(['inputMappings', 'outputMappings'] as const).map((side) => {
+          const label = side === 'inputMappings' ? 'Input mappings' : 'Output mappings'
+          return (
+            <div key={side} className="binding-mappings" role="group" aria-label={label}>
+              <h3>{label}</h3>
+              {binding[side].length === 0 ? <p className="capabilities-note">None yet.</p> : null}
+              {binding[side].map((m, i) => (
+                <div key={i} className="binding-mapping-row">
+                  <input
+                    value={m.from}
+                    aria-label={`${label} ${i + 1} from`}
+                    placeholder="from"
+                    onChange={(e) => updateMapping(side, i, 'from', e.target.value)}
+                  />
+                  <span aria-hidden="true">→</span>
+                  <input
+                    value={m.to}
+                    aria-label={`${label} ${i + 1} to`}
+                    placeholder="to"
+                    onChange={(e) => updateMapping(side, i, 'to', e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-compact"
+                    aria-label={`Remove ${label} ${i + 1}`}
+                    onClick={() => removeMapping(side, i)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <button type="button" className="btn btn-secondary btn-compact" onClick={() => addMapping(side)}>
+                Add {side === 'inputMappings' ? 'input' : 'output'} mapping
+              </button>
+            </div>
+          )
+        })}
+      </div>
 
       {ambiguities.some((a) => !a.resolvedTo) ? (
         <div className="binding-ambiguity" role="group" aria-label="Ambiguous mappings">
