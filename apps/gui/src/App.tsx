@@ -287,6 +287,7 @@ export default function App() {
                           type="button"
                           className={item.id === navActive ? 'nav-item active' : 'nav-item'}
                           aria-current={item.id === navActive ? 'page' : undefined}
+                          aria-label={item.label}
                           title={navCollapsed ? item.label : undefined}
                           onClick={() => navigate(item.id)}
                         >

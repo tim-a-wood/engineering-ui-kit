@@ -16,7 +16,40 @@ const distDir = path.resolve(root, '../apps/gui/dist')
 const outDir = path.resolve(root, '../apps/gui/validation-evidence/capabilities-ux')
 fs.mkdirSync(outDir, { recursive: true })
 
-const EXECUTABLE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
+/**
+ * Resolve a Chromium executable portably:
+ *  1. CAPABILITIES_VISUAL_BROWSER / PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH env override.
+ *  2. Playwright's own resolution (works when the pinned browser is installed).
+ *  3. Any installed chromium build under PLAYWRIGHT_BROWSERS_PATH (handles version drift).
+ * Fails once with an actionable message if none exists — never silently skips.
+ */
+function resolveBrowser() {
+  const envPath = process.env.CAPABILITIES_VISUAL_BROWSER || process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+  if (envPath && fs.existsSync(envPath)) return envPath
+  try {
+    const p = chromium.executablePath()
+    if (p && fs.existsSync(p)) return p
+  } catch { /* fall through */ }
+  const browsersPath = process.env.PLAYWRIGHT_BROWSERS_PATH
+  const roots = [browsersPath, '/opt/pw-browsers'].filter(Boolean)
+  for (const r of roots) {
+    if (!fs.existsSync(r)) continue
+    for (const dir of fs.readdirSync(r)) {
+      if (!/^chromium(-\d+|_headless)/.test(dir)) continue
+      for (const rel of ['chrome-linux/chrome', 'chrome-linux/headless_shell', 'chrome-mac/Chromium.app/Contents/MacOS/Chromium', 'chrome-win/chrome.exe']) {
+        const cand = path.join(r, dir, rel)
+        if (fs.existsSync(cand)) return cand
+      }
+    }
+  }
+  console.error(
+    'No Chromium executable found for visual validation.\n' +
+    'Set CAPABILITIES_VISUAL_BROWSER=/path/to/chrome, or run `npx playwright install chromium`.',
+  )
+  process.exit(2)
+}
+
+const EXECUTABLE = resolveBrowser()
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.woff2': 'font/woff2' }
 
 const server = http.createServer((req, res) => {
@@ -74,9 +107,28 @@ async function selectFirstProject(page) {
 
 const PORT = 4318
 const shots = []
+const failures = []
+function assert(cond, message) {
+  if (cond) return
+  failures.push(message)
+  console.error('  ✗ assertion failed:', message)
+}
+async function assertNoOverflow(page, label) {
+  // Measure the scrolling content column (.main) — the surface the Capabilities layout controls.
+  // No element may extend past the viewport, and the column must not scroll horizontally.
+  const info = await page.evaluate(() => {
+    const vw = document.documentElement.clientWidth
+    const main = document.querySelector('.main')
+    const past = [...document.querySelectorAll('.capabilities-view *')].filter((e) => e.getBoundingClientRect().right > vw + 1).length
+    return { colOverflow: main ? main.scrollWidth - main.clientWidth : 0, past }
+  })
+  assert(info.colOverflow <= 1, `${label}: content column has horizontal overflow (${info.colOverflow}px)`)
+  assert(info.past === 0, `${label}: ${info.past} element(s) extend past the viewport`)
+}
 async function shot(page, name) {
   const file = path.join(outDir, name + '.png')
   await page.screenshot({ path: file, fullPage: true })
+  await assertNoOverflow(page, name)
   shots.push(name)
   console.log('  ✓', name)
 }
@@ -117,9 +169,24 @@ const run = async () => {
     await p.close()
   }
 
+  // Assertions on the handoff view: required header actions reachable + active stage visible.
+  assert(await page.locator('.page-header-actions').getByRole('button', { name: 'Help' }).isVisible(), 'header Help action is reachable')
+  assert(await page.getByRole('button', { name: 'Guided' }).isVisible(), 'Guided/Design control is reachable')
+  assert(await page.locator('.cap-stage-head h2').first().isVisible(), 'active stage heading is visible')
+
   await scenario('04-define-draft', 'define-draft')
   await scenario('05-architecture-draft', 'architect-draft')
-  await scenario('06-build-two-region', 'build')
+  await scenario('06-build-two-region', 'build', async (p) => {
+    // Guided Build: the selected module and the shown next action must agree.
+    const selectedName = (await p.locator('.cap-build-module.active .cap-build-module-name').innerText()).trim()
+    const nextLabel = (await p.locator('.cap-build-step-label').innerText()).trim()
+    const selectedState = (await p.locator('.cap-build-module.active .cap-build-module-state').innerText()).trim()
+    assert(selectedName.length > 0 && !selectedName.startsWith('mod.'), `Build module name is humanized (got "${selectedName}")`)
+    // A not-started module must offer the interview step, not a later lifecycle action.
+    if (/Not started/i.test(selectedState)) {
+      assert(/Create the module interview/i.test(nextLabel), `not-started module shows interview step (got "${nextLabel}")`)
+    }
+  })
   await scenario('07-connect-active', 'connect-active')
   await scenario('08-completed-journey', 'complete')
 
@@ -138,7 +205,7 @@ const run = async () => {
   for (let i = 0; i < designAreas.length; i++) {
     await dp.getByRole('tab', { name: designAreas[i] }).click()
     await dp.waitForTimeout(150)
-    await shot(dp, '09-design-' + (i + 1) + '-' + designAreas[i].toLowerCase().replace(/\\s+/g, '-'))
+    await shot(dp, '09-design-' + (i + 1) + '-' + designAreas[i].toLowerCase().replace(/\s+/g, '-'))
   }
   await dp.close()
 
@@ -162,31 +229,38 @@ const run = async () => {
   await shot(hp, '10b-help-stage-define')
   await hp.close()
 
-  // Narrow viewport — build + journey
-  const nctx = await browser.newContext({ viewport: { width: 480, height: 900 } })
-  await nctx.addInitScript(SEED)
-  const np = await nctx.newPage()
-  await np.goto('http://localhost:' + PORT + '/', { waitUntil: 'networkidle' })
-  await np.waitForFunction(() => !!window.euik)
-  await np.evaluate(() => window.__seed('build'))
-  await np.getByRole('button', { name: 'Capabilities' }).first().click()
-  await np.waitForTimeout(120)
-  const npid = await np.evaluate(() => window.__pid())
-  await np.selectOption('select[aria-label="Capabilities project"]', npid)
-  await np.waitForTimeout(300)
-  await shot(np, '11-narrow-build')
-  await nctx.close()
+  // Narrow viewports — the required 500x900, and a 640 CSS-px reflow (≈1280 @ 200% zoom).
+  const narrowShot = async (width, seed, name) => {
+    const c = await browser.newContext({ viewport: { width, height: 900 } })
+    await c.addInitScript(SEED)
+    const p = await c.newPage()
+    await p.goto('http://localhost:' + PORT + '/', { waitUntil: 'networkidle' })
+    await p.waitForFunction(() => !!window.euik)
+    await p.evaluate((s) => window.__seed(s), seed)
+    await p.getByRole('button', { name: 'Capabilities' }).first().click()
+    await p.waitForTimeout(120)
+    const pid = await p.evaluate(() => window.__pid())
+    await p.selectOption('select[aria-label="Capabilities project"]', pid)
+    await p.waitForTimeout(300)
+    // Required header actions remain reachable at narrow width.
+    assert(await p.locator('.page-header-actions').getByRole('button', { name: 'Help' }).isVisible(), `${name}: Help reachable`)
+    assert(await p.locator('select[aria-label="Capabilities project"]').isVisible(), `${name}: project selector present`)
+    await shot(p, name)
+    await c.close()
+  }
+  await narrowShot(500, 'build', '11-narrow-build')
+  await narrowShot(500, 'connect-active', '12-narrow-connect')
+  await narrowShot(640, 'complete', '13-reflow-640-complete')
 
   await browser.close()
   server.close()
   console.log('\\nCaptured ' + shots.length + ' screenshots to ' + outDir)
-}
-
-async function gotoCapabilitiesOn(page) {
-  await page.goto('http://localhost:' + PORT + '/', { waitUntil: 'networkidle' })
-  await page.waitForFunction(() => !!window.euik, { timeout: 5000 })
-  await page.getByRole('button', { name: 'Capabilities' }).first().click()
-  await page.waitForTimeout(150)
+  if (failures.length) {
+    console.error('\\n' + failures.length + ' assertion(s) failed:')
+    for (const f of failures) console.error('  - ' + f)
+    process.exit(1)
+  }
+  console.log('All visual assertions passed.')
 }
 
 run().catch((e) => { console.error(e); process.exit(1) })

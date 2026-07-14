@@ -3732,6 +3732,37 @@ code.path-wrap {
     grid-template-columns: 1fr;
   }
 }
+
+/* Narrow shell (also covers 1280px @ 200% zoom ≈ 640 CSS px): auto-collapse the
+   sidebar to the icon rail and reduce gutters so content fits without horizontal scroll.
+   Applies to the whole app; Build & Test is unaffected at normal widths. */
+@media (max-width: 720px) {
+  .app-body { grid-template-columns: 56px 1fr; }
+  .sidebar { padding-left: var(--semantic-spacing-2); padding-right: var(--semantic-spacing-2); }
+  .sidebar .nav-section-label,
+  .sidebar .nav-label,
+  .sidebar .tip-card { display: none; }
+  .sidebar .nav-item { justify-content: center; padding: 0; }
+  .main { padding: 0 16px 32px; }
+  /* Keep the sticky header's full-bleed in step with the reduced gutter (no overflow). */
+  .page-header { padding-left: 16px; padding-right: 16px; margin-left: -16px; margin-right: -16px; }
+
+  /* Page header stacks its copy above wrapped actions. */
+  .capabilities-view .page-header { flex-wrap: wrap; row-gap: var(--semantic-spacing-2); }
+  .capabilities-view .page-header-actions { margin-left: 0; width: 100%; justify-content: flex-start; }
+  .cap-project-select select,
+  .cap-project-select { min-width: 0; flex: 1 1 8rem; }
+
+  /* Design area tabs scroll horizontally inside their own row rather than the body. */
+  .cap-design .tab-row { overflow-x: auto; }
+
+  /* Long identifiers / paths wrap instead of forcing body overflow. */
+  .capabilities-view code,
+  .capabilities-view .mono,
+  .cap-handoff-file-name,
+  .cap-build-module-name { overflow-wrap: anywhere; word-break: break-word; }
+  .cap-handoff-files-raw code { overflow-wrap: anywhere; }
+}
 .capabilities-header {
   display: flex;
   justify-content: space-between;
