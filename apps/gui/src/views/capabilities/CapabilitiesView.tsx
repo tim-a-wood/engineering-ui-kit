@@ -2,7 +2,7 @@
  * Capabilities top-level page.
  *
  * Guided and Design are two projections over ONE canonical model. Guided walks a
- * five-stage journey (Define → Architect → Build → Connect → Verify) and gates
+ * four-outcome journey (Plan → Build → Connect → Verify) and gates
  * locked stages so impossible downstream workflows can never be opened. Design
  * exposes the same records as the six canonical areas (Section 31). No projection
  * or stepper state is persisted (CAP-DEC-001/002) — the journey is derived on
@@ -178,6 +178,16 @@ export function CapabilitiesView({
       stageHeadingRef.current?.focus()
     }
   }, [viewing, projection, guidedPanel, projectId, loadState])
+
+  // Define and Architect are one user-facing Plan outcome. Once the definition
+  // gate passes, continue naturally into solution shaping without asking the
+  // user to navigate to what is internally the next record boundary.
+  useEffect(() => {
+    if (projection !== 'guided' || viewing !== 'define' || loadState !== 'ready') return
+    const define = journey.stages.find((stage) => stage.id === 'define')
+    const architect = journey.stages.find((stage) => stage.id === 'architect')
+    if (define?.satisfied && architect?.state !== 'locked') setViewing('architect')
+  }, [journey, loadState, projection, viewing])
 
   /** Background refresh after a child mutation — gen-guarded so it cannot clobber a switch. */
   const refresh = useCallback(async () => {
@@ -427,6 +437,7 @@ export function GuidedBody(props: {
   onClosePanel: () => void
 }) {
   const stage = stageById(props.journey, props.viewing)
+  const stageLabel = stage.id === 'define' || stage.id === 'architect' ? 'Plan' : stage.label
 
   if (props.panel === 'attention') {
     return (
@@ -459,10 +470,10 @@ export function GuidedBody(props: {
   return (
     <div className="cap-guided">
       <CapabilityJourney stages={props.journey.stages} viewing={props.viewing} onView={props.onView} />
-      <section className="capabilities-panel cap-stage" aria-label={`${stage.label} stage`} aria-live="polite">
+      <section className="capabilities-panel cap-stage" aria-label={`${stageLabel} stage`} aria-live="polite">
         <div className="cap-stage-head">
           <h2 ref={props.stageHeadingRef} tabIndex={-1}>
-            {stage.label}
+            {stageLabel}
           </h2>
           <button
             type="button"
@@ -493,6 +504,9 @@ function StageCompletion(props: {
   onView: (id: StageId) => void
 }) {
   const stage = stageById(props.journey, props.stageId)
+  // Define and Architect are consecutive internal gates inside Plan. There is no
+  // user-facing transition between them.
+  if (props.stageId === 'define') return null
   if (!stage.satisfied || !stage.nextStageId) {
     if (stage.satisfied && props.stageId === 'verify' && props.journey.complete) {
       return (
@@ -548,17 +562,21 @@ function GuidedStage(props: {
   switch (stage.id) {
     case 'define':
       return (
-        <ApplicationDefinition
-          bridge={bridge}
-          projectId={projectId}
-          projection="guided"
-          onChanged={props.onChanged}
-          onHelp={() => props.onOpenGuide?.(stageToGuideTopic('define'))}
-        />
+        <div className="cap-plan-workspace">
+          <PlanProgress journey={props.journey} phase="define" />
+          <ApplicationDefinition
+            bridge={bridge}
+            projectId={projectId}
+            projection="guided"
+            onChanged={props.onChanged}
+            onHelp={() => props.onOpenGuide?.(stageToGuideTopic('define'))}
+          />
+        </div>
       )
     case 'architect':
       return (
-        <>
+        <div className="cap-plan-workspace">
+          <PlanProgress journey={props.journey} phase="architect" />
           <ArchitectureInterview
             bridge={bridge}
             projectId={projectId}
@@ -569,7 +587,7 @@ function GuidedStage(props: {
           {props.architectureProjection && (
             <ArchitectureView projection={props.architectureProjection} mode="guided" />
           )}
-        </>
+        </div>
       )
     case 'build':
       return (
@@ -615,6 +633,27 @@ function GuidedStage(props: {
         />
       )
   }
+}
+
+function PlanProgress(props: {
+  journey: ReturnType<typeof deriveJourney>
+  phase: 'define' | 'architect'
+}) {
+  const definitionDone = stageById(props.journey, 'define').satisfied
+  const architectureDone = stageById(props.journey, 'architect').satisfied
+  return (
+    <div className="cap-plan-progress" aria-label="Plan progress">
+      <div className={`cap-plan-milestone ${definitionDone ? 'done' : props.phase === 'define' ? 'active' : ''}`}>
+        <span aria-hidden="true">{definitionDone ? Icon.check(12) : '1'}</span>
+        <strong>Understand the application</strong>
+      </div>
+      <span className="cap-plan-divider" aria-hidden="true">{Icon.arrowRight(14)}</span>
+      <div className={`cap-plan-milestone ${architectureDone ? 'done' : props.phase === 'architect' ? 'active' : ''}`}>
+        <span aria-hidden="true">{architectureDone ? Icon.check(12) : '2'}</span>
+        <strong>Shape the solution</strong>
+      </div>
+    </div>
+  )
 }
 
 function StageBlocker(props: {

@@ -214,12 +214,14 @@ describe('CapabilityHandoffCard', () => {
 
   it('Guided shows filenames + compact size and the three actions, no full path or sha', () => {
     const html = renderToStaticMarkup(<CapabilityHandoffCard bridge={bridge()} result={result} projection="guided" />)
-    expect(html).toContain('Handoff ready')
+    expect(html).toContain('Ready for Copilot')
     expect(html).toContain('product-interview.md')
     expect(html).toContain('2 KB')
     expect(html).toContain('Open Copilot')
     expect(html).toContain('Copy prompt')
     expect(html).toContain('Show files')
+    expect(html).toContain('Bring its response back into the importer below')
+    expect(html).not.toContain('cap-handoff-num')
     expect(html).not.toContain('/Users/tim/app')
     expect(html).not.toContain('deadbeef')
   })

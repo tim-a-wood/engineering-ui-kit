@@ -3369,10 +3369,10 @@ code.path-wrap {
   gap: var(--semantic-spacing-4);
 }
 
-/* Five-stage journey stepper */
+/* Four-outcome journey stepper. Plan contains the two internal planning gates. */
 .cap-journey {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--semantic-spacing-2);
   list-style: none;
   margin: 0;
@@ -3473,6 +3473,52 @@ code.path-wrap {
 .cap-stage-head h2 {
   outline: none;
 }
+.cap-plan-workspace {
+  display: grid;
+  gap: var(--semantic-spacing-4);
+}
+.cap-plan-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  width: fit-content;
+  max-width: 100%;
+  padding: var(--semantic-spacing-2);
+  color: var(--semantic-text-muted);
+  background: var(--semantic-surface-inset);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+}
+.cap-plan-milestone {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  padding: var(--semantic-spacing-1) var(--semantic-spacing-2);
+  white-space: nowrap;
+}
+.cap-plan-milestone > span {
+  display: inline-grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  color: var(--semantic-text-muted);
+  border: 1px solid var(--semantic-border-strong);
+  border-radius: 999px;
+  font-size: 0.7rem;
+}
+.cap-plan-milestone.active { color: var(--semantic-text-primary); }
+.cap-plan-milestone.active > span {
+  color: var(--semantic-accent-text);
+  background: var(--semantic-accent-primary-tint);
+  border-color: var(--semantic-accent-primary);
+}
+.cap-plan-milestone.done { color: var(--semantic-text-secondary); }
+.cap-plan-milestone.done > span {
+  color: var(--semantic-text-inverse);
+  background: var(--semantic-status-success);
+  border-color: var(--semantic-status-success);
+}
+.cap-plan-divider { display: inline-flex; color: var(--semantic-text-disabled); }
 .cap-stage-complete {
   display: flex;
   align-items: center;
@@ -3521,26 +3567,11 @@ code.path-wrap {
 .cap-handoff-help {
   margin-left: auto;
 }
-.cap-handoff-steps {
-  display: grid;
-  gap: var(--semantic-spacing-1);
+.cap-handoff-instruction {
+  max-width: 48rem;
   margin: 0;
-  padding: 0;
-  list-style: none;
   color: var(--semantic-text-secondary);
-}
-.cap-handoff-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  margin-right: var(--semantic-spacing-2);
-  border-radius: 999px;
-  background: var(--semantic-accent-primary-tint);
-  color: var(--semantic-accent-text);
-  font-size: 0.72rem;
-  font-weight: 700;
+  line-height: 1.5;
 }
 .cap-handoff-files {
   display: grid;
@@ -3868,6 +3899,9 @@ code.path-wrap {
   .capabilities-view .page-header-actions { margin-left: 0; width: 100%; justify-content: flex-start; }
   .cap-project-select select,
   .cap-project-select { min-width: 0; flex: 1 1 8rem; }
+  .cap-plan-progress { width: 100%; align-items: stretch; flex-direction: column; }
+  .cap-plan-milestone { white-space: normal; }
+  .cap-plan-divider { display: none; }
 
   /* Design area tabs scroll horizontally inside their own row rather than the body. */
   .cap-design .tab-row { overflow-x: auto; }

@@ -1,7 +1,7 @@
 /**
  * Reusable "Handoff ready" card for capability interviews and implementation
  * packets. Consumes CapabilityPacketExportResult. Guided mode shows filenames,
- * compact sizes and three numbered actions; Design mode adds packet/run IDs,
+ * compact sizes and one natural transfer instruction; Design mode adds packet/run IDs,
  * full paths, bytes and SHA-256. No drag affordance is offered for capability
  * run IDs (the desktop bridge does not support it).
  */
@@ -20,6 +20,7 @@ export function CapabilityHandoffCard(props: {
   onHelp?: () => void
 }) {
   const { bridge, result, projection } = props
+  const guided = projection === 'guided'
   const [status, setStatus] = useState<Status | null>(null)
 
   async function openCopilot() {
@@ -54,10 +55,10 @@ export function CapabilityHandoffCard(props: {
   }
 
   return (
-    <section className="panel-raised cap-handoff" aria-label="Handoff ready">
+    <section className="panel-raised cap-handoff" aria-label={guided ? 'Ready for Copilot' : 'Handoff ready'}>
       <header className="cap-handoff-head">
         <span className="cap-handoff-icon" aria-hidden="true">{Icon.sparkle(16)}</span>
-        <h3>Handoff ready</h3>
+        <h3>{guided ? 'Ready for Copilot' : 'Handoff ready'}</h3>
         {props.onHelp && (
           <button type="button" className="btn btn-ghost btn-compact cap-handoff-help" onClick={props.onHelp}>
             {Icon.help(14)} What to do
@@ -65,11 +66,9 @@ export function CapabilityHandoffCard(props: {
         )}
       </header>
 
-      <ol className="cap-handoff-steps">
-        <li><span className="cap-handoff-num" aria-hidden="true">1</span> Attach the files in Copilot.</li>
-        <li><span className="cap-handoff-num" aria-hidden="true">2</span> Paste the recommended prompt.</li>
-        <li><span className="cap-handoff-num" aria-hidden="true">3</span> Return here and import the response.</li>
-      </ol>
+      <p className="cap-handoff-instruction">
+        Open Copilot, attach these files, and paste the copied prompt. Bring its response back into the importer below.
+      </p>
 
       <ul className="cap-handoff-files" aria-label="Handoff files">
         {result.files.map((f) => (

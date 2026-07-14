@@ -184,7 +184,9 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
 
       <div className="capabilities-toolbar" role="group" aria-label="Application definition actions">
         <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>
-          {exportResult ? 'Recreate interview handoff' : 'Create interview handoff'}
+          {guided
+            ? exportResult ? 'Restart in Copilot' : 'Start in Copilot'
+            : exportResult ? 'Recreate interview handoff' : 'Create interview handoff'}
         </button>
         <button
           type="button"

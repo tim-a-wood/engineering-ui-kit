@@ -1,7 +1,8 @@
 /**
- * Guided five-stage journey stepper. Pure presentation over a derived Journey —
- * it holds no capability truth. State is conveyed by icon + text (never color
- * alone); locked stages are non-navigable and expose their prerequisite.
+ * Guided four-outcome journey. The canonical Define and Architect gates are
+ * intentionally grouped into one user-facing Plan outcome: they are successive
+ * parts of the same thought process, not separate destinations. This remains a
+ * pure presentation over the derived journey and holds no capability truth.
  */
 
 import { Icon } from '../../icons'
@@ -36,16 +37,45 @@ export function CapabilityJourney(props: {
   viewing: StageId
   onView: (id: StageId) => void
 }) {
+  const define = props.stages.find((stage) => stage.id === 'define')
+  const architect = props.stages.find((stage) => stage.id === 'architect')
+  const planViewing = props.viewing === 'define' || props.viewing === 'architect'
+  const planComplete = Boolean(define?.satisfied && architect?.satisfied)
+  const planTarget: StageId = architect && architect.state !== 'locked' ? 'architect' : 'define'
+  const planStatus = !define?.satisfied
+    ? define?.shortStatus === 'Draft ready to review.' ? 'Review the application brief.' : 'Describe the application.'
+    : !architect?.satisfied
+      ? architect?.shortStatus === 'Draft ready to review.' ? 'Review the solution shape.' : 'Shape the module plan.'
+      : 'Plan approved.'
+  const visibleStages = props.stages.filter((stage) => stage.id !== 'define' && stage.id !== 'architect')
+
   return (
     <ol className="cap-journey" aria-label="Capabilities journey">
-      {props.stages.map((stage, index) => {
+      <li className={`cap-journey-step ${planComplete ? 'complete' : 'current'}${planViewing ? ' viewing' : ''}`}>
+        <button
+          type="button"
+          className="cap-journey-link"
+          aria-current={planViewing ? 'step' : undefined}
+          onClick={() => props.onView(planTarget)}
+        >
+          <span className="cap-journey-marker" aria-hidden="true">
+            {planComplete ? Icon.check(13) : <span>1</span>}
+          </span>
+          <span className="cap-journey-copy">
+            <span className="cap-journey-name">Plan</span>
+            <span className="cap-journey-status">{planStatus}</span>
+            <span className="sr-only">, {planComplete ? 'Complete' : 'Current'}{planViewing ? ', viewing' : ''}</span>
+          </span>
+        </button>
+      </li>
+      {visibleStages.map((stage, index) => {
         const viewingThis = stage.id === props.viewing
         const navigable = stage.state !== 'locked'
         const stateLabel = STATE_LABEL[stage.state]
         const content = (
           <>
             <span className="cap-journey-marker" aria-hidden="true">
-              {marker(stage, index)}
+              {marker(stage, index + 1)}
             </span>
             <span className="cap-journey-copy">
               <span className="cap-journey-name">{stage.label}</span>

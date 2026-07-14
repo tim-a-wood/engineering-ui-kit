@@ -150,8 +150,8 @@ const run = async () => {
   await selectFirstProject(page)
   await shot(page, '02-empty-define')
 
-  // 3. Exported handoff (click Create interview handoff)
-  await page.getByRole('button', { name: /Create interview handoff/i }).click()
+  // 3. Copilot transfer ready
+  await page.getByRole('button', { name: /Start in Copilot/i }).click()
   await page.waitForTimeout(250)
   await shot(page, '03-handoff-ready')
 

@@ -17,8 +17,9 @@ import {
   projectDerivedGraph,
   type ArchitectureProposalInput,
 } from '@engineering-ui-kit/core/browser'
-import type { EuikBridge } from '../../bridge'
+import type { CapabilityPacketExportResult, EuikBridge } from '../../bridge'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
+import { CapabilityHandoffCard } from './CapabilityHandoffCard'
 import { presentDiagnosticsForGuided } from './capabilityPresentation'
 
 type Props = {
@@ -50,6 +51,7 @@ export function ArchitectureInterview({
   const [product, setProduct] = useState<ApplicationSpecification | undefined>()
   const [draft, setDraft] = useState<ArchitectureSpecification | undefined>()
   const [packet, setPacket] = useState<InterviewPacket | undefined>()
+  const [exportResult, setExportResult] = useState<CapabilityPacketExportResult | undefined>()
   const [proposal, setProposal] = useState<ArchitectureProposalInput | undefined>()
   const [diagnostics, setDiagnostics] = useState<CapDiagnostic[]>([])
   const [cycles, setCycles] = useState<string[][]>([])
@@ -104,7 +106,8 @@ export function ArchitectureInterview({
         stateLabels: built.stateLabels,
       })
       setPacket(built)
-      setMessage(`Exported ${exported.files.length} architecture handoff files for ${built.packetId}.`)
+      setExportResult(exported)
+      setMessage(guided ? '' : `Exported ${exported.files.length} architecture handoff files for ${built.packetId}.`)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
     } finally {
@@ -202,7 +205,9 @@ export function ArchitectureInterview({
 
       <div className="capabilities-toolbar" role="group" aria-label="Architecture interview actions">
         <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || !product || busy}>
-          Export architecture interview
+          {guided
+            ? exportResult ? 'Restart in Copilot' : 'Continue in Copilot'
+            : 'Export architecture interview'}
         </button>
         <button
           type="button"
@@ -213,6 +218,10 @@ export function ArchitectureInterview({
           Approve architecture
         </button>
       </div>
+
+      {guided && exportResult ? (
+        <CapabilityHandoffCard bridge={bridge} result={exportResult} projection="guided" />
+      ) : null}
 
       {packet && !guided ? (
         <details open>
