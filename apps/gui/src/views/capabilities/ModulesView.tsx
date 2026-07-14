@@ -497,8 +497,8 @@ function ModuleWorkspace(props: {
           ) : null}
 
           <div className="capabilities-toolbar" role="group" aria-label="Module interview actions">
-            <button type="button" onClick={() => void exportPacket()} disabled={!projectId || busy}>Export module interview</button>
-            <button type="button" onClick={() => void approve()} disabled={!projectId || !draft || busy || gatePassed === false}>Approve module</button>
+            <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>Export module interview</button>
+            <button type="button" className="btn btn-secondary btn-compact" onClick={() => void approve()} disabled={!projectId || !draft || busy || gatePassed === false}>Approve module</button>
           </div>
 
           {packet && !guided ? (
@@ -510,10 +510,10 @@ function ModuleWorkspace(props: {
           <section aria-label="Module implementation lifecycle">
             <h3>Implementation lifecycle</h3>
             <div className="capabilities-toolbar" role="group" aria-label="Implementation actions">
-              <button type="button" disabled={busy || !isApproved} onClick={() => void exportImplementation()}>Export implementation packet</button>
-              <button type="button" disabled={busy || !implementationRunId} onClick={() => void selectAndInspectOverlay()}>Select and inspect overlay</button>
-              <button type="button" disabled={busy || !inspection?.canApply || (inspection.warnings.length > 0 && !warningsAccepted)} onClick={() => void applyInspectedOverlay()}>Apply reviewed overlay</button>
-              <button type="button" disabled={busy || !isApproved} onClick={() => void verifyApprovedModule()}>Verify module</button>
+              <button type="button" className="btn btn-primary btn-compact" disabled={busy || !isApproved} onClick={() => void exportImplementation()}>Export implementation packet</button>
+              <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !implementationRunId} onClick={() => void selectAndInspectOverlay()}>Select and inspect overlay</button>
+              <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !inspection?.canApply || (inspection.warnings.length > 0 && !warningsAccepted)} onClick={() => void applyInspectedOverlay()}>Apply reviewed overlay</button>
+              <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !isApproved} onClick={() => void verifyApprovedModule()}>Verify module</button>
             </div>
             {implementationExport ? (
               guided ? (

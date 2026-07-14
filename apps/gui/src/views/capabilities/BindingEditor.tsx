@@ -515,6 +515,7 @@ export function BindingEditor({
                     <button
                       key={candidate}
                       type="button"
+                      className="btn btn-secondary btn-compact"
                       onClick={() => resolveAmbiguity(a.from, candidate)}
                     >
                       Use {candidate}

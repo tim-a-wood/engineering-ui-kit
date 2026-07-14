@@ -196,10 +196,10 @@ export function DeltaQueue({ bridge, projectId, projection }: Props) {
             <p role="status">Queue exhausted — every approved target has been processed.</p>
           ) : (
             <div className="capabilities-toolbar" role="group" aria-label="Delta actions">
-              <button type="button" disabled={busy} onClick={() => void exportNext()}>
+              <button type="button" className="btn btn-primary btn-compact" disabled={busy} onClick={() => void exportNext()}>
                 Export delta packet for {queue.nextTarget}
               </button>
-              <button type="button" disabled={busy} onClick={() => void verifyAndComplete()}>
+              <button type="button" className="btn btn-secondary btn-compact" disabled={busy} onClick={() => void verifyAndComplete()}>
                 Verify &amp; complete {queue.nextTarget}
               </button>
             </div>

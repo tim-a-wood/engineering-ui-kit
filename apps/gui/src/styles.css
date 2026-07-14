@@ -3294,6 +3294,69 @@ code.path-wrap {
   gap: var(--semantic-spacing-4);
 }
 
+/* Capabilities uses many schema-driven controls that are not wrapped in the
+   app's generic `.field` component. Give the whole feature the same control
+   language instead of falling back to Chromium's native grey widgets. */
+.capabilities-view :is(
+  input:not([type]),
+  input[type='text'],
+  input[type='number'],
+  input[type='search'],
+  input[type='url'],
+  select,
+  textarea
+) {
+  min-width: 0;
+  height: 32px;
+  padding: 0 var(--semantic-spacing-3);
+  color: var(--semantic-text-primary);
+  font-family: inherit;
+  font-size: var(--semantic-typography-size-sm);
+  line-height: 1.4;
+  background-color: var(--semantic-surface-inset);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: 6px;
+  transition:
+    border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    box-shadow var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    background-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+}
+.capabilities-view select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 14px;
+  cursor: pointer;
+}
+.capabilities-view textarea {
+  height: auto;
+  min-height: 7rem;
+  padding-block: var(--semantic-spacing-2);
+  resize: vertical;
+}
+.capabilities-view :is(input:not([type]), input[type='text'], input[type='number'], input[type='search'], input[type='url'], select, textarea):hover:not(:disabled) {
+  border-color: var(--semantic-border-strong);
+  background-color: color-mix(in srgb, var(--semantic-surface-inset) 84%, var(--semantic-surface-panel-raised));
+}
+.capabilities-view :is(input:not([type]), input[type='text'], input[type='number'], input[type='search'], input[type='url'], select, textarea):focus-visible {
+  outline: none;
+  border-color: var(--semantic-border-focus);
+  box-shadow: var(--semantic-focus-ring-offset);
+}
+.capabilities-view :is(input:not([type]), input[type='text'], input[type='number'], input[type='search'], input[type='url'], select, textarea):disabled {
+  color: var(--semantic-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+.capabilities-view label:not(.capabilities-file-pick, .hstack) {
+  color: var(--semantic-text-secondary);
+  font-size: 13px;
+  font-weight: var(--semantic-typography-weight-medium);
+}
+
 /* ---- Capabilities UX: journey, stages, handoff, panels ------------------- */
 
 .cap-project-select select,
@@ -3331,6 +3394,18 @@ code.path-wrap {
   background: var(--semantic-surface-panel);
   color: var(--semantic-text-secondary);
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  transition:
+    border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    background-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    transform var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    box-shadow var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+}
+.cap-journey-link:hover {
+  border-color: var(--semantic-border-strong);
+  background: var(--semantic-surface-panel-raised);
+  transform: translateY(-1px);
+  box-shadow: var(--semantic-shadow-sm);
 }
 .cap-journey-locked {
   cursor: default;
@@ -3344,6 +3419,7 @@ code.path-wrap {
   border-color: var(--semantic-accent-primary);
   background: var(--semantic-accent-primary-tint);
   color: var(--semantic-text-primary);
+  box-shadow: inset 0 -2px 0 var(--semantic-accent-primary), var(--semantic-shadow-sm);
 }
 .cap-journey-step.not-applicable .cap-journey-link {
   border-style: dashed;
@@ -3505,6 +3581,9 @@ code.path-wrap {
   gap: var(--semantic-spacing-2);
   padding: var(--semantic-spacing-3);
   margin-bottom: var(--semantic-spacing-2);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel-raised);
 }
 .cap-attention-head {
   display: flex;
@@ -3572,9 +3651,15 @@ code.path-wrap {
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-md);
   background: var(--semantic-surface-panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    background-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    box-shadow var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
 .cap-connect-step.active {
   border-color: var(--semantic-accent-primary);
+  background: var(--semantic-surface-panel-raised);
+  box-shadow: inset 3px 0 0 var(--semantic-accent-primary), var(--semantic-shadow-sm);
 }
 .cap-connect-step.done {
   border-color: var(--semantic-status-success);
@@ -3694,10 +3779,21 @@ code.path-wrap {
   border-radius: var(--semantic-radius-md);
   background: var(--semantic-surface-panel);
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    background-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    transform var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    box-shadow var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+}
+.cap-build-module:hover {
+  border-color: var(--semantic-border-strong);
+  background: var(--semantic-surface-panel-raised);
+  transform: translateY(-1px);
 }
 .cap-build-module.active {
   border-color: var(--semantic-accent-primary);
   background: var(--semantic-accent-primary-tint);
+  box-shadow: inset 3px 0 0 var(--semantic-accent-primary), var(--semantic-shadow-sm);
 }
 .cap-build-module.approved .cap-build-module-glyph {
   color: var(--semantic-status-success);
@@ -3791,6 +3887,8 @@ code.path-wrap {
 }
 .capabilities-toolbar {
   display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: var(--semantic-spacing-2);
 }
 .capabilities-toolbar button.active,
@@ -3825,6 +3923,18 @@ code.path-wrap {
   display: grid;
   grid-template-columns: 12rem 1fr;
   gap: var(--semantic-spacing-2);
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  background: var(--semantic-surface-inset);
+}
+.capabilities-ids :is(dt, dd) { margin: 0; }
+.capabilities-ids dt {
+  color: var(--semantic-text-muted);
+  font-size: 0.78rem;
+  font-weight: var(--semantic-typography-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .capabilities-note {
   opacity: 0.85;
@@ -3921,12 +4031,18 @@ code.path-wrap {
   width: 100%;
   text-align: left;
   padding: var(--semantic-spacing-2);
-  border: 1px solid var(--semantic-color-border, #ccc);
-  background: transparent;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-inset);
+  color: var(--semantic-text-primary);
   cursor: pointer;
+  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    background-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
 }
+.architecture-list button:hover { border-color: var(--semantic-border-strong); background: var(--semantic-surface-panel-raised); }
 .architecture-list button.active {
-  outline: 2px solid var(--semantic-color-border-strong, #333);
+  border-color: var(--semantic-accent-primary);
+  outline: 2px solid color-mix(in srgb, var(--semantic-accent-primary) 28%, transparent);
 }
 .binding-editor-grid {
   display: grid;
@@ -4036,6 +4152,14 @@ code.path-wrap {
   gap: var(--semantic-spacing-3);
   margin-block: var(--semantic-spacing-4);
 }
+.capabilities-state-columns > section {
+  min-width: 0;
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-inset);
+}
+.capabilities-state-columns h3 { margin-top: 0; }
 
 .capabilities-delta-table {
   width: 100%;
