@@ -140,32 +140,46 @@ function manifest(moduleId: string, ops: string[]): ModuleManifest {
 
 describe('Guided Connect (progressive four-substep)', () => {
   const records: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: manifest('mod.orders', ['op.placeOrder']) }]
-  const html = renderToStaticMarkup(
+  // Without a selected element, only step 1 renders (honest gating outside packaged Electron).
+  const noElement = renderToStaticMarkup(
     <GuidedConnect
       bridge={bridge()} projectId="p1" records={records}
       selectionEvidence={undefined} onSelectionEvidence={() => {}}
       previewRef={previewRef} onChanged={() => {}}
     />,
   )
+  // With a marked element, the capability step becomes available.
+  const evidence = { route: '/#/orders', documentTitle: 'Orders', selector: '#place', visibleText: 'Place order', elementTag: 'button', stableMarker: 'data-cap-id=place', captureTime: '2026-07-14T00:00:00.000Z' }
+  const withElement = renderToStaticMarkup(
+    <GuidedConnect
+      bridge={bridge()} projectId="p1" records={records}
+      selectionEvidence={evidence} onSelectionEvidence={() => {}}
+      previewRef={previewRef} onChanged={() => {}}
+    />,
+  )
   it('starts at "Select an element" and honestly disables selection outside packaged Electron', () => {
-    expect(html).toContain('Select an element')
-    // No active picker button outside packaged Electron; an explanatory note instead.
-    expect(html).not.toContain('Preview binding picker')
-    expect(html).toContain('packaged desktop app')
+    expect(noElement).toContain('Select an element')
+    expect(noElement).not.toContain('Preview binding picker')
+    expect(noElement).toContain('packaged desktop app')
+    // Capability/behavior are NOT claimed possible without a real element selection.
+    expect(noElement).not.toContain('aria-label="Capability"')
+    expect(noElement).not.toContain('While it runs')
   })
-  it('humanizes the capability and never shows Binding ID or raw id@version', () => {
-    expect(html).toContain('Place Order')
-    expect(html).not.toContain('op.placeOrder @')
-    expect(html).not.toContain('aria-label="Binding ID"')
-    expect(html).not.toContain('binding.draft')
+  it('once an element is selected, humanizes the capability and never shows Binding ID or raw id@version', () => {
+    expect(withElement).toContain('aria-label="Capability"')
+    expect(withElement).toContain('Place Order')
+    expect(withElement).not.toContain('op.placeOrder @')
+    expect(withElement).not.toContain('aria-label="Binding ID"')
+    expect(withElement).not.toContain('binding.draft')
   })
-  it('does not render behavior fields before element + capability are chosen', () => {
-    expect(html).not.toContain('While it runs')
-    expect(html).not.toContain('Something goes wrong')
+  it('does not render behavior fields before a capability is chosen', () => {
+    // Element selected but no capability chosen yet -> step 3 withheld.
+    expect(withElement).not.toContain('While it runs')
+    expect(withElement).not.toContain('Something goes wrong')
   })
   it('does not render diagnostics before an interaction or approval attempt', () => {
-    expect(html).not.toContain('To finish this connection')
-    expect(html).not.toContain('cap-issue-list')
+    expect(withElement).not.toContain('To finish this connection')
+    expect(withElement).not.toContain('cap-issue-list')
   })
 })
 

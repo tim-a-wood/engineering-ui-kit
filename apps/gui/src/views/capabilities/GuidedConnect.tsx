@@ -33,9 +33,16 @@ import { StatusLine, type Status } from '../../components'
 import { CapabilityPreview, type CapabilityPreviewHandle } from './CapabilityPreview'
 import { PreviewBindingPicker } from './PreviewBindingPicker'
 import { canProceedWithSelection } from './previewSelection'
-import { BEHAVIOR_FIELDS, behaviorLabel, humanizeIdentifier, presentDiagnosticsForGuided } from './capabilityPresentation'
+import { BEHAVIOR_FIELDS, behaviorLabel, humanizeIdentifier, presentDiagnosticsForGuided, sanitizeGuidedMessage } from './capabilityPresentation'
 
 const DATA_MODES: BindingDataMode[] = ['connected', 'approved-example', 'invalid-input', 'dependency-unavailable', 'timeout']
+const TRIGGERS: BindingTrigger[] = ['activate', 'change', 'submit', 'load']
+const TRIGGER_LABELS: Record<BindingTrigger, string> = {
+  activate: 'When clicked or activated',
+  change: 'When the value changes',
+  submit: 'When the form is submitted',
+  load: 'When the screen loads',
+}
 const BEHAVIOR_PLACEHOLDERS: Record<string, string> = {
   loadingBehavior: 'e.g. show a spinner on the button',
   validationBehavior: 'e.g. highlight the invalid field',
@@ -114,12 +121,18 @@ export function GuidedConnect(props: Props) {
     dataMode: props.initialBinding?.dataMode ?? 'connected',
   }))
   const [attempted, setAttempted] = useState(false)
+  const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<Status | null>(null)
   const [ranOutcome, setRanOutcome] = useState<{ label: string; outcome: string; connected: boolean } | null>(null)
 
   useEffect(() => {
     if (props.selectionEvidence) setBinding((prev) => ({ ...prev, selectionEvidence: props.selectionEvidence!, projectId }))
   }, [props.selectionEvidence, projectId])
+
+  // Keep the binding bound to the active project (defence in depth beyond the parent remount).
+  useEffect(() => {
+    setBinding((prev) => (prev.projectId === projectId ? prev : { ...prev, projectId }))
+  }, [projectId])
 
   function update<K extends keyof FrontendBinding>(key: K, value: FrontendBinding[K]) {
     setBinding((prev) => ({ ...prev, [key]: value }))
@@ -128,9 +141,14 @@ export function GuidedConnect(props: Props) {
   const elementSelected = canProceedWithSelection(binding.selectionEvidence) && Boolean(binding.selectionEvidence.elementTag)
   const capabilityChosen = binding.operationId !== ''
   const behaviorsComplete = BEHAVIOR_FIELDS.every((f) => binding[f].trim() !== '')
-  const gate = evaluateBindingApprovalGate(binding, { ambiguities: [] })
+  const gate = evaluateBindingApprovalGate(binding) // canonical gate incl. mapping-ambiguity detection
+  const guidedError = (message: string): Status => ({ tone: 'error', text: sanitizeGuidedMessage(message) })
 
   async function runTest() {
+    if (busy) return
+    if (binding.projectId !== projectId) { setStatus(guidedError('This connection is for a different project.')); return }
+    if (!capabilityChosen || !elementSelected || !behaviorsComplete) return
+    setBusy(true)
     setAttempted(true)
     const mode = binding.dataMode
     const sim = simulateBindingMode({
@@ -159,29 +177,36 @@ export function GuidedConnect(props: Props) {
         setStatus({ tone: 'info', text: `Simulated ${sim.modeLabel} — ${sim.envelope.outcome} (no live call).` })
       }
     } catch (error) {
-      setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+      setStatus(guidedError(error instanceof Error ? error.message : String(error)))
+    } finally {
+      setBusy(false)
     }
   }
 
   async function approve() {
+    if (busy) return
+    if (binding.projectId !== projectId) { setStatus(guidedError('This connection is for a different project.')); return }
     setAttempted(true)
     if (!gate.passed) {
-      setStatus({ tone: 'error', text: `Not ready: ${presentDiagnosticsForGuided(gate.diagnostics)[0]?.message ?? 'complete every step first.'}` })
+      setStatus(guidedError(`Not ready: ${presentDiagnosticsForGuided(gate.diagnostics)[0]?.message ?? 'complete every step first.'}`))
       return
     }
+    setBusy(true)
     try {
       await bridge.capabilitiesSaveBindingDraft(projectId, binding)
       const result = await bridge.capabilitiesApproveBinding(projectId, binding)
       if (!result.ok) {
         const diags = presentDiagnosticsForGuided((Array.isArray(result.diagnostics) ? result.diagnostics : []) as { message?: string }[])
-        setStatus({ tone: 'error', text: `Could not approve: ${diags[0]?.message ?? 'resolve the issues first.'}` })
+        setStatus(guidedError(`Could not approve: ${diags[0]?.message ?? 'resolve the issues first.'}`))
         return
       }
       buildConnectionPacket({ packetId: `pkt-${binding.bindingId}`, binding, architectureVersion: props.architectureVersion ?? '1.0', architectureHash: props.architectureHash ?? 'pending' })
       setStatus({ tone: 'success', text: 'Connection approved.' })
       props.onChanged()
     } catch (error) {
-      setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+      setStatus(guidedError(error instanceof Error ? error.message : String(error)))
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -201,8 +226,8 @@ export function GuidedConnect(props: Props) {
           />
         ) : (
           <p className="cap-connect-note" role="note">
-            {Icon.info(14)} Element selection runs in the packaged desktop app. In this preview build you can still
-            choose a capability and describe behavior below.
+            {Icon.info(14)} Element selection runs in the packaged desktop app. Open Capabilities there to select an
+            element and continue this connection.
           </p>
         )}
         {elementSelected && (
@@ -212,8 +237,8 @@ export function GuidedConnect(props: Props) {
         )}
       </Substep>
 
-      {/* 2. Choose a capability */}
-      {(elementSelected || !isElectron) && (
+      {/* 2. Choose a capability — only after a real element is selected (honest outside packaged Electron) */}
+      {elementSelected && (
         <Substep n={2} title="Choose a capability" done={capabilityChosen} active={!capabilityChosen}>
           {operations.length === 0 ? (
             <p role="status">No approved capabilities are available yet. Approve a module first.</p>
@@ -243,6 +268,12 @@ export function GuidedConnect(props: Props) {
       {/* 3. Define visible behavior — only after element + capability */}
       {elementSelected && capabilityChosen && (
         <Substep n={3} title="Define visible behavior" done={behaviorsComplete} active={!behaviorsComplete}>
+          <label className="cap-connect-field">
+            What triggers it
+            <select aria-label="Trigger" value={binding.trigger} onChange={(e) => update('trigger', e.target.value as BindingTrigger)}>
+              {TRIGGERS.map((t) => <option key={t} value={t}>{TRIGGER_LABELS[t]}</option>)}
+            </select>
+          </label>
           <div className="cap-connect-behaviors">
             {BEHAVIOR_FIELDS.map((field) => (
               <label key={field} className="cap-connect-field">
@@ -298,13 +329,16 @@ export function GuidedConnect(props: Props) {
                 ))}
               </select>
             </label>
-            <button type="button" className="btn btn-secondary btn-compact" disabled={!capabilityChosen || !elementSelected} onClick={() => void runTest()}>
+            <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !capabilityChosen || !elementSelected || !behaviorsComplete} onClick={() => void runTest()}>
               {Icon.play(14)} Run {binding.dataMode === 'connected' ? 'connected test' : 'simulation'}
             </button>
-            <button type="button" className="btn btn-primary btn-compact" onClick={() => void approve()}>
+            <button type="button" className="btn btn-primary btn-compact" disabled={busy || !behaviorsComplete} onClick={() => void approve()}>
               Approve connection
             </button>
           </div>
+          {!behaviorsComplete && (
+            <p className="capabilities-note">Describe every behavior above to test or approve.</p>
+          )}
           {ranOutcome && (
             <p className="cap-connect-outcome" role="status">
               {ranOutcome.connected ? Icon.check(14) : Icon.info(14)}{' '}

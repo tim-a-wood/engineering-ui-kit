@@ -83,6 +83,11 @@ export function CapabilitiesView({
   const [viewing, setViewing] = useState<StageId>('define')
   const [designSection, setDesignSection] = useState<DesignSection>('application')
   const [guidedPanel, setGuidedPanel] = useState<GuidedPanel>('journey')
+  // Project-loading boundary: writes are only possible in 'ready'; a generation token
+  // discards any late response from a project the user has since switched away from.
+  const [loadState, setLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const [loadError, setLoadError] = useState('')
+  const loadGenRef = useRef(0)
   const previewRef = useRef<CapabilityPreviewHandle | null>(null)
   const projectSelectRef = useRef<HTMLSelectElement | null>(null)
   const stageHeadingRef = useRef<HTMLHeadingElement | null>(null)
@@ -93,8 +98,7 @@ export function CapabilitiesView({
   )
   const journey = useMemo(() => deriveJourney(journeyInput), [journeyInput])
 
-  /** Single coherent refresh path for canonical top-level state. */
-  const refreshCapabilityWorkspace = useCallback(
+  const fetchWorkspace = useCallback(
     async (id: string) => {
       const [app, arch, attention, modules, bindings] = await Promise.all([
         bridge.capabilitiesGetApplication(id),
@@ -103,55 +107,85 @@ export function CapabilitiesView({
         bridge.capabilitiesListModules(id),
         bridge.capabilitiesListBindings(id),
       ])
-      setApplication(app)
-      setArchitecture(arch)
-      setAttentionItems(attention)
-      setModuleRecords(modules)
-      setBindingRecords(bindings)
-      return { application: app, architecture: arch, modules, bindings }
+      return { application: app, architecture: arch, attention, modules, bindings }
     },
     [bridge],
   )
 
+  function clearRecords() {
+    setApplication({})
+    setArchitecture({})
+    setAttentionItems([])
+    setModuleRecords([])
+    setBindingRecords([])
+    setSelectionEvidence(undefined)
+    setGuidedPanel('journey')
+  }
+
+  /** Atomically load a project. A late response for a superseded generation is discarded. */
+  const loadProject = useCallback(
+    async (id: string) => {
+      const gen = ++loadGenRef.current
+      clearRecords()
+      setLoadState('loading')
+      setLoadError('')
+      try {
+        // Lazy initialization only on explicit selection.
+        await bridge.capabilitiesEnsureInitialized(id)
+        const d = await fetchWorkspace(id)
+        if (gen !== loadGenRef.current) return // stale — a newer selection won
+        setApplication(d.application)
+        setArchitecture(d.architecture)
+        setAttentionItems(d.attention)
+        setModuleRecords(d.modules)
+        setBindingRecords(d.bindings)
+        const derived = deriveJourney({ application: d.application, architecture: d.architecture, modules: d.modules, bindings: d.bindings })
+        setViewing(derived.firstIncompleteStageId)
+        setDesignSection(stageToDesignSection(derived.firstIncompleteStageId))
+        setLoadState('ready')
+      } catch (error) {
+        if (gen !== loadGenRef.current) return
+        setLoadError(error instanceof Error ? error.message : String(error))
+        setLoadState('error') // never fall back to the previous project's records
+      }
+    },
+    [bridge, fetchWorkspace],
+  )
+
   const selectProject = useCallback(
     async (id: string) => {
+      // Invalidate any in-flight load immediately so stale records can never render.
+      loadGenRef.current++
       setProjectId(id)
-      // Reset project-specific transient selection and panels; preserve canonical records.
-      setSelectionEvidence(undefined)
-      setGuidedPanel('journey')
+      clearRecords()
       if (!id) {
-        setApplication({})
-        setArchitecture({})
-        setAttentionItems([])
-        setModuleRecords([])
-        setBindingRecords([])
+        setLoadState('idle')
         return
       }
-      // Lazy initialization only on explicit selection.
-      await bridge.capabilitiesEnsureInitialized(id)
-      const loaded = await refreshCapabilityWorkspace(id)
-      const derived = deriveJourney({
-        application: loaded.application,
-        architecture: loaded.architecture,
-        modules: loaded.modules,
-        bindings: loaded.bindings,
-      })
-      setViewing(derived.firstIncompleteStageId)
-      setDesignSection(stageToDesignSection(derived.firstIncompleteStageId))
+      await loadProject(id)
     },
-    [bridge, refreshCapabilityWorkspace],
+    [loadProject],
   )
 
   // Move focus to the stage heading when the viewed stage changes.
   useEffect(() => {
-    if (projection === 'guided' && guidedPanel === 'journey' && projectId) {
+    if (projection === 'guided' && guidedPanel === 'journey' && projectId && loadState === 'ready') {
       stageHeadingRef.current?.focus()
     }
-  }, [viewing, projection, guidedPanel, projectId])
+  }, [viewing, projection, guidedPanel, projectId, loadState])
 
-  const refresh = useCallback(() => {
-    if (projectId) void refreshCapabilityWorkspace(projectId)
-  }, [projectId, refreshCapabilityWorkspace])
+  /** Background refresh after a child mutation — gen-guarded so it cannot clobber a switch. */
+  const refresh = useCallback(async () => {
+    if (!projectId) return
+    const gen = loadGenRef.current
+    const d = await fetchWorkspace(projectId)
+    if (gen !== loadGenRef.current) return
+    setApplication(d.application)
+    setArchitecture(d.architecture)
+    setAttentionItems(d.attention)
+    setModuleRecords(d.modules)
+    setBindingRecords(d.bindings)
+  }, [projectId, fetchWorkspace])
 
   const architectureProjection = useMemo(() => {
     const arch = (architecture.approved ?? architecture.draft) as ArchitectureSpecification | undefined
@@ -295,8 +329,24 @@ export function CapabilitiesView({
             )
           }
         />
+      ) : loadState === 'loading' ? (
+        <div className="capabilities-panel cap-loading" role="status" aria-live="polite" aria-busy="true">
+          <span className="cap-loading-spinner" aria-hidden="true">{Icon.refresh(16)}</span>
+          <p>Loading this project…</p>
+        </div>
+      ) : loadState === 'error' ? (
+        <div className="capabilities-panel cap-load-error" role="alert">
+          <span className="cap-blocker-icon" aria-hidden="true">{Icon.alertTriangle(18)}</span>
+          <p>This project could not be loaded. {loadError}</p>
+          <button type="button" className="btn btn-primary btn-compact" onClick={() => void loadProject(projectId)}>
+            {Icon.refresh(14)} Retry
+          </button>
+        </div>
       ) : projection === 'guided' ? (
+        // key={projectId}: switching projects fully remounts the workspace, resetting every
+        // child-local transient value (drafts, packets, diagnostics, run IDs, inspection, …).
         <GuidedBody
+          key={projectId}
           bridge={bridge}
           projectId={projectId}
           journey={journey}
@@ -318,6 +368,7 @@ export function CapabilitiesView({
         />
       ) : (
         <DesignBody
+          key={projectId}
           bridge={bridge}
           projectId={projectId}
           section={designSection}
@@ -526,6 +577,7 @@ function GuidedStage(props: {
       }
       return (
         <GuidedConnect
+          key={`${projectId}:${props.bindingRecords[0]?.bindingId ?? 'new'}`}
           bridge={bridge}
           projectId={projectId}
           records={props.moduleRecords}
