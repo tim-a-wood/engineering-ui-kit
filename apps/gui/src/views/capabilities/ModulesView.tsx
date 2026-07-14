@@ -152,6 +152,7 @@ export function ModulesView({
         projectId={projectId}
         moduleId={selectedModuleId}
         architecture={architecture}
+        record={records.find((record) => record.moduleId === selectedModuleId)}
         isApproved={approvedIds.includes(selectedModuleId)}
         projection={projection}
         progressive={progressive}
@@ -168,18 +169,19 @@ function ModuleWorkspace(props: {
   projectId: string
   moduleId: string
   architecture: ArchitectureSpecification | undefined
+  record?: CapabilityModuleRecord
   isApproved: boolean
   projection: 'guided' | 'design'
   progressive: boolean
   onChanged: () => Promise<void>
 }) {
-  const { bridge, projectId, moduleId, architecture, isApproved, projection, progressive } = props
+  const { bridge, projectId, moduleId, architecture, record, isApproved, projection, progressive } = props
   const guided = projection === 'guided'
   const architectureModule = architecture?.moduleDefinitions?.find((definition) => definition.moduleId === moduleId)
   const selectedType = architectureModule?.moduleType ?? inferModuleType(moduleId, architectureModule?.name)
   const [packet, setPacket] = useState<InterviewPacket | undefined>()
   const [interviewExport, setInterviewExport] = useState<CapabilityPacketExportResult>()
-  const [draft, setDraft] = useState<ModuleManifest | undefined>()
+  const [draft, setDraft] = useState<ModuleManifest | undefined>(record?.draft)
   const [response, setResponse] = useState<ModuleInterviewResponse | undefined>()
   const [diagnostics, setDiagnostics] = useState<CapDiagnostic[]>([])
   const [gatePassed, setGatePassed] = useState<boolean | undefined>()
@@ -192,6 +194,7 @@ function ModuleWorkspace(props: {
   const [inspection, setInspection] = useState<OverlayInspectionSummary>()
   const [warningsAccepted, setWarningsAccepted] = useState(false)
   const [applied, setApplied] = useState(false)
+  const [revisitingInterview, setRevisitingInterview] = useState(false)
   const mounted = useRef(false)
   useEffect(() => {
     mounted.current = true
@@ -272,7 +275,11 @@ function ModuleWorkspace(props: {
       setDraft(imported.manifest)
       setDiagnostics(imported.diagnostics)
       setGatePassed(imported.ok)
-      if (imported.manifest) await bridge.capabilitiesSaveModuleDraft(projectId, imported.manifest)
+      if (imported.manifest) {
+        await bridge.capabilitiesSaveModuleDraft(projectId, imported.manifest)
+        await props.onChanged()
+      }
+      if (!mounted.current) return
       setMessage(imported.ok
         ? 'Imported module draft. Review gate findings, then approve.'
         : guided ? `Imported with ${imported.diagnostics.length} issue(s) to resolve before approval.` : `Module draft blocked by CAP-GATE-003 (${imported.diagnostics.length} finding(s)).`)
@@ -304,6 +311,7 @@ function ModuleWorkspace(props: {
       await props.onChanged()
       if (!mounted.current) return
       setGatePassed(true)
+      setRevisitingInterview(false)
       setMessage(guided ? 'Module approved.' : `Approved module ${draft.moduleId}@${draft.moduleVersion}.`)
     } catch (error) {
       if (mounted.current) setMessage(error instanceof Error ? error.message : String(error))
@@ -388,10 +396,23 @@ function ModuleWorkspace(props: {
     }
   }
 
+  async function revisitInterview() {
+    if (busy) return
+    setRevisitingInterview(true)
+    setDraft(undefined)
+    setResponse(undefined)
+    setDiagnostics([])
+    setGatePassed(undefined)
+    setInterviewExport(undefined)
+    await exportPacket()
+  }
+
   type BuildStep = 'interview' | 'import' | 'approve' | 'handoff' | 'inspect' | 'accept' | 'apply' | 'verify'
   const implementationStarted = Boolean(implementationExport) || ['packet-exported', 'overlay-inspected', 'overlay-applied'].includes(persistedLifecycleState)
   const implementationApplied = applied || persistedLifecycleState === 'overlay-applied'
-  const buildStep: BuildStep = !isApproved
+  const buildStep: BuildStep = revisitingInterview
+    ? draft ? 'approve' : interviewExport ? 'import' : 'interview'
+    : !isApproved
     ? draft ? 'approve' : interviewExport ? 'import' : 'interview'
     : implementationApplied ? 'verify'
       : !implementationStarted ? 'handoff'
@@ -471,12 +492,103 @@ function ModuleWorkspace(props: {
     )
   ) : null
 
+  const interviewOutcome = draft ?? record?.draft ?? record?.approved
+  const moduleDisplayName = interviewOutcome?.name ?? architectureModule?.name ?? humanizeIdentifier(moduleId)
+  const outcomeModuleType = interviewOutcome?.moduleType ?? selectedType
+  const requiredOperations = interviewOutcome?.requiredOperations ?? []
+  const providedOperations = interviewOutcome?.providedOperations ?? []
+  const ownedConcerns = interviewOutcome?.ownedConcerns ?? []
+  const excludedConcerns = interviewOutcome?.excludedConcerns ?? []
+  const verificationSuiteIds = interviewOutcome?.verificationSuiteIds ?? []
+  const outcomeState = revisitingInterview ? 'Revising' : isApproved ? 'Approved' : interviewOutcome ? 'Draft' : 'Waiting for interview'
+  const interviewOutcomePanel = (
+    <section className="cap-build-outcome" aria-label={`Interview outcome for ${moduleDisplayName}`}>
+      <div className="cap-build-outcome-head">
+        <div>
+          <p className="capabilities-eyebrow">Interview outcome</p>
+          <h3>{moduleDisplayName}</h3>
+        </div>
+        <span className={`badge cap-build-outcome-state ${outcomeState.toLowerCase().replaceAll(' ', '-')}`}>{outcomeState}</span>
+      </div>
+
+      {interviewOutcome ? (
+        <>
+          <p className="cap-build-outcome-responsibility">{interviewOutcome.responsibility || architectureModule?.responsibility || 'The module interview outcome is ready for review.'}</p>
+          <div className="cap-build-outcome-facts">
+            <div><span>Module type</span><strong>{moduleTypeLabel(outcomeModuleType)}</strong></div>
+            <div><span>Runs as</span><strong>{interviewOutcome.runtimeAllocation ? humanizeIdentifier(interviewOutcome.runtimeAllocation) : 'Not assigned'}</strong></div>
+          </div>
+
+          <div className="cap-build-operation-map" aria-label="Module operation map">
+            <div className="cap-build-operation-side incoming">
+              <span>Uses</span>
+              {requiredOperations.length
+                ? requiredOperations.map((operation) => <code key={operation.operationId}>{humanizeIdentifier(operation.operationId)}</code>)
+                : <em>No required operations</em>}
+            </div>
+            <div className="cap-build-operation-module">
+              <span>{moduleTypeLabel(outcomeModuleType)}</span>
+              <strong>{moduleDisplayName}</strong>
+            </div>
+            <div className="cap-build-operation-side outgoing">
+              <span>Provides</span>
+              {providedOperations.length
+                ? providedOperations.map((operation) => <code key={operation.operationId}>{humanizeIdentifier(operation.operationId)}</code>)
+                : <em>No provided operations</em>}
+            </div>
+          </div>
+
+          <div className="cap-build-outcome-groups">
+            <div>
+              <h4>Owns</h4>
+              <div className="cap-build-chip-list">
+                {ownedConcerns.length
+                  ? ownedConcerns.map((concern) => <span key={concern}>{humanizeIdentifier(concern)}</span>)
+                  : <span className="muted">No concerns recorded</span>}
+              </div>
+            </div>
+            <div>
+              <h4>Does not own</h4>
+              <div className="cap-build-chip-list excluded">
+                {excludedConcerns.length
+                  ? excludedConcerns.map((concern) => <span key={concern}>{humanizeIdentifier(concern)}</span>)
+                  : <span className="muted">No exclusions recorded</span>}
+              </div>
+            </div>
+          </div>
+
+          <div className="cap-build-outcome-footer">
+            <span>{verificationSuiteIds.length} verification suite{verificationSuiteIds.length === 1 ? '' : 's'}</span>
+            <span>Version {interviewOutcome.moduleVersion ?? 'not set'}</span>
+          </div>
+          <button type="button" className="btn btn-secondary btn-compact" onClick={() => void revisitInterview()} disabled={busy || revisitingInterview}>
+            Revisit interview
+          </button>
+        </>
+      ) : (
+        <div className="cap-build-outcome-empty">
+          <span aria-hidden="true">◇</span>
+          <p>The interview outcome will appear here as a clear module boundary, operation map, and ownership summary.</p>
+        </div>
+      )}
+    </section>
+  )
+
   return (
     <>
       {message ? <p role="status">{message}</p> : <p role="status" className="sr-only">Ready.</p>}
 
       {progressive ? (
-        progressiveNextAction
+        <div className="cap-build-module-workspace">
+          <section className="cap-build-action-panel" aria-label={`Build actions for ${moduleDisplayName}`}>
+            <p className="capabilities-eyebrow">Selected module</p>
+            <h3>{moduleDisplayName}</h3>
+            {architectureModule?.responsibility ? <p className="capabilities-note">{architectureModule.responsibility}</p> : null}
+            {progressiveNextAction}
+            {diagnosticsBlock}
+          </section>
+          {interviewOutcomePanel}
+        </div>
       ) : (
         <>
           <p className="capabilities-note cap-assigned-module-type"><span className="badge">{guided ? moduleTypeLabel(selectedType) : selectedType}</span> Assigned by the approved architecture</p>
@@ -518,7 +630,7 @@ function ModuleWorkspace(props: {
         </>
       )}
 
-      {diagnosticsBlock}
+      {!progressive ? diagnosticsBlock : null}
 
       {draft && projection === 'design' ? (
         <details><summary>Manifest draft {draft.moduleId}</summary><pre className="capabilities-pre">{JSON.stringify(draft, null, 2)}</pre></details>

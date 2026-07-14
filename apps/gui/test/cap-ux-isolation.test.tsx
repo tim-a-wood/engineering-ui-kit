@@ -11,7 +11,7 @@
 import { StrictMode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import type { ApplicationSpecification, CapabilityModuleRecord, Project } from '@engineering-ui-kit/core'
+import type { ApplicationSpecification, CapabilityModuleRecord, ModuleManifest, Project } from '@engineering-ui-kit/core'
 import type { EuikBridge } from '../src/bridge'
 import { CapabilitiesView } from '../src/views/capabilities/CapabilitiesView'
 import { ModulesView } from '../src/views/capabilities/ModulesView'
@@ -356,6 +356,47 @@ describe('module isolation', () => {
     const approvedRecords: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: { moduleId: 'mod.orders' } as never }]
     render(<ModulesView bridge={bridge} projectId="p1" architectureApproved projection="guided" records={approvedRecords} hideModuleList progressive externalSelectedModuleId="mod.orders" />)
     await waitFor(() => expect(screen.getByRole('button', { name: /Run verification/i })).toBeTruthy())
+  })
+
+  it('visualizes the persisted interview outcome and lets the user revisit it', async () => {
+    const manifest: ModuleManifest = {
+      schemaVersion: '1.0', architectureVersion: '1.0', moduleId: 'mod.orders', moduleVersion: '1.2.0',
+      moduleType: 'domain', name: 'Order Domain', responsibility: 'Owns order lifecycle decisions.',
+      ownedConcerns: ['order-rules'], excludedConcerns: ['user-interface'],
+      providedOperations: [{ operationId: 'op.place-order', contractVersion: '1.0.0' }],
+      requiredOperations: [{ operationId: 'op.lookup-customer', acceptedContractRange: '^1.0.0' }],
+      verificationSuiteIds: ['suite.orders'], runtimeAllocation: 'local-embedded', events: [],
+      ownedPaths: ['capabilities/modules/mod.orders/'], configurationSchemaRef: null,
+    }
+    const contextualArch = { approved: {
+      schemaVersion: '1.0', id: 'arch', revision: '1', moduleIds: ['mod.orders'],
+      moduleDefinitions: [{ moduleId: 'mod.orders', name: 'Order Domain', moduleType: 'domain', responsibility: 'Owns order lifecycle decisions.' }],
+      capabilityProjections: [], dependencyEdges: [], operationAllocations: [], adapterAllocations: [], workflowTraces: [],
+      contentHash: 'arch-hash',
+    } }
+    const exportInterview = vi.fn(async () => ({
+      runId: 'run-revisit', packetId: 'pkt-revisit', recommendedPrompt: 'Revisit this module.',
+      files: [{ path: '/tmp/module-interview.md', bytes: 1024, sha256: 'abc123' }], uploadFiles: ['/tmp/module-interview.md'],
+    }))
+    const bridge = makeBridge({
+      capabilitiesGetArchitecture: (async () => contextualArch) as never,
+      capabilitiesExportInterviewPacket: exportInterview as never,
+    })
+    const approvedRecords: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: manifest }]
+    render(<ModulesView bridge={bridge} projectId="p1" architectureApproved projection="guided" records={approvedRecords} hideModuleList progressive externalSelectedModuleId="mod.orders" />)
+
+    const outcome = await screen.findByRole('region', { name: 'Interview outcome for Order Domain' })
+    expect(within(outcome).getByText('Owns order lifecycle decisions.')).toBeTruthy()
+    expect(within(outcome).getByText('Lookup Customer')).toBeTruthy()
+    expect(within(outcome).getByText('Place Order')).toBeTruthy()
+    expect(within(outcome).getByText('Order Rules')).toBeTruthy()
+    expect(within(outcome).getByText('User Interface')).toBeTruthy()
+
+    fireEvent.click(within(outcome).getByRole('button', { name: 'Revisit interview' }))
+    await waitFor(() => expect(exportInterview).toHaveBeenCalledTimes(1))
+    expect(await screen.findByRole('region', { name: 'Ready for Copilot' })).toBeTruthy()
+    expect(screen.getAllByRole('button', { name: 'Import module interview response' }).some((button) => !(button as HTMLButtonElement).disabled)).toBe(true)
+    expect(within(outcome).getByText('Revising')).toBeTruthy()
   })
 
   it('clears an imported module draft when the user selects another module', async () => {

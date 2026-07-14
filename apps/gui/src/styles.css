@@ -3981,7 +3981,7 @@ code.path-wrap {
 /* Guided Build — two-region workspace */
 .cap-build {
   display: grid;
-  grid-template-columns: minmax(14rem, 20rem) 1fr;
+  grid-template-columns: 14rem minmax(0, 1fr);
   gap: var(--semantic-spacing-4);
   align-items: start;
 }
@@ -4050,6 +4050,189 @@ code.path-wrap {
   gap: var(--semantic-spacing-3);
   justify-items: start;
 }
+.cap-build-work {
+  min-width: 0;
+}
+.cap-build-module-workspace {
+  display: grid;
+  grid-template-columns: minmax(15rem, 0.72fr) minmax(20rem, 1.28fr);
+  gap: var(--semantic-spacing-4);
+  align-items: start;
+}
+.capabilities-eyebrow {
+  margin: 0 0 0.2rem;
+  color: var(--semantic-accent-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cap-build-action-panel,
+.cap-build-outcome {
+  min-width: 0;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-lg);
+  background: var(--semantic-surface-panel);
+  box-shadow: var(--semantic-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  padding: var(--semantic-spacing-4);
+}
+.cap-build-action-panel {
+  display: grid;
+  gap: var(--semantic-spacing-3);
+}
+.cap-build-action-panel > h3,
+.cap-build-outcome-head h3,
+.cap-build-outcome-groups h4 {
+  margin: 0;
+}
+.cap-build-action-panel > .capabilities-note {
+  margin: calc(var(--semantic-spacing-2) * -1) 0 0;
+}
+.cap-build-outcome {
+  display: grid;
+  gap: var(--semantic-spacing-4);
+  background:
+    radial-gradient(circle at 80% 0%, color-mix(in srgb, var(--semantic-accent-primary) 12%, transparent), transparent 42%),
+    var(--semantic-surface-panel);
+}
+.cap-build-outcome-head,
+.cap-build-outcome-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-3);
+}
+.cap-build-outcome-state.approved { color: var(--semantic-status-success); }
+.cap-build-outcome-state.revising { color: var(--semantic-status-warning); }
+.cap-build-outcome-responsibility {
+  margin: 0;
+  color: var(--semantic-text-secondary);
+  line-height: 1.55;
+}
+.cap-build-outcome-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--semantic-spacing-2);
+}
+.cap-build-outcome-facts > div {
+  display: grid;
+  gap: 0.2rem;
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel-raised);
+}
+.cap-build-outcome-facts span,
+.cap-build-operation-side > span,
+.cap-build-operation-module > span {
+  color: var(--semantic-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.cap-build-operation-map {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8rem, 1.1fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--semantic-spacing-2);
+}
+.cap-build-operation-side,
+.cap-build-operation-module {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--semantic-spacing-1);
+  min-width: 0;
+  padding: var(--semantic-spacing-3);
+  border-radius: var(--semantic-radius-md);
+}
+.cap-build-operation-side {
+  border: 1px dashed var(--semantic-border-strong);
+  background: var(--semantic-surface-inset);
+}
+.cap-build-operation-side code {
+  overflow-wrap: anywhere;
+  color: var(--semantic-text-secondary);
+  font-size: 0.76rem;
+}
+.cap-build-operation-side em {
+  color: var(--semantic-text-muted);
+  font-size: 0.76rem;
+  font-style: normal;
+}
+.cap-build-operation-module {
+  border: 1px solid color-mix(in srgb, var(--semantic-accent-primary) 65%, var(--semantic-border-strong));
+  background: var(--semantic-accent-primary-tint);
+  text-align: center;
+}
+.cap-build-operation-side.incoming::after,
+.cap-build-operation-side.outgoing::before {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  color: var(--semantic-accent-primary);
+  font-size: 1rem;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+.cap-build-operation-side.incoming::after { content: '→'; right: calc(var(--semantic-spacing-3) * -1); }
+.cap-build-operation-side.outgoing::before { content: '→'; left: calc(var(--semantic-spacing-3) * -1); }
+.cap-build-outcome-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--semantic-spacing-3);
+}
+.cap-build-outcome-groups > div {
+  display: grid;
+  align-content: start;
+  gap: var(--semantic-spacing-2);
+}
+.cap-build-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-1);
+}
+.cap-build-chip-list > span {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--semantic-accent-primary) 35%, var(--semantic-border-subtle));
+  border-radius: 999px;
+  background: var(--semantic-accent-primary-tint);
+  color: var(--semantic-text-secondary);
+  font-size: 0.75rem;
+}
+.cap-build-chip-list.excluded > span {
+  border-color: var(--semantic-border-subtle);
+  background: var(--semantic-surface-inset);
+}
+.cap-build-chip-list > span.muted {
+  border-style: dashed;
+  background: transparent;
+  color: var(--semantic-text-muted);
+}
+.cap-build-outcome-footer {
+  padding-top: var(--semantic-spacing-3);
+  border-top: 1px solid var(--semantic-border-subtle);
+  color: var(--semantic-text-muted);
+  font-size: 0.78rem;
+}
+.cap-build-outcome-empty {
+  display: grid;
+  place-items: center;
+  gap: var(--semantic-spacing-2);
+  min-height: 15rem;
+  padding: var(--semantic-spacing-5);
+  border: 1px dashed var(--semantic-border-strong);
+  border-radius: var(--semantic-radius-md);
+  color: var(--semantic-text-muted);
+  text-align: center;
+}
+.cap-build-outcome-empty > span {
+  color: var(--semantic-accent-primary);
+  font-size: 2rem;
+}
+.cap-build-outcome-empty p { max-width: 28rem; margin: 0; }
 .cap-build-step-label {
   display: flex;
   align-items: center;
@@ -4074,6 +4257,9 @@ code.path-wrap {
     grid-template-columns: 1fr;
   }
   .cap-build {
+    grid-template-columns: 1fr;
+  }
+  .cap-build-module-workspace {
     grid-template-columns: 1fr;
   }
   .cap-connect-behaviors {
