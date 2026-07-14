@@ -22,6 +22,8 @@ import {
 } from '@engineering-ui-kit/core/browser'
 import type { CapabilityPacketExportResult, EuikBridge } from '../../bridge'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
+import { CapabilityHandoffCard } from './CapabilityHandoffCard'
+import { presentDiagnosticsForGuided } from './capabilityPresentation'
 
 type Props = {
   bridge: EuikBridge
@@ -47,6 +49,7 @@ export function ModulesView({
   records = [],
   onChanged = async () => {},
 }: Props) {
+  const guided = projection === 'guided'
   const [architecture, setArchitecture] = useState<ArchitectureSpecification | undefined>()
   const [selectedType, setSelectedType] = useState<ModuleType>('domain')
   const [selectedModuleId, setSelectedModuleId] = useState('')
@@ -148,7 +151,9 @@ export function ModulesView({
       setMessage(
         imported.ok
           ? 'Imported module draft. Review gate findings, then approve.'
-          : `Module draft blocked by CAP-GATE-003 (${imported.diagnostics.length} finding(s)).`,
+          : guided
+            ? `Imported with ${imported.diagnostics.length} issue(s) to resolve before approval.`
+            : `Module draft blocked by CAP-GATE-003 (${imported.diagnostics.length} finding(s)).`,
       )
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
@@ -166,7 +171,7 @@ export function ModulesView({
       if (!result.ok) {
         setDiagnostics(((result.gate as { diagnostics?: CapDiagnostic[] })?.diagnostics) ?? [])
         setGatePassed(false)
-        setMessage('CAP-GATE-003 blocked module approval.')
+        setMessage(guided ? 'Not ready to approve — resolve the issues above first.' : 'CAP-GATE-003 blocked module approval.')
         return
       }
       await onChanged()
@@ -310,8 +315,8 @@ export function ModulesView({
         </button>
       </div>
 
-      {packet ? (
-        <details open={projection === 'design'}>
+      {packet && !guided ? (
+        <details open>
           <summary>Interview packet {packet.packetId}</summary>
           <pre className="capabilities-pre">{JSON.stringify(packet, null, 2)}</pre>
         </details>
@@ -340,9 +345,13 @@ export function ModulesView({
           </button>
         </div>
         {implementationExport ? (
-          <ul aria-label="Implementation handoff files">
-            {implementationExport.files.map((file) => <li key={file.path}><code>{file.path}</code> — {file.bytes} bytes — {file.sha256.slice(0, 12)}…</li>)}
-          </ul>
+          guided ? (
+            <CapabilityHandoffCard bridge={bridge} result={implementationExport} projection="guided" />
+          ) : (
+            <ul aria-label="Implementation handoff files">
+              {implementationExport.files.map((file) => <li key={file.path}><code>{file.path}</code> — {file.bytes} bytes — {file.sha256.slice(0, 12)}…</li>)}
+            </ul>
+          )
         ) : null}
         {inspection ? (
           <div aria-label="Capability overlay inspection">
@@ -354,14 +363,20 @@ export function ModulesView({
       </section>
 
       {diagnostics.length > 0 ? (
-        <ul aria-label="Module gate diagnostics">
-          {diagnostics.map((d, i) => (
-            <li key={`${d.code}-${i}`}>
-              {d.code}: {d.message}
-              {d.fieldPath ? ` [${d.fieldPath}]` : ''}
-            </li>
-          ))}
-        </ul>
+        guided ? (
+          <ul aria-label="Open issues" className="cap-issue-list">
+            {presentDiagnosticsForGuided(diagnostics).map((issue, i) => <li key={i}>{issue.message}</li>)}
+          </ul>
+        ) : (
+          <ul aria-label="Module gate diagnostics">
+            {diagnostics.map((d, i) => (
+              <li key={`${d.code}-${i}`}>
+                {d.code}: {d.message}
+                {d.fieldPath ? ` [${d.fieldPath}]` : ''}
+              </li>
+            ))}
+          </ul>
+        )
       ) : null}
 
       {draft && projection === 'design' ? (

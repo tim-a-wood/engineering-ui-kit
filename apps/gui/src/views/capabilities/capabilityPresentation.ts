@@ -188,9 +188,30 @@ export type GuidedIssue = { message: string; severity: string }
  */
 export function presentDiagnosticsForGuided(diagnostics: readonly RawDiagnostic[]): GuidedIssue[] {
   return diagnostics.map((d) => ({
-    message: (d.message && String(d.message).trim()) || humanizeIdentifier(String(d.code ?? 'issue')),
+    message: sanitizeGuidedMessage(
+      (d.message && String(d.message).trim()) || humanizeIdentifier(String(d.code ?? 'issue')),
+    ),
     severity: String(d.severity ?? 'error'),
   }))
+}
+
+/** Replace raw schema field keys / codes that would leak into Guided copy with plain words. */
+const GUIDED_TERM_REPLACEMENTS: [RegExp, string][] = [
+  [/loadingBehavior/g, 'while it runs'],
+  [/validationBehavior/g, 'invalid input'],
+  [/domainRejectionBehavior/g, 'request rejected'],
+  [/technicalFailureBehavior/g, 'a technical failure'],
+  [/cancellationBehavior/g, 'user cancels'],
+  [/duplicateSubmissionBehavior/g, 'repeated submission'],
+  [/selectionEvidence\.\w+/g, 'the selected element'],
+  [/\bbinding\.draft\b/g, 'this connection'],
+  [/CAP-[A-Z]+-\d+/g, ''],
+]
+
+export function sanitizeGuidedMessage(message: string): string {
+  let out = message
+  for (const [pattern, replacement] of GUIDED_TERM_REPLACEMENTS) out = out.replace(pattern, replacement)
+  return out.replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').trim()
 }
 
 /** The single most useful remediation message for a blocked Guided action. */

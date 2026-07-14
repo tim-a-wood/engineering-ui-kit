@@ -480,7 +480,15 @@ function GuidedStage(props: {
 
   switch (stage.id) {
     case 'define':
-      return <ApplicationDefinition bridge={bridge} projectId={projectId} projection="guided" onChanged={props.onChanged} />
+      return (
+        <ApplicationDefinition
+          bridge={bridge}
+          projectId={projectId}
+          projection="guided"
+          onChanged={props.onChanged}
+          onHelp={() => props.onOpenGuide?.(stageToGuideTopic('define'))}
+        />
+      )
     case 'architect':
       return (
         <>

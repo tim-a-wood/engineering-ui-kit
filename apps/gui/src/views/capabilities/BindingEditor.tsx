@@ -22,6 +22,7 @@ import type {
   ResultEnvelope,
   SelectionEvidence,
 } from '@engineering-ui-kit/core'
+import { behaviorLabel, presentDiagnosticsForGuided } from './capabilityPresentation'
 
 type Props = {
   bridge: EuikBridge
@@ -128,6 +129,7 @@ export function BindingEditor({
   }, [initialBinding, projectId])
 
   const gate = evaluateBindingApprovalGate(binding, { ambiguities })
+  const guided = projection === 'guided'
 
   function update<K extends keyof FrontendBinding>(key: K, value: FrontendBinding[K]) {
     setBinding((prev) => ({ ...prev, [key]: value }))
@@ -148,7 +150,7 @@ export function BindingEditor({
   async function onSaveDraft() {
     await bridge.capabilitiesSaveBindingDraft(projectId, binding)
     await onChanged()
-    setStatus(`Saved draft ${binding.bindingId}@${binding.version}.`)
+    setStatus(guided ? 'Draft saved.' : `Saved draft ${binding.bindingId}@${binding.version}.`)
   }
 
   async function onApprove() {
@@ -159,7 +161,14 @@ export function BindingEditor({
     await bridge.capabilitiesSaveBindingDraft(projectId, binding)
     const result = await bridge.capabilitiesApproveBinding(projectId, binding)
     if (!result.ok) {
-      setStatus(`Approval failed: ${JSON.stringify(result.diagnostics ?? result)}`)
+      const diags = presentDiagnosticsForGuided(
+        (Array.isArray(result.diagnostics) ? result.diagnostics : []) as { message?: string; code?: string }[],
+      )
+      setStatus(
+        guided
+          ? `Could not approve: ${diags[0]?.message ?? 'complete every visible behavior first.'}`
+          : `Approval failed: ${JSON.stringify(result.diagnostics ?? result)}`,
+      )
       return
     }
     await onChanged()
@@ -171,7 +180,7 @@ export function BindingEditor({
         architectureHash,
       })
       setPacketJson(JSON.stringify(packet, null, 2))
-      setStatus(`Approved ${binding.bindingId}@${binding.version}; connection packet ready.`)
+      setStatus(guided ? 'Connection approved.' : `Approved ${binding.bindingId}@${binding.version}; connection packet ready.`)
     } catch (error) {
       setStatus(error instanceof Error ? error.message : String(error))
     }
@@ -287,24 +296,28 @@ export function BindingEditor({
       </p>
 
       <div className="binding-editor-grid">
+        {!guided && (
+          <>
+            <label>
+              Binding ID
+              <input
+                value={binding.bindingId}
+                onChange={(e) => update('bindingId', e.target.value)}
+                aria-label="Binding ID"
+              />
+            </label>
+            <label>
+              Version
+              <input
+                value={binding.version}
+                onChange={(e) => update('version', e.target.value)}
+                aria-label="Binding version"
+              />
+            </label>
+          </>
+        )}
         <label>
-          Binding ID
-          <input
-            value={binding.bindingId}
-            onChange={(e) => update('bindingId', e.target.value)}
-            aria-label="Binding ID"
-          />
-        </label>
-        <label>
-          Version
-          <input
-            value={binding.version}
-            onChange={(e) => update('version', e.target.value)}
-            aria-label="Binding version"
-          />
-        </label>
-        <label>
-          Operation
+          {guided ? 'Capability' : 'Operation'}
           <select
             value={binding.operationId ? `${binding.operationId}@${binding.operationVersion}` : ''}
             aria-label="Operation"
@@ -368,22 +381,28 @@ export function BindingEditor({
           <dt>Route</dt>
           <dd>{binding.selectionEvidence.route || '—'}</dd>
         </div>
-        <div>
-          <dt>Selector</dt>
-          <dd>
-            <code>{binding.selectionEvidence.selector || '—'}</code>
-          </dd>
-        </div>
-        <div>
-          <dt>Stable marker</dt>
-          <dd>{binding.selectionEvidence.stableMarker || 'none'}</dd>
-        </div>
+        {guided && binding.selectionEvidence.visibleText ? (
+          <div>
+            <dt>Element</dt>
+            <dd>{binding.selectionEvidence.visibleText}</dd>
+          </div>
+        ) : null}
         <div>
           <dt>Source confirmed</dt>
           <dd>{binding.selectionEvidence.sourceTargetConfirmed ? 'yes' : 'no'}</dd>
         </div>
-        {projection === 'design' ? (
+        {!guided ? (
           <>
+            <div>
+              <dt>Selector</dt>
+              <dd>
+                <code>{binding.selectionEvidence.selector || '—'}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Stable marker</dt>
+              <dd>{binding.selectionEvidence.stableMarker || 'none'}</dd>
+            </div>
             <div>
               <dt>Element tag</dt>
               <dd>{binding.selectionEvidence.elementTag || '—'}</dd>
@@ -414,15 +433,15 @@ export function BindingEditor({
         </label>
       ) : null}
 
-      <h3>Behavior mappings</h3>
+      <h3>{guided ? 'Visible behavior' : 'Behavior mappings'}</h3>
       <div className="binding-editor-grid">
         {BINDING_BEHAVIOR_FIELDS.map((field) => (
           <label key={field}>
-            {field}
+            {guided ? behaviorLabel(field) : field}
             <input
               value={binding[field]}
               onChange={(e) => update(field, e.target.value)}
-              aria-label={field}
+              aria-label={guided ? behaviorLabel(field) : field}
               required
             />
           </label>
@@ -505,15 +524,23 @@ export function BindingEditor({
       </div>
 
       {!gate.passed ? (
-        <ul aria-label="Binding diagnostics">
-          {gate.diagnostics.map((d) => (
-            <li key={`${d.code}-${d.fieldPath ?? ''}-${d.message}`}>
-              <code>{d.code}</code> {d.message}
-            </li>
-          ))}
-        </ul>
+        guided ? (
+          <ul aria-label="Binding issues" className="cap-issue-list">
+            {presentDiagnosticsForGuided(gate.diagnostics).map((issue, i) => (
+              <li key={i}>{issue.message}</li>
+            ))}
+          </ul>
+        ) : (
+          <ul aria-label="Binding diagnostics">
+            {gate.diagnostics.map((d) => (
+              <li key={`${d.code}-${d.fieldPath ?? ''}-${d.message}`}>
+                <code>{d.code}</code> {d.message}
+              </li>
+            ))}
+          </ul>
+        )
       ) : (
-        <p role="status">Gate passed — ready to approve.</p>
+        <p role="status">Ready to approve.</p>
       )}
 
       {lastResult ? (
@@ -557,7 +584,7 @@ export function BindingEditor({
         </section>
       ) : null}
 
-      {packetJson ? (
+      {packetJson && !guided ? (
         <section aria-label="Connection packet">
           <h3>Connection packet</h3>
           <pre className="pre">

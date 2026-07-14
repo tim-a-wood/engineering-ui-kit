@@ -15,14 +15,17 @@ import {
   diffApplicationSpecification,
   importProductInterviewResponse,
 } from '@engineering-ui-kit/core/browser'
-import type { EuikBridge } from '../../bridge'
+import type { EuikBridge, CapabilityPacketExportResult } from '../../bridge'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
+import { CapabilityHandoffCard } from './CapabilityHandoffCard'
+import { humanizeFieldPath, presentDiagnosticsForGuided } from './capabilityPresentation'
 
 type Props = {
   bridge: EuikBridge
   projectId: string
   projection: 'guided' | 'design'
   onChanged?: () => void
+  onHelp?: () => void
 }
 
 type GateLike = GateResult | { gateId?: string; passed?: boolean; diagnostics?: CapDiagnostic[] }
@@ -32,10 +35,12 @@ function asApp(value: unknown): ApplicationSpecification | undefined {
   return value as ApplicationSpecification
 }
 
-export function ApplicationDefinition({ bridge, projectId, projection, onChanged }: Props) {
+export function ApplicationDefinition({ bridge, projectId, projection, onChanged, onHelp }: Props) {
+  const guided = projection === 'guided'
   const [draft, setDraft] = useState<ApplicationSpecification | undefined>()
   const [approved, setApproved] = useState<ApplicationSpecification | undefined>()
   const [packet, setPacket] = useState<InterviewPacket | undefined>()
+  const [exportResult, setExportResult] = useState<CapabilityPacketExportResult | undefined>()
   const [delta, setDelta] = useState<FieldDelta[]>([])
   const [diagnostics, setDiagnostics] = useState<CapDiagnostic[]>([])
   const [gate, setGate] = useState<GateLike | undefined>()
@@ -85,7 +90,8 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
         stateLabels: built.stateLabels,
       })
       setPacket(built)
-      setMessage(`Exported ${exported.files.length} handoff files for ${built.packetId}. Return capability-interview-response.json.`)
+      setExportResult(exported)
+      setMessage(guided ? '' : `Exported ${exported.files.length} handoff files for ${built.packetId}.`)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
     } finally {
@@ -134,8 +140,13 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
       const gateResult = (await bridge.capabilitiesEvaluateProductGate(draft)) as GateLike
       setGate(gateResult)
       if (!gateResult.passed) {
-        setMessage('CAP-GATE-001 blocked approval.')
-        setDiagnostics((gateResult.diagnostics as CapDiagnostic[]) ?? [])
+        const diags = (gateResult.diagnostics as CapDiagnostic[]) ?? []
+        setMessage(
+          guided
+            ? `Not ready to approve: ${presentDiagnosticsForGuided(diags)[0]?.message ?? 'resolve the open items first.'}`
+            : 'CAP-GATE-001 blocked approval.',
+        )
+        setDiagnostics(diags)
         return
       }
       const result = await bridge.capabilitiesApproveApplication(projectId, draft)
@@ -166,26 +177,31 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
       aria-label="Application definition"
     >
       <p className="lede">
-        {projection === 'guided'
-          ? 'Export a bounded product interview, import the Copilot JSON response, review proposed changes, then approve when CAP-GATE-001 passes.'
+        {guided
+          ? 'Capture what the application must do through a Copilot interview, then approve the definition.'
           : 'Inspect packet IDs, content hashes, field deltas, and gate diagnostics for the same application records.'}
       </p>
 
       <div className="capabilities-toolbar" role="group" aria-label="Application definition actions">
-        <button type="button" onClick={() => void exportPacket()} disabled={!projectId || busy}>
-          Export product interview
+        <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>
+          {exportResult ? 'Recreate interview handoff' : 'Create interview handoff'}
         </button>
         <button
           type="button"
+          className="btn btn-secondary btn-compact"
           onClick={() => void approve()}
           disabled={!projectId || !draft || busy || gate?.passed === false}
         >
-          Approve application
+          Approve definition
         </button>
       </div>
 
-      {packet ? (
-        <details open={projection === 'design'}>
+      {guided && exportResult ? (
+        <CapabilityHandoffCard bridge={bridge} result={exportResult} projection="guided" onHelp={onHelp} />
+      ) : null}
+
+      {!guided && packet ? (
+        <details open>
           <summary>Interview packet {packet.packetId}</summary>
           <dl className="capabilities-ids">
             <div>
@@ -198,12 +214,10 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
               <dt>Output</dt>
               <dd>{packet.outputFileName}</dd>
             </div>
-            {projection === 'design' ? (
-              <div>
-                <dt>Boundary</dt>
-                <dd>{packet.interviewBoundary}</dd>
-              </div>
-            ) : null}
+            <div>
+              <dt>Boundary</dt>
+              <dd>{packet.interviewBoundary}</dd>
+            </div>
           </dl>
           <pre className="capabilities-pre">{JSON.stringify(packet, null, 2)}</pre>
         </details>
@@ -211,26 +225,45 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
 
       <InterviewImport onImport={(r) => void handleImport(r)} disabled={!projectId || busy} />
 
-      <div className="capabilities-state-columns" aria-label="Interview field states">
-        <section>
-          <h3>Confirmed</h3>
-          <ul>
-            {confirmed.length === 0 ? <li>—</li> : confirmed.map(([path]) => <li key={path}>{path}</li>)}
-          </ul>
-        </section>
-        <section>
-          <h3>Proposed</h3>
-          <ul>
-            {proposed.length === 0 ? <li>—</li> : proposed.map(([path]) => <li key={path}>{path}</li>)}
-          </ul>
-        </section>
-        <section>
-          <h3>Unresolved</h3>
-          <ul>
-            {unresolved.length === 0 ? <li>—</li> : unresolved.map(([path]) => <li key={path}>{path}</li>)}
-          </ul>
-        </section>
-      </div>
+      {guided ? (
+        (unresolved.length || proposed.length || confirmed.length) ? (
+          <div className="cap-review-summary" aria-label="Interview field states">
+            {unresolved.length ? (
+              <section className="cap-review-group cap-review-unresolved">
+                <h3>Unresolved <span className="badge">{unresolved.length}</span></h3>
+                <ul>{unresolved.map(([path]) => <li key={path}>{humanizeFieldPath(path)}</li>)}</ul>
+              </section>
+            ) : null}
+            {proposed.length ? (
+              <section className="cap-review-group">
+                <h3>Proposed <span className="badge">{proposed.length}</span></h3>
+                <ul>{proposed.map(([path]) => <li key={path}>{humanizeFieldPath(path)}</li>)}</ul>
+              </section>
+            ) : null}
+            {confirmed.length ? (
+              <section className="cap-review-group">
+                <h3>Confirmed <span className="badge">{confirmed.length}</span></h3>
+                <ul>{confirmed.map(([path]) => <li key={path}>{humanizeFieldPath(path)}</li>)}</ul>
+              </section>
+            ) : null}
+          </div>
+        ) : null
+      ) : (
+        <div className="capabilities-state-columns" aria-label="Interview field states">
+          <section>
+            <h3>Confirmed</h3>
+            <ul>{confirmed.length === 0 ? <li>—</li> : confirmed.map(([path]) => <li key={path}>{path}</li>)}</ul>
+          </section>
+          <section>
+            <h3>Proposed</h3>
+            <ul>{proposed.length === 0 ? <li>—</li> : proposed.map(([path]) => <li key={path}>{path}</li>)}</ul>
+          </section>
+          <section>
+            <h3>Unresolved</h3>
+            <ul>{unresolved.length === 0 ? <li>—</li> : unresolved.map(([path]) => <li key={path}>{path}</li>)}</ul>
+          </section>
+        </div>
+      )}
 
       {delta.length > 0 ? (
         <section aria-label="Field-level delta">
@@ -251,7 +284,7 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
             <tbody>
               {delta.map((row) => (
                 <tr key={row.fieldPath}>
-                  <td>{row.fieldPath}</td>
+                  <td>{guided ? humanizeFieldPath(row.fieldPath) : row.fieldPath}</td>
                   <td>{row.change}</td>
                   {projection === 'design' ? (
                     <>
@@ -274,22 +307,36 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
       ) : null}
 
       {(diagnostics.length > 0 || (gate && !gate.passed)) && (
-        <section aria-label="Diagnostics">
-          <h3>Diagnostics</h3>
-          <ul>
-            {(gate?.diagnostics as CapDiagnostic[] | undefined)?.map((d) => (
-              <li key={`${d.code}-${d.fieldPath ?? ''}-${d.message}`}>
-                {d.code}: {d.message}
-              </li>
-            ))}
-            {diagnostics.map((d) => (
-              <li key={`${d.code}-${d.fieldPath ?? ''}-${d.message}`}>
-                {d.code}: {d.message}
-                {d.fieldPath ? ` (${d.fieldPath})` : ''}
-              </li>
-            ))}
-          </ul>
-        </section>
+        guided ? (
+          <section aria-label="Open issues" className="cap-issues">
+            <h3>Open issues</h3>
+            <ul className="cap-issue-list">
+              {presentDiagnosticsForGuided([
+                ...((gate?.diagnostics as CapDiagnostic[] | undefined) ?? []),
+                ...diagnostics,
+              ]).map((issue, i) => (
+                <li key={i}>{issue.message}</li>
+              ))}
+            </ul>
+          </section>
+        ) : (
+          <section aria-label="Diagnostics">
+            <h3>Diagnostics</h3>
+            <ul>
+              {(gate?.diagnostics as CapDiagnostic[] | undefined)?.map((d) => (
+                <li key={`${d.code}-${d.fieldPath ?? ''}-${d.message}`}>
+                  {d.code}: {d.message}
+                </li>
+              ))}
+              {diagnostics.map((d) => (
+                <li key={`${d.code}-${d.fieldPath ?? ''}-${d.message}`}>
+                  {d.code}: {d.message}
+                  {d.fieldPath ? ` (${d.fieldPath})` : ''}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
       )}
 
       {projection === 'design' && (draft || approved) ? (

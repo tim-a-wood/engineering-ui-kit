@@ -188,11 +188,15 @@ describe('CAP-TEST-038 Capabilities accessibility', () => {
     expect(verificationHtml).toContain('aria-label="Approved module"')
     expect(verificationHtml).toMatch(/<button[^>]*type="button"/)
 
-    const bindingHtml = renderToStaticMarkup(<BindingEditor bridge={bridge} projectId="p1" />)
-    expect(bindingHtml).toContain('aria-label="Binding editor"')
-    expect(bindingHtml).toContain('aria-label="Binding actions"')
-    expect(bindingHtml).toContain('aria-label="Binding ID"')
-    expect(bindingHtml).toMatch(/Approve binding/)
+    // Design mode exposes the technical Binding ID; Guided mode hides it.
+    const bindingDesign = renderToStaticMarkup(<BindingEditor bridge={bridge} projectId="p1" projection="design" />)
+    expect(bindingDesign).toContain('aria-label="Binding editor"')
+    expect(bindingDesign).toContain('aria-label="Binding actions"')
+    expect(bindingDesign).toContain('aria-label="Binding ID"')
+    expect(bindingDesign).toMatch(/Approve binding/)
+    const bindingGuided = renderToStaticMarkup(<BindingEditor bridge={bridge} projectId="p1" projection="guided" />)
+    expect(bindingGuided).not.toContain('aria-label="Binding ID"')
+    expect(bindingGuided).not.toContain('binding.draft')
 
     const emptyAttention = renderToStaticMarkup(<NeedsAttention items={[]} projection="guided" />)
     expect(emptyAttention).toContain('aria-label="Needs attention"')

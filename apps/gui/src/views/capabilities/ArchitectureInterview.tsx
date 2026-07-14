@@ -19,6 +19,7 @@ import {
 } from '@engineering-ui-kit/core/browser'
 import type { EuikBridge } from '../../bridge'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
+import { presentDiagnosticsForGuided } from './capabilityPresentation'
 
 type Props = {
   bridge: EuikBridge
@@ -45,6 +46,7 @@ export function ArchitectureInterview({
   projection,
   onApproved,
 }: Props) {
+  const guided = projection === 'guided'
   const [product, setProduct] = useState<ApplicationSpecification | undefined>()
   const [draft, setDraft] = useState<ArchitectureSpecification | undefined>()
   const [packet, setPacket] = useState<InterviewPacket | undefined>()
@@ -131,7 +133,9 @@ export function ArchitectureInterview({
       setMessage(
         imported.ok
           ? 'Imported architecture proposal as draft. Review cycles and findings, then approve.'
-          : `Imported draft blocked by CAP-GATE-002 (${imported.diagnostics.length} finding(s)).`,
+          : guided
+            ? `Imported with ${imported.diagnostics.length} issue(s) to resolve before approval.`
+            : `Imported draft blocked by CAP-GATE-002 (${imported.diagnostics.length} finding(s)).`,
       )
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
@@ -157,7 +161,7 @@ export function ArchitectureInterview({
       setCycles(evaluation.cycles)
       setGatePassed(evaluation.passed)
       if (!evaluation.passed) {
-        setMessage('CAP-GATE-002 blocked approval.')
+        setMessage(guided ? 'Not ready to approve — resolve the findings above first.' : 'CAP-GATE-002 blocked approval.')
         return
       }
       const result = await bridge.capabilitiesApproveArchitecture(projectId, {
@@ -191,7 +195,7 @@ export function ArchitectureInterview({
     >
       <p className="lede">
         {projection === 'guided'
-          ? 'Export architecture context, import a minimal proposal, review need traces and cycles, then approve CAP-GATE-002.'
+          ? 'Propose the module structure through a Copilot interview, review dependencies and cycles, then approve the architecture.'
           : 'Inspect packet IDs, derived graph edges, cycle paths, and gate diagnostics for the same architecture draft.'}
       </p>
       <p role="status">{message || (architectureApproved ? 'Architecture is approved.' : 'Architecture not yet approved.')}</p>
@@ -209,8 +213,8 @@ export function ArchitectureInterview({
         </button>
       </div>
 
-      {packet ? (
-        <details open={projection === 'design'}>
+      {packet && !guided ? (
+        <details open>
           <summary>Interview packet {packet.packetId}</summary>
           <pre className="capabilities-pre">{JSON.stringify(packet, null, 2)}</pre>
         </details>
@@ -234,14 +238,20 @@ export function ArchitectureInterview({
       ) : null}
 
       {diagnostics.length > 0 ? (
-        <ul aria-label="Architecture gate diagnostics">
-          {diagnostics.map((d, i) => (
-            <li key={`${d.code}-${i}`}>
-              {d.code}: {d.message}
-              {projection === 'design' && d.relatedIds?.length ? ` (${d.relatedIds.join(', ')})` : ''}
-            </li>
-          ))}
-        </ul>
+        guided ? (
+          <ul aria-label="Open issues" className="cap-issue-list">
+            {presentDiagnosticsForGuided(diagnostics).map((issue, i) => <li key={i}>{issue.message}</li>)}
+          </ul>
+        ) : (
+          <ul aria-label="Architecture gate diagnostics">
+            {diagnostics.map((d, i) => (
+              <li key={`${d.code}-${i}`}>
+                {d.code}: {d.message}
+                {d.relatedIds?.length ? ` (${d.relatedIds.join(', ')})` : ''}
+              </li>
+            ))}
+          </ul>
+        )
       ) : null}
 
       {projection === 'design' && graph ? (
