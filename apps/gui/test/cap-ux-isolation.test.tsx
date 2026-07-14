@@ -234,6 +234,43 @@ describe('architecture import recovery', () => {
       expect.objectContaining({ moduleId: 'mod.domain', moduleType: 'domain' }),
     ]))
   })
+
+  it('heals a draft saved by an older build when the user approves it', async () => {
+    const legacyDraft: ArchitectureSpecification = {
+      schemaVersion: '1.0', projectId: 'p1', id: 'arch.legacy', revision: '1', status: 'proposed',
+      applicationSpecId: ARCH_PRODUCT.id, applicationSpecRevision: '1', applicationSpecHash: 'app-hash',
+      capabilityProjections: [{ id: 'cap.main', name: 'Main', moduleIds: ['mod.workflow', 'mod.domain'] }],
+      moduleIds: ['mod.workflow', 'mod.domain'],
+      dependencyEdges: [{ fromModuleId: 'mod.workflow', toModuleId: 'mod.domain', reason: undefined as unknown as string }],
+      operationAllocations: [], adapterAllocations: [],
+      workflowTraces: [{ useCaseId: 'usecase.main', moduleIds: ['mod.workflow'] }],
+      proposals: [], unresolvedQuestions: [],
+      gateResult: { gateId: 'CAP-GATE-002', passed: false, diagnostics: [] }, contentHash: 'legacy-hash',
+    }
+    const saveDraft = vi.fn(async () => ({ ok: true as const }))
+    const approveArchitecture = vi.fn(async (_projectId: string, architecture: ArchitectureSpecification) => ({
+      ok: true as const, approved: { ...architecture, status: 'approved' as const },
+      gate: { gateId: 'CAP-GATE-002', passed: true, diagnostics: [] },
+    }))
+    const bridge = makeBridge({
+      capabilitiesGetApplication: (async () => ({ approved: ARCH_PRODUCT })) as never,
+      capabilitiesGetArchitecture: (async () => ({ draft: legacyDraft })) as never,
+      capabilitiesSaveArchitectureDraft: saveDraft as never,
+      capabilitiesApproveArchitecture: approveArchitecture as never,
+    })
+    render(<ArchitectureInterview bridge={bridge} projectId="p1" architectureApproved={false} projection="guided" />)
+
+    const approve = screen.getByRole('button', { name: 'Approve architecture' }) as HTMLButtonElement
+    await waitFor(() => expect(approve.disabled).toBe(false))
+    fireEvent.click(approve)
+
+    await waitFor(() => expect(screen.getByText('Architecture approved.')).toBeTruthy())
+    const normalized = (approveArchitecture.mock.calls as unknown[][])[0]![1] as ArchitectureSpecification
+    expect(normalized.dependencyEdges[0]?.reason).toContain('Workflow uses Domain')
+    expect(normalized.workflowTraces[0]?.moduleIds).toEqual(['mod.workflow', 'mod.domain'])
+    expect(normalized.moduleDefinitions?.map((definition) => definition.moduleType)).toEqual(['workflow', 'domain'])
+    expect(saveDraft).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('architecture exploration', () => {

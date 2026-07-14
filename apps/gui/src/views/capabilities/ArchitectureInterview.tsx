@@ -14,6 +14,7 @@ import {
   detectCycles,
   evaluateArchitectureProposal,
   importArchitectureProposal,
+  normalizeArchitectureProposal,
   projectDerivedGraph,
   type ArchitectureProposalInput,
 } from '@engineering-ui-kit/core/browser'
@@ -152,13 +153,17 @@ export function ArchitectureInterview({
     setBusy(true)
     setMessage('')
     try {
-      const currentProposal: ArchitectureProposalInput = proposal ?? {
+      const currentProposal = normalizeArchitectureProposal(product, proposal ?? {
         architecture: draft,
         moduleNeedTraces: draft.moduleIds.map((moduleId) => ({
           moduleId,
           needIds: product.useCases.map((u) => u.id),
         })),
-      }
+      })
+      const normalizedDraft = currentProposal.architecture
+      setDraft(normalizedDraft)
+      setProposal(currentProposal)
+      await bridge.capabilitiesSaveArchitectureDraft(projectId, normalizedDraft)
       const evaluation = evaluateArchitectureProposal(product, currentProposal)
       setDiagnostics(evaluation.diagnostics)
       setCycles(evaluation.cycles)
@@ -168,7 +173,7 @@ export function ArchitectureInterview({
         return
       }
       const result = await bridge.capabilitiesApproveArchitecture(projectId, {
-        ...draft,
+        ...normalizedDraft,
         gateResult: { gateId: 'CAP-GATE-002', passed: true, diagnostics: [] },
       })
       if (!result.ok) {
