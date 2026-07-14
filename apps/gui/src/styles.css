@@ -3279,7 +3279,258 @@ code.path-wrap {
 .capabilities-view {
   display: grid;
   gap: var(--semantic-spacing-4);
-  padding: var(--semantic-spacing-5);
+}
+
+/* ---- Capabilities UX: journey, stages, handoff, panels ------------------- */
+
+.cap-project-select select,
+.cap-project-select {
+  min-width: 12rem;
+}
+.cap-guided,
+.cap-design {
+  display: grid;
+  gap: var(--semantic-spacing-4);
+}
+
+/* Five-stage journey stepper */
+.cap-journey {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--semantic-spacing-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cap-journey-step {
+  display: flex;
+}
+.cap-journey-link,
+.cap-journey-locked {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  width: 100%;
+  text-align: left;
+  padding: var(--semantic-spacing-3);
+  border-radius: var(--semantic-radius-md);
+  border: 1px solid var(--semantic-border-subtle);
+  background: var(--semantic-surface-panel);
+  color: var(--semantic-text-secondary);
+  cursor: pointer;
+}
+.cap-journey-locked {
+  cursor: default;
+  opacity: 0.7;
+  background: var(--semantic-surface-inset);
+}
+.cap-journey-step.complete .cap-journey-link {
+  border-color: var(--semantic-status-success);
+}
+.cap-journey-step.viewing .cap-journey-link {
+  border-color: var(--semantic-accent-primary);
+  background: var(--semantic-accent-primary-tint);
+  color: var(--semantic-text-primary);
+}
+.cap-journey-step.not-applicable .cap-journey-link {
+  border-style: dashed;
+}
+.cap-journey-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  border-radius: 999px;
+  background: var(--semantic-surface-inset);
+  color: var(--semantic-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.cap-journey-step.complete .cap-journey-marker {
+  background: var(--semantic-status-success);
+  color: var(--semantic-text-inverse);
+}
+.cap-journey-step.viewing .cap-journey-marker {
+  background: var(--semantic-accent-primary);
+  color: var(--semantic-accent-text);
+}
+.cap-journey-copy {
+  display: grid;
+  min-width: 0;
+}
+.cap-journey-name {
+  font-weight: 600;
+  color: var(--semantic-text-primary);
+}
+.cap-journey-status {
+  font-size: 0.8rem;
+  color: var(--semantic-text-muted);
+}
+.cap-journey-link:focus-visible,
+.cap-journey-locked:focus-visible {
+  outline: 2px solid var(--semantic-border-focus);
+  outline-offset: 2px;
+}
+
+/* Stage panel */
+.cap-stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-3);
+}
+.cap-stage-head h2 {
+  outline: none;
+}
+.cap-stage-complete {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-3);
+  margin-top: var(--semantic-spacing-4);
+  padding: var(--semantic-spacing-3);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-status-success-tint);
+}
+.cap-complete-icon {
+  color: var(--semantic-status-success);
+}
+.cap-stage-na {
+  color: var(--semantic-text-secondary);
+}
+.cap-blocker {
+  display: grid;
+  gap: var(--semantic-spacing-3);
+  justify-items: start;
+  padding: var(--semantic-spacing-4);
+}
+.cap-blocker-icon {
+  color: var(--semantic-status-info);
+}
+.cap-back {
+  margin-bottom: var(--semantic-spacing-3);
+}
+
+/* Reusable handoff card */
+.cap-handoff {
+  display: grid;
+  gap: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-4);
+}
+.cap-handoff-head {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+}
+.cap-handoff-head h3 {
+  margin: 0;
+}
+.cap-handoff-icon {
+  color: var(--semantic-accent-primary);
+}
+.cap-handoff-help {
+  margin-left: auto;
+}
+.cap-handoff-steps {
+  display: grid;
+  gap: var(--semantic-spacing-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--semantic-text-secondary);
+}
+.cap-handoff-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: var(--semantic-spacing-2);
+  border-radius: 999px;
+  background: var(--semantic-accent-primary-tint);
+  color: var(--semantic-accent-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.cap-handoff-files {
+  display: grid;
+  gap: var(--semantic-spacing-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cap-handoff-files li {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  padding: var(--semantic-spacing-2);
+  border-radius: var(--semantic-radius-sm);
+  background: var(--semantic-surface-inset);
+}
+.cap-handoff-file-name {
+  color: var(--semantic-text-primary);
+}
+.cap-handoff-file-size {
+  margin-left: auto;
+  color: var(--semantic-text-muted);
+  font-size: 0.8rem;
+}
+.cap-handoff-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-2);
+}
+.cap-handoff-files-raw {
+  font-size: 0.8rem;
+  color: var(--semantic-text-muted);
+}
+
+/* Needs attention + review summary + issues */
+.cap-attention-item {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+  padding: var(--semantic-spacing-3);
+  margin-bottom: var(--semantic-spacing-2);
+}
+.cap-attention-head {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+}
+.cap-attention-action {
+  color: var(--semantic-text-secondary);
+  margin: 0;
+}
+.cap-review-summary {
+  display: grid;
+  gap: var(--semantic-spacing-3);
+}
+.cap-review-group h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+}
+.cap-review-unresolved {
+  border-left: 3px solid var(--semantic-status-warning);
+  padding-left: var(--semantic-spacing-3);
+}
+.cap-issue-list {
+  color: var(--semantic-status-danger);
+}
+.cap-impact-result {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+}
+.cap-form-row {
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+@media (max-width: 900px) {
+  .cap-journey {
+    grid-template-columns: 1fr;
+  }
 }
 .capabilities-header {
   display: flex;
