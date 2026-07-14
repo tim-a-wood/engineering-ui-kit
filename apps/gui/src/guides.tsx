@@ -7,8 +7,8 @@
  * works" links.
  */
 
-import { useEffect } from 'react'
-import type { ReactElement } from 'react'
+import { useEffect, useRef } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent, ReactElement } from 'react'
 
 export type GuideTopicId =
   | 'workflow-overview'
@@ -538,12 +538,19 @@ export function GuideOverlay(props: {
 }) {
   const index = Math.max(0, GUIDE_TOPICS.findIndex((t) => t.id === props.topic))
   const topic = GUIDE_TOPICS[index]!
-  const prev = GUIDE_TOPICS[index - 1]
-  const next = GUIDE_TOPICS[index + 1]
+  // Previous/Next stay within the current guide group (no crossing into another group).
+  const groupTopics = GUIDE_TOPICS.filter((t) => t.group === topic.group)
+  const groupIndex = groupTopics.findIndex((t) => t.id === topic.id)
+  const prev = groupTopics[groupIndex - 1]
+  const next = groupTopics[groupIndex + 1]
 
-  // Escape closes the guide and focus is restored to the previously focused control.
+  const panelRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  // Escape closes; initial focus enters the dialog; focus is restored to the invoking control.
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null
+    closeRef.current?.focus()
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
@@ -558,9 +565,27 @@ export function GuideOverlay(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Trap Tab / Shift+Tab within the dialog so background content is never keyboard-reachable.
+  const trapFocus = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Tab' || !panelRef.current) return
+    const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    )
+    if (focusable.length === 0) return
+    const first = focusable[0]!
+    const last = focusable[focusable.length - 1]!
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+
   return (
     <div className="guide-scrim" role="dialog" aria-modal="true" aria-label="How-to guides" onClick={props.onClose}>
-      <div className="guide-panel" onClick={(e) => e.stopPropagation()}>
+      <div ref={panelRef} className="guide-panel" onClick={(e) => e.stopPropagation()} onKeyDown={trapFocus}>
         <aside className="guide-rail">
           <h2 className="guide-rail-title">How-to guides</h2>
           {GUIDE_GROUP_ORDER.map((group) => {
@@ -591,7 +616,7 @@ export function GuideOverlay(props: {
         <div className="guide-content">
           <div className="guide-content-head">
             <h3>{topic.title}</h3>
-            <button type="button" className="icon-btn" aria-label="Close guides" onClick={props.onClose}>✕</button>
+            <button ref={closeRef} type="button" className="icon-btn" aria-label="Close guides" onClick={props.onClose}>✕</button>
           </div>
           <div className="guide-art" aria-hidden="false">{topic.art}</div>
           <p className="guide-blurb">{topic.blurb}</p>

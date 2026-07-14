@@ -15,6 +15,7 @@ import type { EuikBridge } from '../src/bridge'
 import { CapabilitiesView } from '../src/views/capabilities/CapabilitiesView'
 import { ModulesView } from '../src/views/capabilities/ModulesView'
 import { GuidedConnect } from '../src/views/capabilities/GuidedConnect'
+import { GuideOverlay } from '../src/guides'
 
 afterEach(cleanup)
 
@@ -209,5 +210,38 @@ describe('guided connect isolation', () => {
     fireEvent.change(screen.getByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
     expect((screen.getByLabelText('While it runs') as HTMLInputElement).value).toBe('')
+  })
+})
+
+describe('help modal accessibility', () => {
+  it('focuses the dialog, closes on Escape, restores focus, and keeps Prev/Next within a group', async () => {
+    const invoker = document.createElement('button')
+    invoker.textContent = 'open help'
+    document.body.appendChild(invoker)
+    invoker.focus()
+    expect(document.activeElement).toBe(invoker)
+
+    const onClose = vi.fn()
+    const onSelect = vi.fn()
+    const { rerender, unmount } = render(<GuideOverlay topic="capabilities-overview" onSelectTopic={onSelect} onClose={onClose} />)
+
+    // Initial focus enters the dialog (close button).
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close guides' })))
+
+    // The Capabilities overview is the first topic in its group -> no Previous action.
+    expect(screen.queryByRole('button', { name: /←/ })).toBeNull()
+    // Next stays inside the Capabilities group (Define), not the Build & Test group.
+    fireEvent.click(screen.getByRole('button', { name: /Define →/ }))
+    expect(onSelect).toHaveBeenCalledWith('capabilities-define')
+
+    // Escape closes.
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onClose).toHaveBeenCalled()
+
+    // Unmount restores focus to the invoking control.
+    unmount()
+    void rerender
+    await waitFor(() => expect(document.activeElement).toBe(invoker))
+    invoker.remove()
   })
 })
