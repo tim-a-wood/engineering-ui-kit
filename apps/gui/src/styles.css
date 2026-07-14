@@ -3731,51 +3731,155 @@ code.path-wrap {
   font-size: 0.78rem;
   font-weight: var(--semantic-typography-weight-semibold);
 }
-.cap-definition-review-grid,
-.cap-definition-detail-grid {
+.cap-definition-purpose {
+  position: relative;
+  overflow: hidden;
+  padding: var(--semantic-spacing-4);
+  border: 1px solid color-mix(in srgb, var(--semantic-accent-primary) 24%, var(--semantic-border-subtle));
+  border-radius: var(--semantic-radius-md);
+  background:
+    radial-gradient(circle at 94% 10%, color-mix(in srgb, var(--semantic-accent-primary) 12%, transparent), transparent 34%),
+    var(--semantic-surface-inset);
+}
+.cap-definition-purpose > span {
+  display: block;
+  margin-bottom: var(--semantic-spacing-1);
+  color: var(--semantic-accent-primary);
+  font-size: 0.72rem;
+  font-weight: var(--semantic-typography-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cap-definition-purpose > p {
+  max-width: 78rem;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+.cap-definition-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-3);
+  margin-top: var(--semantic-spacing-3);
+  color: var(--semantic-text-secondary);
+  font-size: 0.78rem;
+}
+.cap-definition-metrics span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+.cap-definition-metrics strong {
+  color: var(--semantic-text-primary);
+  font-size: 0.92rem;
+}
+.cap-brief-sections {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--semantic-spacing-2);
+}
+.cap-brief-section {
+  min-width: 0;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel-raised);
+  transition: border-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard),
+    background-color var(--semantic-motion-duration-fast) var(--semantic-motion-easing-standard);
+}
+.cap-brief-section:hover,
+.cap-brief-section[open] {
+  border-color: var(--semantic-border-strong);
+  background: color-mix(in srgb, var(--semantic-surface-panel-raised) 94%, var(--semantic-accent-primary) 6%);
+}
+.cap-brief-section[open] {
+  grid-column: 1 / -1;
+}
+.cap-brief-section > summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  min-height: 3.6rem;
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  cursor: pointer;
+  list-style: none;
+}
+.cap-brief-section > summary::-webkit-details-marker {
+  display: none;
+}
+.cap-brief-section > summary > span:first-child {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+.cap-brief-section > summary strong {
+  color: var(--semantic-text-primary);
+  font-size: 0.86rem;
+}
+.cap-brief-section > summary small {
+  overflow: hidden;
+  color: var(--semantic-text-muted);
+  font-size: 0.72rem;
+  font-weight: var(--semantic-typography-weight-regular);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cap-brief-count {
+  display: grid;
+  place-items: center;
+  min-width: 1.65rem;
+  height: 1.65rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  color: var(--semantic-text-secondary);
+  background: var(--semantic-surface-inset);
+  font-size: 0.72rem;
+  font-weight: var(--semantic-typography-weight-semibold);
+}
+.cap-brief-section[open] .cap-brief-count {
+  color: var(--semantic-accent-primary);
+  background: color-mix(in srgb, var(--semantic-accent-primary) 12%, var(--semantic-surface-inset));
+}
+.cap-brief-section > ul,
+.cap-brief-scope {
+  border-top: 1px solid var(--semantic-border-subtle);
+}
+.cap-brief-section ul {
+  display: grid;
+  gap: var(--semantic-spacing-1);
+  margin: 0;
+  padding: var(--semantic-spacing-3) var(--semantic-spacing-4) var(--semantic-spacing-3) 2rem;
+}
+.cap-brief-section li {
+  line-height: 1.45;
+}
+.cap-brief-scope {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--semantic-spacing-3);
-}
-.cap-definition-review-grid > section,
-.cap-definition-detail-grid > section {
-  min-width: 0;
   padding: var(--semantic-spacing-3);
-  border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
-  background: var(--semantic-surface-inset);
 }
-.cap-definition-purpose {
-  grid-column: 1 / -1;
+.cap-brief-scope h4 {
+  font-size: 0.78rem;
 }
-.cap-definition-review ul {
-  display: grid;
-  gap: var(--semantic-spacing-1);
-  margin: var(--semantic-spacing-2) 0 0;
-  padding-left: 1.2rem;
+.cap-brief-scope ul {
+  padding: var(--semantic-spacing-2) 0 0 1.2rem;
 }
-.cap-definition-review li {
-  line-height: 1.45;
-}
-.cap-definition-details {
-  border-top: 1px solid var(--semantic-border-subtle);
-  padding-top: var(--semantic-spacing-3);
-}
-.cap-definition-details > summary {
-  width: fit-content;
-  color: var(--semantic-text-secondary);
-  cursor: pointer;
-}
-.cap-definition-details[open] > summary {
-  margin-bottom: var(--semantic-spacing-3);
-}
-@media (max-width: 760px) {
-  .cap-definition-review-grid,
-  .cap-definition-detail-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 1050px) {
+  .cap-brief-sections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .cap-definition-purpose {
-    grid-column: auto;
+}
+@media (max-width: 700px) {
+  .cap-definition-review-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .cap-ready-label {
+    width: fit-content;
+  }
+  .cap-brief-sections,
+  .cap-brief-scope {
+    grid-template-columns: 1fr;
   }
 }
 .cap-impact-result {

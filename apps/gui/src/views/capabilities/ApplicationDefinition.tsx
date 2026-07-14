@@ -35,6 +35,22 @@ function asApp(value: unknown): ApplicationSpecification | undefined {
   return value as ApplicationSpecification
 }
 
+function compactPreview(values: string[], limit = 2): string {
+  if (values.length === 0) return 'None captured'
+  const visible = values.slice(0, limit).join(' · ')
+  return values.length > limit ? `${visible} · +${values.length - limit} more` : visible
+}
+
+function briefText(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (!value || typeof value !== 'object') return ''
+  const record = value as Record<string, unknown>
+  for (const key of ['text', 'name', 'description', 'expectedOutcome']) {
+    if (typeof record[key] === 'string') return record[key]
+  }
+  return ''
+}
+
 export function ApplicationDefinition({ bridge, projectId, projection, onChanged, onHelp }: Props) {
   const guided = projection === 'guided'
   const [draft, setDraft] = useState<ApplicationSpecification | undefined>()
@@ -178,6 +194,14 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
   const unresolved = Object.entries(fieldStates).filter(([, s]) => s === 'unresolved')
   const openQuestions = draft?.unresolvedQuestions ?? []
   const visibleDelta = guided ? delta.filter((row) => row.fieldPath !== '$') : delta
+  const legacyDraft = draft as unknown as { userRoles?: unknown[] } | undefined
+  const briefActors = ((draft?.actors as unknown[] | undefined) ?? legacyDraft?.userRoles ?? []).map(briefText).filter(Boolean)
+  const briefOutcomes = ((draft?.outcomes as unknown[] | undefined) ?? []).map(briefText).filter(Boolean)
+  const briefUseCases = ((draft?.useCases as unknown[] | undefined) ?? []).map(briefText).filter(Boolean)
+  const briefInScope = ((draft?.scope?.inScope as unknown[] | undefined) ?? []).map(briefText).filter(Boolean)
+  const briefOutOfScope = ((draft?.scope?.outOfScope as unknown[] | undefined) ?? []).map(briefText).filter(Boolean)
+  const briefRules = ((draft?.rules as unknown[] | undefined) ?? []).map(briefText).filter(Boolean)
+  const briefAcceptance = ((draft?.acceptanceCases as unknown[] | undefined) ?? []).map(briefText).filter(Boolean)
   const guidedDiagnostics = [
     ...((gate?.diagnostics as CapDiagnostic[] | undefined) ?? []),
     ...diagnostics,
@@ -299,45 +323,69 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
               </div>
               <span className="cap-ready-label">Ready to approve</span>
             </div>
-            <div className="cap-definition-review-grid">
-              <section className="cap-definition-purpose">
-                <h4>Purpose</h4>
-                <p>{draft.purpose}</p>
-              </section>
-              <section>
-                <h4>People</h4>
-                <ul>{(draft.actors ?? []).map((actor) => <li key={actor.id}>{actor.text}</li>)}</ul>
-              </section>
-              <section>
-                <h4>Outcomes</h4>
-                <ul>{(draft.outcomes ?? []).map((outcome) => <li key={outcome}>{outcome}</li>)}</ul>
-              </section>
-              <section>
-                <h4>Main workflows</h4>
-                <ul>{(draft.useCases ?? []).map((useCase) => <li key={useCase.id}>{useCase.text}</li>)}</ul>
-              </section>
-              <section>
-                <h4>In scope</h4>
-                <ul>{(draft.scope?.inScope ?? []).map((item) => <li key={item}>{item}</li>)}</ul>
-              </section>
-              <section>
-                <h4>Out of scope</h4>
-                <ul>{(draft.scope?.outOfScope ?? []).map((item) => <li key={item}>{item}</li>)}</ul>
-              </section>
-            </div>
-            <details className="cap-definition-details">
-              <summary>Review operational rules and acceptance checks</summary>
-              <div className="cap-definition-detail-grid">
-                <section>
-                  <h4>Operational rules</h4>
-                  <ul>{(draft.rules ?? []).map((rule) => <li key={rule.id}>{rule.text}</li>)}</ul>
-                </section>
-                <section>
-                  <h4>Acceptance checks</h4>
-                  <ul>{(draft.acceptanceCases ?? []).map((item) => <li key={item.id}>{item.description}</li>)}</ul>
-                </section>
+            <div className="cap-definition-purpose">
+              <span>Purpose</span>
+              <p>{draft.purpose}</p>
+              <div className="cap-definition-metrics" aria-label="Brief summary">
+                <span><strong>{briefActors.length}</strong> people</span>
+                <span><strong>{briefOutcomes.length}</strong> outcomes</span>
+                <span><strong>{briefUseCases.length}</strong> workflows</span>
+                <span><strong>{briefInScope.length + briefOutOfScope.length}</strong> scope decisions</span>
               </div>
-            </details>
+            </div>
+            <div className="cap-brief-sections">
+              <details className="cap-brief-section">
+                <summary>
+                  <span><strong>People</strong><small>{compactPreview(briefActors)}</small></span>
+                  <span className="cap-brief-count">{briefActors.length}</span>
+                </summary>
+                <ul>{briefActors.map((actor, index) => <li key={`${actor}-${index}`}>{actor}</li>)}</ul>
+              </details>
+              <details className="cap-brief-section">
+                <summary>
+                  <span><strong>Outcomes</strong><small>{compactPreview(briefOutcomes, 1)}</small></span>
+                  <span className="cap-brief-count">{briefOutcomes.length}</span>
+                </summary>
+                <ul>{briefOutcomes.map((outcome, index) => <li key={`${outcome}-${index}`}>{outcome}</li>)}</ul>
+              </details>
+              <details className="cap-brief-section">
+                <summary>
+                  <span><strong>Main workflows</strong><small>{compactPreview(briefUseCases, 1)}</small></span>
+                  <span className="cap-brief-count">{briefUseCases.length}</span>
+                </summary>
+                <ul>{briefUseCases.map((useCase, index) => <li key={`${useCase}-${index}`}>{useCase}</li>)}</ul>
+              </details>
+              <details className="cap-brief-section">
+                <summary>
+                  <span><strong>Scope</strong><small>{briefInScope.length} in · {briefOutOfScope.length} out</small></span>
+                  <span className="cap-brief-count">{briefInScope.length + briefOutOfScope.length}</span>
+                </summary>
+                <div className="cap-brief-scope">
+                  <section>
+                    <h4>In scope</h4>
+                    <ul>{briefInScope.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul>
+                  </section>
+                  <section>
+                    <h4>Out of scope</h4>
+                    <ul>{briefOutOfScope.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul>
+                  </section>
+                </div>
+              </details>
+              <details className="cap-brief-section">
+                <summary>
+                  <span><strong>Operational rules</strong><small>{compactPreview(briefRules, 1)}</small></span>
+                  <span className="cap-brief-count">{briefRules.length}</span>
+                </summary>
+                <ul>{briefRules.map((rule, index) => <li key={`${rule}-${index}`}>{rule}</li>)}</ul>
+              </details>
+              <details className="cap-brief-section">
+                <summary>
+                  <span><strong>Acceptance checks</strong><small>{compactPreview(briefAcceptance, 1)}</small></span>
+                  <span className="cap-brief-count">{briefAcceptance.length}</span>
+                </summary>
+                <ul>{briefAcceptance.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul>
+              </details>
+            </div>
           </section>
         ) : (unresolved.length || proposed.length || confirmed.length) ? (
           <div className="cap-review-summary" aria-label="Interview field states">
