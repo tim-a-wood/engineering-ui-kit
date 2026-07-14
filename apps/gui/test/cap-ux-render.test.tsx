@@ -13,6 +13,9 @@ import { ApplicationDefinition } from '../src/views/capabilities/ApplicationDefi
 import { ModulesView } from '../src/views/capabilities/ModulesView'
 import { ArchitectureInterview } from '../src/views/capabilities/ArchitectureInterview'
 import { NeedsAttention } from '../src/views/capabilities/NeedsAttention'
+import { GuidedConnect } from '../src/views/capabilities/GuidedConnect'
+import { GuidedBuild } from '../src/views/capabilities/GuidedBuild'
+import type { ArchitectureSpecification, ModuleManifest } from '@engineering-ui-kit/core'
 import { CapabilityHandoffCard } from '../src/views/capabilities/CapabilityHandoffCard'
 import { DesignBody, GuidedBody } from '../src/views/capabilities/CapabilitiesView'
 import { deriveJourney } from '../src/views/capabilities/capabilitiesUiState'
@@ -124,6 +127,66 @@ describe('Guided source scan — no technical strings leak by default', () => {
       for (const token of BANNED) expect(html, `${name} leaked ${token}`).not.toContain(token)
     })
   }
+})
+
+function manifest(moduleId: string, ops: string[]): ModuleManifest {
+  return {
+    schemaVersion: '1.0', architectureVersion: '1.0', moduleId, moduleVersion: '1.0.0',
+    moduleType: 'experience', name: '', responsibility: '', ownedConcerns: [], excludedConcerns: [],
+    providedOperations: ops.map((operationId) => ({ operationId, contractVersion: '2.0' })),
+    requiredOperations: [], verificationSuiteIds: [], runtimeAllocation: 'local-embedded', events: [], ownedPaths: [],
+  }
+}
+
+describe('Guided Connect (progressive four-substep)', () => {
+  const records: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: manifest('mod.orders', ['op.placeOrder']) }]
+  const html = renderToStaticMarkup(
+    <GuidedConnect
+      bridge={bridge()} projectId="p1" records={records}
+      selectionEvidence={undefined} onSelectionEvidence={() => {}}
+      previewRef={previewRef} onChanged={() => {}}
+    />,
+  )
+  it('starts at "Select an element" and honestly disables selection outside packaged Electron', () => {
+    expect(html).toContain('Select an element')
+    // No active picker button outside packaged Electron; an explanatory note instead.
+    expect(html).not.toContain('Preview binding picker')
+    expect(html).toContain('packaged desktop app')
+  })
+  it('humanizes the capability and never shows Binding ID or raw id@version', () => {
+    expect(html).toContain('Place Order')
+    expect(html).not.toContain('op.placeOrder @')
+    expect(html).not.toContain('aria-label="Binding ID"')
+    expect(html).not.toContain('binding.draft')
+  })
+  it('does not render behavior fields before element + capability are chosen', () => {
+    expect(html).not.toContain('While it runs')
+    expect(html).not.toContain('Something goes wrong')
+  })
+  it('does not render diagnostics before an interaction or approval attempt', () => {
+    expect(html).not.toContain('To finish this connection')
+    expect(html).not.toContain('cap-issue-list')
+  })
+})
+
+describe('Guided Build (two-region, single next action)', () => {
+  const arch = { schemaVersion: '1.0', moduleIds: ['mod.a', 'mod.b'] } as unknown as ArchitectureSpecification
+  const records: CapabilityModuleRecord[] = [{ moduleId: 'mod.a', approved: manifest('mod.a', ['op.a']) }, { moduleId: 'mod.b' }]
+  const html = renderToStaticMarkup(<GuidedBuild bridge={bridge()} projectId="p1" archSpec={arch} records={records} onChanged={() => {}} />)
+  it('shows the left module list with progress and per-module state', () => {
+    expect(html).toContain('aria-label="Allocated modules"')
+    expect(html).toContain('1 of 2')
+    expect(html).toContain('approved')
+    expect(html).toMatch(/aria-label="[^"]*, Approved"/)
+    expect(html).toMatch(/aria-label="[^"]*, Not started"/)
+  })
+  it('right region shows only the next relevant action, not every lifecycle button', () => {
+    // First-incomplete module (mod.b) -> "Create interview" only.
+    expect(html).toContain('Create interview')
+    expect(html).not.toContain('Export implementation packet')
+    expect(html).not.toContain('Apply reviewed overlay')
+    expect(html).not.toContain('Verify module')
+  })
 })
 
 describe('CapabilityHandoffCard', () => {

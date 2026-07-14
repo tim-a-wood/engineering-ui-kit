@@ -3527,8 +3527,170 @@ code.path-wrap {
   align-items: flex-end;
 }
 
+/* Guided Connect — progressive substeps */
+.cap-connect {
+  display: grid;
+  gap: var(--semantic-spacing-3);
+}
+.cap-connect-step {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+}
+.cap-connect-step.active {
+  border-color: var(--semantic-accent-primary);
+}
+.cap-connect-step.done {
+  border-color: var(--semantic-status-success);
+}
+.cap-connect-step-head {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+}
+.cap-connect-step-head h3 {
+  margin: 0;
+}
+.cap-connect-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  border-radius: 999px;
+  background: var(--semantic-surface-inset);
+  color: var(--semantic-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.cap-connect-step.done .cap-connect-num {
+  background: var(--semantic-status-success);
+  color: var(--semantic-text-inverse);
+}
+.cap-connect-field {
+  display: grid;
+  gap: var(--semantic-spacing-1);
+  max-width: 28rem;
+}
+.cap-connect-note {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  color: var(--semantic-text-muted);
+}
+.cap-connect-confirmed {
+  color: var(--semantic-status-success);
+}
+.cap-connect-behaviors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--semantic-spacing-3);
+}
+.cap-connect-advanced {
+  margin-top: var(--semantic-spacing-2);
+}
+.cap-connect-test {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--semantic-spacing-3);
+}
+.cap-connect-outcome {
+  color: var(--semantic-text-secondary);
+}
+
+/* Guided Build — two-region workspace */
+.cap-build {
+  display: grid;
+  grid-template-columns: minmax(14rem, 20rem) 1fr;
+  gap: var(--semantic-spacing-4);
+  align-items: start;
+}
+.cap-build-list {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+}
+.cap-build-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--semantic-spacing-1);
+}
+.cap-build-progress {
+  color: var(--semantic-text-secondary);
+  font-size: 0.85rem;
+}
+.cap-build-module {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  width: 100%;
+  text-align: left;
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+  cursor: pointer;
+}
+.cap-build-module.active {
+  border-color: var(--semantic-accent-primary);
+  background: var(--semantic-accent-primary-tint);
+}
+.cap-build-module.approved .cap-build-module-glyph {
+  color: var(--semantic-status-success);
+}
+.cap-build-module.ready .cap-build-module-glyph {
+  color: var(--semantic-status-success);
+}
+.cap-build-module.pending .cap-build-module-glyph {
+  color: var(--semantic-text-muted);
+}
+.cap-build-module-name {
+  color: var(--semantic-text-primary);
+  font-weight: 600;
+}
+.cap-build-module-state {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--semantic-text-muted);
+}
+.cap-build-next {
+  display: grid;
+  gap: var(--semantic-spacing-3);
+  justify-items: start;
+}
+.cap-build-step-label {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  margin: 0;
+  color: var(--semantic-text-primary);
+  font-weight: 600;
+}
+.cap-overlay-inspect {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+  width: 100%;
+}
+.cap-accept-warnings {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+}
+
 @media (max-width: 900px) {
   .cap-journey {
+    grid-template-columns: 1fr;
+  }
+  .cap-build {
+    grid-template-columns: 1fr;
+  }
+  .cap-connect-behaviors {
     grid-template-columns: 1fr;
   }
 }

@@ -30,6 +30,8 @@ import { ArchitectureView } from './ArchitectureView'
 import { BindingEditor } from './BindingEditor'
 import { CapabilityJourney } from './CapabilityJourney'
 import { CapabilityPreview, type CapabilityPreviewHandle } from './CapabilityPreview'
+import { GuidedConnect } from './GuidedConnect'
+import { GuidedBuild } from './GuidedBuild'
 import { DeltaQueue } from './DeltaQueue'
 import { ModulesView } from './ModulesView'
 import { ImpactQueue } from './ImpactQueue'
@@ -506,13 +508,12 @@ function GuidedStage(props: {
       )
     case 'build':
       return (
-        <ModulesView
+        <GuidedBuild
           bridge={bridge}
           projectId={projectId}
-          architectureApproved
-          projection="guided"
+          archSpec={props.archSpec}
           records={props.moduleRecords}
-          onChanged={async () => props.onChanged()}
+          onChanged={props.onChanged}
         />
       )
     case 'connect':
@@ -524,29 +525,18 @@ function GuidedStage(props: {
         )
       }
       return (
-        <div className="capabilities-connections">
-          <CapabilityPreview ref={props.previewRef} bridge={bridge} projectId={projectId} />
-          <PreviewBindingPicker
-            disabled={!projectId}
-            pickFromPreview={() =>
-              props.previewRef.current?.pickElement() ??
-              Promise.reject(new Error('Start Preview before selecting an element.'))
-            }
-            onEvidenceReady={props.onSelectionEvidence}
-            onCancel={() => props.onSelectionEvidence(undefined)}
-          />
-          <BindingEditor
-            bridge={bridge}
-            projectId={projectId}
-            projection="guided"
-            selectionEvidence={props.selectionEvidence}
-            architectureVersion={props.archSpec?.revision}
-            architectureHash={props.archSpec?.contentHash}
-            records={props.moduleRecords}
-            initialBinding={props.bindingRecords[0]?.draft ?? props.bindingRecords[0]?.approved}
-            onChanged={props.onChanged}
-          />
-        </div>
+        <GuidedConnect
+          bridge={bridge}
+          projectId={projectId}
+          records={props.moduleRecords}
+          selectionEvidence={props.selectionEvidence}
+          onSelectionEvidence={props.onSelectionEvidence}
+          architectureVersion={props.archSpec?.revision}
+          architectureHash={props.archSpec?.contentHash}
+          initialBinding={props.bindingRecords[0]?.draft ?? props.bindingRecords[0]?.approved}
+          previewRef={props.previewRef}
+          onChanged={props.onChanged}
+        />
       )
     case 'verify':
       return (

@@ -23,7 +23,7 @@ import {
 import type { CapabilityPacketExportResult, EuikBridge } from '../../bridge'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
 import { CapabilityHandoffCard } from './CapabilityHandoffCard'
-import { presentDiagnosticsForGuided } from './capabilityPresentation'
+import { humanizeIdentifier, moduleTypeLabel, presentDiagnosticsForGuided } from './capabilityPresentation'
 
 type Props = {
   bridge: EuikBridge
@@ -32,6 +32,12 @@ type Props = {
   projection: 'guided' | 'design'
   records?: CapabilityModuleRecord[]
   onChanged?: () => Promise<void>
+  /** When embedded in the guided two-region Build workspace, the parent owns the module list. */
+  hideModuleList?: boolean
+  externalSelectedModuleId?: string
+  onSelectModule?: (id: string) => void
+  /** Guided: render only the single next relevant lifecycle action. */
+  progressive?: boolean
 }
 
 const MODULE_TYPES = Object.keys(MODULE_APPLICABLE_DETAILS) as ModuleType[]
@@ -48,6 +54,10 @@ export function ModulesView({
   projection,
   records = [],
   onChanged = async () => {},
+  hideModuleList = false,
+  externalSelectedModuleId,
+  onSelectModule,
+  progressive = false,
 }: Props) {
   const guided = projection === 'guided'
   const [architecture, setArchitecture] = useState<ArchitectureSpecification | undefined>()
@@ -65,6 +75,8 @@ export function ModulesView({
   const [zipPath, setZipPath] = useState('')
   const [inspection, setInspection] = useState<OverlayInspectionSummary>()
   const [warningsAccepted, setWarningsAccepted] = useState(false)
+  const [applied, setApplied] = useState(false)
+  const [interviewExport, setInterviewExport] = useState<CapabilityPacketExportResult>()
   const approvedIds = records.filter((record) => Boolean(record.approved)).map((record) => record.moduleId)
 
   const moduleIds = architecture?.moduleIds ?? []
@@ -88,6 +100,17 @@ export function ModulesView({
       cancelled = true
     }
   }, [bridge, projectId])
+
+  // Parent-controlled selection (guided two-region Build): follow the external id.
+  useEffect(() => {
+    if (externalSelectedModuleId && externalSelectedModuleId !== selectedModuleId) {
+      setSelectedModuleId(externalSelectedModuleId)
+      setInspection(undefined)
+      setWarningsAccepted(false)
+      setApplied(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalSelectedModuleId])
 
   useEffect(() => {
     if (!projectId || !selectedModuleId) return
@@ -125,8 +148,11 @@ export function ModulesView({
         stateLabels: built.stateLabels,
       })
       setPacket(built)
+      setInterviewExport(exported)
       setMessage(
-        `Exported ${exported.files.length} ${selectedType} module interview files for ${moduleId}. Applicable details: ${applicableDetailsFor(selectedType).join(', ')}.`,
+        guided
+          ? ''
+          : `Exported ${exported.files.length} ${selectedType} module interview files for ${moduleId}. Applicable details: ${applicableDetailsFor(selectedType).join(', ')}.`,
       )
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
@@ -220,11 +246,12 @@ export function ModulesView({
     if (!implementationRunId || !zipPath || !inspection?.canApply) return
     setBusy(true)
     try {
-      const applied = await bridge.capabilitiesApplyOverlay({
+      const result = await bridge.capabilitiesApplyOverlay({
         projectId, runId: implementationRunId, zipPath,
         acceptWarnings: inspection.warnings.length === 0 || warningsAccepted, explicit: true,
       })
-      setMessage(`Applied ${applied.files.length} file(s); verification is now required.`)
+      setApplied(true)
+      setMessage(`Applied ${result.files.length} file(s); verification is now required.`)
       await onChanged()
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
@@ -251,116 +278,157 @@ export function ModulesView({
     )
   }
 
+  const isApproved = approvedIds.includes(selectedModuleId)
+  type BuildStep = 'interview' | 'import' | 'approve' | 'handoff' | 'inspect' | 'accept' | 'apply' | 'verify'
+  const buildStep: BuildStep = !isApproved
+    ? draft ? 'approve' : interviewExport ? 'import' : 'interview'
+    : !implementationExport ? 'handoff'
+      : !inspection ? 'inspect'
+        : inspection.warnings.length > 0 && !warningsAccepted ? 'accept'
+          : inspection.canApply && !applied ? 'apply'
+            : applied ? 'verify'
+              : 'inspect'
+  const BUILD_STEP_LABEL: Record<BuildStep, string> = {
+    interview: 'Create the module interview', import: 'Import the response', approve: 'Review and approve',
+    handoff: 'Create the implementation handoff', inspect: 'Select and inspect the overlay',
+    accept: 'Review and accept warnings', apply: 'Apply the reviewed overlay', verify: 'Ready for verification',
+  }
+  const overlayInspection = inspection ? (
+    <div aria-label="Capability overlay inspection" className="cap-overlay-inspect">
+      {inspection.hardBlockers.length ? <ul className="cap-issue-list">{inspection.hardBlockers.map((item, index) => <li key={`${item.ruleId}-${index}`}>{guided ? item.message : `${item.ruleId}: ${item.message}`} <span className="badge">cannot apply</span></li>)}</ul> : null}
+      {inspection.warnings.length ? <ul>{inspection.warnings.map((item, index) => <li key={`${item.ruleId}-${index}`}>Warning: {guided ? item.message : `${item.ruleId}: ${item.message}`}</li>)}</ul> : <p className="capabilities-note">No overlay warnings.</p>}
+      {inspection.warnings.length ? <label className="cap-accept-warnings"><input type="checkbox" checked={warningsAccepted} onChange={(event) => setWarningsAccepted(event.target.checked)} /> I reviewed and accept every overlay warning</label> : null}
+    </div>
+  ) : null
+
+  const progressiveNextAction = (
+    <div className="cap-build-next" role="group" aria-label="Next action">
+      <p className="cap-build-step-label"><span className="badge">Next</span> {BUILD_STEP_LABEL[buildStep]}</p>
+      {buildStep === 'interview' && (
+        <>
+          <label className="cap-connect-field">Kind of module
+            <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as ModuleType)} aria-label="Module interview type">
+              {MODULE_TYPES.map((type) => <option key={type} value={type}>{moduleTypeLabel(type)}</option>)}
+            </select>
+          </label>
+          <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>Create interview</button>
+        </>
+      )}
+      {buildStep === 'import' && (
+        <>
+          {interviewExport ? <CapabilityHandoffCard bridge={bridge} result={interviewExport} projection="guided" /> : null}
+          <InterviewImport label="Import module interview response" onImport={(r) => void handleImport(r)} disabled={!projectId || busy} />
+        </>
+      )}
+      {buildStep === 'approve' && (
+        <>
+          {response ? <p className="capabilities-note">Draft ready ({response.answers.length} answers). Review and approve.</p> : null}
+          <button type="button" className="btn btn-primary btn-compact" onClick={() => void approve()} disabled={!projectId || !draft || busy || gatePassed === false}>Approve module</button>
+        </>
+      )}
+      {buildStep === 'handoff' && (
+        <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportImplementation()} disabled={busy}>Create implementation handoff</button>
+      )}
+      {buildStep === 'inspect' && (
+        <>
+          {implementationExport ? <CapabilityHandoffCard bridge={bridge} result={implementationExport} projection="guided" /> : null}
+          <button type="button" className="btn btn-primary btn-compact" onClick={() => void selectAndInspectOverlay()} disabled={busy || !implementationRunId}>Select and inspect overlay</button>
+        </>
+      )}
+      {buildStep === 'accept' && overlayInspection}
+      {buildStep === 'apply' && (
+        <>
+          {overlayInspection}
+          <button type="button" className="btn btn-primary btn-compact" onClick={() => void applyInspectedOverlay()} disabled={busy || !inspection?.canApply}>Apply reviewed overlay</button>
+        </>
+      )}
+      {buildStep === 'verify' && (
+        <button type="button" className="btn btn-primary btn-compact" onClick={() => void verifyApprovedModule()} disabled={busy}>Run verification</button>
+      )}
+    </div>
+  )
+
   return (
     <section className="capabilities-modules" role="region" aria-label="Modules">
-      <p className="lede">
-        {projection === 'guided'
-          ? 'Run one type-specific module interview per allocated module. Applicable details are required; unresolved domain questions block approval.'
-          : 'Inspect module types, applicable detail IDs, manifests, and CAP-GATE-003 diagnostics.'}
-      </p>
-      <p role="status">{message}</p>
-
-      <div className="capabilities-module-list" role="navigation" aria-label="Allocated modules">
-        <h3>Allocated modules</h3>
-        <ul>
-          {moduleIds.length === 0 ? <li>No modules in approved architecture.</li> : null}
-          {moduleIds.map((id) => (
-            <li key={id}>
-              <button
-                type="button"
-                className={selectedModuleId === id ? 'active' : undefined}
-                aria-current={selectedModuleId === id ? 'true' : undefined}
-                aria-label={`Select module ${id}`}
-                onClick={() => setSelectedModuleId(id)}
-              >
-                {id}
-                {approvedIds.includes(id) ? ' (approved)' : ''}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <label>
-        Module type
-        <select
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value as ModuleType)}
-          aria-label="Module interview type"
-        >
-          {MODULE_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      {projection === 'design' ? (
-        <p className="capabilities-note">
-          Applicable details ({selectedType}): {applicableDetailsFor(selectedType).join(', ')}
+      {!hideModuleList && (
+        <p className="lede">
+          {projection === 'guided'
+            ? 'Work one allocated module at a time: interview it, approve it, then hand off implementation.'
+            : 'Inspect module types, applicable detail IDs, manifests, and CAP-GATE-003 diagnostics.'}
         </p>
-      ) : null}
+      )}
+      {message ? <p role="status">{message}</p> : <p role="status" className="sr-only">Ready.</p>}
 
-      <div className="capabilities-toolbar" role="group" aria-label="Module interview actions">
-        <button type="button" onClick={() => void exportPacket()} disabled={!projectId || busy}>
-          Export module interview
-        </button>
-        <button
-          type="button"
-          onClick={() => void approve()}
-          disabled={!projectId || !draft || busy || gatePassed === false}
-        >
-          Approve module
-        </button>
-      </div>
-
-      {packet && !guided ? (
-        <details open>
-          <summary>Interview packet {packet.packetId}</summary>
-          <pre className="capabilities-pre">{JSON.stringify(packet, null, 2)}</pre>
-        </details>
-      ) : null}
-
-      <InterviewImport
-        label="Import module interview response"
-        onImport={(r) => void handleImport(r)}
-        disabled={!projectId || busy}
-      />
-
-      <section aria-label="Module implementation lifecycle">
-        <h3>Implementation lifecycle</h3>
-        <div className="capabilities-toolbar" role="group" aria-label="Implementation actions">
-          <button type="button" disabled={busy || !approvedIds.includes(selectedModuleId)} onClick={() => void exportImplementation()}>
-            Export implementation packet
-          </button>
-          <button type="button" disabled={busy || !implementationRunId} onClick={() => void selectAndInspectOverlay()}>
-            Select and inspect overlay
-          </button>
-          <button type="button" disabled={busy || !inspection?.canApply || (inspection.warnings.length > 0 && !warningsAccepted)} onClick={() => void applyInspectedOverlay()}>
-            Apply reviewed overlay
-          </button>
-          <button type="button" disabled={busy || !approvedIds.includes(selectedModuleId)} onClick={() => void verifyApprovedModule()}>
-            Verify module
-          </button>
+      {!hideModuleList && (
+        <div className="capabilities-module-list" role="navigation" aria-label="Allocated modules">
+          <h3>Allocated modules</h3>
+          <ul>
+            {moduleIds.length === 0 ? <li>No modules in approved architecture.</li> : null}
+            {moduleIds.map((id) => (
+              <li key={id}>
+                <button
+                  type="button"
+                  className={selectedModuleId === id ? 'active' : undefined}
+                  aria-current={selectedModuleId === id ? 'true' : undefined}
+                  aria-label={`Select module ${id}`}
+                  onClick={() => (onSelectModule ? onSelectModule(id) : setSelectedModuleId(id))}
+                >
+                  {guided ? humanizeIdentifier(id) : id}
+                  {approvedIds.includes(id) ? ' (approved)' : ''}
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
-        {implementationExport ? (
-          guided ? (
-            <CapabilityHandoffCard bridge={bridge} result={implementationExport} projection="guided" />
-          ) : (
-            <ul aria-label="Implementation handoff files">
-              {implementationExport.files.map((file) => <li key={file.path}><code>{file.path}</code> — {file.bytes} bytes — {file.sha256.slice(0, 12)}…</li>)}
-            </ul>
-          )
-        ) : null}
-        {inspection ? (
-          <div aria-label="Capability overlay inspection">
-            {inspection.hardBlockers.length ? <ul>{inspection.hardBlockers.map((item, index) => <li key={`${item.ruleId}-${index}`}>{item.ruleId}: {item.message}</li>)}</ul> : null}
-            {inspection.warnings.length ? <ul>{inspection.warnings.map((item, index) => <li key={`${item.ruleId}-${index}`}>Warning {item.ruleId}: {item.message}</li>)}</ul> : <p>No overlay warnings.</p>}
-            {inspection.warnings.length ? <label><input type="checkbox" checked={warningsAccepted} onChange={(event) => setWarningsAccepted(event.target.checked)} />I reviewed and accept every overlay warning</label> : null}
+      )}
+
+      {progressive ? (
+        progressiveNextAction
+      ) : (
+        <>
+          <label>
+            Module type
+            <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as ModuleType)} aria-label="Module interview type">
+              {MODULE_TYPES.map((type) => <option key={type} value={type}>{guided ? moduleTypeLabel(type) : type}</option>)}
+            </select>
+          </label>
+
+          {projection === 'design' ? (
+            <p className="capabilities-note">Applicable details ({selectedType}): {applicableDetailsFor(selectedType).join(', ')}</p>
+          ) : null}
+
+          <div className="capabilities-toolbar" role="group" aria-label="Module interview actions">
+            <button type="button" onClick={() => void exportPacket()} disabled={!projectId || busy}>Export module interview</button>
+            <button type="button" onClick={() => void approve()} disabled={!projectId || !draft || busy || gatePassed === false}>Approve module</button>
           </div>
-        ) : null}
-      </section>
+
+          {packet && !guided ? (
+            <details open><summary>Interview packet {packet.packetId}</summary><pre className="capabilities-pre">{JSON.stringify(packet, null, 2)}</pre></details>
+          ) : null}
+
+          <InterviewImport label="Import module interview response" onImport={(r) => void handleImport(r)} disabled={!projectId || busy} />
+
+          <section aria-label="Module implementation lifecycle">
+            <h3>Implementation lifecycle</h3>
+            <div className="capabilities-toolbar" role="group" aria-label="Implementation actions">
+              <button type="button" disabled={busy || !approvedIds.includes(selectedModuleId)} onClick={() => void exportImplementation()}>Export implementation packet</button>
+              <button type="button" disabled={busy || !implementationRunId} onClick={() => void selectAndInspectOverlay()}>Select and inspect overlay</button>
+              <button type="button" disabled={busy || !inspection?.canApply || (inspection.warnings.length > 0 && !warningsAccepted)} onClick={() => void applyInspectedOverlay()}>Apply reviewed overlay</button>
+              <button type="button" disabled={busy || !approvedIds.includes(selectedModuleId)} onClick={() => void verifyApprovedModule()}>Verify module</button>
+            </div>
+            {implementationExport ? (
+              guided ? (
+                <CapabilityHandoffCard bridge={bridge} result={implementationExport} projection="guided" />
+              ) : (
+                <ul aria-label="Implementation handoff files">
+                  {implementationExport.files.map((file) => <li key={file.path}><code>{file.path}</code> — {file.bytes} bytes — {file.sha256.slice(0, 12)}…</li>)}
+                </ul>
+              )
+            ) : null}
+            {overlayInspection}
+          </section>
+        </>
+      )}
 
       {diagnostics.length > 0 ? (
         guided ? (
