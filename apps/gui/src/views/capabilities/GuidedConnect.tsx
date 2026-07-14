@@ -12,7 +12,7 @@
  * - Element selection is honestly disabled outside packaged Electron.
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   bindingModeLabel,
   buildConnectionPacket,
@@ -122,6 +122,7 @@ export function GuidedConnect(props: Props) {
   }))
   const [attempted, setAttempted] = useState(false)
   const [busy, setBusy] = useState(false)
+  const busyRef = useRef(false) // synchronous guard: blocks a second click in the same tick
   const [status, setStatus] = useState<Status | null>(null)
   const [ranOutcome, setRanOutcome] = useState<{ label: string; outcome: string; connected: boolean } | null>(null)
 
@@ -145,9 +146,10 @@ export function GuidedConnect(props: Props) {
   const guidedError = (message: string): Status => ({ tone: 'error', text: sanitizeGuidedMessage(message) })
 
   async function runTest() {
-    if (busy) return
+    if (busyRef.current) return
     if (binding.projectId !== projectId) { setStatus(guidedError('This connection is for a different project.')); return }
     if (!capabilityChosen || !elementSelected || !behaviorsComplete) return
+    busyRef.current = true
     setBusy(true)
     setAttempted(true)
     const mode = binding.dataMode
@@ -179,18 +181,20 @@ export function GuidedConnect(props: Props) {
     } catch (error) {
       setStatus(guidedError(error instanceof Error ? error.message : String(error)))
     } finally {
+      busyRef.current = false
       setBusy(false)
     }
   }
 
   async function approve() {
-    if (busy) return
+    if (busyRef.current) return
     if (binding.projectId !== projectId) { setStatus(guidedError('This connection is for a different project.')); return }
     setAttempted(true)
     if (!gate.passed) {
       setStatus(guidedError(`Not ready: ${presentDiagnosticsForGuided(gate.diagnostics)[0]?.message ?? 'complete every step first.'}`))
       return
     }
+    busyRef.current = true
     setBusy(true)
     try {
       await bridge.capabilitiesSaveBindingDraft(projectId, binding)
@@ -206,6 +210,7 @@ export function GuidedConnect(props: Props) {
     } catch (error) {
       setStatus(guidedError(error instanceof Error ? error.message : String(error)))
     } finally {
+      busyRef.current = false
       setBusy(false)
     }
   }
