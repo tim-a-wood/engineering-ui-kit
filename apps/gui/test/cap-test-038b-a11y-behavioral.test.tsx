@@ -220,8 +220,8 @@ describe('CAP-TEST-038b Capabilities accessibility (behavioral)', () => {
     expect(canProceedWithSelection(confirmed)).toBe(true) // only after explicit confirmation
   })
 
-  // ---- Guided journey: four outcomes, keyboard reachable, locked non-navigable --
-  it('groups planning into one outcome; unlocked outcomes are buttons and locked outcomes are not', () => {
+  // ---- Guided journey: five steps, keyboard reachable, locked non-navigable --
+  it('shows Plan and Design separately; unlocked steps are buttons and locked steps are not', () => {
     const stages = deriveJourney({
       application: { approved: {} },
       architecture: { approved: { schemaVersion: '1.0', moduleIds: ['mod.a'] } as never },
@@ -229,9 +229,9 @@ describe('CAP-TEST-038b Capabilities accessibility (behavioral)', () => {
       bindings: [],
     }).stages
     const html = renderToStaticMarkup(<CapabilityJourney stages={stages} viewing="build" onView={() => {}} />)
-    // Define + Architect are one visible Plan outcome, followed by three outcomes.
-    expect((html.match(/class="cap-journey-step/g) ?? []).length).toBe(4)
+    expect((html.match(/class="cap-journey-step/g) ?? []).length).toBe(5)
     expect(html).toContain('>Plan</span>')
+    expect(html).toContain('>Design</span>')
     // Exactly one is the step being viewed.
     expect((html.match(/aria-current="step"/g) ?? []).length).toBe(1)
     // Locked stages (connect, verify here) are NOT buttons — they cannot be navigated.

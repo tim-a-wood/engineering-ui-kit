@@ -317,7 +317,7 @@ export default function App() {
           <TipCard
             text={
               view === 'capabilities'
-                ? 'Guided follows four outcomes: Plan, Build, Connect, and Verify. Switch to Design for the technical detail.'
+                ? 'Guided follows five steps: Plan, Design, Build, Connect, and Verify. Switch views for the technical detail.'
                 : TIPS[view] ?? 'Keep handoffs small and reviewable.'
             }
             linkLabel={view === 'capabilities' ? 'View Capabilities guide' : 'View workflow guide'}

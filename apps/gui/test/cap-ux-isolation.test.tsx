@@ -62,14 +62,14 @@ describe('project isolation', () => {
 
     selectProject('A') // A's application load is pending
     selectProject('B') // switch before A resolves
-    await waitFor(() => expect(screen.getByText('Describe the application.')).toBeTruthy()) // B (empty) is ready
+    await waitFor(() => expect(screen.getByText('Understand the application.')).toBeTruthy()) // B (empty) is ready
 
     // A resolves LATE with an approved application — must be ignored.
     defA.resolve(APPROVED_APP)
     await new Promise((r) => setTimeout(r, 0))
 
-    expect(screen.getByText('Describe the application.')).toBeTruthy()
-    expect(screen.queryByText('Shape the module plan.')).toBeNull()
+    expect(screen.getByText('Understand the application.')).toBeTruthy()
+    expect(screen.queryByText('Shape the solution.')).toBeNull()
   })
 
   it('clears the previous project immediately and shows a loading state on switch', async () => {
@@ -78,15 +78,15 @@ describe('project isolation', () => {
     render(<CapabilitiesView bridge={makeBridge({ capabilitiesGetApplication: getApp as never })} projects={projects} />)
 
     selectProject('A')
-    await waitFor(() => expect(screen.getByText('Shape the module plan.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Shape the solution.')).toBeTruthy())
 
     selectProject('B') // B load pending
     // A's records are gone immediately; a compact loading state shows instead.
-    expect(screen.queryByText('Shape the module plan.')).toBeNull()
+    expect(screen.queryByText('Shape the solution.')).toBeNull()
     expect(screen.getByText('Loading this project…')).toBeTruthy()
 
     defB.resolve({})
-    await waitFor(() => expect(screen.getByText('Describe the application.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Understand the application.')).toBeTruthy())
   })
 
   it('disables writes while a project is loading (no stage workspace mounted)', async () => {
@@ -108,22 +108,22 @@ describe('project isolation', () => {
     render(<CapabilitiesView bridge={makeBridge({ capabilitiesGetApplication: getApp as never })} projects={projects} />)
 
     selectProject('A')
-    await waitFor(() => expect(screen.getByText('Shape the module plan.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Shape the solution.')).toBeTruthy())
 
     selectProject('B')
     await waitFor(() => expect(screen.getByRole('button', { name: /Retry/i })).toBeTruthy())
     expect(screen.getByRole('alert').textContent).toMatch(/could not be loaded/i)
-    expect(screen.queryByText('Shape the module plan.')).toBeNull()
+    expect(screen.queryByText('Shape the solution.')).toBeNull()
   })
 
   it('resets canonical records on project change (B does not show A stage state)', async () => {
     const getApp = vi.fn((pid: string) => Promise.resolve(pid === 'A' ? APPROVED_APP : {}))
     render(<CapabilitiesView bridge={makeBridge({ capabilitiesGetApplication: getApp as never })} projects={projects} />)
     selectProject('A')
-    await waitFor(() => expect(screen.getByText('Shape the module plan.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Shape the solution.')).toBeTruthy())
     selectProject('B')
-    await waitFor(() => expect(screen.getByText('Describe the application.')).toBeTruthy())
-    expect(screen.queryByText('Shape the module plan.')).toBeNull()
+    await waitFor(() => expect(screen.getByText('Understand the application.')).toBeTruthy())
+    expect(screen.queryByText('Shape the solution.')).toBeNull()
   })
 
   it('ignores a refresh invoked by an unmounted Project A child after switching to B', async () => {
@@ -150,13 +150,13 @@ describe('project isolation', () => {
     await waitFor(() => expect((screen.getByRole('button', { name: 'Approve definition' }) as HTMLButtonElement).disabled).toBe(false))
     fireEvent.click(screen.getByRole('button', { name: 'Approve definition' }))
     selectProject('B')
-    await waitFor(() => expect(screen.getByText('Describe the application.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Understand the application.')).toBeTruthy())
 
     gate.resolve({ passed: true, diagnostics: [] })
     await waitFor(() => expect(approveApplication).toHaveBeenCalledTimes(1))
     await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(screen.getByText('Describe the application.')).toBeTruthy()
-    expect(screen.queryByText('Shape the module plan.')).toBeNull()
+    expect(screen.getByText('Understand the application.')).toBeTruthy()
+    expect(screen.queryByText('Shape the solution.')).toBeNull()
   })
 })
 
@@ -349,8 +349,8 @@ describe('help modal accessibility', () => {
 
     // The Capabilities overview is the first topic in its group -> no Previous action.
     expect(screen.queryByRole('button', { name: /←/ })).toBeNull()
-    // Next stays inside the Capabilities group (Plan · Application), not Build & Test.
-    fireEvent.click(screen.getByRole('button', { name: /Plan · Application →/ }))
+    // Next stays inside the Capabilities group (Plan · Understand), not Build & Test.
+    fireEvent.click(screen.getByRole('button', { name: /Plan · Understand →/ }))
     expect(onSelect).toHaveBeenCalledWith('capabilities-define')
 
     // Escape closes.

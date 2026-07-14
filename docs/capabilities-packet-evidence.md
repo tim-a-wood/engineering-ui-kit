@@ -438,7 +438,7 @@ persistence, adapters, gates, runtime, and legacy Build & Test behavior are unch
   state is a polished empty state (Select a project / Go to Projects). Single
   `refreshCapabilityWorkspace` path owns canonical state; the journey is derived every render and
   never persisted.
-- **Guided four-outcome journey.** `Plan → Build → Connect → Verify`, with the canonical Define and Architect gates grouped inside Plan and gated by a pure
+- **Guided five-step journey.** `Plan → Design → Build → Connect → Verify`, with Plan used to understand the application and Design used to shape the solution, gated by a pure
   derivation (`capabilitiesUiState.deriveJourney`). Locked stages are non-navigable and never render
   their editors; Connect resolves to `not-applicable` when no experience/connection module exists;
   completion shows a single `Continue to …`. Needs attention and Changes are contextual header

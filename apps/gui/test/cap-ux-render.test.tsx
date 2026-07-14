@@ -104,6 +104,35 @@ describe('Guided vs Design disclosure', () => {
     expect(html).not.toContain('aria-label="Binding editor"')
     expect(html).toContain('Show me how')
   })
+
+  it('keeps Plan and Design as separate steps with an explicit transition', () => {
+    const journey = deriveJourney({ application: { approved: {} }, architecture: {}, modules: [], bindings: [] })
+    const html = renderToStaticMarkup(
+      <GuidedBody
+        bridge={bridge()}
+        projectId="p1"
+        journey={journey}
+        viewing="define"
+        panel="journey"
+        moduleRecords={noModules}
+        attentionItems={[]}
+        architectureProjection={undefined}
+        archSpec={undefined}
+        selectionEvidence={undefined}
+        bindingRecords={[]}
+        previewRef={previewRef}
+        stageHeadingRef={headingRef}
+        onView={() => {}}
+        onChanged={() => {}}
+        onSelectionEvidence={() => {}}
+        onClosePanel={() => {}}
+      />,
+    )
+
+    expect(html).toContain('>Plan</span>')
+    expect(html).toContain('>Design</span>')
+    expect(html).toContain('Continue to Design')
+  })
 })
 
 describe('Guided source scan — no technical strings leak by default', () => {

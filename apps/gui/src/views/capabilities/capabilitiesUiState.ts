@@ -67,8 +67,8 @@ export type Journey = {
 export const STAGE_ORDER: StageId[] = ['define', 'architect', 'build', 'connect', 'verify']
 
 export const STAGE_LABELS: Record<StageId, string> = {
-  define: 'Define',
-  architect: 'Architect',
+  define: 'Plan',
+  architect: 'Design',
   build: 'Build',
   connect: 'Connect',
   verify: 'Verify',
@@ -140,10 +140,10 @@ export function deriveJourney(input: JourneyInput): Journey {
     label: STAGE_LABELS.define,
     state: appApproved ? 'complete' : 'current',
     shortStatus: appApproved
-      ? 'Definition approved.'
+      ? 'Application plan approved.'
       : appDraft
-        ? 'Draft ready to review.'
-        : 'Not started.',
+        ? 'Review the application plan.'
+        : 'Understand the application.',
     helpTopic: STAGE_HELP.define,
     nextStageId: 'architect',
     satisfied: appApproved,
@@ -155,13 +155,13 @@ export function deriveJourney(input: JourneyInput): Journey {
     label: STAGE_LABELS.architect,
     state: !appApproved ? 'locked' : archApproved ? 'complete' : 'current',
     shortStatus: !appApproved
-      ? 'Approve the definition first.'
+      ? 'Approve Plan first.'
       : archApproved
-        ? 'Architecture approved.'
+        ? 'Solution design approved.'
         : archDraft
-          ? 'Draft ready to review.'
-          : 'Not started.',
-    prerequisiteReason: !appApproved ? 'Requires an approved definition.' : undefined,
+          ? 'Review the solution design.'
+          : 'Shape the solution.',
+    prerequisiteReason: !appApproved ? 'Requires an approved application plan.' : undefined,
     helpTopic: STAGE_HELP.architect,
     nextStageId: 'build',
     satisfied: archApproved,
@@ -178,13 +178,13 @@ export function deriveJourney(input: JourneyInput): Journey {
     label: STAGE_LABELS.build,
     state: buildState,
     shortStatus: !archApproved
-      ? 'Approve the architecture first.'
+      ? 'Approve Design first.'
       : !buildHasModules
         ? 'The architecture allocates no modules.'
         : buildComplete
           ? `All ${buildTotal} modules approved.`
           : `${buildDone} of ${buildTotal} approved.`,
-    prerequisiteReason: !archApproved ? 'Requires an approved architecture.' : undefined,
+    prerequisiteReason: !archApproved ? 'Requires an approved solution design.' : undefined,
     progress: archApproved && buildHasModules ? { done: buildDone, total: buildTotal } : undefined,
     helpTopic: STAGE_HELP.build,
     nextStageId: 'connect',

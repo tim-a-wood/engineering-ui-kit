@@ -219,20 +219,20 @@ function EvidenceArt() {
 /* --------------------------------------------------- capabilities artwork */
 
 function CapJourneyArt() {
-  const stages = ['Plan', 'Build', 'Connect', 'Verify']
+  const stages = ['Plan', 'Design', 'Build', 'Connect', 'Verify']
   return (
-    <svg viewBox="0 0 520 150" role="img" aria-label="The four-outcome Capabilities journey">
+    <svg viewBox="0 0 520 150" role="img" aria-label="The five-step Capabilities journey">
       {stages.map((label, i) => {
-        const x = 25 + i * 124
+        const x = 8 + i * 103
         const done = i < 1
         const current = i === 1
         return (
           <g key={label}>
-            <rect x={x} y="46" width="98" height="58" rx="10" fill={current ? 'var(--semantic-accent-primary-tint)' : panel} stroke={current ? accent : done ? ok : stroke} strokeWidth={current ? '1.6' : '1'} />
+            <rect x={x} y="46" width="82" height="58" rx="10" fill={current ? 'var(--semantic-accent-primary-tint)' : panel} stroke={current ? accent : done ? ok : stroke} strokeWidth={current ? '1.6' : '1'} />
             <circle cx={x + 18} cy="70" r="11" fill={done ? ok : current ? accent : inset} stroke={done || current ? 'none' : stroke} />
             <text x={x + 18} y="74" textAnchor="middle" fontSize="10" fontWeight="700" fill={done || current ? '#fff' : muted}>{done ? '✓' : i + 1}</text>
-            <text x={x + 49} y="94" textAnchor="middle" fontSize="10.5" fontWeight="600" fill="var(--semantic-text-primary)">{label}</text>
-            {i < 3 && <path d={`M${x + 98} 75 H${x + 124}`} stroke={stroke} strokeWidth="1.5" markerEnd="url(#cap-arrow)" />}
+            <text x={x + 41} y="94" textAnchor="middle" fontSize="10.5" fontWeight="600" fill="var(--semantic-text-primary)">{label}</text>
+            {i < 4 && <path d={`M${x + 82} 75 H${x + 103}`} stroke={stroke} strokeWidth="1.5" markerEnd="url(#cap-arrow)" />}
           </g>
         )
       })}
@@ -349,10 +349,10 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
     group: 'Capabilities',
     label: 'The journey',
     title: 'Capabilities, in one picture',
-    blurb: 'Capabilities turns "what should this application do" into approved, verified modules through four outcomes: Plan, Build, Connect, Verify. Guided is the task-focused view; Design holds the technical detail. Both read the same records.',
+    blurb: 'Capabilities turns "what should this application do" into approved, verified modules through five steps: Plan, Design, Build, Connect, Verify. Guided is the task-focused view; the technical view holds the detailed records. Both read the same model.',
     art: <CapJourneyArt />,
     steps: [
-      { title: 'Guided vs Design', body: 'Guided follows four outcomes and shows the next useful action. Plan naturally moves from understanding the application to shaping its solution. Design exposes the same records as six technical areas.' },
+      { title: 'Guided vs technical view', body: 'Guided follows five steps and shows the next useful action. Plan establishes an understanding of the application; Design shapes the solution. The technical view exposes the same records as six detailed areas.' },
       { title: 'One model', body: 'Switching modes never duplicates or forks your work — both projections read and write the same canonical records.' },
       { title: 'Maintenance', body: 'Needs attention lists modules that have drifted and the one action each needs. Changes assesses the impact of an edit and walks the affected modules in dependency order.' },
     ],
@@ -360,21 +360,21 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
   {
     id: 'capabilities-define',
     group: 'Capabilities',
-    label: 'Plan · Application',
-    title: 'Define what the application must do',
+    label: 'Plan · Understand',
+    title: 'Understand what the application must do',
     blurb: 'Capture outcomes and user-visible behavior through a Copilot interview, then approve the definition. Nothing downstream unlocks until it is approved.',
     art: <CapHandoffArt label="Interview" aria="Product interview handoff and import loop" />,
     steps: [
       { title: 'Create the handoff', body: 'Generate the product-interview files and open them in Copilot with the recommended prompt.' },
       { title: 'Attach and prompt', body: 'Attach the files in Copilot, paste the prompt, and let it draft the definition.' },
       { title: 'Import the response', body: 'Bring the response file back. Review proposed and unresolved items — unresolved first.' },
-      { title: 'Approve', body: 'When the definition is complete, approve it. Guided then continues directly to shaping the solution within Plan.' },
+      { title: 'Approve', body: 'When the application plan is complete, approve it to unlock Design.' },
     ],
   },
   {
     id: 'capabilities-architect',
     group: 'Capabilities',
-    label: 'Plan · Solution',
+    label: 'Design · Shape',
     title: 'Shape the modules and their dependencies',
     blurb: 'A second interview proposes the module structure. Review the modules and dependencies, resolve any cycles, and approve the architecture.',
     art: <CapHandoffArt label="Architecture" aria="Architecture interview handoff and import loop" />,

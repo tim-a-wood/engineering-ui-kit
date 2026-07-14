@@ -56,7 +56,7 @@ describe('deriveJourney', () => {
   it('empty selected project: Define is current, everything after is locked', () => {
     const j = deriveJourney(EMPTY)
     expect(stageById(j, 'define').state).toBe('current')
-    expect(stageById(j, 'define').shortStatus).toBe('Not started.')
+    expect(stageById(j, 'define').shortStatus).toBe('Understand the application.')
     expect(stageById(j, 'architect').state).toBe('locked')
     expect(stageById(j, 'build').state).toBe('locked')
     expect(stageById(j, 'connect').state).toBe('locked')
@@ -68,7 +68,7 @@ describe('deriveJourney', () => {
   it('application draft only: Define current with draft status; Architect still locked', () => {
     const j = deriveJourney({ ...EMPTY, application: { draft: { id: 'app.x' } } })
     expect(stageById(j, 'define').state).toBe('current')
-    expect(stageById(j, 'define').shortStatus).toBe('Draft ready to review.')
+    expect(stageById(j, 'define').shortStatus).toBe('Review the application plan.')
     expect(stageById(j, 'architect').state).toBe('locked')
   })
 
@@ -76,7 +76,7 @@ describe('deriveJourney', () => {
     const j = deriveJourney({ ...EMPTY, application: { approved: { id: 'app.x' } } })
     expect(stageById(j, 'define').state).toBe('complete')
     expect(stageById(j, 'architect').state).toBe('current')
-    expect(stageById(j, 'architect').shortStatus).toBe('Not started.')
+    expect(stageById(j, 'architect').shortStatus).toBe('Shape the solution.')
     expect(j.firstIncompleteStageId).toBe('architect')
   })
 
@@ -87,7 +87,7 @@ describe('deriveJourney', () => {
       architecture: { draft: arch(['mod.a']) },
     })
     expect(stageById(j, 'architect').state).toBe('current')
-    expect(stageById(j, 'architect').shortStatus).toBe('Draft ready to review.')
+    expect(stageById(j, 'architect').shortStatus).toBe('Review the solution design.')
     expect(stageById(j, 'build').state).toBe('locked')
   })
 
