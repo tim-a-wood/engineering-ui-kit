@@ -16,11 +16,21 @@ export type GuideTopicId =
   | 'upload-run'
   | 'apply-safely'
   | 'verify-review'
+  | 'capabilities-overview'
+  | 'capabilities-define'
+  | 'capabilities-architect'
+  | 'capabilities-build'
+  | 'capabilities-connect'
+  | 'capabilities-verify'
+  | 'capabilities-changes'
+
+export type GuideGroup = 'Build & Test' | 'Capabilities'
 
 export type GuideStep = { title: string; body: string }
 
 export type GuideTopic = {
   id: GuideTopicId
+  group: GuideGroup
   label: string
   title: string
   blurb: string
@@ -205,11 +215,237 @@ function EvidenceArt() {
   )
 }
 
+/* --------------------------------------------------- capabilities artwork */
+
+function CapJourneyArt() {
+  const stages = ['Define', 'Architect', 'Build', 'Connect', 'Verify']
+  return (
+    <svg viewBox="0 0 520 150" role="img" aria-label="The five-stage Capabilities journey">
+      {stages.map((label, i) => {
+        const x = 16 + i * 100
+        const done = i < 2
+        const current = i === 2
+        return (
+          <g key={label}>
+            <rect x={x} y="46" width="84" height="58" rx="10" fill={current ? 'var(--semantic-accent-primary-tint)' : panel} stroke={current ? accent : done ? ok : stroke} strokeWidth={current ? '1.6' : '1'} />
+            <circle cx={x + 18} cy="70" r="11" fill={done ? ok : current ? accent : inset} stroke={done || current ? 'none' : stroke} />
+            <text x={x + 18} y="74" textAnchor="middle" fontSize="10" fontWeight="700" fill={done || current ? '#fff' : muted}>{done ? '✓' : i + 1}</text>
+            <text x={x + 42} y="94" textAnchor="middle" fontSize="10.5" fontWeight="600" fill="var(--semantic-text-primary)">{label}</text>
+            {i < 4 && <path d={`M${x + 84} 75 H${x + 100}`} stroke={stroke} strokeWidth="1.5" markerEnd="url(#cap-arrow)" />}
+          </g>
+        )
+      })}
+      <text x="260" y="28" textAnchor="middle" fontSize="10.5" fill={muted}>One canonical model · Guided is the task view · Design holds the detail</text>
+      <text x="260" y="130" textAnchor="middle" fontSize="9.5" fill={muted}>Needs attention finds maintenance · Changes processes bounded updates</text>
+      <defs>
+        <marker id="cap-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={stroke} /></marker>
+      </defs>
+    </svg>
+  )
+}
+
+/** Simple reusable "handoff loop" illustration used by the interview-driven stages. */
+function CapHandoffArt(props: { label: string; aria: string }) {
+  return (
+    <svg viewBox="0 0 460 150" role="img" aria-label={props.aria}>
+      <rect x="24" y="40" width="118" height="70" rx="10" fill={panel} stroke={accent} />
+      <text x="83" y="70" textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--semantic-text-primary)">{props.label}</text>
+      <text x="83" y="90" textAnchor="middle" fontSize="9.5" fill={muted}>handoff files</text>
+      <path d="M146 66 H196" stroke={accent} strokeWidth="1.8" markerEnd="url(#cap-h-arrow)" />
+      <text x="171" y="58" textAnchor="middle" fontSize="8.5" fill={muted}>attach</text>
+      <rect x="200" y="30" width="120" height="90" rx="10" fill={panel} stroke={stroke} />
+      <text x="260" y="52" textAnchor="middle" fontSize="10" fill="var(--semantic-text-secondary)">Copilot</text>
+      <rect x="214" y="64" width="92" height="16" rx="8" fill={inset} stroke={stroke} />
+      <rect x="214" y="88" width="60" height="16" rx="8" fill="var(--semantic-accent-primary-tint)" />
+      <path d="M324 84 H374" stroke={accent} strokeWidth="1.8" markerEnd="url(#cap-h-arrow)" />
+      <text x="349" y="76" textAnchor="middle" fontSize="8.5" fill={muted}>import</text>
+      <rect x="378" y="52" width="70" height="46" rx="8" fill={panel} stroke={ok} />
+      <text x="413" y="79" textAnchor="middle" fontSize="9.5" fill={ok}>review</text>
+      <defs>
+        <marker id="cap-h-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={accent} /></marker>
+      </defs>
+    </svg>
+  )
+}
+
+function CapConnectArt() {
+  return (
+    <svg viewBox="0 0 460 150" role="img" aria-label="Selecting a preview element and connecting it to a capability">
+      <rect x="24" y="28" width="150" height="94" rx="10" fill={panel} stroke={stroke} />
+      <text x="99" y="20" textAnchor="middle" fontSize="9.5" fill={muted}>Preview</text>
+      <rect x="40" y="44" width="118" height="14" rx="4" fill={inset} stroke={stroke} />
+      <rect x="40" y="66" width="70" height="40" rx="6" fill="var(--semantic-accent-primary-tint)" stroke={accent} strokeWidth="1.6" />
+      <text x="75" y="90" textAnchor="middle" fontSize="8.5" fill={accentText}>selected</text>
+      <path d="M178 86 H222" stroke={accent} strokeWidth="1.8" markerEnd="url(#cap-c-arrow)" />
+      <rect x="228" y="40" width="96" height="30" rx="8" fill={panel} stroke={accent} />
+      <text x="276" y="59" textAnchor="middle" fontSize="9.5" fill={accentText}>capability</text>
+      <rect x="228" y="82" width="96" height="30" rx="8" fill={panel} stroke={stroke} />
+      <text x="276" y="101" textAnchor="middle" fontSize="9" fill="var(--semantic-text-secondary)">behavior</text>
+      <path d="M328 86 H372" stroke={stroke} strokeWidth="1.5" markerEnd="url(#cap-c-arrow2)" />
+      <rect x="376" y="64" width="70" height="44" rx="8" fill={panel} stroke={ok} />
+      <text x="411" y="90" textAnchor="middle" fontSize="9.5" fill={ok}>approve</text>
+      <defs>
+        <marker id="cap-c-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={accent} /></marker>
+        <marker id="cap-c-arrow2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={stroke} /></marker>
+      </defs>
+    </svg>
+  )
+}
+
+function CapVerifyArt() {
+  return (
+    <svg viewBox="0 0 460 150" role="img" aria-label="Running verification and reaching a ready state">
+      <rect x="30" y="34" width="120" height="84" rx="10" fill={panel} stroke={stroke} />
+      <text x="90" y="26" textAnchor="middle" fontSize="9.5" fill={muted}>modules</text>
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          <rect x="46" y={46 + i * 22} width="88" height="16" rx="4" fill={inset} stroke={stroke} />
+          <circle cx="54" cy={54 + i * 22} r="4" fill={i < 2 ? ok : warn} />
+        </g>
+      ))}
+      <path d="M154 76 H198" stroke={accent} strokeWidth="1.8" markerEnd="url(#cap-v-arrow)" />
+      <rect x="204" y="52" width="96" height="46" rx="8" fill={panel} stroke={accent} />
+      <text x="252" y="79" textAnchor="middle" fontSize="9.5" fill={accentText}>run checks</text>
+      <path d="M304 76 H348" stroke={stroke} strokeWidth="1.5" markerEnd="url(#cap-v-arrow2)" />
+      <rect x="354" y="52" width="92" height="46" rx="8" fill={panel} stroke={ok} />
+      <text x="400" y="73" textAnchor="middle" fontSize="9.5" fill={ok}>ready</text>
+      <text x="400" y="88" textAnchor="middle" fontSize="8" fill={muted}>or repair</text>
+      <defs>
+        <marker id="cap-v-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={accent} /></marker>
+        <marker id="cap-v-arrow2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={stroke} /></marker>
+      </defs>
+    </svg>
+  )
+}
+
+function CapChangesArt() {
+  return (
+    <svg viewBox="0 0 460 150" role="img" aria-label="Assessing impact and processing a delta queue one target at a time">
+      <rect x="24" y="48" width="96" height="54" rx="10" fill={panel} stroke={warn} />
+      <text x="72" y="72" textAnchor="middle" fontSize="10" fill={warn}>impact</text>
+      <text x="72" y="88" textAnchor="middle" fontSize="8.5" fill={muted}>affected?</text>
+      <path d="M124 75 H166" stroke={stroke} strokeWidth="1.5" markerEnd="url(#cap-ch-arrow)" />
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          <rect x={172 + i * 96} y="56" width="86" height="38" rx="8" fill={i === 0 ? 'var(--semantic-accent-primary-tint)' : panel} stroke={i === 0 ? accent : stroke} />
+          <text x={215 + i * 96} y="79" textAnchor="middle" fontSize="9" fill={i === 0 ? accentText : muted}>{i === 0 ? 'next →' : 'locked'}</text>
+          {i < 2 && <path d={`M${258 + i * 96} 75 H${268 + i * 96}`} stroke={stroke} strokeWidth="1.5" />}
+        </g>
+      ))}
+      <text x="240" y="120" textAnchor="middle" fontSize="9" fill={muted}>verify each target before the next unlocks</text>
+      <defs>
+        <marker id="cap-ch-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={stroke} /></marker>
+      </defs>
+    </svg>
+  )
+}
+
 /* ----------------------------------------------------------------- topics */
+
+const CAPABILITIES_TOPICS: GuideTopic[] = [
+  {
+    id: 'capabilities-overview',
+    group: 'Capabilities',
+    label: 'The journey',
+    title: 'Capabilities, in one picture',
+    blurb: 'Capabilities turns "what should this application do" into approved, verified modules through five stages: Define, Architect, Build, Connect, Verify. Guided is the task-focused view; Design holds the technical detail. Both read the same records.',
+    art: <CapJourneyArt />,
+    steps: [
+      { title: 'Guided vs Design', body: 'Guided walks the five stages one at a time and shows the next action. Design exposes the same records as six technical areas: Application, Architecture, Needs attention, Modules, Connections, Verification.' },
+      { title: 'One model', body: 'Switching modes never duplicates or forks your work — both projections read and write the same canonical records.' },
+      { title: 'Maintenance', body: 'Needs attention lists modules that have drifted and the one action each needs. Changes assesses the impact of an edit and walks the affected modules in dependency order.' },
+    ],
+  },
+  {
+    id: 'capabilities-define',
+    group: 'Capabilities',
+    label: 'Define',
+    title: 'Define what the application must do',
+    blurb: 'Capture outcomes and user-visible behavior through a Copilot interview, then approve the definition. Nothing downstream unlocks until it is approved.',
+    art: <CapHandoffArt label="Interview" aria="Product interview handoff and import loop" />,
+    steps: [
+      { title: 'Create the handoff', body: 'Generate the product-interview files and open them in Copilot with the recommended prompt.' },
+      { title: 'Attach and prompt', body: 'Attach the files in Copilot, paste the prompt, and let it draft the definition.' },
+      { title: 'Import the response', body: 'Bring the response file back. Review proposed and unresolved items — unresolved first.' },
+      { title: 'Approve', body: 'When the definition is complete, approve it. Approval unlocks Architect.' },
+    ],
+  },
+  {
+    id: 'capabilities-architect',
+    group: 'Capabilities',
+    label: 'Architect',
+    title: 'Shape the modules and their dependencies',
+    blurb: 'A second interview proposes the module structure. Review the modules and dependencies, resolve any cycles, and approve the architecture.',
+    art: <CapHandoffArt label="Architecture" aria="Architecture interview handoff and import loop" />,
+    steps: [
+      { title: 'Create the handoff', body: 'Generate the architecture-interview files from the approved definition.' },
+      { title: 'Import the proposal', body: 'Bring the proposal back and review the derived module diagram and dependency list.' },
+      { title: 'Resolve findings', body: 'Dependency cycles and invalid structure are flagged in plain language — fix them before approving.' },
+      { title: 'Approve', body: 'Approve the architecture to unlock Build.' },
+    ],
+  },
+  {
+    id: 'capabilities-build',
+    group: 'Capabilities',
+    label: 'Build',
+    title: 'Interview, approve, and implement each module',
+    blurb: 'Work one allocated module at a time: interview it, approve its manifest, hand off implementation to Copilot, then inspect and apply the returned overlay.',
+    art: <CapHandoffArt label="Module" aria="Module interview and implementation overlay loop" />,
+    steps: [
+      { title: 'Select one module', body: 'Pick a module from the list. Its status and the single next action are shown.' },
+      { title: 'Interview and approve', body: 'Run the module interview, import the response, and approve the manifest.' },
+      { title: 'Implementation handoff', body: 'Generate the implementation files and return with ui-overlay.zip from Copilot.' },
+      { title: 'Inspect and apply', body: 'Inspect the overlay: blockers can never be applied; warnings need your explicit acceptance. Then mark it ready for verification.' },
+    ],
+  },
+  {
+    id: 'capabilities-connect',
+    group: 'Capabilities',
+    label: 'Connect',
+    title: 'Connect an element to a capability',
+    blurb: 'When the application has a user interface, connect a Preview element to one approved capability and describe how it should behave.',
+    art: <CapConnectArt />,
+    steps: [
+      { title: 'Start Preview', body: 'Launch the application preview. Element selection is available in the packaged desktop app.' },
+      { title: 'Select an element', body: 'Pick the element you want to wire up. Its visible text and location are confirmed.' },
+      { title: 'Choose a capability', body: 'Choose exactly one approved operation and describe the visible behavior in plain language.' },
+      { title: 'Test and approve', body: 'Test the connection — connected or simulated — then approve it. Simulations never touch adapters.' },
+    ],
+  },
+  {
+    id: 'capabilities-verify',
+    group: 'Capabilities',
+    label: 'Verify',
+    title: 'Verify every module is ready',
+    blurb: 'Run each approved module’s configured checks and read the outcome. A module is ready when its checks pass; failures route you back to repair.',
+    art: <CapVerifyArt />,
+    steps: [
+      { title: 'Select an approved module', body: 'Choose a module and see its total ready progress.' },
+      { title: 'Run checks', body: 'Run the module’s configured verification. Watch the pending state while it runs.' },
+      { title: 'Read the outcome', body: 'Passed, setup failure, behavioral failure, technical failure, or cancelled — each shown with an icon and text.' },
+      { title: 'Repair failures', body: 'A failure offers a clear route back to Build or the relevant repair action. When every module is ready, the journey is complete.' },
+    ],
+  },
+  {
+    id: 'capabilities-changes',
+    group: 'Capabilities',
+    label: 'Changes',
+    title: 'Process a bounded change',
+    blurb: 'When something changes, assess its impact, approve it, then work the affected modules one at a time. Each delta target must verify before the next unlocks.',
+    art: <CapChangesArt />,
+    steps: [
+      { title: 'Assess impact', body: 'Calculate which modules a change affects and which it does not — each with a reason.' },
+      { title: 'Review and approve', body: 'Review affected and unaffected capabilities, then approve the impact.' },
+      { title: 'Process one target', body: 'The delta queue shows the provider-first order. Only the next target is actionable; later targets stay locked.' },
+      { title: 'Verify each target', body: 'Export, apply, and verify each target before the next one unlocks.' },
+    ],
+  },
+]
 
 export const GUIDE_TOPICS: GuideTopic[] = [
   {
     id: 'workflow-overview',
+    group: 'Build & Test',
     label: 'The workflow',
     title: 'Build and Test, in one picture',
     blurb: 'The current app has two main work areas. Build defines the change, prepares the Copilot handoff, and safely applies the returned zip. Test shows the result, captures feedback, and completes or repeats the loop.',
@@ -221,6 +457,7 @@ export const GUIDE_TOPICS: GuideTopic[] = [
   },
   {
     id: 'getting-started',
+    group: 'Build & Test',
     label: 'Getting started',
     title: 'Set up a project in two minutes',
     blurb: 'A project is a repo plus how to see it running. Configure it once; every handoff reuses it.',
@@ -234,6 +471,7 @@ export const GUIDE_TOPICS: GuideTopic[] = [
   },
   {
     id: 'prepare-context',
+    group: 'Build & Test',
     label: 'Define the change',
     title: 'Use “What are you building?” to define the work',
     blurb: 'The Build panel now brings the use case, requirements, reference material, project context, and handoff generation together in one place.',
@@ -246,6 +484,7 @@ export const GUIDE_TOPICS: GuideTopic[] = [
   },
   {
     id: 'upload-run',
+    group: 'Build & Test',
     label: 'Run in Copilot',
     title: 'Attach the files, then paste the prompt',
     blurb: 'No folder digging: the upload set is a chip you drag straight into the chat, and the prompt is on your clipboard the moment Copilot opens.',
@@ -258,6 +497,7 @@ export const GUIDE_TOPICS: GuideTopic[] = [
   },
   {
     id: 'apply-safely',
+    group: 'Build & Test',
     label: 'Apply safely',
     title: 'Nothing is applied that you did not accept',
     blurb: 'Inspection runs before anything touches your repo. Blockers stop the overlay outright; warnings — including visual element loss — wait for your explicit acceptance. Nothing is ever deleted.',
@@ -270,6 +510,7 @@ export const GUIDE_TOPICS: GuideTopic[] = [
   },
   {
     id: 'verify-review',
+    group: 'Build & Test',
     label: 'Test and review',
     title: 'Use “What changes are needed?” to judge the result',
     blurb: 'Test brings checks, the live application preview, feedback notes, evidence, and final approval into one review panel.',
@@ -281,7 +522,11 @@ export const GUIDE_TOPICS: GuideTopic[] = [
       { title: 'Approve or iterate', body: 'Happy? Approve & complete. Not yet? Add feedback and generate a new task packet — your notes and the evidence travel into the next run.' },
     ],
   },
+  ...CAPABILITIES_TOPICS,
 ]
+
+/** Distinct group order for the guide rail. */
+const GUIDE_GROUP_ORDER: GuideGroup[] = ['Build & Test', 'Capabilities']
 
 /* ---------------------------------------------------------------- overlay */
 
@@ -300,20 +545,30 @@ export function GuideOverlay(props: {
       <div className="guide-panel" onClick={(e) => e.stopPropagation()}>
         <aside className="guide-rail">
           <h2 className="guide-rail-title">How-to guides</h2>
-          <ul>
-            {GUIDE_TOPICS.map((t, i) => (
-              <li key={t.id}>
-                <button
-                  type="button"
-                  className={t.id === topic.id ? 'guide-topic active' : 'guide-topic'}
-                  onClick={() => props.onSelectTopic(t.id)}
-                >
-                  <span className="guide-topic-num num">{i + 1}</span>
-                  {t.label}
-                </button>
-              </li>
-            ))}
-          </ul>
+          {GUIDE_GROUP_ORDER.map((group) => {
+            const groupTopics = GUIDE_TOPICS.filter((t) => t.group === group)
+            if (groupTopics.length === 0) return null
+            return (
+              <div key={group} className="guide-rail-group">
+                <span className="guide-rail-group-label">{group}</span>
+                <ul>
+                  {groupTopics.map((t, i) => (
+                    <li key={t.id}>
+                      <button
+                        type="button"
+                        className={t.id === topic.id ? 'guide-topic active' : 'guide-topic'}
+                        aria-current={t.id === topic.id ? 'true' : undefined}
+                        onClick={() => props.onSelectTopic(t.id)}
+                      >
+                        <span className="guide-topic-num num">{i + 1}</span>
+                        {t.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
         </aside>
         <div className="guide-content">
           <div className="guide-content-head">
