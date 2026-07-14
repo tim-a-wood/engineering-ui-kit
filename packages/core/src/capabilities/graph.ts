@@ -33,7 +33,7 @@ export function buildCapabilityGraph(
   manifests: ModuleManifest[] = [],
 ): CapabilityGraph {
   const byId = new Map(manifests.map((m) => [m.moduleId, m]))
-  const nodes: CapabilityGraphNode[] = architecture.moduleIds
+  const nodes: CapabilityGraphNode[] = (architecture.moduleIds ?? [])
     .slice()
     .sort((a, b) => a.localeCompare(b))
     .map((id) => {
@@ -44,14 +44,18 @@ export function buildCapabilityGraph(
         runtimeAllocation: manifest?.runtimeAllocation,
       }
     })
-  const edges = architecture.dependencyEdges
+  const edges = (architecture.dependencyEdges ?? [])
     .slice()
     .sort((a, b) => {
-      const from = a.fromModuleId.localeCompare(b.fromModuleId)
+      const from = String(a.fromModuleId ?? '').localeCompare(String(b.fromModuleId ?? ''))
       if (from !== 0) return from
-      return a.toModuleId.localeCompare(b.toModuleId)
+      return String(a.toModuleId ?? '').localeCompare(String(b.toModuleId ?? ''))
     })
-    .map((e) => ({ from: e.fromModuleId, to: e.toModuleId, reason: e.reason }))
+    .map((e) => ({
+      from: String(e.fromModuleId ?? ''),
+      to: String(e.toModuleId ?? ''),
+      reason: typeof e.reason === 'string' ? e.reason : '',
+    }))
   return { nodes, edges }
 }
 

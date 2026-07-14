@@ -110,7 +110,7 @@ export function findUnsupportedModules(
   const needIds = PRODUCT_NEED_IDS(product)
   const traces = new Map((proposal.moduleNeedTraces ?? []).map((t) => [t.moduleId, t.needIds]))
   const unsupported: string[] = []
-  for (const moduleId of proposal.architecture.moduleIds) {
+  for (const moduleId of proposal.architecture.moduleIds ?? []) {
     const claimed = traces.get(moduleId) ?? []
     const supported = claimed.some((id) => needIds.has(id))
     // Need-trace is required (CAP-TEST-008); workflow coverage alone is not sufficient.
@@ -133,10 +133,13 @@ export function findRedundantModules(proposal: ArchitectureProposalInput): strin
     for (let j = i + 1; j < manifests.length; j++) {
       const a = manifests[i]!
       const b = manifests[j]!
-      const sameResponsibility =
-        a.responsibility.trim().toLowerCase() === b.responsibility.trim().toLowerCase()
+      const aResponsibility = typeof a.responsibility === 'string' ? a.responsibility.trim().toLowerCase() : ''
+      const bResponsibility = typeof b.responsibility === 'string' ? b.responsibility.trim().toLowerCase() : ''
+      const sameResponsibility = Boolean(aResponsibility && bResponsibility && aResponsibility === bResponsibility)
+      const aOwned = Array.isArray(a.ownedConcerns) ? a.ownedConcerns : []
+      const bOwned = Array.isArray(b.ownedConcerns) ? b.ownedConcerns : []
       const sameOwned =
-        [...a.ownedConcerns].sort().join('|') === [...b.ownedConcerns].sort().join('|')
+        Boolean(aOwned.length && bOwned.length && [...aOwned].sort().join('|') === [...bOwned].sort().join('|'))
       if (!(sameResponsibility || sameOwned)) continue
       const ja = justifications.get(a.moduleId)
       const jb = justifications.get(b.moduleId)
@@ -149,9 +152,10 @@ export function findRedundantModules(proposal: ArchitectureProposalInput): strin
 }
 
 export function findOrphanModules(architecture: ArchitectureSpecification): string[] {
-  if (!architecture.workflowTraces.length) return []
-  const traced = new Set(architecture.workflowTraces.flatMap((t) => t.moduleIds))
-  return architecture.moduleIds.filter((id) => !traced.has(id)).sort((a, b) => a.localeCompare(b))
+  const workflowTraces = architecture.workflowTraces ?? []
+  if (!workflowTraces.length) return []
+  const traced = new Set(workflowTraces.flatMap((t) => t.moduleIds ?? []))
+  return (architecture.moduleIds ?? []).filter((id) => !traced.has(id)).sort((a, b) => a.localeCompare(b))
 }
 
 export function projectDerivedGraph(
@@ -190,11 +194,11 @@ export function evaluateArchitectureProposal(
       }),
     )
   }
-  if (proposal.architecture.unresolvedQuestions.length) {
+  if ((proposal.architecture.unresolvedQuestions ?? []).length) {
     extras.push(
       diagnostic('CAP-GATE-002-UNRESOLVED', 'unresolved architecture questions block approval', {
         ruleId: 'CAP-GATE-002',
-        relatedIds: proposal.architecture.unresolvedQuestions.map((q) => q.id),
+        relatedIds: (proposal.architecture.unresolvedQuestions ?? []).map((q) => q.id),
       }),
     )
   }

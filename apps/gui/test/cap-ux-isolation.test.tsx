@@ -11,12 +11,13 @@
 import { StrictMode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import type { CapabilityModuleRecord, Project } from '@engineering-ui-kit/core'
+import type { ApplicationSpecification, CapabilityModuleRecord, Project } from '@engineering-ui-kit/core'
 import type { EuikBridge } from '../src/bridge'
 import { CapabilitiesView } from '../src/views/capabilities/CapabilitiesView'
 import { ModulesView } from '../src/views/capabilities/ModulesView'
 import { GuidedConnect } from '../src/views/capabilities/GuidedConnect'
 import { GuidedBuild } from '../src/views/capabilities/GuidedBuild'
+import { ArchitectureInterview } from '../src/views/capabilities/ArchitectureInterview'
 import { GuideOverlay } from '../src/guides'
 
 afterEach(cleanup)
@@ -49,6 +50,17 @@ function makeBridge(over: Partial<EuikBridge> = {}): EuikBridge {
 
 const APPROVED_APP = { approved: { id: 'app.a', revision: '1' } }
 const projects = [project('A', 'Project A'), project('B', 'Project B')]
+
+const ARCH_PRODUCT: ApplicationSpecification = {
+  schemaVersion: '1.0', projectId: 'p1', id: 'app.p1', revision: '1', status: 'approved',
+  purpose: 'Test architecture imports', outcomes: ['A working system'],
+  actors: [{ id: 'actor.user', text: 'User' }], goals: [],
+  useCases: [{ id: 'usecase.main', text: 'Complete the main workflow' }], scenarios: [],
+  information: [], rules: [], externalSystems: [], constraints: [],
+  scope: { inScope: ['Main workflow'], outOfScope: [] },
+  acceptanceCases: [{ id: 'accept.main', description: 'Run it', expectedOutcome: 'It works' }],
+  sources: [], unresolvedQuestions: [], contentHash: 'app-hash',
+}
 
 function selectProject(value: string) {
   fireEvent.change(screen.getByLabelText('Capabilities project'), { target: { value } })
@@ -157,6 +169,69 @@ describe('project isolation', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(screen.getByText('Understand the application.')).toBeTruthy()
     expect(screen.queryByText('Shape the solution.')).toBeNull()
+  })
+})
+
+describe('architecture import recovery', () => {
+  it('shows an actionable finding for an incomplete dependency and accepts a corrected re-import', async () => {
+    const saveDraft = vi.fn(async () => ({ ok: true as const }))
+    const bridge = makeBridge({
+      capabilitiesGetApplication: (async () => ({ approved: ARCH_PRODUCT })) as never,
+      capabilitiesGetArchitecture: (async () => ({})) as never,
+      capabilitiesSaveArchitectureDraft: saveDraft as never,
+    })
+    render(
+      <ArchitectureInterview
+        bridge={bridge}
+        projectId="p1"
+        architectureApproved={false}
+        projection="guided"
+      />,
+    )
+
+    await waitFor(() => expect(screen.getByLabelText('Interview response JSON')).toBeTruthy())
+    const architecture = {
+      schemaVersion: '1.0', projectId: 'p1', id: 'arch.p1', revision: '1', status: 'proposed',
+      applicationSpecId: ARCH_PRODUCT.id, applicationSpecRevision: '1', applicationSpecHash: 'app-hash',
+      capabilityProjections: [{ id: 'cap.main', name: 'Main', moduleIds: ['mod.workflow', 'mod.domain'] }],
+      moduleIds: ['mod.workflow', 'mod.domain'],
+      dependencyEdges: [{
+        fromModuleId: 'mod.workflow',
+        toModuleId: 'mod.domain',
+        reason: undefined as string | undefined,
+      }],
+      operationAllocations: [], adapterAllocations: [],
+      workflowTraces: [{ useCaseId: 'usecase.main', moduleIds: ['mod.workflow', 'mod.domain'] }],
+      proposals: [], unresolvedQuestions: [],
+      gateResult: { gateId: 'CAP-GATE-002', passed: false, diagnostics: [] }, contentHash: 'pending',
+    }
+    const response = {
+      architecture,
+      moduleNeedTraces: [
+        { moduleId: 'mod.workflow', needIds: ['usecase.main'] },
+        { moduleId: 'mod.domain', needIds: ['usecase.main'] },
+      ],
+      moduleJustifications: [
+        { moduleId: 'mod.workflow', justification: 'independent-change' },
+        { moduleId: 'mod.domain', justification: 'distinct-rules' },
+      ],
+    }
+    const paste = screen.getByLabelText('Interview response JSON')
+    const importButtons = screen.getAllByRole('button', { name: 'Import architecture proposal' })
+    fireEvent.change(paste, { target: { value: JSON.stringify(response) } })
+    fireEvent.click(importButtons[1]!)
+
+    await waitFor(() => expect(screen.getByText('dependency edges require a reason')).toBeTruthy())
+    expect(screen.queryByText(/Cannot read properties of undefined/)).toBeNull()
+    expect(saveDraft).toHaveBeenCalledTimes(1)
+    expect((screen.getByRole('button', { name: 'Approve architecture' }) as HTMLButtonElement).disabled).toBe(true)
+
+    response.architecture.dependencyEdges[0]!.reason = 'Coordinates the domain calculation'
+    fireEvent.change(paste, { target: { value: JSON.stringify(response) } })
+    fireEvent.click(importButtons[1]!)
+
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Approve architecture' }) as HTMLButtonElement).disabled).toBe(false))
+    expect(saveDraft).toHaveBeenCalledTimes(2)
   })
 })
 

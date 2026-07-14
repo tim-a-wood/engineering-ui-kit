@@ -200,6 +200,44 @@ describe('CAP-TEST-008 architecture proposal gate', () => {
     )
   })
 
+  it('reports incomplete Copilot fields instead of throwing during import', () => {
+    const incomplete = minimalProposal()
+    incomplete.architecture = baseArch({
+      moduleIds: ['mod.domain', 'mod.workflow'],
+      dependencyEdges: [
+        {
+          fromModuleId: 'mod.workflow',
+          toModuleId: 'mod.domain',
+          reason: undefined as unknown as string,
+        },
+      ],
+      workflowTraces: [{ useCaseId: 'u1', moduleIds: ['mod.workflow', 'mod.domain'] }],
+      capabilityProjections: [
+        { id: 'cap1', name: 'Primary', moduleIds: ['mod.workflow', 'mod.domain'] },
+      ],
+    })
+    incomplete.manifests = [
+      domainManifest(),
+      {
+        ...domainManifest('mod.workflow'),
+        responsibility: undefined as unknown as string,
+        excludedConcerns: undefined as unknown as string[],
+      },
+    ]
+    incomplete.moduleNeedTraces = [
+      { moduleId: 'mod.domain', needIds: ['u1'] },
+      { moduleId: 'mod.workflow', needIds: ['u1'] },
+    ]
+
+    expect(() => importArchitectureProposal(product, incomplete)).not.toThrow()
+    const imported = importArchitectureProposal(product, incomplete)
+    expect(imported.ok).toBe(false)
+    expect(imported.draft).toBeDefined()
+    expect(imported.diagnostics.map((d) => d.code)).toEqual(
+      expect.arrayContaining(['CAP-GATE-002-DEP-REASON', 'CAP-GATE-002-RESP']),
+    )
+  })
+
   it('imports response and approves only when gate passes', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'euik-cap-008-'))
     const ws = new CapabilityWorkspace(dir)

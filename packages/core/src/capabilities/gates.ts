@@ -57,15 +57,18 @@ export function evaluateArchitectureGate(
   graph?: CapabilityGraph,
 ): GateResult {
   const diagnostics: CapDiagnostic[] = []
-  if (!arch.moduleIds.length) {
+  const moduleIds = arch.moduleIds ?? []
+  const dependencyEdges = arch.dependencyEdges ?? []
+  const workflowTraces = arch.workflowTraces ?? []
+  if (!moduleIds.length) {
     diagnostics.push(
       diagnostic('CAP-GATE-002-MODULES', 'architecture must allocate at least one module', {
         ruleId: 'CAP-GATE-002',
       }),
     )
   }
-  for (const edge of arch.dependencyEdges) {
-    if (!edge.reason.trim()) {
+  for (const edge of dependencyEdges) {
+    if (typeof edge.reason !== 'string' || !edge.reason.trim()) {
       diagnostics.push(
         diagnostic('CAP-GATE-002-DEP-REASON', 'dependency edges require a reason', {
           ruleId: 'CAP-GATE-002',
@@ -73,7 +76,7 @@ export function evaluateArchitectureGate(
         }),
       )
     }
-    if (!arch.moduleIds.includes(edge.fromModuleId) || !arch.moduleIds.includes(edge.toModuleId)) {
+    if (!moduleIds.includes(edge.fromModuleId) || !moduleIds.includes(edge.toModuleId)) {
       diagnostics.push(
         diagnostic('CAP-GATE-002-DEP-REF', 'dependency edge references unknown module', {
           ruleId: 'CAP-GATE-002',
@@ -81,8 +84,9 @@ export function evaluateArchitectureGate(
       )
     }
   }
-  for (const trace of arch.workflowTraces) {
-    if (!trace.moduleIds.length) {
+  for (const trace of workflowTraces) {
+    const traceModuleIds = trace.moduleIds ?? []
+    if (!traceModuleIds.length) {
       diagnostics.push(
         diagnostic('CAP-GATE-002-TRACE', 'workflow traces must list modules', {
           ruleId: 'CAP-GATE-002',
@@ -90,8 +94,8 @@ export function evaluateArchitectureGate(
         }),
       )
     }
-    for (const moduleId of trace.moduleIds) {
-      if (!arch.moduleIds.includes(moduleId)) {
+    for (const moduleId of traceModuleIds) {
+      if (!moduleIds.includes(moduleId)) {
         diagnostics.push(
           diagnostic('CAP-GATE-002-TRACE-REF', 'workflow trace references unknown module', {
             ruleId: 'CAP-GATE-002',
@@ -101,9 +105,9 @@ export function evaluateArchitectureGate(
       }
     }
   }
-  const traced = new Set(arch.workflowTraces.flatMap((t) => t.moduleIds))
-  for (const moduleId of arch.moduleIds) {
-    if (arch.workflowTraces.length && !traced.has(moduleId)) {
+  const traced = new Set(workflowTraces.flatMap((t) => t.moduleIds ?? []))
+  for (const moduleId of moduleIds) {
+    if (workflowTraces.length && !traced.has(moduleId)) {
       diagnostics.push(
         diagnostic('CAP-GATE-002-ORPHAN', 'module lacks workflow trace coverage', {
           ruleId: 'CAP-GATE-002',
@@ -113,7 +117,12 @@ export function evaluateArchitectureGate(
     }
   }
   for (const manifest of manifests) {
-    if (!manifest.responsibility.trim() || !manifest.excludedConcerns.length) {
+    if (
+      typeof manifest.responsibility !== 'string'
+      || !manifest.responsibility.trim()
+      || !Array.isArray(manifest.excludedConcerns)
+      || !manifest.excludedConcerns.length
+    ) {
       diagnostics.push(
         diagnostic('CAP-GATE-002-RESP', 'modules need responsibility and exclusions', {
           ruleId: 'CAP-GATE-002',
@@ -123,11 +132,11 @@ export function evaluateArchitectureGate(
     }
   }
   const cycleGraph = graph ?? {
-    nodes: arch.moduleIds.map((id) => ({ id })),
-    edges: arch.dependencyEdges.map((e) => ({
+    nodes: moduleIds.map((id) => ({ id })),
+    edges: dependencyEdges.map((e) => ({
       from: e.fromModuleId,
       to: e.toModuleId,
-      reason: e.reason,
+      reason: typeof e.reason === 'string' ? e.reason : '',
     })),
   }
   const cycles = detectCycles(cycleGraph)
