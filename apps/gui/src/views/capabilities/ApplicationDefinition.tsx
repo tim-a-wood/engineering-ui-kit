@@ -176,6 +176,12 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
   const confirmed = Object.entries(fieldStates).filter(([, s]) => s === 'confirmed')
   const proposed = Object.entries(fieldStates).filter(([, s]) => s === 'proposed')
   const unresolved = Object.entries(fieldStates).filter(([, s]) => s === 'unresolved')
+  const openQuestions = draft?.unresolvedQuestions ?? []
+  const visibleDelta = guided ? delta.filter((row) => row.fieldPath !== '$') : delta
+  const guidedDiagnostics = [
+    ...((gate?.diagnostics as CapDiagnostic[] | undefined) ?? []),
+    ...diagnostics,
+  ].filter((diagnostic) => !(openQuestions.length > 0 && diagnostic.code === 'CAP-GATE-001-UNRESOLVED'))
 
   return (
     <section
@@ -201,13 +207,13 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
           type="button"
           className="btn btn-secondary btn-compact"
           onClick={() => void approve()}
-          disabled={!projectId || !draft || busy || gate?.passed === false}
+          disabled={!projectId || !draft || busy || openQuestions.length > 0 || gate?.passed === false}
         >
           Approve definition
         </button>
       </div>
 
-      {guided && exportResult ? (
+      {guided && exportResult && openQuestions.length === 0 ? (
         <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={exportResult} projection="guided" onHelp={onHelp} />
       ) : null}
 
@@ -236,8 +242,55 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
 
       <InterviewImport onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
 
+      {message ? (
+        <p role="status" className="capabilities-note cap-interview-status">
+          {message}
+        </p>
+      ) : null}
+
       {guided ? (
-        (unresolved.length || proposed.length || confirmed.length) ? (
+        openQuestions.length > 0 ? (
+          <section className="cap-question-card" aria-labelledby="cap-open-question-heading">
+            <div className="cap-question-card-head">
+              <div>
+                <h3 id="cap-open-question-heading">
+                  {openQuestions.length} question{openQuestions.length === 1 ? '' : 's'} to finish
+                </h3>
+                <p>Your brief is saved. Resolve these with Copilot, then import the updated response.</p>
+              </div>
+              <span className="badge" aria-hidden="true">{openQuestions.length}</span>
+            </div>
+            <ol className="cap-question-list">
+              {openQuestions.map((question) => <li key={question.id}>{question.text}</li>)}
+            </ol>
+            {exportResult ? (
+              <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={exportResult} projection="guided" onHelp={onHelp} />
+            ) : (
+              <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={busy}>
+                Continue in Copilot
+              </button>
+            )}
+            {(unresolved.length || proposed.length || confirmed.length) ? (
+              <details className="cap-captured-details">
+                <summary>Review captured brief</summary>
+                <div className="cap-review-summary" aria-label="Interview field states">
+                  {proposed.length ? (
+                    <section className="cap-review-group">
+                      <h4>Still being shaped <span className="badge">{proposed.length}</span></h4>
+                      <ul>{proposed.map(([path]) => <li key={path}>{humanizeFieldPath(path)}</li>)}</ul>
+                    </section>
+                  ) : null}
+                  {confirmed.length ? (
+                    <section className="cap-review-group">
+                      <h4>Captured <span className="badge">{confirmed.length}</span></h4>
+                      <ul>{confirmed.map(([path]) => <li key={path}>{humanizeFieldPath(path)}</li>)}</ul>
+                    </section>
+                  ) : null}
+                </div>
+              </details>
+            ) : null}
+          </section>
+        ) : (unresolved.length || proposed.length || confirmed.length) ? (
           <div className="cap-review-summary" aria-label="Interview field states">
             {unresolved.length ? (
               <section className="cap-review-group cap-review-unresolved">
@@ -276,7 +329,7 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
         </div>
       )}
 
-      {delta.length > 0 ? (
+      {visibleDelta.length > 0 ? (
         <section aria-label="Field-level delta">
           <h3>Field-level delta vs approved</h3>
           <table className="capabilities-delta-table">
@@ -293,7 +346,7 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
               </tr>
             </thead>
             <tbody>
-              {delta.map((row) => (
+              {visibleDelta.map((row) => (
                 <tr key={row.fieldPath}>
                   <td>{guided ? humanizeFieldPath(row.fieldPath) : row.fieldPath}</td>
                   <td>{row.change}</td>
@@ -317,15 +370,12 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
         </section>
       ) : null}
 
-      {(diagnostics.length > 0 || (gate && !gate.passed)) && (
+      {(guided ? guidedDiagnostics.length > 0 : diagnostics.length > 0 || (gate && !gate.passed)) && (
         guided ? (
           <section aria-label="Open issues" className="cap-issues">
             <h3>Open issues</h3>
             <ul className="cap-issue-list">
-              {presentDiagnosticsForGuided([
-                ...((gate?.diagnostics as CapDiagnostic[] | undefined) ?? []),
-                ...diagnostics,
-              ]).map((issue, i) => (
+              {presentDiagnosticsForGuided(guidedDiagnostics).map((issue, i) => (
                 <li key={i}>{issue.message}</li>
               ))}
             </ul>
@@ -369,11 +419,6 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
         </dl>
       ) : null}
 
-      {message ? (
-        <p role="status" className="capabilities-note">
-          {message}
-        </p>
-      ) : null}
     </section>
   )
 }

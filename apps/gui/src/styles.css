@@ -3633,7 +3633,8 @@ code.path-wrap {
   display: grid;
   gap: var(--semantic-spacing-3);
 }
-.cap-review-group h3 {
+.cap-review-group h3,
+.cap-review-group h4 {
   display: flex;
   align-items: center;
   gap: var(--semantic-spacing-2);
@@ -3644,6 +3645,56 @@ code.path-wrap {
 }
 .cap-issue-list {
   color: var(--semantic-status-danger);
+}
+.cap-interview-status {
+  margin: var(--semantic-spacing-2) 0 0;
+}
+.cap-question-card {
+  display: grid;
+  gap: var(--semantic-spacing-4);
+  margin-top: var(--semantic-spacing-4);
+  padding: var(--semantic-spacing-4);
+  border: 1px solid color-mix(in srgb, var(--semantic-status-warning) 45%, var(--semantic-border-subtle));
+  border-radius: var(--semantic-radius-lg);
+  background: color-mix(in srgb, var(--semantic-status-warning) 5%, var(--semantic-surface-panel-raised));
+}
+.cap-question-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-4);
+}
+.cap-question-card-head h3,
+.cap-question-card-head p {
+  margin: 0;
+}
+.cap-question-card-head p {
+  margin-top: var(--semantic-spacing-1);
+  color: var(--semantic-text-secondary);
+}
+.cap-question-list {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+  margin: 0;
+  padding-left: 1.5rem;
+  max-width: 76rem;
+}
+.cap-question-list li {
+  padding-left: var(--semantic-spacing-1);
+  color: var(--semantic-text-primary);
+  line-height: 1.5;
+}
+.cap-captured-details {
+  border-top: 1px solid var(--semantic-border-subtle);
+  padding-top: var(--semantic-spacing-3);
+}
+.cap-captured-details > summary {
+  width: fit-content;
+  color: var(--semantic-text-secondary);
+  cursor: pointer;
+}
+.cap-captured-details[open] > summary {
+  margin-bottom: var(--semantic-spacing-3);
 }
 .cap-impact-result {
   display: grid;
