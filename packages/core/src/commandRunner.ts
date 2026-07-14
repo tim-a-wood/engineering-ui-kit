@@ -33,14 +33,27 @@ export async function runCommand(options: RunCommandOptions): Promise<Verificati
   let timedOut = false
 
   const exitCode = await new Promise<number | null>((resolve) => {
+    // Run the shell in its own process group (detached) so a timeout can kill the WHOLE tree.
+    // With shell:true, child.kill() would only signal the shell; a runaway grandchild keeps the
+    // stdout/stderr pipes open and 'close' never fires. Killing the group (negative pid) reaps it.
+    const detached = process.platform !== 'win32'
     const child = spawn(options.commandText, {
       cwd: options.workingDirectory,
       shell: true,
       stdio: ['ignore', 'pipe', 'pipe'],
+      detached,
     })
+    const killTree = (signal: NodeJS.Signals) => {
+      try {
+        if (detached && typeof child.pid === 'number') process.kill(-child.pid, signal)
+        else child.kill(signal)
+      } catch {
+        child.kill(signal)
+      }
+    }
     const timer = setTimeout(() => {
       timedOut = true
-      child.kill('SIGKILL')
+      killTree('SIGKILL')
     }, timeoutMs)
     child.stdout.on('data', (d: Buffer) => { stdout += d.toString() })
     child.stderr.on('data', (d: Buffer) => { stderr += d.toString() })
