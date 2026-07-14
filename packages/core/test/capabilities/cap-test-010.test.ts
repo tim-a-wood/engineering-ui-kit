@@ -11,6 +11,7 @@ import {
   buildModuleInterviewPacket,
   evaluateModuleInterview,
   importModuleInterviewResponse,
+  moduleInterviewOpeningGuidance,
   MODULE_APPLICABLE_DETAILS,
   type ModuleInterviewAnswer,
   type ModuleInterviewResponse,
@@ -88,6 +89,7 @@ describe('CAP-TEST-010 module interviews and CAP-GATE-003', () => {
       expect(packet.gateId).toBe('CAP-GATE-003')
       expect(packet.interviewBoundary).toBe(`module:${type}`)
       expect(packet.outputSchemaRef).toBe('CAP-CONTRACT-003')
+      expect(moduleInterviewOpeningGuidance(packet)).toMatch(/suggest/i)
     }
   })
 
@@ -105,6 +107,38 @@ describe('CAP-TEST-010 module interviews and CAP-GATE-003', () => {
     expect(evaluation.missingApplicableDetailIds.length).toBeGreaterThan(0)
     expect(evaluation.diagnostics.some((d) => d.code === 'CAP-GATE-003-UNRESOLVED')).toBe(true)
     expect(evaluation.diagnostics.some((d) => d.code === 'CAP-GATE-003-APPLICABLE')).toBe(true)
+  })
+
+  it('grounds the opening questions in architecture context and offers type-specific suggestions', () => {
+    const contextualArchitecture: ArchitectureSpecification = {
+      ...architecture,
+      capabilityProjections: [{ id: 'cap.work', name: 'Work management', moduleIds: ['mod.workflow', 'mod.domain'] }],
+      moduleDefinitions: [
+        { moduleId: 'mod.workflow', name: 'Work Order Workflow', moduleType: 'workflow', responsibility: 'Coordinates work-order completion.' },
+        { moduleId: 'mod.domain', name: 'Work Order Domain', moduleType: 'domain', responsibility: 'Owns work-order lifecycle rules.' },
+      ],
+      dependencyEdges: [{
+        fromModuleId: 'mod.workflow', toModuleId: 'mod.domain',
+        reason: 'The workflow delegates lifecycle decisions to the domain.',
+      }],
+      workflowTraces: [{ useCaseId: 'usecase.complete-work', moduleIds: ['mod.workflow', 'mod.domain'] }],
+    }
+    const packet = buildModuleInterviewPacket({
+      packetId: 'pkt-contextual-domain', projectId: 'proj-1', architecture: contextualArchitecture,
+      moduleId: 'mod.domain', moduleType: 'domain',
+    })
+
+    expect(packet.inputContext.facts).toContain('moduleName:Work Order Domain')
+    expect(packet.inputContext.facts).toContain('moduleResponsibility:Owns work-order lifecycle rules.')
+    expect(packet.inputContext.facts).toContain('capabilityGroup:Work management')
+    expect(packet.inputContext.facts).toContain('workflowTrace:usecase.complete-work')
+    expect(packet.inputContext.facts.some((fact) => fact.startsWith('usedByModule:mod.workflow | Work Order Workflow'))).toBe(true)
+
+    const guidance = moduleInterviewOpeningGuidance(packet)
+    expect(guidance).toContain('Work Order Domain (domain; architecture role: domain core)')
+    expect(guidance).toContain('Do not begin by asking the user to restate them')
+    expect(guidance).toContain('Include a plausible suggestion or default')
+    expect(guidance).toContain('Suggest likely domain vocabulary and invariants')
   })
 
   it('passes CAP-GATE-003 and produces valid manifests for each module type', () => {

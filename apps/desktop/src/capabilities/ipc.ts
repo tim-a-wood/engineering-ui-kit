@@ -27,6 +27,7 @@ import {
   evaluateModuleGate,
   evaluateProductGate,
   importProductInterviewResponse,
+  moduleInterviewOpeningGuidance,
   inspectOverlay,
   applyOverlay,
   invokeLocalRuntime,
@@ -158,6 +159,7 @@ function interactiveInterviewPrompt(packet: InterviewPacket): string {
     : packet.outputSchemaRef === 'CAP-CONTRACT-002'
       ? 'The final response must assign every module a name, moduleType, and responsibility; give every dependency edge a concrete reason; cover every module in a workflow trace and moduleNeedTrace; and contain an empty unresolvedQuestions array.'
       : 'The final response must contain an empty unresolvedQuestions array. Do not leave proposals or assumptions awaiting confirmation.'
+  const moduleOpeningGuidance = moduleInterviewOpeningGuidance(packet)
   return `Run the interview defined by the embedded capability packet as a live conversation with the user.
 
 Interview protocol:
@@ -168,6 +170,7 @@ Interview protocol:
 5. Before emitting JSON, silently audit the response against the completion rule, repair mechanical omissions, and do not emit while any approval-blocking item remains. A per-turn question limit is not a total interview limit.
 6. Never mark the interview complete and never return a response that merely records questions the user has not answered.
 7. ${completionRule}
+${moduleOpeningGuidance}
 
 After the interview is genuinely complete, return only a new ${packet.outputFileName} using the exact template below. Do not design beyond the interview boundary, implement source code, or approve the application's separate review gate.`
 }

@@ -133,6 +133,45 @@ export function buildModuleInterviewPacket(input: {
   dependencyContractIds?: string[]
 }): InterviewPacket {
   const details = applicableDetailsFor(input.moduleType)
+  const definition = input.architecture.moduleDefinitions?.find((candidate) => candidate.moduleId === input.moduleId)
+  const moduleName = definition?.name ?? input.moduleId
+  const moduleResponsibility = definition?.responsibility ?? 'Not yet described in the architecture.'
+  const moduleNames = new Map(
+    input.architecture.moduleDefinitions?.map((candidate) => [candidate.moduleId, candidate.name]) ?? [],
+  )
+  const architectureRole: Record<ModuleType, string> = {
+    experience: 'inbound adapter',
+    workflow: 'application orchestration',
+    domain: 'domain core',
+    connection: 'outbound external adapter',
+    platform: 'outbound platform adapter',
+  }
+  const contextualFacts = [
+    `moduleName:${moduleName}`,
+    `moduleResponsibility:${moduleResponsibility}`,
+    `architectureRole:${architectureRole[input.moduleType]}`,
+    ...input.architecture.capabilityProjections
+      .filter((capability) => capability.moduleIds.includes(input.moduleId))
+      .map((capability) => `capabilityGroup:${capability.name}`),
+    ...input.architecture.dependencyEdges.flatMap((edge) => {
+      if (edge.fromModuleId === input.moduleId) {
+        return [`usesModule:${edge.toModuleId} | ${moduleNames.get(edge.toModuleId) ?? edge.toModuleId} | ${edge.reason}`]
+      }
+      if (edge.toModuleId === input.moduleId) {
+        return [`usedByModule:${edge.fromModuleId} | ${moduleNames.get(edge.fromModuleId) ?? edge.fromModuleId} | ${edge.reason}`]
+      }
+      return []
+    }),
+    ...input.architecture.operationAllocations
+      .filter((allocation) => allocation.moduleId === input.moduleId)
+      .map((allocation) => `allocatedOperation:${allocation.operationId}`),
+    ...input.architecture.adapterAllocations
+      .filter((allocation) => allocation.moduleId === input.moduleId)
+      .map((allocation) => `allocatedAdapter:${allocation.adapterId} | port:${allocation.portId}`),
+    ...input.architecture.workflowTraces
+      .filter((trace) => trace.moduleIds.includes(input.moduleId))
+      .map((trace) => `workflowTrace:${trace.useCaseId}`),
+  ]
   return buildInterviewPacket({
     packetId: input.packetId,
     projectId: input.projectId,
@@ -151,12 +190,55 @@ export function buildModuleInterviewPacket(input: {
       facts: [
         `moduleType:${input.moduleType}`,
         `architecture:${input.architecture.id}@${input.architecture.revision}`,
+        ...contextualFacts,
         ...details.map((d) => `detail:${d}`),
         ...(input.dependencyContractIds ?? []).map((id) => `contract:${id}`),
       ],
       glossary: [],
     },
   })
+}
+
+function packetFactValues(packet: InterviewPacket, prefix: string): string[] {
+  return packet.inputContext.facts
+    .filter((fact) => fact.startsWith(prefix))
+    .map((fact) => fact.slice(prefix.length))
+}
+
+/** Context-aware instructions for the first conversational turn of a module interview. */
+export function moduleInterviewOpeningGuidance(packet: InterviewPacket): string {
+  if (packet.outputSchemaRef !== 'CAP-CONTRACT-003') return ''
+  const moduleType = packetFactValues(packet, 'moduleType:')[0] ?? 'module'
+  const moduleName = packetFactValues(packet, 'moduleName:')[0] ?? packet.inputContext.recordIds[1] ?? 'this module'
+  const responsibility = packetFactValues(packet, 'moduleResponsibility:')[0] ?? 'not yet described'
+  const role = packetFactValues(packet, 'architectureRole:')[0] ?? moduleType
+  const capabilityGroups = packetFactValues(packet, 'capabilityGroup:')
+  const uses = packetFactValues(packet, 'usesModule:')
+  const usedBy = packetFactValues(packet, 'usedByModule:')
+  const workflows = packetFactValues(packet, 'workflowTrace:')
+  const connections = [...uses.map((value) => `uses ${value}`), ...usedBy.map((value) => `is used by ${value}`)]
+  const typeSuggestions: Record<string, string> = {
+    domain: 'Suggest likely domain vocabulary and invariants from the responsibility, then ask the user to correct or confirm the inputs, outputs, ranges, and exceptional outcomes implied by connected modules.',
+    workflow: 'Suggest a likely trigger, actor, and happy-path sequence from the traced workflows, then ask the user to correct or confirm alternative paths, cancellation, recovery, and the success guarantee.',
+    experience: 'Suggest the primary user task and information hierarchy from the supported workflows, then ask the user to correct or confirm actions, results, and loading, empty, error, responsive, and accessibility behavior.',
+    connection: 'Suggest the external operations and translation boundary implied by the connected module and adapter, then ask the user to correct or confirm authentication, timeout, failure, compatibility, and verification behavior.',
+    platform: 'Suggest the execution and storage model implied by the platform responsibility, then ask the user to correct or confirm location, retention, access, recovery, and configuration defaults.',
+  }
+  const context = [
+    `- Module: ${moduleName} (${moduleType}; architecture role: ${role})`,
+    `- Existing responsibility: ${responsibility}`,
+    capabilityGroups.length ? `- Capability group: ${capabilityGroups.join(', ')}` : '',
+    workflows.length ? `- Participates in workflow: ${workflows.join(', ')}` : '',
+    connections.length ? `- Architecture connections: ${connections.join('; ')}` : '',
+  ].filter(Boolean).join('\n')
+
+  return `\nModule-specific opening guidance:
+${context}
+- Treat the supplied module identity, type, responsibility, allocation, and dependencies as established context. Do not begin by asking the user to restate them.
+- Open with a short plain-language recap of what this module appears to do, then ask only about the most important missing details.
+- Make every opening question concrete and contextual. Include a plausible suggestion or default drawn from the responsibility, workflow traces, and connected modules, and ask the user to accept or change it.
+- ${typeSuggestions[moduleType] ?? 'Suggest concrete defaults from the supplied architecture context and ask the user to correct or confirm them.'}
+- Avoid identifier-heavy or checklist-style wording. Ask no more than three related questions, then wait for the user's answers.\n`
 }
 
 export function missingApplicableDetails(
