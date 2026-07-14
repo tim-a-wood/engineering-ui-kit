@@ -27,6 +27,8 @@ export type ArchitectureNodeProjection = {
   neighborIds: string[]
   toolsAndData: string[]
   responsibility?: string
+  architectureRole?: 'inbound-adapter' | 'application' | 'domain-core' | 'outbound-adapter' | 'unassigned'
+  laneLabel?: string
   layout: { x: number; y: number; column: number; row: number }
   moduleType?: string
   moduleVersion?: string
@@ -134,30 +136,45 @@ function neighborsOf(moduleId: string, edges: ArchitectureEdgeProjection[]): str
 
 function layoutNodes(
   moduleIds: string[],
-  groupOf: (id: string) => string,
+  roleOf: (id: string) => ArchitectureNodeProjection['architectureRole'],
 ): Map<string, { x: number; y: number; column: number; row: number }> {
-  const byGroup = new Map<string, string[]>()
+  const byRole = new Map<NonNullable<ArchitectureNodeProjection['architectureRole']>, string[]>()
   for (const id of moduleIds) {
-    const g = groupOf(id)
-    if (!byGroup.has(g)) byGroup.set(g, [])
-    byGroup.get(g)!.push(id)
+    const role = roleOf(id) ?? 'unassigned'
+    if (!byRole.has(role)) byRole.set(role, [])
+    byRole.get(role)!.push(id)
   }
-  const groups = [...byGroup.keys()].sort((a, b) => a.localeCompare(b))
   const layout = new Map<string, { x: number; y: number; column: number; row: number }>()
-  const colWidth = 248
-  const rowHeight = 126
-  groups.forEach((group, column) => {
-    const ids = byGroup.get(group)!.slice().sort((a, b) => a.localeCompare(b))
+  const roleOrder: NonNullable<ArchitectureNodeProjection['architectureRole']>[] = [
+    'inbound-adapter', 'application', 'domain-core', 'outbound-adapter', 'unassigned',
+  ]
+  const colWidth = 258
+  const rowHeight = 132
+  roleOrder.forEach((role, column) => {
+    const ids = (byRole.get(role) ?? []).slice().sort((a, b) => a.localeCompare(b))
     ids.forEach((id, row) => {
       layout.set(id, {
         column,
         row,
-        x: 52 + column * colWidth,
-        y: 58 + row * rowHeight,
+        x: 56 + column * colWidth,
+        y: 78 + row * rowHeight,
       })
     })
   })
   return layout
+}
+
+function architectureRoleFor(moduleType: string | undefined): {
+  role: NonNullable<ArchitectureNodeProjection['architectureRole']>
+  laneLabel: string
+} {
+  if (moduleType === 'experience') return { role: 'inbound-adapter', laneLabel: 'Inbound adapters' }
+  if (moduleType === 'workflow') return { role: 'application', laneLabel: 'Application' }
+  if (moduleType === 'domain') return { role: 'domain-core', laneLabel: 'Domain core' }
+  if (moduleType === 'connection' || moduleType === 'platform') {
+    return { role: 'outbound-adapter', laneLabel: 'Outbound adapters' }
+  }
+  return { role: 'unassigned', laneLabel: 'Other modules' }
 }
 
 /**
@@ -193,7 +210,8 @@ export function projectArchitecture(
       suggested,
     }))
 
-  const layouts = layoutNodes(moduleIds, (id) => purposeGroupFor(id, architecture))
+  const moduleTypeFor = (id: string) => byId.get(id)?.moduleType ?? definitionById.get(id)?.moduleType
+  const layouts = layoutNodes(moduleIds, (id) => architectureRoleFor(moduleTypeFor(id)).role)
 
   const nodes: ArchitectureNodeProjection[] = moduleIds.map((id) => {
     const manifest = byId.get(id)
@@ -203,6 +221,8 @@ export function projectArchitecture(
       ? 'proposed'
       : (freshness?.primaryState ?? (manifest ? 'draft' : 'planned'))
     const neighborIds = neighborsOf(id, edges)
+    const moduleType = manifest?.moduleType ?? definition?.moduleType
+    const architectureRole = architectureRoleFor(moduleType)
     const base: ArchitectureNodeProjection = {
       id,
       name: manifest?.name || definition?.name || id,
@@ -214,8 +234,10 @@ export function projectArchitecture(
       neighborIds,
       toolsAndData: toolsAndDataFor(id, architecture, manifest),
       responsibility: manifest?.responsibility || definition?.responsibility,
+      architectureRole: architectureRole.role,
+      laneLabel: architectureRole.laneLabel,
       layout: layouts.get(id)!,
-      moduleType: manifest?.moduleType ?? definition?.moduleType,
+      moduleType,
     }
     if (mode === 'design') {
       base.moduleVersion = manifest?.moduleVersion

@@ -133,13 +133,13 @@ function sampleProjection(): ArchitectureProjection {
     architectureRevision: '1',
     architectureStatus: 'draft',
     nodes: [
-      { id: 'mod.a', name: 'Module A', purposeGroup: 'Core', status: 'ready', statusLabel: 'Ready', statusIcon: 'ready', proposed: false, neighborIds: ['mod.b'], toolsAndData: [], layout: { x: 0, y: 0, column: 0, row: 0 } },
-      { id: 'mod.b', name: 'Module B', purposeGroup: 'Core', status: 'blocked', statusLabel: 'Blocked', statusIcon: 'blocked', proposed: false, neighborIds: ['mod.a'], toolsAndData: [], layout: { x: 160, y: 0, column: 1, row: 0 } },
+      { id: 'mod.a', name: 'Module A', purposeGroup: 'Core', status: 'ready', statusLabel: 'Ready', statusIcon: 'ready', proposed: false, neighborIds: ['mod.b'], toolsAndData: [], moduleType: 'domain', architectureRole: 'domain-core', laneLabel: 'Domain core', layout: { x: 516, y: 78, column: 2, row: 0 } },
+      { id: 'mod.b', name: 'Module B', purposeGroup: 'Core', status: 'blocked', statusLabel: 'Blocked', statusIcon: 'blocked', proposed: false, neighborIds: ['mod.a'], toolsAndData: [], moduleType: 'connection', architectureRole: 'outbound-adapter', laneLabel: 'Outbound adapters', layout: { x: 774, y: 78, column: 3, row: 0 } },
     ],
     edges: [{ id: 'mod.a->mod.b', from: 'mod.a', to: 'mod.b', reason: 'depends', suggested: false }],
     listItems: [
-      { id: 'mod.a', name: 'Module A', purposeGroup: 'Core', statusLabel: 'Ready', statusIcon: 'ready', neighborIds: ['mod.b'], edgeSummaries: ['depends on Module B'] },
-      { id: 'mod.b', name: 'Module B', purposeGroup: 'Core', statusLabel: 'Blocked', statusIcon: 'blocked', neighborIds: ['mod.a'], edgeSummaries: ['required by Module A'] },
+      { id: 'mod.a', name: 'Module A', purposeGroup: 'Core', statusLabel: 'Ready', statusIcon: 'ready', moduleType: 'domain', neighborIds: ['mod.b'], edgeSummaries: ['depends on Module B'] },
+      { id: 'mod.b', name: 'Module B', purposeGroup: 'Core', statusLabel: 'Blocked', statusIcon: 'blocked', moduleType: 'connection', neighborIds: ['mod.a'], edgeSummaries: ['required by Module A'] },
     ],
   } as unknown as ArchitectureProjection
 }
@@ -268,6 +268,12 @@ describe('CAP-TEST-038b Capabilities accessibility (behavioral)', () => {
     expect(html).toContain('aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Enter"')
     expect(html).toMatch(/role="application"[^>]*tabindex="0"|tabindex="0"[^>]*role="application"/i)
     expect(html).toContain('tabindex="-1"')
+    // Ports-and-adapters semantics are explicit and type is conveyed by shape as well as text/color.
+    expect(html).toContain('aria-label="Component type shapes"')
+    expect(html).toContain('data-component-shape="hexagon"')
+    expect(html).toContain('data-component-shape="outbound-adapter"')
+    expect(html).toContain('class="architecture-port output-port"')
+    expect(html).toContain('Hexagonal ports and adapters module dependency diagram')
   })
 
   // ---- Non-color status cues across differing data states -------------------

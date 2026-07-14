@@ -4249,7 +4249,10 @@ code.path-wrap {
 }
 .architecture-map-toolbar {
   display: flex;
-  gap: var(--semantic-spacing-4);
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-3) var(--semantic-spacing-5);
   padding: 0.7rem 1rem;
   border-bottom: 1px solid var(--semantic-border-subtle);
   color: var(--semantic-text-secondary);
@@ -4257,6 +4260,24 @@ code.path-wrap {
   font-size: 0.75rem;
   font-weight: 650;
 }
+.architecture-map-counts { display: flex; gap: var(--semantic-spacing-4); white-space: nowrap; }
+.architecture-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.architecture-map-legend li { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+.architecture-shape-swatch { display: inline-block; width: 1.1rem; height: 0.78rem; border: 1.5px solid currentColor; background: color-mix(in srgb, currentColor 16%, transparent); }
+.architecture-shape-swatch.shape-experience { color: #e66bb2; clip-path: polygon(0 0, 76% 0, 100% 50%, 76% 100%, 0 100%); }
+.architecture-shape-swatch.shape-workflow { color: #3f9df3; border-radius: 0.28rem; }
+.architecture-shape-swatch.shape-domain { color: #8b7cf6; clip-path: polygon(20% 0, 80% 0, 100% 50%, 80% 100%, 20% 100%, 0 50%); }
+.architecture-shape-swatch.shape-platform { color: #42b99a; border-radius: 50% / 28%; }
+.architecture-shape-swatch.shape-connection { color: #e99942; border-radius: 999px; }
+.architecture-port-swatch { width: 0.65rem; height: 0.65rem; border: 2px solid var(--semantic-accent-primary); border-radius: 50%; background: var(--semantic-surface-panel-raised); }
 .architecture-diagram {
   outline: none;
   overflow: auto;
@@ -4268,13 +4289,9 @@ code.path-wrap {
 }
 .architecture-map-background { fill: color-mix(in srgb, var(--semantic-surface-inset) 85%, #08101f); }
 .architecture-grid-line { fill: none; stroke: color-mix(in srgb, var(--semantic-border-subtle) 42%, transparent); stroke-width: 0.65; }
-.architecture-group-label {
-  fill: var(--semantic-text-secondary);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+.architecture-lane-heading rect { fill: color-mix(in srgb, var(--semantic-surface-panel-raised) 84%, transparent); stroke: var(--semantic-border-subtle); }
+.architecture-lane-heading text { fill: var(--semantic-text-secondary); font-size: 9.5px; font-weight: 750; letter-spacing: 0.08em; }
+.architecture-domain-halo { fill: color-mix(in srgb, #8b7cf6 7%, transparent); stroke: color-mix(in srgb, #8b7cf6 24%, transparent); stroke-width: 1; stroke-dasharray: 3 5; }
 .architecture-edge {
   fill: none;
   stroke: color-mix(in srgb, var(--semantic-accent-primary) 68%, var(--semantic-border-strong));
@@ -4286,28 +4303,37 @@ code.path-wrap {
   opacity: 0.58;
 }
 .architecture-arrow { fill: var(--semantic-accent-primary); }
+.architecture-port { fill: var(--semantic-surface-panel-raised); stroke: var(--semantic-accent-primary); stroke-width: 2.2; }
+.architecture-port.output-port { fill: color-mix(in srgb, var(--semantic-accent-primary) 28%, var(--semantic-surface-panel-raised)); }
 .architecture-node { cursor: pointer; }
-.architecture-node rect:first-of-type {
+.architecture-node-body {
   fill: color-mix(in srgb, var(--semantic-surface-panel-raised) 94%, transparent);
   stroke: var(--semantic-border-subtle);
   stroke-width: 1;
   filter: drop-shadow(0 7px 9px color-mix(in srgb, #000 15%, transparent));
   transition: stroke 120ms ease, filter 120ms ease, transform 120ms ease;
 }
-.architecture-node:hover rect:first-of-type,
-.architecture-node.in-focus rect:first-of-type { stroke: color-mix(in srgb, var(--semantic-accent-primary) 50%, var(--semantic-border-strong)); }
-.architecture-node.selected rect:first-of-type {
+.architecture-node.type-domain .architecture-node-body { fill: color-mix(in srgb, #8b7cf6 10%, var(--semantic-surface-panel-raised)); }
+.architecture-node.type-workflow .architecture-node-body { fill: color-mix(in srgb, #3f9df3 8%, var(--semantic-surface-panel-raised)); }
+.architecture-node.type-experience .architecture-node-body { fill: color-mix(in srgb, #e66bb2 8%, var(--semantic-surface-panel-raised)); }
+.architecture-node.type-connection .architecture-node-body { fill: color-mix(in srgb, #e99942 9%, var(--semantic-surface-panel-raised)); }
+.architecture-node.type-platform .architecture-node-body { fill: color-mix(in srgb, #42b99a 9%, var(--semantic-surface-panel-raised)); }
+.architecture-node:hover .architecture-node-body,
+.architecture-node.in-focus .architecture-node-body { stroke: color-mix(in srgb, var(--semantic-accent-primary) 50%, var(--semantic-border-strong)); }
+.architecture-node.selected .architecture-node-body {
   stroke: var(--semantic-accent-primary);
   stroke-width: 2.5;
   filter: drop-shadow(0 9px 13px color-mix(in srgb, var(--semantic-accent-primary) 24%, transparent));
 }
-.architecture-node.proposed rect:first-of-type { stroke-dasharray: 7 4; }
-.architecture-node-accent { stroke: none !important; fill: #8391a8; filter: none !important; }
-.architecture-node.type-domain .architecture-node-accent { fill: #8b7cf6; }
-.architecture-node.type-workflow .architecture-node-accent { fill: #3f9df3; }
-.architecture-node.type-experience .architecture-node-accent { fill: #e66bb2; }
-.architecture-node.type-connection .architecture-node-accent { fill: #e99942; }
-.architecture-node.type-platform .architecture-node-accent { fill: #42b99a; }
+.architecture-node.proposed .architecture-node-body { stroke-dasharray: 7 4; }
+.architecture-node-type-mark { fill: #8391a8; stroke: none; }
+.architecture-node.type-domain .architecture-node-type-mark { fill: #8b7cf6; }
+.architecture-node.type-workflow .architecture-node-type-mark { fill: #3f9df3; }
+.architecture-node.type-experience .architecture-node-type-mark { fill: #e66bb2; }
+.architecture-node.type-connection .architecture-node-type-mark { fill: #e99942; }
+.architecture-node.type-platform .architecture-node-type-mark { fill: #42b99a; }
+.architecture-connector-prongs,
+.architecture-platform-rim { fill: none; stroke: var(--semantic-border-strong); stroke-width: 1.4; opacity: 0.55; pointer-events: none; }
 .architecture-node-kicker {
   fill: var(--semantic-text-secondary);
   font-size: 8.5px;
@@ -4360,13 +4386,17 @@ code.path-wrap {
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 0.7rem;
+  border-radius: 0.45rem;
   color: #fff;
   background: #8391a8;
   font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
 }
+.architecture-list-icon.architecture-type-experience { clip-path: polygon(0 0, 76% 0, 100% 50%, 76% 100%, 0 100%); border-radius: 0; padding-right: 0.2rem; }
+.architecture-list-icon.architecture-type-domain { clip-path: polygon(20% 0, 80% 0, 100% 50%, 80% 100%, 20% 100%, 0 50%); border-radius: 0; }
+.architecture-list-icon.architecture-type-connection { border-radius: 999px; }
+.architecture-list-icon.architecture-type-platform { border-radius: 50% / 25%; }
 .architecture-type-domain { background: #705de8; }
 .architecture-type-workflow { background: #247fcf; }
 .architecture-type-experience { background: #c94b96; }
@@ -4411,6 +4441,7 @@ code.path-wrap {
 .architecture-chip-list li { padding: 0.35rem 0.55rem; border-radius: 999px; background: var(--semantic-surface-inset); color: var(--semantic-text-secondary); font-size: 0.75rem; }
 @media (max-width: 760px) {
   .architecture-detail-columns { grid-template-columns: 1fr; }
+  .architecture-map-legend { justify-content: flex-start; }
   .architecture-heading,
   .architecture-directory-heading { align-items: flex-start; flex-direction: column; }
 }

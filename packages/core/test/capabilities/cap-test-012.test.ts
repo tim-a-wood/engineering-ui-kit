@@ -187,4 +187,25 @@ describe('CAP-TEST-012 architecture diagram and list projection', () => {
       status: 'planned', statusLabel: 'Planned',
     }))
   })
+
+  it('lays out module types as ports-and-adapters architecture lanes', () => {
+    const { architecture, manifests } = buildTwentyNodeFixture()
+    const projection = projectArchitecture(architecture, manifests, {}, { mode: 'guided' })
+    const columnsByType = Object.fromEntries(
+      projection.nodes.slice(0, 5).map((node) => [node.moduleType, node.layout.column]),
+    )
+    expect(columnsByType).toEqual({
+      domain: 2,
+      workflow: 1,
+      experience: 0,
+      connection: 3,
+      platform: 3,
+    })
+    expect(projection.nodes.find((node) => node.moduleType === 'domain')).toEqual(
+      expect.objectContaining({ architectureRole: 'domain-core', laneLabel: 'Domain core' }),
+    )
+    expect(projection.nodes.find((node) => node.moduleType === 'connection')).toEqual(
+      expect.objectContaining({ architectureRole: 'outbound-adapter', laneLabel: 'Outbound adapters' }),
+    )
+  })
 })
