@@ -114,29 +114,28 @@ function sampleProjection(): ArchitectureProjection {
 }
 
 describe('CAP-TEST-038 Capabilities accessibility', () => {
-  it('labels main Capabilities shell regions and keyboard-reachable controls', () => {
+  it('labels the Capabilities shell and does not initialize a project implicitly', () => {
+    const bridge = mockBridge()
     const html = renderToStaticMarkup(
-      <CapabilitiesView bridge={mockBridge()} projects={[project()]} activeProjectId="p1" />,
+      <CapabilitiesView bridge={bridge} projects={[project()]} activeProjectId="p1" />,
     )
 
+    // Shell region + standard page header.
     expect(html).toContain('role="region"')
     expect(html).toContain('aria-label="Capabilities"')
-    expect(html).toContain('aria-label="Projection mode"')
-    expect(html).toContain('aria-label="Guided projection"')
-    expect(html).toContain('aria-label="Design projection"')
-    expect(html).toContain('aria-pressed="true"')
-    expect(html).toContain('aria-label="Capabilities project"')
-    expect(html).toContain('aria-label="Capabilities sections"')
-    expect(html).toContain('aria-label="Application definition section"')
-    expect(html).toContain('aria-label="Architecture section"')
-    expect(html).toContain('aria-label="Needs attention section"')
-    expect(html).toContain('aria-label="Modules section"')
-    expect(html).toContain('aria-label="Connections section"')
-    expect(html).toContain('aria-label="Verification section"')
-    expect(html).toContain('aria-label="Application definition"')
-    expect(html).toContain('aria-label="Application definition actions"')
-    expect(html).toMatch(/<button[^>]*type="button"/)
+    expect(html).toContain('class="page-header"')
+    // Guided/Design segmented control conveys state without relying on color.
+    expect(html).toContain('aria-label="View mode"')
+    expect((html.match(/aria-pressed="(true|false)"/g) ?? []).length).toBeGreaterThanOrEqual(2)
+    // Explicit project selector with an unselected default.
     expect(html).toMatch(/<select[^>]*aria-label="Capabilities project"/)
+    expect(html).toContain('Select a project…')
+    // No project selected -> a polished empty state with one primary action, and
+    // NO capability workspace is initialized (Section 31).
+    expect(html).toContain('class="empty-state"')
+    expect(html).toMatch(/<button[^>]*class="btn btn-primary"/)
+    expect(bridge.capabilitiesEnsureInitialized).not.toHaveBeenCalled()
+    expect(bridge.capabilitiesGetApplication).not.toHaveBeenCalled()
   })
 
   it('labels application, modules, verification, binding, and attention panels', () => {

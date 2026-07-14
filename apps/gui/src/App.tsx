@@ -197,6 +197,8 @@ export default function App() {
             bridge={bridge}
             projects={projects}
             activeProjectId={activeProject?.id}
+            onOpenGuide={setGuideTopic}
+            onNavigateToProjects={() => setView('projects')}
           />
         )
       case 'build':
@@ -264,7 +266,7 @@ export default function App() {
             Mock data
           </span>
         )}
-        <button type="button" className="icon-btn" aria-label="Help" data-tip="How-to guides" data-tip-pos="bottom" onClick={() => setGuideTopic('workflow-overview')}>
+        <button type="button" className="icon-btn" aria-label="Help" data-tip="How-to guides" data-tip-pos="bottom" onClick={() => setGuideTopic(view === 'capabilities' ? 'capabilities-overview' : 'workflow-overview')}>
           {Icon.help()}
         </button>
       </div>
@@ -312,9 +314,13 @@ export default function App() {
             <span className="nav-label">Collapse</span>
           </button>
           <TipCard
-            text={TIPS[view] ?? 'Keep handoffs small and reviewable.'}
-            linkLabel="View workflow guide"
-            onLink={() => setGuideTopic('workflow-overview')}
+            text={
+              view === 'capabilities'
+                ? 'Guided walks the five stages one at a time. Switch to Design for the technical detail.'
+                : TIPS[view] ?? 'Keep handoffs small and reviewable.'
+            }
+            linkLabel={view === 'capabilities' ? 'View Capabilities guide' : 'View workflow guide'}
+            onLink={() => setGuideTopic(view === 'capabilities' ? 'capabilities-overview' : 'workflow-overview')}
           />
         </aside>
 

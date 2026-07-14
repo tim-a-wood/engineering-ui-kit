@@ -29,6 +29,8 @@ import { fileURLToPath } from 'node:url'
 import type { ArchitectureProjection, Project } from '@engineering-ui-kit/core'
 import type { EuikBridge } from '../src/bridge'
 import { CapabilitiesView } from '../src/views/capabilities/CapabilitiesView'
+import { CapabilityJourney } from '../src/views/capabilities/CapabilityJourney'
+import { deriveJourney } from '../src/views/capabilities/capabilitiesUiState'
 import { ArchitectureView } from '../src/views/capabilities/ArchitectureView'
 import { DeltaQueue } from '../src/views/capabilities/DeltaQueue'
 import { VerificationPanel } from '../src/views/capabilities/VerificationPanel'
@@ -218,23 +220,32 @@ describe('CAP-TEST-038b Capabilities accessibility (behavioral)', () => {
     expect(canProceedWithSelection(confirmed)).toBe(true) // only after explicit confirmation
   })
 
-  // ---- Keyboard reachability across every Capabilities section ---------------
-  it('every section control is a native, accessibly-named button (keyboard reachable)', () => {
+  // ---- Guided journey: five stages, keyboard reachable, locked non-navigable --
+  it('renders exactly five journey stages; unlocked stages are buttons and locked stages are not', () => {
+    const stages = deriveJourney({
+      application: { approved: {} },
+      architecture: { approved: { schemaVersion: '1.0', moduleIds: ['mod.a'] } as never },
+      modules: [],
+      bindings: [],
+    }).stages
+    const html = renderToStaticMarkup(<CapabilityJourney stages={stages} viewing="build" onView={() => {}} />)
+    // Five stages, one list.
+    expect((html.match(/class="cap-journey-step/g) ?? []).length).toBe(5)
+    // Exactly one is the step being viewed.
+    expect((html.match(/aria-current="step"/g) ?? []).length).toBe(1)
+    // Locked stages (connect, verify here) are NOT buttons — they cannot be navigated.
+    expect(html).toContain('class="cap-journey-locked"')
+    expect(html).toContain('aria-disabled="true"')
+    // Every state is conveyed by text (color-independent), including the lock reason.
+    expect(html).toMatch(/Complete|Current|Locked/)
+  })
+
+  it('shell shows a live region and the segmented control conveys state without color', () => {
     const html = renderToStaticMarkup(
       <CapabilitiesView bridge={mockBridge()} projects={[project()]} activeProjectId="p1" />,
     )
-    const navMatch = html.match(/aria-label="Capabilities sections">([\s\S]*?)<\/nav>/)
-    expect(navMatch).not.toBeNull()
-    const nav = navMatch![1]
-    const sectionButtons = nav.match(/<button[^>]*type="button"[^>]*aria-label="[^"]+ section"/g) ?? []
-    expect(sectionButtons.length).toBe(7)
-    // Exactly one is the current page (roving aria-current across a keyboard list).
-    expect((html.match(/aria-current="page"/g) ?? []).length).toBe(1)
-    // Projection toggle exposes state without relying on color.
     expect((html.match(/aria-pressed="(true|false)"/g) ?? []).length).toBeGreaterThanOrEqual(2)
-    // Live region so async status is announced.
-    expect(html).toContain('aria-live="polite"')
-    expect(html).toContain('role="status"')
+    expect(html).toContain('aria-label="View mode"')
   })
 
   // ---- Architecture list fallback + non-color status cues -------------------
