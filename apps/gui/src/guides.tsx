@@ -7,6 +7,7 @@
  * works" links.
  */
 
+import { useEffect } from 'react'
 import type { ReactElement } from 'react'
 
 export type GuideTopicId =
@@ -539,6 +540,23 @@ export function GuideOverlay(props: {
   const topic = GUIDE_TOPICS[index]!
   const prev = GUIDE_TOPICS[index - 1]
   const next = GUIDE_TOPICS[index + 1]
+
+  // Escape closes the guide and focus is restored to the previously focused control.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        props.onClose()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      previouslyFocused?.focus?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="guide-scrim" role="dialog" aria-modal="true" aria-label="How-to guides" onClick={props.onClose}>

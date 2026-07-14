@@ -3527,6 +3527,19 @@ code.path-wrap {
   align-items: flex-end;
 }
 
+/* Capabilities page-header actions wrap instead of clipping on narrower widths. */
+.capabilities-view .page-header-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--semantic-spacing-2);
+}
+
+/* Keep the Connect preview compact until the user drives it. */
+.cap-connect .capability-app-preview .app-preview-frame,
+.cap-connect .capability-app-preview {
+  max-height: 340px;
+}
+
 /* Guided Connect — progressive substeps */
 .cap-connect {
   display: grid;
@@ -3601,6 +3614,31 @@ code.path-wrap {
 }
 .cap-connect-outcome {
   color: var(--semantic-text-secondary);
+}
+
+/* Guided interview import — file primary, JSON behind a disclosure */
+.cap-import {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+}
+.cap-import-primary {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  flex-wrap: wrap;
+}
+.cap-import-advanced summary {
+  cursor: pointer;
+  color: var(--semantic-text-secondary);
+  font-size: 0.85rem;
+}
+.cap-import-paste {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+  margin-top: var(--semantic-spacing-2);
+}
+.cap-import-paste textarea {
+  width: 100%;
 }
 
 /* Guided Build — two-region workspace */

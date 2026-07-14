@@ -91,7 +91,8 @@ export function ModulesView({
         if (cancelled) return
         const approved = asArch(arch.approved) ?? asArch(arch.draft)
         setArchitecture(approved)
-        if (approved?.moduleIds[0]) setSelectedModuleId(approved.moduleIds[0])
+        // Don't override a parent-controlled selection (guided two-region Build).
+        if (!externalSelectedModuleId && approved?.moduleIds[0]) setSelectedModuleId(approved.moduleIds[0])
       } catch (error) {
         if (!cancelled) setMessage(error instanceof Error ? error.message : String(error))
       }
@@ -317,7 +318,7 @@ export function ModulesView({
       {buildStep === 'import' && (
         <>
           {interviewExport ? <CapabilityHandoffCard bridge={bridge} result={interviewExport} projection="guided" /> : null}
-          <InterviewImport label="Import module interview response" onImport={(r) => void handleImport(r)} disabled={!projectId || busy} />
+          <InterviewImport label="Import module interview response" onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
         </>
       )}
       {buildStep === 'approve' && (
@@ -406,7 +407,7 @@ export function ModulesView({
             <details open><summary>Interview packet {packet.packetId}</summary><pre className="capabilities-pre">{JSON.stringify(packet, null, 2)}</pre></details>
           ) : null}
 
-          <InterviewImport label="Import module interview response" onImport={(r) => void handleImport(r)} disabled={!projectId || busy} />
+          <InterviewImport label="Import module interview response" onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
 
           <section aria-label="Module implementation lifecycle">
             <h3>Implementation lifecycle</h3>

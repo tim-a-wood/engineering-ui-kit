@@ -13,6 +13,7 @@ import {
   type RunModuleVerificationResult,
 } from '@engineering-ui-kit/core/browser'
 import type { EuikBridge } from '../../bridge'
+import { freshnessLabel } from './capabilityPresentation'
 
 type Props = {
   bridge: EuikBridge
@@ -121,15 +122,16 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
           </label>
           <button
             type="button"
+            className="btn btn-primary btn-compact"
             disabled={busy || !projectId || !moduleId}
             onClick={() => void runVerification()}
           >
-            {busy ? 'Running…' : 'Verify approved module'}
+            {busy ? 'Running…' : projection === 'guided' ? 'Run verification' : 'Verify approved module'}
           </button>
         </div>
       )}
 
-      {selectedManifest ? (
+      {selectedManifest && projection === 'design' ? (
         <section aria-label="Selected suites">
           <h3>Suites for {selectedManifest.moduleType}</h3>
           <ul>
@@ -144,7 +146,7 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
 
       {freshness ? (
         <p className="capabilities-note" role="status">
-          Current freshness: <strong>{freshness.primaryState}</strong>
+          Current status: <strong>{projection === 'guided' ? freshnessLabel(freshness.primaryState) : freshness.primaryState}</strong>
         </p>
       ) : null}
 

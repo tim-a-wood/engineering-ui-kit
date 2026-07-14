@@ -223,7 +223,7 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
         </details>
       ) : null}
 
-      <InterviewImport onImport={(r) => void handleImport(r)} disabled={!projectId || busy} />
+      <InterviewImport onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
 
       {guided ? (
         (unresolved.length || proposed.length || confirmed.length) ? (
