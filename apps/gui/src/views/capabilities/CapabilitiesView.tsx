@@ -94,6 +94,7 @@ export function CapabilitiesView({
   const previewRef = useRef<CapabilityPreviewHandle | null>(null)
   const projectSelectRef = useRef<HTMLSelectElement | null>(null)
   const stageHeadingRef = useRef<HTMLHeadingElement | null>(null)
+  const viewRef = useRef<HTMLDivElement | null>(null)
 
   const journeyInput: JourneyInput = useMemo(
     () => ({ application, architecture, modules: moduleRecords, bindings: bindingRecords }),
@@ -217,6 +218,14 @@ export function CapabilitiesView({
       setGuidedPanel('journey')
     }
     setProjection(next)
+    viewRef.current?.scrollIntoView?.({ block: 'start' })
+  }
+
+  function openDesignSection(section: DesignSection) {
+    setDesignSection(section)
+    // Long areas such as Connections must not donate their scroll offset to the
+    // next area. Keep the page header and Design navigation in view.
+    viewRef.current?.scrollIntoView?.({ block: 'start' })
   }
 
   function viewStage(id: StageId) {
@@ -291,13 +300,13 @@ export function CapabilitiesView({
         className="btn btn-ghost btn-compact"
         onClick={() => onOpenGuide?.(projection === 'guided' ? stageToGuideTopic(viewing) : 'capabilities-overview')}
       >
-        {Icon.help(14)} Help
+        {Icon.help(14)} {projection === 'guided' ? 'Stage guide' : 'Capability guide'}
       </button>
     </>
   )
 
   return (
-    <div className="capabilities-view" role="region" aria-label="Capabilities">
+    <div ref={viewRef} className="capabilities-view" role="region" aria-label="Capabilities">
       <PageHeader
         title="Capabilities"
         icon={Icon.box()}
@@ -377,7 +386,7 @@ export function CapabilitiesView({
           bridge={bridge}
           projectId={projectId}
           section={designSection}
-          onSection={setDesignSection}
+          onSection={openDesignSection}
           moduleRecords={moduleRecords}
           attentionItems={attentionItems}
           architectureProjection={architectureProjection}
@@ -691,6 +700,7 @@ export function DesignBody(props: {
             projection="design"
             records={props.moduleRecords}
             onChanged={async () => props.onChanged()}
+            onOpenArchitecture={() => props.onSection('architecture')}
           />
         )}
         {props.section === 'connections' && (
@@ -725,6 +735,7 @@ export function DesignBody(props: {
             projection="design"
             records={props.moduleRecords}
             onVerified={props.onChanged}
+            onOpenModules={() => props.onSection('modules')}
           />
         )}
       </section>

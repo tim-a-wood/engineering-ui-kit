@@ -20,7 +20,7 @@ export function ImpactQueue({ bridge, projectId, records, projection = 'design' 
   const [message, setMessage] = useState('')
   const guided = projection === 'guided'
   const modName = (id: string) =>
-    guided ? (approved.find((r) => r.moduleId === id)?.approved?.name ?? humanizeIdentifier(id)) : id
+    approved.find((r) => r.moduleId === id)?.approved?.name ?? humanizeIdentifier(id)
   const reasonText = (reason: string) => (guided ? humanizeIdentifier(reason) : reason)
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export function ImpactQueue({ bridge, projectId, records, projection = 'design' 
         <label>Kind of change
           <select aria-label="Impact classification" value={classification} onChange={(e) => setClassification(e.target.value as ImpactClassification)}>
             {CLASSIFICATIONS.map((value) => (
-              <option key={value} value={value}>{guided ? impactClassificationLabel(value) : value}</option>
+              <option key={value} value={value}>{impactClassificationLabel(value)}</option>
             ))}
           </select>
         </label>

@@ -3539,6 +3539,11 @@ code.path-wrap {
   flex-wrap: wrap;
   align-items: flex-end;
 }
+.cap-form-row label {
+  display: grid;
+  gap: var(--semantic-spacing-1);
+  min-width: 11rem;
+}
 
 /* Capabilities page-header actions wrap instead of clipping on narrower widths. */
 .capabilities-view .page-header-actions {
@@ -3549,7 +3554,9 @@ code.path-wrap {
 
 /* Keep the Connect preview compact until the user drives it. */
 .cap-connect .capability-app-preview .app-preview-frame,
-.cap-connect .capability-app-preview {
+.cap-connect .capability-app-preview,
+.capabilities-connections .capability-app-preview .app-preview-frame,
+.capabilities-connections .capability-app-preview {
   max-height: 340px;
 }
 
@@ -3799,6 +3806,17 @@ code.path-wrap {
   border-top: 1px solid var(--semantic-color-border, #ccc);
   padding-top: var(--semantic-spacing-4);
 }
+.cap-design > .capabilities-panel {
+  padding: var(--semantic-spacing-4);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-lg);
+  background: var(--semantic-surface-panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+.cap-design > .capabilities-panel > :first-child > .lede:first-child,
+.cap-design > .capabilities-panel > .lede:first-child {
+  margin-top: 0;
+}
 .capabilities-ids {
   display: grid;
   gap: var(--semantic-spacing-2);
@@ -3920,6 +3938,48 @@ code.path-wrap {
   display: grid;
   gap: 0.25rem;
 }
+.cap-field-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-2);
+}
+.cap-field-label code {
+  color: var(--semantic-text-muted);
+  font-size: 0.72rem;
+  font-weight: 400;
+}
+.cap-diagnostic-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: var(--semantic-spacing-2);
+  margin-top: var(--semantic-spacing-3);
+  padding: 0;
+  list-style: none;
+}
+.cap-diagnostic-list li {
+  display: grid;
+  gap: var(--semantic-spacing-1);
+  padding: var(--semantic-spacing-2);
+  border-left: 3px solid var(--semantic-status-warning);
+  background: var(--semantic-status-warning-tint);
+}
+.cap-diagnostic-list details ul {
+  display: grid;
+  gap: var(--semantic-spacing-1);
+  margin: var(--semantic-spacing-1) 0 0;
+  padding-left: var(--semantic-spacing-4);
+}
+.cap-diagnostic-list details li {
+  display: list-item;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.cap-diagnostic-list details {
+  color: var(--semantic-text-muted);
+  font-size: 0.8rem;
+}
 .binding-ambiguity {
   display: grid;
   gap: var(--semantic-spacing-2);
@@ -3954,6 +4014,15 @@ code.path-wrap {
   width: 100%;
   font-family: var(--semantic-font-mono, ui-monospace, monospace);
   min-height: 8rem;
+}
+.cap-import-advanced {
+  max-width: 100%;
+}
+.cap-import-advanced[open] {
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-inset);
 }
 
 .capabilities-file-pick input[type='file'] {

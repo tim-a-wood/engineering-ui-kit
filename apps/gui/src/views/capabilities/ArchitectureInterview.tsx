@@ -196,16 +196,17 @@ export function ArchitectureInterview({
       <p className="lede">
         {projection === 'guided'
           ? 'Propose the module structure through a Copilot interview, review dependencies and cycles, then approve the architecture.'
-          : 'Inspect packet IDs, derived graph edges, cycle paths, and gate diagnostics for the same architecture draft.'}
+          : 'Review the proposed structure, dependencies, approval state, and technical record details.'}
       </p>
       <p role="status">{message || (architectureApproved ? 'Architecture is approved.' : 'Architecture not yet approved.')}</p>
 
       <div className="capabilities-toolbar" role="group" aria-label="Architecture interview actions">
-        <button type="button" onClick={() => void exportPacket()} disabled={!projectId || !product || busy}>
+        <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || !product || busy}>
           Export architecture interview
         </button>
         <button
           type="button"
+          className="btn btn-secondary btn-compact"
           onClick={() => void approve()}
           disabled={!projectId || !draft || busy || gatePassed === false}
         >

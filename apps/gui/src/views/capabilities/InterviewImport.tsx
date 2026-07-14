@@ -1,7 +1,8 @@
 /**
  * Shared interview response import control (CAP-PKT-008).
  * Guided: the file chooser is the primary import method; raw JSON paste lives
- * behind a "Paste JSON instead" disclosure. Design keeps the paste box visible.
+ * behind a disclosure. File import stays primary in both projections so the
+ * advanced JSON editor never dominates an otherwise empty workspace.
  */
 
 import { useRef, useState } from 'react'
@@ -90,13 +91,17 @@ export function InterviewImport({ label = 'Import interview response', onImport,
         </>
       ) : (
         <>
-          {pasteBox}
-          <div className="capabilities-toolbar">
+          <div className="cap-import-primary">
             <label className="capabilities-file-pick btn btn-secondary btn-compact">
-              Choose file
+              {Icon.upload(14)} Import response file
               {fileInput}
             </label>
+            <span className="capabilities-note">Choose the response file produced by Copilot.</span>
           </div>
+          <details className="cap-import-advanced">
+            <summary>Paste or inspect JSON</summary>
+            {pasteBox}
+          </details>
         </>
       )}
       {status ? (

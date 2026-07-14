@@ -27,6 +27,8 @@ import {
   type ModuleInterviewResponse,
 } from '@engineering-ui-kit/core/browser'
 import type { CapabilityPacketExportResult, EuikBridge } from '../../bridge'
+import { EmptyState } from '../../components'
+import { Icon } from '../../icons'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
 import { CapabilityHandoffCard } from './CapabilityHandoffCard'
 import { humanizeIdentifier, moduleTypeLabel, presentDiagnosticsForGuided } from './capabilityPresentation'
@@ -44,6 +46,7 @@ type Props = {
   onSelectModule?: (id: string) => void
   /** Guided: render only the single next relevant lifecycle action. */
   progressive?: boolean
+  onOpenArchitecture?: () => void
 }
 
 const MODULE_TYPES = Object.keys(MODULE_APPLICABLE_DETAILS) as ModuleType[]
@@ -64,6 +67,7 @@ export function ModulesView({
   externalSelectedModuleId,
   onSelectModule,
   progressive = false,
+  onOpenArchitecture,
 }: Props) {
   const guided = projection === 'guided'
   const [architecture, setArchitecture] = useState<ArchitectureSpecification | undefined>()
@@ -95,7 +99,18 @@ export function ModulesView({
   if (!architectureApproved) {
     return (
       <section className="capabilities-modules" role="region" aria-label="Modules">
-        <p role="status">Module interviews are blocked until architecture is approved (CAP-GATE-002).</p>
+        <div role="status">
+          <EmptyState
+            icon={Icon.box(24)}
+            title="Approve the architecture first"
+            hint="Modules become available after the application structure and dependencies are approved."
+            action={onOpenArchitecture ? (
+              <button type="button" className="btn btn-primary btn-compact" onClick={onOpenArchitecture}>
+                Open Architecture {Icon.arrowRight(14)}
+              </button>
+            ) : undefined}
+          />
+        </div>
       </section>
     )
   }
@@ -106,7 +121,7 @@ export function ModulesView({
         <p className="lede">
           {guided
             ? 'Work one allocated module at a time: interview it, approve it, then hand off implementation.'
-            : 'Inspect module types, applicable detail IDs, manifests, and CAP-GATE-003 diagnostics.'}
+            : 'Review allocated modules, their contracts, implementation status, and approval details.'}
         </p>
       )}
 

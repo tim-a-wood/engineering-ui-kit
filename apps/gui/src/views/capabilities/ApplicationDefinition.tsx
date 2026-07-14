@@ -179,7 +179,7 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
       <p className="lede">
         {guided
           ? 'Capture what the application must do through a Copilot interview, then approve the definition.'
-          : 'Inspect packet IDs, content hashes, field deltas, and gate diagnostics for the same application records.'}
+          : 'Review the canonical definition, imported field changes, approval state, and technical record details.'}
       </p>
 
       <div className="capabilities-toolbar" role="group" aria-label="Application definition actions">

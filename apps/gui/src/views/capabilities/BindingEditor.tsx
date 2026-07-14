@@ -46,6 +46,10 @@ const DATA_MODES: BindingDataMode[] = [
   'timeout',
 ]
 
+function sentenceCase(value: string): string {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : value
+}
+
 const emptyEvidence: SelectionEvidence = {
   route: '/',
   documentTitle: '',
@@ -130,6 +134,13 @@ export function BindingEditor({
 
   const gate = evaluateBindingApprovalGate(binding, { ambiguities })
   const guided = projection === 'guided'
+  const designDiagnosticGroups = Array.from(
+    gate.diagnostics.reduce<Map<string, (typeof gate.diagnostics)[number][]>>((groups, diagnostic) => {
+      const message = sentenceCase(presentDiagnosticsForGuided([diagnostic])[0]?.message ?? diagnostic.message)
+      groups.set(message, [...(groups.get(message) ?? []), diagnostic])
+      return groups
+    }, new Map()),
+  )
 
   function update<K extends keyof FrontendBinding>(key: K, value: FrontendBinding[K]) {
     setBinding((prev) => ({ ...prev, [key]: value }))
@@ -288,7 +299,7 @@ export function BindingEditor({
       <p className="lede">
         {projection === 'guided'
           ? 'Map a Preview selection to one operation. Complete every presentation behavior before approval.'
-          : 'Validate CAP-CONTRACT-013 fields, resolve mapping ambiguity, approve a revision, and export a bounded connection packet.'}
+          : 'Review the selected interface element, map it to an operation, and define how every outcome appears to the user.'}
       </p>
 
       <p role="status" className="capabilities-note">
@@ -437,7 +448,10 @@ export function BindingEditor({
       <div className="binding-editor-grid">
         {BINDING_BEHAVIOR_FIELDS.map((field) => (
           <label key={field}>
-            {guided ? behaviorLabel(field) : field}
+            <span className="cap-field-label">
+              {behaviorLabel(field)}
+              {!guided ? <code>{field}</code> : null}
+            </span>
             <input
               value={binding[field]}
               onChange={(e) => update(field, e.target.value)}
@@ -471,6 +485,7 @@ export function BindingEditor({
                 />
                 <button
                   type="button"
+                  className="btn btn-ghost btn-compact"
                   aria-label={`Remove ${label} ${i + 1}`}
                   onClick={() => removeMapping(side, i)}
                 >
@@ -478,7 +493,7 @@ export function BindingEditor({
                 </button>
               </div>
             ))}
-            <button type="button" onClick={() => addMapping(side)}>
+            <button type="button" className="btn btn-secondary btn-compact" onClick={() => addMapping(side)}>
               Add {side === 'inputMappings' ? 'input' : 'output'} mapping
             </button>
           </div>
@@ -512,13 +527,13 @@ export function BindingEditor({
       ) : null}
 
       <div className="capabilities-toolbar" role="group" aria-label="Binding actions">
-        <button type="button" onClick={() => void onSaveDraft()}>
+        <button type="button" className="btn btn-secondary btn-compact" onClick={() => void onSaveDraft()}>
           Save draft
         </button>
-        <button type="button" onClick={() => void onApprove()} disabled={!gate.passed}>
+        <button type="button" className="btn btn-primary btn-compact" onClick={() => void onApprove()} disabled={!gate.passed}>
           Approve binding
         </button>
-        <button type="button" onClick={() => void onRunMode()}>
+        <button type="button" className="btn btn-secondary btn-compact" onClick={() => void onRunMode()}>
           Run {bindingModeLabel(binding.dataMode)}
         </button>
       </div>
@@ -531,10 +546,20 @@ export function BindingEditor({
             ))}
           </ul>
         ) : (
-          <ul aria-label="Binding diagnostics">
-            {gate.diagnostics.map((d) => (
-              <li key={`${d.code}-${d.fieldPath ?? ''}-${d.message}`}>
-                <code>{d.code}</code> {d.message}
+          <ul aria-label="Binding diagnostics" className="cap-diagnostic-list">
+            {designDiagnosticGroups.map(([message, diagnostics]) => (
+              <li key={message}>
+                <span>{message}</span>
+                <details>
+                  <summary>Technical detail</summary>
+                  <ul>
+                    {diagnostics.map((d) => (
+                      <li key={`${d.code}-${d.fieldPath ?? ''}-${d.message}`}>
+                        <code>{d.code}</code> {d.message}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
               </li>
             ))}
           </ul>

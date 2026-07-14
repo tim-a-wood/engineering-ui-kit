@@ -13,6 +13,8 @@ import {
   type RunModuleVerificationResult,
 } from '@engineering-ui-kit/core/browser'
 import type { EuikBridge } from '../../bridge'
+import { EmptyState } from '../../components'
+import { Icon } from '../../icons'
 import { freshnessLabel } from './capabilityPresentation'
 
 type Props = {
@@ -21,6 +23,7 @@ type Props = {
   projection: 'guided' | 'design'
   records: CapabilityModuleRecord[]
   onVerified: () => void | Promise<void>
+  onOpenModules?: () => void
 }
 
 const OUTCOME_LABEL: Record<string, string> = {
@@ -32,7 +35,7 @@ const OUTCOME_LABEL: Record<string, string> = {
   unverified: 'Unverified',
 }
 
-export function VerificationPanel({ bridge, projectId, projection, records, onVerified }: Props) {
+export function VerificationPanel({ bridge, projectId, projection, records, onVerified, onOpenModules }: Props) {
   const approved = useMemo(() => records.filter((r) => r.approved), [records])
   const [moduleId, setModuleId] = useState('')
   const [busy, setBusy] = useState(false)
@@ -93,13 +96,22 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
       <p className="lede">
         {projection === 'guided'
           ? 'Verify an approved module. The desktop runs its configured checks and records provenance; ready stays gated on an exact pass.'
-          : 'Desktop-computed input hashes and configured commands only. Renderer never supplies command outcomes.'}
+          : 'Run configured checks for approved modules and inspect the exact inputs, commands, and recorded outcomes.'}
       </p>
 
       {approved.length === 0 ? (
-        <p className="capabilities-note" role="status">
-          No approved modules yet. Approve a module before verification.
-        </p>
+        <div role="status">
+          <EmptyState
+            icon={Icon.listChecks(24)}
+            title="No approved modules yet"
+            hint="Approve at least one module, then return here to run its configured checks."
+            action={projection === 'design' && onOpenModules ? (
+              <button type="button" className="btn btn-primary btn-compact" onClick={onOpenModules}>
+                Open Modules {Icon.arrowRight(14)}
+              </button>
+            ) : undefined}
+          />
+        </div>
       ) : (
         <div
           className="capabilities-verification-controls"

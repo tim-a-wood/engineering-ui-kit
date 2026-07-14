@@ -172,7 +172,7 @@ const run = async () => {
   }
 
   // Assertions on the handoff view: required header actions reachable + active stage visible.
-  assert(await page.locator('.page-header-actions').getByRole('button', { name: 'Help' }).isVisible(), 'header Help action is reachable')
+  assert(await page.locator('.page-header-actions').getByRole('button', { name: /guide$/i }).isVisible(), 'header guide action is reachable')
   assert(await page.getByRole('button', { name: 'Guided' }).isVisible(), 'Guided/Design control is reachable')
   assert(await page.locator('.cap-stage-head h2').first().isVisible(), 'active stage heading is visible')
 
@@ -245,7 +245,7 @@ const run = async () => {
     await p.selectOption('select[aria-label="Capabilities project"]', pid)
     await p.waitForTimeout(300)
     // Required header actions remain reachable at narrow width.
-    assert(await p.locator('.page-header-actions').getByRole('button', { name: 'Help' }).isVisible(), `${name}: Help reachable`)
+    assert(await p.locator('.page-header-actions').getByRole('button', { name: /guide$/i }).isVisible(), `${name}: guide reachable`)
     assert(await p.locator('select[aria-label="Capabilities project"]').isVisible(), `${name}: project selector present`)
     await shot(p, name)
     await c.close()
