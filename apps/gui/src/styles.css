@@ -3696,6 +3696,88 @@ code.path-wrap {
 .cap-captured-details[open] > summary {
   margin-bottom: var(--semantic-spacing-3);
 }
+.cap-definition-review {
+  display: grid;
+  gap: var(--semantic-spacing-4);
+  margin-top: var(--semantic-spacing-4);
+  padding: var(--semantic-spacing-4);
+  border: 1px solid color-mix(in srgb, var(--semantic-status-success) 35%, var(--semantic-border-subtle));
+  border-radius: var(--semantic-radius-lg);
+  background: color-mix(in srgb, var(--semantic-status-success) 4%, var(--semantic-surface-panel-raised));
+}
+.cap-definition-review-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-4);
+}
+.cap-definition-review-head h3,
+.cap-definition-review-head p,
+.cap-definition-review h4,
+.cap-definition-review p {
+  margin: 0;
+}
+.cap-definition-review-head p {
+  margin-top: var(--semantic-spacing-1);
+  color: var(--semantic-text-secondary);
+}
+.cap-ready-label {
+  flex: none;
+  padding: var(--semantic-spacing-1) var(--semantic-spacing-2);
+  border: 1px solid color-mix(in srgb, var(--semantic-status-success) 42%, transparent);
+  border-radius: 999px;
+  color: var(--semantic-status-success);
+  background: color-mix(in srgb, var(--semantic-status-success) 9%, transparent);
+  font-size: 0.78rem;
+  font-weight: var(--semantic-typography-weight-semibold);
+}
+.cap-definition-review-grid,
+.cap-definition-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--semantic-spacing-3);
+}
+.cap-definition-review-grid > section,
+.cap-definition-detail-grid > section {
+  min-width: 0;
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-inset);
+}
+.cap-definition-purpose {
+  grid-column: 1 / -1;
+}
+.cap-definition-review ul {
+  display: grid;
+  gap: var(--semantic-spacing-1);
+  margin: var(--semantic-spacing-2) 0 0;
+  padding-left: 1.2rem;
+}
+.cap-definition-review li {
+  line-height: 1.45;
+}
+.cap-definition-details {
+  border-top: 1px solid var(--semantic-border-subtle);
+  padding-top: var(--semantic-spacing-3);
+}
+.cap-definition-details > summary {
+  width: fit-content;
+  color: var(--semantic-text-secondary);
+  cursor: pointer;
+}
+.cap-definition-details[open] > summary {
+  margin-bottom: var(--semantic-spacing-3);
+}
+@media (max-width: 760px) {
+  .cap-definition-review-grid,
+  .cap-definition-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .cap-definition-purpose {
+    grid-column: auto;
+  }
+}
 .cap-impact-result {
   display: grid;
   gap: var(--semantic-spacing-2);

@@ -200,7 +200,7 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
           {guided
             ? exportResult
               ? draft?.unresolvedQuestions?.length ? 'Continue in Copilot' : 'Restart in Copilot'
-              : draft?.unresolvedQuestions?.length ? 'Continue in Copilot' : 'Start in Copilot'
+              : draft?.unresolvedQuestions?.length ? 'Continue in Copilot' : draft ? 'Revise in Copilot' : 'Start in Copilot'
             : exportResult ? 'Recreate interview handoff' : 'Create interview handoff'}
         </button>
         <button
@@ -289,6 +289,55 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
                 </div>
               </details>
             ) : null}
+          </section>
+        ) : draft ? (
+          <section className="cap-definition-review" aria-labelledby="cap-definition-review-heading">
+            <div className="cap-definition-review-head">
+              <div>
+                <h3 id="cap-definition-review-heading">Application brief ready</h3>
+                <p>Review what was captured, then approve it to shape the solution.</p>
+              </div>
+              <span className="cap-ready-label">Ready to approve</span>
+            </div>
+            <div className="cap-definition-review-grid">
+              <section className="cap-definition-purpose">
+                <h4>Purpose</h4>
+                <p>{draft.purpose}</p>
+              </section>
+              <section>
+                <h4>People</h4>
+                <ul>{(draft.actors ?? []).map((actor) => <li key={actor.id}>{actor.text}</li>)}</ul>
+              </section>
+              <section>
+                <h4>Outcomes</h4>
+                <ul>{(draft.outcomes ?? []).map((outcome) => <li key={outcome}>{outcome}</li>)}</ul>
+              </section>
+              <section>
+                <h4>Main workflows</h4>
+                <ul>{(draft.useCases ?? []).map((useCase) => <li key={useCase.id}>{useCase.text}</li>)}</ul>
+              </section>
+              <section>
+                <h4>In scope</h4>
+                <ul>{(draft.scope?.inScope ?? []).map((item) => <li key={item}>{item}</li>)}</ul>
+              </section>
+              <section>
+                <h4>Out of scope</h4>
+                <ul>{(draft.scope?.outOfScope ?? []).map((item) => <li key={item}>{item}</li>)}</ul>
+              </section>
+            </div>
+            <details className="cap-definition-details">
+              <summary>Review operational rules and acceptance checks</summary>
+              <div className="cap-definition-detail-grid">
+                <section>
+                  <h4>Operational rules</h4>
+                  <ul>{(draft.rules ?? []).map((rule) => <li key={rule.id}>{rule.text}</li>)}</ul>
+                </section>
+                <section>
+                  <h4>Acceptance checks</h4>
+                  <ul>{(draft.acceptanceCases ?? []).map((item) => <li key={item.id}>{item.description}</li>)}</ul>
+                </section>
+              </div>
+            </details>
           </section>
         ) : (unresolved.length || proposed.length || confirmed.length) ? (
           <div className="cap-review-summary" aria-label="Interview field states">

@@ -152,6 +152,24 @@ function factValue(packet: InterviewPacket, prefix: string): string | undefined 
   return packet.inputContext.facts.find((fact) => fact.startsWith(prefix))?.slice(prefix.length)
 }
 
+function interactiveInterviewPrompt(packet: InterviewPacket): string {
+  const completionRule = packet.outputSchemaRef === 'CAP-CONTRACT-003'
+    ? 'Every required answer must contain a concrete answer and no answer may have status "unresolved".'
+    : 'The final response must contain an empty unresolvedQuestions array. Do not leave proposals or assumptions awaiting confirmation.'
+  return `Run the interview defined by the embedded capability packet as a live conversation with the user.
+
+Interview protocol:
+1. Start by reviewing the supplied context and identifying only the approval-blocking gaps.
+2. Ask at most three closely related questions in one message, then stop and wait for the user's answers.
+3. Continue in further question-and-answer rounds until every blocking gap has been answered, explicitly accepted as a reasonable default, or deliberately removed from scope.
+4. If the user is unsure, offer a concrete default and ask them to accept or change it. Never silently invent approval.
+5. Do not emit the final JSON while any approval-blocking item remains. A per-turn question limit is not a total interview limit.
+6. Never mark the interview complete and never return a response that merely records questions the user has not answered.
+7. ${completionRule}
+
+After the interview is genuinely complete, return only a new ${packet.outputFileName} using the exact template below. Do not design beyond the interview boundary, implement source code, or approve the application's separate review gate.`
+}
+
 /** Exact importer-facing starter, embedded in the one-file interview handoff. */
 function interviewResponseStarter(packet: InterviewPacket): unknown {
   if (packet.outputSchemaRef === 'CAP-CONTRACT-002') {
@@ -219,9 +237,17 @@ function exportCapabilityPacketFiles(input: {
   const supportingSection = companionJson === packetJson
     ? ''
     : `\n## ${companionHeading}\n\n\`\`\`json\n${companionJson}\n\`\`\`\n`
+  const isInterview = input.run.kind === 'interview'
+  const introduction = isInterview
+    ? 'This is the complete handoff. Follow the request and use the embedded records as context. This interview has a conversational phase before the final requested output.'
+    : 'This is the complete handoff. Follow the request, use the embedded records as context, and return only the requested output.'
+  const responseTimingRules = isInterview
+    ? `- During the interview, ask questions as plain conversation and wait for the user's answers; do not wrap questions in JSON.
+- Return only the JSON file named ${input.companion.fileName} after the interview completion rules in the request are satisfied.`
+    : `- Return only the requested output named ${input.companion.fileName}.`
   const content = `# Copilot capability handoff
 
-This is the complete handoff. Follow the request, use the embedded records as context, and return only the requested output.
+${introduction}
 
 ## Request
 
@@ -229,7 +255,7 @@ ${input.recommendedPrompt}
 
 ## Output rules
 
-- Return only the JSON file named ${input.companion.fileName}.
+${responseTimingRules}
 - Use exactly the top-level shape shown in the required response template below.
 - Replace every "Replace with…" placeholder with interview content.
 - Do not invent wrapper keys such as productDefinition, confirmedRequirements, or gate.
@@ -425,7 +451,7 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
         transitionHistory: [], createdAt: now, updatedAt: now,
       },
       packet,
-      recommendedPrompt: `Conduct the interview defined by the embedded capability packet and stay within its interview boundary. Return a new ${packet.outputFileName}; do not implement source code or approve proposals.`,
+      recommendedPrompt: interactiveInterviewPrompt(packet),
       companion: { fileName: packet.outputFileName, value: interviewResponseStarter(packet) },
     })
   })

@@ -405,13 +405,13 @@ export function buildProductInterviewPacket(input: {
   questionBudget?: number
 }): InterviewPacket {
   const approved = input.approved
-  const budget = input.questionBudget ?? 12
+  const budget = input.questionBudget ?? 3
   return buildInterviewPacket({
     packetId: input.packetId,
     projectId: input.projectId,
     interviewKind: 'product',
     gateId: 'CAP-GATE-001',
-    interviewBoundary: `Product interview only. Question budget: ${budget}. Do not design architecture or implement source.`,
+    interviewBoundary: `Product interview only. Ask at most ${budget} related questions per conversational turn, wait for the answers, and continue with further turns until every approval-blocking item is resolved. Do not treat this per-turn limit as permission to end the interview. Do not design architecture or implement source.`,
     inputContext: {
       recordIds: approved ? [approved.id] : [],
       revisions: approved ? [approved.revision] : [],
