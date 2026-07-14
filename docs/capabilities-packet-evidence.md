@@ -424,3 +424,94 @@ below require an environment not available in CI and can be run on a suitably co
   the `matlab.engine` Python package; unset `EUIK_TEST_MODE` to exercise the real adapter.
 - **Real Azure DevOps execution — CAP-TEST-033/034/035 real path.** Needs `EUIK_AZURE_ORG` + a
   read-scoped PAT via `EUIK_AZURE_PAT`.
+
+## Capabilities UX hard pass (2026-07-14)
+
+Renderer information-architecture, interaction, help, and state-presentation pass. Contracts,
+persistence, adapters, gates, runtime, and legacy Build & Test behavior are unchanged.
+
+### UX changes delivered
+
+- **Shell.** Rebuilt `CapabilitiesView` on the app's `PageHeader`, `segmented`, `panel`,
+  `EmptyState`, `badge`, and `tab-row` primitives. Explicit project selector with **no implicit
+  initialization** — `capabilitiesEnsureInitialized` runs only on explicit selection; the no-project
+  state is a polished empty state (Select a project / Go to Projects). Single
+  `refreshCapabilityWorkspace` path owns canonical state; the journey is derived every render and
+  never persisted.
+- **Guided five-stage journey.** `Define → Architect → Build → Connect → Verify`, gated by a pure
+  derivation (`capabilitiesUiState.deriveJourney`). Locked stages are non-navigable and never render
+  their editors; Connect resolves to `not-applicable` when no experience/connection module exists;
+  completion shows a single `Continue to …`. Needs attention and Changes are contextual header
+  panels, not journey peers. Delta lives under Needs attention/Changes.
+- **Design six-area workstation.** Application, Architecture, Needs attention, Modules, Connections,
+  Verification via a styled tab row; mode switching maps stage↔area and back.
+- **Reusable handoff.** `CapabilityHandoffCard` (filenames + compact sizes, Open Copilot / Copy
+  prompt / Show files; packet id/run id/full path/sha only in Design) is used by Define and by the
+  Build implementation handoff.
+- **Guided disclosure cleanup.** Guided mode no longer renders `CAP-GATE-*`/`CAP-CONTRACT-*`, raw
+  behavior field keys (`loadingBehavior` → “While it runs”, etc.), `binding.draft`, packet JSON,
+  selectors/hashes, or coded diagnostic dumps by default. `capabilityPresentation` centralizes
+  humanization, friendly labels, and `sanitizeGuidedMessage`.
+- **Help.** `GuideTopic` gained a `group`; seven Capabilities topics (overview + five stages +
+  changes) with token-colored inline SVG art; the rail is grouped (Build & Test / Capabilities). The
+  titlebar Help opens `capabilities-overview` on the page and stage topics from the header; each
+  Guided stage and blocker exposes contextual help; the sidebar tip is Capabilities-specific.
+
+### New tests and exact commands
+
+- `apps/gui/test/cap-ux-journey-state.test.ts` — 14 tests: every journey gating transition
+  (no-project, draft-only, approved, no-modules, partial/all approval, Connect required/not-required,
+  binding-satisfied, partial/all ready, purity).
+- `apps/gui/test/cap-ux-presentation.test.ts` — 14 tests: humanization, labels, guided-diagnostic
+  sanitization, stage↔area/guide mappings.
+- `apps/gui/test/cap-ux-render.test.tsx` — 12 tests: guided vs design disclosure, locked-stage
+  gating, six design areas, handoff card (guided filenames vs design metadata), needs-attention one
+  next action, and a **guided source scan** proving no banned technical strings render by default.
+- Reworked `cap-test-038-a11y.test.tsx` and `cap-test-038b-a11y-behavioral.test.tsx` to the new IA
+  (five journey stages, no implicit init) — old seven-section-nav assertions replaced, not weakened.
+
+Commands run (all green):
+`npm run typecheck -w packages/core`, `npm test -w packages/core` (capabilities 84/84; two
+pre-existing env failures elsewhere — real-browser fidelity, runaway-command timeout — unrelated to
+this pass), `npm run typecheck -w apps/desktop`, `npx vitest run apps/desktop/test/` (46 pass, 1
+real-integration skip), `npm run typecheck -w apps/gui`, `npm test -w apps/gui` (119/119),
+`npm run build -w apps/gui`, `npm run build` (all workspaces clean).
+
+### Accessibility checks performed (via static-markup + behavioral tests)
+
+Five journey stages with exactly one `aria-current="step"`; locked stages rendered as non-button,
+`aria-disabled` with prerequisite text; state conveyed by icon + text (color-independent); segmented
+control `aria-pressed`; live regions retained; picker keyboard/escape/navigation teardown unchanged;
+architecture list fallback + glyph-plus-text status retained; guide dialog Escape-close and focus
+restoration retained (`components.Dialog`). Note: the GUI test harness uses `renderToStaticMarkup`
+(no jsdom); focus-movement and mode-switch focus are implemented (`stageHeadingRef.focus()`) but not
+asserted by an automated DOM test.
+
+### Visual review
+
+**Not performed as live visual validation.** This environment cannot launch the app (Electron binary
+is not installable; no display), so screenshots at 1440×900 and the 15-state visual walkthrough were
+**not** done. Styling was implemented against the existing design tokens and verified structurally
+via static-markup tests and a clean `vite build`. This is disclosed rather than claimed.
+
+### Packaged Electron status
+
+`node apps/desktop/e2e/capabilities-packaged.mjs` — **unavailable**: the Electron binary cannot be
+fetched/installed in this environment. **CAP-TEST-040 / CAP-JRN-001–008 remain incomplete.** Not
+marked complete; no success is claimed.
+
+### Real MATLAB / Azure status
+
+**Unchanged** from the prior entry — still experimental, real-environment verification deferred. No
+real MATLAB or Azure execution was performed or claimed in this pass.
+
+### Remaining known limitations
+
+- Operation IDs are still shown as `id @ version` in Guided (not humanized) to preserve
+  `cap-test-030`'s existing assertions; input/output mapping editors remain visible in Guided rather
+  than moved behind an Advanced disclosure, for the same reason. Both are “should”s, noted as not
+  done.
+- Build’s two-region workspace and Connect’s four explicit substeps are delivered as gated,
+  guided-cleaned reuse of the existing stage components rather than bespoke rebuilds; the gating,
+  disclosure, handoff card, and IA are new, the inner form layouts are largely preserved.
+- Live visual validation and packaged-journey verification remain environment-blocked (above).
