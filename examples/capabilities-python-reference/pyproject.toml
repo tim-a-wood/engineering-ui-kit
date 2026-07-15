@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "capabilities-python-reference"
+version = "0.1.0"
+description = "Runnable Python reference app proving the Engineering UI Kit Capabilities runtime end-to-end (CAP-ERA-001 WP4B-slices)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "UNLICENSED" }
+dependencies = [
+    "engineering-ui-capabilities-runtime",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
