@@ -50,7 +50,7 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP7-apply | §11.3 transactional generation apply + rollback (`applyGenerationPlan`/`rollbackGenerationApply`) | WP2 | cap-sonnet-implementer + Opus review | `capabilities/generationApply.ts` (Node) | `7b70435` (merged) | core 284/284; **13 safety tests** (forced-failure-@-each-phase byte-identical restore; traversal/symlink/stale/modified refusal; rollback idempotent); reviewed | **gate-green** (CAP-TEST-085/086/089/092) |
 | WP7-rest (assembly) | Generate→apply assembly (`assembleGenerationPlan`) + impact-scoped regen | WP7-apply, WP3B-gen, WP4B-gen | cap-sonnet-implementer | `capabilities/generationAssembly.ts` (Node) | `12cad75` (merged) | core 291/291; CAP-TEST-087/088; deterministic `planHash`; impact-scoped (1 binding→1 adapter); generate→apply→app-on-disk proven | **gate-green** (deferred → WP7-followups) |
 | WP7-followups | React marker/source adoption (§10.4), OpenAPI-artifact wiring, registry-diagnostic equivalence, Python composition-root generator, real DI wiring (`resolved.g.*` is placeholder glue) | WP7-rest | — | generation | — | CAP-TEST-084/090/091 | todo |
-| WP8 | Real connection evidence + verification | WP7 | evidence/verification (Sonnet) | launchers, evidence, freshness | — | CAP-TEST-094..101 | todo |
+| WP8 | Real connection verification runner + `ConnectionVerificationRecord` | WP7 | cap-sonnet-implementer + Opus review | `capabilities/verificationRunner.ts` (Node) | `a17f77a` (merged) | core 297/297 clean exit (no leaks); real HTTP+CLI launch→trigger→CAP-CONTRACT-029 (AJV-valid); simulation≠pass (separate fn, no bypass); test-adapter→partial/outstanding; redaction; process-cleanup pid-death-verified; CAP-TEST-094 | **gate-green** (Electron/Python launch presets + freshness-aggregation → WP8-followups) |
 | WP9A | Migration prep: existing-repo planner + 3 fixtures + legacy diagnostic | WP1, WP2 | cap-sonnet-implementer (symlinked worktree) | `generation/existingRepoMigration.ts`, `fixtures/existing-repos/` | `79d2fa3` (merged) | pure planner (additive, node-free); react-ts/python/react-python fixtures; CAP-TEST-102; core 199/199 | **gate-green** (apply=WP9B) |
 | WP9B | Adoption finalization | WP7, WP8, WP9A | migration/adoption (Sonnet + Opus review) | conformance | — | CAP-TEST-102..108 | todo |
 | WP10 | Platform matrix + docs + Experimental-exit evidence | WP9B | matrix/docs (Sonnet) + coordinator sign-off | docs, CI, evidence index | — | full matrix (§18) | todo |
@@ -119,6 +119,8 @@ WP6B added 4 bridge methods (`capabilitiesListDeployables`/`ListInboundBindings`
 **RUNTIME-DIST — before WP7 ships real generated TS apps / WP10 build matrix:**
 `@engineering-ui-kit/capabilities-runtime` package.json `exports` point only at `./dist/*.js` (gitignored, unbuilt), so downstream TS consumers can't resolve it via `node_modules` without building it. The TS example (`capabilities-ts-reference`) works around it with tsconfig `paths` + a vitest `resolve.alias` to the runtime `src/`. Fix before real generated apps: build the runtime (`npm run build --workspace=@engineering-ui-kit/capabilities-runtime`) into consumer resolution OR add a `"development"`/`"source"` export condition pointing at `src`. Also: TS example packages must be run via `cd <pkg> && npx vitest run` (Vitest loads a nested config only from its own cwd) — document for WP10's matrix.
 
+**REDACTION-JSON — hardening candidate (WP8 found it):** the frozen `redaction.ts` `redactSensitiveText` only matches unquoted `key: value`/`key=value` + `Bearer …`; it does NOT mask JSON-quoted secret-looking keys (`"apiKey":"…"`). WP8's `verificationRunner.ts` added a local `redactSensitiveKeys` deep-walk as defense-in-depth. Consider hardening `redactSensitiveText` itself (small; affects existing cap-test-047 — verify) so all secret sinks (evidence/logs/diagnostics) are covered uniformly.
+
 ## RESUME HERE — next session (second half)
 
 **Runtimes + generators + editors + both-language E2E slices COMPLETE** at HEAD `4ebe6e3` on `claude/cap-era-integration` (pushed).
@@ -131,7 +133,7 @@ types.ts contract types, or schemas; §17.6 change-request protocol for any defe
 WP6A (journey/entry-point model), WP9A (existing-repo migration prep), WP3B-gen + **WP4B-gen** (TS+Python
 code generators, core 266 tests), **WP6B** (trigger-first Connect editors over InboundBinding, gui 165 tests, mock-backed). See the table.
 
-Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `12cad75`, read the
+Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `a17f77a`, read the
 "Open issues", "Parallel-execution model", and "Python environment" notes above, then release the remaining lanes
 (≤4 concurrent `cap-sonnet-implementer`, 90 steps each; route each per the model):
 - **✅ SCHED-ENUM reconciliation DONE** (`c4e8981`) — runtimes + generators emit contract enums 1:1.
