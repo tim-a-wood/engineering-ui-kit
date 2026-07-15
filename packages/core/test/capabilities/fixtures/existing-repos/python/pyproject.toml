@@ -1,0 +1,13 @@
+[project]
+name = "widgets"
+version = "0.1.0"
+description = "Existing repo migration fixture: a minimal Python package with an entry point."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+widgets = "widgets.main:run"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
