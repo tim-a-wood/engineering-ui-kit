@@ -215,16 +215,16 @@ describe('CAP-TEST-038 Capabilities accessibility', () => {
     expect(attentionHtml).toContain('aria-label="state needs-review"')
   })
 
-  it('exposes keyboard-focusable architecture diagram and list fallback', () => {
+  it('exposes a keyboard-focusable architecture diagram with accessible module cards and routes', () => {
     const html = renderToStaticMarkup(
       <ArchitectureView projection={sampleProjection()} mode="guided" />,
     )
     expect(html).toContain('aria-label="Architecture diagram"')
     expect(html).toContain('tabindex="0"')
     expect(html).toContain('aria-keyshortcuts=')
-    expect(html).toContain('aria-label="Architecture list alternative"')
+    expect(html).toContain('aria-label="Architecture responsibility lanes"')
+    expect(html).toContain('aria-label="Port dependency routes"')
     expect(html).toContain('aria-label="Module A, Module, Draft. Open details"')
-    expect(html).toContain('role="button"')
     expect(html).toContain('role="status"')
     expect(html).toMatch(/<button[^>]*type="button"[^>]*>[\s\S]*Module A/)
   })

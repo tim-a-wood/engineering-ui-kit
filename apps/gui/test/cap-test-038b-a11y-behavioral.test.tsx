@@ -249,31 +249,28 @@ describe('CAP-TEST-038b Capabilities accessibility (behavioral)', () => {
     expect(html).toContain('aria-label="View mode"')
   })
 
-  // ---- Architecture list fallback + non-color status cues -------------------
-  it('architecture renders a complete list alternative with text+shape status cues (color redundant)', () => {
+  // ---- Architecture lanes + non-color status cues ---------------------------
+  it('architecture renders complete responsibility lanes and isolated port routes', () => {
     const html = renderToStaticMarkup(<ArchitectureView projection={sampleProjection()} mode="guided" />)
-    // Non-graph alternative present.
-    expect(html).toContain('aria-label="Architecture list alternative"')
-    // One list button per node -> keyboard reachable list.
-    const listMatch = html.match(/aria-label="Architecture list alternative">([\s\S]*?)<\/ul>/)
-    expect(listMatch).not.toBeNull()
-    expect((listMatch![1].match(/<button[^>]*type="button"/g) ?? []).length).toBe(2)
+    expect(html).toContain('aria-label="Architecture responsibility lanes"')
+    expect(html).toContain('aria-label="Port dependency routes"')
+    expect((html.match(/class="architecture-node-card/g) ?? []).length).toBe(2)
+    expect((html.match(/class="architecture-route-port"/g) ?? []).length).toBe(2)
     // Status is conveyed by glyph + text label, not color alone.
     expect(html).toContain('Ready')
     expect(html).toContain('Blocked')
     expect(html).toMatch(/[✓!]/)
     expect(html).toContain('role="note"')
-    expect(html).toMatch(/color is redundant/i)
+    expect(html).toMatch(/without crossing lines/i)
     // Diagram is a single tab stop with roving -1 children (focus entry semantics).
     expect(html).toContain('aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Enter"')
     expect(html).toMatch(/role="application"[^>]*tabindex="0"|tabindex="0"[^>]*role="application"/i)
     expect(html).toContain('tabindex="-1"')
-    // Ports-and-adapters semantics are explicit and type is conveyed by shape as well as text/color.
-    expect(html).toContain('aria-label="Component type shapes"')
-    expect(html).toContain('data-component-shape="hexagon"')
-    expect(html).toContain('data-component-shape="outbound-adapter"')
-    expect(html).toContain('class="architecture-port output-port"')
-    expect(html).toContain('Hexagonal ports and adapters module dependency diagram')
+    // Ports-and-adapters semantics are explicit without a crossing SVG graph.
+    expect(html).toContain('aria-label="Component types"')
+    expect(html).not.toContain('<svg')
+    expect(html).toContain('Requires')
+    expect(html).toContain('Provides')
   })
 
   // ---- Non-color status cues across differing data states -------------------

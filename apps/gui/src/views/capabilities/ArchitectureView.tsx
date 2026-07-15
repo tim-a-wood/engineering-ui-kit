@@ -1,6 +1,7 @@
 /**
- * Read-only architecture map and module directory (CAP-PKT-010 / CAP-DEC-006).
- * Module cards open a shared detail dialog; keyboard selection remains available.
+ * Read-only architecture map (CAP-PKT-010 / CAP-DEC-006).
+ * Responsibility lanes and isolated port routes keep the dependency view legible;
+ * module cards open a shared detail dialog and retain keyboard navigation.
  */
 
 import { useEffect, useId, useMemo, useState, type KeyboardEvent } from 'react'
@@ -18,46 +19,21 @@ const STATUS_GLYPH: Record<string, string> = {
   ready: '✓', review: '◒', blocked: '!', failed: '×', draft: '○', proposed: '◇', unknown: '◇',
 }
 
-const NODE_WIDTH = 196
-const NODE_HEIGHT = 82
-
 const ARCHITECTURE_TYPES = [
-  { type: 'experience', label: 'User-facing adapter' },
-  { type: 'workflow', label: 'Application flow' },
-  { type: 'domain', label: 'Domain core' },
+  { type: 'experience', label: 'Experience adapter' },
+  { type: 'workflow', label: 'Application workflow' },
+  { type: 'domain', label: 'Domain module' },
   { type: 'platform', label: 'Platform adapter' },
   { type: 'connection', label: 'External adapter' },
 ] as const
 
-function clipped(value: string, length = 25): string {
-  return value.length <= length ? value : `${value.slice(0, length - 1)}…`
-}
-
-function NodeShape({ moduleType }: { moduleType?: string }) {
-  if (moduleType === 'domain') {
-    return <path className="architecture-node-body architecture-shape-domain" data-component-shape="hexagon" d="M24 1 H172 L195 41 L172 81 H24 L1 41 Z" />
-  }
-  if (moduleType === 'experience') {
-    return <path className="architecture-node-body architecture-shape-experience" data-component-shape="inbound-adapter" d="M10 1 H166 L195 41 L166 81 H10 Q1 81 1 72 V10 Q1 1 10 1 Z" />
-  }
-  if (moduleType === 'connection') {
-    return (
-      <>
-        <rect className="architecture-node-body architecture-shape-connection" data-component-shape="outbound-adapter" width={190} height={80} x={1} y={1} rx={40} />
-        <path className="architecture-connector-prongs" d="M181 31 H195 M181 51 H195" />
-      </>
-    )
-  }
-  if (moduleType === 'platform') {
-    return (
-      <>
-        <path className="architecture-node-body architecture-shape-platform" data-component-shape="platform" d="M1 14 C1 6 44 1 98 1 C152 1 195 6 195 14 V68 C195 76 152 81 98 81 C44 81 1 76 1 68 Z" />
-        <path className="architecture-platform-rim" d="M1 14 C1 22 44 27 98 27 C152 27 195 22 195 14" />
-      </>
-    )
-  }
-  return <rect className="architecture-node-body architecture-shape-workflow" data-component-shape={moduleType === 'workflow' ? 'application' : 'unassigned'} width={194} height={80} x={1} y={1} rx={moduleType === 'workflow' ? 16 : 8} />
-}
+const ROLE_LANES = [
+  { role: 'inbound-adapter', label: 'Inbound adapters', hint: 'User, API, CLI, or event entry points' },
+  { role: 'application', label: 'Application', hint: 'Coordinates use cases and workflows' },
+  { role: 'domain-core', label: 'Domain', hint: 'Business rules and core decisions' },
+  { role: 'outbound-adapter', label: 'Outbound adapters', hint: 'Storage, platforms, and external systems' },
+  { role: 'unassigned', label: 'Other', hint: 'Modules awaiting architectural placement' },
+] as const
 
 function ModuleDetails(props: {
   node: ArchitectureNodeProjection
@@ -125,18 +101,20 @@ export function ArchitectureView({ projection }: Props) {
     : { focused: undefined, neighbors: [] }
   const neighborSet = new Set(neighbors.map((node) => node.id))
   const detailNode = projection.nodes.find((node) => node.id === detailId)
-  const lanes = useMemo(() => {
-    const values = new Map<number, { x: number; count: number; label: string }>()
-    for (const node of projection.nodes) {
-      const current = values.get(node.layout.column)
-      values.set(node.layout.column, {
-        x: Math.min(current?.x ?? node.layout.x, node.layout.x),
-        count: (current?.count ?? 0) + 1,
-        label: node.laneLabel ?? 'Other modules',
-      })
-    }
-    return [...values.entries()].sort(([left], [right]) => left - right)
-  }, [projection.nodes])
+  const lanes = useMemo(() => ROLE_LANES
+    .map((lane) => ({
+      ...lane,
+      nodes: projection.nodes
+        .filter((node) => (node.architectureRole ?? 'unassigned') === lane.role)
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    }))
+    .filter((lane) => lane.nodes.length > 0), [projection.nodes])
+
+  const routes = useMemo(() => projection.edges.map((edge) => ({
+    ...edge,
+    fromNode: projection.nodes.find((node) => node.id === edge.from),
+    toNode: projection.nodes.find((node) => node.id === edge.to),
+  })).filter((edge) => edge.fromNode && edge.toNode), [projection.edges, projection.nodes])
 
   const moveSelection = (delta: number) => {
     if (!orderedIds.length) return
@@ -158,9 +136,6 @@ export function ArchitectureView({ projection }: Props) {
     }
   }
 
-  const maxX = Math.max(420, ...projection.nodes.map((node) => node.layout.x + NODE_WIDTH + 54))
-  const maxY = Math.max(250, ...projection.nodes.map((node) => node.layout.y + NODE_HEIGHT + 52))
-
   return (
     <div className="architecture-view" role="region" aria-labelledby={labelId}>
       <div className="architecture-heading">
@@ -170,86 +145,82 @@ export function ArchitectureView({ projection }: Props) {
         </div>
         <span className="architecture-revision">Revision {projection.architectureRevision}</span>
       </div>
-      <p className="capabilities-note" role="note">Read the map from user-facing adapters through application workflows into the domain core and out to platform or external adapters. Shape and text make every type clear, so color is redundant; connection points show ports. Use arrow keys to move and Enter to open details.</p>
+      <p className="capabilities-note" role="note">Modules are arranged by architectural responsibility. Every dependency is shown below as its own required-port to provided-port route, so direction and interaction stay readable without crossing lines. Use arrow keys to move and Enter to open details.</p>
 
       <div className="architecture-map-shell">
         <div className="architecture-map-toolbar">
           <div className="architecture-map-counts" aria-label="Architecture map summary"><span>{projection.nodes.length} modules</span><span>{projection.edges.length} port connections</span></div>
-          <ul className="architecture-map-legend" aria-label="Component type shapes">
-            {ARCHITECTURE_TYPES.map((item) => <li key={item.type}><span className={`architecture-shape-swatch shape-${item.type}`} aria-hidden="true" />{item.label}</li>)}
-            <li><span className="architecture-port-swatch" aria-hidden="true" />Port</li>
+          <ul className="architecture-map-legend" aria-label="Component types">
+            {ARCHITECTURE_TYPES.map((item) => <li key={item.type}><span className={`architecture-type-swatch type-${item.type}`} aria-hidden="true" />{item.label}</li>)}
+            <li><span className="architecture-port-swatch" aria-hidden="true" />Port connection</li>
           </ul>
         </div>
         <div className="architecture-diagram" role="application" aria-label="Architecture diagram" aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Enter" tabIndex={0} onKeyDown={onKeyDown}>
-          <svg width="100%" viewBox={`0 0 ${maxX} ${maxY}`} role="img" aria-label="Hexagonal ports and adapters module dependency diagram">
-            <defs>
-              <pattern id={`${labelId}-grid`} width="24" height="24" patternUnits="userSpaceOnUse"><path d="M 24 0 L 0 0 0 24" className="architecture-grid-line" /></pattern>
-              <marker id={`${labelId}-arrow`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" className="architecture-arrow" /></marker>
-            </defs>
-            <rect width={maxX} height={maxY} className="architecture-map-background" />
-            <rect width={maxX} height={maxY} fill={`url(#${labelId}-grid)`} />
-            {lanes.map(([column, value]) => (
-              <g key={column} className="architecture-lane-heading">
-                <rect x={value.x - 10} y={22} width={216} height={34} rx={17} />
-                <text x={value.x + 7} y={43}>{value.label.toUpperCase()} · {value.count}</text>
-              </g>
+          <div className={`architecture-lanes architecture-lanes-${lanes.length}`} aria-label="Architecture responsibility lanes">
+            {lanes.map((lane) => (
+              <section key={lane.role} className={`architecture-lane architecture-lane-${lane.role}`} aria-label={lane.label}>
+                <header>
+                  <span className="architecture-lane-count">{lane.nodes.length}</span>
+                  <div><h4>{lane.label}</h4><p>{lane.hint}</p></div>
+                </header>
+                <ul>
+                  {lane.nodes.map((node) => {
+                    const selected = node.id === selectedId
+                    const inFocus = selected || neighborSet.has(node.id)
+                    return (
+                      <li key={node.id}>
+                        <button
+                          type="button"
+                          className={['architecture-node-card', node.proposed ? 'proposed' : '', selected ? 'selected' : '', inFocus ? 'in-focus' : '', `status-${node.statusIcon}`, `type-${node.moduleType ?? 'unassigned'}`].filter(Boolean).join(' ')}
+                          onClick={() => { setSelectedId(node.id); setDetailId(node.id) }}
+                          tabIndex={-1}
+                          aria-label={`${node.name}, ${moduleTypeLabel(node.moduleType ?? 'module')}, ${node.statusLabel}. Open details`}
+                          aria-pressed={selected}
+                        >
+                          <span className={`architecture-node-icon architecture-type-${node.moduleType ?? 'unassigned'}`} aria-hidden="true">{moduleTypeLabel(node.moduleType ?? 'module').charAt(0)}</span>
+                          <span className="architecture-node-copy">
+                            <span className="architecture-node-meta">
+                              <small>{moduleTypeLabel(node.moduleType ?? 'module')}</small>
+                              <span className="architecture-node-status"><span aria-hidden="true">{STATUS_GLYPH[node.statusIcon] ?? '◇'}</span> {node.statusLabel}</span>
+                            </span>
+                            <strong>{node.name}</strong>
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
             ))}
-            {projection.nodes.filter((node) => node.architectureRole === 'domain-core').map((node) => (
-              <ellipse key={`halo-${node.id}`} className="architecture-domain-halo" cx={node.layout.x + NODE_WIDTH / 2} cy={node.layout.y + NODE_HEIGHT / 2} rx={125} ry={62} />
-            ))}
-            {projection.edges.map((edge) => {
-              const from = projection.nodes.find((node) => node.id === edge.from)
-              const to = projection.nodes.find((node) => node.id === edge.to)
-              if (!from || !to) return null
-              const sameColumn = from.layout.x === to.layout.x
-              const movesRight = to.layout.x > from.layout.x
-              const x1 = sameColumn || movesRight ? from.layout.x + NODE_WIDTH : from.layout.x
-              const y1 = from.layout.y + NODE_HEIGHT / 2
-              const x2 = sameColumn ? to.layout.x + NODE_WIDTH : movesRight ? to.layout.x : to.layout.x + NODE_WIDTH
-              const y2 = to.layout.y + NODE_HEIGHT / 2
-              const curve = sameColumn ? 62 + Math.abs(from.layout.row - to.layout.row) * 10 : Math.max(38, Math.abs(x2 - x1) * 0.42)
-              const direction = sameColumn || movesRight ? 1 : -1
-              return (
-                <g key={edge.id} className="architecture-port-connection">
-                  <path d={`M ${x1} ${y1} C ${x1 + curve * direction} ${y1}, ${x2 - curve * direction} ${y2}, ${x2} ${y2}`} className={edge.suggested ? 'architecture-edge suggested' : 'architecture-edge'} markerEnd={`url(#${labelId}-arrow)`}><title>{edge.reason}</title></path>
-                  <circle cx={x1} cy={y1} r={5} className="architecture-port output-port"><title>{`Output port from ${from.name}`}</title></circle>
-                  <circle cx={x2} cy={y2} r={5} className="architecture-port input-port"><title>{`Input port on ${to.name}`}</title></circle>
-                </g>
-              )
-            })}
-            {projection.nodes.map((node) => {
-              const selected = node.id === selectedId
-              const inFocus = selected || neighborSet.has(node.id)
-              return (
-                <g key={node.id} transform={`translate(${node.layout.x},${node.layout.y})`} className={['architecture-node', node.proposed ? 'proposed' : '', selected ? 'selected' : '', inFocus ? 'in-focus' : '', `status-${node.statusIcon}`, `type-${node.moduleType ?? 'unassigned'}`].filter(Boolean).join(' ')} onClick={() => { setSelectedId(node.id); setDetailId(node.id) }} role="button" tabIndex={-1} aria-label={`${node.name}, ${moduleTypeLabel(node.moduleType ?? 'module')}, ${node.statusLabel}. Open details`} aria-pressed={selected}>
-                  <NodeShape moduleType={node.moduleType} />
-                  <circle className="architecture-node-type-mark" cx={node.moduleType === 'domain' ? 35 : 19} cy={20} r={4} />
-                  <text x={node.moduleType === 'domain' ? 46 : 30} y={23} className="architecture-node-kicker">{moduleTypeLabel(node.moduleType ?? 'module').toUpperCase()}</text>
-                  <text x={node.moduleType === 'domain' ? 34 : 20} y={48} className="architecture-node-title">{clipped(node.name, node.moduleType === 'domain' ? 21 : 25)}</text>
-                  <text x={node.moduleType === 'domain' ? 34 : 20} y={68} className="architecture-node-status"><tspan aria-hidden="true">{STATUS_GLYPH[node.statusIcon] ?? '◇'} </tspan>{node.statusLabel}</text>
-                  <text x={node.moduleType === 'connection' ? 164 : 174} y={48} className="architecture-node-open" aria-hidden="true">↗</text>
-                </g>
-              )
-            })}
-          </svg>
+          </div>
+
+          <section className="architecture-routes" aria-label="Port dependency routes">
+            <div className="architecture-routes-heading">
+              <div><p className="architecture-eyebrow">Interactions</p><h4>Port-to-port dependency routes</h4></div>
+              <span>{routes.length} connection{routes.length === 1 ? '' : 's'}</span>
+            </div>
+            {routes.length ? (
+              <ol className="architecture-route-list">
+                {routes.map((route) => (
+                  <li key={route.id} className={route.suggested ? 'suggested' : undefined}>
+                    <div className="architecture-route-endpoint source"><small>Requires</small><strong>{route.fromNode!.name}</strong></div>
+                    <div className="architecture-route-wire" aria-label={`${route.fromNode!.name} depends on ${route.toNode!.name}: ${route.reason}`}>
+                      <span className="architecture-route-port" aria-hidden="true" />
+                      <span className="architecture-route-reason">{route.reason || 'Uses capability'}</span>
+                      <span className="architecture-route-arrow" aria-hidden="true">→</span>
+                      <span className="architecture-route-port" aria-hidden="true" />
+                    </div>
+                    <div className="architecture-route-endpoint target"><small>Provides</small><strong>{route.toNode!.name}</strong></div>
+                  </li>
+                ))}
+              </ol>
+            ) : <p className="architecture-routes-empty">No module dependencies are defined.</p>}
+          </section>
         </div>
       </div>
 
       {focused ? <p role="status" aria-live="polite" className="sr-only">Focused {focused.name}. {neighbors.length} connected modules.</p> : null}
 
-      <div className="architecture-directory-heading"><div><p className="architecture-eyebrow">Module directory</p><h4>Explore the solution</h4></div><span className="capabilities-note">Open any card for full details</span></div>
-      <ul className="architecture-list" aria-label="Architecture list alternative">
-        {projection.listItems.map((item) => (
-          <li key={item.id}>
-            <button type="button" className={item.id === selectedId ? 'active' : undefined} aria-current={item.id === selectedId ? 'true' : undefined} onClick={() => { setSelectedId(item.id); setDetailId(item.id) }}>
-              <span className={`architecture-list-icon architecture-type-${item.moduleType ?? 'unassigned'}`} aria-hidden="true">{moduleTypeLabel(item.moduleType ?? 'module').charAt(0)}</span>
-              <span className="architecture-list-copy"><strong>{item.name}</strong><span>{moduleTypeLabel(item.moduleType ?? 'module')} · {item.purposeGroup}</span></span>
-              <span className={`architecture-list-status status-${item.statusIcon}`}><span aria-hidden="true">{STATUS_GLYPH[item.statusIcon] ?? '◇'}</span> {item.statusLabel}</span>
-              <span className="architecture-list-open" aria-hidden="true">→</span>
-            </button>
-          </li>
-        ))}
-      </ul>
       {detailNode ? <ModuleDetails node={detailNode} projection={projection} onClose={() => setDetailId(null)} /> : null}
     </div>
   )

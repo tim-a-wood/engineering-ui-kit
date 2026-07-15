@@ -651,11 +651,13 @@ function ModuleWorkspace(props: {
       {progressive ? (
         <div className="cap-build-module-workspace">
           <section className="cap-build-action-panel" aria-label={`Build actions for ${moduleDisplayName}`}>
-            <p className="capabilities-eyebrow">Selected module</p>
-            <h3>{moduleDisplayName}</h3>
-            {architectureModule?.responsibility ? <p className="capabilities-note">{architectureModule.responsibility}</p> : null}
+            <div className="cap-build-selection-summary">
+              <p className="capabilities-eyebrow">Selected module</p>
+              <h3>{moduleDisplayName}</h3>
+              {architectureModule?.responsibility ? <p className="capabilities-note">{architectureModule.responsibility}</p> : null}
+            </div>
             {progressiveNextAction}
-            {diagnosticsBlock}
+            {diagnosticsBlock ? <div className="cap-build-action-diagnostics">{diagnosticsBlock}</div> : null}
           </section>
           {interviewOutcomePanel}
         </div>

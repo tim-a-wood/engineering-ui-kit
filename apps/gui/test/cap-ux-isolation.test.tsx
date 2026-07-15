@@ -293,9 +293,10 @@ describe('architecture exploration', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Flight Planner, Workflow, Planned. Open details' }))
 
-    expect(screen.getByRole('dialog', { name: 'Flight Planner' })).toBeTruthy()
+    const dialog = screen.getByRole('dialog', { name: 'Flight Planner' })
+    expect(dialog).toBeTruthy()
     expect(screen.getByText('Coordinates a complete flight planning workflow.')).toBeTruthy()
-    expect(screen.getByText('Workflow')).toBeTruthy()
+    expect(within(dialog).getByText('Workflow')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Close dialog' }))
     expect(screen.queryByRole('dialog')).toBeNull()
   })
