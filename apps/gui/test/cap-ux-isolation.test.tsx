@@ -431,6 +431,33 @@ describe('module isolation', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /Other, Not started/i }).getAttribute('aria-current')).toBe('true'))
     expect(screen.getByText('Create the module interview')).toBeTruthy()
   })
+
+  it('offers an agent-assisted build for an approved experience module with approved context', async () => {
+    const manifest: ModuleManifest = {
+      schemaVersion: '1.0', architectureVersion: '1.0', moduleId: 'mod.ui', moduleVersion: '1.0.0',
+      moduleType: 'experience', name: 'Flight Planner UI', responsibility: 'Lets dispatchers plan flights.',
+      ownedConcerns: ['flight-plan-presentation'], excludedConcerns: ['route-optimization'],
+      providedOperations: [{ operationId: 'ui.show-plan', contractVersion: '1.0.0' }],
+      requiredOperations: [{ operationId: 'plan.calculate', acceptedContractRange: '^1.0.0', reason: 'Calculate the route' }],
+      verificationSuiteIds: ['suite.ui'], runtimeAllocation: 'local-embedded', events: [], ownedPaths: ['src/features/planner/'],
+    }
+    const architecture = {
+      schemaVersion: '1.0', id: 'arch.ui', revision: '3', moduleIds: ['mod.ui'],
+      moduleDefinitions: [{ moduleId: 'mod.ui', name: 'Flight Planner UI', moduleType: 'experience', responsibility: manifest.responsibility }],
+    }
+    const onStartUiBuild = vi.fn(async () => {})
+    const bridge = makeBridge({ capabilitiesGetArchitecture: (async () => ({ approved: architecture })) as never })
+    render(<ModulesView bridge={bridge} projectId="p1" architectureApproved projection="guided" records={[{ moduleId: 'mod.ui', approved: manifest }]} hideModuleList progressive externalSelectedModuleId="mod.ui" onStartUiBuild={onStartUiBuild} />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Build UI with agent' }))
+    await waitFor(() => expect(onStartUiBuild).toHaveBeenCalledTimes(1))
+    const [projectId, fields] = onStartUiBuild.mock.calls[0]
+    expect(projectId).toBe('p1')
+    expect(fields.taskTitle).toBe('Build UI module: Flight Planner UI')
+    expect(fields.scope).toContain('plan.calculate')
+    expect(fields.constraints).toContain('route-optimization')
+    expect(fields.references).toContain('arch.ui revision 3')
+  })
 })
 
 describe('capability preview recovery', () => {
@@ -467,6 +494,59 @@ describe('guided connect isolation', () => {
       fireEvent.change(screen.getByLabelText(label), { target: { value: 'x' } })
     }
   }
+
+  it('requires the configured project UI to be confirmed before launching its preview', async () => {
+    const launchApp = vi.fn(async () => ({ url: 'http://127.0.0.1:5402', started: false, rebuilt: false }))
+    const configuredProject = {
+      ...project('p1', 'Aircraft Performance'), repoPath: 'C:\\work\\aircraft-performance',
+      launchUrl: 'http://127.0.0.1:5402', launchCommand: 'npm run dev',
+    }
+    const updateProject = vi.fn(async (_id, patch) => ({ ...configuredProject, ...patch }))
+    render(<GuidedConnect bridge={makeBridge({ launchApp: launchApp as never, updateProject: updateProject as never })} projectId="p1" project={configuredProject} records={records} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+
+    expect(screen.getByRole('region', { name: 'Step 1: Choose how this application connects' })).toBeTruthy()
+    expect(launchApp).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: /Connect a UI now/i }))
+    await waitFor(() => expect(screen.getByText('Aircraft Performance')).toBeTruthy())
+    expect(screen.getByText('C:\\work\\aircraft-performance')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Use this UI' }))
+    await waitFor(() => expect(launchApp).toHaveBeenCalledWith('p1', { open: false }))
+    expect(await screen.findByTitle('Target application Preview')).toBeTruthy()
+  })
+
+  it('can configure a different application UI before element binding begins', async () => {
+    const unconfiguredProject = project('p1', 'Aircraft Performance')
+    const updatedProject = { ...unconfiguredProject, launchUrl: 'http://localhost:4400', launchCommand: 'npm run ui' }
+    const updateProject = vi.fn(async (_id, patch) => ({ ...unconfiguredProject, ...patch }))
+    const launchApp = vi.fn(async () => ({ url: updatedProject.launchUrl, started: true, rebuilt: false }))
+    render(<GuidedConnect bridge={makeBridge({ updateProject: updateProject as never, launchApp: launchApp as never })} projectId="p1" project={unconfiguredProject} records={records} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Connect a UI now/i }))
+    await waitFor(() => expect(screen.getByLabelText('Application UI URL')).toBeTruthy())
+    fireEvent.change(screen.getByLabelText('Application UI URL'), { target: { value: 'http://localhost:4400' } })
+    fireEvent.change(screen.getByLabelText('Application UI start command'), { target: { value: 'npm run ui' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save and use this UI' }))
+
+    await waitFor(() => expect(updateProject).toHaveBeenLastCalledWith('p1', {
+      launchUrl: 'http://localhost:4400', launchCommand: 'npm run ui', capabilitiesConnectDisposition: 'connect-now',
+    }))
+    await waitFor(() => expect(launchApp).toHaveBeenCalledTimes(1))
+    expect(screen.getByText('Connected')).toBeTruthy()
+  })
+
+  it.each(['no-ui', 'deferred'] as const)('persists the %s choice without launching a preview', async (disposition) => {
+    const baseProject = project('p1', 'Service')
+    const updateProject = vi.fn(async (_id, patch) => ({ ...baseProject, ...patch }))
+    const launchApp = vi.fn()
+    const onProjectChanged = vi.fn(async () => {})
+    render(<GuidedConnect bridge={makeBridge({ updateProject: updateProject as never, launchApp: launchApp as never })} projectId="p1" project={baseProject} records={records} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} onProjectChanged={onProjectChanged} />)
+
+    fireEvent.click(screen.getByRole('button', { name: disposition === 'no-ui' ? /No UI for this application/i : /Decide later/i }))
+    await waitFor(() => expect(updateProject).toHaveBeenCalledWith('p1', { capabilitiesConnectDisposition: disposition }))
+    expect(onProjectChanged).toHaveBeenCalledTimes(1)
+    expect(launchApp).not.toHaveBeenCalled()
+  })
 
   it('prevents duplicate Approve actions (one persistence call for a double click)', async () => {
     const approveBinding = vi.fn(() => new Promise(() => {})) // never resolves -> stays busy

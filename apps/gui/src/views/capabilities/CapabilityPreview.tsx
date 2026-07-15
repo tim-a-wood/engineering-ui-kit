@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import type { SelectionEvidence } from '@engineering-ui-kit/core'
+import type { Project, SelectionEvidence } from '@engineering-ui-kit/core'
 import type { EuikBridge } from '../../bridge'
 import { PREVIEW_BINDING_PICKER_JS } from './previewSelection'
 
@@ -10,6 +10,7 @@ export type CapabilityPreviewHandle = {
 type Props = {
   bridge: EuikBridge
   projectId: string
+  project?: Project
 }
 
 type PreviewState =
@@ -19,7 +20,7 @@ type PreviewState =
 
 /** Target application preview. Selection executes inside the Electron guest. */
 export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
-  function CapabilityPreview({ bridge, projectId }, ref) {
+  function CapabilityPreview({ bridge, projectId, project }, ref) {
     const [state, setState] = useState<PreviewState>({ status: 'idle' })
     const webviewRef = useRef<HTMLWebViewElement | null>(null)
     const iframeRef = useRef<HTMLIFrameElement | null>(null)
@@ -100,7 +101,7 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
       <div className="app-preview capability-app-preview" aria-label="Target application Preview">
         <div className="app-preview-shell">
           <div className="hstack between app-preview-chrome">
-            <span className="overline">Target application Preview</span>
+            <span className="overline">Target application Preview{project?.name ? ` · ${project.name}` : ''}</span>
             {state.status === 'ready' ? (
               <span className="hstack">
                 <span className="mono app-preview-url">{state.url}</span>

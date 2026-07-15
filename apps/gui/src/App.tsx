@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { HandoffRun, Project, Settings } from '@engineering-ui-kit/core'
-import { getBridge, type BuildPacketResult } from './bridge'
+import { getBridge, type BuildPacketResult, type TaskPacketFields } from './bridge'
 import {
   NAV_ITEMS,
   isStepReachable,
@@ -169,6 +169,18 @@ export default function App() {
     [activeRun],
   )
 
+  const startUiModuleBuild = useCallback(async (projectId: string, fields: TaskPacketFields) => {
+    const run = await bridge.createRun(projectId)
+    await bridge.updateRun(run.id, { taskTitle: fields.taskTitle, taskPacketFields: fields })
+    await bridge.prepareContext(run.id)
+    const generated = await bridge.buildPacket(run.id, fields)
+    setActiveRun((await bridge.getRun(run.id)) ?? run)
+    setPacket(generated)
+    setRecipe(null)
+    setBuildWorkspace('handoff')
+    setView('build')
+  }, [bridge])
+
   const activeProject = activeRun ? projects.find((p) => p.id === activeRun.projectId) : undefined
   const navActive: ViewId = isWorkflowView(view) ? 'copilot-handoff' : view
 
@@ -199,6 +211,8 @@ export default function App() {
             activeProjectId={activeProject?.id}
             onOpenGuide={setGuideTopic}
             onNavigateToProjects={() => setView('projects')}
+            onProjectsChanged={refreshProjects}
+            onStartUiBuild={startUiModuleBuild}
           />
         )
       case 'build':

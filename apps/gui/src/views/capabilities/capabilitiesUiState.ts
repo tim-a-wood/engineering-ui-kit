@@ -54,6 +54,7 @@ export type JourneyInput = {
   architecture: { draft?: unknown; approved?: unknown }
   modules: CapabilityModuleRecord[]
   bindings: CapabilityBindingRecord[]
+  connectDisposition?: 'connect-now' | 'no-ui' | 'deferred'
 }
 
 export type Journey = {
@@ -119,7 +120,8 @@ export function deriveJourney(input: JourneyInput): Journey {
   const requiresConnect = approved.some((m) => UI_MODULE_TYPES.has(m.moduleType))
   const approvedBinding = input.bindings.some((b) => Boolean(b.approved))
   const connectUnlocked = buildComplete && hasApprovedOperation
-  const connectComplete = connectUnlocked && (!requiresConnect || approvedBinding)
+  const connectSkipped = input.connectDisposition === 'no-ui' || input.connectDisposition === 'deferred'
+  const connectComplete = connectUnlocked && (!requiresConnect || approvedBinding || connectSkipped)
 
   // ---- Verify ----
   const verifyReady = approved.filter((m) => {
@@ -194,7 +196,7 @@ export function deriveJourney(input: JourneyInput): Journey {
   // Connect
   const connectState: StageState = !connectUnlocked
     ? 'locked'
-    : !requiresConnect
+    : !requiresConnect || connectSkipped
       ? 'not-applicable'
       : connectComplete
         ? 'complete'
@@ -209,6 +211,10 @@ export function deriveJourney(input: JourneyInput): Journey {
         ? 'No approved operation to connect yet.'
         : !requiresConnect
           ? 'Not required.'
+          : input.connectDisposition === 'no-ui'
+            ? 'No UI connection required.'
+            : input.connectDisposition === 'deferred'
+              ? 'UI connection deferred.'
           : connectComplete
             ? 'Connection approved.'
             : 'Connect an element to a capability.',

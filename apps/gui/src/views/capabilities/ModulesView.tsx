@@ -25,7 +25,7 @@ import {
   importModuleInterviewResponse,
   type ModuleInterviewResponse,
 } from '@engineering-ui-kit/core/browser'
-import type { CapabilityPacketExportResult, EuikBridge } from '../../bridge'
+import type { CapabilityPacketExportResult, EuikBridge, TaskPacketFields } from '../../bridge'
 import { EmptyState } from '../../components'
 import { Icon } from '../../icons'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
@@ -46,11 +46,49 @@ type Props = {
   /** Guided: render only the single next relevant lifecycle action. */
   progressive?: boolean
   onOpenArchitecture?: () => void
+  onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
 }
 
 function asArch(value: unknown): ArchitectureSpecification | undefined {
   if (!value || typeof value !== 'object') return undefined
   return value as ArchitectureSpecification
+}
+
+export function buildUiModuleTaskFields(
+  manifest: ModuleManifest,
+  architecture: ArchitectureSpecification,
+): TaskPacketFields {
+  const lines = (values: string[], fallback: string) => values.length ? values.map((value) => `- ${value}`).join('\n') : `- ${fallback}`
+  const provided = manifest.providedOperations.map((operation) => `${operation.operationId} @ ${operation.contractVersion}`)
+  const required = manifest.requiredOperations.map((operation) => `${operation.operationId} (${operation.reason})`)
+  return {
+    taskTitle: `Build UI module: ${manifest.name}`,
+    goal: `Implement the user-facing ${manifest.name} module. ${manifest.responsibility}`,
+    scope: [
+      `Approved module: ${manifest.moduleId} @ ${manifest.moduleVersion}`,
+      `Owned paths:\n${lines(manifest.ownedPaths, 'Choose repository paths consistent with the existing UI structure')}`,
+      `Provided operations:\n${lines(provided, 'No outward operations')}`,
+      `Required operations:\n${lines(required, 'No dependencies')}`,
+      `Owned concerns:\n${lines(manifest.ownedConcerns, 'Use the approved module responsibility')}`,
+    ].join('\n\n'),
+    constraints: [
+      '- Preserve the approved ports-and-adapters boundaries; keep domain logic outside the UI module.',
+      '- Use the repository’s existing design system, component patterns, and visual language.',
+      '- Include responsive, keyboard, focus, loading, empty, failure, and disabled states.',
+      `- Do not take ownership of:\n${lines(manifest.excludedConcerns, 'Anything outside the approved module boundary')}`,
+    ].join('\n'),
+    acceptanceCriteria: [
+      '- Every approved user-facing operation has a clear action and visible outcome.',
+      '- Required capability operations are consumed through the approved interfaces, not reimplemented in the UI.',
+      '- The module is polished, responsive, and accessible by keyboard and assistive technology.',
+      '- Relevant tests, type checks, and the project build pass.',
+    ].join('\n'),
+    references: [
+      `Capabilities architecture: ${architecture.id} revision ${architecture.revision}`,
+      `Module manifest: ${manifest.moduleId} @ ${manifest.moduleVersion}`,
+      `Verification suites: ${manifest.verificationSuiteIds.join(', ') || 'none recorded'}`,
+    ].join('\n'),
+  }
 }
 
 export function ModulesView({
@@ -65,6 +103,7 @@ export function ModulesView({
   onSelectModule,
   progressive = false,
   onOpenArchitecture,
+  onStartUiBuild,
 }: Props) {
   const guided = projection === 'guided'
   const [architecture, setArchitecture] = useState<ArchitectureSpecification | undefined>()
@@ -157,6 +196,7 @@ export function ModulesView({
         projection={projection}
         progressive={progressive}
         onChanged={onChanged}
+        onStartUiBuild={onStartUiBuild}
       />
     </section>
   )
@@ -174,6 +214,7 @@ function ModuleWorkspace(props: {
   projection: 'guided' | 'design'
   progressive: boolean
   onChanged: () => Promise<void>
+  onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
 }) {
   const { bridge, projectId, moduleId, architecture, record, isApproved, projection, progressive } = props
   const guided = projection === 'guided'
@@ -341,6 +382,20 @@ function ModuleWorkspace(props: {
     }
   }
 
+  async function startUiAgentBuild() {
+    const manifest = record?.approved
+    if (busy || !manifest || !architecture || !props.onStartUiBuild) return
+    setBusy(true)
+    setMessage('Preparing the UI build workspace with this module’s approved context…')
+    try {
+      await props.onStartUiBuild(projectId, buildUiModuleTaskFields(manifest, architecture))
+    } catch (error) {
+      if (mounted.current) setMessage(error instanceof Error ? error.message : String(error))
+    } finally {
+      if (mounted.current) setBusy(false)
+    }
+  }
+
   async function selectAndInspectOverlay() {
     if (busy || !implementationRunId) return
     const selected = await bridge.pickZipFile()
@@ -457,7 +512,22 @@ function ModuleWorkspace(props: {
         </>
       )}
       {buildStep === 'handoff' && (
-        <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportImplementation()} disabled={busy}>Create implementation handoff</button>
+        <div className="cap-ui-build-options">
+          {selectedType === 'experience' && props.onStartUiBuild ? (
+            <div className="cap-ui-build-agent">
+              <span className="capabilities-eyebrow">Recommended for UI modules</span>
+              <strong>Build the UI with the agent</strong>
+              <p>Open Build &amp; Test with this module’s approved responsibilities, operations, paths, and architecture boundaries already prepared.</p>
+              <button type="button" className="btn btn-primary btn-compact" onClick={() => void startUiAgentBuild()} disabled={busy}>
+                {Icon.sparkle(14)} Build UI with agent
+              </button>
+            </div>
+          ) : null}
+          <div className="cap-ui-build-manual">
+            <strong>{selectedType === 'experience' ? 'Or use an external implementation handoff' : 'Create the implementation handoff'}</strong>
+            <button type="button" className="btn btn-secondary btn-compact" onClick={() => void exportImplementation()} disabled={busy}>Create implementation handoff</button>
+          </div>
+        </div>
       )}
       {buildStep === 'inspect' && (
         <>

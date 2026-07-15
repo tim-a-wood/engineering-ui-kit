@@ -163,6 +163,22 @@ describe('deriveJourney', () => {
     expect(stageById(j, 'verify').state).toBe('current')
   })
 
+  it.each([
+    ['no-ui', 'No UI connection required.'],
+    ['deferred', 'UI connection deferred.'],
+  ] as const)('allows Verify when UI integration is %s', (connectDisposition, status) => {
+    const j = deriveJourney({
+      ...EMPTY,
+      application: { approved: {} },
+      architecture: { approved: arch(['mod.ui']) },
+      modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      connectDisposition,
+    })
+    expect(stageById(j, 'connect').state).toBe('not-applicable')
+    expect(stageById(j, 'connect').shortStatus).toBe(status)
+    expect(stageById(j, 'verify').state).toBe('current')
+  })
+
   it('Build complete but no approved operation keeps Connect locked', () => {
     const j = deriveJourney({
       ...EMPTY,

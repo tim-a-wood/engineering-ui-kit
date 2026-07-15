@@ -20,7 +20,7 @@ import type {
   Project,
   SelectionEvidence,
 } from '@engineering-ui-kit/core'
-import type { EuikBridge } from '../../bridge'
+import type { EuikBridge, TaskPacketFields } from '../../bridge'
 import { EmptyState, PageHeader } from '../../components'
 import { Icon } from '../../icons'
 import type { GuideTopicId } from '../../guides'
@@ -63,6 +63,8 @@ type Props = {
   activeProjectId?: string
   onOpenGuide?: (topic: GuideTopicId) => void
   onNavigateToProjects?: () => void
+  onProjectsChanged?: () => Promise<void> | void
+  onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
 }
 
 export function CapabilitiesView({
@@ -70,6 +72,8 @@ export function CapabilitiesView({
   projects,
   onOpenGuide,
   onNavigateToProjects,
+  onProjectsChanged,
+  onStartUiBuild,
 }: Props) {
   const [projection, setProjection] = useState<CapabilitiesProjection>('guided')
   // No project is initialized implicitly (Section 31): selection is an explicit action.
@@ -96,11 +100,29 @@ export function CapabilitiesView({
   const stageHeadingRef = useRef<HTMLHeadingElement | null>(null)
   const viewRef = useRef<HTMLDivElement | null>(null)
 
+  const selectedProject = projects.find((project) => project.id === projectId)
   const journeyInput: JourneyInput = useMemo(
-    () => ({ application, architecture, modules: moduleRecords, bindings: bindingRecords }),
-    [application, architecture, moduleRecords, bindingRecords],
+    () => ({
+      application,
+      architecture,
+      modules: moduleRecords,
+      bindings: bindingRecords,
+      connectDisposition: selectedProject?.capabilitiesConnectDisposition,
+    }),
+    [application, architecture, moduleRecords, bindingRecords, selectedProject?.capabilitiesConnectDisposition],
   )
   const journey = useMemo(() => deriveJourney(journeyInput), [journeyInput])
+  const effectiveAttentionItems = useMemo(() => {
+    if (selectedProject?.capabilitiesConnectDisposition !== 'deferred') return attentionItems
+    if (attentionItems.some((item) => item.reasonCodes.includes('ui-connection-deferred'))) return attentionItems
+    return [...attentionItems, {
+      moduleId: 'ui.connection',
+      primaryState: 'needs-review' as const,
+      reasonCodes: ['ui-connection-deferred'],
+      blocker: 'UI connection deferred',
+      nextAction: 'Return to Connect and configure the application UI',
+    }]
+  }, [attentionItems, selectedProject?.capabilitiesConnectDisposition])
 
   const fetchWorkspace = useCallback(
     async (id: string) => {
@@ -143,7 +165,8 @@ export function CapabilitiesView({
         setAttentionItems(d.attention)
         setModuleRecords(d.modules)
         setBindingRecords(d.bindings)
-        const derived = deriveJourney({ application: d.application, architecture: d.architecture, modules: d.modules, bindings: d.bindings })
+        const project = projects.find((candidate) => candidate.id === id)
+        const derived = deriveJourney({ application: d.application, architecture: d.architecture, modules: d.modules, bindings: d.bindings, connectDisposition: project?.capabilitiesConnectDisposition })
         setViewing(derived.firstIncompleteStageId)
         setDesignSection(stageToDesignSection(derived.firstIncompleteStageId))
         setLoadState('ready')
@@ -153,7 +176,7 @@ export function CapabilitiesView({
         setLoadState('error') // never fall back to the previous project's records
       }
     },
-    [bridge, fetchWorkspace],
+    [bridge, fetchWorkspace, projects],
   )
 
   const selectProject = useCallback(
@@ -236,7 +259,7 @@ export function CapabilitiesView({
   }
 
   const hasProjects = projects.length > 0
-  const attentionCount = attentionItems.length
+  const attentionCount = effectiveAttentionItems.length
 
   const headerActions = (
     <>
@@ -364,11 +387,12 @@ export function CapabilitiesView({
           key={projectId}
           bridge={bridge}
           projectId={projectId}
+          project={selectedProject}
           journey={journey}
           viewing={viewing}
           panel={guidedPanel}
           moduleRecords={moduleRecords}
-          attentionItems={attentionItems}
+          attentionItems={effectiveAttentionItems}
           architectureProjection={architectureProjection}
           archSpec={archSpec}
           selectionEvidence={selectionEvidence}
@@ -380,16 +404,19 @@ export function CapabilitiesView({
           onSelectionEvidence={setSelectionEvidence}
           onOpenGuide={onOpenGuide}
           onClosePanel={() => setGuidedPanel('journey')}
+          onProjectsChanged={onProjectsChanged}
+          onStartUiBuild={onStartUiBuild}
         />
       ) : (
         <DesignBody
           key={projectId}
           bridge={bridge}
           projectId={projectId}
+          project={selectedProject}
           section={designSection}
           onSection={openDesignSection}
           moduleRecords={moduleRecords}
-          attentionItems={attentionItems}
+          attentionItems={effectiveAttentionItems}
           architectureProjection={architectureProjection}
           archSpec={archSpec}
           application={application}
@@ -410,6 +437,7 @@ export function CapabilitiesView({
 export function GuidedBody(props: {
   bridge: EuikBridge
   projectId: string
+  project?: Project
   journey: ReturnType<typeof deriveJourney>
   viewing: StageId
   panel: GuidedPanel
@@ -426,6 +454,8 @@ export function GuidedBody(props: {
   onSelectionEvidence: (e: SelectionEvidence | undefined) => void
   onOpenGuide?: (topic: GuideTopicId) => void
   onClosePanel: () => void
+  onProjectsChanged?: () => Promise<void> | void
+  onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
 }) {
   const stage = stageById(props.journey, props.viewing)
   const stageLabel = stage.label
@@ -439,7 +469,9 @@ export function GuidedBody(props: {
           projection="guided"
           onNextAction={(item) => {
             // Route to the relevant Guided stage where possible.
-            const target: StageId = item.primaryState === 'draft' ? 'build' : 'verify'
+            const target: StageId = item.reasonCodes.includes('ui-connection-deferred')
+              ? 'connect'
+              : item.primaryState === 'draft' ? 'build' : 'verify'
             const t = props.journey.stages.find((s) => s.id === target)
             if (t && t.state !== 'locked') props.onView(target)
           }}
@@ -521,6 +553,7 @@ function StageCompletion(props: {
 function GuidedStage(props: {
   bridge: EuikBridge
   projectId: string
+  project?: Project
   stage: ReturnType<typeof stageById>
   journey: ReturnType<typeof deriveJourney>
   moduleRecords: CapabilityModuleRecord[]
@@ -533,6 +566,8 @@ function GuidedStage(props: {
   onSelectionEvidence: (e: SelectionEvidence | undefined) => void
   onOpenGuide?: (topic: GuideTopicId) => void
   onView: (id: StageId) => void
+  onProjectsChanged?: () => Promise<void> | void
+  onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
 }) {
   const { bridge, projectId, stage } = props
 
@@ -581,14 +616,34 @@ function GuidedStage(props: {
           archSpec={props.archSpec}
           records={props.moduleRecords}
           onChanged={props.onChanged}
+          onStartUiBuild={props.onStartUiBuild}
         />
       )
     case 'connect':
       if (stage.state === 'not-applicable') {
+        const disposition = props.project?.capabilitiesConnectDisposition
         return (
-          <p className="cap-stage-na" role="status">
-            This application has no user-interface modules, so there is nothing to connect. You can continue to Verify.
-          </p>
+          <div className="cap-stage-na" role="status">
+            <p>
+              {disposition === 'no-ui'
+                ? 'This application intentionally has no UI connection. You can continue to Verify.'
+                : disposition === 'deferred'
+                  ? 'UI integration is deferred and remains in Needs attention. You can continue to Verify.'
+                  : 'This application has no user-interface modules, so there is nothing to connect. You can continue to Verify.'}
+            </p>
+            {disposition ? (
+              <button
+                type="button"
+                className="btn btn-secondary btn-compact"
+                onClick={() => void (async () => {
+                  await bridge.updateProject(projectId, { capabilitiesConnectDisposition: undefined })
+                  await props.onProjectsChanged?.()
+                })()}
+              >
+                Change UI decision
+              </button>
+            ) : null}
+          </div>
         )
       }
       return (
@@ -596,6 +651,7 @@ function GuidedStage(props: {
           key={`${projectId}:${props.bindingRecords[0]?.bindingId ?? 'new'}`}
           bridge={bridge}
           projectId={projectId}
+          project={props.project}
           records={props.moduleRecords}
           selectionEvidence={props.selectionEvidence}
           onSelectionEvidence={props.onSelectionEvidence}
@@ -604,6 +660,7 @@ function GuidedStage(props: {
           initialBinding={props.bindingRecords[0]?.draft ?? props.bindingRecords[0]?.approved}
           previewRef={props.previewRef}
           onChanged={props.onChanged}
+          onProjectChanged={props.onProjectsChanged}
         />
       )
     case 'verify':
@@ -640,6 +697,7 @@ function StageBlocker(props: {
 export function DesignBody(props: {
   bridge: EuikBridge
   projectId: string
+  project?: Project
   section: DesignSection
   onSection: (s: DesignSection) => void
   moduleRecords: CapabilityModuleRecord[]
@@ -707,7 +765,7 @@ export function DesignBody(props: {
         )}
         {props.section === 'connections' && (
           <div className="capabilities-connections">
-            <CapabilityPreview ref={props.previewRef} bridge={bridge} projectId={projectId} />
+            <CapabilityPreview ref={props.previewRef} bridge={bridge} projectId={projectId} project={props.project} />
             <PreviewBindingPicker
               disabled={!projectId}
               pickFromPreview={() =>

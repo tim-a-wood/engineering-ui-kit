@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ArchitectureSpecification, CapabilityModuleRecord } from '@engineering-ui-kit/core'
-import type { EuikBridge } from '../../bridge'
+import type { EuikBridge, TaskPacketFields } from '../../bridge'
 import { Icon } from '../../icons'
 import { ModulesView } from './ModulesView'
 import { humanizeIdentifier, moduleTypeLabel } from './capabilityPresentation'
@@ -19,6 +19,7 @@ type Props = {
   archSpec: ArchitectureSpecification | undefined
   records: CapabilityModuleRecord[]
   onChanged: () => void
+  onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
 }
 
 export function GuidedBuild(props: Props) {
@@ -100,6 +101,7 @@ export function GuidedBuild(props: Props) {
             progressive
             externalSelectedModuleId={selected}
             onSelectModule={setSelected}
+            onStartUiBuild={props.onStartUiBuild}
           />
         ) : (
           <p role="status" className="capabilities-note">Select a module to work on.</p>
