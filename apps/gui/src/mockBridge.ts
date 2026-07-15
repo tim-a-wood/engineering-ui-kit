@@ -15,6 +15,7 @@ import type {
   FrontendBinding,
   HandoffRun,
   ModuleManifest,
+  ModuleInterviewResponse,
   OverlayInspectionSummary,
   Project,
   Settings,
@@ -38,6 +39,8 @@ type CapProjectState = {
   architectureApproved?: ArchitectureSpecification
   moduleDrafts: Map<string, ModuleManifest>
   moduleApproved: Map<string, ModuleManifest>
+  moduleInterviewDrafts: Map<string, ModuleInterviewResponse>
+  moduleInterviewApproved: Map<string, ModuleInterviewResponse>
   bindingDrafts: Map<string, FrontendBinding>
   bindingApproved: Map<string, FrontendBinding>
   freshness: Map<string, FreshnessRecord>
@@ -81,6 +84,8 @@ export function installMockBridge(): EuikBridge {
         initializedAt: now(),
         moduleDrafts: new Map(),
         moduleApproved: new Map(),
+        moduleInterviewDrafts: new Map(),
+        moduleInterviewApproved: new Map(),
         bindingDrafts: new Map(),
         bindingApproved: new Map(),
         freshness: new Map(),
@@ -437,7 +442,14 @@ export function installMockBridge(): EuikBridge {
       const runId = `cap-implementation-${Date.now()}`
       const files = ['capability-implementation-handoff.md']
         .map((name) => ({ path: `/mock/${runId}/${name}`, bytes: 100, sha256: `mock-${name}` }))
-      return { runId, packetId: `pkt-${input.moduleId}`, recommendedPrompt: `Implement only ${input.moduleId}.`, files, uploadFiles: files.map((f) => f.path) }
+      return {
+        runId,
+        packetId: `pkt-${input.moduleId}`,
+        recommendedPrompt: `Implement production source code and tests for ${input.moduleId}.`,
+        files,
+        uploadFiles: files.map((f) => f.path),
+        readiness: { status: 'ready' as const, issues: [] },
+      }
     },
     async capabilitiesStartHandoffDrag() { return { files: 1 } },
     async capabilitiesImportInterviewResponse(projectId, raw) {
@@ -468,15 +480,20 @@ export function installMockBridge(): EuikBridge {
       state.architectureDraft = undefined
       return { ok: true, approved, gate: { gateId: 'CAP-GATE-002', passed: true, diagnostics: [] } }
     },
-    async capabilitiesSaveModuleDraft(projectId, draft) {
+    async capabilitiesSaveModuleDraft(projectId, draft, interviewResponse) {
       const manifest = draft as ModuleManifest
-      ensureCap(projectId).moduleDrafts.set(manifest.moduleId, manifest)
+      const state = ensureCap(projectId)
+      state.moduleDrafts.set(manifest.moduleId, manifest)
+      if (interviewResponse) state.moduleInterviewDrafts.set(manifest.moduleId, interviewResponse as ModuleInterviewResponse)
       return { ok: true as const }
     },
-    async capabilitiesApproveModule(projectId, draft) {
+    async capabilitiesApproveModule(projectId, draft, interviewResponse) {
       const state = ensureCap(projectId)
       const approved = draft as ModuleManifest
       state.moduleApproved.set(approved.moduleId, approved)
+      const approvedInterview = interviewResponse as ModuleInterviewResponse | undefined
+        ?? state.moduleInterviewDrafts.get(approved.moduleId)
+      if (approvedInterview) state.moduleInterviewApproved.set(approved.moduleId, approvedInterview)
       state.moduleDrafts.delete(approved.moduleId)
       return { ok: true, approved, gate: { gateId: 'CAP-GATE-003', passed: true, diagnostics: [] } }
     },

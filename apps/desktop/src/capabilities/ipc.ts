@@ -10,12 +10,15 @@ import { ipcMain, nativeImage, safeStorage } from 'electron'
 import {
   CapabilityRunStore,
   CapabilityWorkspace,
+  buildCapabilityHandoffMarkdown,
+  buildModuleImplementationBrief,
   buildImplementationPacket,
   buildInterviewPacket,
   buildNeedsAttention,
   buildDeltaPacket,
   calculateImpact,
   deltaQueueState,
+  discoverRepositoryImplementationContext,
   assertTargetExportable,
   buildCapabilityGraph,
   calculateFreshness,
@@ -24,6 +27,7 @@ import {
   runCommand,
   selectVerificationSuites,
   evaluateArchitectureGate,
+  evaluateModuleInterview,
   evaluateModuleGate,
   evaluateProductGate,
   importProductInterviewResponse,
@@ -41,12 +45,14 @@ import {
   transitionJob,
   type ApplicationSpecification,
   type ArchitectureSpecification,
+  type CapabilityHandoffMarkdownInput,
   type CapabilityRunScope,
   type FreshnessRecord,
   type FrontendBinding,
   type JobRecord,
   type InterviewPacket,
   type ModuleManifest,
+  type ModuleInterviewResponse,
   type ResultEnvelope,
 } from '@engineering-ui-kit/core'
 import type { Workspace } from '@engineering-ui-kit/core'
@@ -155,7 +161,7 @@ function factValue(packet: InterviewPacket, prefix: string): string | undefined 
 
 function interactiveInterviewPrompt(packet: InterviewPacket): string {
   const completionRule = packet.outputSchemaRef === 'CAP-CONTRACT-003'
-    ? 'Every required answer must contain a concrete answer and no answer may have status "unresolved".'
+    ? 'Every required answer must contain a concrete answer and no answer may have status "unresolved". Every provided operation must have one matching operationContracts entry at the same version, and its inputSchemaRef and outputSchemaRef must resolve to concrete dataSchemas entries.'
     : packet.outputSchemaRef === 'CAP-CONTRACT-002'
       ? 'The final response must assign every module a name, moduleType, and responsibility; give every dependency edge a concrete reason; cover every module in a workflow trace and moduleNeedTrace; and contain an empty unresolvedQuestions array.'
       : 'The final response must contain an empty unresolvedQuestions array. Do not leave proposals or assumptions awaiting confirmation.'
@@ -209,6 +215,7 @@ function interviewResponseStarter(packet: InterviewPacket): unknown {
       responsibility: 'Replace with one clear responsibility', ownedConcerns: [], excludedConcerns: [],
       providedOperations: [], requiredOperations: [], verificationSuiteIds: [], runtimeAllocation: 'local-embedded',
       events: [], ownedPaths: [`capabilities/modules/${moduleId}/`], configurationSchemaRef: null,
+      operationContracts: [], dataSchemas: [],
       answers: packet.inputContext.facts.filter((fact) => fact.startsWith('detail:')).map((fact) => ({
         id: fact.slice('detail:'.length), text: 'Replace with a concrete answer', status: 'proposed',
       })),
@@ -232,52 +239,22 @@ function interviewResponseStarter(packet: InterviewPacket): unknown {
 function exportCapabilityPacketFiles(input: {
   caps: CapabilityWorkspace
   runs: CapabilityRunStore
-  run: CapabilityRunScope
-  packet: { packetId: string; outputFileName?: string }
+  run: CapabilityRunScope & { kind: CapabilityHandoffMarkdownInput['kind'] }
+  packet: CapabilityHandoffMarkdownInput['packet']
   recommendedPrompt: string
-  companion: { fileName: string; value: unknown }
+  responseTemplate?: { fileName: string; value: unknown }
+  supportingRecord?: { fileName: string; value: unknown }
 }) {
   input.runs.createRun(input.run)
   const handoffDir = path.join(input.caps.root(input.run.projectId), 'runs', input.run.runId, 'handoff')
   fs.mkdirSync(handoffDir, { recursive: true })
-  const packetJson = JSON.stringify(input.packet, null, 2)
-  const companionJson = JSON.stringify(input.companion.value, null, 2)
-  const companionHeading = input.companion.fileName === input.packet.outputFileName
-    ? `Required response starter: ${input.companion.fileName}`
-    : `Supporting record: ${input.companion.fileName}`
-  const supportingSection = companionJson === packetJson
-    ? ''
-    : `\n## ${companionHeading}\n\n\`\`\`json\n${companionJson}\n\`\`\`\n`
-  const isInterview = input.run.kind === 'interview'
-  const introduction = isInterview
-    ? 'This is the complete handoff. Follow the request and use the embedded records as context. This interview has a conversational phase before the final requested output.'
-    : 'This is the complete handoff. Follow the request, use the embedded records as context, and return only the requested output.'
-  const responseTimingRules = isInterview
-    ? `- During the interview, ask questions as plain conversation and wait for the user's answers; do not wrap questions in JSON.
-- Return only the JSON file named ${input.companion.fileName} after the interview completion rules in the request are satisfied.`
-    : `- Return only the requested output named ${input.companion.fileName}.`
-  const content = `# Copilot capability handoff
-
-${introduction}
-
-## Request
-
-${input.recommendedPrompt}
-
-## Output rules
-
-${responseTimingRules}
-- Use exactly the top-level shape shown in the required response template below.
-- Replace every "Replace with…" placeholder with interview content.
-- Do not invent wrapper keys such as productDefinition, confirmedRequirements, or gate.
-- Do not omit required keys. Use empty arrays only when the interview confirms there are no items.
-
-## Capability packet
-
-\`\`\`json
-${packetJson}
-\`\`\`
-${supportingSection}`
+  const content = buildCapabilityHandoffMarkdown({
+    kind: input.run.kind,
+    packet: input.packet,
+    recommendedPrompt: input.recommendedPrompt,
+    responseTemplate: input.responseTemplate,
+    supportingRecord: input.supportingRecord,
+  })
   const filePath = path.join(handoffDir, `capability-${input.run.kind}-handoff.md`)
   fs.writeFileSync(filePath, content)
   const files = [{
@@ -310,6 +287,20 @@ ${supportingSection}`
 function requireString(value: unknown, name: string): string {
   if (typeof value !== 'string' || !value.trim()) throw new Error(`invalid ${name}`)
   return value
+}
+
+function approvedContractContext(
+  caps: CapabilityWorkspace,
+  projectId: string,
+  architecture: ArchitectureSpecification,
+) {
+  const interviews = architecture.moduleIds
+    .map((moduleId) => caps.getApprovedModuleInterview(projectId, moduleId))
+    .filter((response): response is ModuleInterviewResponse => Boolean(response))
+  return {
+    availableOperationContracts: interviews.flatMap((response) => response.operationContracts ?? []),
+    availableDataSchemas: interviews.flatMap((response) => response.dataSchemas ?? []),
+  }
 }
 
 function secretsDir(dataDir: string): string {
@@ -406,17 +397,28 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
     evaluateArchitectureGate(arch),
   )
 
-  ipcMain.handle(CAP_CHANNELS.saveModuleDraft, (_e, projectId: string, draft: ModuleManifest) => {
+  ipcMain.handle(CAP_CHANNELS.saveModuleDraft, (
+    _e,
+    projectId: string,
+    draft: ModuleManifest,
+    interviewResponse?: ModuleInterviewResponse,
+  ) => {
     requireString(projectId, 'projectId')
-    caps.saveModuleDraft(projectId, draft)
+    caps.saveModuleDraft(projectId, draft, interviewResponse)
     return { ok: true }
   })
 
-  ipcMain.handle(CAP_CHANNELS.approveModule, (_e, projectId: string, draft: ModuleManifest) => {
+  ipcMain.handle(CAP_CHANNELS.approveModule, (
+    _e,
+    projectId: string,
+    draft: ModuleManifest,
+    interviewResponse?: ModuleInterviewResponse,
+  ) => {
     requireString(projectId, 'projectId')
-    const gate = evaluateModuleGate(draft)
+    const detailedResponse = interviewResponse ?? caps.getModuleInterviewDraft(projectId, draft.moduleId)
+    const gate = detailedResponse ? evaluateModuleInterview(detailedResponse) : evaluateModuleGate(draft)
     if (!gate.passed) return { ok: false as const, gate }
-    return { ok: true as const, approved: caps.approveModule(projectId, draft), gate }
+    return { ok: true as const, approved: caps.approveModule(projectId, draft, interviewResponse), gate }
   })
 
   ipcMain.handle(CAP_CHANNELS.listModules, (_e, projectId: string) => {
@@ -463,7 +465,7 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
       },
       packet,
       recommendedPrompt: interactiveInterviewPrompt(packet),
-      companion: { fileName: packet.outputFileName, value: interviewResponseStarter(packet) },
+      responseTemplate: { fileName: packet.outputFileName, value: interviewResponseStarter(packet) },
     })
   })
 
@@ -491,8 +493,23 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
       const moduleId = requireString(input.moduleId, 'moduleId')
       const manifest = caps.getApprovedModule(projectId, moduleId)
       const architecture = caps.getApprovedArchitecture(projectId)
+      const project = workspace.getProject(projectId)
       if (!manifest) throw new Error(`approved module not found: ${moduleId}`)
       if (!architecture) throw new Error('approved architecture not found')
+      if (!project) throw new Error('project not found')
+      const interview = caps.getApprovedModuleInterview(projectId, moduleId)
+      const repository = discoverRepositoryImplementationContext({
+        repoRoot: project.repoPath,
+        allowedPaths: manifest.ownedPaths,
+        verificationCommands: project.verificationCommands,
+      })
+      const brief = buildModuleImplementationBrief({
+        manifest,
+        interview,
+        architecture,
+        repository,
+        ...approvedContractContext(caps, projectId, architecture),
+      })
       const packet = buildImplementationPacket({
         packetId: `pkt-implementation-${moduleId}-${Date.now()}`,
         projectId,
@@ -506,16 +523,20 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
           architecture: architecture.contentHash,
           dependencies: canonicalHash(manifest.requiredOperations),
         },
-        acceptanceCases: [{
-          id: `accept-${moduleId}`,
-          description: manifest.responsibility,
-          expectedOutcome: 'All declared verification suites pass',
-        }],
+        acceptanceCases: interview?.acceptanceCases?.length
+          ? interview.acceptanceCases
+          : [{
+              id: `accept-${moduleId}`,
+              description: manifest.responsibility,
+              expectedOutcome: 'All declared verification suites pass',
+            }],
         unchangedBehavior: manifest.excludedConcerns.map((concern) => `Do not add responsibility for ${concern}`),
       })
       const now = new Date().toISOString()
       const runId = `cap-implementation-${crypto.randomUUID()}`
-      return exportCapabilityPacketFiles({
+      const providedOperations = manifest.providedOperations.map((operation) => operation.operationId).join(', ') || 'none'
+      const requiredOperations = manifest.requiredOperations.map((operation) => operation.operationId).join(', ') || 'none'
+      const exported = exportCapabilityPacketFiles({
         caps,
         runs,
         run: {
@@ -527,9 +548,13 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
           packetRefs: [], artifactRefs: [], transitionHistory: [], createdAt: now, updatedAt: now,
         },
         packet,
-        recommendedPrompt: `Implement only ${moduleId} within the allowed paths in the embedded capability packet. Preserve unchanged behavior, run the required tests, and return only ${packet.requiredOutput}.`,
-        companion: { fileName: 'module-manifest.json', value: manifest },
+        recommendedPrompt: `Implement production source code and tests for “${manifest.name}” (${moduleId}). Its approved responsibility is: ${manifest.responsibility}. Implement its provided operations (${providedOperations}) and consume its required operations (${requiredOperations}) only through the approved architecture boundaries. Follow the implementation plan, precedence rules, detailed interview evidence, reference architecture, and live repository context in the embedded implementation brief. Work only within allowedPaths, preserve unchanged behavior, run the required tests, and return only ${packet.requiredOutput}.`,
+        supportingRecord: {
+          fileName: 'module-implementation-brief.json',
+          value: brief,
+        },
       })
+      return { ...exported, readiness: brief.readiness }
     },
   )
 
@@ -572,7 +597,7 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
       const inspection = inspectOverlay(input.zipPath, {
         runId: input.runId,
         targetRoot: project.repoPath,
-        expectedFiles: run.expectedPaths,
+        expectedFiles: run.expectedPaths.length ? run.expectedPaths : undefined,
         capabilityAllowedPaths: run.allowedPaths,
       })
       const inspectionRef = runs.saveRunArtifact(
@@ -642,7 +667,7 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
       const currentInspection = inspectOverlay(input.zipPath, {
         runId: input.runId,
         targetRoot: project.repoPath,
-        expectedFiles: run.expectedPaths,
+        expectedFiles: run.expectedPaths.length ? run.expectedPaths : undefined,
         capabilityAllowedPaths: run.allowedPaths,
       })
       const applied = applyOverlay(input.zipPath, currentInspection, {
@@ -806,8 +831,23 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
 
       const manifest = caps.getApprovedModule(projectId, targetId)
       const architecture = caps.getApprovedArchitecture(projectId)
+      const project = workspace.getProject(projectId)
       if (!manifest) throw new Error(`approved module not found: ${targetId}`)
       if (!architecture) throw new Error('approved architecture not found')
+      if (!project) throw new Error('project not found')
+      const interview = caps.getApprovedModuleInterview(projectId, targetId)
+      const repository = discoverRepositoryImplementationContext({
+        repoRoot: project.repoPath,
+        allowedPaths: manifest.ownedPaths,
+        verificationCommands: project.verificationCommands,
+      })
+      const brief = buildModuleImplementationBrief({
+        manifest,
+        interview,
+        architecture,
+        repository,
+        ...approvedContractContext(caps, projectId, architecture),
+      })
 
       const base = buildImplementationPacket({
         packetId: `pkt-delta-${targetId}-${Date.now()}`,
@@ -822,11 +862,13 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
           architecture: architecture.contentHash,
           dependencies: canonicalHash(manifest.requiredOperations),
         },
-        acceptanceCases: [{
-          id: `accept-delta-${targetId}`,
-          description: manifest.responsibility,
-          expectedOutcome: 'All declared verification suites pass after the change',
-        }],
+        acceptanceCases: interview?.acceptanceCases?.length
+          ? interview.acceptanceCases
+          : [{
+              id: `accept-delta-${targetId}`,
+              description: manifest.responsibility,
+              expectedOutcome: 'All declared verification suites pass after the change',
+            }],
         unchangedBehavior: manifest.excludedConcerns.map((concern) => `Do not add responsibility for ${concern}`),
       })
 
@@ -856,7 +898,7 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
 
       const now = new Date().toISOString()
       const runId = `cap-delta-${crypto.randomUUID()}`
-      return exportCapabilityPacketFiles({
+      const exported = exportCapabilityPacketFiles({
         caps,
         runs,
         run: {
@@ -868,9 +910,13 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
           packetRefs: [], artifactRefs: [], transitionHistory: [], createdAt: now, updatedAt: now,
         },
         packet: delta,
-        recommendedPrompt: `Apply only the delta for ${targetId} described in the embedded capability packet. Preserve the listed behavior, change only what is required, add the new tests, leave unchanged modules untouched, and return only ${delta.requiredOutput}.`,
-        companion: { fileName: 'delta-packet.json', value: delta },
+        recommendedPrompt: `Apply the approved delta for “${manifest.name}” (${targetId}) as production source code and tests. The embedded delta packet and module implementation brief are requirements, not outputs. Follow the approved interview evidence, reference architecture, live repository context, and implementation plan. Preserve the listed behavior, change only what is required, add the new tests, leave unchanged modules untouched, and return only ${delta.requiredOutput}.`,
+        supportingRecord: {
+          fileName: 'module-implementation-brief.json',
+          value: brief,
+        },
       })
+      return { ...exported, readiness: brief.readiness }
     },
   )
 

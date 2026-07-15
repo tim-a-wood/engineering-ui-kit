@@ -67,6 +67,10 @@ export type CapabilityPacketExportResult = {
   recommendedPrompt: string
   files: { path: string; bytes: number; sha256: string }[]
   uploadFiles: string[]
+  readiness?: {
+    status: 'ready' | 'ready-with-gaps' | 'blocked'
+    issues: { code: string; severity: 'warning' | 'blocking'; message: string; resolution: string }[]
+  }
 }
 
 export type EvidenceViewDisplay = {
@@ -145,8 +149,8 @@ export type EuikBridge = {
   capabilitiesGetArchitecture(projectId: string): Promise<{ draft?: unknown; approved?: unknown }>
   capabilitiesSaveArchitectureDraft(projectId: string, draft: unknown): Promise<{ ok: true }>
   capabilitiesApproveArchitecture(projectId: string, draft: unknown): Promise<{ ok: boolean; gate?: unknown; approved?: unknown }>
-  capabilitiesSaveModuleDraft(projectId: string, draft: unknown): Promise<{ ok: true }>
-  capabilitiesApproveModule(projectId: string, draft: unknown): Promise<{ ok: boolean; gate?: unknown; approved?: unknown }>
+  capabilitiesSaveModuleDraft(projectId: string, draft: unknown, interviewResponse?: unknown): Promise<{ ok: true }>
+  capabilitiesApproveModule(projectId: string, draft: unknown, interviewResponse?: unknown): Promise<{ ok: boolean; gate?: unknown; approved?: unknown }>
   capabilitiesListModules(projectId: string): Promise<CapabilityModuleRecord[]>
   capabilitiesListBindings(projectId: string): Promise<CapabilityBindingRecord[]>
   capabilitiesListRuns(projectId: string): Promise<unknown[]>

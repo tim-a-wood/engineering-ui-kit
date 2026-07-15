@@ -12,6 +12,7 @@ import type {
   FrontendBinding,
   ModuleManifest,
 } from './types.js'
+import type { ModuleInterviewResponse } from './moduleInterview.js'
 
 function atomicWriteJson(filePath: string, value: unknown): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true })
@@ -187,13 +188,29 @@ export class CapabilityWorkspace {
     return readJson(path.join(this.root(projectId), 'architecture', 'approved', `${rev}.json`))
   }
 
-  saveModuleDraft(projectId: string, draft: ModuleManifest): void {
+  saveModuleDraft(
+    projectId: string,
+    draft: ModuleManifest,
+    interviewResponse?: ModuleInterviewResponse,
+  ): void {
     if (this.isFutureSchemaVersion(projectId)) {
       throw new Error('capability workspace is read-only due to future schema version')
     }
     this.ensureInitialized(projectId)
+    if (interviewResponse && (
+      interviewResponse.moduleId !== draft.moduleId
+      || (interviewResponse.moduleVersion && interviewResponse.moduleVersion !== draft.moduleVersion)
+    )) {
+      throw new Error('module interview response does not match the module draft identity or version')
+    }
     const dir = path.join(this.root(projectId), 'modules', draft.moduleId, 'drafts')
     atomicWriteJson(path.join(dir, 'current.json'), draft)
+    if (interviewResponse) {
+      atomicWriteJson(
+        path.join(this.root(projectId), 'modules', draft.moduleId, 'interviews', 'drafts', 'current.json'),
+        interviewResponse,
+      )
+    }
     const index = this.getIndex(projectId)
     index.modules[draft.moduleId] = { ...index.modules[draft.moduleId], draft: true }
     this.saveIndex(projectId, index)
@@ -205,7 +222,17 @@ export class CapabilityWorkspace {
     )
   }
 
-  approveModule(projectId: string, draft: ModuleManifest): ModuleManifest {
+  getModuleInterviewDraft(projectId: string, moduleId: string): ModuleInterviewResponse | undefined {
+    return readJson(
+      path.join(this.root(projectId), 'modules', moduleId, 'interviews', 'drafts', 'current.json'),
+    )
+  }
+
+  approveModule(
+    projectId: string,
+    draft: ModuleManifest,
+    interviewResponse?: ModuleInterviewResponse,
+  ): ModuleManifest {
     if (this.isFutureSchemaVersion(projectId)) {
       throw new Error('capability workspace is read-only due to future schema version')
     }
@@ -220,7 +247,27 @@ export class CapabilityWorkspace {
     if (fs.existsSync(dest)) {
       throw new Error(`approved module revision already exists: ${draft.moduleId}@${draft.moduleVersion}`)
     }
+    const approvedInterview = interviewResponse ?? this.getModuleInterviewDraft(projectId, draft.moduleId)
+    if (approvedInterview && (
+      approvedInterview.moduleId !== draft.moduleId
+      || (approvedInterview.moduleVersion && approvedInterview.moduleVersion !== draft.moduleVersion)
+    )) {
+      throw new Error('module interview response does not match the module identity or version being approved')
+    }
     atomicWriteJson(dest, draft)
+    if (approvedInterview) {
+      atomicWriteJson(
+        path.join(
+          this.root(projectId),
+          'modules',
+          draft.moduleId,
+          'interviews',
+          'approved',
+          `${draft.moduleVersion}.json`,
+        ),
+        approvedInterview,
+      )
+    }
     const index = this.getIndex(projectId)
     index.modules[draft.moduleId] = {
       draft: false,
@@ -234,6 +281,18 @@ export class CapabilityWorkspace {
     const rev = revision ?? this.getIndex(projectId).modules[moduleId]?.approvedRevision
     if (!rev) return undefined
     return readJson(path.join(this.root(projectId), 'modules', moduleId, 'approved', `${rev}.json`))
+  }
+
+  getApprovedModuleInterview(
+    projectId: string,
+    moduleId: string,
+    revision?: string,
+  ): ModuleInterviewResponse | undefined {
+    const rev = revision ?? this.getIndex(projectId).modules[moduleId]?.approvedRevision
+    if (!rev) return undefined
+    return readJson(
+      path.join(this.root(projectId), 'modules', moduleId, 'interviews', 'approved', `${rev}.json`),
+    )
   }
 
   listModules(

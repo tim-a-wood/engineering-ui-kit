@@ -64,6 +64,17 @@ function completeResponse(moduleType: ModuleType): ModuleInterviewResponse {
     runtimeAllocation: moduleType === 'connection' ? 'external-adapter' : 'local-embedded',
     events: [],
     ownedPaths: [`capabilities/modules/${moduleId}/`],
+    operationContracts: [{
+      schemaVersion: '1.0', operationId: `op.${moduleType}`, version: '1.0.0', behavior: 'command',
+      inputSchemaRef: `${moduleId}.input`, outputSchemaRef: `${moduleId}.output`,
+      preconditions: [], postconditions: ['The requested behavior is complete.'], domainRejections: [],
+      technicalErrors: [], sideEffects: [], idempotency: 'unknown', timeoutClass: 'short', cancellable: false,
+      artifactTypes: [], provenanceFields: [],
+    }],
+    dataSchemas: [
+      { schemaId: `${moduleId}.input`, description: 'Operation input.', fields: [] },
+      { schemaId: `${moduleId}.output`, description: 'Operation output.', fields: [] },
+    ],
     answers: confirmedAnswers(moduleType),
     acceptanceCases: [
       { id: 'ac1', description: 'works', expectedOutcome: 'success' },
@@ -107,6 +118,22 @@ describe('CAP-TEST-010 module interviews and CAP-GATE-003', () => {
     expect(evaluation.missingApplicableDetailIds.length).toBeGreaterThan(0)
     expect(evaluation.diagnostics.some((d) => d.code === 'CAP-GATE-003-UNRESOLVED')).toBe(true)
     expect(evaluation.diagnostics.some((d) => d.code === 'CAP-GATE-003-APPLICABLE')).toBe(true)
+  })
+
+  it('requires implementation-ready contracts and concrete payload schemas for provided operations', () => {
+    const withoutContract = importModuleInterviewResponse({
+      ...completeResponse('domain'),
+      operationContracts: [],
+      dataSchemas: [],
+    })
+    expect(withoutContract.ok).toBe(false)
+    expect(withoutContract.diagnostics.some((item) => item.code === 'CAP-GATE-003-CONTRACT')).toBe(true)
+
+    const unresolvedSchema = completeResponse('domain')
+    unresolvedSchema.dataSchemas = []
+    const withoutSchema = importModuleInterviewResponse(unresolvedSchema)
+    expect(withoutSchema.ok).toBe(false)
+    expect(withoutSchema.diagnostics.some((item) => item.code === 'CAP-GATE-003-SCHEMA')).toBe(true)
   })
 
   it('grounds the opening questions in architecture context and offers type-specific suggestions', () => {
@@ -159,6 +186,8 @@ describe('CAP-TEST-010 module interviews and CAP-GATE-003', () => {
       if (approved.ok) {
         expect(approved.approved.moduleId).toBe(`mod.${type}`)
         expect(ws.getApprovedModule('proj-1', `mod.${type}`)?.moduleVersion).toBe('1.0.0')
+        expect(ws.getApprovedModuleInterview('proj-1', `mod.${type}`)?.answers).toEqual(response.answers)
+        expect(ws.getApprovedModuleInterview('proj-1', `mod.${type}`)?.acceptanceCases).toEqual(response.acceptanceCases)
       }
     }
 
@@ -173,5 +202,18 @@ describe('CAP-TEST-010 module interviews and CAP-GATE-003', () => {
     // MVP: single applicable-detail set per type — no quick/standard/detailed variants.
     expect(Object.keys(MODULE_APPLICABLE_DETAILS)).not.toContain('domain.quick')
     expect(Object.keys(MODULE_APPLICABLE_DETAILS)).not.toContain('domain.detailed')
+  })
+
+  it('promotes the persisted draft interview when approval happens after a reload', () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'euik-cap-010-reload-'))
+    const ws = new CapabilityWorkspace(dir)
+    const response = completeResponse('domain')
+    const imported = importModuleInterviewResponse(response)
+    expect(imported.manifest).toBeDefined()
+    ws.saveModuleDraft('proj-1', imported.manifest!, response)
+
+    const reopened = new CapabilityWorkspace(dir)
+    reopened.approveModule('proj-1', imported.manifest!)
+    expect(reopened.getApprovedModuleInterview('proj-1', response.moduleId)).toEqual(response)
   })
 })

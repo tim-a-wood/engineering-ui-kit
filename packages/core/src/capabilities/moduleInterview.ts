@@ -13,12 +13,25 @@ import type {
   InterviewPacket,
   ModuleManifest,
   ModuleType,
+  OperationContract,
 } from './types.js'
 
 export type ModuleInterviewAnswer = {
   id: string
   text: string
   status: 'confirmed' | 'proposed' | 'unresolved'
+}
+
+export type ModuleDataSchema = {
+  schemaId: string
+  description: string
+  fields: {
+    name: string
+    type: string
+    required: boolean
+    description: string
+    constraints: string[]
+  }[]
 }
 
 export type ModuleInterviewResponse = {
@@ -36,6 +49,10 @@ export type ModuleInterviewResponse = {
   events?: string[]
   ownedPaths?: string[]
   configurationSchemaRef?: string | null
+  /** Full contracts owned by this module's provided operations. */
+  operationContracts?: OperationContract[]
+  /** Human-readable payload schemas referenced by the provided operation contracts. */
+  dataSchemas?: ModuleDataSchema[]
   /** Type-specific applicable detail answers */
   answers: ModuleInterviewAnswer[]
   acceptanceCases?: { id: string; description: string; expectedOutcome: string }[]
@@ -238,6 +255,7 @@ ${context}
 - Open with a short plain-language recap of what this module appears to do, then ask only about the most important missing details.
 - Make every opening question concrete and contextual. Include a plausible suggestion or default drawn from the responsibility, workflow traces, and connected modules, and ask the user to accept or change it.
 - ${typeSuggestions[moduleType] ?? 'Suggest concrete defaults from the supplied architecture context and ask the user to correct or confirm them.'}
+- For every provided operation, establish its command/query/job behavior, concrete input and output fields, preconditions, postconditions, domain rejections, technical errors, side effects, idempotency, timeout, and cancellation behavior. Encode these in operationContracts and dataSchemas in the final response rather than leaving them only in prose.
 - Avoid identifier-heavy or checklist-style wording. Ask no more than three related questions, then wait for the user's answers.\n`
 }
 
@@ -299,6 +317,32 @@ export function evaluateModuleInterview(response: ModuleInterviewResponse): Modu
         relatedIds: [response.moduleId],
       }),
     )
+  }
+  const contracts = new Map((response.operationContracts ?? []).map((contract) => [contract.operationId, contract]))
+  const schemaIds = new Set((response.dataSchemas ?? []).map((schema) => schema.schemaId))
+  for (const operation of response.providedOperations) {
+    const contract = contracts.get(operation.operationId)
+    if (!contract || contract.version !== operation.contractVersion) {
+      extras.push(
+        diagnostic('CAP-GATE-003-CONTRACT', 'every provided operation requires a matching detailed operation contract', {
+          ruleId: 'CAP-GATE-003',
+          fieldPath: `operationContracts.${operation.operationId}`,
+          relatedIds: [operation.operationId],
+        }),
+      )
+      continue
+    }
+    for (const schemaRef of [contract.inputSchemaRef, contract.outputSchemaRef]) {
+      if (!schemaIds.has(schemaRef)) {
+        extras.push(
+          diagnostic('CAP-GATE-003-SCHEMA', 'operation input and output schema references must resolve to a supplied data schema', {
+            ruleId: 'CAP-GATE-003',
+            fieldPath: `dataSchemas.${schemaRef}`,
+            relatedIds: [operation.operationId, schemaRef],
+          }),
+        )
+      }
+    }
   }
 
   const diagnostics = sortDiagnostics([...gate.diagnostics, ...extras])
@@ -368,6 +412,10 @@ export function parseModuleInterviewResponse(raw: unknown): {
       r.configurationSchemaRef === null || typeof r.configurationSchemaRef === 'string'
         ? (r.configurationSchemaRef as string | null)
         : null,
+    operationContracts: Array.isArray(r.operationContracts)
+      ? (r.operationContracts as OperationContract[])
+      : [],
+    dataSchemas: Array.isArray(r.dataSchemas) ? (r.dataSchemas as ModuleDataSchema[]) : [],
     answers: Array.isArray(r.answers) ? (r.answers as ModuleInterviewAnswer[]) : [],
     acceptanceCases: Array.isArray(r.acceptanceCases)
       ? (r.acceptanceCases as ModuleInterviewResponse['acceptanceCases'])
@@ -386,12 +434,21 @@ export function importModuleInterviewResponse(raw: unknown): ModuleImportResult 
   const schemaDiagnostics = validateContractRecord('CAP-CONTRACT-003', evaluation.manifest!).map((d) =>
     diagnostic(d.code, d.message, { fieldPath: d.fieldPath, relatedIds: d.relatedIds }),
   )
+  const operationContractDiagnostics = (parsed.response.operationContracts ?? []).flatMap((contract) =>
+    validateContractRecord('CAP-CONTRACT-004', contract).map((d) =>
+      diagnostic(d.code, d.message, {
+        fieldPath: d.fieldPath ? `operationContracts.${contract.operationId}.${d.fieldPath}` : `operationContracts.${contract.operationId}`,
+        relatedIds: [contract.operationId, ...(d.relatedIds ?? [])],
+      }),
+    ),
+  )
   const diagnostics = sortDiagnostics([
     ...parsed.diagnostics,
     ...evaluation.diagnostics,
     ...(evaluation.passed ? schemaDiagnostics : []),
+    ...(evaluation.passed ? operationContractDiagnostics : []),
   ])
-  const schemaFailed = evaluation.passed && schemaDiagnostics.length > 0
+  const schemaFailed = evaluation.passed && (schemaDiagnostics.length > 0 || operationContractDiagnostics.length > 0)
   return {
     ok: evaluation.passed && !schemaFailed,
     response: parsed.response,
@@ -412,7 +469,18 @@ export function approveModuleIfReady(
   | { ok: false; evaluation: ModuleInterviewEvaluation } {
   const evaluation = evaluateModuleInterview(response)
   if (!evaluation.passed || !evaluation.manifest) return { ok: false, evaluation }
-  const schemaDiagnostics = validateContractRecord('CAP-CONTRACT-003', evaluation.manifest)
+  const schemaDiagnostics = [
+    ...validateContractRecord('CAP-CONTRACT-003', evaluation.manifest),
+    ...(response.operationContracts ?? []).flatMap((contract) =>
+      validateContractRecord('CAP-CONTRACT-004', contract).map((item) => ({
+        ...item,
+        fieldPath: item.fieldPath
+          ? `operationContracts.${contract.operationId}.${item.fieldPath}`
+          : `operationContracts.${contract.operationId}`,
+        relatedIds: [contract.operationId, ...(item.relatedIds ?? [])],
+      })),
+    ),
+  ]
   if (schemaDiagnostics.length) {
     return {
       ok: false,
@@ -428,6 +496,6 @@ export function approveModuleIfReady(
       },
     }
   }
-  const approved = workspace.approveModule(projectId, evaluation.manifest)
+  const approved = workspace.approveModule(projectId, evaluation.manifest, response)
   return { ok: true, approved, evaluation }
 }

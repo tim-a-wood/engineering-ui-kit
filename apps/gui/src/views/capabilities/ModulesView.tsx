@@ -366,7 +366,7 @@ function ModuleWorkspace(props: {
       setDiagnostics(imported.diagnostics)
       setGatePassed(imported.ok)
       if (imported.manifest) {
-        await bridge.capabilitiesSaveModuleDraft(projectId, imported.manifest)
+        await bridge.capabilitiesSaveModuleDraft(projectId, imported.manifest, imported.response)
         await props.onChanged()
       }
       if (!mounted.current) return
@@ -390,7 +390,7 @@ function ModuleWorkspace(props: {
     setBusy(true)
     setMessage('')
     try {
-      const result = await bridge.capabilitiesApproveModule(projectId, draft)
+      const result = await bridge.capabilitiesApproveModule(projectId, draft, response)
       if (!mounted.current) return
       if (!result.ok) {
         setDiagnostics(((result.gate as { diagnostics?: CapDiagnostic[] })?.diagnostics) ?? [])
@@ -423,7 +423,14 @@ function ModuleWorkspace(props: {
       setWarningsAccepted(false)
       setApplied(false)
       setZipPath('')
-      setMessage(guided ? '' : `Exported ${exported.files.length} implementation handoff files for ${moduleId}.`)
+      const readiness = exported.readiness
+      if (readiness?.status === 'blocked') {
+        setMessage(`Implementation handoff created, but repository setup is incomplete: ${readiness.issues.map((issue) => issue.message).join(' ')}`)
+      } else if (readiness?.status === 'ready-with-gaps') {
+        setMessage(`Implementation handoff created with ${readiness.issues.length} documented context gap(s). Copilot is instructed to inspect the repository and ask only if a material decision remains ambiguous.`)
+      } else {
+        setMessage(guided ? 'Implementation-ready handoff created.' : `Exported ${exported.files.length} implementation handoff files for ${moduleId}.`)
+      }
     } catch (error) {
       if (mounted.current) setMessage(error instanceof Error ? error.message : String(error))
     } finally {

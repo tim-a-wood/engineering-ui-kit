@@ -6,8 +6,12 @@ release/
 *.log
 .DS_Store
 
-# Local tool/workspace state (regenerable)
-.claude/
+# Local tool/workspace state (regenerable). Keep only the reviewed,
+# project-scoped Capabilities agent definitions in version control.
+.claude/*
+!.claude/agents/
+.claude/agents/*
+!.claude/agents/cap-*.md
 .self-transform-workspace/
 
 # Internal planning sources — kept out of the public repository.
