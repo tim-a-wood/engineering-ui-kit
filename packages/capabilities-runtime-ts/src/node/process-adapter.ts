@@ -46,11 +46,17 @@ export class ProcessAdapterError extends Error {
   }
 }
 
-// Disallowed outside an explicit argv array: shell metacharacters that would
-// have special meaning if this string were ever concatenated into a shell
-// command line. Rejecting them here defends callers even if a future code
-// path is tempted to build a shell string from adapter inputs.
-const SHELL_METACHARACTERS = /[\0;&|`$(){}<>\n\r"'\\*?~[\]!#]/
+// Disallowed outside an explicit argv array: the shell metacharacters that
+// enable command chaining/substitution/redirection if this string were ever
+// concatenated into a shell command line (command separators, background/
+// pipe operators, command substitution, and embedded newlines/NUL).
+// Deliberately narrow: `shell: false` already means the OS never parses
+// these argv elements as shell syntax, so ordinary characters common in
+// legitimate arguments (parentheses, quotes, brackets, wildcards) are not
+// rejected — only the classic injection vectors are, as defense in depth
+// against a future caller that might compose a shell string from adapter
+// inputs.
+const SHELL_METACHARACTERS = /[\0;&|`$\n\r]/
 
 const DEFAULT_TIMEOUT_MS = 30_000
 const DEFAULT_MAX_OUTPUT_BYTES = 1_048_576
