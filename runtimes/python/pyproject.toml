@@ -12,6 +12,8 @@ license = { text = "UNLICENSED" }
 dependencies = [
     "pydantic>=2",
     "jsonschema>=4",
+    "fastapi>=0.110",
+    "httpx>=0.27",
 ]
 
 [project.optional-dependencies]
