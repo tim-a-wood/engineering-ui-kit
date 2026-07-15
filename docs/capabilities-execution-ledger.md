@@ -16,9 +16,10 @@ Coordinator maintains this file. One row per work packet.
 
 | Field | Value |
 |---|---|
-| Baseline branch | `main` |
-| Baseline commit (pre-initiative HEAD) | `a805045` |
-| WP0 baseline commit (dirty work committed) | _pending user decision_ |
+| Baseline branch | `main` (pushed to origin) |
+| Pre-initiative HEAD | `a805045` |
+| WP0 baseline commit (richer-handoff work + scaffolding) | `e80ddce` (on `main`, pushed) |
+| Initiative integration branch | `claude/cap-era-integration` (from `e80ddce`) |
 | Node / TS | Node 22 LTS, TypeScript 5.8 |
 | Test runner | vitest |
 
@@ -28,7 +29,7 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 
 | Packet | Title | Depends on | Owner / model | Owned paths | Commit | Tests | Status |
 |---|---|---|---|---|---|---|---|
-| WP0 | Preserve & baseline | — | coordinator | (read-only + this ledger) | — | core 151/151, gui 157/157, all typecheck clean | **verification-green; baseline-commit pending** |
+| WP0 | Preserve & baseline | — | coordinator | (read-only + this ledger) | `e80ddce` | core 151/151, gui 157/157, all typecheck clean | **gate-green** |
 | WP1 | Schema 2.0 + canonical contracts (CAP-CONTRACT-023..031) | WP0 | contract steward (Sonnet) | core types/schemas/parity/fixtures | — | CAP-TEST-042..047 | todo |
 | WP2 | Reference profile, repo discovery, deterministic planning | WP1 | generator (Sonnet) | `packages/core/src/capabilities/generation/` | — | CAP-TEST-048..053 | todo |
 | WP3A | TypeScript runtime core | WP1 | TS runtime (Sonnet) | `packages/capabilities-runtime-ts/` | — | — | todo |
