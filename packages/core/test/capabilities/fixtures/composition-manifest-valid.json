@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "proj-1",
+  "compositionId": "comp-api",
+  "applicationRevision": "1",
+  "architectureRevision": "1",
+  "deployableIds": ["api"],
+  "registrations": [
+    {
+      "contractId": "op.orders.approve",
+      "implementationTarget": "src/domain/orders/approve.ts",
+      "lifecycle": "singleton",
+      "providerModuleId": "mod.orders",
+      "dependencies": ["port.credit"]
+    }
+  ],
+  "operationRoutes": [
+    { "operationId": "op.orders.approve", "operationVersion": "1.0.0", "inboundBindingId": "binding.approve" }
+  ],
+  "inboundAdapterRefs": ["adapter.http"],
+  "outboundAdapterRefs": ["adapter.creditHttp"],
+  "configurationRefs": ["config.port"],
+  "secretReferenceIds": ["secret.dbUrl"],
+  "telemetryHookRefs": ["telemetry.json"],
+  "healthHookRefs": ["health.default"],
+  "authorizationHookRefs": ["authz.default"],
+  "compositionHash": "comp-hash"
+}

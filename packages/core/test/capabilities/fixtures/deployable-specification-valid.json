@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "deployableId": "api",
+  "name": "HTTP API",
+  "kind": "http-api",
+  "runtimeLanguage": "typescript",
+  "runtimeVersionRange": ">=22",
+  "moduleIds": ["mod.orders"],
+  "inboundBindingIds": ["binding.approve"],
+  "compositionRootPath": "src/composition/api.ts",
+  "commands": {
+    "build": "npm run build",
+    "test": "npm test",
+    "launch": "node dist/api.js",
+    "health": "curl localhost:3000/health",
+    "shutdown": "SIGTERM"
+  },
+  "configurationRefs": ["config.port"],
+  "secretReferenceIds": ["secret.dbUrl"],
+  "proposedLocations": [
+    { "path": "src/composition/api.ts", "evidence": "package.json main and src root", "approvalStatus": "approved" }
+  ]
+}

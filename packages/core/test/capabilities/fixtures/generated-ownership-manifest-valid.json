@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "proj-1",
+  "filePath": "src/composition/api.ts",
+  "contentHash": "file-hash",
+  "generatorVersion": "0.1.0",
+  "referenceProfileVersion": "1.0.0",
+  "sourceContractHashes": ["arch-hash", "module-hash"],
+  "deployableId": "api",
+  "moduleIds": ["mod.orders"],
+  "lastAppliedPlanId": "plan-0001",
+  "safeToDelete": false
+}

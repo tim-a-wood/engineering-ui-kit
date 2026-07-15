@@ -81,3 +81,29 @@ export function sha256Hex(input: string): string {
 export function canonicalHash(value: unknown): string {
   return sha256Hex(JSON.stringify(value))
 }
+
+/**
+ * Order-independent canonical form: recursively sort object keys so that two
+ * records with identical content but different key insertion order serialize
+ * identically. Array order is preserved (arrays are ordered data).
+ */
+export function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((item) => canonicalize(item))
+  if (value && typeof value === 'object') {
+    const source = value as Record<string, unknown>
+    const out: Record<string, unknown> = {}
+    for (const key of Object.keys(source).sort()) {
+      out[key] = canonicalize(source[key])
+    }
+    return out
+  }
+  return value
+}
+
+/**
+ * Canonical record hash: stable regardless of object key ordering. Use for
+ * reference-architecture records whose fields may be constructed in any order.
+ */
+export function canonicalRecordHash(value: unknown): string {
+  return sha256Hex(JSON.stringify(canonicalize(value)))
+}

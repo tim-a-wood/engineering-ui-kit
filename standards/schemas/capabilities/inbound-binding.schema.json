@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engineering-ui-kit/standards/schemas/capabilities/inbound-binding.schema.json",
+  "title": "InboundBinding",
+  "description": "CAP-CONTRACT-028 — inbound binding discriminated on kind. Supersedes CAP-CONTRACT-013.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "bindingId",
+    "version",
+    "projectId",
+    "deployableId",
+    "kind",
+    "operationId",
+    "operationVersion",
+    "inputMappings",
+    "outputMappings",
+    "validationBehavior",
+    "domainRejectionBehavior",
+    "technicalFailureBehavior",
+    "timeoutBehavior",
+    "cancellationBehavior",
+    "retryBehavior",
+    "duplicateSubmissionBehavior",
+    "exposure",
+    "generatedTargets",
+    "approvalState"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "bindingId": { "type": "string" },
+    "version": { "type": "string" },
+    "projectId": { "type": "string" },
+    "deployableId": { "type": "string" },
+    "kind": { "type": "string", "enum": ["ui", "http", "cli", "schedule", "embedded-library"] },
+    "operationId": { "type": "string" },
+    "operationVersion": { "type": "string" },
+    "inputMappings": {
+      "type": "array",
+      "items": { "type": "object", "required": ["from", "to"], "properties": { "from": { "type": "string" }, "to": { "type": "string" } } }
+    },
+    "outputMappings": {
+      "type": "array",
+      "items": { "type": "object", "required": ["from", "to"], "properties": { "from": { "type": "string" }, "to": { "type": "string" } } }
+    },
+    "validationBehavior": { "type": "string" },
+    "domainRejectionBehavior": { "type": "string" },
+    "technicalFailureBehavior": { "type": "string" },
+    "timeoutBehavior": { "type": "string" },
+    "cancellationBehavior": { "type": "string" },
+    "retryBehavior": { "type": "string" },
+    "duplicateSubmissionBehavior": { "type": "string" },
+    "exposure": { "type": "string", "enum": ["private", "protected", "public"] },
+    "generatedTargets": { "type": "array", "items": { "type": "string" } },
+    "approvalState": { "type": "string" },
+
+    "transport": { "type": "string", "enum": ["browser-local", "electron-ipc", "generated-http-client"] },
+    "trigger": { "type": "string", "enum": ["activate", "change", "submit", "load"] },
+    "selectionEvidence": { "type": "object" },
+    "rendererDeployableId": { "type": "string" },
+    "mainDeployableId": { "type": "string" },
+    "ipcChannel": { "type": "string" },
+
+    "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+    "path": { "type": "string" },
+    "statusMapping": {
+      "type": "array",
+      "items": { "type": "object", "required": ["outcome", "status"], "properties": { "outcome": { "type": "string" }, "status": { "type": "integer" } } }
+    },
+    "authRequirement": { "type": "string" },
+
+    "command": { "type": "string" },
+    "argumentMappings": {
+      "type": "array",
+      "items": { "type": "object", "required": ["from", "to"], "properties": { "from": { "type": "string" }, "to": { "type": "string" } } }
+    },
+    "exitCodeMapping": {
+      "type": "array",
+      "items": { "type": "object", "required": ["outcome", "code"], "properties": { "outcome": { "type": "string" }, "code": { "type": "integer" } } }
+    },
+
+    "cronExpression": { "type": "string" },
+    "timezone": { "type": "string" },
+    "overlapPolicy": { "type": "string", "enum": ["skip", "queue", "allow-concurrent"] },
+    "misfirePolicy": { "type": "string", "enum": ["run-once", "skip", "run-all"] },
+
+    "exportedCallable": { "type": "string" },
+    "reason": { "type": "string" }
+  }
+}

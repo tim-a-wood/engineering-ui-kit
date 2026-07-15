@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engineering-ui-kit/standards/schemas/capabilities/capability-migration-plan.schema.json",
+  "title": "CapabilityMigrationPlan",
+  "description": "CAP-CONTRACT-030 — reviewable capability/workspace migration plan.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "migrationPlanId",
+    "projectId",
+    "versions",
+    "recordTransformations",
+    "fileTransformations",
+    "compatibilityShims",
+    "dataLossAssessment",
+    "blockedAmbiguities",
+    "previewHashes",
+    "backupInstructions",
+    "rollbackInstructions",
+    "conformanceCommands"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "migrationPlanId": { "type": "string" },
+    "projectId": { "type": "string" },
+    "versions": {
+      "type": "object",
+      "required": ["fromWorkspaceVersion", "toWorkspaceVersion"],
+      "properties": {
+        "fromWorkspaceVersion": { "type": "string" },
+        "toWorkspaceVersion": { "type": "string" },
+        "fromProfileVersion": { "type": "string" },
+        "toProfileVersion": { "type": "string" },
+        "fromRuntimeVersion": { "type": "string" },
+        "toRuntimeVersion": { "type": "string" }
+      }
+    },
+    "recordTransformations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["recordId", "kind", "description"],
+        "properties": {
+          "recordId": { "type": "string" },
+          "kind": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "fileTransformations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "action", "description"],
+        "properties": {
+          "path": { "type": "string" },
+          "action": { "type": "string", "enum": ["create", "update", "delete"] },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "compatibilityShims": { "type": "array", "items": { "type": "string" } },
+    "dataLossAssessment": {
+      "type": "object",
+      "required": ["hasLoss", "details"],
+      "properties": {
+        "hasLoss": { "type": "boolean" },
+        "details": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "blockedAmbiguities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description"],
+        "properties": { "id": { "type": "string" }, "description": { "type": "string" } }
+      }
+    },
+    "previewHashes": { "type": "array", "items": { "type": "string" } },
+    "backupInstructions": { "type": "string" },
+    "rollbackInstructions": { "type": "string" },
+    "conformanceCommands": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engineering-ui-kit/standards/schemas/capabilities/deployable-specification.schema.json",
+  "title": "DeployableSpecification",
+  "description": "CAP-CONTRACT-024 — one executable or library deployable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "deployableId",
+    "name",
+    "kind",
+    "runtimeLanguage",
+    "runtimeVersionRange",
+    "moduleIds",
+    "inboundBindingIds",
+    "compositionRootPath",
+    "commands",
+    "configurationRefs",
+    "secretReferenceIds",
+    "proposedLocations"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "deployableId": { "type": "string" },
+    "name": { "type": "string" },
+    "kind": {
+      "type": "string",
+      "enum": ["browser", "electron-main", "http-api", "cli", "worker", "embedded-library"]
+    },
+    "runtimeLanguage": { "type": "string", "enum": ["typescript", "python"] },
+    "runtimeVersionRange": { "type": "string" },
+    "moduleIds": { "type": "array", "items": { "type": "string" } },
+    "inboundBindingIds": { "type": "array", "items": { "type": "string" } },
+    "compositionRootPath": { "type": "string" },
+    "commands": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "build": { "type": "string" },
+        "test": { "type": "string" },
+        "launch": { "type": "string" },
+        "health": { "type": "string" },
+        "shutdown": { "type": "string" }
+      }
+    },
+    "configurationRefs": { "type": "array", "items": { "type": "string" } },
+    "secretReferenceIds": { "type": "array", "items": { "type": "string" } },
+    "proposedLocations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "evidence", "approvalStatus"],
+        "properties": {
+          "path": { "type": "string" },
+          "evidence": { "type": "string" },
+          "approvalStatus": { "type": "string", "enum": ["proposed", "approved", "rejected"] }
+        }
+      }
+    }
+  }
+}

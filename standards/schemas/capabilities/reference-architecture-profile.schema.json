@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engineering-ui-kit/standards/schemas/capabilities/reference-architecture-profile.schema.json",
+  "title": "ReferenceArchitectureProfile",
+  "description": "CAP-CONTRACT-023 — immutable reference-architecture profile.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profileId",
+    "profileVersion",
+    "supportedRuntimeLanguages",
+    "supportedHostKinds",
+    "contractFormat",
+    "httpContractFormat",
+    "generatedDirectoryPolicy",
+    "editableDirectoryPolicy",
+    "runtimePackageCoordinates",
+    "lifecyclePolicy",
+    "telemetryPolicy",
+    "secretPolicy",
+    "authorizationPolicy",
+    "persistencePolicy",
+    "errorPolicy",
+    "generatorVersion",
+    "generatorCompatibilityRange",
+    "contentHash"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "profileId": { "type": "string" },
+    "profileVersion": { "type": "string" },
+    "supportedRuntimeLanguages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["language", "versionRange"],
+        "properties": {
+          "language": { "type": "string", "enum": ["typescript", "python"] },
+          "versionRange": { "type": "string" }
+        }
+      }
+    },
+    "supportedHostKinds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["browser", "electron-main", "http-api", "cli", "worker", "embedded-library"]
+      }
+    },
+    "contractFormat": { "type": "string" },
+    "httpContractFormat": { "type": "string" },
+    "generatedDirectoryPolicy": { "type": "array", "items": { "type": "string" } },
+    "editableDirectoryPolicy": { "type": "array", "items": { "type": "string" } },
+    "runtimePackageCoordinates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["language", "packageName", "version", "pinnedVersionPolicy"],
+        "properties": {
+          "language": { "type": "string", "enum": ["typescript", "python"] },
+          "packageName": { "type": "string" },
+          "version": { "type": "string" },
+          "pinnedVersionPolicy": { "type": "string" }
+        }
+      }
+    },
+    "lifecyclePolicy": { "type": "string" },
+    "telemetryPolicy": { "type": "string" },
+    "secretPolicy": { "type": "string" },
+    "authorizationPolicy": { "type": "string" },
+    "persistencePolicy": { "type": "string" },
+    "errorPolicy": { "type": "string" },
+    "generatorVersion": { "type": "string" },
+    "generatorCompatibilityRange": { "type": "string" },
+    "contentHash": { "type": "string" }
+  }
+}

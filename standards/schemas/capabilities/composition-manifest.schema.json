@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engineering-ui-kit/standards/schemas/capabilities/composition-manifest.schema.json",
+  "title": "CompositionManifest",
+  "description": "CAP-CONTRACT-027 — one deployable composition manifest.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "compositionId",
+    "applicationRevision",
+    "architectureRevision",
+    "deployableIds",
+    "registrations",
+    "operationRoutes",
+    "inboundAdapterRefs",
+    "outboundAdapterRefs",
+    "configurationRefs",
+    "secretReferenceIds",
+    "telemetryHookRefs",
+    "healthHookRefs",
+    "authorizationHookRefs",
+    "compositionHash"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "projectId": { "type": "string" },
+    "compositionId": { "type": "string" },
+    "applicationRevision": { "type": "string" },
+    "architectureRevision": { "type": "string" },
+    "deployableIds": { "type": "array", "items": { "type": "string" } },
+    "registrations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["contractId", "implementationTarget", "lifecycle", "providerModuleId", "dependencies"],
+        "properties": {
+          "contractId": { "type": "string" },
+          "implementationTarget": { "type": "string" },
+          "lifecycle": { "type": "string", "enum": ["singleton", "request-job", "transient"] },
+          "providerModuleId": { "type": "string" },
+          "dependencies": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "operationRoutes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["operationId", "operationVersion", "inboundBindingId"],
+        "properties": {
+          "operationId": { "type": "string" },
+          "operationVersion": { "type": "string" },
+          "inboundBindingId": { "type": "string" }
+        }
+      }
+    },
+    "inboundAdapterRefs": { "type": "array", "items": { "type": "string" } },
+    "outboundAdapterRefs": { "type": "array", "items": { "type": "string" } },
+    "configurationRefs": { "type": "array", "items": { "type": "string" } },
+    "secretReferenceIds": { "type": "array", "items": { "type": "string" } },
+    "telemetryHookRefs": { "type": "array", "items": { "type": "string" } },
+    "healthHookRefs": { "type": "array", "items": { "type": "string" } },
+    "authorizationHookRefs": { "type": "array", "items": { "type": "string" } },
+    "compositionHash": { "type": "string" }
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engineering-ui-kit/standards/schemas/capabilities/connection-verification-record.schema.json",
+  "title": "ConnectionVerificationRecord",
+  "description": "CAP-CONTRACT-029 — real connection verification evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "verificationId",
+    "projectId",
+    "bindingId",
+    "deployableId",
+    "hashes",
+    "launchCommand",
+    "triggerKind",
+    "redactedTriggerInput",
+    "outcomeSummary",
+    "correlationId",
+    "observedPath",
+    "startedAt",
+    "completedAt",
+    "durationMs",
+    "healthState",
+    "usedTestAdapter",
+    "externalEvidenceStatus",
+    "evidenceArtifactRefs",
+    "verificationStatus",
+    "reasonCodes"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "verificationId": { "type": "string" },
+    "projectId": { "type": "string" },
+    "bindingId": { "type": "string" },
+    "deployableId": { "type": "string" },
+    "hashes": {
+      "type": "object",
+      "required": ["binding", "operation", "architecture", "composition", "generatedOwnership", "source"],
+      "properties": {
+        "binding": { "type": "string" },
+        "operation": { "type": "string" },
+        "architecture": { "type": "string" },
+        "composition": { "type": "string" },
+        "generatedOwnership": { "type": "string" },
+        "source": { "type": "string" }
+      }
+    },
+    "launchCommand": { "type": "string" },
+    "triggerKind": { "type": "string" },
+    "redactedTriggerInput": { "type": "string" },
+    "outcomeSummary": { "type": "string" },
+    "correlationId": { "type": "string" },
+    "observedPath": {
+      "type": "object",
+      "required": ["inboundAdapter", "compositionRoot", "operation", "outboundAdapters"],
+      "properties": {
+        "inboundAdapter": { "type": "string" },
+        "compositionRoot": { "type": "string" },
+        "operation": { "type": "string" },
+        "outboundAdapters": { "type": "array", "items": { "type": "string" } },
+        "workflow": { "type": "string" }
+      }
+    },
+    "startedAt": { "type": "string" },
+    "completedAt": { "type": "string" },
+    "durationMs": { "type": "number" },
+    "healthState": { "type": "string" },
+    "usedTestAdapter": { "type": "boolean" },
+    "externalEvidenceStatus": { "type": "string", "enum": ["complete", "outstanding", "not-applicable"] },
+    "evidenceArtifactRefs": { "type": "array", "items": { "type": "string" } },
+    "verificationStatus": { "type": "string", "enum": ["pass", "fail", "partial"] },
+    "reasonCodes": { "type": "array", "items": { "type": "string" } }
+  }
+}

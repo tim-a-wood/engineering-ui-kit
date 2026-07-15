@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://engineering-ui-kit/standards/schemas/capabilities/generation-plan.schema.json",
+  "title": "GenerationPlan",
+  "description": "CAP-CONTRACT-025 — deterministic generation plan.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "planId",
+    "projectId",
+    "inputRecords",
+    "generatorVersion",
+    "referenceProfileVersion",
+    "targetRepository",
+    "dependencyChanges",
+    "fileChanges",
+    "commands",
+    "warnings",
+    "blockers",
+    "ambiguityQuestions",
+    "rollbackStrategy",
+    "planHash"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "planId": { "type": "string" },
+    "projectId": { "type": "string" },
+    "inputRecords": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["recordId", "revision", "hash"],
+        "properties": {
+          "recordId": { "type": "string" },
+          "revision": { "type": "string" },
+          "hash": { "type": "string" }
+        }
+      }
+    },
+    "generatorVersion": { "type": "string" },
+    "referenceProfileVersion": { "type": "string" },
+    "targetRepository": {
+      "type": "object",
+      "required": ["root", "cleanState"],
+      "properties": {
+        "root": { "type": "string" },
+        "cleanState": { "type": "string", "enum": ["clean", "dirty"] }
+      }
+    },
+    "dependencyChanges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["packageName", "language", "toVersion", "reason"],
+        "properties": {
+          "packageName": { "type": "string" },
+          "language": { "type": "string", "enum": ["typescript", "python"] },
+          "toVersion": { "type": "string" },
+          "fromVersion": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "fileChanges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "action", "ownership", "reason"],
+        "properties": {
+          "path": { "type": "string" },
+          "action": { "type": "string", "enum": ["create", "update", "delete"] },
+          "ownership": { "type": "string", "enum": ["generated", "editable"] },
+          "reason": { "type": "string" },
+          "preimageHash": { "type": "string" },
+          "postimageHash": { "type": "string" }
+        }
+      }
+    },
+    "commands": { "type": "array", "items": { "type": "string" } },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "blockers": { "type": "array", "items": { "type": "string" } },
+    "ambiguityQuestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "question", "choices"],
+        "properties": {
+          "id": { "type": "string" },
+          "question": { "type": "string" },
+          "choices": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "rollbackStrategy": { "type": "string" },
+    "planHash": { "type": "string" }
+  }
+}

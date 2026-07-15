@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "planId": "plan-0001",
+  "projectId": "proj-1",
+  "inputRecords": [{ "recordId": "architecture", "revision": "1", "hash": "arch-hash" }],
+  "generatorVersion": "0.1.0",
+  "referenceProfileVersion": "1.0.0",
+  "targetRepository": { "root": ".", "cleanState": "clean" },
+  "dependencyChanges": [
+    { "packageName": "fastify", "language": "typescript", "toVersion": "5.0.0", "reason": "http host" }
+  ],
+  "fileChanges": [
+    { "path": "src/composition/api.ts", "action": "create", "ownership": "generated", "reason": "composition root" }
+  ],
+  "commands": ["npm install", "npm test"],
+  "warnings": [],
+  "blockers": [],
+  "ambiguityQuestions": [],
+  "rollbackStrategy": "staged-rename-with-journal",
+  "planHash": "plan-hash-example"
+}

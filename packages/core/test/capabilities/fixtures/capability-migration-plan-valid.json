@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "migrationPlanId": "migrate-0001",
+  "projectId": "proj-1",
+  "versions": { "fromWorkspaceVersion": "1.0", "toWorkspaceVersion": "2.0" },
+  "recordTransformations": [
+    { "recordId": "binding.approve", "kind": "frontend-binding-to-inbound-binding", "description": "convert ui binding" }
+  ],
+  "fileTransformations": [
+    { "path": ".engineering-ui/capabilities/workspace-version.json", "action": "update", "description": "bump to 2.0" }
+  ],
+  "compatibilityShims": ["frontend-binding-alias"],
+  "dataLossAssessment": { "hasLoss": false, "details": [] },
+  "blockedAmbiguities": [],
+  "previewHashes": ["preview-hash"],
+  "backupInstructions": "copy .engineering-ui/capabilities to a backup directory",
+  "rollbackInstructions": "restore backup and workspace-version.json",
+  "conformanceCommands": ["npm test"]
+}

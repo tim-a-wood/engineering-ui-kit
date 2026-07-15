@@ -17,6 +17,11 @@ import {
   RECORD_STATUSES,
   RESULT_OUTCOMES,
   RUNTIME_ALLOCATIONS,
+  RUNTIME_LANGUAGES,
+  EXPOSURE_LEVELS,
+  LIFECYCLE_KINDS,
+  CONNECTION_VERIFICATION_STATUSES,
+  EXTERNAL_EVIDENCE_STATUSES,
   type ContractId,
 } from './parity.js'
 import { diagnostic, sortDiagnostics, type CapDiagnostic } from './diagnostics.js'
@@ -35,6 +40,11 @@ const ENUMS: Partial<Record<string, readonly string[]>> = {
   dataMode: BINDING_DATA_MODES,
   classification: IMPACT_CLASSIFICATIONS,
   kind: [...CAPABILITY_RUN_KINDS, 'configuration', 'secret-reference', 'module', 'connection'],
+  runtimeLanguage: RUNTIME_LANGUAGES,
+  exposure: EXPOSURE_LEVELS,
+  lifecycleRegistration: LIFECYCLE_KINDS,
+  verificationStatus: CONNECTION_VERIFICATION_STATUSES,
+  externalEvidenceStatus: EXTERNAL_EVIDENCE_STATUSES,
 }
 
 function isAbsolutePath(p: string): boolean {

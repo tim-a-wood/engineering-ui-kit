@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "profileId": "hexagonal-ports-and-adapters",
+  "profileVersion": "1.0.0",
+  "supportedRuntimeLanguages": [
+    { "language": "typescript", "versionRange": ">=22" },
+    { "language": "python", "versionRange": ">=3.11" }
+  ],
+  "supportedHostKinds": ["browser", "electron-main", "http-api", "cli", "worker", "embedded-library"],
+  "contractFormat": "json-schema-2020-12",
+  "httpContractFormat": "openapi-3.1",
+  "generatedDirectoryPolicy": ["do-not-edit", "committed"],
+  "editableDirectoryPolicy": ["project-owned"],
+  "runtimePackageCoordinates": [
+    { "language": "typescript", "packageName": "@engineering-ui-kit/capabilities-runtime", "version": "0.1.0", "pinnedVersionPolicy": "exact" }
+  ],
+  "lifecyclePolicy": "singleton|request-job|transient",
+  "telemetryPolicy": "json-console-default",
+  "secretPolicy": "references-only",
+  "authorizationPolicy": "protected-deny-by-default",
+  "persistencePolicy": "ports-with-in-memory-test-adapter",
+  "errorPolicy": "typed-outcomes",
+  "generatorVersion": "0.1.0",
+  "generatorCompatibilityRange": ">=0.1.0 <0.2.0",
+  "contentHash": "sha256-profile-example"
+}

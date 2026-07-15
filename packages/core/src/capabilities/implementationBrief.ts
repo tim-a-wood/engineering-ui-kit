@@ -27,7 +27,7 @@ export type RepositoryImplementationContext = {
   testFiles: string[]
 }
 
-export type ReferenceArchitectureProfile = {
+export type ModuleReferenceProfile = {
   profileId: 'hexagonal-ports-and-adapters'
   version: '1.0'
   role: string
@@ -59,7 +59,7 @@ export type ModuleImplementationBrief = {
     runtimeAllocation: ModuleManifest['runtimeAllocation']
     allowedPaths: string[]
   }
-  referenceArchitecture: ReferenceArchitectureProfile
+  referenceArchitecture: ModuleReferenceProfile
   approvedSpecification: {
     ownedConcerns: string[]
     excludedConcerns: string[]
@@ -120,7 +120,7 @@ const COMMON_PROFILE = {
   ],
 }
 
-const TYPE_PROFILE: Record<ModuleType, Pick<ReferenceArchitectureProfile, 'role' | 'implementationRules'>> = {
+const TYPE_PROFILE: Record<ModuleType, Pick<ModuleReferenceProfile, 'role' | 'implementationRules'>> = {
   domain: {
     role: 'Domain core: owns business vocabulary, invariants, calculations, and decisions.',
     implementationRules: [
@@ -163,7 +163,7 @@ const TYPE_PROFILE: Record<ModuleType, Pick<ReferenceArchitectureProfile, 'role'
   },
 }
 
-export function referenceArchitectureFor(moduleType: ModuleType): ReferenceArchitectureProfile {
+export function referenceArchitectureFor(moduleType: ModuleType): ModuleReferenceProfile {
   return {
     ...COMMON_PROFILE,
     ...TYPE_PROFILE[moduleType],

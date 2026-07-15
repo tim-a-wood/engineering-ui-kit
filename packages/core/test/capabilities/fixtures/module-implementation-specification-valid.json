@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "proj-1",
+  "moduleId": "mod.orders",
+  "moduleVersion": "1.0.0",
+  "moduleType": "domain",
+  "runtimeLanguage": "typescript",
+  "deployableId": "api",
+  "ownedPaths": ["src/domain/orders/"],
+  "editablePaths": ["src/domain/orders/"],
+  "responsibility": "Decide whether an order can be approved.",
+  "nonResponsibilities": ["persistence", "presentation"],
+  "providedOperations": [{ "operationId": "op.orders.approve", "contractVersion": "1.0.0" }],
+  "requiredOperations": [
+    { "operationId": "op.credit.check", "acceptedContractRange": "^1.0.0", "reason": "approval requires credit eligibility" }
+  ],
+  "providedPorts": ["port.orders.approve"],
+  "requiredPorts": ["port.credit"],
+  "canonicalSchemaRefs": ["orders.approve.input", "orders.approve.output"],
+  "generatedTypeTargets": ["src/generated/orders-types.ts"],
+  "rules": [{ "id": "rule-positive-total", "text": "Order total must be positive." }],
+  "invariants": ["order-approved is emitted at most once"],
+  "examples": ["approve an eligible order with a positive total"],
+  "edgeCases": ["order with a zero total"],
+  "failureSemantics": ["credit provider unavailable maps to a technical failure"],
+  "performanceConstraints": ["p95 under 50ms"],
+  "cancellationExpectations": "cooperative cancellation via the operation context",
+  "timeoutExpectations": "short",
+  "concurrencyExpectations": "stateless and safe under concurrency",
+  "lifecycleRegistration": "singleton",
+  "configurationRefs": [],
+  "secretReferenceIds": [],
+  "persistenceExpectations": "none directly; persists through the required port",
+  "telemetryExpectations": "emit an approval-decision span",
+  "healthExpectations": "not applicable for a domain module",
+  "implementationSteps": ["inspect existing files", "implement the port", "cover acceptance cases"],
+  "acceptanceCases": [
+    { "id": "ac-order-positive", "description": "approve an eligible order", "expectedOutcome": "approved and order-approved emitted once", "kind": "example" }
+  ],
+  "acceptanceCommands": ["npm test"],
+  "unresolvedItems": []
+}

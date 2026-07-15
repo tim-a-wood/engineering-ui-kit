@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "verificationId": "verify-0001",
+  "projectId": "proj-1",
+  "bindingId": "binding.approve",
+  "deployableId": "api",
+  "hashes": {
+    "binding": "b-hash",
+    "operation": "o-hash",
+    "architecture": "a-hash",
+    "composition": "c-hash",
+    "generatedOwnership": "g-hash",
+    "source": "s-hash"
+  },
+  "launchCommand": "node dist/api.js",
+  "triggerKind": "http",
+  "redactedTriggerInput": "{ orderId: *** }",
+  "outcomeSummary": "success",
+  "correlationId": "corr-123",
+  "observedPath": {
+    "inboundAdapter": "adapter.http",
+    "compositionRoot": "src/composition/api.ts",
+    "operation": "op.orders.approve",
+    "outboundAdapters": ["adapter.creditHttp"]
+  },
+  "startedAt": "2026-07-15T00:00:00.000Z",
+  "completedAt": "2026-07-15T00:00:01.000Z",
+  "durationMs": 1000,
+  "healthState": "ready",
+  "usedTestAdapter": false,
+  "externalEvidenceStatus": "complete",
+  "evidenceArtifactRefs": ["artifact.trace"],
+  "verificationStatus": "pass",
+  "reasonCodes": []
+}
