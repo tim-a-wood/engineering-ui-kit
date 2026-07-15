@@ -37,11 +37,11 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP2 | Reference profile, repo discovery, deterministic planning | WP1 | cap-sonnet-implementer (delegated ✓) | `packages/core/src/capabilities/generation/` | `def7616` | core 180/180 (19 new); CAP-TEST-048..053; all workspaces typecheck clean | **gate-green** |
 | WP3A | TypeScript runtime core (`.`+`./testing`) | WP1 | cap-sonnet-implementer (coordinator checkout) | `packages/capabilities-runtime-ts/` | `34f1b6c` | runtime-ts 29/29 typecheck clean; core still 180/180; standalone (no core/desktop/gui imports); node-free core | **gate-green (core; hosts=WP3A-hosts next)** |
 | WP3B | TS generators + executable slices | WP2, WP3A | TS runtime (Sonnet) | TS generators + examples | — | CAP-TEST-054..061 | todo |
-| WP4A | Python runtime core | WP1 | cap-sonnet-implementer (worktree `cap-era-wt-wp4a`) | `runtimes/python/` | — | — | **in-progress** (WP4A-core: `core`+`telemetry`+`testing`; hosts next) |
+| WP4A | Python runtime core (`core`+`telemetry`+`testing`) | WP1 | cap-sonnet-implementer (worktree) | `runtimes/python/` | `ee1fe1f` (merged) | 34 pytest at integrated tree; Outcome/Operation/Context frozen for parity; conftest fixes `.pth`/UF_HIDDEN | **gate-green (core; hosts=WP4B)** |
 | WP4B | Python generators + executable slices | WP2, WP4A | Py runtime (Sonnet) | Py generators + examples | — | CAP-TEST-062..069 | todo |
 | WP5A | Foundation planning UI | WP1, WP2 | foundation workbench (Sonnet) | Design/Build UI | — | CAP-TEST-070..075 | todo |
 | WP5B | Foundation runtime integration | WP3B, WP4B, WP5A | foundation workbench (Sonnet) | bridge/IPC | — | (part of WP5 gate) | todo |
-| WP6A | Inbound binding + journey state | WP1 | connect (Sonnet) | journey/state | — | CAP-TEST-076..083 | todo |
+| WP6A | Inbound binding + journey state | WP1 | cap-sonnet-implementer (coordinator checkout) | `journeys.ts`, `capabilitiesUiState.ts` | `a9492d4` | CAP-TEST-076/079/081; core 193/193, gui 162/162; private-default, multi-binding, no-UI-can't-skip | **gate-green** (GUI deployable/binding bridge wiring → WP6B) |
 | WP6B | Connect editors | WP2, WP6A | connect (Sonnet) | Connect UI/editors | — | (part of WP6 gate) | todo |
 | WP7 | Real generation + transactional apply | WP3B, WP4B, WP5B, WP6B | integration/apply (Sonnet + Opus review) | inbound generators, overlay | — | CAP-TEST-084..093 | todo |
 | WP8 | Real connection evidence + verification | WP7 | evidence/verification (Sonnet) | launchers, evidence, freshness | — | CAP-TEST-094..101 | todo |
@@ -162,3 +162,6 @@ canary never survives redaction).
 - WP1a: nine canonical contracts frozen; `103c229`; core 155/155, all workspaces typecheck clean.
 - WP1b: workspace schema 2.0 + lossless migration/rollback; `14f9f7f`; core 161/161, all workspaces typecheck clean.
 - **Wave 1 COMPLETE** (WP0+WP1a+WP1b). WP1 gate green; contract freeze recorded. Wave 2 ready to release (needs session restart for parallel Sonnet delegation).
+- Restart confirmed: delegation restored (agents run 90–99 steps). Provisioned user-space Python 3.11.15 (+ `pip --use-feature=truststore`) so Python lanes verify locally.
+- WP2 integrated `def7616` (180/180). WP3A-core integrated `34f1b6c` (runtime-ts 29/29, standalone). WP4A merged `ee1fe1f` (34 pytest). WP6A integrated `a9492d4` (core 193/193, gui 162/162).
+- **Wave 2 core packets COMPLETE** (WP2/WP3A-core/WP4A/WP6A). WP3A-hosts-node (Node/browser adapters) in a symlinked worktree; then release Wave 3 (WP3B/WP4B/WP5A/WP6B) + WP9A.
