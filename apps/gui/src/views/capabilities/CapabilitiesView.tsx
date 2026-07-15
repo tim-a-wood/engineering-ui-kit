@@ -20,7 +20,7 @@ import type {
   Project,
   SelectionEvidence,
 } from '@engineering-ui-kit/core'
-import type { EuikBridge, TaskPacketFields } from '../../bridge'
+import type { CapabilityDeployableSummary, EuikBridge, InboundBindingReadRecord, TaskPacketFields } from '../../bridge'
 import { EmptyState, PageHeader } from '../../components'
 import { Icon } from '../../icons'
 import type { GuideTopicId } from '../../guides'
@@ -42,6 +42,7 @@ import {
   deriveJourney,
   stageById,
   STAGE_LABELS,
+  type CapabilityInboundBindingRecord,
   type JourneyInput,
   type StageId,
 } from './capabilitiesUiState'
@@ -56,6 +57,27 @@ import {
 export type CapabilitiesProjection = 'guided' | 'design'
 
 type GuidedPanel = 'journey' | 'attention' | 'changes'
+
+/**
+ * Projects the raw CAP-CONTRACT-028 read model (draft/approved per bindingId)
+ * into the minimal shape `deriveJourney` needs to evaluate Connect entry-point
+ * completeness (CAP-ERA-001 §5.1/§12.4). Every record's own kind/exposure
+ * ride along unchanged; nothing here decides completeness itself.
+ */
+function projectInboundBindings(records: InboundBindingReadRecord[]): CapabilityInboundBindingRecord[] {
+  return records.flatMap((record) => {
+    const rec = record.approved ?? record.draft
+    if (!rec) return []
+    return [{
+      bindingId: record.bindingId,
+      deployableId: rec.deployableId,
+      operationId: rec.operationId,
+      operationVersion: rec.operationVersion,
+      approved: Boolean(record.approved),
+      exposure: rec.exposure,
+    }]
+  })
+}
 
 type Props = {
   bridge: EuikBridge
@@ -83,6 +105,8 @@ export function CapabilitiesView({
   const [attentionItems, setAttentionItems] = useState<AttentionItem[]>([])
   const [moduleRecords, setModuleRecords] = useState<CapabilityModuleRecord[]>([])
   const [bindingRecords, setBindingRecords] = useState<CapabilityBindingRecord[]>([])
+  const [deployables, setDeployables] = useState<CapabilityDeployableSummary[]>([])
+  const [inboundBindingRecords, setInboundBindingRecords] = useState<InboundBindingReadRecord[]>([])
   const [selectionEvidence, setSelectionEvidence] = useState<SelectionEvidence | undefined>()
   const [viewing, setViewing] = useState<StageId>('define')
   const [designSection, setDesignSection] = useState<DesignSection>('application')
@@ -101,15 +125,18 @@ export function CapabilitiesView({
   const viewRef = useRef<HTMLDivElement | null>(null)
 
   const selectedProject = projects.find((project) => project.id === projectId)
+  const inboundBindingProjections = useMemo(() => projectInboundBindings(inboundBindingRecords), [inboundBindingRecords])
   const journeyInput: JourneyInput = useMemo(
     () => ({
       application,
       architecture,
       modules: moduleRecords,
       bindings: bindingRecords,
+      deployables,
+      inboundBindings: inboundBindingProjections,
       connectDisposition: selectedProject?.capabilitiesConnectDisposition,
     }),
-    [application, architecture, moduleRecords, bindingRecords, selectedProject?.capabilitiesConnectDisposition],
+    [application, architecture, moduleRecords, bindingRecords, deployables, inboundBindingProjections, selectedProject?.capabilitiesConnectDisposition],
   )
   const journey = useMemo(() => deriveJourney(journeyInput), [journeyInput])
   const effectiveAttentionItems = useMemo(() => {
@@ -126,14 +153,16 @@ export function CapabilitiesView({
 
   const fetchWorkspace = useCallback(
     async (id: string) => {
-      const [app, arch, attention, modules, bindings] = await Promise.all([
+      const [app, arch, attention, modules, bindings, deployableList, inboundBindings] = await Promise.all([
         bridge.capabilitiesGetApplication(id),
         bridge.capabilitiesGetArchitecture(id),
         bridge.capabilitiesListNeedsAttention(id),
         bridge.capabilitiesListModules(id),
         bridge.capabilitiesListBindings(id),
+        bridge.capabilitiesListDeployables(id),
+        bridge.capabilitiesListInboundBindings(id),
       ])
-      return { application: app, architecture: arch, attention, modules, bindings }
+      return { application: app, architecture: arch, attention, modules, bindings, deployableList, inboundBindings }
     },
     [bridge],
   )
@@ -144,6 +173,8 @@ export function CapabilitiesView({
     setAttentionItems([])
     setModuleRecords([])
     setBindingRecords([])
+    setDeployables([])
+    setInboundBindingRecords([])
     setSelectionEvidence(undefined)
     setGuidedPanel('journey')
   }
@@ -165,8 +196,18 @@ export function CapabilitiesView({
         setAttentionItems(d.attention)
         setModuleRecords(d.modules)
         setBindingRecords(d.bindings)
+        setDeployables(d.deployableList)
+        setInboundBindingRecords(d.inboundBindings)
         const project = projects.find((candidate) => candidate.id === id)
-        const derived = deriveJourney({ application: d.application, architecture: d.architecture, modules: d.modules, bindings: d.bindings, connectDisposition: project?.capabilitiesConnectDisposition })
+        const derived = deriveJourney({
+          application: d.application,
+          architecture: d.architecture,
+          modules: d.modules,
+          bindings: d.bindings,
+          deployables: d.deployableList,
+          inboundBindings: projectInboundBindings(d.inboundBindings),
+          connectDisposition: project?.capabilitiesConnectDisposition,
+        })
         setViewing(derived.firstIncompleteStageId)
         setDesignSection(stageToDesignSection(derived.firstIncompleteStageId))
         setLoadState('ready')
@@ -214,6 +255,8 @@ export function CapabilitiesView({
     setAttentionItems(d.attention)
     setModuleRecords(d.modules)
     setBindingRecords(d.bindings)
+    setDeployables(d.deployableList)
+    setInboundBindingRecords(d.inboundBindings)
   }, [projectId, fetchWorkspace])
 
   const architectureProjection = useMemo(() => {
@@ -397,6 +440,8 @@ export function CapabilitiesView({
           archSpec={archSpec}
           selectionEvidence={selectionEvidence}
           bindingRecords={bindingRecords}
+          deployables={deployables}
+          inboundBindingRecords={inboundBindingRecords}
           previewRef={previewRef}
           stageHeadingRef={stageHeadingRef}
           onView={viewStage}
@@ -447,6 +492,8 @@ export function GuidedBody(props: {
   archSpec: ArchitectureSpecification | undefined
   selectionEvidence: SelectionEvidence | undefined
   bindingRecords: CapabilityBindingRecord[]
+  deployables: CapabilityDeployableSummary[]
+  inboundBindingRecords: InboundBindingReadRecord[]
   previewRef: React.RefObject<CapabilityPreviewHandle | null>
   stageHeadingRef: React.RefObject<HTMLHeadingElement | null>
   onView: (id: StageId) => void
@@ -561,6 +608,8 @@ function GuidedStage(props: {
   archSpec: ArchitectureSpecification | undefined
   selectionEvidence: SelectionEvidence | undefined
   bindingRecords: CapabilityBindingRecord[]
+  deployables: CapabilityDeployableSummary[]
+  inboundBindingRecords: InboundBindingReadRecord[]
   previewRef: React.RefObject<CapabilityPreviewHandle | null>
   onChanged: () => void
   onSelectionEvidence: (e: SelectionEvidence | undefined) => void
@@ -648,16 +697,17 @@ function GuidedStage(props: {
       }
       return (
         <GuidedConnect
-          key={`${projectId}:${props.bindingRecords[0]?.bindingId ?? 'new'}`}
+          key={projectId}
           bridge={bridge}
           projectId={projectId}
           project={props.project}
           records={props.moduleRecords}
+          deployables={props.deployables}
+          inboundBindingRecords={props.inboundBindingRecords}
           selectionEvidence={props.selectionEvidence}
           onSelectionEvidence={props.onSelectionEvidence}
           architectureVersion={props.archSpec?.revision}
           architectureHash={props.archSpec?.contentHash}
-          initialBinding={props.bindingRecords[0]?.draft ?? props.bindingRecords[0]?.approved}
           previewRef={props.previewRef}
           onChanged={props.onChanged}
           onProjectChanged={props.onProjectsChanged}

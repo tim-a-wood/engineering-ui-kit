@@ -46,6 +46,8 @@ function makeBridge(over: Partial<EuikBridge> = {}): EuikBridge {
     capabilitiesListModules: async () => [],
     capabilitiesListBindings: async () => [],
     capabilitiesListRuns: async () => [],
+    capabilitiesListDeployables: async () => [],
+    capabilitiesListInboundBindings: async () => [],
   }
   const merged = { ...base, ...(over as Record<string, unknown>) }
   return new Proxy(merged, { get: (t, k) => (k in t ? (t as Record<string, unknown>)[k] : (async () => ({}))) }) as unknown as EuikBridge

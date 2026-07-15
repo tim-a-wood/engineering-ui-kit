@@ -4063,6 +4063,42 @@ code.path-wrap {
   font-weight: 400;
 }
 
+/* Guided Connect — configured entry points + inbound-binding editors (WP6B) */
+.cap-entry-points {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cap-entry-point {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  flex-wrap: wrap;
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+}
+.cap-entry-point-kind {
+  font-weight: 600;
+}
+.cap-inbound-editor,
+.cap-connect-ui-editor {
+  display: grid;
+  gap: var(--semantic-spacing-3);
+  margin-top: var(--semantic-spacing-3);
+}
+.cap-exposure-control {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel-raised);
+}
+
 /* Guided interview import — file primary, JSON behind a disclosure */
 .cap-import {
   display: grid;
