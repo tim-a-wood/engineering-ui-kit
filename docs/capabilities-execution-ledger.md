@@ -30,7 +30,8 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | Packet | Title | Depends on | Owner / model | Owned paths | Commit | Tests | Status |
 |---|---|---|---|---|---|---|---|
 | WP0 | Preserve & baseline | — | coordinator | (read-only + this ledger) | `e80ddce` | core 151/151, gui 157/157, all typecheck clean | **gate-green** |
-| WP1 | Schema 2.0 + canonical contracts (CAP-CONTRACT-023..031) | WP0 | contract steward (Sonnet) | core types/schemas/parity/fixtures | — | CAP-TEST-042..047 | todo |
+| WP1a | Canonical contract catalogue (CAP-CONTRACT-023..031 types/schemas/fixtures/parity + InboundBinding) | WP0 (`9ac6c7f`) | contract steward (cap-sonnet-implementer) | core `types.ts`/`parity.ts`/`validation.ts`/`binding.ts`, `standards/schemas/capabilities/*`, fixtures, `cap-test-042/043` | — | CAP-TEST-042, 043 + CAP-TEST-001 stays green | **in-progress** |
+| WP1b | Workspace schema 2.0 + migration (1.0 reader, future read-only, FrontendBinding→InboundBinding, interview→ModuleImplementationSpecification, rollback) | WP1a | contract steward (cap-sonnet-implementer) | core `persistence.ts`/`migration.ts` + `cap-test-044..047` | — | CAP-TEST-044..047 | todo (after WP1a) |
 | WP2 | Reference profile, repo discovery, deterministic planning | WP1 | generator (Sonnet) | `packages/core/src/capabilities/generation/` | — | CAP-TEST-048..053 | todo |
 | WP3A | TypeScript runtime core | WP1 | TS runtime (Sonnet) | `packages/capabilities-runtime-ts/` | — | — | todo |
 | WP3B | TS generators + executable slices | WP2, WP3A | TS runtime (Sonnet) | TS generators + examples | — | CAP-TEST-054..061 | todo |
