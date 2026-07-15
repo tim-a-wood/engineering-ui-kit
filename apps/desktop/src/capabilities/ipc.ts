@@ -43,16 +43,21 @@ import {
   technicalFailureResult,
   sanitizeBoundaryError,
   transitionJob,
+  discoverRepository,
+  proposeDeployables,
   type ApplicationSpecification,
   type ArchitectureSpecification,
   type CapabilityHandoffMarkdownInput,
   type CapabilityRunScope,
+  type DeployableSpecification,
   type FreshnessRecord,
   type FrontendBinding,
+  type InboundBinding,
   type JobRecord,
   type InterviewPacket,
   type ModuleManifest,
   type ModuleInterviewResponse,
+  type RepositoryManifestEvidence,
   type ResultEnvelope,
 } from '@engineering-ui-kit/core'
 import type { Workspace } from '@engineering-ui-kit/core'
@@ -105,6 +110,10 @@ const CAP_CHANNELS = {
   invokeOperation: 'capabilities:invoke-operation',
   saveBindingDraft: 'capabilities:save-binding-draft',
   approveBinding: 'capabilities:approve-binding',
+  listDeployables: 'capabilities:list-deployables',
+  listInboundBindings: 'capabilities:list-inbound-bindings',
+  saveInboundBindingDraft: 'capabilities:save-inbound-binding-draft',
+  approveInboundBinding: 'capabilities:approve-inbound-binding',
 } as const
 
 export type CapabilityBridgeChannels = typeof CAP_CHANNELS
@@ -122,6 +131,79 @@ type PersistedOverlayReview = {
 
 function sha256File(filePath: string): string {
   return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex')
+}
+
+const DEPLOYABLE_DISCOVERY_SKIP_DIRECTORIES = new Set([
+  '.git', '.idea', '.next', '.turbo', '.venv', 'build', 'coverage', 'dist',
+  'node_modules', 'out', 'target', 'vendor',
+])
+
+/** Bounded repository file walk (privileged filesystem work stays in this process). */
+function walkRepositoryFilePaths(root: string, maxFiles = 5000): string[] {
+  const files: string[] = []
+  const visit = (directory: string): void => {
+    if (files.length >= maxFiles) return
+    let entries: fs.Dirent[]
+    try {
+      entries = fs.readdirSync(directory, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      if (files.length >= maxFiles) break
+      if (entry.isSymbolicLink()) continue
+      const absolute = path.join(directory, entry.name)
+      if (entry.isDirectory()) {
+        if (!DEPLOYABLE_DISCOVERY_SKIP_DIRECTORIES.has(entry.name)) visit(absolute)
+      } else if (entry.isFile()) {
+        files.push(path.relative(root, absolute).split(path.sep).join('/'))
+      }
+    }
+  }
+  visit(root)
+  return files
+}
+
+/** Minimal `requirements.txt` -> pseudo-manifest parse, just enough for framework-name detection. */
+function requirementsTxtDependencies(text: string): Record<string, string> {
+  const deps: Record<string, string> = {}
+  for (const rawLine of text.split('\n')) {
+    const line = rawLine.split('#')[0]!.trim()
+    if (!line || line.startsWith('-')) continue
+    const name = line.split(/[<>=~!; \[]/)[0]?.trim()
+    if (name) deps[name] = ''
+  }
+  return deps
+}
+
+/** Live repository-discovery evidence for deployable proposal (CAP-ERA-001 §11.1/§11.2). */
+function buildRepositoryEvidence(repoRoot: string): {
+  repositoryId: string
+  files: { path: string }[]
+  manifests: RepositoryManifestEvidence[]
+} {
+  const root = path.resolve(repoRoot)
+  const files = walkRepositoryFilePaths(root).map((filePath) => ({ path: filePath }))
+  const manifests: RepositoryManifestEvidence[] = []
+  const packageJsonPath = path.join(root, 'package.json')
+  if (fs.existsSync(packageJsonPath)) {
+    try {
+      manifests.push({
+        path: 'package.json',
+        content: JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')),
+      })
+    } catch {
+      // Malformed manifest — no dependency evidence contributed, proposal falls back safely.
+    }
+  }
+  const requirementsPath = path.join(root, 'requirements.txt')
+  if (fs.existsSync(requirementsPath)) {
+    manifests.push({
+      path: 'requirements.txt',
+      content: { dependencies: requirementsTxtDependencies(fs.readFileSync(requirementsPath, 'utf8')) },
+    })
+  }
+  return { repositoryId: root, files, manifests }
 }
 
 function implementationHash(repoRoot: string, ownedPaths: readonly string[]): string {
@@ -1449,6 +1531,77 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
       return { ok: false as const, diagnostics: [{ code: 'CAP-BIND-002', message: 'all behavior mappings are required' }] }
     }
     return { ok: true as const, approved: caps.approveBinding(projectId, draft) }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.listDeployables, (_e, projectId: string) => {
+    requireString(projectId, 'projectId')
+    caps.ensureInitialized(projectId)
+    const persisted = caps
+      .listDeployables(projectId)
+      .map((record) => record.approved)
+      .filter((deployable): deployable is DeployableSpecification => Boolean(deployable))
+    if (persisted.length > 0) {
+      return persisted.map((deployable) => ({
+        deployableId: deployable.deployableId,
+        kind: deployable.kind,
+        name: deployable.name,
+      }))
+    }
+    const architecture = caps.getApprovedArchitecture(projectId)
+    if (!architecture) return []
+    const project = workspace.getProject(projectId)
+    if (!project) return []
+    const discovery = discoverRepository(buildRepositoryEvidence(project.repoPath))
+    const { deployables } = proposeDeployables({
+      architectureModuleIds: architecture.moduleIds,
+      architectureModuleDefinitions: architecture.moduleDefinitions,
+      discovery,
+    })
+    return deployables.map((deployable) => ({
+      deployableId: deployable.deployableId,
+      kind: deployable.kind,
+      name: deployable.name,
+    }))
+  })
+
+  ipcMain.handle(CAP_CHANNELS.listInboundBindings, (_e, projectId: string) => {
+    requireString(projectId, 'projectId')
+    caps.ensureInitialized(projectId)
+    return caps.listInboundBindings(projectId)
+  })
+
+  ipcMain.handle(CAP_CHANNELS.saveInboundBindingDraft, (_e, projectId: string, draft: InboundBinding) => {
+    requireString(projectId, 'projectId')
+    caps.saveInboundBindingDraft(projectId, draft)
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.approveInboundBinding, (_e, projectId: string, draft: InboundBinding) => {
+    requireString(projectId, 'projectId')
+    const required = [
+      draft.operationId,
+      draft.operationVersion,
+      draft.validationBehavior,
+      draft.domainRejectionBehavior,
+      draft.technicalFailureBehavior,
+      draft.timeoutBehavior,
+      draft.cancellationBehavior,
+      draft.retryBehavior,
+      draft.duplicateSubmissionBehavior,
+    ]
+    if (required.some((value) => !value?.trim())) {
+      return {
+        ok: false as const,
+        diagnostics: [
+          {
+            code: 'CAP-BIND-INBOUND-001',
+            message: 'operation identity and all behavior mappings are required',
+          },
+        ],
+      }
+    }
+    // Multiple inbound bindings may target the same operation — never deduplicated (CAP-ERA-001 §12.4).
+    return { ok: true as const, approved: caps.approveInboundBinding(projectId, draft) }
   })
 
   // Keep transitionJob referenced for job API completeness in later packets.
