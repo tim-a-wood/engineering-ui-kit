@@ -427,11 +427,16 @@ function planHttpAdapter(input: PythonInboundAdapterGenerationInput, binding: Ex
   const inputSchemaExpr = pythonInputSchemaExpression(types, diagnostics)
   const functionName = `register_${toSnakeCase(binding.bindingId)}_route`
 
+  // Only the input type is actually referenced (for `.model_json_schema()`),
+  // so — unlike `resolveOperationTypes`'s all-four import bag reused by the
+  // other binding kinds below — the http adapter imports just that one name.
   const importDecls: PythonImportDeclarationInput[] = [
     { moduleSpecifier: `${runtimePackageName}.http.host`, names: ['HttpOperationHost'] },
     operationImport,
   ]
-  if (types.typeImportSpecifier) importDecls.push({ moduleSpecifier: types.typeImportSpecifier, names: types.typeImports })
+  if (types.hasInputModel && input.operationTypes?.modelsFilePath) {
+    importDecls.push({ moduleSpecifier: pythonModuleSpecifierFromPath(input.operationTypes.modelsFilePath), names: [types.inputType] })
+  }
   const importBlock = renderPythonImportBlock(importDecls)
 
   const body = [
