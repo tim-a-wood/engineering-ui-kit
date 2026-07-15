@@ -9,10 +9,13 @@ import crypto from 'node:crypto'
 import type {
   ApplicationSpecification,
   ArchitectureSpecification,
+  DeployableSpecification,
   FrontendBinding,
+  InboundBinding,
   ModuleManifest,
 } from './types.js'
 import type { ModuleInterviewResponse } from './moduleInterview.js'
+import { withDefaultExposure } from './journeys.js'
 
 function atomicWriteJson(filePath: string, value: unknown): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true })
@@ -37,6 +40,8 @@ export type CapabilityIndex = {
   architectureApprovedRevision?: string
   modules: Record<string, { draft?: boolean; approvedRevision?: string }>
   bindings: Record<string, { draft?: boolean; approvedRevision?: string }>
+  deployables: Record<string, { draft?: boolean; approvedRevision?: string }>
+  inboundBindings: Record<string, { draft?: boolean; approvedRevision?: string }>
 }
 
 export type SchemaMeta = {
@@ -68,6 +73,8 @@ export class CapabilityWorkspace {
       schemaVersion: '1.0',
       modules: {},
       bindings: {},
+      deployables: {},
+      inboundBindings: {},
     } satisfies CapabilityIndex)
     for (const dir of [
       'application/drafts',
@@ -76,6 +83,8 @@ export class CapabilityWorkspace {
       'architecture/approved',
       'modules',
       'bindings',
+      'deployables',
+      'inbound-bindings',
       'meta/migrations',
     ]) {
       fs.mkdirSync(path.join(root, dir), { recursive: true })
@@ -95,13 +104,18 @@ export class CapabilityWorkspace {
 
   getIndex(projectId: string): CapabilityIndex {
     this.ensureInitialized(projectId)
-    return (
-      readJson<CapabilityIndex>(this.indexPath(projectId)) ?? {
-        schemaVersion: '1.0',
-        modules: {},
-        bindings: {},
-      }
-    )
+    const index = readJson<CapabilityIndex>(this.indexPath(projectId)) ?? {
+      schemaVersion: '1.0',
+      modules: {},
+      bindings: {},
+      deployables: {},
+      inboundBindings: {},
+    }
+    // Back-compat: a workspace created before deployables/inboundBindings existed
+    // may be missing these maps on disk.
+    index.deployables ??= {}
+    index.inboundBindings ??= {}
+    return index
   }
 
   private saveIndex(projectId: string, index: CapabilityIndex): void {
@@ -372,6 +386,150 @@ export class CapabilityWorkspace {
         bindingId,
         draft: this.getBindingDraft(projectId, bindingId),
         approved: this.getApprovedBinding(projectId, bindingId),
+      }))
+  }
+
+  // --- CAP-CONTRACT-024 DeployableSpecification (WP5B connect backing) -----
+
+  saveDeployableDraft(projectId: string, draft: DeployableSpecification): void {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    atomicWriteJson(
+      path.join(this.root(projectId), 'deployables', draft.deployableId, 'drafts', 'current.json'),
+      draft,
+    )
+    const index = this.getIndex(projectId)
+    index.deployables[draft.deployableId] = { ...index.deployables[draft.deployableId], draft: true }
+    this.saveIndex(projectId, index)
+  }
+
+  getDeployableDraft(projectId: string, deployableId: string): DeployableSpecification | undefined {
+    return readJson(
+      path.join(this.root(projectId), 'deployables', deployableId, 'drafts', 'current.json'),
+    )
+  }
+
+  /**
+   * Approves a deployable specification. `DeployableSpecification` (unlike
+   * `ModuleManifest`/`FrontendBinding`) has no intrinsic version field, so the
+   * approved revision key is the draft's canonical content hash — re-approving
+   * byte-identical content is a no-op collision (same hash, same file).
+   */
+  approveDeployable(projectId: string, draft: DeployableSpecification): DeployableSpecification {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    const revision = canonicalHash(draft)
+    const dest = path.join(this.root(projectId), 'deployables', draft.deployableId, 'approved', `${revision}.json`)
+    if (fs.existsSync(dest)) {
+      throw new Error(`approved deployable revision already exists: ${draft.deployableId}@${revision}`)
+    }
+    atomicWriteJson(dest, draft)
+    const index = this.getIndex(projectId)
+    index.deployables[draft.deployableId] = { draft: false, approvedRevision: revision }
+    this.saveIndex(projectId, index)
+    return draft
+  }
+
+  getApprovedDeployable(
+    projectId: string,
+    deployableId: string,
+    revision?: string,
+  ): DeployableSpecification | undefined {
+    const rev = revision ?? this.getIndex(projectId).deployables[deployableId]?.approvedRevision
+    if (!rev) return undefined
+    return readJson(path.join(this.root(projectId), 'deployables', deployableId, 'approved', `${rev}.json`))
+  }
+
+  listDeployables(
+    projectId: string,
+  ): { deployableId: string; draft?: DeployableSpecification; approved?: DeployableSpecification }[] {
+    const index = this.getIndex(projectId)
+    return Object.keys(index.deployables)
+      .sort((a, b) => a.localeCompare(b))
+      .map((deployableId) => ({
+        deployableId,
+        draft: this.getDeployableDraft(projectId, deployableId),
+        approved: this.getApprovedDeployable(projectId, deployableId),
+      }))
+  }
+
+  // --- CAP-CONTRACT-028 InboundBinding (WP5B connect backing) --------------
+
+  /** Missing/omitted `exposure` always persists as `private` (§5.1) — never silently escalated. */
+  saveInboundBindingDraft(projectId: string, draft: InboundBinding): void {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    const binding = withDefaultExposure(draft)
+    atomicWriteJson(
+      path.join(this.root(projectId), 'inbound-bindings', binding.bindingId, 'drafts', 'current.json'),
+      binding,
+    )
+    const index = this.getIndex(projectId)
+    index.inboundBindings[binding.bindingId] = { ...index.inboundBindings[binding.bindingId], draft: true }
+    this.saveIndex(projectId, index)
+  }
+
+  getInboundBindingDraft(projectId: string, bindingId: string): InboundBinding | undefined {
+    return readJson(
+      path.join(this.root(projectId), 'inbound-bindings', bindingId, 'drafts', 'current.json'),
+    )
+  }
+
+  /**
+   * Approves an inbound binding. Multiple `InboundBinding`s may legitimately
+   * target the same `operationId`/`operationVersion` (CAP-ERA-001 §12.4) —
+   * bindings are keyed and stored by their own `bindingId`, never deduplicated
+   * by operation.
+   */
+  approveInboundBinding(projectId: string, draft: InboundBinding): InboundBinding {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    const binding = withDefaultExposure(draft)
+    const dest = path.join(
+      this.root(projectId),
+      'inbound-bindings',
+      binding.bindingId,
+      'approved',
+      `${binding.version}.json`,
+    )
+    if (fs.existsSync(dest)) {
+      throw new Error(`approved inbound binding revision already exists: ${binding.bindingId}@${binding.version}`)
+    }
+    atomicWriteJson(dest, binding)
+    const index = this.getIndex(projectId)
+    index.inboundBindings[binding.bindingId] = { draft: false, approvedRevision: binding.version }
+    this.saveIndex(projectId, index)
+    return binding
+  }
+
+  getApprovedInboundBinding(
+    projectId: string,
+    bindingId: string,
+    revision?: string,
+  ): InboundBinding | undefined {
+    const rev = revision ?? this.getIndex(projectId).inboundBindings[bindingId]?.approvedRevision
+    if (!rev) return undefined
+    return readJson(path.join(this.root(projectId), 'inbound-bindings', bindingId, 'approved', `${rev}.json`))
+  }
+
+  listInboundBindings(
+    projectId: string,
+  ): { bindingId: string; draft?: InboundBinding; approved?: InboundBinding }[] {
+    const index = this.getIndex(projectId)
+    return Object.keys(index.inboundBindings)
+      .sort((a, b) => a.localeCompare(b))
+      .map((bindingId) => ({
+        bindingId,
+        draft: this.getInboundBindingDraft(projectId, bindingId),
+        approved: this.getApprovedInboundBinding(projectId, bindingId),
       }))
   }
 }
