@@ -10,6 +10,8 @@ import type {
   ApplicationSpecification,
   ArchitectureSpecification,
   AzureDevOpsProvenance,
+  DeployableKind,
+  ExposureLevel,
   FrontendBinding,
   MatlabSessionRecord,
   ModuleManifest,
@@ -34,6 +36,113 @@ export type JourneyEvidence = {
   journeyId: string
   passed: boolean
   evidence: Record<string, unknown>
+}
+
+/**
+ * Connect entry-point completeness (CAP-ERA-001 §5.1/§5.4/§12.4, CAP-PKT WP6A).
+ *
+ * Canonical model for whether a deployable's Connect stage is satisfied. This
+ * replaces the earlier "does a UI module exist" heuristic: completeness is
+ * driven solely by whether each required (non-`embedded-library`) deployable
+ * has at least one *valid* `InboundBinding` (CAP-CONTRACT-028), regardless of
+ * binding `kind` (ui/http/cli/schedule/embedded-library) — a migrated `ui`
+ * binding counts exactly the same as any other kind. Multiple bindings may
+ * target the same operation id/version; none are deduplicated away.
+ */
+
+/** Default exposure for a newly created inbound binding — private until a deliberate review elevates it (§5.1/§15.2). */
+export const DEFAULT_INBOUND_EXPOSURE: ExposureLevel = 'private'
+
+/** Applies the private-by-default rule to a binding-shaped value that omits `exposure`. */
+export function withDefaultExposure<T extends { exposure?: ExposureLevel }>(
+  binding: T,
+): T & { exposure: ExposureLevel } {
+  return { ...binding, exposure: binding.exposure ?? DEFAULT_INBOUND_EXPOSURE }
+}
+
+/** Minimal deployable shape needed to evaluate Connect entry-point completeness. */
+export type DeployableEntryPointInput = {
+  deployableId: string
+  kind: DeployableKind
+}
+
+/** Minimal inbound-binding shape needed to evaluate Connect entry-point completeness. */
+export type InboundBindingEntryPointInput = {
+  bindingId: string
+  deployableId: string
+  operationId?: string
+  operationVersion?: string
+  /** Whether this binding record has been reviewed/approved (draft bindings do not count). */
+  approved: boolean
+  /** Missing/omitted exposure is treated as `private` (§5.1) — never silently escalated. */
+  exposure?: ExposureLevel
+}
+
+export type DeployableConnectStatus = {
+  deployableId: string
+  /** False only for deployables Design has classified `embedded-library` (§5.1). */
+  requiresEntryPoint: boolean
+  bindingCount: number
+  validBindingCount: number
+  hasValidEntryPoint: boolean
+  /** True when any binding for this deployable has been deliberately elevated beyond `private`. */
+  exposureElevated: boolean
+  /** True when this deployable's Connect requirement is met (or not applicable). */
+  satisfied: boolean
+}
+
+export type ConnectEntryPointModel = {
+  deployables: DeployableConnectStatus[]
+  requiredDeployableIds: string[]
+  /** True only when every required deployable has a valid inbound entry point. */
+  allRequiredSatisfied: boolean
+  anyExposureElevated: boolean
+}
+
+/**
+ * Evaluates Connect completeness from deployables + inbound bindings alone.
+ * A deployable of kind `embedded-library` never requires an entry point
+ * (§5.1: "unless Design explicitly classifies it as an embedded library").
+ * Every other deployable requires at least one binding whose `approved` is
+ * true; unapproved/draft bindings do not yet satisfy the requirement.
+ */
+export function evaluateConnectEntryPoints(
+  deployables: DeployableEntryPointInput[],
+  bindings: InboundBindingEntryPointInput[],
+): ConnectEntryPointModel {
+  const byDeployable = new Map<string, InboundBindingEntryPointInput[]>()
+  for (const binding of bindings) {
+    const list = byDeployable.get(binding.deployableId) ?? []
+    list.push(binding)
+    byDeployable.set(binding.deployableId, list)
+  }
+
+  const statuses: DeployableConnectStatus[] = deployables.map((deployable) => {
+    const requiresEntryPoint = deployable.kind !== 'embedded-library'
+    const forThisDeployable = byDeployable.get(deployable.deployableId) ?? []
+    const validBindings = forThisDeployable.filter((b) => b.approved)
+    const exposureElevated = forThisDeployable.some(
+      (b) => (b.exposure ?? DEFAULT_INBOUND_EXPOSURE) !== DEFAULT_INBOUND_EXPOSURE,
+    )
+    const hasValidEntryPoint = validBindings.length > 0
+    return {
+      deployableId: deployable.deployableId,
+      requiresEntryPoint,
+      bindingCount: forThisDeployable.length,
+      validBindingCount: validBindings.length,
+      hasValidEntryPoint,
+      exposureElevated,
+      satisfied: !requiresEntryPoint || hasValidEntryPoint,
+    }
+  })
+
+  const required = statuses.filter((s) => s.requiresEntryPoint)
+  return {
+    deployables: statuses,
+    requiredDeployableIds: required.map((s) => s.deployableId),
+    allRequiredSatisfied: required.every((s) => s.satisfied),
+    anyExposureElevated: statuses.some((s) => s.exposureElevated),
+  }
 }
 
 export type FakeFilesystemAdapter = {
