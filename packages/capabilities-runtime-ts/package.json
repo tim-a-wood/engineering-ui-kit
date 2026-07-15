@@ -1,0 +1,33 @@
+{
+  "name": "@engineering-ui-kit/capabilities-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework-neutral runtime core for Engineering UI Kit Capabilities: operation/outcome model, dispatcher, validation, lifecycle container, cancellation/timeouts, configuration and secret-reference protocols, and an in-memory test harness. Host adapters (Node/browser/React/Electron) are delivered in a later package increment.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}
