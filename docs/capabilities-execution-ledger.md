@@ -37,7 +37,7 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP2 | Reference profile, repo discovery, deterministic planning | WP1 | cap-sonnet-implementer (delegated ✓) | `packages/core/src/capabilities/generation/` | `def7616` | core 180/180 (19 new); CAP-TEST-048..053; all workspaces typecheck clean | **gate-green** |
 | WP3A | TypeScript runtime: core + Node/browser hosts | WP1 | cap-sonnet-implementer (coord + symlinked worktree) | `packages/capabilities-runtime-ts/` | `4528258` (merged) | runtime-ts **63/63**, typecheck clean; standalone; node-free `.`/`./browser`; real node:http/CLI/cron tests | **gate-green (React/Electron adapters deferred → coord-checkout packet)** |
 | WP3B | TS generators + executable slices | WP2, WP3A | TS runtime (Sonnet) | TS generators + examples | — | CAP-TEST-054..061 | todo |
-| WP4A | Python runtime core (`core`+`telemetry`+`testing`) | WP1 | cap-sonnet-implementer (worktree) | `runtimes/python/` | `ee1fe1f` (merged) | 34 pytest at integrated tree; Outcome/Operation/Context frozen for parity; conftest fixes `.pth`/UF_HIDDEN | **gate-green (core; hosts=WP4B)** |
+| WP4A | Python runtime: core + FastAPI/CLI/worker hosts + adapters | WP1 | cap-sonnet-implementer (worktrees) | `runtimes/python/` | `338ac7f` (merged) | **127 pytest** at integrated tree; outcome→HTTP/CLI mapping frozen for parity; conftest fixes `.pth`/UF_HIDDEN | **gate-green** (Python runtime complete) |
 | WP4B | Python generators + executable slices | WP2, WP4A | Py runtime (Sonnet) | Py generators + examples | — | CAP-TEST-062..069 | todo |
 | WP5A | Foundation planning UI | WP1, WP2 | foundation workbench (Sonnet) | Design/Build UI | — | CAP-TEST-070..075 | todo |
 | WP5B | Foundation runtime integration | WP3B, WP4B, WP5A | foundation workbench (Sonnet) | bridge/IPC | — | (part of WP5 gate) | todo |
@@ -45,7 +45,7 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP6B | Connect editors | WP2, WP6A | connect (Sonnet) | Connect UI/editors | — | (part of WP6 gate) | todo |
 | WP7 | Real generation + transactional apply | WP3B, WP4B, WP5B, WP6B | integration/apply (Sonnet + Opus review) | inbound generators, overlay | — | CAP-TEST-084..093 | todo |
 | WP8 | Real connection evidence + verification | WP7 | evidence/verification (Sonnet) | launchers, evidence, freshness | — | CAP-TEST-094..101 | todo |
-| WP9A | Migration preparation | WP1, WP2 | migration/adoption (Sonnet) | migration, fixtures | — | (part of WP9 gate) | todo |
+| WP9A | Migration prep: existing-repo planner + 3 fixtures + legacy diagnostic | WP1, WP2 | cap-sonnet-implementer (symlinked worktree) | `generation/existingRepoMigration.ts`, `fixtures/existing-repos/` | `79d2fa3` (merged) | pure planner (additive, node-free); react-ts/python/react-python fixtures; CAP-TEST-102; core 199/199 | **gate-green** (apply=WP9B) |
 | WP9B | Adoption finalization | WP7, WP8, WP9A | migration/adoption (Sonnet + Opus review) | conformance | — | CAP-TEST-102..108 | todo |
 | WP10 | Platform matrix + docs + Experimental-exit evidence | WP9B | matrix/docs (Sonnet) + coordinator sign-off | docs, CI, evidence index | — | full matrix (§18) | todo |
 
@@ -88,25 +88,34 @@ NO sudo, fully reversible (delete the dir):
   worktree (gitignored). Node worktrees remain unusable without a full `npm install` (workspace
   symlinks), so node lanes run in the coordinator checkout; Python/isolated lanes run in worktrees.
 
-## Parallel-execution note
+## Parallel-execution model (proven)
 
-Env ceiling: 1 node-lane agent in the coordinator checkout at a time (npm workspace resolution) +
-N isolated (Python) agents in worktrees. Currently: WP3A (coordinator) ‖ WP4A (worktree). WP6A and
-WP9A are node lanes → queued behind WP3A in the coordinator checkout.
+- **Standalone / core lanes with NO new npm deps** → git worktree + `ln -s <main>/node_modules <wt>/node_modules`; agent MUST NOT run `npm install` (symlink is shared). Verified for `capabilities-runtime-ts` and `packages/core` lanes. Keeps the coordinator checkout free for integration.
+- **Python lanes** → git worktree + per-worktree venv from `~/.local/uikit-python/python/bin/python3.11`, `pip install --use-feature=truststore`. Disjoint from node.
+- **Lanes needing NEW npm deps** (example apps under `examples/`, some gui work) → coordinator checkout, ONE at a time (npm workspace resolution + lockfile).
+- **`generation/index.ts` is a shared barrel** — run core/`generation` lanes one at a time, or have agents report new exports for the coordinator to wire (avoids merge conflicts).
+- Coordinator merges each lane branch with `--no-ff`, verifies at the integrated tree, updates this ledger. `react`/`react-dom`/`@types/react`/`electron` are already in `node_modules` (React/Electron lanes need no install).
 
-## RESUME HERE — next session (Wave 2)
+## RESUME HERE — next session (second half)
 
-**Wave 1 is COMPLETE** (WP0, WP1a, WP1b) at HEAD `14f9f7f` on `claude/cap-era-integration`.
-The contract surface is FROZEN at `14f9f7f` (content hash `1cb8df5e…b2b5c2`) — do NOT change
-parity.ts `CONTRACT_REQUIRED_FIELDS`, types.ts contract types, or the schemas; every downstream
-lane depends on them. If a defect is found, follow the §17.6 change-request protocol, don't patch ad hoc.
+**Waves 1–2 COMPLETE** at HEAD `79d2fa3` on `claude/cap-era-integration` (LOCAL branch, not pushed).
+Contract surface FROZEN at `14f9f7f` (hash `1cb8df5e…`) — do NOT change parity.ts `CONTRACT_REQUIRED_FIELDS`,
+types.ts contract types, or schemas; §17.6 change-request protocol for any defect.
 
-Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `14f9f7f`, then release
-**Wave 2** per handoff §17.5 — up to 4 concurrent `cap-sonnet-implementer` agents (now 90 steps each):
-- **WP2** deterministic planning + repo discovery → `packages/core/src/capabilities/generation/` (gate CAP-TEST-048..053)
-- **WP3A** TypeScript runtime core → `packages/capabilities-runtime-ts/`
-- **WP4A** Python runtime core → `runtimes/python/` (consumes the same frozen fixtures as WP3A; behavior must match)
-- **WP6A** inbound binding + journey state (uses the frozen InboundBinding)
+**Done + integrated:** WP0, WP1a/b (contracts+schema2.0), WP2 (generation/planning), WP3A (TS runtime
+core+Node/browser hosts, 63 tests), WP4A (Python runtime core+FastAPI/CLI/worker hosts, 127 pytest),
+WP6A (journey/entry-point model), WP9A (existing-repo migration prep). See the table above for commits.
+
+Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `79d2fa3`, read the
+"Parallel-execution model" + "Python environment" notes above, then release the remaining lanes
+(≤4 concurrent `cap-sonnet-implementer`, 90 steps each; route each per the model):
+- **WP3A-react-electron** → `capabilities-runtime-ts` `./react` + Electron IPC (symlinked worktree; react/electron already in node_modules; NO install). Finishes the TS runtime.
+- **WP3B** → TS generators (`generation/typescript.ts`,`contracts.ts`,`composition.ts`,`inbound.ts` — core/generation worktree, one gen-lane at a time) + TS vertical slices (`examples/` runnable apps — coordinator checkout, npm install). Gate CAP-TEST-054..061.
+- **WP4B** → Python generators (`generation/python.ts`; Pydantic models + op protocols from schemas) + Python slices + React↔Python via generated OpenAPI + cross-language parity fixtures. Gate CAP-TEST-062..069.
+- **WP5A/WP5B** → Design/Build foundation UI (gui) + bridge/IPC plan/apply/rollback. Gate CAP-TEST-070..075.
+- **WP6B** → Connect editors over InboundBinding (gui); needs new bridge methods `capabilitiesListDeployables`/`capabilitiesListInboundBindings` (WP6A flagged). Gate CAP-TEST-076..083 (rest).
+- **WP7** → real inbound-source generation + transactional staging/apply/rollback (delicate). **WP8** → real connection evidence + verification. **WP9B** → adoption finalization (needs WP7+WP8). **WP10** → platform matrix + docs.
+Cross-language parity (TS vs Python) is checked after WP3B+WP4B integrate.
 
 After WP2 integrates, release WP9A. Integrate narrow commits centrally; run affected tests per §17.9;
 run the full gate at wave end. Size each packet to fit one agent context and commit at checkpoints.
@@ -167,3 +176,5 @@ canary never survives redaction).
 - **Wave 2 core packets COMPLETE** (WP2/WP3A-core/WP4A/WP6A). WP3A-hosts-node (Node/browser adapters) in a symlinked worktree; then release Wave 3 (WP3B/WP4B/WP5A/WP6B) + WP9A.
 - WP3A-hosts merged `4528258` (runtime-ts 63/63) — **TS runtime complete** (React/Electron adapters deferred, need deps). WP4A-hosts (Python FastAPI/CLI/worker) running in `cap-era-wt-wp4ah`.
 - Proven parallelism model: symlinked-node_modules worktree works for no-new-deps standalone/core lanes (keeps coordinator checkout free for integration); Python lanes use their own worktree+venv; lanes needing new npm deps (example apps, gui) use the coordinator checkout one at a time.
+- WP4A-hosts merged `338ac7f` — **Python runtime complete** (127 pytest: core+http+cli+worker+adapters). WP9A merged `79d2fa3` — existing-repo migration prep (CAP-TEST-102, core 199/199). Cleaned up 4 merged worktrees/branches.
+- **BOTH RUNTIMES COMPLETE.** integration HEAD `79d2fa3`. Remaining: WP3A React/Electron adapters; WP3B/WP4B (generators + slices); WP5 (Design/Build foundation UI + bridge); WP6B (Connect editors); WP7 (real generation + transactional apply); WP8 (real evidence/verify); WP9B (adoption finalization); WP10 (matrix + docs). react 19 / electron 43 / @types/react present in node_modules (React/Electron lanes need no new install).
