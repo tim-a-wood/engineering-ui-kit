@@ -10,10 +10,12 @@ import type {
   AppliedFiles,
   ArchitectureSpecification,
   AttentionItem,
+  DeployableKind,
   EvidenceCapture,
   FreshnessRecord,
   FrontendBinding,
   HandoffRun,
+  InboundBinding,
   ModuleManifest,
   ModuleInterviewResponse,
   OverlayInspectionSummary,
@@ -29,7 +31,8 @@ import {
   evaluateBindingApprovalGate,
   runModuleVerification,
 } from '@engineering-ui-kit/core/browser'
-import type { BuildPacketResult, EuikBridge, PrepareContextResult, RunEvidence, TaskPacketFields } from './bridge'
+import type { BuildPacketResult, CapabilityDeployableSummary, CapabilityInboundBindingRecord, EuikBridge, PrepareContextResult, RunEvidence, TaskPacketFields } from './bridge'
+import { validateInboundBindingDraft } from './views/capabilities/inbound/inboundBinding'
 
 type CapProjectState = {
   initializedAt: string
@@ -44,6 +47,10 @@ type CapProjectState = {
   bindingDrafts: Map<string, FrontendBinding>
   bindingApproved: Map<string, FrontendBinding>
   freshness: Map<string, FreshnessRecord>
+  /** CAP-ERA-001 §5.1/§12.4 — deployables this mock synthesizes for Connect (WP5B/WP7 own real generation-time deployables). */
+  deployables: Map<string, CapabilityDeployableSummary>
+  inboundBindingDrafts: Map<string, InboundBinding>
+  inboundBindingApproved: Map<string, InboundBinding>
 }
 
 /* 4x3 placeholder PNGs (blue-ish before, teal-ish after) for evidence mocks. */
@@ -89,10 +96,34 @@ export function installMockBridge(): EuikBridge {
         bindingDrafts: new Map(),
         bindingApproved: new Map(),
         freshness: new Map(),
+        deployables: new Map(),
+        inboundBindingDrafts: new Map(),
+        inboundBindingApproved: new Map(),
       }
       capByProject.set(projectId, state)
     }
     return state
+  }
+
+  /**
+   * Synthesizes this project's deployables (CAP-ERA-001 §5.1) on first access.
+   * The mock has no persisted `DeployableSpecification` generation pipeline
+   * (that is WP5B/WP7 real-IPC scope) — it derives a defensible minimal set:
+   * a `browser` UI deployable when the project has a configured application UI
+   * or an approved `experience`-type module, plus always one headless deployable
+   * so every project has at least one entry point that requires connecting.
+   */
+  function ensureDeployables(projectId: string): Map<string, CapabilityDeployableSummary> {
+    const state = ensureCap(projectId)
+    if (state.deployables.size > 0) return state.deployables
+    const project = projects.get(projectId)
+    const hasExperienceModule = [...state.moduleApproved.values()].some((m) => m.moduleType === 'experience')
+    const hasUi = Boolean(project?.launchUrl) || hasExperienceModule
+    if (hasUi) {
+      state.deployables.set('deployable.ui', { deployableId: 'deployable.ui', kind: 'browser' as DeployableKind, name: 'Application UI' })
+    }
+    state.deployables.set('deployable.main', { deployableId: 'deployable.main', kind: 'http-api' as DeployableKind, name: 'Application' })
+    return state.deployables
   }
 
   function listNeedsAttentionFor(projectId: string): AttentionItem[] {
@@ -641,6 +672,39 @@ export function installMockBridge(): EuikBridge {
       const state = ensureCap(projectId)
       state.bindingApproved.set(binding.bindingId, binding)
       state.bindingDrafts.delete(binding.bindingId)
+      return { ok: true, approved: binding }
+    },
+    async capabilitiesListDeployables(projectId) {
+      return [...ensureDeployables(projectId).values()].sort((a, b) => a.deployableId.localeCompare(b.deployableId))
+    },
+    async capabilitiesListInboundBindings(projectId) {
+      const state = ensureCap(projectId)
+      const bindingIds = [...new Set([
+        ...state.inboundBindingDrafts.keys(),
+        ...state.inboundBindingApproved.keys(),
+      ])].sort((a, b) => a.localeCompare(b))
+      return bindingIds.map((bindingId) => ({
+        bindingId,
+        draft: state.inboundBindingDrafts.get(bindingId),
+        approved: state.inboundBindingApproved.get(bindingId),
+      }))
+    },
+    async capabilitiesSaveInboundBindingDraft(projectId, draft) {
+      // Missing/omitted exposure is always treated as private (§5.1) — never silently escalated.
+      const binding: InboundBinding = { ...draft, exposure: draft.exposure ?? 'private' }
+      ensureCap(projectId).inboundBindingDrafts.set(binding.bindingId, binding)
+      return { ok: true as const }
+    },
+    async capabilitiesApproveInboundBinding(projectId, draft) {
+      const binding: InboundBinding = { ...draft, exposure: draft.exposure ?? 'private', approvalState: 'approved' }
+      const issues = validateInboundBindingDraft(binding)
+      if (issues.length > 0) {
+        return { ok: false, diagnostics: issues.map((message) => ({ code: 'CAP-BIND-INBOUND-001', message })) }
+      }
+      const state = ensureCap(projectId)
+      // Multiple bindings may target the same operation — none are deduplicated (§12.4).
+      state.inboundBindingApproved.set(binding.bindingId, binding)
+      state.inboundBindingDrafts.delete(binding.bindingId)
       return { ok: true, approved: binding }
     },
     async capabilitiesListNeedsAttention(projectId) {

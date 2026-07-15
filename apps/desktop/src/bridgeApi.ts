@@ -11,9 +11,11 @@ import type {
   AttentionItem,
   CapabilityModuleRecord,
   CapabilityBindingRecord,
+  DeployableKind,
   ElementLoss,
   EvidenceCapture,
   HandoffRun,
+  InboundBinding,
   OverlayInspectionSummary,
   Project,
   RepoInventory,
@@ -25,6 +27,25 @@ import type {
   Settings,
   VerificationResult,
 } from '@engineering-ui-kit/core'
+
+/**
+ * Read-model summary for a CAP-CONTRACT-024 deployable (CAP-ERA-001 §5.1/§12.4).
+ * Mirrors `apps/gui/src/bridge.ts`. The real desktop-side persistence/IPC for
+ * deployables and inbound bindings is WP5B/WP7 scope (see the WP6B handoff);
+ * this type mirror lets the renderer stay Electron-import-free.
+ */
+export type CapabilityDeployableSummary = {
+  deployableId: string
+  kind: DeployableKind
+  name: string
+}
+
+/** Persisted CAP-CONTRACT-028 inbound-binding read model (mirrors CapabilityBindingRecord's shape). */
+export type CapabilityInboundBindingRecord = {
+  bindingId: string
+  draft?: InboundBinding
+  approved?: InboundBinding
+}
 
 export type TaskPacketFields = {
   taskTitle: string
@@ -222,6 +243,15 @@ export type EuikBridge = {
   }): Promise<unknown>
   capabilitiesSaveBindingDraft(projectId: string, draft: unknown): Promise<{ ok: true }>
   capabilitiesApproveBinding(projectId: string, draft: unknown): Promise<{ ok: boolean; diagnostics?: unknown; approved?: unknown }>
+  /** CAP-ERA-001 §5.1/§12.4 — deployables this project's architecture allocates. Not yet backed by real IPC (WP5B/WP7). */
+  capabilitiesListDeployables(projectId: string): Promise<CapabilityDeployableSummary[]>
+  /** CAP-CONTRACT-028 inbound bindings across every deployable/kind. Not yet backed by real IPC (WP5B/WP7). */
+  capabilitiesListInboundBindings(projectId: string): Promise<CapabilityInboundBindingRecord[]>
+  capabilitiesSaveInboundBindingDraft(projectId: string, draft: InboundBinding): Promise<{ ok: true }>
+  capabilitiesApproveInboundBinding(
+    projectId: string,
+    draft: InboundBinding,
+  ): Promise<{ ok: boolean; diagnostics?: unknown; approved?: InboundBinding }>
   capabilitiesListNeedsAttention(projectId: string): Promise<AttentionItem[]>
   capabilitiesCalculateImpact(input: {
     projectId: string
@@ -316,6 +346,10 @@ export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
   capabilitiesInvokeOperation: 'capabilities:invoke-operation',
   capabilitiesSaveBindingDraft: 'capabilities:save-binding-draft',
   capabilitiesApproveBinding: 'capabilities:approve-binding',
+  capabilitiesListDeployables: 'capabilities:list-deployables',
+  capabilitiesListInboundBindings: 'capabilities:list-inbound-bindings',
+  capabilitiesSaveInboundBindingDraft: 'capabilities:save-inbound-binding-draft',
+  capabilitiesApproveInboundBinding: 'capabilities:approve-inbound-binding',
   capabilitiesListNeedsAttention: 'capabilities:list-needs-attention',
   capabilitiesCalculateImpact: 'capabilities:calculate-impact',
   capabilitiesApproveImpact: 'capabilities:approve-impact',
