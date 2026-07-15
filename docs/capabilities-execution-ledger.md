@@ -20,6 +20,8 @@ Coordinator maintains this file. One row per work packet.
 | Pre-initiative HEAD | `a805045` |
 | WP0 baseline commit (richer-handoff work + scaffolding) | `e80ddce` (on `main`, pushed) |
 | Initiative integration branch | `claude/cap-era-integration` (from `e80ddce`) |
+| **WP1 contract freeze** | commit `14f9f7f`; 31 schemas; content hash `1cb8df5e084851946121b5a6b1f0032aeededdb69361d0d205abc99dedb2b5c2` |
+| Current HEAD (Wave 1 complete) | `14f9f7f` |
 | Node / TS | Node 22 LTS, TypeScript 5.8 |
 | Test runner | vitest |
 
@@ -31,7 +33,7 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 |---|---|---|---|---|---|---|---|
 | WP0 | Preserve & baseline | — | coordinator | (read-only + this ledger) | `e80ddce` | core 151/151, gui 157/157, all typecheck clean | **gate-green** |
 | WP1a | Canonical contract catalogue (CAP-CONTRACT-023..031 types/schemas/fixtures/parity + InboundBinding + canonicalRecordHash) | WP0 | coordinator-direct (see note) | core `types.ts`/`parity.ts`/`validation.ts`/`hash.ts`/`implementationBrief.ts`, `standards/schemas/capabilities/*`, fixtures, `cap-test-042/043` | `103c229` | core 155/155 + desktop/gui typecheck clean; CAP-TEST-001 covers all 31 | **gate-green** |
-| WP1b | Workspace schema 2.0 + migration (1.0 reader, future read-only, FrontendBinding→InboundBinding, interview→ModuleImplementationSpecification, rollback) | WP1a (`103c229`) | cap-sonnet-implementer (delegate post-restart) | core `persistence.ts`/`migration.ts`/`binding.ts`/`types.ts` + `cap-test-044..047` | — | CAP-TEST-044..047 | **NEXT — see Resume section** |
+| WP1b | Workspace schema 2.0 + migration (1.0 reader, future read-only, FrontendBinding→InboundBinding, interview→ModuleImplementationSpecification, rollback) | WP1a | coordinator-direct | core `persistence.ts`/`migration.ts`/`binding.ts`/`types.ts` + `cap-test-044..047` | `14f9f7f` | core 161/161; desktop/gui typecheck clean | **gate-green** |
 | WP2 | Reference profile, repo discovery, deterministic planning | WP1 | generator (Sonnet) | `packages/core/src/capabilities/generation/` | — | CAP-TEST-048..053 | todo |
 | WP3A | TypeScript runtime core | WP1 | TS runtime (Sonnet) | `packages/capabilities-runtime-ts/` | — | — | todo |
 | WP3B | TS generators + executable slices | WP2, WP3A | TS runtime (Sonnet) | TS generators + examples | — | CAP-TEST-054..061 | todo |
@@ -74,12 +76,24 @@ coordinator should delegate WP1b onward to `cap-sonnet-implementer` (and scouts/
 integrating and reviewing centrally. WP1a was completed coordinator-direct only because the fix
 had not yet loaded. The failed runs' one salvage — the field-name design in `parity.ts` — was kept.
 
-## RESUME HERE — next session (WP1b)
+## RESUME HERE — next session (Wave 2)
 
-Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD is the WP1b-notes
-commit, then delegate WP1b to `cap-sonnet-implementer` (now 90 steps) with a packet built from
-these notes. **Do not re-derive; do not change the frozen WP1a contract surface** (parity.ts
-`CONTRACT_REQUIRED_FIELDS` + types.ts) — other lanes depend on it. Contract freeze = `103c229`.
+**Wave 1 is COMPLETE** (WP0, WP1a, WP1b) at HEAD `14f9f7f` on `claude/cap-era-integration`.
+The contract surface is FROZEN at `14f9f7f` (content hash `1cb8df5e…b2b5c2`) — do NOT change
+parity.ts `CONTRACT_REQUIRED_FIELDS`, types.ts contract types, or the schemas; every downstream
+lane depends on them. If a defect is found, follow the §17.6 change-request protocol, don't patch ad hoc.
+
+Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `14f9f7f`, then release
+**Wave 2** per handoff §17.5 — up to 4 concurrent `cap-sonnet-implementer` agents (now 90 steps each):
+- **WP2** deterministic planning + repo discovery → `packages/core/src/capabilities/generation/` (gate CAP-TEST-048..053)
+- **WP3A** TypeScript runtime core → `packages/capabilities-runtime-ts/`
+- **WP4A** Python runtime core → `runtimes/python/` (consumes the same frozen fixtures as WP3A; behavior must match)
+- **WP6A** inbound binding + journey state (uses the frozen InboundBinding)
+
+After WP2 integrates, release WP9A. Integrate narrow commits centrally; run affected tests per §17.9;
+run the full gate at wave end. Size each packet to fit one agent context and commit at checkpoints.
+
+The WP1b notes below are RETAINED FOR REFERENCE ONLY (already implemented in `14f9f7f`).
 
 **WP1b goal:** workspace schema 2.0 + migration. Gate: CAP-TEST-044 (FrontendBinding→InboundBinding
 lossless), 045 (migration idempotent + reversible), 046 (future version read-only), 047 (secret
@@ -128,3 +142,5 @@ canary never survives redaction).
 
 - WP0: classified dirty diff, verified baseline (all green), created this ledger. Committed `e80ddce` (main), branched `claude/cap-era-integration`.
 - WP1a: nine canonical contracts frozen; `103c229`; core 155/155, all workspaces typecheck clean.
+- WP1b: workspace schema 2.0 + lossless migration/rollback; `14f9f7f`; core 161/161, all workspaces typecheck clean.
+- **Wave 1 COMPLETE** (WP0+WP1a+WP1b). WP1 gate green; contract freeze recorded. Wave 2 ready to release (needs session restart for parallel Sonnet delegation).
