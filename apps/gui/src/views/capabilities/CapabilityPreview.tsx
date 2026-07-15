@@ -13,7 +13,7 @@ type Props = {
 }
 
 type PreviewState =
-  | { status: 'idle' | 'starting' }
+  | { status: 'idle' | 'starting' | 'installing' }
   | { status: 'ready'; url: string }
   | { status: 'error'; message: string }
 
@@ -24,6 +24,7 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
     const webviewRef = useRef<HTMLWebViewElement | null>(null)
     const iframeRef = useRef<HTMLIFrameElement | null>(null)
     const isElectron = typeof window !== 'undefined' && window.euikMode === 'electron'
+    const setupRequired = state.status === 'error' && /project setup required|dependencies are not installed/i.test(state.message)
 
     const start = async () => {
       if (!projectId) return
@@ -31,6 +32,28 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
       try {
         const launched = await bridge.launchApp(projectId, { open: false })
         setState({ status: 'ready', url: launched.url })
+      } catch (cause) {
+        setState({
+          status: 'error',
+          message: cause instanceof Error ? cause.message : String(cause),
+        })
+      }
+    }
+
+    const installAndRetry = async () => {
+      if (!projectId) return
+      setState({ status: 'installing' })
+      try {
+        const run = await bridge.createRun(projectId)
+        const result = await bridge.installDependencies(run.id)
+        if (result.status !== 'passed') {
+          setState({
+            status: 'error',
+            message: `Dependency installation failed${result.exitCode === null ? '' : ` (exit ${result.exitCode})`}. Review the package-manager output, then retry setup.`,
+          })
+          return
+        }
+        await start()
       } catch (cause) {
         setState({
           status: 'error',
@@ -99,12 +122,28 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
               role={state.status === 'error' ? 'alert' : 'status'}
             >
               <div className="placeholder-preview-copy">
-                <strong>{state.status === 'starting' ? 'Starting target application…' : 'Preview unavailable'}</strong>
+                <strong>
+                  {state.status === 'starting'
+                    ? 'Starting target application…'
+                    : state.status === 'installing'
+                      ? 'Setting up this project…'
+                      : setupRequired
+                        ? 'Project setup required'
+                        : 'Preview unavailable'}
+                </strong>
                 {state.status === 'error' ? <p>{state.message}</p> : null}
-                {state.status !== 'starting' ? (
-                  <button type="button" className="btn btn-secondary btn-compact" onClick={() => void start()}>
-                    Start Preview
-                  </button>
+                {state.status === 'installing' ? <p>Installing dependencies with the project’s package manager. This can take a few minutes.</p> : null}
+                {state.status !== 'starting' && state.status !== 'installing' ? (
+                  <div className="cap-preview-recovery-actions" role="group" aria-label="Preview recovery actions">
+                    {setupRequired ? (
+                      <button type="button" className="btn btn-primary btn-compact" onClick={() => void installAndRetry()}>
+                        Install dependencies and retry
+                      </button>
+                    ) : null}
+                    <button type="button" className="btn btn-secondary btn-compact" onClick={() => void start()}>
+                      {setupRequired ? 'Retry Preview' : 'Start Preview'}
+                    </button>
+                  </div>
                 ) : null}
               </div>
             </div>

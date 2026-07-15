@@ -2369,6 +2369,7 @@ webview.app-preview-frame { display: flex; }
 .placeholder-preview-copy { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 20px 26px; text-align: center; background: color-mix(in srgb, var(--semantic-surface-panel-raised) 92%, transparent); border: 1px solid var(--semantic-border-strong); border-radius: 10px; box-shadow: var(--semantic-shadow-overlay); }
 .placeholder-preview-copy strong { font-size: 15px; }
 .placeholder-preview-copy p { margin: 0 0 4px; color: var(--semantic-text-muted); font-size: 12.5px; }
+.cap-preview-recovery-actions { display: flex; align-items: center; justify-content: center; gap: var(--semantic-spacing-2); flex-wrap: wrap; }
 
 /* Clickable workflow stepper (visited/artifact-reachable steps navigate). */
 .workflow-step-link {

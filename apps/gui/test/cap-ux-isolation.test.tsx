@@ -19,6 +19,7 @@ import { GuidedConnect } from '../src/views/capabilities/GuidedConnect'
 import { GuidedBuild } from '../src/views/capabilities/GuidedBuild'
 import { ArchitectureInterview } from '../src/views/capabilities/ArchitectureInterview'
 import { ArchitectureView } from '../src/views/capabilities/ArchitectureView'
+import { CapabilityPreview } from '../src/views/capabilities/CapabilityPreview'
 import { projectArchitecture } from '@engineering-ui-kit/core/browser'
 import { GuideOverlay } from '../src/guides'
 
@@ -429,6 +430,28 @@ describe('module isolation', () => {
     rerender(<GuidedBuild bridge={bridge} projectId="p1" archSpec={architecture as never} records={afterApproval} onChanged={() => {}} />)
     await waitFor(() => expect(screen.getByRole('button', { name: /Other, Not started/i }).getAttribute('aria-current')).toBe('true'))
     expect(screen.getByText('Create the module interview')).toBeTruthy()
+  })
+})
+
+describe('capability preview recovery', () => {
+  it('installs missing project dependencies and automatically retries the preview', async () => {
+    const launchApp = vi.fn()
+      .mockRejectedValueOnce(new Error('Project setup required: dependencies are not installed.'))
+      .mockResolvedValueOnce({ url: 'http://127.0.0.1:4180', started: true, rebuilt: false })
+    const createRun = vi.fn(async () => ({ id: 'run-setup', projectId: 'p1', currentStep: 'prepare-context', createdAt: 't', updatedAt: 't' }))
+    const installDependencies = vi.fn(async () => ({
+      runId: 'run-setup', commandLabel: 'install-dependencies', commandText: 'npm ci', workingDirectory: '/tmp/project',
+      startedAt: 't', endedAt: 't', exitCode: 0, status: 'passed' as const, wasCancelledByUser: false,
+    }))
+    const bridge = makeBridge({ launchApp: launchApp as never, createRun: createRun as never, installDependencies: installDependencies as never })
+
+    render(<CapabilityPreview bridge={bridge} projectId="p1" />)
+    expect(await screen.findByText('Project setup required')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Install dependencies and retry' }))
+
+    await waitFor(() => expect(installDependencies).toHaveBeenCalledWith('run-setup'))
+    await waitFor(() => expect(launchApp).toHaveBeenCalledTimes(2))
+    expect(await screen.findByTitle('Target application Preview')).toBeTruthy()
   })
 })
 
