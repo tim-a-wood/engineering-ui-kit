@@ -47,7 +47,8 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP5B | Foundation runtime integration | WP3B, WP4B, WP5A | foundation workbench (Sonnet) | bridge/IPC | — | (part of WP5 gate) | todo |
 | WP6A | Inbound binding + journey state | WP1 | cap-sonnet-implementer (coordinator checkout) | `journeys.ts`, `capabilitiesUiState.ts` | `a9492d4` | CAP-TEST-076/079/081; core 193/193, gui 162/162; private-default, multi-binding, no-UI-can't-skip | **gate-green** (GUI deployable/binding bridge wiring → WP6B) |
 | WP6B | Connect editors (trigger-first, per-host, private-default, multi-binding) | WP2, WP6A | cap-sonnet-implementer (coord checkout, 3 resumes) | `GuidedConnect.tsx` + `inbound/*` editors + bridge/mock | `61a3148` (+preload fix) | gui 165/165; CAP-TEST-076..083; desktop typecheck restored | **gate-green (real IPC/persistence → WP5B, see Open issues)** |
-| WP7 | Real generation + transactional apply | WP3B, WP4B, WP5B, WP6B | integration/apply (Sonnet + Opus review) | inbound generators, overlay | — | CAP-TEST-084..093 | todo |
+| WP7-apply | §11.3 transactional generation apply + rollback (`applyGenerationPlan`/`rollbackGenerationApply`) | WP2 | cap-sonnet-implementer + Opus review | `capabilities/generationApply.ts` (Node) | `7b70435` (merged) | core 284/284; **13 safety tests** (forced-failure-@-each-phase byte-identical restore; traversal/symlink/stale/modified refusal; rollback idempotent); reviewed | **gate-green** (CAP-TEST-085/086/089/092) |
+| WP7-rest | Generate composition root + inbound source INTO target, OpenAPI/client artifacts, React marker/source adoption, plan-assembly | WP7-apply, WP3B-gen, WP4B-gen, WP5B | — | generation + apply integration | — | CAP-TEST-084/087/088/090/091/093 | todo |
 | WP8 | Real connection evidence + verification | WP7 | evidence/verification (Sonnet) | launchers, evidence, freshness | — | CAP-TEST-094..101 | todo |
 | WP9A | Migration prep: existing-repo planner + 3 fixtures + legacy diagnostic | WP1, WP2 | cap-sonnet-implementer (symlinked worktree) | `generation/existingRepoMigration.ts`, `fixtures/existing-repos/` | `79d2fa3` (merged) | pure planner (additive, node-free); react-ts/python/react-python fixtures; CAP-TEST-102; core 199/199 | **gate-green** (apply=WP9B) |
 | WP9B | Adoption finalization | WP7, WP8, WP9A | migration/adoption (Sonnet + Opus review) | conformance | — | CAP-TEST-102..108 | todo |
@@ -129,7 +130,7 @@ types.ts contract types, or schemas; §17.6 change-request protocol for any defe
 WP6A (journey/entry-point model), WP9A (existing-repo migration prep), WP3B-gen + **WP4B-gen** (TS+Python
 code generators, core 266 tests), **WP6B** (trigger-first Connect editors over InboundBinding, gui 165 tests, mock-backed). See the table.
 
-Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `6023f59`, read the
+Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `7b70435`, read the
 "Open issues", "Parallel-execution model", and "Python environment" notes above, then release the remaining lanes
 (≤4 concurrent `cap-sonnet-implementer`, 90 steps each; route each per the model):
 - **✅ SCHED-ENUM reconciliation DONE** (`c4e8981`) — runtimes + generators emit contract enums 1:1.
