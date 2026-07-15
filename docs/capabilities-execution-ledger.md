@@ -38,7 +38,7 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP3A | TypeScript runtime: core + Node/browser hosts + React + Electron IPC | WP1 | cap-sonnet-implementer (worktrees) | `packages/capabilities-runtime-ts/` | `e12f7da` (merged) | runtime-ts **89/89**, typecheck clean; standalone; node-free `.`/`./browser`/`./react`/preload; real node:http/CLI/cron; Electron pure logic tested (real-Electron E2E → WP8) | **gate-green** (TS runtime complete) |
 | WP3B-gen | TS code generators (contracts/composition/inbound/typescript) | WP2, WP3A | cap-sonnet-implementer (symlinked worktree) | `generation/{contracts,composition,inbound,typescript}.ts` | `87cd124` (merged) | pure/deterministic; core 233/233; CAP-TEST-054/055/056 | **gate-green** |
 | WP3B-slices-headless | TS headless HTTP+CLI reference app — real E2E | WP3B-gen | cap-sonnet-implementer (symlinked worktree) | `examples/capabilities-ts-reference/` | `dad2e54` (merged) | **7/7 at integrated tree** (real node:http+fetch; real runCli argv→dispatch); run via `cd <pkg> && npx vitest run` | **gate-green** |
-| WP3B-slices-re | TS React web + Electron reference slices | WP3B-gen, WP3A-react | cap-sonnet-implementer (symlinked worktree) | `examples/capabilities-react-reference/` | — | CAP-TEST-059..061 | **in-progress** |
+| WP3B-slices-re | TS React web + Electron reference slices — real E2E | WP3B-gen, WP3A-react | cap-sonnet-implementer (symlinked worktree) | `examples/capabilities-react-reference/` | `4ebe6e3` (merged) | **8/8 at integrated tree** (React form→useOperation→dispatch→op; Electron renderer→main-handler→dispatch, correlation propagation); real-Electron-process E2E → WP8 | **gate-green** |
 | WP4A | Python runtime: core + FastAPI/CLI/worker hosts + adapters | WP1 | cap-sonnet-implementer (worktrees) | `runtimes/python/` | `338ac7f` (merged) | **127 pytest** at integrated tree; outcome→HTTP/CLI mapping frozen for parity; conftest fixes `.pth`/UF_HIDDEN | **gate-green** (Python runtime complete) |
 | WP4B-gen | Python code generators (Pydantic/protocols/inbound/OpenAPI) | WP2, WP4A | cap-sonnet-implementer (symlinked worktree) | `generation/python.ts`,`python-emit.ts` | `619cdbb` (merged) | pure/deterministic; core 266/266; CAP-TEST-062/063/064; verified vs real WP4A runtime | **gate-green** |
 | WP4B-slices-py | Python runnable HTTP/CLI/schedule slices — real E2E | WP4B-gen | cap-sonnet-implementer (Python worktree) | `examples/capabilities-python-reference/` | `1cc204f` (merged) | **15 pytest at integrated tree** (TestClient→dispatch→op; CronJob.poll under injected clock; real traversal) | **gate-green** |
@@ -119,7 +119,8 @@ WP6B added 4 bridge methods (`capabilitiesListDeployables`/`ListInboundBindings`
 
 ## RESUME HERE — next session (second half)
 
-**Waves 1–2 + both-language generators + Connect editors COMPLETE** at HEAD `619cdbb` on `claude/cap-era-integration` (pushed to origin through `9c4b655`; push again).
+**Runtimes + generators + editors + both-language E2E slices COMPLETE** at HEAD `4ebe6e3` on `claude/cap-era-integration` (pushed).
+Both runtimes fully E2E-proven at the integrated tree: Python 15 (HTTP/CLI/schedule), TS 15 (headless HTTP/CLI + React web + Electron IPC).
 Contract surface FROZEN at `14f9f7f` (hash `1cb8df5e…`) — do NOT change parity.ts `CONTRACT_REQUIRED_FIELDS`,
 types.ts contract types, or schemas; §17.6 change-request protocol for any defect.
 
@@ -128,7 +129,7 @@ types.ts contract types, or schemas; §17.6 change-request protocol for any defe
 WP6A (journey/entry-point model), WP9A (existing-repo migration prep), WP3B-gen + **WP4B-gen** (TS+Python
 code generators, core 266 tests), **WP6B** (trigger-first Connect editors over InboundBinding, gui 165 tests, mock-backed). See the table.
 
-Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `619cdbb`, read the
+Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `4ebe6e3`, read the
 "Open issues", "Parallel-execution model", and "Python environment" notes above, then release the remaining lanes
 (≤4 concurrent `cap-sonnet-implementer`, 90 steps each; route each per the model):
 - **⚠ FIRST — SCHED-ENUM reconciliation** (see Open issues) before any schedule-adapter slice compiles.
