@@ -111,7 +111,7 @@ WP3B-gen `inbound.ts` maps contract→runtime lossily (queue/allow-concurrent→
 catch-up in the TS `node` scheduler AND the Python `worker`; use the contract's names), then drop inbound.ts's
 lossy mapping. Cross-language (parity) — a focused reconciliation packet. Do NOT change the frozen contract enums.
 
-**CONNECT-BACKING — WP5B/WP7 must make WP6B's Connect real (it's mock-backed now):**
+**CONNECT-BACKING — ✅ RESOLVED by WP5B (`6023f59`)** — real `DeployableSpecification`+`InboundBinding` persistence in `CapabilityWorkspace` (schema-2.0-aware, private-default, multi-binding) + the 4 desktop IPC handlers (`listDeployables` proposes via `proposeDeployables` when empty). Residual: no shared *core* `InboundBinding` validator yet (desktop approve gate is a minimal inline check; gui has a per-kind presentation validator) — add one if WP7/WP8 needs stricter server-side gating. Original issue for reference:
 WP6B added 4 bridge methods (`capabilitiesListDeployables`/`ListInboundBindings`/`SaveInboundBindingDraft`/`ApproveInboundBinding`) wired through `bridge.ts`+`bridgeApi.ts`+`preload.cts` (parity restored) but backed only by `mockBridge.ts`. WP5B/WP7 must add: (a) real `DeployableSpecification` (CAP-CONTRACT-024) + `InboundBinding` (CAP-CONTRACT-028) persistence in `CapabilityWorkspace` (`persistence.ts`, mirror `listModules`/`saveBindingDraft`/`approveBinding`); (b) the 4 `ipcMain.handle(...)` handlers in `apps/desktop/src/capabilities/ipc.ts`; (c) replace the mock's deployable-synthesis heuristic with the real Design-stage `proposeDeployables` (`generation/deployables.ts`). Until then the desktop Connect path is declared-but-unhandled (gui mock tests pass; real desktop run would 404 those channels).
 
 **RUNTIME-DIST — before WP7 ships real generated TS apps / WP10 build matrix:**
@@ -129,7 +129,7 @@ types.ts contract types, or schemas; §17.6 change-request protocol for any defe
 WP6A (journey/entry-point model), WP9A (existing-repo migration prep), WP3B-gen + **WP4B-gen** (TS+Python
 code generators, core 266 tests), **WP6B** (trigger-first Connect editors over InboundBinding, gui 165 tests, mock-backed). See the table.
 
-Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `c4e8981`, read the
+Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `6023f59`, read the
 "Open issues", "Parallel-execution model", and "Python environment" notes above, then release the remaining lanes
 (≤4 concurrent `cap-sonnet-implementer`, 90 steps each; route each per the model):
 - **✅ SCHED-ENUM reconciliation DONE** (`c4e8981`) — runtimes + generators emit contract enums 1:1.
