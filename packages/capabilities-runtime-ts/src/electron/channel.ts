@@ -40,7 +40,11 @@ export interface CapabilitiesIpcBridge {
 const ipcOperationRequestSchema = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
-  required: ['operationCode', 'input', 'correlationId'],
+  // `input` is deliberately NOT required: an operation that takes no input
+  // (§10.1, mirrored by the Node HTTP host's `void`-input routes) sends
+  // `input: undefined`, and AJV's compiled `required` check treats an
+  // explicit `undefined` value the same as an absent key.
+  required: ['operationCode', 'correlationId'],
   properties: {
     operationCode: { type: 'string', minLength: 1 },
     input: {},
