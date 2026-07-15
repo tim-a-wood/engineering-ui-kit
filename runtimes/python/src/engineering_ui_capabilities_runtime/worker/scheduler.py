@@ -21,26 +21,39 @@ from .cron import CronSchedule
 
 class OverlapPolicy(str, Enum):
     """What to do if a scheduled run becomes due while the previous run of
-    the *same* job is still executing.
+    the *same* job is still executing (CAP-CONTRACT-028 `overlapPolicy`;
+    values are the contract's exact strings so generated schedule adapters
+    map 1:1).
     """
 
     #: Drop this occurrence; wait for the next scheduled time.
     SKIP = "skip"
+    #: Serialize: never run concurrently with the still-executing previous
+    #: run — instead enqueue this occurrence and run it as soon as the
+    #: active run finishes (see `CronJob._queue`).
+    QUEUE = "queue"
     #: Run anyway, concurrently with the still-executing previous run.
-    ALLOW = "allow"
+    ALLOW_CONCURRENT = "allow-concurrent"
 
 
 class MisfirePolicy(str, Enum):
     """What to do if the scheduler was not polled promptly enough and one
-    or more scheduled occurrences were missed entirely.
+    or more scheduled occurrences were missed entirely (CAP-CONTRACT-028
+    `misfirePolicy`; values are the contract's exact strings).
     """
 
-    #: Run once now, for the most recently missed occurrence, then resume
-    #: the normal schedule from that point.
-    FIRE_NOW = "fire_now"
+    #: Run once, for the oldest missed occurrence, then resume the normal
+    #: schedule strictly after "now" — a single catch-up run no matter how
+    #: large the backlog, and the remaining missed occurrences are never
+    #: fired.
+    RUN_ONCE = "run-once"
     #: Drop every missed occurrence; jump straight to the next occurrence
     #: strictly after the current time.
     SKIP = "skip"
+    #: Fire each missed occurrence exactly once, in order, up to "now" —
+    #: each `poll()` call (even without the clock advancing) drains one
+    #: more of the backlog, until it is fully caught up.
+    RUN_ALL = "run-all"
 
 
 JobContextFactory = Callable[[str, datetime], Context]
@@ -81,7 +94,7 @@ class CronJob:
         make_input: JobInputFactory = lambda scheduled_for: {},
         context_factory: JobContextFactory = default_job_context_factory,
         overlap_policy: OverlapPolicy = OverlapPolicy.SKIP,
-        misfire_policy: MisfirePolicy = MisfirePolicy.FIRE_NOW,
+        misfire_policy: MisfirePolicy = MisfirePolicy.RUN_ONCE,
         container: Optional[Container] = None,
     ) -> None:
         self.name = name
@@ -95,6 +108,9 @@ class CronJob:
         self.container = container
         self._next_run_at: Optional[datetime] = None
         self._running = False
+        #: Occurrences deferred by `overlap_policy=QUEUE` while a previous
+        #: run of this job was still active, oldest first.
+        self._queue: List[datetime] = []
 
     def initialize(self, clock: WallClock) -> None:
         """Computes the first scheduled occurrence strictly after `now`.
@@ -112,16 +128,34 @@ class CronJob:
     def is_running(self) -> bool:
         return self._running
 
+    @property
+    def pending_queue_size(self) -> int:
+        """Number of occurrences currently deferred by
+        `overlap_policy=QUEUE`, waiting for the active run to finish.
+        """
+
+        return len(self._queue)
+
     def poll(self, clock: WallClock) -> Optional[ScheduledJobRun]:
         """Checks whether a scheduled occurrence is due at `clock.now()`.
         Returns `None` if nothing is due yet, otherwise a `ScheduledJobRun`
-        describing what happened (executed, or skipped per overlap/misfire
-        policy).
+        describing what happened (executed, or skipped/queued per
+        overlap/misfire policy).
         """
 
         if self._next_run_at is None:
             self.initialize(clock)
         assert self._next_run_at is not None
+
+        # Drain one occurrence queued by a previous `overlap_policy=QUEUE`
+        # deferral now that the previously-active run has finished — this
+        # is what makes `queue` serialize execution rather than dropping
+        # it: the run happens as soon as the active run is no longer
+        # running, ahead of whatever else is newly due.
+        if not self._running and self._queue:
+            scheduled_for = self._queue.pop(0)
+            outcome = self._execute(scheduled_for)
+            return ScheduledJobRun(job_name=self.name, scheduled_for=scheduled_for, outcome=outcome)
 
         now = clock.now()
         if now < self._next_run_at:
@@ -140,18 +174,38 @@ class CronJob:
                 skipped_reason="misfire",
             )
 
-        # FIRE_NOW: catch up once, for the oldest missed occurrence, then
-        # resume the schedule from that occurrence (not from `now`), so a
-        # long pause does not fire a burst of catch-up runs.
-        self._next_run_at = self.schedule.next_run_after(scheduled_for)
+        if self.misfire_policy is MisfirePolicy.RUN_ONCE:
+            # Single catch-up: fire only the oldest missed occurrence, then
+            # resume the schedule strictly after `now` — a long pause never
+            # fires more than one catch-up run, and the rest of the
+            # backlog is never fired.
+            self._next_run_at = self.schedule.next_run_after(now)
+        else:
+            assert self.misfire_policy is MisfirePolicy.RUN_ALL
+            # Fire each missed occurrence once, in order: advance only to
+            # the immediate next occurrence after the one just fired, so a
+            # subsequent `poll()` (even before the clock moves further)
+            # drains one more of the backlog, until fully caught up.
+            self._next_run_at = self.schedule.next_run_after(scheduled_for)
 
-        if self._running and self.overlap_policy is OverlapPolicy.SKIP:
-            return ScheduledJobRun(
-                job_name=self.name,
-                scheduled_for=scheduled_for,
-                outcome=None,
-                skipped_reason="overlap",
-            )
+        if self._running:
+            if self.overlap_policy is OverlapPolicy.SKIP:
+                return ScheduledJobRun(
+                    job_name=self.name,
+                    scheduled_for=scheduled_for,
+                    outcome=None,
+                    skipped_reason="overlap",
+                )
+            if self.overlap_policy is OverlapPolicy.QUEUE:
+                self._queue.append(scheduled_for)
+                return ScheduledJobRun(
+                    job_name=self.name,
+                    scheduled_for=scheduled_for,
+                    outcome=None,
+                    skipped_reason="queued",
+                )
+            assert self.overlap_policy is OverlapPolicy.ALLOW_CONCURRENT
+            # Falls through to execute anyway, concurrently.
 
         outcome = self._execute(scheduled_for)
         return ScheduledJobRun(job_name=self.name, scheduled_for=scheduled_for, outcome=outcome)
