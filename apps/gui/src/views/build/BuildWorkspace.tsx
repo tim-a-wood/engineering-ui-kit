@@ -157,12 +157,12 @@ export function BuildWorkspace(props: BuildWorkspaceProps) {
           )}
           <div className="build-primary-inputs">
             <div className="field">
-              <label htmlFor={`${baseId}-requirements`}>Your requirements</label>
+              <label htmlFor={`${baseId}-requirements`}>{props.templateId === 'new-ui-from-requirements' ? 'Requirement spec' : 'Your requirements'}</label>
               <textarea
                 id={`${baseId}-requirements`}
-                rows={7}
+                rows={props.templateId === 'new-ui-from-requirements' ? 15 : 7}
                 value={props.fields.goal}
-                placeholder="Add the project-specific details outlined above."
+                placeholder={props.templateId === 'new-ui-from-requirements' ? 'Paste or generate the complete requirement spec for this UI.' : 'Add the project-specific details outlined above.'}
                 onChange={(event) => props.setFields((fields) => ({ ...fields, goal: event.target.value }))}
               />
             </div>

@@ -171,11 +171,13 @@ export default function App() {
 
   const startUiModuleBuild = useCallback(async (projectId: string, fields: TaskPacketFields) => {
     const run = await bridge.createRun(projectId)
-    await bridge.updateRun(run.id, { taskTitle: fields.taskTitle, taskPacketFields: fields })
-    await bridge.prepareContext(run.id)
-    const generated = await bridge.buildPacket(run.id, fields)
-    setActiveRun((await bridge.getRun(run.id)) ?? run)
-    setPacket(generated)
+    const prepared = await bridge.updateRun(run.id, {
+      taskTitle: fields.taskTitle,
+      taskTemplateId: 'new-ui-from-requirements',
+      taskPacketFields: fields,
+    })
+    setActiveRun(prepared)
+    setPacket(null)
     setRecipe(null)
     setBuildWorkspace('handoff')
     setView('build')

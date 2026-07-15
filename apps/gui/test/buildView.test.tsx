@@ -97,6 +97,22 @@ describe('BuildWorkspace unified flow', () => {
     expect(html).toContain('Result zip')
     expect(html).not.toContain('Work in Copilot')
   })
+
+  it('presents a generated requirement document as the From spec input', () => {
+    const fields = {
+      ...baseProps().fields,
+      taskTitle: 'Build UI from approved capability spec: Flight Planner UI',
+      goal: '# Approved UI requirement spec — Flight Planner UI\n\n## Product outcome\nBuild the approved experience.',
+      scope: 'UI module scope',
+      constraints: 'Approved boundaries',
+      acceptanceCriteria: 'All requirements are implemented',
+    }
+    const html = renderToStaticMarkup(<BuildWorkspace {...baseProps({ templateId: 'new-ui-from-requirements', fields })} />)
+    expect(html).toContain('aria-checked="true"')
+    expect(html).toContain('Requirement spec')
+    expect(html).toContain('Approved UI requirement spec — Flight Planner UI')
+    expect(html).toContain('rows="15"')
+  })
 })
 
 describe('ProjectContextPanel disclosures', () => {

@@ -60,6 +60,8 @@ export type HandoffRun = {
   projectId: string
   taskId?: string
   taskTitle?: string
+  /** Selected Build & Test authoring mode, persisted so launched/resumed work opens consistently. */
+  taskTemplateId?: string
   /** The packet section text as last exported — prefills packet regeneration. */
   taskPacketFields?: {
     taskTitle: string

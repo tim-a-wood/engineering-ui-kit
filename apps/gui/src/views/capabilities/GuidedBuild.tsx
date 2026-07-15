@@ -1,9 +1,8 @@
 /**
- * Guided Build — two-region workspace.
- *   Left:  allocated modules with per-module state, "x of y approved" progress,
- *          and first-incomplete default selection.
- *   Right: the selected module and ONLY its next relevant lifecycle action
- *          (delegated to ModulesView in controlled + progressive mode).
+ * Guided Build — module picker above a focused two-column workspace.
+ * The selected module/action stays on the left and its interview outcome stays
+ * visible on the right. This avoids spending the full page height on a narrow
+ * module rail while retaining the first-incomplete default selection.
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -49,6 +48,7 @@ export function GuidedBuild(props: Props) {
   }, [firstIncomplete])
 
   const approvedCount = moduleIds.filter((id) => approvedIds.has(id)).length
+  const completion = moduleIds.length ? Math.round((approvedCount / moduleIds.length) * 100) : 0
 
   function stateOf(id: string): { label: string; glyph: React.ReactNode; cls: string } {
     if (readyIds.has(id)) return { label: 'Ready', glyph: Icon.shieldCheck(14), cls: 'ready' }
@@ -59,8 +59,24 @@ export function GuidedBuild(props: Props) {
   return (
     <div className="cap-build">
       <aside className="cap-build-list" role="navigation" aria-label="Allocated modules">
-        <div className="cap-build-progress">
-          <strong>{approvedCount} of {moduleIds.length}</strong> approved
+        <div className="cap-build-list-head">
+          <div>
+            <p className="capabilities-eyebrow">Build modules</p>
+            <h3>Choose a module</h3>
+          </div>
+          <div className="cap-build-progress">
+            <span><strong>{approvedCount} of {moduleIds.length}</strong> approved</span>
+            <span
+              className="cap-build-progress-track"
+              role="progressbar"
+              aria-label="Approved modules"
+              aria-valuemin={0}
+              aria-valuemax={moduleIds.length}
+              aria-valuenow={approvedCount}
+            >
+              <span style={{ width: `${completion}%` }} />
+            </span>
+          </div>
         </div>
         <ul>
           {moduleIds.length === 0 ? <li className="capabilities-note">The architecture allocates no modules.</li> : null}
@@ -80,7 +96,8 @@ export function GuidedBuild(props: Props) {
                 >
                   <span className="cap-build-module-glyph" aria-hidden="true">{s.glyph}</span>
                   <span className="cap-build-module-name">{displayName}</span>
-                  <span className="cap-build-module-state">{typeLabel ? `${typeLabel} · ` : ''}{s.label}</span>
+                  <span className="cap-build-module-state">{typeLabel ?? 'Module'}</span>
+                  <span className={`cap-build-module-status ${s.cls}`}>{s.label}</span>
                 </button>
               </li>
             )

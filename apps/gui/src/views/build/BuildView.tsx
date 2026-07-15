@@ -21,10 +21,15 @@ import { BuildWorkspace } from './BuildWorkspace'
 import type { BuildViewProps } from './buildTypes'
 
 export function BuildView(props: BuildViewProps) {
+  const persistedTemplateId = props.run.taskTemplateId && TASK_TEMPLATES.some((template) => template.id === props.run.taskTemplateId)
+    ? props.run.taskTemplateId
+    : undefined
   const [workspace, setWorkspace] = useState<BuildWorkspaceState>(props.initialWorkspace ?? 'handoff')
   const [status, setStatus] = useState<Status>({
     tone: 'info',
-    text: 'Define the work, prepare the handoff files, then apply the result zip.',
+    text: persistedTemplateId === 'new-ui-from-requirements' && props.run.taskPacketFields
+      ? 'From spec is prefilled from the approved UI module. Review the requirements, then generate the handoff.'
+      : 'Define the work, prepare the handoff files, then apply the result zip.',
   })
   const [contextResult, setContextResult] = useState<PrepareContextResult | null>(null)
   const [contextBusy, setContextBusy] = useState(false)
@@ -49,7 +54,7 @@ export function BuildView(props: BuildViewProps) {
   const [editing, setEditing] = useState<keyof TaskPacketFields | null>(null)
   const [draft, setDraft] = useState('')
   const [showValidation, setShowValidation] = useState(false)
-  const [templateId, setTemplateId] = useState(() => defaultTemplateId(props.preferredTemplate ?? ''))
+  const [templateId, setTemplateIdRaw] = useState(() => persistedTemplateId ?? defaultTemplateId(props.preferredTemplate ?? ''))
   const [confirmTemplate, setConfirmTemplate] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewText, setPreviewText] = useState('')
@@ -70,6 +75,13 @@ export function BuildView(props: BuildViewProps) {
       return result
     },
   }), [props.bridge]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const setTemplateId = (id: string) => {
+    setTemplateIdRaw(id)
+    void bridge.updateRun(props.run.id, { taskTemplateId: id }).catch(() => {
+      setStatus({ tone: 'error', text: 'The selected build mode could not be saved. You can continue in this session.' })
+    })
+  }
 
   useEffect(() => {
     if (props.initialWorkspace) setWorkspace(props.initialWorkspace)

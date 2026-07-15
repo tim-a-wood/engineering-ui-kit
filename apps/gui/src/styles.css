@@ -4088,10 +4088,9 @@ code.path-wrap {
   width: 100%;
 }
 
-/* Guided Build — two-region workspace */
+/* Guided Build — full-width picker above selected-module workspace */
 .cap-build {
   display: grid;
-  grid-template-columns: minmax(14rem, 16rem) minmax(0, 1fr);
   gap: var(--semantic-spacing-4);
   align-items: start;
 }
@@ -4105,27 +4104,59 @@ code.path-wrap {
   background: var(--semantic-surface-panel);
   box-shadow: var(--semantic-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }
+.cap-build-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-5);
+}
+.cap-build-list-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
 .cap-build-list ul {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--semantic-spacing-1);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--semantic-spacing-2);
 }
 .cap-build-progress {
+  display: grid;
+  gap: var(--semantic-spacing-1);
+  min-width: min(18rem, 38vw);
   color: var(--semantic-text-secondary);
   font-size: 0.85rem;
-  padding-bottom: var(--semantic-spacing-2);
-  border-bottom: 1px solid var(--semantic-border-subtle);
+  text-align: right;
+}
+.cap-build-progress-track {
+  display: block;
+  overflow: hidden;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: var(--semantic-surface-inset);
+}
+.cap-build-progress-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--semantic-status-success);
+  transition: width var(--semantic-motion-duration-medium) var(--semantic-motion-easing-standard);
 }
 .cap-build-module {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "glyph name status"
+    "glyph type status";
   align-items: center;
-  gap: var(--semantic-spacing-2);
+  column-gap: var(--semantic-spacing-2);
+  row-gap: 0.15rem;
   width: 100%;
   text-align: left;
-  min-height: 3rem;
-  padding: var(--semantic-spacing-2);
+  min-height: 4rem;
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-md);
   background: var(--semantic-surface-panel);
@@ -4155,15 +4186,44 @@ code.path-wrap {
 .cap-build-module.pending .cap-build-module-glyph {
   color: var(--semantic-text-muted);
 }
+.cap-build-module-glyph {
+  grid-area: glyph;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--semantic-radius-sm);
+  background: var(--semantic-surface-inset);
+}
 .cap-build-module-name {
+  grid-area: name;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--semantic-text-primary);
   font-weight: 600;
 }
 .cap-build-module-state {
-  margin-left: auto;
+  grid-area: type;
   font-size: 0.78rem;
   color: var(--semantic-text-muted);
-  text-align: right;
+}
+.cap-build-module-status {
+  grid-area: status;
+  align-self: center;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: 999px;
+  color: var(--semantic-text-muted);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+.cap-build-module-status.approved,
+.cap-build-module-status.ready {
+  border-color: color-mix(in srgb, var(--semantic-status-success) 35%, var(--semantic-border-subtle));
+  color: var(--semantic-status-success);
+  background: color-mix(in srgb, var(--semantic-status-success) 8%, transparent);
 }
 .cap-build-next {
   display: grid;
@@ -4204,7 +4264,7 @@ code.path-wrap {
 }
 .cap-build-module-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(18rem, 0.72fr) minmax(0, 1.28fr);
   gap: var(--semantic-spacing-4);
   align-items: start;
 }
@@ -4227,7 +4287,8 @@ code.path-wrap {
 }
 .cap-build-action-panel {
   display: grid;
-  grid-template-columns: minmax(14rem, 0.72fr) minmax(20rem, 1.28fr);
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
   align-items: start;
   gap: var(--semantic-spacing-4);
 }
@@ -4249,8 +4310,8 @@ code.path-wrap {
 }
 .cap-build-action-panel > .cap-build-next {
   min-width: 0;
-  padding-left: var(--semantic-spacing-4);
-  border-left: 1px solid var(--semantic-border-subtle);
+  padding-top: var(--semantic-spacing-3);
+  border-top: 1px solid var(--semantic-border-subtle);
 }
 .cap-build-action-diagnostics {
   grid-column: 1 / -1;
@@ -4421,30 +4482,9 @@ code.path-wrap {
   gap: var(--semantic-spacing-2);
 }
 
-@media (max-width: 1200px) {
-  .cap-build-action-panel { grid-template-columns: 1fr; }
-  .cap-build-action-panel > .cap-build-next {
-    padding-top: var(--semantic-spacing-3);
-    padding-left: 0;
-    border-top: 1px solid var(--semantic-border-subtle);
-    border-left: 0;
-  }
-}
-
-@media (min-width: 1600px) {
+@media (max-width: 1100px) {
   .cap-build-module-workspace {
-    grid-template-columns: minmax(22rem, 0.8fr) minmax(34rem, 1.2fr);
-    align-items: start;
-  }
-  .cap-build-action-panel {
     grid-template-columns: 1fr;
-    align-content: start;
-  }
-  .cap-build-action-panel > .cap-build-next {
-    padding-top: var(--semantic-spacing-3);
-    padding-left: 0;
-    border-top: 1px solid var(--semantic-border-subtle);
-    border-left: 0;
   }
 }
 
@@ -4454,6 +4494,9 @@ code.path-wrap {
   }
   .cap-build {
     grid-template-columns: 1fr;
+  }
+  .cap-build-list ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .cap-build-module-workspace {
     grid-template-columns: 1fr;
@@ -4470,6 +4513,26 @@ code.path-wrap {
   .cap-ui-setup-intro,
   .cap-ui-setup-form .field-error,
   .cap-ui-setup-form .cap-ui-source-actions { grid-column: auto; }
+}
+
+@media (max-width: 700px) {
+  .cap-build-list-head {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--semantic-spacing-3);
+  }
+  .cap-build-progress {
+    min-width: 0;
+    text-align: left;
+  }
+  .cap-build-module-name {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+  .cap-build-list ul {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Narrow shell (also covers 1280px @ 200% zoom ≈ 640 CSS px): auto-collapse the

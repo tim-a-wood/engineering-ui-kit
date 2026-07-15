@@ -454,7 +454,12 @@ describe('module isolation', () => {
     await waitFor(() => expect(onStartUiBuild).toHaveBeenCalledTimes(1))
     const [projectId, fields] = onStartUiBuild.mock.calls[0]
     expect(projectId).toBe('p1')
-    expect(fields.taskTitle).toBe('Build UI module: Flight Planner UI')
+    expect(fields.taskTitle).toBe('Build UI from approved capability spec: Flight Planner UI')
+    expect(fields.goal).toContain('# Approved UI requirement spec — Flight Planner UI')
+    expect(fields.goal).toContain('## Capability interactions')
+    expect(fields.goal).toContain('plan.calculate')
+    expect(fields.goal).toContain('## Required experience states')
+    expect(fields.goal.length).toBeGreaterThan(2500)
     expect(fields.scope).toContain('plan.calculate')
     expect(fields.constraints).toContain('route-optimization')
     expect(fields.references).toContain('arch.ui revision 3')
