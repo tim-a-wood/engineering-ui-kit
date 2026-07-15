@@ -34,10 +34,10 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP0 | Preserve & baseline | — | coordinator | (read-only + this ledger) | `e80ddce` | core 151/151, gui 157/157, all typecheck clean | **gate-green** |
 | WP1a | Canonical contract catalogue (CAP-CONTRACT-023..031 types/schemas/fixtures/parity + InboundBinding + canonicalRecordHash) | WP0 | coordinator-direct (see note) | core `types.ts`/`parity.ts`/`validation.ts`/`hash.ts`/`implementationBrief.ts`, `standards/schemas/capabilities/*`, fixtures, `cap-test-042/043` | `103c229` | core 155/155 + desktop/gui typecheck clean; CAP-TEST-001 covers all 31 | **gate-green** |
 | WP1b | Workspace schema 2.0 + migration (1.0 reader, future read-only, FrontendBinding→InboundBinding, interview→ModuleImplementationSpecification, rollback) | WP1a | coordinator-direct | core `persistence.ts`/`migration.ts`/`binding.ts`/`types.ts` + `cap-test-044..047` | `14f9f7f` | core 161/161; desktop/gui typecheck clean | **gate-green** |
-| WP2 | Reference profile, repo discovery, deterministic planning | WP1 | generator (Sonnet) | `packages/core/src/capabilities/generation/` | — | CAP-TEST-048..053 | todo |
-| WP3A | TypeScript runtime core | WP1 | TS runtime (Sonnet) | `packages/capabilities-runtime-ts/` | — | — | todo |
+| WP2 | Reference profile, repo discovery, deterministic planning | WP1 | cap-sonnet-implementer (delegated ✓) | `packages/core/src/capabilities/generation/` | `def7616` | core 180/180 (19 new); CAP-TEST-048..053; all workspaces typecheck clean | **gate-green** |
+| WP3A | TypeScript runtime core (`.`+`./testing`) | WP1 | cap-sonnet-implementer (coordinator checkout) | `packages/capabilities-runtime-ts/` | `34f1b6c` | runtime-ts 29/29 typecheck clean; core still 180/180; standalone (no core/desktop/gui imports); node-free core | **gate-green (core; hosts=WP3A-hosts next)** |
 | WP3B | TS generators + executable slices | WP2, WP3A | TS runtime (Sonnet) | TS generators + examples | — | CAP-TEST-054..061 | todo |
-| WP4A | Python runtime core | WP1 | Py runtime (Sonnet) | `runtimes/python/` | — | — | todo |
+| WP4A | Python runtime core | WP1 | cap-sonnet-implementer (worktree `cap-era-wt-wp4a`) | `runtimes/python/` | — | — | **in-progress** (WP4A-core: `core`+`telemetry`+`testing`; hosts next) |
 | WP4B | Python generators + executable slices | WP2, WP4A | Py runtime (Sonnet) | Py generators + examples | — | CAP-TEST-062..069 | todo |
 | WP5A | Foundation planning UI | WP1, WP2 | foundation workbench (Sonnet) | Design/Build UI | — | CAP-TEST-070..075 | todo |
 | WP5B | Foundation runtime integration | WP3B, WP4B, WP5A | foundation workbench (Sonnet) | bridge/IPC | — | (part of WP5 gate) | todo |
@@ -75,6 +75,24 @@ attempts stalled at exactly 24 steps. It is now **committed as `maxTurns: 90`** 
 coordinator should delegate WP1b onward to `cap-sonnet-implementer` (and scouts/verifiers),
 integrating and reviewing centrally. WP1a was completed coordinator-direct only because the fix
 had not yet loaded. The failed runs' one salvage — the field-name design in `parity.ts` — was kept.
+
+## Python environment (provisioned for WP4A/WP4B)
+
+System Python is 3.9.6 (too old; spec needs 3.11+). Provisioned a user-space standalone build —
+NO sudo, fully reversible (delete the dir):
+- Interpreter (3.11.15): `/Users/timwood/.local/uikit-python/python/bin/python3.11`
+- `curl` reaches github/PyPI/astral fine (system trust store has the corp CA); `pip`/`npm` use their
+  OWN cert bundles and fail — so **every pip command MUST pass `--use-feature=truststore`** (verified:
+  pydantic 2.13.4 / fastapi 0.139 / uvicorn 0.51 / pytest 9.1 / httpx install cleanly that way).
+- Shared sanity venv: `/Users/timwood/.local/uikit-python/venv-cap`. Per-packet venvs live in the
+  worktree (gitignored). Node worktrees remain unusable without a full `npm install` (workspace
+  symlinks), so node lanes run in the coordinator checkout; Python/isolated lanes run in worktrees.
+
+## Parallel-execution note
+
+Env ceiling: 1 node-lane agent in the coordinator checkout at a time (npm workspace resolution) +
+N isolated (Python) agents in worktrees. Currently: WP3A (coordinator) ‖ WP4A (worktree). WP6A and
+WP9A are node lanes → queued behind WP3A in the coordinator checkout.
 
 ## RESUME HERE — next session (Wave 2)
 
