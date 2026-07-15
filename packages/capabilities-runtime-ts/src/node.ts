@@ -50,3 +50,26 @@ export { ScheduledWorker } from './node/schedule.js'
 
 export type { TelemetrySink, ProcessLifecycleOptions, ProcessStartResult } from './node/lifecycle.js'
 export { ProcessLifecycle } from './node/lifecycle.js'
+
+export type { HttpAdapterOptions, OutboundHttpRequest, OutboundHttpResponse } from './node/http-client.js'
+export { NodeHttpClientAdapter, HttpAdapterError, redactHeaders } from './node/http-client.js'
+
+export type { FilesystemAdapterOptions } from './node/filesystem.js'
+export {
+  NodeFilesystemAdapter,
+  FilesystemPathError,
+  FilesystemCapabilityError,
+  resolveWithinRoot,
+} from './node/filesystem.js'
+
+export type { ProcessAdapterOptions, RunCommandRequest, RunCommandResult } from './node/process-adapter.js'
+export { NodeProcessAdapter, ProcessAdapterError } from './node/process-adapter.js'
+
+export type { PersistenceAdapter } from './node/persistence.js'
+export { InMemoryPersistenceAdapter } from './node/persistence.js'
+
+export type { WritableStream, JsonConsoleLoggerOptions } from './node/telemetry.js'
+export { JsonConsoleLogger, JsonConsoleTelemetrySink } from './node/telemetry.js'
+
+export type { RequiredAdapterCheck, ReadinessOptions } from './node/health.js'
+export { createEventLoopHealthCheck, createReadinessCheck } from './node/health.js'
