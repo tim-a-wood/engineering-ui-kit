@@ -142,15 +142,14 @@ describe('CAP-TEST-056 inbound.ts adapter planning', () => {
     expect(contents).toContain('quantity: args[1], // from argv position 1 ("arg1")')
   })
 
-  it('schedule: maps CAP-CONTRACT-028 overlap/misfire policy values with a diagnostic when approximated', () => {
+  it('schedule: emits CAP-CONTRACT-028 overlap/misfire values directly (SCHED-ENUM reconciled, no remapping)', () => {
     const result = planInboundAdapter(baseInput(SCHEDULE_BINDING))
     const contents = result.file.contents
     expect(contents).toContain('cronExpression: "0 * * * *"')
     expect(contents).toContain('timeZone: "UTC"')
-    expect(contents).toContain('overlapPolicy: "allow"')
-    expect(contents).toContain('misfirePolicy: "run-once"')
-    expect(result.diagnostics.some((message) => message.includes('overlapPolicy') && message.includes('contract-change requested'))).toBe(true)
-    expect(result.diagnostics.some((message) => message.includes('misfirePolicy') && message.includes('contract-change requested'))).toBe(true)
+    expect(contents).toContain('overlapPolicy: "queue"')
+    expect(contents).toContain('misfirePolicy: "run-all"')
+    expect(result.diagnostics).toEqual([])
   })
 
   it('schedule: an exact policy match (skip/run-once) produces no diagnostic', () => {

@@ -158,24 +158,23 @@ describe('CAP-TEST-063 python.ts inbound adapter planning', () => {
     expect(contents).toContain('return json.loads(args.input_json)')
   })
 
-  it('schedule: maps CAP-CONTRACT-028 overlap/misfire policy values to the Python worker enum with a diagnostic when approximated', () => {
+  it('schedule: emits CAP-CONTRACT-028 policies as reconciled Python worker enum members (SCHED-ENUM, no remapping)', () => {
     const result = planPythonInboundAdapter(baseInput(SCHEDULE_BINDING))
     const contents = result.file.contents
     expect(contents).toContain('from engineering_ui_capabilities_runtime.worker.cron import CronSchedule')
     expect(contents).toContain('from engineering_ui_capabilities_runtime.worker.scheduler import CronJob, MisfirePolicy, OverlapPolicy')
     expect(contents).toContain('CronSchedule.parse("0 * * * *", "UTC")')
-    expect(contents).toContain('overlap_policy=OverlapPolicy.ALLOW')
-    expect(contents).toContain('misfire_policy=MisfirePolicy.FIRE_NOW')
-    expect(result.diagnostics.some((message) => message.includes('overlapPolicy') && message.includes('contract-change requested'))).toBe(true)
-    expect(result.diagnostics.some((message) => message.includes('misfirePolicy') && message.includes('contract-change requested'))).toBe(true)
+    expect(contents).toContain('overlap_policy=OverlapPolicy.QUEUE')
+    expect(contents).toContain('misfire_policy=MisfirePolicy.RUN_ALL')
+    expect(result.diagnostics).toEqual([])
   })
 
-  it('schedule: an exact policy match (skip/run-once) produces no diagnostic', () => {
+  it('schedule: skip/run-once map to OverlapPolicy.SKIP / MisfirePolicy.RUN_ONCE, no diagnostic', () => {
     const binding: ScheduleInboundBinding = { ...SCHEDULE_BINDING, overlapPolicy: 'skip', misfirePolicy: 'run-once' }
     const result = planPythonInboundAdapter(baseInput(binding))
     expect(result.diagnostics).toEqual([])
     expect(result.file.contents).toContain('overlap_policy=OverlapPolicy.SKIP')
-    expect(result.file.contents).toContain('misfire_policy=MisfirePolicy.FIRE_NOW')
+    expect(result.file.contents).toContain('misfire_policy=MisfirePolicy.RUN_ONCE')
   })
 
   it('embedded-library: emits a snake_case sync function named from exportedCallable, dispatching the operation', () => {

@@ -209,24 +209,10 @@ function planScheduleAdapter(
   const constName = `${toCamelCase(binding.bindingId)}Job`
   const diagnostics: string[] = []
 
-  // CAP-CONTRACT-028 (parity.ts OVERLAP_POLICIES/MISFIRE_POLICIES) and the
-  // runtime's node OverlapPolicy/MisfirePolicy unions do not share an
-  // identical value set; map deterministically and flag the approximation
-  // (see WP3B-gen handoff contract-change request).
-  const overlapPolicyMap: Record<string, string> = { skip: 'skip', queue: 'allow', 'allow-concurrent': 'allow' }
-  const misfirePolicyMap: Record<string, string> = { skip: 'skip-missed', 'run-once': 'run-once', 'run-all': 'run-once' }
-  const overlapPolicy = overlapPolicyMap[binding.overlapPolicy] ?? 'skip'
-  const misfirePolicy = misfirePolicyMap[binding.misfirePolicy] ?? 'skip-missed'
-  if (binding.overlapPolicy === 'queue' || binding.overlapPolicy === 'allow-concurrent') {
-    diagnostics.push(
-      `binding "${binding.bindingId}": CAP-CONTRACT-028 overlapPolicy "${binding.overlapPolicy}" has no exact runtime OverlapPolicy equivalent; mapped to "${overlapPolicy}" (contract-change requested)`,
-    )
-  }
-  if (binding.misfirePolicy === 'run-all') {
-    diagnostics.push(
-      `binding "${binding.bindingId}": CAP-CONTRACT-028 misfirePolicy "run-all" has no runtime MisfirePolicy equivalent; mapped to "${misfirePolicy}" (contract-change requested)`,
-    )
-  }
+  // CAP-CONTRACT-028 overlap/misfire policy values are consumed directly by the
+  // reconciled runtime OverlapPolicy/MisfirePolicy unions (SCHED-ENUM) — no remapping, no loss.
+  const overlapPolicy = binding.overlapPolicy
+  const misfirePolicy = binding.misfirePolicy
 
   const importDecls: ImportDeclarationInput[] = [
     { moduleSpecifier: `${runtimePackageName}/node`, namedImports: ['ScheduledJobDefinition'], typeOnly: true },

@@ -521,8 +521,8 @@ function planCliAdapter(input: PythonInboundAdapterGenerationInput, binding: Ext
   }
 }
 
-const PYTHON_OVERLAP_POLICY_MAP: Record<string, string> = { skip: 'SKIP', queue: 'ALLOW', 'allow-concurrent': 'ALLOW' }
-const PYTHON_MISFIRE_POLICY_MAP: Record<string, string> = { skip: 'SKIP', 'run-once': 'FIRE_NOW', 'run-all': 'FIRE_NOW' }
+const PYTHON_OVERLAP_POLICY_MAP: Record<string, string> = { skip: 'SKIP', queue: 'QUEUE', 'allow-concurrent': 'ALLOW_CONCURRENT' }
+const PYTHON_MISFIRE_POLICY_MAP: Record<string, string> = { skip: 'SKIP', 'run-once': 'RUN_ONCE', 'run-all': 'RUN_ALL' }
 
 function planScheduleAdapter(
   input: PythonInboundAdapterGenerationInput,
@@ -535,23 +535,10 @@ function planScheduleAdapter(
   const inputSchemaExpr = pythonInputSchemaExpression(types, diagnostics)
   const functionName = `build_${toSnakeCase(binding.bindingId)}_job`
 
-  // CAP-CONTRACT-028 (parity.ts OVERLAP_POLICIES/MISFIRE_POLICIES) and the
-  // Python runtime's worker.scheduler OverlapPolicy/MisfirePolicy enums do
-  // not share an identical value set; map deterministically and flag the
-  // approximation — the SAME lossy mapping points and diagnostic pattern as
-  // WP3B-gen's `inbound.ts` (SCHED-ENUM open issue; not fixed here).
+  // CAP-CONTRACT-028 policy values map 1:1 to the reconciled Python worker enum
+  // MEMBER NAMES (SCHED-ENUM); each member's `.value` equals the contract string. No loss.
   const overlapPolicy = PYTHON_OVERLAP_POLICY_MAP[binding.overlapPolicy] ?? 'SKIP'
   const misfirePolicy = PYTHON_MISFIRE_POLICY_MAP[binding.misfirePolicy] ?? 'SKIP'
-  if (binding.overlapPolicy === 'queue' || binding.overlapPolicy === 'allow-concurrent') {
-    diagnostics.push(
-      `binding "${binding.bindingId}": CAP-CONTRACT-028 overlapPolicy "${binding.overlapPolicy}" has no exact Python worker OverlapPolicy equivalent; mapped to "${overlapPolicy}" (contract-change requested)`,
-    )
-  }
-  if (binding.misfirePolicy === 'run-all') {
-    diagnostics.push(
-      `binding "${binding.bindingId}": CAP-CONTRACT-028 misfirePolicy "run-all" has no Python worker MisfirePolicy equivalent; mapped to "${misfirePolicy}" (contract-change requested)`,
-    )
-  }
 
   const importDecls: PythonImportDeclarationInput[] = [
     { moduleSpecifier: 'typing', names: ['Optional'] },
