@@ -43,7 +43,7 @@ export type CapabilityDeployableSummary = {
 }
 
 /** Persisted CAP-CONTRACT-028 inbound-binding read model (mirrors CapabilityBindingRecord's shape). */
-export type CapabilityInboundBindingRecord = {
+export type InboundBindingReadRecord = {
   bindingId: string
   draft?: InboundBinding
   approved?: InboundBinding
@@ -233,7 +233,7 @@ export type EuikBridge = {
   /** CAP-ERA-001 §5.1/§12.4 — deployables this project's architecture allocates (WP6B read-only projection). */
   capabilitiesListDeployables(projectId: string): Promise<CapabilityDeployableSummary[]>
   /** CAP-CONTRACT-028 inbound bindings across every deployable/kind — supersedes `capabilitiesListBindings` for Connect completeness. */
-  capabilitiesListInboundBindings(projectId: string): Promise<CapabilityInboundBindingRecord[]>
+  capabilitiesListInboundBindings(projectId: string): Promise<InboundBindingReadRecord[]>
   capabilitiesSaveInboundBindingDraft(projectId: string, draft: InboundBinding): Promise<{ ok: true }>
   capabilitiesApproveInboundBinding(
     projectId: string,

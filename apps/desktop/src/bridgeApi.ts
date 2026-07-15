@@ -41,7 +41,7 @@ export type CapabilityDeployableSummary = {
 }
 
 /** Persisted CAP-CONTRACT-028 inbound-binding read model (mirrors CapabilityBindingRecord's shape). */
-export type CapabilityInboundBindingRecord = {
+export type InboundBindingReadRecord = {
   bindingId: string
   draft?: InboundBinding
   approved?: InboundBinding
@@ -246,7 +246,7 @@ export type EuikBridge = {
   /** CAP-ERA-001 §5.1/§12.4 — deployables this project's architecture allocates. Not yet backed by real IPC (WP5B/WP7). */
   capabilitiesListDeployables(projectId: string): Promise<CapabilityDeployableSummary[]>
   /** CAP-CONTRACT-028 inbound bindings across every deployable/kind. Not yet backed by real IPC (WP5B/WP7). */
-  capabilitiesListInboundBindings(projectId: string): Promise<CapabilityInboundBindingRecord[]>
+  capabilitiesListInboundBindings(projectId: string): Promise<InboundBindingReadRecord[]>
   capabilitiesSaveInboundBindingDraft(projectId: string, draft: InboundBinding): Promise<{ ok: true }>
   capabilitiesApproveInboundBinding(
     projectId: string,

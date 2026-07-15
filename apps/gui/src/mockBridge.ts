@@ -31,7 +31,7 @@ import {
   evaluateBindingApprovalGate,
   runModuleVerification,
 } from '@engineering-ui-kit/core/browser'
-import type { BuildPacketResult, CapabilityDeployableSummary, CapabilityInboundBindingRecord, EuikBridge, PrepareContextResult, RunEvidence, TaskPacketFields } from './bridge'
+import type { BuildPacketResult, CapabilityDeployableSummary, InboundBindingReadRecord, EuikBridge, PrepareContextResult, RunEvidence, TaskPacketFields } from './bridge'
 import { validateInboundBindingDraft } from './views/capabilities/inbound/inboundBinding'
 
 type CapProjectState = {
