@@ -22,6 +22,22 @@
     "./node": {
       "types": "./dist/node.d.ts",
       "default": "./dist/node.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "default": "./dist/react.js"
+    },
+    "./electron/renderer": {
+      "types": "./dist/electron/renderer.d.ts",
+      "default": "./dist/electron/renderer.js"
+    },
+    "./electron/preload": {
+      "types": "./dist/electron/preload.d.ts",
+      "default": "./dist/electron/preload.js"
+    },
+    "./electron/main": {
+      "types": "./dist/electron/main.d.ts",
+      "default": "./dist/electron/main.js"
     }
   },
   "scripts": {
@@ -33,8 +49,29 @@
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1"
   },
+  "peerDependencies": {
+    "electron": ">=30.0.0",
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "electron": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "electron": "^43.0.0",
+    "jsdom": "^25.0.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "typescript": "^5.8.0",
     "vitest": "^3.1.0"
   }
