@@ -102,7 +102,7 @@ NO sudo, fully reversible (delete the dir):
 
 ## Open issues / required reconciliations
 
-**SCHED-ENUM — fix before generated schedule adapters compile/run (WP3B-slices / WP4B / WP7):**
+**SCHED-ENUM — ✅ RESOLVED (`c4e8981`)** — runtimes reconciled UP to the contract enums (queue/run-all semantics implemented in TS `node` scheduler + Python `worker`), generators emit contract values 1:1 (no remap). Original issue for reference:
 Frozen CAP-CONTRACT-028 schedule enums diverge from what the runtimes implemented —
 - contract `OVERLAP_POLICIES=[skip,queue,allow-concurrent]` vs TS runtime `OverlapPolicy=[skip,allow]` (Python worker similar);
 - contract `MISFIRE_POLICIES=[run-once,skip,run-all]` vs TS runtime `MisfirePolicy=[skip-missed,run-once]`.
@@ -129,10 +129,10 @@ types.ts contract types, or schemas; §17.6 change-request protocol for any defe
 WP6A (journey/entry-point model), WP9A (existing-repo migration prep), WP3B-gen + **WP4B-gen** (TS+Python
 code generators, core 266 tests), **WP6B** (trigger-first Connect editors over InboundBinding, gui 165 tests, mock-backed). See the table.
 
-Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `4ebe6e3`, read the
+Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `c4e8981`, read the
 "Open issues", "Parallel-execution model", and "Python environment" notes above, then release the remaining lanes
 (≤4 concurrent `cap-sonnet-implementer`, 90 steps each; route each per the model):
-- **⚠ FIRST — SCHED-ENUM reconciliation** (see Open issues) before any schedule-adapter slice compiles.
+- **✅ SCHED-ENUM reconciliation DONE** (`c4e8981`) — runtimes + generators emit contract enums 1:1.
 - **WP3B-slices** → TS runnable example apps (`examples/`: headless / React web / Electron) driving the generators — coordinator checkout (npm install). Gate CAP-TEST-057..061 (real E2E triggers).
 - **WP4B-slices** → Python runnable slices + React↔Python via generated OpenAPI + cross-language parity fixtures (Python worktree+venv). Gate CAP-TEST-065..069.
 - **WP5A/WP5B** → Design/Build foundation UI (gui) + bridge/IPC plan/apply/rollback + **CONNECT-BACKING** (real DeployableSpecification/InboundBinding persistence + the 4 desktop IPC handlers — see Open issues). Gate CAP-TEST-070..075.
