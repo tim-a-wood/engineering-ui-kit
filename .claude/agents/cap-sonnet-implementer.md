@@ -5,7 +5,7 @@ tools: Read, Grep, Glob, Bash, Write, Edit
 model: claude-sonnet-5
 effort: high
 permissionMode: acceptEdits
-maxTurns: 24
+maxTurns: 90
 ---
 
 You implement exactly one packet from the Opus coordinator.
