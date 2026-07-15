@@ -9,6 +9,8 @@ import {
   deriveJourney,
   stageById,
   continueTarget,
+  type CapabilityDeployableRecord,
+  type CapabilityInboundBindingRecord,
   type JourneyInput,
 } from '../src/views/capabilities/capabilitiesUiState'
 import type { CapabilityModuleRecord, ModuleManifest, ModuleType } from '@engineering-ui-kit/core'
@@ -48,6 +50,25 @@ function moduleRecord(
 
 function arch(moduleIds: string[]) {
   return { schemaVersion: '1.0', moduleIds } as unknown
+}
+
+function deployable(deployableId: string, kind: CapabilityDeployableRecord['kind'] = 'browser'): CapabilityDeployableRecord {
+  return { deployableId, kind }
+}
+
+function inboundBinding(
+  bindingId: string,
+  deployableId: string,
+  opts: { approved?: boolean; operationId?: string; operationVersion?: string; exposure?: CapabilityInboundBindingRecord['exposure'] } = {},
+): CapabilityInboundBindingRecord {
+  return {
+    bindingId,
+    deployableId,
+    operationId: opts.operationId ?? 'op.show',
+    operationVersion: opts.operationVersion ?? '1.0.0',
+    approved: opts.approved ?? true,
+    exposure: opts.exposure,
+  }
 }
 
 const EMPTY: JourneyInput = { application: {}, architecture: {}, modules: [], bindings: [] }
@@ -121,7 +142,7 @@ describe('deriveJourney', () => {
     expect(stageById(j, 'connect').state).toBe('locked')
   })
 
-  it('all modules approved (no UI modules): Build complete, Connect not-applicable, Verify current', () => {
+  it('all modules approved, no deployables requiring an entry point: Build complete, Connect not-applicable, Verify current', () => {
     const j = deriveJourney({
       ...EMPTY,
       application: { approved: {} },
@@ -138,12 +159,30 @@ describe('deriveJourney', () => {
     expect(j.firstIncompleteStageId).toBe('verify')
   })
 
-  it('Connect required (experience module) with no binding: Connect current', () => {
+  it('an embedded-library deployable never requires an entry point', () => {
     const j = deriveJourney({
       ...EMPTY,
       application: { approved: {} },
-      architecture: { approved: arch(['mod.ui']) },
-      modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      architecture: { approved: arch(['mod.a']) },
+      modules: [moduleRecord('mod.a', { approved: manifest('mod.a', 'domain', ['op.a']) })],
+      deployables: [deployable('dep.lib', 'embedded-library')],
+    })
+    expect(stageById(j, 'connect').state).toBe('not-applicable')
+    expect(j.connectEntryPoints).toEqual([
+      expect.objectContaining({ deployableId: 'dep.lib', requiresEntryPoint: false, satisfied: true }),
+    ])
+  })
+
+  // CAP-TEST-076: a headless (no-UI) application cannot reach Connect-complete
+  // without a real inbound entry point. Applicability is driven by the
+  // deployable, not by whether a UI module exists (§5.1/§12.4).
+  it('CAP-TEST-076: a required deployable with no binding keeps Connect current (not not-applicable, not complete)', () => {
+    const j = deriveJourney({
+      ...EMPTY,
+      application: { approved: {} },
+      architecture: { approved: arch(['mod.a']) },
+      modules: [moduleRecord('mod.a', { approved: manifest('mod.a', 'domain', ['op.show']) })],
+      deployables: [deployable('dep.api', 'http-api')],
     })
     const connect = stageById(j, 'connect')
     expect(connect.state).toBe('current')
@@ -151,32 +190,121 @@ describe('deriveJourney', () => {
     expect(stageById(j, 'verify').state).toBe('locked')
   })
 
-  it('Connect required and satisfied by an approved binding', () => {
+  it('CAP-TEST-076: "no-ui" disposition alone never completes or skips Connect', () => {
+    const j = deriveJourney({
+      ...EMPTY,
+      application: { approved: {} },
+      architecture: { approved: arch(['mod.a']) },
+      modules: [moduleRecord('mod.a', { approved: manifest('mod.a', 'domain', ['op.show']) })],
+      deployables: [deployable('dep.cli', 'cli')],
+      connectDisposition: 'no-ui',
+    })
+    const connect = stageById(j, 'connect')
+    expect(connect.state).toBe('current')
+    expect(connect.satisfied).toBe(false)
+    expect(connect.shortStatus).toContain('headless entry point')
+    expect(stageById(j, 'verify').state).toBe('locked')
+  })
+
+  it('Connect required and satisfied by a valid inbound binding on the deployable', () => {
     const j = deriveJourney({
       ...EMPTY,
       application: { approved: {} },
       architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'connection', ['op.show']) })],
-      bindings: [{ bindingId: 'b1', approved: {} as never }],
+      deployables: [deployable('dep.browser', 'browser')],
+      inboundBindings: [inboundBinding('b1', 'dep.browser')],
     })
     expect(stageById(j, 'connect').state).toBe('complete')
     expect(stageById(j, 'verify').state).toBe('current')
   })
 
-  it.each([
-    ['no-ui', 'No UI connection required.'],
-    ['deferred', 'UI connection deferred.'],
-  ] as const)('allows Verify when UI integration is %s', (connectDisposition, status) => {
+  // CAP-TEST-081: multiple inbound bindings may target the same operation.
+  it('CAP-TEST-081: two bindings targeting the same operation on the same deployable both count', () => {
+    const j = deriveJourney({
+      ...EMPTY,
+      application: { approved: {} },
+      architecture: { approved: arch(['mod.ui']) },
+      modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'connection', ['op.show']) })],
+      deployables: [deployable('dep.browser', 'browser')],
+      inboundBindings: [inboundBinding('b1', 'dep.browser'), inboundBinding('b2', 'dep.browser')],
+    })
+    expect(stageById(j, 'connect').state).toBe('complete')
+    const status = j.connectEntryPoints.find((d) => d.deployableId === 'dep.browser')
+    expect(status?.bindingCount).toBe(2)
+    expect(status?.validBindingCount).toBe(2)
+  })
+
+  // CAP-TEST-079: a deferred deployable stays incomplete and visible.
+  it('CAP-TEST-079: deferred Connect never silently completes, even with a required deployable', () => {
     const j = deriveJourney({
       ...EMPTY,
       application: { approved: {} },
       architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
-      connectDisposition,
+      deployables: [deployable('dep.browser', 'browser')],
+      connectDisposition: 'deferred',
     })
-    expect(stageById(j, 'connect').state).toBe('not-applicable')
-    expect(stageById(j, 'connect').shortStatus).toBe(status)
-    expect(stageById(j, 'verify').state).toBe('current')
+    const connect = stageById(j, 'connect')
+    expect(connect.state).not.toBe('not-applicable')
+    expect(connect.state).not.toBe('complete')
+    expect(connect.satisfied).toBe(false)
+    expect(connect.shortStatus).toBe('Connect is deferred and needs attention.')
+    expect(j.complete).toBe(false)
+  })
+
+  it('a draft (unapproved) binding remains visible in connectEntryPoints but does not satisfy Connect', () => {
+    const j = deriveJourney({
+      ...EMPTY,
+      application: { approved: {} },
+      architecture: { approved: arch(['mod.ui']) },
+      modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      deployables: [deployable('dep.browser', 'browser')],
+      inboundBindings: [inboundBinding('b1', 'dep.browser', { approved: false })],
+    })
+    expect(stageById(j, 'connect').state).toBe('current')
+    const status = j.connectEntryPoints.find((d) => d.deployableId === 'dep.browser')
+    expect(status?.bindingCount).toBe(1)
+    expect(status?.validBindingCount).toBe(0)
+    expect(status?.satisfied).toBe(false)
+  })
+
+  it('new inbound bindings default to private exposure; escalating is surfaced, not hidden', () => {
+    const privateJourney = deriveJourney({
+      ...EMPTY,
+      application: { approved: {} },
+      architecture: { approved: arch(['mod.ui']) },
+      modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      deployables: [deployable('dep.browser', 'browser')],
+      inboundBindings: [inboundBinding('b1', 'dep.browser')],
+    })
+    expect(privateJourney.anyExposureElevated).toBe(false)
+
+    const elevatedJourney = deriveJourney({
+      ...EMPTY,
+      application: { approved: {} },
+      architecture: { approved: arch(['mod.ui']) },
+      modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      deployables: [deployable('dep.browser', 'browser')],
+      inboundBindings: [inboundBinding('b1', 'dep.browser', { exposure: 'public' })],
+    })
+    expect(elevatedJourney.anyExposureElevated).toBe(true)
+    // Elevation is visible, but does not by itself block Connect completeness.
+    expect(stageById(elevatedJourney, 'connect').state).toBe('complete')
+  })
+
+  it('a migrated ui inbound binding counts the same as any other kind (legacy FrontendBinding no longer consulted)', () => {
+    const j = deriveJourney({
+      ...EMPTY,
+      application: { approved: {} },
+      architecture: { approved: arch(['mod.ui']) },
+      modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      deployables: [deployable('dep.browser', 'browser')],
+      inboundBindings: [inboundBinding('bind-approve', 'dep.browser')],
+      // Legacy FrontendBinding records no longer drive Connect completeness.
+      bindings: [{ bindingId: 'stale-legacy', approved: {} as never }],
+    })
+    expect(stageById(j, 'connect').state).toBe('complete')
   })
 
   it('Build complete but no approved operation keeps Connect locked', () => {

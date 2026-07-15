@@ -14,9 +14,11 @@ import type {
   ArchitectureSpecification,
   CapabilityBindingRecord,
   CapabilityModuleRecord,
+  DeployableKind,
+  ExposureLevel,
   ModuleManifest,
-  ModuleType,
 } from '@engineering-ui-kit/core'
+import { evaluateConnectEntryPoints, type DeployableConnectStatus } from '@engineering-ui-kit/core'
 import type { GuideTopicId } from '../../guides'
 
 export type StageId = 'define' | 'architect' | 'build' | 'connect' | 'verify'
@@ -49,11 +51,51 @@ export type JourneyStage = {
   satisfied: boolean
 }
 
+/**
+ * A deployable that may need a Connect inbound entry point (CAP-ERA-001 §5.1).
+ * `kind: 'embedded-library'` deployables never require one.
+ */
+export type CapabilityDeployableRecord = {
+  deployableId: string
+  kind: DeployableKind
+}
+
+/**
+ * A CAP-CONTRACT-028 `InboundBinding` projection used for Connect completeness.
+ * Multiple records may share the same `deployableId`/`operationId` — the model
+ * never deduplicates bindings targeting the same operation (§12.4).
+ */
+export type CapabilityInboundBindingRecord = {
+  bindingId: string
+  deployableId: string
+  operationId?: string
+  operationVersion?: string
+  /** A binding counts toward completeness once reviewed/approved; drafts remain visible but not valid. */
+  approved: boolean
+  /** Omitted exposure is treated as `private` (§5.1/§15.2) — never silently escalated. */
+  exposure?: ExposureLevel
+}
+
 export type JourneyInput = {
   application: { draft?: unknown; approved?: unknown }
   architecture: { draft?: unknown; approved?: unknown }
   modules: CapabilityModuleRecord[]
+  /**
+   * Legacy CAP-CONTRACT-013 `FrontendBinding` records. Retained for callers that have
+   * not yet migrated to `inboundBindings`; no longer consulted for Connect completeness
+   * (superseded by CAP-CONTRACT-028 `InboundBinding` via `inboundBindings`).
+   */
   bindings: CapabilityBindingRecord[]
+  /** Deployables the architecture allocates (§5.1) — drives Connect applicability/completeness. */
+  deployables?: CapabilityDeployableRecord[]
+  /** Inbound bindings (CAP-CONTRACT-028) targeting those deployables. */
+  inboundBindings?: CapabilityInboundBindingRecord[]
+  /**
+   * A UX hint only: which host choices to foreground/hide and whether the user has
+   * explicitly deferred configuring Connect. It never completes or skips Connect by
+   * itself — Connect stays incomplete until every required deployable has a valid
+   * inbound entry point (§5.4/§12.4).
+   */
   connectDisposition?: 'connect-now' | 'no-ui' | 'deferred'
 }
 
@@ -63,6 +105,14 @@ export type Journey = {
   firstIncompleteStageId: StageId
   /** True when every applicable stage is satisfied. */
   complete: boolean
+  /**
+   * Per-deployable Connect entry-point status (CAP-ERA-001 §5.1/§12.4). Surfaced
+   * explicitly so a deferred/incomplete deployable and any exposure escalation
+   * stay visible rather than being hidden by a coarse stage state.
+   */
+  connectEntryPoints: DeployableConnectStatus[]
+  /** True when any inbound binding has been deliberately elevated beyond `private`. */
+  anyExposureElevated: boolean
 }
 
 export const STAGE_ORDER: StageId[] = ['define', 'architect', 'build', 'connect', 'verify']
@@ -82,9 +132,6 @@ const STAGE_HELP: Record<StageId, GuideTopicId> = {
   connect: 'capabilities-connect',
   verify: 'capabilities-verify',
 }
-
-/** Module types that require a frontend Connect stage. */
-const UI_MODULE_TYPES: ReadonlySet<ModuleType> = new Set<ModuleType>(['experience', 'connection'])
 
 function approvedManifests(modules: CapabilityModuleRecord[]): ModuleManifest[] {
   return modules.map((m) => m.approved).filter((m): m is ModuleManifest => Boolean(m))
@@ -115,13 +162,31 @@ export function deriveJourney(input: JourneyInput): Journey {
   const buildHasModules = buildTotal > 0
   const buildComplete = buildHasModules && buildDone === buildTotal
 
-  // ---- Connect applicability ----
+  // ---- Connect applicability (CAP-ERA-001 §5.1/§5.4/§12.4) ----
+  // Driven by deployable entry points, not by UI module types: a deployable is
+  // incomplete until it has a valid inbound binding unless Design classifies it
+  // `embedded-library`. "No UI" only changes which host choices are foregrounded
+  // (connectDisposition) — it never completes or skips Connect on its own.
   const hasApprovedOperation = approved.some((m) => m.providedOperations.length > 0)
-  const requiresConnect = approved.some((m) => UI_MODULE_TYPES.has(m.moduleType))
-  const approvedBinding = input.bindings.some((b) => Boolean(b.approved))
+  const deployables = input.deployables ?? []
+  const inboundBindings = input.inboundBindings ?? []
+  const entryPoints = evaluateConnectEntryPoints(
+    deployables.map((d) => ({ deployableId: d.deployableId, kind: d.kind })),
+    inboundBindings.map((b) => ({
+      bindingId: b.bindingId,
+      deployableId: b.deployableId,
+      operationId: b.operationId,
+      operationVersion: b.operationVersion,
+      approved: b.approved,
+      exposure: b.exposure,
+    })),
+  )
+  const requiresConnect = entryPoints.requiredDeployableIds.length > 0
+  // A user may defer Connect, but the affected deployable remains "Needs attention"
+  // and can never be silently marked complete (§5.4/CAP-TEST-079).
+  const connectDeferred = input.connectDisposition === 'deferred'
   const connectUnlocked = buildComplete && hasApprovedOperation
-  const connectSkipped = input.connectDisposition === 'no-ui' || input.connectDisposition === 'deferred'
-  const connectComplete = connectUnlocked && (!requiresConnect || approvedBinding || connectSkipped)
+  const connectComplete = connectUnlocked && (!requiresConnect || (entryPoints.allRequiredSatisfied && !connectDeferred))
 
   // ---- Verify ----
   const verifyReady = approved.filter((m) => {
@@ -196,7 +261,7 @@ export function deriveJourney(input: JourneyInput): Journey {
   // Connect
   const connectState: StageState = !connectUnlocked
     ? 'locked'
-    : !requiresConnect || connectSkipped
+    : !requiresConnect
       ? 'not-applicable'
       : connectComplete
         ? 'complete'
@@ -211,13 +276,13 @@ export function deriveJourney(input: JourneyInput): Journey {
         ? 'No approved operation to connect yet.'
         : !requiresConnect
           ? 'Not required.'
-          : input.connectDisposition === 'no-ui'
-            ? 'No UI connection required.'
-            : input.connectDisposition === 'deferred'
-              ? 'UI connection deferred.'
           : connectComplete
             ? 'Connection approved.'
-            : 'Connect an element to a capability.',
+            : connectDeferred
+              ? 'Connect is deferred and needs attention.'
+              : input.connectDisposition === 'no-ui'
+                ? 'Configure a headless entry point (HTTP, CLI, schedule, or embedded library).'
+                : 'Connect an element to a capability.',
     prerequisiteReason: !connectUnlocked
       ? 'Requires a completed Build with at least one approved operation.'
       : undefined,
@@ -256,7 +321,13 @@ export function deriveJourney(input: JourneyInput): Journey {
   const firstIncompleteStageId = firstIncomplete?.id ?? 'verify'
   const complete = stages.every((s) => s.satisfied)
 
-  return { stages, firstIncompleteStageId, complete }
+  return {
+    stages,
+    firstIncompleteStageId,
+    complete,
+    connectEntryPoints: entryPoints.deployables,
+    anyExposureElevated: entryPoints.anyExposureElevated,
+  }
 }
 
 /** Look up a single stage descriptor by id. */
