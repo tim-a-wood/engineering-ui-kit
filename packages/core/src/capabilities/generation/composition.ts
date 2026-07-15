@@ -225,6 +225,24 @@ export function planCompositionRootModule(input: CompositionRootModuleInput): Co
     '}',
   ]
 
+  // Explicit, statically inspectable record of which frozen operation
+  // id/version each inbound binding routes to (CAP-CONTRACT-027
+  // `operationRoutes`), so composition audits and inbound.ts consumers never
+  // need to re-derive it.
+  const operationRoutes = sortByKey(
+    [...input.manifest.operationRoutes],
+    (route) => `${route.inboundBindingId} ${route.operationId} ${route.operationVersion}`,
+  )
+  const routeTableName = `${toCamelCase(input.manifest.compositionId)}OperationRoutes`
+  const routeTableLines = [
+    `export const ${routeTableName}: ReadonlyArray<{ readonly inboundBindingId: string; readonly operationId: string; readonly operationVersion: string }> = [`,
+    ...operationRoutes.map(
+      (route) =>
+        `  { inboundBindingId: ${JSON.stringify(route.inboundBindingId)}, operationId: ${JSON.stringify(route.operationId)}, operationVersion: ${JSON.stringify(route.operationVersion)} },`,
+    ),
+    ']',
+  ]
+
   const header = generatedFileHeader({
     generatorVersion: input.generatorVersion,
     referenceProfileVersion: input.referenceProfileVersion,
@@ -233,7 +251,13 @@ export function planCompositionRootModule(input: CompositionRootModuleInput): Co
 
   const file: GeneratedVirtualFile = {
     path: input.filePath,
-    contents: renderVirtualFileBody([header, importBlock, tokenDeclarations.join('\n'), bodyLines.join('\n')]),
+    contents: renderVirtualFileBody([
+      header,
+      importBlock,
+      tokenDeclarations.join('\n'),
+      routeTableLines.join('\n'),
+      bodyLines.join('\n'),
+    ]),
   }
 
   return { file, issues }
