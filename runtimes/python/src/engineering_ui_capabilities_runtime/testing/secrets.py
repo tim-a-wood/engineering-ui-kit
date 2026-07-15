@@ -15,6 +15,8 @@ class UnknownSecretReferenceError(KeyError):
 
 
 class TestSecretResolver(SecretResolver):
+    __test__ = False  # not a pytest test class, despite the name prefix
+
     def __init__(self, values: Dict[SecretReference, str] | None = None) -> None:
         self._values: Dict[SecretReference, str] = dict(values or {})
 
