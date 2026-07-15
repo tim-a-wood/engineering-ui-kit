@@ -36,7 +36,8 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP1b | Workspace schema 2.0 + migration (1.0 reader, future read-only, FrontendBinding→InboundBinding, interview→ModuleImplementationSpecification, rollback) | WP1a | coordinator-direct | core `persistence.ts`/`migration.ts`/`binding.ts`/`types.ts` + `cap-test-044..047` | `14f9f7f` | core 161/161; desktop/gui typecheck clean | **gate-green** |
 | WP2 | Reference profile, repo discovery, deterministic planning | WP1 | cap-sonnet-implementer (delegated ✓) | `packages/core/src/capabilities/generation/` | `def7616` | core 180/180 (19 new); CAP-TEST-048..053; all workspaces typecheck clean | **gate-green** |
 | WP3A | TypeScript runtime: core + Node/browser hosts + React + Electron IPC | WP1 | cap-sonnet-implementer (worktrees) | `packages/capabilities-runtime-ts/` | `e12f7da` (merged) | runtime-ts **89/89**, typecheck clean; standalone; node-free `.`/`./browser`/`./react`/preload; real node:http/CLI/cron; Electron pure logic tested (real-Electron E2E → WP8) | **gate-green** (TS runtime complete) |
-| WP3B | TS generators + executable slices | WP2, WP3A | TS runtime (Sonnet) | TS generators + examples | — | CAP-TEST-054..061 | todo |
+| WP3B-gen | TS code generators (contracts/composition/inbound/typescript) | WP2, WP3A | cap-sonnet-implementer (symlinked worktree) | `generation/{contracts,composition,inbound,typescript}.ts` | `87cd124` (merged) | pure/deterministic; core 233/233; CAP-TEST-054/055/056 | **gate-green** |
+| WP3B-slices | TS runnable example apps (headless/React web/Electron) | WP3B-gen | — | `examples/` (coord checkout, npm install) | — | CAP-TEST-057..061 (real E2E) | todo |
 | WP4A | Python runtime: core + FastAPI/CLI/worker hosts + adapters | WP1 | cap-sonnet-implementer (worktrees) | `runtimes/python/` | `338ac7f` (merged) | **127 pytest** at integrated tree; outcome→HTTP/CLI mapping frozen for parity; conftest fixes `.pth`/UF_HIDDEN | **gate-green** (Python runtime complete) |
 | WP4B | Python generators + executable slices | WP2, WP4A | Py runtime (Sonnet) | Py generators + examples | — | CAP-TEST-062..069 | todo |
 | WP5A | Foundation planning UI | WP1, WP2 | foundation workbench (Sonnet) | Design/Build UI | — | CAP-TEST-070..075 | todo |
@@ -96,21 +97,32 @@ NO sudo, fully reversible (delete the dir):
 - **`generation/index.ts` is a shared barrel** — run core/`generation` lanes one at a time, or have agents report new exports for the coordinator to wire (avoids merge conflicts).
 - Coordinator merges each lane branch with `--no-ff`, verifies at the integrated tree, updates this ledger. `react`/`react-dom`/`@types/react`/`electron` are already in `node_modules` (React/Electron lanes need no install).
 
+## Open issues / required reconciliations
+
+**SCHED-ENUM — fix before generated schedule adapters compile/run (WP3B-slices / WP4B / WP7):**
+Frozen CAP-CONTRACT-028 schedule enums diverge from what the runtimes implemented —
+- contract `OVERLAP_POLICIES=[skip,queue,allow-concurrent]` vs TS runtime `OverlapPolicy=[skip,allow]` (Python worker similar);
+- contract `MISFIRE_POLICIES=[run-once,skip,run-all]` vs TS runtime `MisfirePolicy=[skip-missed,run-once]`.
+WP3B-gen `inbound.ts` maps contract→runtime lossily (queue/allow-concurrent→allow; run-all→run-once) + emits a diagnostic.
+**Resolution: align the RUNTIMES to the canonical contract enums** (implement `queue` serialize + `run-all`
+catch-up in the TS `node` scheduler AND the Python `worker`; use the contract's names), then drop inbound.ts's
+lossy mapping. Cross-language (parity) — a focused reconciliation packet. Do NOT change the frozen contract enums.
+
 ## RESUME HERE — next session (second half)
 
-**Waves 1–2 COMPLETE** at HEAD `79d2fa3` on `claude/cap-era-integration` (LOCAL branch, not pushed).
+**Waves 1–2 + TS generators COMPLETE** at HEAD `87cd124` on `claude/cap-era-integration` (pushed to origin).
 Contract surface FROZEN at `14f9f7f` (hash `1cb8df5e…`) — do NOT change parity.ts `CONTRACT_REQUIRED_FIELDS`,
 types.ts contract types, or schemas; §17.6 change-request protocol for any defect.
 
-**Done + integrated:** WP0, WP1a/b (contracts+schema2.0), WP2 (generation/planning), WP3A (TS runtime
-core+Node/browser hosts, 63 tests), WP4A (Python runtime core+FastAPI/CLI/worker hosts, 127 pytest),
-WP6A (journey/entry-point model), WP9A (existing-repo migration prep). See the table above for commits.
+**Done + integrated:** WP0, WP1a/b (contracts+schema2.0), WP2 (generation/planning), **WP3A COMPLETE**
+(TS runtime core+Node/browser hosts+React+Electron, 89 tests), **WP4A COMPLETE** (Python runtime core+FastAPI/CLI/worker, 127 pytest),
+WP6A (journey/entry-point model), WP9A (existing-repo migration prep), WP3B-gen (TS code generators, core 233 tests). See the table.
 
-Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `79d2fa3`, read the
-"Parallel-execution model" + "Python environment" notes above, then release the remaining lanes
+Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `87cd124`, read the
+"Open issues", "Parallel-execution model", and "Python environment" notes above, then release the remaining lanes
 (≤4 concurrent `cap-sonnet-implementer`, 90 steps each; route each per the model):
-- **WP3A-react-electron** → `capabilities-runtime-ts` `./react` + Electron IPC (symlinked worktree; react/electron already in node_modules; NO install). Finishes the TS runtime.
-- **WP3B** → TS generators (`generation/typescript.ts`,`contracts.ts`,`composition.ts`,`inbound.ts` — core/generation worktree, one gen-lane at a time) + TS vertical slices (`examples/` runnable apps — coordinator checkout, npm install). Gate CAP-TEST-054..061.
+- **⚠ FIRST — SCHED-ENUM reconciliation** (see Open issues) before any schedule-adapter slice compiles.
+- **WP3B-slices** → TS runnable example apps (`examples/`: headless / React web / Electron) driving the generators — coordinator checkout (npm install). Gate CAP-TEST-057..061 (real E2E triggers).
 - **WP4B** → Python generators (`generation/python.ts`; Pydantic models + op protocols from schemas) + Python slices + React↔Python via generated OpenAPI + cross-language parity fixtures. Gate CAP-TEST-062..069.
 - **WP5A/WP5B** → Design/Build foundation UI (gui) + bridge/IPC plan/apply/rollback. Gate CAP-TEST-070..075.
 - **WP6B** → Connect editors over InboundBinding (gui); needs new bridge methods `capabilitiesListDeployables`/`capabilitiesListInboundBindings` (WP6A flagged). Gate CAP-TEST-076..083 (rest).
