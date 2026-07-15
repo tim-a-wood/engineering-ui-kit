@@ -1,0 +1,20 @@
+{
+  "name": "@engineering-ui-kit/example-ts-reference",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Headless TypeScript reference app proving the Capabilities TS runtime works end-to-end via a real HTTP API slice and a real CLI slice, both wired through one explicit composition root.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "start:http": "vite-node -c vitest.config.ts src/http/main.ts",
+    "start:cli": "vite-node -c vitest.config.ts src/cli/main.ts --"
+  },
+  "dependencies": {
+    "@engineering-ui-kit/capabilities-runtime": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}
