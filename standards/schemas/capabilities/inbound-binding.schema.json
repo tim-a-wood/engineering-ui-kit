@@ -61,6 +61,8 @@
     "rendererDeployableId": { "type": "string" },
     "mainDeployableId": { "type": "string" },
     "ipcChannel": { "type": "string" },
+    "loadingBehavior": { "type": "string" },
+    "dataMode": { "type": "string", "enum": ["connected", "approved-example", "invalid-input", "dependency-unavailable", "timeout"] },
 
     "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
     "path": { "type": "string" },

@@ -19,8 +19,71 @@ import type {
   Provenance,
   ResultEnvelope,
   SelectionEvidence,
+  UiInboundBinding,
 } from './types.js'
 import { validateContractRecord } from './validation.js'
+
+/**
+ * Migrate a CAP-CONTRACT-013 FrontendBinding to a CAP-CONTRACT-028 ui InboundBinding.
+ * Lossless: every FrontendBinding field is preserved (loadingBehavior and dataMode
+ * ride along on the ui variant); new InboundBinding fields get explicit migration
+ * defaults so the result is inspectable and reversible.
+ */
+export function frontendBindingToInboundBinding(
+  binding: FrontendBinding,
+  options: { deployableId: string },
+): UiInboundBinding {
+  return {
+    schemaVersion: '1.0',
+    kind: 'ui',
+    bindingId: binding.bindingId,
+    version: binding.version,
+    projectId: binding.projectId,
+    deployableId: options.deployableId,
+    operationId: binding.operationId,
+    operationVersion: binding.operationVersion,
+    inputMappings: binding.inputMappings,
+    outputMappings: binding.outputMappings,
+    validationBehavior: binding.validationBehavior,
+    domainRejectionBehavior: binding.domainRejectionBehavior,
+    technicalFailureBehavior: binding.technicalFailureBehavior,
+    timeoutBehavior: 'unspecified (migrated from FrontendBinding)',
+    cancellationBehavior: binding.cancellationBehavior,
+    retryBehavior: 'unspecified (migrated from FrontendBinding)',
+    duplicateSubmissionBehavior: binding.duplicateSubmissionBehavior,
+    exposure: 'private',
+    generatedTargets: [],
+    approvalState: 'migrated',
+    transport: 'browser-local',
+    trigger: binding.trigger,
+    selectionEvidence: binding.selectionEvidence,
+    loadingBehavior: binding.loadingBehavior,
+    dataMode: binding.dataMode,
+  }
+}
+
+/** Inverse of frontendBindingToInboundBinding — recovers the original FrontendBinding. */
+export function inboundBindingToFrontendBinding(binding: UiInboundBinding): FrontendBinding {
+  return {
+    schemaVersion: '1.0',
+    bindingId: binding.bindingId,
+    version: binding.version,
+    projectId: binding.projectId,
+    selectionEvidence: binding.selectionEvidence as SelectionEvidence,
+    trigger: binding.trigger,
+    operationId: binding.operationId,
+    operationVersion: binding.operationVersion,
+    inputMappings: binding.inputMappings,
+    outputMappings: binding.outputMappings,
+    loadingBehavior: binding.loadingBehavior ?? '',
+    validationBehavior: binding.validationBehavior,
+    domainRejectionBehavior: binding.domainRejectionBehavior,
+    technicalFailureBehavior: binding.technicalFailureBehavior,
+    cancellationBehavior: binding.cancellationBehavior,
+    duplicateSubmissionBehavior: binding.duplicateSubmissionBehavior,
+    dataMode: binding.dataMode as BindingDataMode,
+  }
+}
 
 export const BINDING_BEHAVIOR_FIELDS = [
   'loadingBehavior',

@@ -44,6 +44,12 @@ export type SchemaMeta = {
   initializedAt: string
 }
 
+/** The workspace schema version this build writes for new records. */
+export const CURRENT_WORKSPACE_SCHEMA_VERSION = '2.0' as const
+/** Versions this build can read and write. Anything else is future/read-only. */
+export const SUPPORTED_WORKSPACE_SCHEMA_VERSIONS = ['1.0', '2.0'] as const
+export type WorkspaceSchemaVersion = (typeof SUPPORTED_WORKSPACE_SCHEMA_VERSIONS)[number]
+
 export class CapabilityWorkspace {
   constructor(readonly dataDir: string) {}
 
@@ -80,7 +86,7 @@ export class CapabilityWorkspace {
   isFutureSchemaVersion(projectId: string): boolean {
     const meta = readJson<SchemaMeta>(path.join(this.root(projectId), 'meta', 'schema-version.json'))
     if (!meta) return false
-    return meta.schemaVersion !== '1.0'
+    return !(SUPPORTED_WORKSPACE_SCHEMA_VERSIONS as readonly string[]).includes(meta.schemaVersion)
   }
 
   private indexPath(projectId: string): string {

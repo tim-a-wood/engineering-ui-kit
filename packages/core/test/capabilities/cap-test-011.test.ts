@@ -71,7 +71,8 @@ describe('CAP-TEST-011 capability definition persistence', () => {
     const ws = tempWorkspace()
     ws.ensureInitialized('proj-1')
     const metaPath = path.join(ws.root('proj-1'), 'meta', 'schema-version.json')
-    fs.writeFileSync(metaPath, JSON.stringify({ schemaVersion: '2.0', initializedAt: new Date().toISOString() }))
+    // 2.0 is now a supported/current version; a genuinely future version is read-only.
+    fs.writeFileSync(metaPath, JSON.stringify({ schemaVersion: '3.0', initializedAt: new Date().toISOString() }))
     expect(ws.isFutureSchemaVersion('proj-1')).toBe(true)
     expect(() => ws.saveApplicationDraft('proj-1', draft('9'))).toThrow(/read-only/)
   })

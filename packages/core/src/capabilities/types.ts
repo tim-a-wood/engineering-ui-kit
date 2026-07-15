@@ -737,6 +737,10 @@ export type UiInboundBinding = InboundBindingBase & {
   rendererDeployableId?: string
   mainDeployableId?: string
   ipcChannel?: string
+  /** Preserved from a migrated FrontendBinding (CAP-CONTRACT-013). */
+  loadingBehavior?: string
+  /** Preserved from a migrated FrontendBinding (CAP-CONTRACT-013). */
+  dataMode?: BindingDataMode
 }
 export type HttpInboundBinding = InboundBindingBase & {
   kind: 'http'
