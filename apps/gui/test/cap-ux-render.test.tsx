@@ -167,48 +167,78 @@ function manifest(moduleId: string, ops: string[]): ModuleManifest {
   }
 }
 
-describe('Guided Connect (progressive four-substep)', () => {
+describe('Guided Connect (trigger-first, multi-host InboundBinding — WP6B)', () => {
   const records: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: manifest('mod.orders', ['op.placeOrder']) }]
-  // Without a selected element, only step 1 renders (honest gating outside packaged Electron).
-  const noElement = renderToStaticMarkup(
+  const uiDeployables = [{ deployableId: 'deployable.ui', kind: 'browser' as const, name: 'Application UI' }, { deployableId: 'deployable.main', kind: 'http-api' as const, name: 'Application' }]
+  const headlessOnlyDeployables = [{ deployableId: 'deployable.main', kind: 'http-api' as const, name: 'Application' }]
+
+  const withUi = renderToStaticMarkup(
     <GuidedConnect
-      bridge={bridge()} projectId="p1" records={records}
+      bridge={bridge()} projectId="p1" records={records} deployables={uiDeployables} inboundBindingRecords={[]}
       selectionEvidence={undefined} onSelectionEvidence={() => {}}
       previewRef={previewRef} onChanged={() => {}}
     />,
   )
-  // With a marked element, the capability step becomes available.
-  const evidence = { route: '/#/orders', documentTitle: 'Orders', selector: '#place', visibleText: 'Place order', elementTag: 'button', stableMarker: 'data-cap-id=place', captureTime: '2026-07-14T00:00:00.000Z' }
-  const withElement = renderToStaticMarkup(
+  const noUi = renderToStaticMarkup(
     <GuidedConnect
-      bridge={bridge()} projectId="p1" records={records}
-      selectionEvidence={evidence} onSelectionEvidence={() => {}}
+      bridge={bridge()} projectId="p1" records={records} deployables={headlessOnlyDeployables} inboundBindingRecords={[]}
+      selectionEvidence={undefined} onSelectionEvidence={() => {}}
       previewRef={previewRef} onChanged={() => {}}
     />,
   )
-  it('starts at "Select an element" and honestly disables selection outside packaged Electron', () => {
-    expect(noElement).toContain('Select an element')
-    expect(noElement).not.toContain('Preview binding picker')
-    expect(noElement).toContain('packaged desktop app')
-    // Capability/behavior are NOT claimed possible without a real element selection.
-    expect(noElement).not.toContain('aria-label="Capability"')
-    expect(noElement).not.toContain('While it runs')
+
+  it('opens with "How is this capability triggered?" offering every host kind when a UI deployable exists', () => {
+    expect(withUi).toContain('How is this capability triggered?')
+    expect(withUi).toContain('Existing or new UI')
+    expect(withUi).toContain('HTTP endpoint')
+    expect(withUi).toContain('Command line')
+    expect(withUi).toContain('Scheduled or background')
+    expect(withUi).toContain('Embedded library')
+    expect(withUi).toContain('Decide later')
   })
-  it('once an element is selected, humanizes the capability and never shows Binding ID or raw id@version', () => {
-    expect(withElement).toContain('aria-label="Capability"')
-    expect(withElement).toContain('Place Order')
-    expect(withElement).not.toContain('op.placeOrder @')
-    expect(withElement).not.toContain('aria-label="Binding ID"')
-    expect(withElement).not.toContain('binding.draft')
+
+  it('hides the UI trigger choice entirely when the app has no UI deployable', () => {
+    expect(noUi).not.toContain('Existing or new UI')
+    expect(noUi).toContain('HTTP endpoint')
+    expect(noUi).toContain('Command line')
+    expect(noUi).toContain('Scheduled or background')
+    expect(noUi).toContain('Embedded library')
   })
-  it('does not render behavior fields before a capability is chosen', () => {
-    // Element selected but no capability chosen yet -> step 3 withheld.
-    expect(withElement).not.toContain('While it runs')
-    expect(withElement).not.toContain('Something goes wrong')
+
+  it('does not render an editor or diagnostics before a trigger is chosen', () => {
+    expect(withUi).not.toContain('aria-label="Capability"')
+    expect(withUi).not.toContain('While it runs')
+    expect(withUi).not.toContain('To finish this connection')
   })
-  it('does not render diagnostics before an interaction or approval attempt', () => {
-    expect(withElement).not.toContain('To finish this connection')
-    expect(withElement).not.toContain('cap-issue-list')
+
+  it('lists configured entry points with kind, capability, status, and exposure — never a raw binding id', () => {
+    const html = renderToStaticMarkup(
+      <GuidedConnect
+        bridge={bridge()} projectId="p1" records={records} deployables={uiDeployables}
+        inboundBindingRecords={[
+          {
+            bindingId: 'binding.http.1',
+            approved: {
+              schemaVersion: '1.0', kind: 'http', bindingId: 'binding.http.1', version: '1.0.0', projectId: 'p1',
+              deployableId: 'deployable.main', operationId: 'op.placeOrder', operationVersion: '2.0',
+              inputMappings: [], outputMappings: [], validationBehavior: 'v', domainRejectionBehavior: 'd',
+              technicalFailureBehavior: 't', timeoutBehavior: 'to', cancellationBehavior: 'c', retryBehavior: 'r',
+              duplicateSubmissionBehavior: 'dup', exposure: 'protected', generatedTargets: [], approvalState: 'approved',
+              method: 'POST', path: '/orders/place',
+            },
+          },
+        ]}
+        selectionEvidence={undefined} onSelectionEvidence={() => {}}
+        previewRef={previewRef} onChanged={() => {}}
+      />,
+    )
+    expect(html).toContain('Configured entry points')
+    expect(html).toContain('HTTP endpoint')
+    expect(html).toContain('Place Order')
+    expect(html).toContain('Approved')
+    expect(html).toContain('protected')
+    expect(html).toContain('Add another entry point')
+    expect(html).not.toContain('binding.http.1')
   })
 })
 

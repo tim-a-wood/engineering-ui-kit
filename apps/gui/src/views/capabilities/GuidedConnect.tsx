@@ -55,8 +55,8 @@ type Props = {
   projectId: string
   project?: Project
   records: CapabilityModuleRecord[]
-  deployables: CapabilityDeployableSummary[]
-  inboundBindingRecords: InboundBindingReadRecord[]
+  deployables?: CapabilityDeployableSummary[]
+  inboundBindingRecords?: InboundBindingReadRecord[]
   selectionEvidence?: SelectionEvidence
   onSelectionEvidence: (e: SelectionEvidence | undefined) => void
   architectureVersion?: string
@@ -77,7 +77,9 @@ function newBindingId(kind: TriggerChoice): string {
 }
 
 export function GuidedConnect(props: Props) {
-  const { bridge, projectId, records, deployables, inboundBindingRecords } = props
+  const { bridge, projectId, records } = props
+  const deployables = props.deployables ?? []
+  const inboundBindingRecords = props.inboundBindingRecords ?? []
   const [triggerChoice, setTriggerChoice] = useState<TriggerChoice | undefined>(undefined)
   const [draftSeed, setDraftSeed] = useState(0)
 

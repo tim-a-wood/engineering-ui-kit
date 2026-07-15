@@ -118,7 +118,9 @@ export function UiBindingEditor(props: Props) {
   const [status, setStatus] = useState<Status | null>(null)
   const [ranOutcome, setRanOutcome] = useState<{ label: string; outcome: string; connected: boolean } | null>(null)
   const [uiProject, setUiProject] = useState<Project | undefined>(props.project)
-  const [uiConfirmed, setUiConfirmed] = useState(Boolean(props.project?.launchUrl))
+  // A configured launchUrl is not auto-trusted: the user must explicitly confirm it
+  // (or edit it) before the target-app Preview launches (CAP-PKT-024/025).
+  const [uiConfirmed, setUiConfirmed] = useState(!props.project)
   const [editingUi, setEditingUi] = useState(!props.project?.launchUrl)
   const [uiUrl, setUiUrl] = useState(props.project?.launchUrl ?? '')
   const [uiCommand, setUiCommand] = useState(props.project?.launchCommand ?? '')
@@ -243,7 +245,7 @@ export function UiBindingEditor(props: Props) {
 
   return (
     <div className="cap-connect-ui-editor" aria-label="UI entry point editor">
-      {!uiConfirmed && (
+      {(editingUi || !uiProject?.launchUrl) && (
         <section className="cap-connect-step active" aria-label="Configure the application UI">
           <header className="cap-connect-step-head"><h3>Configure the application UI</h3></header>
           <div className="cap-ui-setup-form" aria-label="Application UI setup">
@@ -282,16 +284,23 @@ export function UiBindingEditor(props: Props) {
         </section>
       )}
 
-      {uiConfirmed && !editingUi && (
-        <section className="cap-connect-step done" aria-label="Application UI source">
+      {!editingUi && uiProject?.launchUrl && (
+        <section className={uiConfirmed ? 'cap-connect-step done' : 'cap-connect-step active'} aria-label="Application UI source">
           <div className="cap-ui-source-card">
             <div className="cap-ui-source-icon" aria-hidden="true">↗</div>
             <div className="cap-ui-source-summary">
               <span className="capabilities-eyebrow">Application UI source</span>
-              <strong>{uiProject?.name}</strong>
-              <span><code>{uiProject?.launchUrl}</code></span>
+              <strong>{uiProject.name}</strong>
+              <span><code>{uiProject.launchUrl}</code></span>
             </div>
             <div className="cap-ui-source-actions">
+              {!uiConfirmed ? (
+                <button type="button" className="btn btn-primary btn-compact" onClick={() => setUiConfirmed(true)}>
+                  Use this UI
+                </button>
+              ) : (
+                <span className="status status-ok"><span className="status-dot" aria-hidden="true" /> Connected</span>
+              )}
               <button type="button" className="btn btn-secondary btn-compact" onClick={() => { setEditingUi(true); setUiConfirmed(false) }}>
                 Change UI setup
               </button>

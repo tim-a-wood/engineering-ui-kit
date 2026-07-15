@@ -22,6 +22,7 @@ import { ArchitectureView } from '../src/views/capabilities/ArchitectureView'
 import { CapabilityPreview } from '../src/views/capabilities/CapabilityPreview'
 import { projectArchitecture } from '@engineering-ui-kit/core/browser'
 import { GuideOverlay } from '../src/guides'
+import { installMockBridge } from '../src/mockBridge'
 
 afterEach(cleanup)
 
@@ -490,12 +491,13 @@ describe('capability preview recovery', () => {
   })
 })
 
-describe('guided connect isolation', () => {
+describe('guided connect isolation (WP6B trigger-first)', () => {
   const records: CapabilityModuleRecord[] = [{
     moduleId: 'mod.ui',
     approved: { schemaVersion: '1.0', architectureVersion: '1.0', moduleId: 'mod.ui', moduleVersion: '1.0.0', moduleType: 'experience', name: 'ui', responsibility: '', ownedConcerns: [], excludedConcerns: [], providedOperations: [{ operationId: 'op.placeOrder', contractVersion: '2.0' }], requiredOperations: [], verificationSuiteIds: [], runtimeAllocation: 'local-embedded', events: [], ownedPaths: [] } as never,
   }]
   const evidence = { route: '/#/orders', documentTitle: 'Orders', selector: '#p', visibleText: 'Place', elementTag: 'button', stableMarker: 'data-cap-id=p', captureTime: '2026-07-14T00:00:00.000Z' }
+  const uiDeployables = [{ deployableId: 'deployable.ui', kind: 'browser' as const, name: 'Application UI' }, { deployableId: 'deployable.main', kind: 'http-api' as const, name: 'Application' }]
 
   function fillAllBehaviors() {
     for (const label of ['While it runs', 'Invalid input', 'Request rejected', 'Something goes wrong', 'User cancels', 'Repeated submission']) {
@@ -503,21 +505,20 @@ describe('guided connect isolation', () => {
     }
   }
 
-  it('requires the configured project UI to be confirmed before launching its preview', async () => {
+  it('opens with the trigger question and requires the configured project UI to be confirmed before launching its preview', async () => {
     const launchApp = vi.fn(async () => ({ url: 'http://127.0.0.1:5402', started: false, rebuilt: false }))
     const configuredProject = {
       ...project('p1', 'Aircraft Performance'), repoPath: 'C:\\work\\aircraft-performance',
       launchUrl: 'http://127.0.0.1:5402', launchCommand: 'npm run dev',
     }
     const updateProject = vi.fn(async (_id, patch) => ({ ...configuredProject, ...patch }))
-    render(<GuidedConnect bridge={makeBridge({ launchApp: launchApp as never, updateProject: updateProject as never })} projectId="p1" project={configuredProject} records={records} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+    render(<GuidedConnect bridge={makeBridge({ launchApp: launchApp as never, updateProject: updateProject as never })} projectId="p1" project={configuredProject} records={records} deployables={uiDeployables} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
 
-    expect(screen.getByRole('region', { name: 'Step 1: Choose how this application connects' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'How is this capability triggered?' })).toBeTruthy()
     expect(launchApp).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('button', { name: /Connect a UI now/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
     await waitFor(() => expect(screen.getByText('Aircraft Performance')).toBeTruthy())
-    expect(screen.getByText('C:\\work\\aircraft-performance')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Use this UI' }))
     await waitFor(() => expect(launchApp).toHaveBeenCalledWith('p1', { open: false }))
     expect(await screen.findByTitle('Target application Preview')).toBeTruthy()
@@ -528,41 +529,42 @@ describe('guided connect isolation', () => {
     const updatedProject = { ...unconfiguredProject, launchUrl: 'http://localhost:4400', launchCommand: 'npm run ui' }
     const updateProject = vi.fn(async (_id, patch) => ({ ...unconfiguredProject, ...patch }))
     const launchApp = vi.fn(async () => ({ url: updatedProject.launchUrl, started: true, rebuilt: false }))
-    render(<GuidedConnect bridge={makeBridge({ updateProject: updateProject as never, launchApp: launchApp as never })} projectId="p1" project={unconfiguredProject} records={records} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+    render(<GuidedConnect bridge={makeBridge({ updateProject: updateProject as never, launchApp: launchApp as never })} projectId="p1" project={unconfiguredProject} records={records} deployables={uiDeployables} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Connect a UI now/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
     await waitFor(() => expect(screen.getByLabelText('Application UI URL')).toBeTruthy())
     fireEvent.change(screen.getByLabelText('Application UI URL'), { target: { value: 'http://localhost:4400' } })
     fireEvent.change(screen.getByLabelText('Application UI start command'), { target: { value: 'npm run ui' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save and use this UI' }))
 
     await waitFor(() => expect(updateProject).toHaveBeenLastCalledWith('p1', {
-      launchUrl: 'http://localhost:4400', launchCommand: 'npm run ui', capabilitiesConnectDisposition: 'connect-now',
+      launchUrl: 'http://localhost:4400', launchCommand: 'npm run ui',
     }))
     await waitFor(() => expect(launchApp).toHaveBeenCalledTimes(1))
     expect(screen.getByText('Connected')).toBeTruthy()
   })
 
-  it.each(['no-ui', 'deferred'] as const)('persists the %s choice without launching a preview', async (disposition) => {
+  it('"decide later" defers without launching a preview and never completes Connect on its own', async () => {
     const baseProject = project('p1', 'Service')
     const updateProject = vi.fn(async (_id, patch) => ({ ...baseProject, ...patch }))
     const launchApp = vi.fn()
-    const onProjectChanged = vi.fn(async () => {})
-    render(<GuidedConnect bridge={makeBridge({ updateProject: updateProject as never, launchApp: launchApp as never })} projectId="p1" project={baseProject} records={records} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} onProjectChanged={onProjectChanged} />)
+    render(<GuidedConnect bridge={makeBridge({ updateProject: updateProject as never, launchApp: launchApp as never })} projectId="p1" project={baseProject} records={records} deployables={uiDeployables} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
 
-    fireEvent.click(screen.getByRole('button', { name: disposition === 'no-ui' ? /No UI for this application/i : /Decide later/i }))
-    await waitFor(() => expect(updateProject).toHaveBeenCalledWith('p1', { capabilitiesConnectDisposition: disposition }))
-    expect(onProjectChanged).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: /Decide later/i }))
+    expect(screen.getByText(/Needs attention/i)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Decide later' }))
+    await waitFor(() => expect(updateProject).toHaveBeenCalledWith('p1', { capabilitiesConnectDisposition: 'deferred' }))
     expect(launchApp).not.toHaveBeenCalled()
   })
 
-  it('prevents duplicate Approve actions (one persistence call for a double click)', async () => {
-    const approveBinding = vi.fn(() => new Promise(() => {})) // never resolves -> stays busy
-    const saveBindingDraft = vi.fn(async () => ({ ok: true as const }))
-    const bridge = makeBridge({ capabilitiesApproveBinding: approveBinding as never, capabilitiesSaveBindingDraft: saveBindingDraft as never })
-    render(<GuidedConnect bridge={bridge} projectId="p1" records={records} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+  it('prevents duplicate Approve actions on the UI editor (one persistence call for a double click)', async () => {
+    const approveInboundBinding = vi.fn(() => new Promise(() => {})) // never resolves -> stays busy
+    const saveInboundBindingDraft = vi.fn(async () => ({ ok: true as const }))
+    const bridge = makeBridge({ capabilitiesApproveInboundBinding: approveInboundBinding as never, capabilitiesSaveInboundBindingDraft: saveInboundBindingDraft as never })
+    render(<GuidedConnect bridge={bridge} projectId="p1" records={records} deployables={uiDeployables} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
 
-    fireEvent.change(screen.getByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
+    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
     fillAllBehaviors()
 
@@ -570,12 +572,13 @@ describe('guided connect isolation', () => {
     fireEvent.click(approve)
     fireEvent.click(approve) // second click in the same tick must be ignored
     await new Promise((r) => setTimeout(r, 0))
-    expect(approveBinding).toHaveBeenCalledTimes(1)
+    expect(approveInboundBinding).toHaveBeenCalledTimes(1)
   })
 
   it('withholds Test and Approve until every behavior is described', async () => {
-    render(<GuidedConnect bridge={makeBridge()} projectId="p1" records={records} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
-    fireEvent.change(screen.getByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
+    render(<GuidedConnect bridge={makeBridge()} projectId="p1" records={records} deployables={uiDeployables} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
     // No behaviors filled yet -> both actions disabled.
     expect((screen.getByRole('button', { name: 'Approve connection' }) as HTMLButtonElement).disabled).toBe(true)
@@ -585,31 +588,124 @@ describe('guided connect isolation', () => {
   })
 
   it('re-initializes (empty behaviors) when the project identity changes', async () => {
-    const { rerender } = render(<GuidedConnect key="p1" bridge={makeBridge()} projectId="p1" records={records} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
-    fireEvent.change(screen.getByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
+    const { rerender } = render(<GuidedConnect key="p1" bridge={makeBridge()} projectId="p1" records={records} deployables={uiDeployables} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
     fireEvent.change(screen.getByLabelText('While it runs'), { target: { value: 'typed in project 1' } })
     expect((screen.getByLabelText('While it runs') as HTMLInputElement).value).toBe('typed in project 1')
-    // Remount under a new project key (as the shell does) -> fresh, empty editor.
-    rerender(<GuidedConnect key="p2" bridge={makeBridge()} projectId="p2" records={records} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
-    fireEvent.change(screen.getByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
+    // Remount under a new project key (as the shell does) -> fresh, empty editor back at the trigger question.
+    rerender(<GuidedConnect key="p2" bridge={makeBridge()} projectId="p2" records={records} deployables={uiDeployables} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+    expect(screen.getByRole('heading', { name: 'How is this capability triggered?' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
     expect((screen.getByLabelText('While it runs') as HTMLInputElement).value).toBe('')
   })
 
-  it('reflects a refreshed canonical binding when its id and version are unchanged', async () => {
-    const canonical = (loadingBehavior: string) => ({
-      bindingId: 'binding.same', version: '1.0.0', projectId: 'p1', selectionEvidence: evidence,
-      trigger: 'activate' as const, operationId: 'op.placeOrder', operationVersion: '2.0',
-      inputMappings: [], outputMappings: [], loadingBehavior, validationBehavior: 'v',
-      domainRejectionBehavior: 'd', technicalFailureBehavior: 't', cancellationBehavior: 'c',
-      duplicateSubmissionBehavior: 'x', dataMode: 'connected' as const,
+  it('the trigger picker offers every host and hides the UI choice when there is no UI deployable', () => {
+    const headlessOnly = [{ deployableId: 'deployable.main', kind: 'http-api' as const, name: 'Application' }]
+    render(<GuidedConnect bridge={makeBridge()} projectId="p1" records={records} deployables={headlessOnly} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+    expect(screen.queryByRole('button', { name: /Existing or new UI/i })).toBeNull()
+    expect(screen.getByRole('button', { name: /HTTP endpoint/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Command line/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Scheduled or background/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Embedded library/i })).toBeTruthy()
+  })
+
+  it('persists an HTTP entry point via the mock bridge and allows a second binding on the same operation', async () => {
+    const bridge = installMockBridge()
+    await bridge.capabilitiesEnsureInitialized('p1')
+    render(<GuidedConnect bridge={bridge} projectId="p1" records={records} deployables={uiDeployables} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /HTTP endpoint/i }))
+    fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
+    fireEvent.change(screen.getByLabelText('HTTP path'), { target: { value: '/orders/place' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Approve entry point' }))
+    // Wait for the APPROVE to actually land (not just the intermediate draft-save half of the flow).
+    await waitFor(async () => {
+      const list = await bridge.capabilitiesListInboundBindings('p1')
+      expect(list.length).toBe(1)
+      expect(list[0]?.approved).toBeTruthy()
     })
-    const props = { bridge: makeBridge(), projectId: 'p1', records, selectionEvidence: evidence, onSelectionEvidence: () => {}, previewRef: { current: null }, onChanged: () => {} }
-    const { rerender } = render(<GuidedConnect {...props} initialBinding={canonical('old behavior')} />)
-    expect((screen.getByLabelText('While it runs') as HTMLInputElement).value).toBe('old behavior')
-    rerender(<GuidedConnect {...props} initialBinding={canonical('canonical refreshed behavior')} />)
-    await waitFor(() => expect((screen.getByLabelText('While it runs') as HTMLInputElement).value).toBe('canonical refreshed behavior'))
+
+    // Back at the picker (or "add another") — add a second HTTP entry point for the SAME operation.
+    fireEvent.click(await screen.findByRole('button', { name: /HTTP endpoint/i }))
+    fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
+    fireEvent.change(screen.getByLabelText('HTTP path'), { target: { value: '/orders/place-alt' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Approve entry point' }))
+
+    const persisted = await waitFor(async () => {
+      const list = await bridge.capabilitiesListInboundBindings('p1')
+      expect(list.length).toBe(2)
+      // Both must be fully APPROVED (not merely present as a draft mid-flight) before asserting on them.
+      expect(list.every((r) => Boolean(r.approved))).toBe(true)
+      return list
+    })
+    expect(persisted.every((r) => r.approved?.operationId === 'op.placeOrder')).toBe(true)
+    expect(new Set(persisted.map((r) => r.bindingId)).size).toBe(2)
+    expect(persisted.every((r) => r.approved?.exposure === 'private')).toBe(true)
+  })
+
+  it('CLI and scheduled entry points are keyboard-accessible (labeled native controls) and persist via the mock bridge', async () => {
+    const bridge = installMockBridge()
+    await bridge.capabilitiesEnsureInitialized('p1')
+    render(<GuidedConnect bridge={bridge} projectId="p1" records={records} deployables={uiDeployables} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Command line/i }))
+    fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
+    fireEvent.change(screen.getByLabelText('Command'), { target: { value: 'orders place' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Approve entry point' }))
+    await waitFor(async () => expect((await bridge.capabilitiesListInboundBindings('p1'))[0]?.approved?.kind).toBe('cli'))
+
+    fireEvent.click(await screen.findByRole('button', { name: /Scheduled or background/i }))
+    fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
+    fireEvent.change(screen.getByLabelText('Cron expression'), { target: { value: '0 * * * *' } })
+    fireEvent.change(screen.getByLabelText('Timezone'), { target: { value: 'UTC' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Approve entry point' }))
+    await waitFor(async () => expect((await bridge.capabilitiesListInboundBindings('p1')).length).toBe(2))
+  })
+
+  it('embedded-library entry points require an explicit reason before they can be approved', async () => {
+    const bridge = installMockBridge()
+    await bridge.capabilitiesEnsureInitialized('p1')
+    render(<GuidedConnect bridge={bridge} projectId="p1" records={records} deployables={uiDeployables} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Embedded library/i }))
+    fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
+    fireEvent.change(screen.getByLabelText('Exported callable'), { target: { value: 'placeOrder' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Approve entry point' }))
+    expect((await screen.findAllByText(/explain why this operation is only reachable/i)).length).toBeGreaterThan(0)
+    expect(await bridge.capabilitiesListInboundBindings('p1')).toEqual([])
+
+    fireEvent.change(screen.getByLabelText('Reason this is embedded-library only'), { target: { value: 'Only ever invoked in-process by the batch job runner.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Approve entry point' }))
+    await waitFor(async () => expect((await bridge.capabilitiesListInboundBindings('p1'))[0]?.approved?.kind).toBe('embedded-library'))
+  })
+
+  it('elevating exposure beyond private requires the deliberate control', async () => {
+    const bridge = installMockBridge()
+    await bridge.capabilitiesEnsureInitialized('p1')
+    render(<GuidedConnect bridge={bridge} projectId="p1" records={records} deployables={uiDeployables} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /HTTP endpoint/i }))
+    fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
+    fireEvent.change(screen.getByLabelText('HTTP path'), { target: { value: '/orders/place' } })
+    expect(screen.queryByLabelText('Exposure level')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Approve entry point' }))
+    await waitFor(async () => expect((await bridge.capabilitiesListInboundBindings('p1'))[0]?.approved?.exposure).toBe('private'))
+
+    fireEvent.click(await screen.findByRole('button', { name: /HTTP endpoint/i }))
+    fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
+    fireEvent.change(screen.getByLabelText('HTTP path'), { target: { value: '/orders/place-2' } })
+    fireEvent.click(screen.getByLabelText('Allow this entry point to be reached from outside this application'))
+    expect(screen.getByLabelText('Exposure level')).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Exposure level'), { target: { value: 'public' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Approve entry point' }))
+    await waitFor(async () => {
+      const list = await bridge.capabilitiesListInboundBindings('p1')
+      expect(list.some((r) => r.approved?.exposure === 'public')).toBe(true)
+    })
   })
 })
 
