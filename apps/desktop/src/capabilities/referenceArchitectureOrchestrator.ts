@@ -225,7 +225,7 @@ function locatePythonRuntime(): string | undefined {
   return candidates.find((candidate) => fs.existsSync(path.join(candidate, 'pyproject.toml')))
 }
 
-function buildRuntimeDistribution(deployable: DeployableSpecification, targetRoot: string): RuntimeDistribution {
+export function buildRuntimeDistribution(deployable: DeployableSpecification, targetRoot: string): RuntimeDistribution {
   const result: RuntimeDistribution = { files: [], dependencies: [], commands: [], blockers: [] }
   if (deployable.runtimeLanguage === 'typescript') {
     const runtimeRoot = locateTypeScriptRuntime()
@@ -305,17 +305,21 @@ function buildRuntimeDistribution(deployable: DeployableSpecification, targetRoo
         reason: 'bundled Python reference-architecture runtime',
       })
     }
+    const hostDependencies = deployable.kind === 'http-api' ? ['uvicorn==0.35.0'] : []
     result.files.push({
       path: 'requirements.engineering-ui.txt',
       // A normal local-path install works with the older pip bundled by some
       // supported Python 3.11 installations. Editable PEP 660 installs would
       // unnecessarily require a newer pip just to consume generated runtime
       // infrastructure.
-      contents: `./${vendorRoot}\n`,
+      contents: [`./${vendorRoot}`, ...hostDependencies, ''].join('\n'),
       ownership: 'generated',
       reason: 'install the bundled Python reference-architecture runtime and its declared dependencies',
     })
     result.dependencies.push({ packageName: 'engineering-ui-capabilities-runtime', language: 'python', toVersion: '0.1.0', reason: 'generated adapters and composition root import the project runtime' })
+    if (deployable.kind === 'http-api') {
+      result.dependencies.push({ packageName: 'uvicorn', language: 'python', toVersion: '0.35.0', reason: 'generated Python HTTP host launches the ASGI application with uvicorn' })
+    }
     const pythonCommand = pythonCommandFor(targetRoot)
     result.commands.push(`${pythonCommand} -m pip install -r requirements.engineering-ui.txt`)
     if (deployable.kind === 'http-api') {
@@ -710,10 +714,23 @@ export class ReferenceArchitectureOrchestrator {
       inboundBindingId: binding.bindingId,
     })).sort((a, b) => a.inboundBindingId.localeCompare(b.inboundBindingId))
     const inboundAdapterRefs = bindings.map((binding) => binding.bindingId).sort()
+    const deployable = this.approvedDeployable(projectId, deployableId)
+    const requiredOperationIds = new Set(deployable.moduleIds.flatMap((moduleId) =>
+      this.integration.getModuleSpecification(projectId, moduleId)?.requiredOperations.map((operation) => operation.operationId) ?? []))
+    const allApprovedBindings = this.capabilities.listInboundBindings(projectId)
+      .map((record) => record.approved)
+      .filter((binding): binding is InboundBinding => binding !== undefined)
+    const remoteHttpRefs = allApprovedBindings
+      .filter((binding) => binding.kind === 'http' && binding.deployableId !== deployableId && requiredOperationIds.has(binding.operationId))
+      .map((binding) => binding.bindingId)
+    const approvedBindingIds = new Set(allApprovedBindings.map((binding) => binding.bindingId))
+    const customOutboundRefs = current.outboundAdapterRefs.filter((reference) => !approvedBindingIds.has(reference))
+    const outboundAdapterRefs = [...new Set([...customOutboundRefs, ...remoteHttpRefs])].sort()
     if (canonicalHash(current.operationRoutes) === canonicalHash(operationRoutes)
-      && canonicalHash(current.inboundAdapterRefs) === canonicalHash(inboundAdapterRefs)) return
+      && canonicalHash(current.inboundAdapterRefs) === canonicalHash(inboundAdapterRefs)
+      && canonicalHash(current.outboundAdapterRefs) === canonicalHash(outboundAdapterRefs)) return
     const { compositionHash: _priorHash, ...priorBody } = current
-    const body = { ...priorBody, operationRoutes, inboundAdapterRefs }
+    const body = { ...priorBody, operationRoutes, inboundAdapterRefs, outboundAdapterRefs }
     this.integration.saveCompositionManifest({ ...body, compositionHash: canonicalHash(body) })
   }
 
@@ -1010,6 +1027,38 @@ export class ReferenceArchitectureOrchestrator {
         kind: 'in-process',
         start: async () => {
           let child: ChildProcess | undefined
+          const dependencyChildren: ChildProcess[] = []
+          for (const remoteBinding of collected.remoteHttpBindings) {
+            const remoteDeployable = this.approvedDeployable(input.projectId, remoteBinding.deployableId)
+            const remoteLaunchText = generatedLaunchCommand(remoteDeployable, collected.project.repoPath, remoteBinding)
+              ?? remoteDeployable.commands.launch
+            if (!remoteLaunchText) throw new Error(`remote HTTP deployable "${remoteDeployable.deployableId}" has no approved launch command`)
+            const healthUrl = `http://127.0.0.1:3000/${remoteDeployable.runtimeLanguage === 'python' ? 'healthz' : 'health'}`
+            if (!(await urlReachable(healthUrl))) {
+              const approved = parseApprovedCommand(remoteLaunchText)
+              const dependency = spawn(approved.command, approved.args, {
+                cwd: collected.project.repoPath,
+                env: remoteDeployable.runtimeLanguage === 'python' ? {
+                  ...process.env,
+                  PORT: '3000',
+                  PYTHONPATH: [
+                    collected.project.repoPath,
+                    path.join(collected.project.repoPath, '.engineering-ui/capabilities/runtime/python/src'),
+                    process.env.PYTHONPATH,
+                  ].filter(Boolean).join(path.delimiter),
+                } : { ...process.env, PORT: '3000' },
+                stdio: ['ignore', 'pipe', 'pipe'],
+                detached: process.platform !== 'win32',
+              })
+              dependencyChildren.push(dependency)
+              try {
+                await waitForUrl(healthUrl, 15_000)
+              } catch (error) {
+                await stopSpawnedProcess(dependency)
+                throw error
+              }
+            }
+          }
           if (!(await urlReachable(launchUrl))) {
             if (!collected.project.launchCommand) throw new Error('the configured UI is not running and has no approved launch command')
             const approved = parseApprovedCommand(collected.project.launchCommand)
@@ -1017,7 +1066,13 @@ export class ReferenceArchitectureOrchestrator {
               cwd: collected.project.repoPath, env: process.env, stdio: ['ignore', 'pipe', 'pipe'],
               detached: process.platform !== 'win32',
             })
-            await waitForUrl(launchUrl, 45_000)
+            try {
+              await waitForUrl(launchUrl, 45_000)
+            } catch (error) {
+              await stopSpawnedProcess(child)
+              for (const dependency of dependencyChildren) await stopSpawnedProcess(dependency)
+              throw error
+            }
           }
           const { BrowserWindow } = await import('electron')
           const verificationWindow = new BrowserWindow({
@@ -1049,6 +1104,7 @@ export class ReferenceArchitectureOrchestrator {
             close: async () => {
               if (!verificationWindow.isDestroyed()) verificationWindow.destroy()
               await stopSpawnedProcess(child)
+              for (const dependency of dependencyChildren) await stopSpawnedProcess(dependency)
             },
           }
         },

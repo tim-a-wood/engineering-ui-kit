@@ -19,6 +19,27 @@ class OpenApiConsistencyError(AssertionError):
     pass
 
 
+def _validation_shape(value: Any) -> Any:
+    """Return the validation-relevant JSON Schema shape.
+
+    FastAPI's OpenAPI encoder removes JSON Schema ``default: null`` values
+    from ``openapi_extra``. ``default`` is an annotation and never changes
+    whether an instance validates, so comparing it would report false drift
+    for ordinary optional Pydantic fields. All structural validation keywords
+    remain part of the comparison.
+    """
+
+    if isinstance(value, Mapping):
+        return {
+            key: _validation_shape(item)
+            for key, item in value.items()
+            if key != "default"
+        }
+    if isinstance(value, list):
+        return [_validation_shape(item) for item in value]
+    return value
+
+
 def documented_request_schema(app: FastAPI, path: str, method: str) -> Mapping[str, Any]:
     spec = app.openapi()
     try:
@@ -42,7 +63,7 @@ def assert_operation_schema_in_openapi(
     """
 
     documented = documented_request_schema(app, path, method)
-    if documented != dict(input_schema):
+    if _validation_shape(documented) != _validation_shape(dict(input_schema)):
         raise OpenApiConsistencyError(
             f"OpenAPI request body schema for {method.upper()} {path} does not match the operation's "
             "input schema (documentation/runtime drift detected)."

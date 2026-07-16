@@ -12,7 +12,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { createPythonHeadlessFixture, createTypeScriptUiFixture } from './production-capabilities-fixtures.mjs'
+import { createMixedReactPythonFixture, createPythonHeadlessFixture, createTypeScriptUiFixture } from './production-capabilities-fixtures.mjs'
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const EVIDENCE_DIR = path.join(REPO_ROOT, 'apps/desktop/validation-evidence/capabilities-production/packaged')
@@ -21,7 +21,7 @@ const TIMEOUT = Number(process.env.EUIK_PACKAGED_TIMEOUT_MS ?? 60_000)
 const JOURNEY_TIMEOUT = Number(process.env.EUIK_PACKAGED_JOURNEY_TIMEOUT_MS ?? 360_000)
 
 fs.mkdirSync(EVIDENCE_DIR, { recursive: true })
-for (const stale of ['failure.json', 'failure.png', 'python-failure.png']) fs.rmSync(path.join(EVIDENCE_DIR, stale), { force: true })
+for (const stale of ['failure.json', 'failure.png', 'python-failure.png', 'mixed-failure.png']) fs.rmSync(path.join(EVIDENCE_DIR, stale), { force: true })
 
 function run(command, args, cwd = REPO_ROOT) {
   const result = spawnSync(command, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' })
@@ -113,7 +113,7 @@ async function answerFoundationQuestions(page) {
   }
 }
 
-async function selectTargetButton(page, app, targetUrl) {
+async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Selected Run capability') {
   await click(page.getByRole('button', { name: 'Select preview element' }), 'select preview element')
   await expectVisible(page.getByRole('button', { name: 'Click an element…' }), 'active target element picker')
   const preview = page.getByLabel('Target application Preview')
@@ -134,7 +134,20 @@ async function selectTargetButton(page, app, targetUrl) {
     return true
   }, targetUrl)
   if (!clicked) throw new Error('Target preview guest webContents was not found')
-  await waitForStatus(page, 'Selected Run capability')
+  await waitForStatus(page, expectedSelection)
+}
+
+async function generateApplyBuild(page, deployableId) {
+  const card = page.getByRole('article', { name: `Integration for ${deployableId}` })
+  await click(card.getByRole('button', { name: /Preview generation|Regenerate plan/ }), `Preview ${deployableId}`)
+  await expectVisible(card.getByText('Generation plan is ready for review.', { exact: false }), `${deployableId} plan-ready status`)
+  const acceptDirty = card.getByLabel(/I reviewed and accept applying this plan/)
+  if (await acceptDirty.count()) await acceptDirty.check()
+  await waitEnabled(card.getByRole('button', { name: 'Apply generation plan' }), `${deployableId} generation apply`)
+  await click(card.getByRole('button', { name: 'Apply generation plan' }), `Apply ${deployableId}`)
+  await expectVisible(card.getByText('Reference-architecture infrastructure applied.', { exact: false }), `${deployableId} apply status`)
+  await click(card.getByRole('button', { name: 'Install, build & test' }), `Build ${deployableId}`)
+  await expectVisible(card.getByText('Install, build, and test commands completed.', { exact: false }), `${deployableId} command status`)
 }
 
 function stopPort(url) {
@@ -414,6 +427,130 @@ async function runPythonHeadlessJourney(electron) {
   }
 }
 
+async function runMixedReactPythonJourney(electron) {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'euik-production-mixed-'))
+  const fixtureRepo = path.join(scratch, 'repo')
+  const dataDir = path.join(scratch, 'data')
+  fs.mkdirSync(fixtureRepo, { recursive: true })
+  fs.mkdirSync(dataDir, { recursive: true })
+  const fixture = createMixedReactPythonFixture(fixtureRepo, 'production-mixed', 56_000 + Math.floor(Math.random() * 3_000))
+  const workspacePython = path.join(REPO_ROOT, process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python')
+  const python = process.env.PYTHON ?? (fs.existsSync(workspacePython) ? workspacePython : process.platform === 'win32' ? 'python' : 'python3')
+  run(python, ['-m', 'venv', path.join(fixtureRepo, '.venv')])
+  const executablePath = packagedExecutable()
+  const app = await electron.launch({
+    executablePath,
+    env: { ...process.env, EUIK_DATA_DIR: dataDir, EUIK_TEST_MODE: '1', EUIK_TEST_PICK_DIR: fixtureRepo, NO_PROXY: '127.0.0.1,localhost' },
+    timeout: TIMEOUT,
+  })
+  const evidence = { journey: 'mixed-react-python-http', executablePath, packaged: false, scratch, screenshots: [], passed: false }
+  try {
+    const page = await app.firstWindow({ timeout: TIMEOUT })
+    page.setDefaultTimeout(TIMEOUT)
+    await page.waitForLoadState('domcontentloaded')
+    if (!await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)) throw new Error('Electron reports app.isPackaged=false')
+    evidence.packaged = true
+
+    await click(page.getByRole('button', { name: 'New Project' }).first(), 'New Project')
+    await page.getByLabel('Project name').fill('Production Mixed Journey')
+    await click(page.getByRole('button', { name: 'Browse' }), 'repository Browse')
+    await click(page.getByRole('button', { name: 'Create Project' }), 'Create Project')
+    await click(page.getByRole('button', { name: 'Capabilities' }), 'Capabilities navigation')
+    await page.getByLabel('Capabilities project').selectOption({ label: 'Production Mixed Journey' })
+    await chooseInterviewFile(page, fixture.responseFiles.product, 'Application definition')
+    await waitForStatus(page, 'Interview imported')
+    await click(page.getByRole('button', { name: 'Approve definition' }), 'Approve definition')
+    await waitForStatus(page, 'Approved application revision')
+    await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode')
+    await click(page.getByRole('tab', { name: 'Architecture' }), 'Architecture tab')
+    await waitEnabled(page.getByRole('button', { name: 'Export architecture interview' }), 'loaded architecture interview')
+    await chooseInterviewFile(page, fixture.responseFiles.architecture, 'Architecture interview')
+    await waitForStatus(page, 'Imported architecture proposal')
+    await click(page.getByRole('button', { name: 'Approve architecture' }), 'Approve architecture')
+    await waitForStatus(page, 'Architecture approved')
+    await click(page.getByRole('button', { name: 'Propose foundation plan' }), 'Propose foundation plan')
+    await waitEnabled(page.getByRole('button', { name: 'Approve foundation' }), 'ready mixed foundation approval')
+    await click(page.getByRole('button', { name: 'Approve foundation' }), 'Approve foundation')
+    await waitForStatus(page, 'Approved foundation plan')
+
+    await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab')
+    for (const [moduleId, responseFile] of [['mod.ui', fixture.responseFiles.uiModule], ['mod.echo', fixture.responseFiles.domainModule]]) {
+      const selector = page.getByRole('button', { name: `Select module ${moduleId}` })
+      await click(selector, `Select ${moduleId}`)
+      const deadline = Date.now() + TIMEOUT
+      while (Date.now() < deadline && await selector.getAttribute('aria-current') !== 'true') await page.waitForTimeout(100)
+      const moduleImport = page.locator('[aria-label="Import module interview response"] input[type=file]')
+      await moduleImport.first().setInputFiles(responseFile)
+      await waitForStatus(page, 'Imported module draft')
+      await click(page.getByRole('button', { name: 'Approve module' }).first(), `Approve ${moduleId}`)
+      await waitForStatus(page, 'Approved module')
+    }
+
+    await page.getByLabel(`Implementation factory for ${fixture.uiOperationId}`).fill('src/ui/run.ts#createUiRun')
+    await click(page.getByRole('article', { name: 'Integration for browser' }).getByRole('button', { name: 'Save composition factories' }), 'Save browser factories')
+    await page.getByLabel(`Implementation factory for ${fixture.domainOperationId}`).fill('src/domain/echo.py#create_echo_run')
+    await click(page.getByRole('article', { name: 'Integration for http-api' }).getByRole('button', { name: 'Save composition factories' }), 'Save Python factories')
+    await generateApplyBuild(page, 'browser')
+    await generateApplyBuild(page, 'http-api')
+    evidence.screenshots.push(await shot(page, '21-mixed-deployables-applied'))
+
+    await click(page.getByRole('tab', { name: 'Connections' }), 'Connections tab')
+    await click(page.getByRole('button', { name: /HTTP endpoint/i }), 'HTTP trigger choice')
+    await page.getByLabel('Capability', { exact: true }).selectOption(`${fixture.domainOperationId}@1.0.0`)
+    await page.getByLabel('HTTP path').fill('/echo')
+    await click(page.getByRole('button', { name: 'Approve entry point' }), 'Approve Python HTTP entry point')
+    await expectVisible(page.getByRole('region', { name: 'Configured entry points' }), 'configured HTTP entry point')
+
+    await click(page.getByRole('button', { name: /Existing or new UI/i }), 'UI trigger choice')
+    if (!await page.getByLabel('Application UI URL').count()) await click(page.getByRole('button', { name: 'Change UI setup' }), 'Change UI setup')
+    await page.getByLabel('Application UI URL').fill(fixture.uiUrl)
+    await page.getByLabel('Application UI start command').fill('npm run dev')
+    await click(page.getByRole('button', { name: 'Save and use this UI' }), 'Save mixed UI')
+    const useUi = page.getByRole('button', { name: 'Use this UI', exact: true })
+    if (await useUi.count()) await click(useUi, 'Use mixed UI')
+    await expectVisible(page.locator('webview'), 'mixed target application webview')
+    await page.waitForTimeout(1_000)
+    await selectTargetButton(page, app, fixture.uiUrl, 'Selected Run mixed capability')
+    await page.getByLabel('Capability', { exact: true }).selectOption(`${fixture.uiOperationId}@1.0.0`)
+    for (const input of await page.getByRole('region', { name: 'Define visible behavior' }).locator('input').all()) await input.fill('Show the cross-language outcome clearly.')
+    await page.getByLabel('Test mode').selectOption('approved-example')
+    await click(page.getByRole('button', { name: 'Run simulation' }), 'Run mixed simulation')
+    await click(page.getByRole('button', { name: 'Approve connection' }), 'Approve mixed UI entry point')
+    await expectVisible(page.getByRole('region', { name: 'Configured entry points' }).getByText('Approved', { exact: true }).last(), 'approved mixed UI status')
+
+    await generateApplyBuild(page, 'http-api')
+    await generateApplyBuild(page, 'browser')
+    evidence.screenshots.push(await shot(page, '22-mixed-http-and-ui-connected'))
+
+    await click(page.getByRole('tab', { name: 'Verification' }), 'Verification tab')
+    const httpCard = page.locator('.cap-verification-card').filter({ hasText: 'http entry point' })
+    await click(httpCard.getByRole('button', { name: 'Run real verification' }), 'Run Python HTTP verification')
+    await expectVisible(httpCard.getByText('pass', { exact: true }), 'current HTTP passing evidence')
+    const httpBindingId = (await httpCard.locator('h4').textContent())?.trim()
+    if (!httpBindingId) throw new Error('HTTP verification card did not expose its binding id')
+    const uiCard = page.locator('.cap-verification-card').filter({ hasText: 'ui entry point' })
+    await click(uiCard.getByRole('button', { name: 'Run real verification' }), 'Run React-to-Python verification')
+    await expectVisible(uiCard.getByText('pass', { exact: true }), 'current mixed passing evidence')
+    await expectVisible(uiCard.getByText(httpBindingId, { exact: true }), 'cross-language outbound HTTP trace')
+    evidence.screenshots.push(await shot(page, '23-mixed-cross-language-verification'))
+    evidence.passed = true
+    return evidence
+  } catch (error) {
+    const page = app.windows()[0]
+    if (page) {
+      evidence.screenshots.push(await shot(page, 'mixed-failure').catch(() => ''))
+      evidence.visibleText = await page.locator('body').innerText().catch(() => '')
+    }
+    evidence.error = error instanceof Error ? error.stack : String(error)
+    throw error
+  } finally {
+    await app.close().catch(() => {})
+    stopPort(fixture.uiUrl)
+    stopPort('http://127.0.0.1:3000')
+    fs.writeFileSync(path.join(EVIDENCE_DIR, 'mixed-react-python.json'), JSON.stringify(evidence, null, 2) + '\n')
+  }
+}
+
 const watchdog = setTimeout(() => {
   console.error(`Packaged production journey exceeded ${JOURNEY_TIMEOUT}ms`)
   process.exit(1)
@@ -429,10 +566,11 @@ try {
     run('npm', ['run', 'package:dir', '-w', 'apps/desktop'])
   }
   const { _electron } = await import('playwright')
-  const selected = new Set((process.env.EUIK_PACKAGED_JOURNEYS ?? 'typescript-ui,python-headless').split(',').map((value) => value.trim()).filter(Boolean))
+  const selected = new Set((process.env.EUIK_PACKAGED_JOURNEYS ?? 'typescript-ui,python-headless,mixed').split(',').map((value) => value.trim()).filter(Boolean))
   const results = []
   if (selected.has('typescript-ui')) results.push(await runTypeScriptUiJourney(_electron))
   if (selected.has('python-headless')) results.push(await runPythonHeadlessJourney(_electron))
+  if (selected.has('mixed')) results.push(await runMixedReactPythonJourney(_electron))
   if (results.length === 0) throw new Error('EUIK_PACKAGED_JOURNEYS did not select a known journey')
   console.log(JSON.stringify(results, null, 2))
   if (results.some((result) => !result.passed)) process.exitCode = 1

@@ -646,9 +646,12 @@ function planTypescriptFiles(input: {
         '    signal: options.signal,',
         '  })',
         '  const body = await response.json() as Record<string, unknown>',
-        "  if (body.kind === 'failed') return { ...body, safeMessage: body.safe_message, causeRef: body.cause_ref } as Outcome<" + `${successType}, ${rejectionType}, ${technicalType}>`,
-        "  if (body.kind === 'timed_out') return { ...body, kind: 'timedOut' } as Outcome<" + `${successType}, ${rejectionType}, ${technicalType}>`,
-        `  return body as Outcome<${successType}, ${rejectionType}, ${technicalType}>`,
+        "  if (body.kind === 'failed') return { ...body, safeMessage: body.safe_message, causeRef: body.cause_ref } as unknown as Outcome<" + `${successType}, ${rejectionType}, ${technicalType}>`,
+        "  if (body.kind === 'timed_out') return { ...body, kind: 'timedOut' } as unknown as Outcome<" + `${successType}, ${rejectionType}, ${technicalType}>`,
+        // JSON is an untyped trust boundary. The generated client deliberately
+        // makes that boundary explicit instead of using an invalid direct cast
+        // from Record<string, unknown> under strict TypeScript checking.
+        `  return body as unknown as Outcome<${successType}, ${rejectionType}, ${technicalType}>`,
         '}',
       ].join('\n'))
     }

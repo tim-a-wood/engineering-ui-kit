@@ -66,6 +66,7 @@ import type { Workspace } from '@engineering-ui-kit/core'
 import { createMatlabAdapter } from './matlabAdapter.js'
 import { discover as azureDiscover, importWorkItem as azureImportWorkItem } from './azureAdapter.js'
 import { ReferenceArchitectureOrchestrator } from './referenceArchitectureOrchestrator.js'
+import { pyprojectManifestContent, requirementsTxtDependencies } from './repositoryEvidence.js'
 
 const CAP_CHANNELS = {
   ensureInitialized: 'capabilities:ensure-initialized',
@@ -179,18 +180,6 @@ function walkRepositoryFilePaths(root: string, maxFiles = 5000): string[] {
   return files
 }
 
-/** Minimal `requirements.txt` -> pseudo-manifest parse, just enough for framework-name detection. */
-function requirementsTxtDependencies(text: string): Record<string, string> {
-  const deps: Record<string, string> = {}
-  for (const rawLine of text.split('\n')) {
-    const line = rawLine.split('#')[0]!.trim()
-    if (!line || line.startsWith('-')) continue
-    const name = line.split(/[<>=~!; \[]/)[0]?.trim()
-    if (name) deps[name] = ''
-  }
-  return deps
-}
-
 /** Live repository-discovery evidence for deployable proposal (CAP-ERA-001 §11.1/§11.2). */
 function buildRepositoryEvidence(repoRoot: string): {
   repositoryId: string
@@ -216,6 +205,13 @@ function buildRepositoryEvidence(repoRoot: string): {
     manifests.push({
       path: 'requirements.txt',
       content: { dependencies: requirementsTxtDependencies(fs.readFileSync(requirementsPath, 'utf8')) },
+    })
+  }
+  const pyprojectPath = path.join(root, 'pyproject.toml')
+  if (fs.existsSync(pyprojectPath)) {
+    manifests.push({
+      path: 'pyproject.toml',
+      content: pyprojectManifestContent(fs.readFileSync(pyprojectPath, 'utf8')),
     })
   }
   return { repositoryId: root, files, manifests }

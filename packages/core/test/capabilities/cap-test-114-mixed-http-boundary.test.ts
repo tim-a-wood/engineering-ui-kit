@@ -54,5 +54,7 @@ describe('CAP-TEST-114 mixed React/Python HTTP boundary generation', () => {
     expect(client).toContain('input: WeatherReadV1_0_0Input')
     expect(client).toContain('new URL("/weather", options.baseUrl)')
     expect(client).toContain('Promise<Outcome<WeatherReadV1_0_0Success')
+    expect(client).toContain('body as unknown as Outcome<WeatherReadV1_0_0Success')
+    expect(client).not.toMatch(/body as Outcome</)
   })
 })

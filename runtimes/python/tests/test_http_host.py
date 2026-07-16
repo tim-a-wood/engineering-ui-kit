@@ -176,3 +176,23 @@ def test_openapi_consistency_check_detects_documentation_drift() -> None:
         pass
     else:
         raise AssertionError("Expected OpenApiConsistencyError for a drifted schema")
+
+
+def test_openapi_consistency_ignores_validation_neutral_default_elision() -> None:
+    from engineering_ui_capabilities_runtime.http.openapi import assert_operation_schema_in_openapi
+
+    schema = {
+        "type": "object",
+        "properties": {
+            "message": {
+                "anyOf": [{"type": "string"}, {"type": "null"}],
+                "default": None,
+            }
+        },
+    }
+    host = HttpOperationHost()
+    host.add_operation("/optional", GreetOperation(), schema)
+
+    # FastAPI elides `default: null` from the documented openapi_extra, but
+    # that annotation does not change JSON Schema validation behavior.
+    assert_operation_schema_in_openapi(host.app, "/optional", "POST", schema)

@@ -54,6 +54,10 @@ nsis:
   allowToChangeInstallationDirectory: true
   perMachine: false
 mac:
+  # v0.1 artifacts are intentionally unsigned. Explicitly disable identity
+  # auto-discovery so a developer certificate cannot make otherwise identical
+  # local/CI packaging nondeterministic (or fail on downloaded Electron xattrs).
+  identity: null
   target:
     - zip
   artifactName: engineering-ui-kit-${version}-mac-${arch}.${ext}

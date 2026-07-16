@@ -15,7 +15,7 @@ import {
   type ModuleManifest,
 } from '@engineering-ui-kit/core'
 import { Workspace } from '@engineering-ui-kit/core'
-import { ReferenceArchitectureOrchestrator } from '../src/capabilities/referenceArchitectureOrchestrator.js'
+import { ReferenceArchitectureOrchestrator, buildRuntimeDistribution } from '../src/capabilities/referenceArchitectureOrchestrator.js'
 
 const roots: string[] = []
 function tempRoot(label: string): string {
@@ -110,6 +110,22 @@ function seed() {
 }
 
 describe('production reference-architecture orchestrator', () => {
+  it('includes the ASGI server required by generated Python HTTP hosts', () => {
+    const root = tempRoot('euik-python-http-runtime-')
+    const distribution = buildRuntimeDistribution({
+      ...deployable(),
+      deployableId: 'http-api',
+      name: 'HTTP API',
+      kind: 'http-api',
+      runtimeLanguage: 'python',
+      compositionRootPath: 'src/composition/http_api.py',
+    }, root)
+
+    expect(distribution.files.find((file) => file.path === 'requirements.engineering-ui.txt')?.contents)
+      .toContain('uvicorn==0.35.0')
+    expect(distribution.dependencies).toContainEqual(expect.objectContaining({ packageName: 'uvicorn', language: 'python' }))
+  })
+
   it('previews, persists, applies, restores after restart, and rolls back a real generation plan', () => {
     const { orchestrator, repoRoot, dataDir } = seed()
     const preview = orchestrator.previewGeneration('project-1', 'embedded-library')

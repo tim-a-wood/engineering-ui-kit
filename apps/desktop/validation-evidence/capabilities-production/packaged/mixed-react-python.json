@@ -1,0 +1,12 @@
+{
+  "journey": "mixed-react-python-http",
+  "executablePath": "/Users/timwood/Documents/UI Framework/release/mac-arm64/Engineering UI Kit.app/Contents/MacOS/Engineering UI Kit",
+  "packaged": true,
+  "scratch": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-production-mixed-whLO6k",
+  "screenshots": [
+    "apps/desktop/validation-evidence/capabilities-production/packaged/21-mixed-deployables-applied.png",
+    "apps/desktop/validation-evidence/capabilities-production/packaged/22-mixed-http-and-ui-connected.png",
+    "apps/desktop/validation-evidence/capabilities-production/packaged/23-mixed-cross-language-verification.png"
+  ],
+  "passed": true
+}
