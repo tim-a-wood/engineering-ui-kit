@@ -5,6 +5,7 @@
  */
 
 import { app, BrowserWindow } from 'electron'
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { registerIpcHandlers } from './ipc.js'
@@ -12,6 +13,12 @@ import { registerIpcHandlers } from './ipc.js'
 const here = path.dirname(fileURLToPath(import.meta.url))
 
 let mainWindow: BrowserWindow | null = null
+
+function previewPreloadPath(): string {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'previewGuestPreload.cjs')
+    : path.join(app.getAppPath(), 'dist', 'preload', 'previewGuestPreload.cjs')
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -30,6 +37,31 @@ function createWindow(): void {
       // <webview> guest pointed only at the project's local launch URL.
       webviewTag: true,
     },
+  })
+
+  mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
+    let target: URL
+    try {
+      if (!params.src) throw new Error('missing WebView source')
+      target = new URL(params.src)
+    } catch {
+      event.preventDefault()
+      return
+    }
+    const preload = previewPreloadPath()
+    if (
+      !['http:', 'https:'].includes(target.protocol)
+      || !['127.0.0.1', 'localhost', '::1'].includes(target.hostname)
+      || !fs.existsSync(preload)
+    ) {
+      event.preventDefault()
+      return
+    }
+    webPreferences.preload = preload
+    webPreferences.nodeIntegration = false
+    webPreferences.contextIsolation = true
+    webPreferences.sandbox = true
+    webPreferences.webSecurity = true
   })
 
   mainWindow.once('ready-to-show', () => mainWindow?.show())
