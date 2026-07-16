@@ -62,9 +62,13 @@ function createWindow(): void {
     webPreferences.contextIsolation = true
     webPreferences.sandbox = true
     webPreferences.webSecurity = true
+    console.log(`[target-preview attach] ${preload}`)
   })
   mainWindow.webContents.on('did-attach-webview', (_event, guest) => {
     guest.setWindowOpenHandler(() => ({ action: 'deny' }))
+    guest.on('console-message', (details) => {
+      if (details.message.startsWith('[euik-preview-preload]')) console.log(details.message)
+    })
     guest.on('preload-error', (_preloadEvent, preloadPath, error) => {
       console.error(`[target-preview preload] ${preloadPath}: ${error.message}`)
     })

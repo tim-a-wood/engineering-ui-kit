@@ -7,6 +7,8 @@
  */
 import { ipcRenderer } from 'electron'
 
+console.log('[euik-preview-preload] initialized')
+
 const START_CHANNEL = 'euik-preview-picker:start'
 const CANCEL_CHANNEL = 'euik-preview-picker:cancel'
 const RESULT_CHANNEL = 'euik-preview-picker:result'

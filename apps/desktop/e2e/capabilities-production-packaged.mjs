@@ -252,7 +252,10 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
           returnByValue: false,
         })
         if (!result.objectId || result.subtype === 'null') {
-          lastState = `${lastState}; picker or marked control not ready yet`
+          const preferences = guest.getLastWebPreferences()
+          const preload = preferences.preload || '(none)'
+          const fileSystem = process.getBuiltinModule('node:fs')
+          lastState = `${lastState}; picker or marked control not ready yet; preload=${preload}; preloadExists=${preload === '(none)' ? false : fileSystem.existsSync(preload)}; sandbox=${preferences.sandbox}; mainFrameLoading=${guest.isLoadingMainFrame()}`
           await new Promise((resolve) => setTimeout(resolve, 100))
           continue
         }
