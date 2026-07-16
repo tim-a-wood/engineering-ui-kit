@@ -3,11 +3,10 @@ runtime's `worker` (CAP-ERA-001 §7.1/§10.3): a subscription customer's
 recurring order is placed once an hour, wired through the same
 composition root as the HTTP and CLI slices.
 
-`OverlapPolicy`/`MisfirePolicy` naming is a tracked open issue
-(`SCHED-ENUM`) across the wider spec/runtimes; this slice deliberately
-does not attempt to reconcile it -- it just uses the Python runtime's
-current enum values (`OverlapPolicy.SKIP`, `MisfirePolicy.FIRE_NOW`) as
-they exist today.
+`OverlapPolicy`/`MisfirePolicy` now use the canonical CAP-CONTRACT-028
+enum members (`SCHED-ENUM` reconciliation, resolved): this slice uses
+`OverlapPolicy.SKIP` and `MisfirePolicy.RUN_ONCE` (a missed hourly tick
+is caught up exactly once), matching the runtime's own defaults.
 """
 
 from __future__ import annotations
@@ -63,7 +62,7 @@ def build_scheduler(container: Container | None = None, clock: WallClock | None 
         make_input=lambda scheduled_for: dict(SUBSCRIPTION_ORDER),
         context_factory=lambda correlation_id, scheduled_for: make_context(correlation_id),
         overlap_policy=OverlapPolicy.SKIP,
-        misfire_policy=MisfirePolicy.FIRE_NOW,
+        misfire_policy=MisfirePolicy.RUN_ONCE,
         container=container,
     )
     return Scheduler(clock, jobs=[job])

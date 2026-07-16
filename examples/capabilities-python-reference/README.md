@@ -109,10 +109,10 @@ injected `FakeWallClock`) and asserts on the response/exit-code/outcome
 that comes back through the real composition root and `dispatch` — none
 of them call `PlaceOrderOperation.execute(...)` directly.
 
-## Known open issues (not solved here)
+## Notes
 
-- `SCHED-ENUM`: `OverlapPolicy`/`MisfirePolicy` naming is a tracked open
-  issue across the spec/runtimes. This example uses the Python runtime's
-  current enum values (`OverlapPolicy.SKIP`/`.ALLOW`,
-  `MisfirePolicy.FIRE_NOW`/`.SKIP`) as-is; reconciling them is out of
-  scope for this packet.
+- `SCHED-ENUM` (resolved): `OverlapPolicy`/`MisfirePolicy` now carry the
+  canonical CAP-CONTRACT-028 members. This example uses
+  `OverlapPolicy.SKIP` and `MisfirePolicy.RUN_ONCE`
+  (`OverlapPolicy` also offers `QUEUE`/`ALLOW_CONCURRENT`; `MisfirePolicy`
+  also offers `SKIP`/`RUN_ALL`).
