@@ -8,6 +8,7 @@ import type {
   CompositionOperationRoute,
   LifecycleKind,
   ConnectionVerificationRecord,
+  CapabilityMigrationPlan,
   GeneratedOwnershipManifest,
   GenerationPlan,
 } from './types.js'
@@ -108,5 +109,7 @@ export type CapabilityIntegrationState = {
   schemaVersion: '1.0'
   projectId: string
   deployables: DeployableIntegrationState[]
+  /** Review-only, evidence-derived plan for adopting a non-empty repository. */
+  migrationPreview?: CapabilityMigrationPlan
   updatedAt: string
 }

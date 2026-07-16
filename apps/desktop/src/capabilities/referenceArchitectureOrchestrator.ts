@@ -20,6 +20,7 @@ import {
   canonicalHash,
   canonicalRecordHash,
   generatedContentHash,
+  planExistingRepoMigration,
   promoteInterviewToModuleImplementationSpecification,
   rollbackGenerationApply,
   runConnectionVerification,
@@ -44,6 +45,7 @@ import {
   type PersistedGenerationBundle,
 } from '@engineering-ui-kit/core'
 import type { Workspace } from '@engineering-ui-kit/core'
+import { buildRepositoryEvidence } from './repositoryEvidence.js'
 
 export type GenerationPreviewResult = {
   plan: GenerationPlan
@@ -785,6 +787,30 @@ export class ReferenceArchitectureOrchestrator {
       try { hashes[id] = this.collectInputs(projectId, id).inputHash } catch { /* state remains not-ready */ }
     }
     const state = this.integration.buildState(projectId, ids, hashes)
+    const project = this.workspace.getProject(projectId)
+    const architecture = this.capabilities.getApprovedArchitecture(projectId)
+    if (project && architecture) {
+      const evidence = buildRepositoryEvidence(project.repoPath)
+      const originalFiles = evidence.files.filter((file) => !file.path.startsWith('.engineering-ui/'))
+      if (originalFiles.length > 0) {
+        const capabilityRecords = (architecture.moduleDefinitions ?? []).map((module) => ({
+          recordId: `architecture:${architecture.id}:${module.moduleId}`,
+          moduleId: module.moduleId,
+          name: module.name,
+          moduleType: module.moduleType,
+          responsibility: module.responsibility,
+        }))
+        state.migrationPreview = planExistingRepoMigration({
+          migrationPlanId: `migration-${canonicalRecordHash({ projectId, files: originalFiles.map((file) => file.path), architecture: architecture.contentHash }).slice(0, 16)}`,
+          projectId,
+          evidence,
+          capabilityRecords,
+          versions: { fromWorkspaceVersion: '1.0', toWorkspaceVersion: '2.0', toProfileVersion: '1.0.0', toRuntimeVersion: '0.1.0' },
+          conformanceCommands: Object.values(project.verificationCommands ?? {})
+            .filter((command): command is string => typeof command === 'string' && command.trim().length > 0),
+        })
+      }
+    }
     for (const deployableState of state.deployables) {
       try {
         const inputs = this.collectInputs(projectId, deployableState.deployableId)

@@ -59,14 +59,13 @@ import {
   type InterviewPacket,
   type ModuleManifest,
   type ModuleInterviewResponse,
-  type RepositoryManifestEvidence,
   type ResultEnvelope,
 } from '@engineering-ui-kit/core'
 import type { Workspace } from '@engineering-ui-kit/core'
 import { createMatlabAdapter } from './matlabAdapter.js'
 import { discover as azureDiscover, importWorkItem as azureImportWorkItem } from './azureAdapter.js'
 import { ReferenceArchitectureOrchestrator } from './referenceArchitectureOrchestrator.js'
-import { pyprojectManifestContent, requirementsTxtDependencies } from './repositoryEvidence.js'
+import { buildRepositoryEvidence } from './repositoryEvidence.js'
 
 const CAP_CHANNELS = {
   ensureInitialized: 'capabilities:ensure-initialized',
@@ -147,74 +146,6 @@ type PersistedOverlayReview = {
 
 function sha256File(filePath: string): string {
   return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex')
-}
-
-const DEPLOYABLE_DISCOVERY_SKIP_DIRECTORIES = new Set([
-  '.git', '.idea', '.next', '.turbo', '.venv', 'build', 'coverage', 'dist',
-  'node_modules', 'out', 'target', 'vendor',
-])
-
-/** Bounded repository file walk (privileged filesystem work stays in this process). */
-function walkRepositoryFilePaths(root: string, maxFiles = 5000): string[] {
-  const files: string[] = []
-  const visit = (directory: string): void => {
-    if (files.length >= maxFiles) return
-    let entries: fs.Dirent[]
-    try {
-      entries = fs.readdirSync(directory, { withFileTypes: true })
-    } catch {
-      return
-    }
-    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-      if (files.length >= maxFiles) break
-      if (entry.isSymbolicLink()) continue
-      const absolute = path.join(directory, entry.name)
-      if (entry.isDirectory()) {
-        if (!DEPLOYABLE_DISCOVERY_SKIP_DIRECTORIES.has(entry.name)) visit(absolute)
-      } else if (entry.isFile()) {
-        files.push(path.relative(root, absolute).split(path.sep).join('/'))
-      }
-    }
-  }
-  visit(root)
-  return files
-}
-
-/** Live repository-discovery evidence for deployable proposal (CAP-ERA-001 §11.1/§11.2). */
-function buildRepositoryEvidence(repoRoot: string): {
-  repositoryId: string
-  files: { path: string }[]
-  manifests: RepositoryManifestEvidence[]
-} {
-  const root = path.resolve(repoRoot)
-  const files = walkRepositoryFilePaths(root).map((filePath) => ({ path: filePath }))
-  const manifests: RepositoryManifestEvidence[] = []
-  const packageJsonPath = path.join(root, 'package.json')
-  if (fs.existsSync(packageJsonPath)) {
-    try {
-      manifests.push({
-        path: 'package.json',
-        content: JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')),
-      })
-    } catch {
-      // Malformed manifest — no dependency evidence contributed, proposal falls back safely.
-    }
-  }
-  const requirementsPath = path.join(root, 'requirements.txt')
-  if (fs.existsSync(requirementsPath)) {
-    manifests.push({
-      path: 'requirements.txt',
-      content: { dependencies: requirementsTxtDependencies(fs.readFileSync(requirementsPath, 'utf8')) },
-    })
-  }
-  const pyprojectPath = path.join(root, 'pyproject.toml')
-  if (fs.existsSync(pyprojectPath)) {
-    manifests.push({
-      path: 'pyproject.toml',
-      content: pyprojectManifestContent(fs.readFileSync(pyprojectPath, 'utf8')),
-    })
-  }
-  return { repositoryId: root, files, manifests }
 }
 
 function implementationHash(repoRoot: string, ownedPaths: readonly string[]): string {

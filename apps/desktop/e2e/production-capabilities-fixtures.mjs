@@ -184,6 +184,18 @@ export function createPythonHeadlessFixture(root, projectId = 'production-python
   return { projectId, responseFiles, operationId: 'job.run' }
 }
 
+export function createExistingRepositoryFixture(root, projectId = 'production-existing') {
+  const fixture = createPythonHeadlessFixture(root, projectId)
+  fs.writeFileSync(path.join(root, 'legacy-data.txt'), 'preserved\n')
+  fs.writeFileSync(path.join(root, 'legacy.py'), [
+    'from pathlib import Path',
+    'value = Path(__file__).with_name("legacy-data.txt").read_text(encoding="utf-8").strip()',
+    'print(f"LEGACY_BEHAVIOR:{value}")',
+    '',
+  ].join('\n'))
+  return { ...fixture, legacyExpected: 'LEGACY_BEHAVIOR:preserved' }
+}
+
 export function createMixedReactPythonFixture(root, projectId = 'production-mixed', uiPort = 56100) {
   fs.mkdirSync(path.join(root, 'src/ui'), { recursive: true })
   fs.mkdirSync(path.join(root, 'src/domain'), { recursive: true })

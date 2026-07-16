@@ -45,6 +45,44 @@ export function IntegrationWorkspace({ bridge, projectId, state, projection, onC
         </div>
       </div>
 
+      {state?.migrationPreview ? (
+        <section className="panel-raised cap-migration-preview" aria-label="Existing repository migration preview">
+          <header>
+            <div>
+              <p className="capabilities-eyebrow">Existing repository adoption</p>
+              <h4>Preserve the application while adding generated infrastructure</h4>
+            </div>
+            <span className={`badge ${state.migrationPreview.dataLossAssessment.hasLoss ? 'failed' : 'approved'}`}>
+              {state.migrationPreview.dataLossAssessment.hasLoss ? 'Data-loss risk' : 'No data loss identified'}
+            </span>
+          </header>
+          <p>
+            This review-only migration preview records how the approved architecture fits the repository. Generation remains additive and transactional; existing behavior is retained and rollback restores every preimage.
+          </p>
+          <div className="cap-migration-summary">
+            <span><strong>{state.migrationPreview.fileTransformations.length}</strong> repository transformation(s)</span>
+            <span><strong>{state.migrationPreview.recordTransformations.length}</strong> canonical record transformation(s)</span>
+            <span><strong>{state.migrationPreview.compatibilityShims.length}</strong> compatibility shim(s)</span>
+          </div>
+          {state.migrationPreview.blockedAmbiguities.length ? (
+            <ul className="cap-issue-list">{state.migrationPreview.blockedAmbiguities.map((ambiguity) => <li key={ambiguity.id}>{ambiguity.description}</li>)}</ul>
+          ) : <p className="capabilities-note">Repository conventions were detected without a blocking migration ambiguity.</p>}
+          <details>
+            <summary>Review preserved files and proposed transformations</summary>
+            <ul>{state.migrationPreview.fileTransformations.map((change) => (
+              <li key={`${change.path}-${change.action}`}><code>{change.path}</code> — {change.action}: {change.description}</li>
+            ))}</ul>
+          </details>
+          {design ? (
+            <dl className="capabilities-ids">
+              <div><dt>Migration plan</dt><dd><code>{state.migrationPreview.migrationPlanId}</code></dd></div>
+              <div><dt>Workspace</dt><dd>{state.migrationPreview.versions.fromWorkspaceVersion} → {state.migrationPreview.versions.toWorkspaceVersion}</dd></div>
+              <div><dt>Rollback</dt><dd>{state.migrationPreview.rollbackInstructions}</dd></div>
+            </dl>
+          ) : null}
+        </section>
+      ) : null}
+
       {deployables.length === 0 ? (
         <p className="capabilities-note" role="status">Approve a foundation plan before generating deployable infrastructure.</p>
       ) : (

@@ -1,0 +1,17 @@
+{
+  "journey": "existing-repository-no-loss",
+  "executablePath": "/Users/timwood/Documents/UI Framework/release/mac-arm64/Engineering UI Kit.app/Contents/MacOS/Engineering UI Kit",
+  "packaged": true,
+  "scratch": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-production-existing-obF82x",
+  "baselineHash": "430827908965975a2e71b9b80c31e4d69e4329b8a5d4e0d885e2ab5350d9c568",
+  "legacyBefore": "LEGACY_BEHAVIOR:preserved",
+  "screenshots": [
+    "apps/desktop/validation-evidence/capabilities-production/packaged/31-existing-migration-preview.png",
+    "apps/desktop/validation-evidence/capabilities-production/packaged/32-existing-additive-apply.png",
+    "apps/desktop/validation-evidence/capabilities-production/packaged/33-existing-byte-identical-rollback.png"
+  ],
+  "passed": true,
+  "legacyAfterApply": "LEGACY_BEHAVIOR:preserved",
+  "restoredHash": "430827908965975a2e71b9b80c31e4d69e4329b8a5d4e0d885e2ab5350d9c568",
+  "legacyAfterRollback": "LEGACY_BEHAVIOR:preserved"
+}

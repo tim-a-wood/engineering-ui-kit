@@ -95,3 +95,65 @@ export function pyprojectManifestContent(text: string): Record<string, unknown> 
   }
   return content
 }
+
+const SKIP_DIRECTORIES = new Set([
+  '.git', '.idea', '.next', '.turbo', '.venv', 'build', 'coverage', 'dist',
+  'node_modules', 'out', 'target', 'vendor',
+])
+
+/** Bounded, symlink-safe repository file walk for privileged discovery. */
+export function walkRepositoryFilePaths(root: string, maxFiles = 5000): string[] {
+  const files: string[] = []
+  const visit = (directory: string): void => {
+    if (files.length >= maxFiles) return
+    let entries: fs.Dirent[]
+    try {
+      entries = fs.readdirSync(directory, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      if (files.length >= maxFiles) break
+      if (entry.isSymbolicLink()) continue
+      const absolute = path.join(directory, entry.name)
+      if (entry.isDirectory()) {
+        if (!SKIP_DIRECTORIES.has(entry.name)) visit(absolute)
+      } else if (entry.isFile()) {
+        files.push(path.relative(root, absolute).split(path.sep).join('/'))
+      }
+    }
+  }
+  visit(root)
+  return files
+}
+
+/** Live evidence shared by foundation proposal and existing-repository adoption preview. */
+export function buildRepositoryEvidence(repoRoot: string): RepositoryEvidence {
+  const root = path.resolve(repoRoot)
+  const files = walkRepositoryFilePaths(root).map((filePath) => ({ path: filePath }))
+  const manifests: RepositoryManifestEvidence[] = []
+  const packageJsonPath = path.join(root, 'package.json')
+  if (fs.existsSync(packageJsonPath)) {
+    try {
+      manifests.push({ path: 'package.json', content: JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) })
+    } catch {
+      // Malformed manifests contribute no invented dependency evidence.
+    }
+  }
+  const requirementsPath = path.join(root, 'requirements.txt')
+  if (fs.existsSync(requirementsPath)) {
+    manifests.push({
+      path: 'requirements.txt',
+      content: { dependencies: requirementsTxtDependencies(fs.readFileSync(requirementsPath, 'utf8')) },
+    })
+  }
+  const pyprojectPath = path.join(root, 'pyproject.toml')
+  if (fs.existsSync(pyprojectPath)) {
+    manifests.push({ path: 'pyproject.toml', content: pyprojectManifestContent(fs.readFileSync(pyprojectPath, 'utf8')) })
+  }
+  return { repositoryId: root, files, manifests }
+}
+import fs from 'node:fs'
+import path from 'node:path'
+
+import type { RepositoryEvidence, RepositoryManifestEvidence } from '@engineering-ui-kit/core'

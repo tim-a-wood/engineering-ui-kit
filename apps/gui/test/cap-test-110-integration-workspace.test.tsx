@@ -24,6 +24,25 @@ function state(currentPlan?: GenerationPlan): CapabilityIntegrationState {
 }
 
 describe('CAP-TEST-110 visible production integration workspace', () => {
+  it('shows the no-loss existing-repository migration preview before generation', () => {
+    const migrationState = state()
+    migrationState.migrationPreview = {
+      schemaVersion: '1.0', migrationPlanId: 'migration-existing-1', projectId: 'project-1',
+      versions: { fromWorkspaceVersion: '1.0', toWorkspaceVersion: '2.0' },
+      recordTransformations: [{ recordId: 'repo:conventions', kind: 'preserve-conventions', description: 'Preserve npm and src.' }],
+      fileTransformations: [{ path: 'src/index.ts', action: 'update', description: 'Wrap and extend without replacement.' }],
+      compatibilityShims: [], dataLossAssessment: { hasLoss: false, details: ['No source file is deleted.'] },
+      blockedAmbiguities: [], previewHashes: ['hash-1'], backupInstructions: 'Create a backup.',
+      rollbackInstructions: 'Restore preimages.', conformanceCommands: ['npm test'],
+    }
+
+    render(<IntegrationWorkspace bridge={{} as EuikBridge} projectId="project-1" state={migrationState} projection="design" onChanged={() => {}} />)
+
+    expect(screen.getByRole('region', { name: 'Existing repository migration preview' }).textContent).toContain('No data loss identified')
+    expect(document.body.textContent).toContain('migration-existing-1')
+    expect(document.body.textContent).toContain('src/index.ts')
+  })
+
   it('shows exact plan ownership and invokes ID/hash-gated apply', async () => {
     const apply = vi.fn().mockResolvedValue({ status: 'applied' })
     const bridge = { capabilitiesApplyGeneration: apply } as unknown as EuikBridge

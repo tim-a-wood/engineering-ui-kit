@@ -110,6 +110,19 @@ function seed() {
 }
 
 describe('production reference-architecture orchestrator', () => {
+  it('projects a no-loss migration preview for a non-empty existing repository', () => {
+    const { orchestrator, repoRoot } = seed()
+    fs.mkdirSync(path.join(repoRoot, 'src'), { recursive: true })
+    fs.writeFileSync(path.join(repoRoot, 'src', 'index.ts'), 'export const legacy = true\n')
+    fs.writeFileSync(path.join(repoRoot, 'package.json'), JSON.stringify({ private: true, type: 'module' }) + '\n')
+
+    const preview = orchestrator.getState('project-1').migrationPreview
+
+    expect(preview?.dataLossAssessment.hasLoss).toBe(false)
+    expect(preview?.fileTransformations).not.toContainEqual(expect.objectContaining({ action: 'delete' }))
+    expect(preview?.fileTransformations).toContainEqual(expect.objectContaining({ path: 'src/index.ts', action: 'update' }))
+  })
+
   it('includes the ASGI server required by generated Python HTTP hosts', () => {
     const root = tempRoot('euik-python-http-runtime-')
     const distribution = buildRuntimeDistribution({

@@ -8,11 +8,12 @@
  * transactional apply, generated runtime, target app, and verifier cooperate.
  */
 import fs from 'node:fs'
+import crypto from 'node:crypto'
 import os from 'node:os'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { createMixedReactPythonFixture, createPythonHeadlessFixture, createTypeScriptUiFixture } from './production-capabilities-fixtures.mjs'
+import { createExistingRepositoryFixture, createMixedReactPythonFixture, createPythonHeadlessFixture, createTypeScriptUiFixture } from './production-capabilities-fixtures.mjs'
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const EVIDENCE_DIR = path.join(REPO_ROOT, 'apps/desktop/validation-evidence/capabilities-production/packaged')
@@ -21,11 +22,41 @@ const TIMEOUT = Number(process.env.EUIK_PACKAGED_TIMEOUT_MS ?? 60_000)
 const JOURNEY_TIMEOUT = Number(process.env.EUIK_PACKAGED_JOURNEY_TIMEOUT_MS ?? 360_000)
 
 fs.mkdirSync(EVIDENCE_DIR, { recursive: true })
-for (const stale of ['failure.json', 'failure.png', 'python-failure.png', 'mixed-failure.png']) fs.rmSync(path.join(EVIDENCE_DIR, stale), { force: true })
+for (const stale of ['failure.json', 'failure.png', 'python-failure.png', 'mixed-failure.png', 'existing-failure.png']) fs.rmSync(path.join(EVIDENCE_DIR, stale), { force: true })
 
 function run(command, args, cwd = REPO_ROOT) {
   const result = spawnSync(command, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' })
   if (result.status !== 0) throw new Error(`${command} ${args.join(' ')} failed with exit ${result.status}`)
+}
+
+function repositorySnapshot(root) {
+  const ignoredDirectories = new Set(['.engineering-ui', '.git', '.venv', 'node_modules'])
+  const files = []
+  const visit = (directory) => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      if (entry.isDirectory() && ignoredDirectories.has(entry.name)) continue
+      const absolute = path.join(directory, entry.name)
+      if (entry.isDirectory()) visit(absolute)
+      else if (entry.isFile()) {
+        const relative = path.relative(root, absolute).split(path.sep).join('/')
+        files.push({ path: relative, sha256: crypto.createHash('sha256').update(fs.readFileSync(absolute)).digest('hex') })
+      }
+    }
+  }
+  visit(root)
+  return files
+}
+
+function snapshotHash(snapshot) {
+  return crypto.createHash('sha256').update(JSON.stringify(snapshot)).digest('hex')
+}
+
+function invokeLegacyPython(python, root, expected) {
+  const result = spawnSync(python, ['legacy.py'], { cwd: root, encoding: 'utf8' })
+  if (result.status !== 0) throw new Error(`legacy behavior exited ${result.status}: ${result.stderr ?? ''}`)
+  const output = (result.stdout ?? '').trim()
+  if (output !== expected) throw new Error(`legacy behavior changed: expected "${expected}", received "${output}"`)
+  return output
 }
 
 function packagedExecutable() {
@@ -551,6 +582,118 @@ async function runMixedReactPythonJourney(electron) {
   }
 }
 
+async function runExistingRepositoryJourney(electron) {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'euik-production-existing-'))
+  const fixtureRepo = path.join(scratch, 'repo')
+  const dataDir = path.join(scratch, 'data')
+  fs.mkdirSync(fixtureRepo, { recursive: true })
+  fs.mkdirSync(dataDir, { recursive: true })
+  const fixture = createExistingRepositoryFixture(fixtureRepo)
+  const workspacePython = path.join(REPO_ROOT, process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python')
+  const python = process.env.PYTHON ?? (fs.existsSync(workspacePython) ? workspacePython : process.platform === 'win32' ? 'python' : 'python3')
+  run('git', ['init'], fixtureRepo)
+  run('git', ['config', 'user.email', 'packaged-journey@example.invalid'], fixtureRepo)
+  run('git', ['config', 'user.name', 'Packaged Journey'], fixtureRepo)
+  run('git', ['add', '.'], fixtureRepo)
+  run('git', ['commit', '-m', 'legacy baseline'], fixtureRepo)
+  const baseline = repositorySnapshot(fixtureRepo)
+  const baselineHash = snapshotHash(baseline)
+  const legacyBefore = invokeLegacyPython(python, fixtureRepo, fixture.legacyExpected)
+  const executablePath = packagedExecutable()
+  const app = await electron.launch({
+    executablePath,
+    env: { ...process.env, EUIK_DATA_DIR: dataDir, EUIK_TEST_MODE: '1', EUIK_TEST_PICK_DIR: fixtureRepo },
+    timeout: TIMEOUT,
+  })
+  const evidence = {
+    journey: 'existing-repository-no-loss', executablePath, packaged: false, scratch,
+    baselineHash, legacyBefore, screenshots: [], passed: false,
+  }
+  try {
+    const page = await app.firstWindow({ timeout: TIMEOUT })
+    page.setDefaultTimeout(TIMEOUT)
+    await page.waitForLoadState('domcontentloaded')
+    if (!await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)) throw new Error('Electron reports app.isPackaged=false')
+    evidence.packaged = true
+
+    await click(page.getByRole('button', { name: 'New Project' }).first(), 'New Project')
+    await page.getByLabel('Project name').fill('Production Existing Repository')
+    await click(page.getByRole('button', { name: 'Browse' }), 'repository Browse')
+    await click(page.getByRole('button', { name: 'Create Project' }), 'Create Project')
+    await click(page.getByRole('button', { name: 'Capabilities' }), 'Capabilities navigation')
+    await page.getByLabel('Capabilities project').selectOption({ label: 'Production Existing Repository' })
+    await chooseInterviewFile(page, fixture.responseFiles.product, 'Application definition')
+    await waitForStatus(page, 'Interview imported')
+    await click(page.getByRole('button', { name: 'Approve definition' }), 'Approve definition')
+    await waitForStatus(page, 'Approved application revision')
+    await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode')
+    await click(page.getByRole('tab', { name: 'Architecture' }), 'Architecture tab')
+    await waitEnabled(page.getByRole('button', { name: 'Export architecture interview' }), 'loaded architecture interview')
+    await chooseInterviewFile(page, fixture.responseFiles.architecture, 'Architecture interview')
+    await waitForStatus(page, 'Imported architecture proposal')
+    await click(page.getByRole('button', { name: 'Approve architecture' }), 'Approve architecture')
+    await waitForStatus(page, 'Architecture approved')
+    await click(page.getByRole('button', { name: 'Propose foundation plan' }), 'Propose foundation plan')
+    const foundationQuestions = page.getByRole('group', { name: 'Open foundation questions' })
+    if (await foundationQuestions.count()) await answerFoundationQuestions(page)
+    await waitEnabled(page.getByRole('button', { name: 'Approve foundation' }), 'ready existing foundation approval')
+    await click(page.getByRole('button', { name: 'Approve foundation' }), 'Approve foundation')
+    await waitForStatus(page, 'Approved foundation plan')
+
+    await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab')
+    const migration = await expectVisible(page.getByRole('region', { name: 'Existing repository migration preview' }), 'existing repository migration preview')
+    await expectVisible(migration.getByText('No data loss identified', { exact: true }), 'no-loss migration assessment')
+    await expectVisible(migration.getByText('Repository conventions were detected without a blocking migration ambiguity.', { exact: false }), 'migration readiness')
+    evidence.screenshots.push(await shot(page, '31-existing-migration-preview'))
+
+    const moduleImport = page.locator('[aria-label="Import module interview response"] input[type=file]')
+    await moduleImport.first().setInputFiles(fixture.responseFiles.module)
+    await waitForStatus(page, 'Imported module draft')
+    await click(page.getByRole('button', { name: 'Approve module' }).first(), 'Approve existing module')
+    await waitForStatus(page, 'Approved module')
+    await page.getByLabel(`Implementation factory for ${fixture.operationId}`).fill('src/domain/run_job.py#create_job_run')
+    await click(page.getByRole('button', { name: 'Save composition factories' }), 'Save existing composition factory')
+    await waitForStatus(page, 'Composition configuration saved')
+    await click(page.getByRole('button', { name: 'Preview generation' }), 'Preview existing generation')
+    await waitForStatus(page, 'Generation plan is ready')
+    const acceptDirty = page.getByLabel(/I reviewed and accept applying this plan/)
+    if (await acceptDirty.count()) await acceptDirty.check()
+    await waitEnabled(page.getByRole('button', { name: 'Apply generation plan' }), 'existing generation apply')
+    await click(page.getByRole('button', { name: 'Apply generation plan' }), 'Apply existing generation')
+    await waitForStatus(page, 'Reference-architecture infrastructure applied')
+    const afterApply = repositorySnapshot(fixtureRepo)
+    for (const original of baseline) {
+      const current = afterApply.find((file) => file.path === original.path)
+      if (!current || current.sha256 !== original.sha256) throw new Error(`original repository file changed during additive apply: ${original.path}`)
+    }
+    evidence.legacyAfterApply = invokeLegacyPython(python, fixtureRepo, fixture.legacyExpected)
+    evidence.screenshots.push(await shot(page, '32-existing-additive-apply'))
+
+    await click(page.getByRole('button', { name: 'Roll back' }), 'Roll back existing generation')
+    await waitForStatus(page, 'Generation was rolled back')
+    const restored = repositorySnapshot(fixtureRepo)
+    evidence.restoredHash = snapshotHash(restored)
+    if (JSON.stringify(restored) !== JSON.stringify(baseline)) {
+      throw new Error(`rollback did not restore the exact original repository tree (${baselineHash} != ${evidence.restoredHash})`)
+    }
+    evidence.legacyAfterRollback = invokeLegacyPython(python, fixtureRepo, fixture.legacyExpected)
+    evidence.screenshots.push(await shot(page, '33-existing-byte-identical-rollback'))
+    evidence.passed = true
+    return evidence
+  } catch (error) {
+    const page = app.windows()[0]
+    if (page) {
+      evidence.screenshots.push(await shot(page, 'existing-failure').catch(() => ''))
+      evidence.visibleText = await page.locator('body').innerText().catch(() => '')
+    }
+    evidence.error = error instanceof Error ? error.stack : String(error)
+    throw error
+  } finally {
+    await app.close().catch(() => {})
+    fs.writeFileSync(path.join(EVIDENCE_DIR, 'existing-repository.json'), JSON.stringify(evidence, null, 2) + '\n')
+  }
+}
+
 const watchdog = setTimeout(() => {
   console.error(`Packaged production journey exceeded ${JOURNEY_TIMEOUT}ms`)
   process.exit(1)
@@ -566,11 +709,12 @@ try {
     run('npm', ['run', 'package:dir', '-w', 'apps/desktop'])
   }
   const { _electron } = await import('playwright')
-  const selected = new Set((process.env.EUIK_PACKAGED_JOURNEYS ?? 'typescript-ui,python-headless,mixed').split(',').map((value) => value.trim()).filter(Boolean))
+  const selected = new Set((process.env.EUIK_PACKAGED_JOURNEYS ?? 'typescript-ui,python-headless,mixed,existing').split(',').map((value) => value.trim()).filter(Boolean))
   const results = []
   if (selected.has('typescript-ui')) results.push(await runTypeScriptUiJourney(_electron))
   if (selected.has('python-headless')) results.push(await runPythonHeadlessJourney(_electron))
   if (selected.has('mixed')) results.push(await runMixedReactPythonJourney(_electron))
+  if (selected.has('existing')) results.push(await runExistingRepositoryJourney(_electron))
   if (results.length === 0) throw new Error('EUIK_PACKAGED_JOURNEYS did not select a known journey')
   console.log(JSON.stringify(results, null, 2))
   if (results.some((result) => !result.passed)) process.exitCode = 1
