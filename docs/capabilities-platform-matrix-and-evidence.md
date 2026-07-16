@@ -2,14 +2,14 @@
 
 This is the coordinator's final evidence index for the Capabilities Executable Reference
 Architecture initiative (`docs/CAPABILITIES-EXECUTABLE-REFERENCE-ARCHITECTURE-CLAUDE-HANDOFF.md`,
-CAP-ERA-001). It records what has been proven, **how to reproduce it**, and — honestly — what
-remains before the `Experimental` badge can be removed. The authoritative packet-by-packet status
+CAP-ERA-001). It records what has been proven, **how to reproduce it**, and the evidence supporting
+the separate product decision about the `Experimental` badge. The authoritative packet-by-packet status
 lives in [`capabilities-execution-ledger.md`](capabilities-execution-ledger.md); this document is the
 requirement→evidence roll-up required by handoff §18/§19/WP10.
 
-Integration branch: `claude/cap-era-integration`. All evidence below was captured on **macOS**
-(darwin 24.6.0, Apple Silicon) with Python 3.11.15 (user-space standalone build) and Node via the
-repo toolchain.
+Integration branch: `claude/cap-era-integration`. The suite was captured locally on **macOS**
+(darwin 24.6.0, Apple Silicon, Python 3.11.15) and repeated on GitHub-hosted **Windows** and
+**Ubuntu Linux** runners in [Actions run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532).
 
 ---
 
@@ -19,7 +19,7 @@ Every suite below was run green at the integrated tree. Commands are copy-pastea
 
 | Surface | Command | Result |
 |---|---|---|
-| Core (contracts, generation, apply, migration, **foundation planning**, verification) | `npm run test --workspace=@engineering-ui-kit/core` | **317 passed** (WP5A: +CAP-TEST-071/072/073) |
+| Core (contracts, generation, apply, migration, **foundation planning**, verification) | `npm run test --workspace=@engineering-ui-kit/core` | **320 passed** (including CAP-TEST-106–108 legacy adoption) |
 | TypeScript runtime | `npm run test --workspace=@engineering-ui-kit/capabilities-runtime` | **95 passed** |
 | Foundation GUI | `npm run test --workspace=@engineering-ui-kit/gui` | **174 passed** (WP5A: +CAP-TEST-074/075) |
 | Desktop (privileged bridge/IPC) | `npm run typecheck --workspace=@engineering-ui-kit/desktop` | **clean** |
@@ -28,6 +28,13 @@ Every suite below was run green at the integrated tree. Commands are copy-pastea
 | Example — React reference | `cd examples/capabilities-react-reference && npx vitest run` | **8 passed** |
 | Example — Python reference (HTTP, CLI, schedule) | `.venv/bin/python -m pytest examples/capabilities-python-reference -q` | **15 passed** |
 | Example — React↔Python over generated OpenAPI (CAP-TEST-066/069) | `cd examples/capabilities-react-python-reference && npx vitest run` **and** `.venv/bin/python -m pytest examples/capabilities-react-python-reference -q` | **TS 7 passed + Python 3 passed** |
+
+The complete table passed unchanged in both jobs of
+[Actions run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532)
+at `7ec2588`: Ubuntu in 1m23s and Windows in 2m05s. The first CI passes found and fixed a stale
+workspace lockfile (`b55384f`), missing Playwright browser provisioning (`ea24e5b`), Windows
+timezone-data packaging, Windows process-tree termination, and an asynchronous E2E assertion race
+(`44f9997`).
 
 ### Environment prerequisites (one-time)
 
@@ -48,22 +55,21 @@ Every suite below was run green at the integrated tree. Commands are copy-pastea
 
 ## 2. Required test matrix (handoff §18)
 
-Legend: **✅ real E2E green (macOS)** · **⬚ deferred to CI** (not run in this single-developer macOS
-environment) · **◐ partial** (see note).
+Legend: **✅ real E2E green on the named platform**.
 
 | Scenario | Boundary | Greenfield | Existing repo | Windows | macOS | Linux CI | Real E2E |
 |---|---|:--:|:--:|:--:|:--:|:--:|---|
-| React UI in one deployable | TS | ✅ | ✅ | ⬚ | ✅ | ⬚ | `capabilities-ts-reference`, `capabilities-react-reference` |
-| React UI → API | TS→TS HTTP | ✅ | ✅ | ⬚ | ✅ | ⬚ | `capabilities-ts-reference` (HTTP host + client round-trip) |
-| React UI → Python API | TS→Python HTTP | ✅ | ✅ | ⬚ | ✅ | ⬚ | `capabilities-react-python-reference` CAP-TEST-066/069 |
-| Electron renderer → main | TS IPC | ✅ | ✅ | ⬚ | ✅ | ⬚ | `capabilities-ts-reference` (Electron IPC slice) |
-| HTTP API | TS | ✅ | ✅ | ⬚ | ✅ | ⬚ | `capabilities-ts-reference` |
-| HTTP API | Python | ✅ | ✅ | ⬚ | ✅ | ⬚ | `capabilities-python-reference` (FastAPI TestClient→dispatch) |
-| CLI | TS | ✅ | ✅ | ⬚ | ✅ | ⬚ | `capabilities-ts-reference` |
-| CLI | Python | ✅ | ✅ | ⬚ | ✅ | ⬚ | `capabilities-python-reference` (argparse host) |
-| Scheduled/background | TS | ✅ | ✅ | ⬚ | ✅ | ⬚ | `capabilities-ts-reference` (injected-clock scheduler) |
-| Scheduled/background | Python | ✅ | ✅ | ⬚ | ✅ | ⬚ | `capabilities-python-reference` (CronJob under injected `WallClock`) |
-| Legacy `runtime.js` adoption | TS compatibility | n/a | ◐ | ⬚ | ◐ | ⬚ | migration overlay + additive apply proven (CAP-TEST-103/104); compat-adapter **execution** deferred |
+| React UI in one deployable | TS | ✅ | ✅ | ✅ | ✅ | ✅ | `capabilities-ts-reference`, `capabilities-react-reference` |
+| React UI → API | TS→TS HTTP | ✅ | ✅ | ✅ | ✅ | ✅ | `capabilities-ts-reference` (HTTP host + client round-trip) |
+| React UI → Python API | TS→Python HTTP | ✅ | ✅ | ✅ | ✅ | ✅ | `capabilities-react-python-reference` CAP-TEST-066/069 |
+| Electron renderer → main | TS IPC | ✅ | ✅ | ✅ | ✅ | ✅ | `capabilities-ts-reference` (Electron IPC slice) |
+| HTTP API | TS | ✅ | ✅ | ✅ | ✅ | ✅ | `capabilities-ts-reference` |
+| HTTP API | Python | ✅ | ✅ | ✅ | ✅ | ✅ | `capabilities-python-reference` (FastAPI TestClient→dispatch) |
+| CLI | TS | ✅ | ✅ | ✅ | ✅ | ✅ | `capabilities-ts-reference` |
+| CLI | Python | ✅ | ✅ | ✅ | ✅ | ✅ | `capabilities-python-reference` (argparse host) |
+| Scheduled/background | TS | ✅ | ✅ | ✅ | ✅ | ✅ | `capabilities-ts-reference` (injected-clock scheduler) |
+| Scheduled/background | Python | ✅ | ✅ | ✅ | ✅ | ✅ | `capabilities-python-reference` (CronJob under injected `WallClock`) |
+| Legacy `runtime.js` adoption | TS compatibility | n/a | ✅ | ✅ | ✅ | ✅ | actual `runtime.js` → real HTTP before and after additive apply, byte-identical preservation, and conformance-retirement gate (CAP-TEST-106–108) |
 
 **Cross-cutting coverage** (proven at the core/runtime level, applies to every applicable cell):
 deterministic generation (`canonicalRecordHash`, generator determinism tests); schema/type parity
@@ -75,10 +81,10 @@ impact-scoped staleness (`impact.ts`, CAP-TEST-088); desktop-stopped standalone 
 have no `apps/desktop`/`apps/gui` dependency; Python invokes no Node); offline-after-install
 (no network at run time once deps are installed).
 
-**Windows/Linux cells (⬚):** not exercised in this environment (single macOS developer machine; a
-Windows installer/runner is separately tracked in project memory). The runtimes and examples use only
-cross-platform Python/Node APIs; the remaining work is to run this same matrix under Windows and Linux
-CI runners. This is the primary gap for §18's "all required matrix cells pass".
+**Windows/Linux evidence:** every supported TypeScript/Python runtime and reference-application cell
+passed on the real GitHub-hosted runners in
+[run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532),
+including legacy compatibility execution across a real HTTP boundary before and after migration.
 
 ---
 
@@ -94,35 +100,26 @@ CI runners. This is the primary gap for §18's "all required matrix cells pass".
 | 6 | Connect writes and verifies real integration code | ✅ | WP6B trigger-first editors + WP5B real `Deployable`/`InboundBinding` persistence + WP8 `runConnectionVerification` (real launch+trigger; simulation can never `pass`). |
 | 7 | "No UI" produces a headless connection path | ✅ | `embedded-library` inbound binding generates a headless callable (TS + Python generators + runtime dispatch); no UI host required. |
 | 8 | Ownership conflicts, atomic rollback, secret leakage, auth defaults, runtime upgrades tested | ✅ | `generationApply` 13 forced-failure/tamper tests; redaction + canary; private-default/protected-denial; WP9B `planRuntimeUpgradePreview` (preview-only, blocks silent upgrades). |
-| 9 | TS + Python conformance matrices pass on the supported platform set | ◐ | Full matrix green on **macOS**; **Windows + Linux CI runs are the remaining work** (see §2). |
+| 9 | TS + Python conformance matrices pass on the supported platform set | ✅ | Full matrix green on **macOS, Windows, and Ubuntu Linux**; real Windows/Linux evidence is [Actions run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532). |
 | 10 | Generated targets run with EUIK/Claude Code/Cursor/Copilot/desktop closed | ✅ | Examples run under plain `vitest`/`pytest` with no editor, no desktop, and no GUI process; Python invokes no Node. |
 
-**Fully met: 9 of 10. Partial: #9 (cross-platform CI) only.** (#5 met by WP5A, `1b394df`+`90725d6`.)
+**Fully met: 10 of 10.** The final platform gate is [Actions run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532).
 
 ---
 
 ## 4. Experimental-exit decision
 
 Per the WP10 gate, "Capabilities remains Experimental unless the complete TypeScript and Python
-evidence set is green." The **macOS** evidence set is green with zero known severity-1/severity-2
-conformance or security defects, and standalone/offline-after-install operation is demonstrated. The
-WP10 matrix pass additionally **caught and fixed** a latent SCHED-ENUM regression in the Python
-schedule example (a post-merge enum rename), which is exactly the kind of drift this gate exists to
-surface.
+evidence set is green." The evidence set is now green on **macOS, Windows, and Ubuntu Linux**, with
+zero known severity-1/severity-2 conformance or security defects and standalone/offline-after-install
+operation demonstrated. The WP10 passes caught and fixed both a latent SCHED-ENUM regression and the
+real cross-platform defects recorded in §1, which is exactly the kind of drift this gate exists to surface.
 
-**Decision: Capabilities remains `Experimental`.** Removing the badge is a separate product decision
-(handoff §WP10.6) and now waits on a **single** remaining gap:
-
-1. **Cross-platform matrix (§18 / DoD #9)** — run this identical suite on Windows and Linux CI runners.
-
-(DoD #5 — foundation-orchestration UI — is now **met** by WP5A: deployables/allocations are surfaced and
-explained in the architecture interview, a foundation review with a separate approval + Build prerequisite
-gate is in the Design workflow, and generated contract/path/command references enrich the module brief and
-the From-spec Build launch. Re-run matrix green: core 317, gui 174, all other suites unchanged.)
-
-This last gap does not undermine the executable core: both language runtimes, both code generators, the
-generate→apply→rollback pipeline, real connection verification, foundation planning, and every trigger's
-real E2E are proven and reproducible today.
+**Decision: the technical Experimental-exit gate is met; Capabilities remains `Experimental` pending
+the separate product decision required by handoff §WP10.6.** There is no remaining engineering-evidence
+gap in the 10-point Definition of Done. Both language runtimes, both code generators, the
+generate→apply→rollback pipeline, real connection verification, foundation planning, and every supported
+trigger's real E2E are proven and reproducible across the supported platform set.
 
 ---
 
@@ -131,10 +128,10 @@ real E2E are proven and reproducible today.
 Detail and rationale for each item live in the ledger's "Open issues" section.
 
 - ~~**WP5A** — Foundation planning UI~~ **DONE** (`1b394df`+`90725d6`, CAP-TEST-071..075, DoD #5 met).
-- **Cross-platform CI** — Windows + Linux matrix runs. *(DoD #9 / §18 ⬚ cells — the last Experimental-exit gate.)*
-- **Legacy `runtime.js` compatibility-adapter execution** — the review-level migration + additive
-  apply are proven; actually wrapping/invoking a legacy `runtime.js` and the "conformance replaces
-  compatibility" retirement gate are deferred (handoff-acknowledged).
+- ~~**Cross-platform CI**~~ **DONE** (`0245dfb` workflow; green Windows+Ubuntu
+  [run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532); DoD #9 met).
+- ~~**Legacy `runtime.js` compatibility-adapter execution**~~ **DONE** (`7ec2588`, CAP-TEST-106–108:
+  migrated real-HTTP E2E plus the "conformance replaces compatibility" retirement gate).
 - **WP7-followups** — React source-marker adoption (§10.4), OpenAPI-artifact wiring into apply,
   registry-diagnostic equivalence, a Python composition-root generator, real DI glue (currently
   `resolved.g.*` placeholders).
@@ -149,5 +146,5 @@ Detail and rationale for each item live in the ledger's "Open issues" section.
 
 ---
 
-_Last updated by the Opus integration coordinator after the WP10 matrix pass. Regenerate the evidence
-in §1 by re-running the listed commands from the repo root._
+_Last updated after the green Windows/Linux WP10 matrix run. Regenerate the evidence in §1 locally or
+dispatch `.github/workflows/capabilities-cross-platform.yml`._

@@ -52,8 +52,8 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP7-followups | React marker/source adoption (§10.4), OpenAPI-artifact wiring, registry-diagnostic equivalence, Python composition-root generator, real DI wiring (`resolved.g.*` is placeholder glue) | WP7-rest | — | generation | — | CAP-TEST-084/090/091 | todo |
 | WP8 | Real connection verification runner + `ConnectionVerificationRecord` | WP7 | cap-sonnet-implementer + Opus review | `capabilities/verificationRunner.ts` (Node) | `a17f77a` (merged) | core 297/297 clean exit (no leaks); real HTTP+CLI launch→trigger→CAP-CONTRACT-029 (AJV-valid); simulation≠pass (separate fn, no bypass); test-adapter→partial/outstanding; redaction; process-cleanup pid-death-verified; CAP-TEST-094 | **gate-green** (Electron/Python launch presets + freshness-aggregation → WP8-followups) |
 | WP9A | Migration prep: existing-repo planner + 3 fixtures + legacy diagnostic | WP1, WP2 | cap-sonnet-implementer (symlinked worktree) | `generation/existingRepoMigration.ts`, `fixtures/existing-repos/` | `79d2fa3` (merged) | pure planner (additive, node-free); react-ts/python/react-python fixtures; CAP-TEST-102; core 199/199 | **gate-green** (apply=WP9B) |
-| WP9B | Adoption finalization: additive existing-repo apply + runtime-upgrade preview | WP7, WP8, WP9A | cap-sonnet-implementer | `generation/upgradePreview.ts` + adoption tests | `25dec77` (merged) | core 308/308; CAP-TEST-103/104/105; react-ts+python adopted additively (originals byte-identical, rollback restores); react-python boundary preserved; upgrade never silent | **gate-green** (legacy runtime.js compat-adapter execution + conformance-replaces-compatibility gate deferred) |
-| WP10 | Platform matrix + docs + Experimental-exit evidence | WP9B | coordinator sign-off | [`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md) | `2b0c837` (+doc); re-run post-WP5A | **full macOS matrix green post-WP5A** (core 317, runtime-ts 95, gui 174, desktop typecheck, python 130, examples 15+7+8+7/3); DoD scorecard **9/10** met (only #9 cross-platform CI remains); WP10 pass caught+fixed a latent SCHED-ENUM regression | **macOS gate-green; remains `Experimental`** (Windows/Linux CI is the last badge-removal gate) |
+| WP9B | Adoption finalization: additive existing-repo apply + runtime-upgrade preview | WP7, WP8, WP9A | cap-sonnet-implementer + coordinator completion | `generation/upgradePreview.ts`, legacy compatibility gate + adoption tests | `25dec77` + `7ec2588` | CAP-TEST-103–108; react-ts+python adopted additively (originals byte-identical, rollback restores); react-python boundary preserved; actual legacy `runtime.js` crosses real HTTP before+after apply; compatibility retires only after full conformance; upgrade never silent | **gate-green** |
+| WP10 | Platform matrix + docs + Experimental-exit evidence | WP9B | coordinator sign-off | [`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md) + `.github/workflows/capabilities-cross-platform.yml` | `0245dfb` workflow + `b55384f`/`44f9997`/`ea24e5b` portability fixes + `7ec2588` final WP9 gate | **full matrix green on macOS, Windows, and Ubuntu Linux** (core 320, runtime-ts 95, gui 174, desktop typecheck, python 130, examples 15+7+8+7/3); real CI [run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532); DoD **10/10** | **gate-green; technical Experimental-exit evidence complete** (`Experimental` retained pending separate product decision) |
 
 ## WP0 classification of the dirty baseline diff
 
@@ -124,7 +124,7 @@ lossy mapping. Cross-language (parity) — a focused reconciliation packet. Do N
 **CONNECT-BACKING — ✅ RESOLVED by WP5B (`6023f59`)** — real `DeployableSpecification`+`InboundBinding` persistence in `CapabilityWorkspace` (schema-2.0-aware, private-default, multi-binding) + the 4 desktop IPC handlers (`listDeployables` proposes via `proposeDeployables` when empty). Residual: no shared *core* `InboundBinding` validator yet (desktop approve gate is a minimal inline check; gui has a per-kind presentation validator) — add one if WP7/WP8 needs stricter server-side gating. Original issue for reference:
 WP6B added 4 bridge methods (`capabilitiesListDeployables`/`ListInboundBindings`/`SaveInboundBindingDraft`/`ApproveInboundBinding`) wired through `bridge.ts`+`bridgeApi.ts`+`preload.cts` (parity restored) but backed only by `mockBridge.ts`. WP5B/WP7 must add: (a) real `DeployableSpecification` (CAP-CONTRACT-024) + `InboundBinding` (CAP-CONTRACT-028) persistence in `CapabilityWorkspace` (`persistence.ts`, mirror `listModules`/`saveBindingDraft`/`approveBinding`); (b) the 4 `ipcMain.handle(...)` handlers in `apps/desktop/src/capabilities/ipc.ts`; (c) replace the mock's deployable-synthesis heuristic with the real Design-stage `proposeDeployables` (`generation/deployables.ts`). Until then the desktop Connect path is declared-but-unhandled (gui mock tests pass; real desktop run would 404 those channels).
 
-**RUNTIME-DIST — before WP7 ships real generated TS apps / WP10 build matrix:**
+**RUNTIME-DIST — distribution hardening before shipping generated TS apps:**
 `@engineering-ui-kit/capabilities-runtime` package.json `exports` point only at `./dist/*.js` (gitignored, unbuilt), so downstream TS consumers can't resolve it via `node_modules` without building it. The TS example (`capabilities-ts-reference`) works around it with tsconfig `paths` + a vitest `resolve.alias` to the runtime `src/`. Fix before real generated apps: build the runtime (`npm run build --workspace=@engineering-ui-kit/capabilities-runtime`) into consumer resolution OR add a `"development"`/`"source"` export condition pointing at `src`. Also: TS example packages must be run via `cd <pkg> && npx vitest run` (Vitest loads a nested config only from its own cwd) — document for WP10's matrix.
 
 **REDACTION-JSON — hardening candidate (WP8 found it):** the frozen `redaction.ts` `redactSensitiveText` only matches unquoted `key: value`/`key=value` + `Bearer …`; it does NOT mask JSON-quoted secret-looking keys (`"apiKey":"…"`). WP8's `verificationRunner.ts` added a local `redactSensitiveKeys` deep-walk as defense-in-depth. Consider hardening `redactSensitiveText` itself (small; affects existing cap-test-047 — verify) so all secret sinks (evidence/logs/diagnostics) are covered uniformly.
@@ -145,28 +145,28 @@ foundation planning: `FoundationPlan` proposer + allocation explanations + ambig
 separate approval + handoff/staleness gate + brief `deployment` enrichment + foundation-review UI +
 Build prerequisite gate + From-spec generated-refs, CAP-TEST-071..075, **DoD #5**), WP6A/WP6B (journey model +
 trigger-first Connect editors), WP7-apply + WP7-rest (transactional generate→apply→rollback), WP8 (real
-connection verification), WP9A + **WP9B** (`25dec77`, additive existing-repo adoption + runtime-upgrade
-preview, CAP-TEST-103/104/105, DoD #2/#8), SCHED-ENUM reconciled (`c4e8981`). See the status table.
-**The last feature lane (WP5A) is now done — every DoD requirement except cross-platform CI (#9) is met.**
+connection verification), WP9A + **WP9B** (`25dec77`+`7ec2588`, additive existing-repo adoption +
+legacy-runtime continuity/retirement gate + runtime-upgrade preview, CAP-TEST-103–108, DoD #2/#8),
+SCHED-ENUM reconciled (`c4e8981`). See the status table.
+**The last feature lane (WP5A) and the cross-platform evidence gate are done — all 10 DoD requirements are met.**
 
-**WP10 matrix — re-run green post-WP5A** (see
-[`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md)): core **317**,
+**WP10 matrix — green on the complete supported platform set** (see
+[`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md)): core **320**,
 runtime-ts 95, gui **174**, desktop typecheck, python 130, examples 15 + 7 + 8 + (7 TS / 3 py). DoD scorecard:
-**9/10 fully met** (only #9 cross-platform CI remains). No regressions; the react↔python TS suite re-spawned a
-real FastAPI subprocess and passed. **Capabilities remains `Experimental`** pending the single honest gap below.
+**10/10 fully met**. The same suite passed on macOS and in real Windows+Ubuntu GitHub jobs
+([run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532)); the react↔python
+TS suite re-spawned a real FastAPI subprocess on both CI platforms. **Capabilities remains `Experimental` only
+because badge removal is the separate product decision required by WP10.6, not because evidence is missing.**
 
-**Remaining (all tracked; none block the executable core):**
-- **Cross-platform CI** — run the §1 command set on Windows + Linux runners. *DoD #9 / §18 ⬚ cells — the last
-  Experimental-exit gate.*
-- **Legacy `runtime.js` compat-adapter execution** + "conformance replaces compatibility" retirement gate.
+**Remaining (all tracked; none are DoD blockers):**
 - **WP7-followups / WP8-followups / RUNTIME-DIST / REDACTION-JSON** — see "Open issues".
 - **WP5A followup (non-blocking):** `brief.deployment.generatedContractRefs`/`generatedTypeTargets` are wired
   and tested but render empty in live UI until a `ModuleImplementationSpecification` exists (WP7 generation
   scope populates them); the surfacing mechanism is complete.
 
 To provision Python locally: repo-root `.venv` (git-ignored) — see the "Python environment" note above and
-§1 of the platform-matrix doc. To resume: `git checkout claude/cap-era-integration`, read "Open issues" +
-"Parallel-execution model" + "Python environment", then pick up cross-platform CI (DoD #9), the last gate.
+§1 of the platform-matrix doc. The initiative is complete; any resumed work should select an explicitly
+approved non-blocking follow-up from "Open issues" rather than reopening a green gate.
 
 The WP1b notes below are RETAINED FOR REFERENCE ONLY (already implemented in `14f9f7f`).
 
@@ -231,3 +231,6 @@ canary never survives redaction).
   - **WP5A-gui** (`90725d6`) in the coordinator checkout: `FoundationReview.tsx` rendered from `ArchitectureInterview` in BOTH projections; Build/handoff **prerequisite gate** in `ModulesView` (guided + design) via `foundationHandoffGate`; From-spec spec enriched with generated contract/path/command refs at `buildUiModuleTaskFields` (single source of truth); 4 new `EuikBridge` foundation methods with **real** desktop IPC wiring (`ipc.ts`/`bridgeApi.ts`/`preload.cts`, reusing `listDeployables`' discovery) — no mock-only debt. CAP-TEST-074/075; **gui 165→174**; desktop typecheck clean.
   - **WP5 gate CAP-TEST-070..075 now complete** (070 = WP5B connect-backing pulled forward; 071–075 = WP5A). Numbering note: 070 was consumed by WP5B, so WP5A realized its planning bullets as 071–075.
 - **Full platform matrix re-run green post-WP5A** at integrated HEAD `90725d6`: core **317**, runtime-ts 95, gui **174**, desktop typecheck clean, python 130, examples 15 + 7 + 8 + (7 TS / 3 py). **DoD 8/10 → 9/10** (#5 met; only #9 cross-platform CI remains). Capabilities still `Experimental` pending Windows/Linux CI. Not pushed (awaiting explicit request).
+- **WP10 cross-platform gate COMPLETE:** workflow `0245dfb`; clean-install lock repair `b55384f`; Windows portability fixes `44f9997`; browser provisioning `ea24e5b`. Real Windows+Ubuntu matrix [run 29465178533](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465178533) passed every §1 suite. **DoD 9/10 → 10/10**; technical Experimental-exit evidence complete. Badge retained pending the separate WP10.6 product decision.
+- **WP9 legacy execution gate COMPLETE** (`7ec2588`): CAP-TEST-106 invokes the actual mixed-app `runtime.js` over real HTTP before and after additive generate/apply and proves byte-identical preservation; CAP-TEST-107 proves only material evidence conflicts ask questions; CAP-TEST-108 prevents compatibility retirement until generated contracts, composition registration, and real-connection verification all pass.
+- **WP10 final matrix re-run green:** [run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532) passed every §1 suite, including CAP-TEST-106–108, on Windows+Ubuntu at `7ec2588` (core 320). This supersedes the prior pre-legacy-gate run above.
