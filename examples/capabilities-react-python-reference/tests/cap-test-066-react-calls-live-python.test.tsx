@@ -29,7 +29,7 @@
  * real deployment would drive it.
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 
 import { PlaceOrderForm } from '../src/react/PlaceOrderForm.js'
@@ -62,8 +62,9 @@ describe('CAP-TEST-066 React calls a live Python host (real end-to-end)', () => 
     await user.type(screen.getByLabelText('Quantity'), '2')
     await user.click(screen.getByRole('button', { name: 'Place order' }))
 
-    const status = await screen.findByRole('status')
-    expect(status.textContent).toMatch(/^Order order-\d{6} placed \(total 3998 cents\)\.$/)
+    await waitFor(() => {
+      expect(screen.getByRole('status').textContent).toMatch(/^Order order-\d{6} placed \(total 3998 cents\)\.$/)
+    }, { timeout: 5_000 })
   })
 
   it('drives a real domain-rejection round-trip through the live Python host', async () => {

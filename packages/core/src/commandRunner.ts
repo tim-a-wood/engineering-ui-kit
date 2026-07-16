@@ -7,7 +7,7 @@
  * never assume a framework default port; own the process lifecycle).
  */
 
-import { spawn, type ChildProcess } from 'node:child_process'
+import { spawn, spawnSync, type ChildProcess } from 'node:child_process'
 import fs from 'node:fs'
 import net from 'node:net'
 import path from 'node:path'
@@ -44,6 +44,13 @@ export async function runCommand(options: RunCommandOptions): Promise<Verificati
       detached,
     })
     const killTree = (signal: NodeJS.Signals) => {
+      if (process.platform === 'win32' && typeof child.pid === 'number') {
+        const taskkill = spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
+          stdio: 'ignore',
+          windowsHide: true,
+        })
+        if (taskkill.status === 0) return
+      }
       try {
         if (detached && typeof child.pid === 'number') process.kill(-child.pid, signal)
         else child.kill(signal)
