@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["node"],
+    "strict": true,
+    "noEmit": true,
+    "declaration": false,
+    "sourceMap": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true,
+    "baseUrl": ".",
+    "paths": {
+      "@engineering-ui-kit/capabilities-runtime": ["../../packages/capabilities-runtime-ts/src/index.ts"],
+      "@engineering-ui-kit/capabilities-runtime/browser": ["../../packages/capabilities-runtime-ts/src/browser.ts"],
+      "@engineering-ui-kit/capabilities-runtime/react": ["../../packages/capabilities-runtime-ts/src/react.tsx"]
+    }
+  },
+  "include": ["src", "tests"]
+}
