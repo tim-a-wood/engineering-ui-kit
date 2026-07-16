@@ -51,7 +51,7 @@ import {
 } from './standardsTemplate.js'
 import { registerCapabilityIpcHandlers } from './capabilities/ipc.js'
 import {
-  buildPreviewSelectionEvidenceScript,
+  buildPreviewSelectionEvidenceFunction,
 } from './previewPicker.js'
 
 function requireProject(workspace: Workspace, projectId: string): Project {
@@ -905,31 +905,50 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       setImmediate(() => {
         void (async () => {
           if (guest.isDestroyed()) throw new Error('the target-app Preview closed during element selection')
-          if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
-          const evaluated = await guest.debugger.sendCommand('Runtime.evaluate', {
-            expression: buildPreviewSelectionEvidenceScript(mouse.x, mouse.y),
-            returnByValue: true,
-          }) as {
-            result?: { value?: unknown; description?: string }
-            exceptionDetails?: { text?: string; exception?: { description?: string } }
+          const ownsDebugger = !guest.debugger.isAttached()
+          if (ownsDebugger) guest.debugger.attach('1.3')
+          try {
+            await guest.debugger.sendCommand('DOM.enable')
+            const located = await guest.debugger.sendCommand('DOM.getNodeForLocation', {
+              x: mouse.x,
+              y: mouse.y,
+              includeUserAgentShadowDOM: true,
+              ignorePointerEventsNone: true,
+            }) as { backendNodeId?: number }
+            if (!located.backendNodeId) throw new Error('no target-app Preview element was found at the click location')
+            const resolved = await guest.debugger.sendCommand('DOM.resolveNode', {
+              backendNodeId: located.backendNodeId,
+            }) as { object?: { objectId?: string } }
+            if (!resolved.object?.objectId) throw new Error('the selected target-app Preview element could not be inspected')
+            const evaluated = await guest.debugger.sendCommand('Runtime.callFunctionOn', {
+              functionDeclaration: buildPreviewSelectionEvidenceFunction(),
+              objectId: resolved.object.objectId,
+              returnByValue: true,
+              userGesture: true,
+            }) as {
+              result?: { value?: unknown; description?: string }
+              exceptionDetails?: { text?: string; exception?: { description?: string } }
+            }
+            if (evaluated.exceptionDetails) {
+              throw new Error(
+                evaluated.exceptionDetails.exception?.description
+                ?? evaluated.exceptionDetails.text
+                ?? evaluated.result?.description
+                ?? 'target-app Preview hit-test failed',
+              )
+            }
+            const value = evaluated.result?.value
+            if (!value || typeof value !== 'object'
+              || typeof (value as Partial<SelectionEvidence>).selector !== 'string'
+              || typeof (value as Partial<SelectionEvidence>).elementTag !== 'string') {
+              throw new Error('the target-app Preview returned invalid selection evidence')
+            }
+            if (session.status !== 'pending') return
+            session.evidence = value as SelectionEvidence
+            session.status = 'done'
+          } finally {
+            if (ownsDebugger && !guest.isDestroyed() && guest.debugger.isAttached()) guest.debugger.detach()
           }
-          if (evaluated.exceptionDetails) {
-            throw new Error(
-              evaluated.exceptionDetails.exception?.description
-              ?? evaluated.exceptionDetails.text
-              ?? evaluated.result?.description
-              ?? 'target-app Preview hit-test failed',
-            )
-          }
-          const value = evaluated.result?.value
-          if (!value || typeof value !== 'object'
-            || typeof (value as Partial<SelectionEvidence>).selector !== 'string'
-            || typeof (value as Partial<SelectionEvidence>).elementTag !== 'string') {
-            throw new Error('the target-app Preview returned invalid selection evidence')
-          }
-          if (session.status !== 'pending') return
-          session.evidence = value as SelectionEvidence
-          session.status = 'done'
         })().catch(fail)
       })
     }

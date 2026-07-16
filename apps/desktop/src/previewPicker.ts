@@ -1,8 +1,13 @@
-/** Build a self-contained, read-only hit-test for an authorized Preview click. */
-export function buildPreviewSelectionEvidenceScript(x: number, y: number): string {
-  return `(() => {
-    const element = document.elementFromPoint(${JSON.stringify(x)}, ${JSON.stringify(y)});
-    if (!(element instanceof Element)) return null;
+/**
+ * Build the read-only function invoked against the exact DOM node resolved by
+ * Chrome's DOM domain for an authorized Preview click. Resolving the node
+ * first avoids relying on Runtime.evaluate's implicit execution context,
+ * which can point at the wrong document for a Windows <webview> guest.
+ */
+export function buildPreviewSelectionEvidenceFunction(): string {
+  return `function () {
+    const element = this;
+    if (!element || element.nodeType !== 1) return null;
     const marker = (target) => {
       for (const attr of ['data-cap-id', 'data-testid']) {
         const value = target.getAttribute(attr);
@@ -40,5 +45,5 @@ export function buildPreviewSelectionEvidenceScript(x: number, y: number): strin
       stableMarker: marker(element),
       captureTime: new Date().toISOString(),
     };
-  })()`
+  }`
 }
