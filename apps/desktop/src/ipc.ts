@@ -3,7 +3,7 @@
  * child processes, or persistence — always through @engineering-ui-kit/core.
  */
 
-import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell, webContents } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawn, type ChildProcess } from 'node:child_process'
@@ -29,6 +29,7 @@ import {
   type OverlayInspectionSummary,
   type Project,
   type Settings,
+  type SelectionEvidence,
   type VerificationResult,
 } from '@engineering-ui-kit/core'
 import {
@@ -48,6 +49,7 @@ import {
   buildTaskPacketMarkdown,
 } from './standardsTemplate.js'
 import { registerCapabilityIpcHandlers } from './capabilities/ipc.js'
+import { DESKTOP_PREVIEW_PICKER_JS } from './previewPicker.js'
 
 function requireProject(workspace: Workspace, projectId: string): Project {
   const project = workspace.getProject(projectId)
@@ -856,6 +858,39 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     // system browser when asked (the default, and the legacy behavior).
     if (options?.open !== false) await shell.openExternal(launchUrl)
     return { url: launchUrl, started, rebuilt }
+  })
+
+  ipcMain.handle(BRIDGE_CHANNELS.pickPreviewElement, async (event, guestId: number): Promise<SelectionEvidence | null> => {
+    if (!Number.isSafeInteger(guestId) || guestId <= 0) throw new Error('invalid target-app Preview guest')
+    const guest = webContents.fromId(guestId)
+    if (!guest || guest.isDestroyed() || guest.getType() !== 'webview' || guest.hostWebContents?.id !== event.sender.id) {
+      throw new Error('the target-app Preview guest is unavailable or does not belong to this window')
+    }
+    const target = new URL(guest.getURL())
+    if (!['http:', 'https:'].includes(target.protocol) || !['127.0.0.1', 'localhost', '::1'].includes(target.hostname)) {
+      throw new Error('element selection is limited to the configured local application Preview')
+    }
+    if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
+    let timer: ReturnType<typeof setTimeout>
+    try {
+      const evaluated = await Promise.race([
+        guest.debugger.sendCommand('Runtime.evaluate', {
+          expression: DESKTOP_PREVIEW_PICKER_JS,
+          awaitPromise: true,
+          returnByValue: true,
+          userGesture: true,
+        }),
+        new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(() => reject(new Error('element selection timed out; try again')), 5 * 60 * 1000)
+        }),
+      ]) as { result?: { value?: unknown } }
+      const value = evaluated.result?.value
+      if (value === null || value === undefined) return null
+      if (!value || typeof value !== 'object') throw new Error('the target-app Preview returned invalid selection evidence')
+      return value as SelectionEvidence
+    } finally {
+      clearTimeout(timer!)
+    }
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.openExternal, async (_e, url: string) => {

@@ -1,7 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { Project, SelectionEvidence } from '@engineering-ui-kit/core'
 import type { EuikBridge } from '../../bridge'
-import { PREVIEW_BINDING_PICKER_JS } from './previewSelection'
 
 export type CapabilityPreviewHandle = {
   pickElement(): Promise<SelectionEvidence | null>
@@ -126,14 +125,15 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
         }
         await waitForGuestReady()
         const guest = webviewRef.current as unknown as {
-          executeJavaScript?: (code: string) => Promise<unknown>
+          getWebContentsId?: () => number
         } | null
-        if (!guest?.executeJavaScript) {
+        const guestId = guest?.getWebContentsId?.()
+        if (!guestId) {
           throw new Error('The target-app Preview guest is unavailable.')
         }
-        return (await guest.executeJavaScript(PREVIEW_BINDING_PICKER_JS)) as SelectionEvidence | null
+        return bridge.pickPreviewElement(guestId)
       },
-    }), [isElectron, state, waitForGuestReady])
+    }), [bridge, isElectron, state, waitForGuestReady])
 
     const reload = () => {
       if (isElectron) {
