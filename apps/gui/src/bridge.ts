@@ -27,7 +27,6 @@ import type {
   ImpactClassification,
   DeltaQueueState,
   Settings,
-  SelectionEvidence,
   VerificationResult,
   CapabilityIntegrationState,
   GenerationApplyRecord,
@@ -147,7 +146,7 @@ export type EuikBridge = {
   startUploadDrag(runId: string): Promise<void>
   copyUploadSet(runId: string): Promise<{ files: number }>
   launchApp(projectId: string, options?: { open?: boolean }): Promise<{ url: string; started: boolean; rebuilt: boolean }>
-  pickPreviewElement(guestId: number): Promise<SelectionEvidence | null>
+  getPreviewPreloadUrl(): Promise<string>
   openExternal(url: string): Promise<void>
   openPath(path: string): Promise<void>
   showInFolder(path: string): Promise<void>

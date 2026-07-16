@@ -3,9 +3,10 @@
  * child processes, or persistence — always through @engineering-ui-kit/core.
  */
 
-import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell, webContents } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { buildCfHdropBuffer, buildFilenamesPboardPlist, buildUriList } from './uploadSetTransfer.js'
 import {
@@ -29,7 +30,6 @@ import {
   type OverlayInspectionSummary,
   type Project,
   type Settings,
-  type SelectionEvidence,
   type VerificationResult,
 } from '@engineering-ui-kit/core'
 import {
@@ -49,11 +49,6 @@ import {
   buildTaskPacketMarkdown,
 } from './standardsTemplate.js'
 import { registerCapabilityIpcHandlers } from './capabilities/ipc.js'
-import {
-  DESKTOP_PREVIEW_PICKER_CANCEL_JS,
-  DESKTOP_PREVIEW_PICKER_JS,
-  DESKTOP_PREVIEW_PICKER_RESULT_JS,
-} from './previewPicker.js'
 
 function requireProject(workspace: Workspace, projectId: string): Project {
   const project = workspace.getProject(projectId)
@@ -864,50 +859,10 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     return { url: launchUrl, started, rebuilt }
   })
 
-  ipcMain.handle(BRIDGE_CHANNELS.pickPreviewElement, async (event, guestId: number): Promise<SelectionEvidence | null> => {
-    if (!Number.isSafeInteger(guestId) || guestId <= 0) throw new Error('invalid target-app Preview guest')
-    const guest = webContents.fromId(guestId)
-    if (!guest || guest.isDestroyed() || guest.getType() !== 'webview' || guest.hostWebContents?.id !== event.sender.id) {
-      throw new Error('the target-app Preview guest is unavailable or does not belong to this window')
-    }
-    const target = new URL(guest.getURL())
-    if (!['http:', 'https:'].includes(target.protocol) || !['127.0.0.1', 'localhost', '::1'].includes(target.hostname)) {
-      throw new Error('element selection is limited to the configured local application Preview')
-    }
-    if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
-    try {
-      await guest.debugger.sendCommand('Runtime.evaluate', {
-        expression: DESKTOP_PREVIEW_PICKER_JS,
-        returnByValue: true,
-        userGesture: true,
-      })
-      const deadline = Date.now() + 5 * 60 * 1000
-      let value: unknown
-      for (;;) {
-        if (guest.isDestroyed()) throw new Error('the target-app Preview closed during element selection')
-        const evaluated = await guest.debugger.sendCommand('Runtime.evaluate', {
-          expression: DESKTOP_PREVIEW_PICKER_RESULT_JS,
-          returnByValue: true,
-        }) as { result?: { value?: unknown } }
-        const state = evaluated.result?.value as { done?: unknown; value?: unknown } | undefined
-        if (state?.done === true) {
-          value = state.value
-          break
-        }
-        if (Date.now() >= deadline) throw new Error('element selection timed out; try again')
-        await new Promise((resolve) => setTimeout(resolve, 50))
-      }
-      if (value === null || value === undefined) return null
-      if (!value || typeof value !== 'object') throw new Error('the target-app Preview returned invalid selection evidence')
-      return value as SelectionEvidence
-    } finally {
-      if (!guest.isDestroyed()) {
-        await guest.debugger.sendCommand('Runtime.evaluate', {
-          expression: DESKTOP_PREVIEW_PICKER_CANCEL_JS,
-          returnByValue: true,
-        }).catch(() => undefined)
-      }
-    }
+  ipcMain.handle(BRIDGE_CHANNELS.getPreviewPreloadUrl, () => {
+    const preloadPath = path.join(app.getAppPath(), 'dist', 'preload', 'previewGuestPreload.cjs')
+    if (!fs.existsSync(preloadPath)) throw new Error('the target-app Preview picker is unavailable in this build')
+    return pathToFileURL(preloadPath).toString()
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.openExternal, async (_e, url: string) => {

@@ -11,5 +11,5 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["src/preload.cts"]
+  "include": ["src/preload.cts", "src/previewGuestPreload.cts"]
 }

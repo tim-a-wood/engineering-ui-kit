@@ -35,7 +35,7 @@ const CHANNELS = {
   startUploadDrag: 'dnd:start-upload-drag',
   copyUploadSet: 'clipboard:copy-upload-set',
   launchApp: 'app:launch-target',
-  pickPreviewElement: 'app:pick-preview-element',
+  getPreviewPreloadUrl: 'app:preview-preload-url',
   openExternal: 'shell:open-external',
   openPath: 'shell:open-path',
   showInFolder: 'shell:show-in-folder',

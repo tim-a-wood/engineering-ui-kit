@@ -14,8 +14,21 @@ type Props = {
 
 type PreviewState =
   | { status: 'idle' | 'starting' | 'installing' }
-  | { status: 'ready'; url: string }
+  | { status: 'ready'; url: string; preloadUrl?: string }
   | { status: 'error'; message: string }
+
+type PreviewWebview = HTMLWebViewElement & {
+  getWebContentsId?: () => number
+  getURL?: () => string
+  send?: (channel: string, ...args: unknown[]) => void
+  reload?: () => void
+}
+
+type PreviewIpcMessage = Event & { channel?: string; args?: unknown[] }
+
+const PREVIEW_PICK_START = 'euik-preview-picker:start'
+const PREVIEW_PICK_CANCEL = 'euik-preview-picker:cancel'
+const PREVIEW_PICK_RESULT = 'euik-preview-picker:result'
 
 /** Target application preview. Selection executes inside the Electron guest. */
 export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
@@ -23,10 +36,24 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
     const [state, setState] = useState<PreviewState>({ status: 'idle' })
     const webviewRef = useRef<HTMLWebViewElement | null>(null)
     const guestReadyRef = useRef(false)
+    const pendingPickRef = useRef<{
+      resolve: (value: SelectionEvidence | null) => void
+      reject: (cause: Error) => void
+      timer: ReturnType<typeof setTimeout>
+    } | null>(null)
+    const settlePendingPick = useCallback((value: SelectionEvidence | null, cause?: Error) => {
+      const pending = pendingPickRef.current
+      if (!pending) return
+      pendingPickRef.current = null
+      clearTimeout(pending.timer)
+      if (cause) pending.reject(cause)
+      else pending.resolve(value)
+    }, [])
     const guestListenersRef = useRef<{
       node: HTMLWebViewElement
       ready: EventListener
       loading: EventListener
+      message: EventListener
     } | null>(null)
     const iframeRef = useRef<HTMLIFrameElement | null>(null)
     const isElectron = typeof window !== 'undefined' && window.euikMode === 'electron'
@@ -35,30 +62,52 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
     const setWebviewRef = useCallback((node: HTMLWebViewElement | null) => {
       const previous = guestListenersRef.current
       if (previous) {
+        ;(previous.node as PreviewWebview).send?.(PREVIEW_PICK_CANCEL)
         previous.node.removeEventListener('dom-ready', previous.ready)
         previous.node.removeEventListener('did-start-loading', previous.loading)
+        previous.node.removeEventListener('ipc-message', previous.message)
         guestListenersRef.current = null
       }
+      settlePendingPick(null)
       webviewRef.current = node
       guestReadyRef.current = false
       if (!node) return
-      const loading: EventListener = () => { guestReadyRef.current = false }
+      const loading: EventListener = () => {
+        guestReadyRef.current = false
+        settlePendingPick(null)
+      }
       const ready: EventListener = () => {
         guestReadyRef.current = true
       }
-      guestListenersRef.current = { node, ready, loading }
+      const message: EventListener = (rawEvent) => {
+        const event = rawEvent as PreviewIpcMessage
+        if (event.channel !== PREVIEW_PICK_RESULT) return
+        const value = event.args?.[0]
+        if (value === null || value === undefined) {
+          settlePendingPick(null)
+          return
+        }
+        if (
+          typeof value !== 'object'
+          || typeof (value as Partial<SelectionEvidence>).selector !== 'string'
+          || typeof (value as Partial<SelectionEvidence>).elementTag !== 'string'
+        ) {
+          settlePendingPick(null, new Error('The target-app Preview returned invalid selection evidence.'))
+          return
+        }
+        settlePendingPick(value as SelectionEvidence)
+      }
+      guestListenersRef.current = { node, ready, loading, message }
       node.addEventListener('did-start-loading', loading)
       node.addEventListener('dom-ready', ready)
-    }, [])
+      node.addEventListener('ipc-message', message)
+    }, [settlePendingPick])
 
     const waitForGuestReady = useCallback(async () => {
       const deadline = Date.now() + 30_000
       while (Date.now() < deadline) {
         if (guestReadyRef.current) return
-        const guest = webviewRef.current as unknown as {
-          getWebContentsId?: () => number
-          getURL?: () => string
-        } | null
+        const guest = webviewRef.current as PreviewWebview | null
         // `dom-ready` can fire between custom-element connection and React's
         // ref callback on slower Windows runners. A live guest identity at the
         // requested URL is authoritative when that one-shot event was missed.
@@ -75,8 +124,11 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
       if (!projectId) return
       setState({ status: 'starting' })
       try {
-        const launched = await bridge.launchApp(projectId, { open: false })
-        setState({ status: 'ready', url: launched.url })
+        const [launched, preloadUrl] = await Promise.all([
+          bridge.launchApp(projectId, { open: false }),
+          isElectron ? bridge.getPreviewPreloadUrl() : Promise.resolve(undefined),
+        ])
+        setState({ status: 'ready', url: launched.url, preloadUrl })
       } catch (cause) {
         setState({
           status: 'error',
@@ -124,20 +176,29 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
           throw new Error('The target-app Preview is not ready.')
         }
         await waitForGuestReady()
-        const guest = webviewRef.current as unknown as {
-          getWebContentsId?: () => number
-        } | null
-        const guestId = guest?.getWebContentsId?.()
-        if (!guestId) {
+        const guest = webviewRef.current as PreviewWebview | null
+        if (!guest?.getWebContentsId?.() || !guest.send) {
           throw new Error('The target-app Preview guest is unavailable.')
         }
-        return bridge.pickPreviewElement(guestId)
+        settlePendingPick(null)
+        return new Promise<SelectionEvidence | null>((resolve, reject) => {
+          const timer = setTimeout(() => {
+            guest.send?.(PREVIEW_PICK_CANCEL)
+            settlePendingPick(null, new Error('Element selection timed out; try again.'))
+          }, 5 * 60 * 1000)
+          pendingPickRef.current = { resolve, reject, timer }
+          try {
+            guest.send?.(PREVIEW_PICK_START)
+          } catch (cause) {
+            settlePendingPick(null, cause instanceof Error ? cause : new Error(String(cause)))
+          }
+        })
       },
-    }), [bridge, isElectron, state, waitForGuestReady])
+    }), [isElectron, settlePendingPick, state, waitForGuestReady])
 
     const reload = () => {
       if (isElectron) {
-        ;(webviewRef.current as unknown as { reload?: () => void } | null)?.reload?.()
+        ;(webviewRef.current as PreviewWebview | null)?.reload?.()
       } else if (iframeRef.current && state.status === 'ready') {
         iframeRef.current.src = state.url
       }
@@ -159,7 +220,7 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
           </div>
           {state.status === 'ready' ? (
             isElectron ? (
-              <webview ref={setWebviewRef} className="app-preview-frame" src={state.url} />
+              <webview ref={setWebviewRef} className="app-preview-frame" src={state.url} preload={state.preloadUrl} />
             ) : (
               <iframe ref={iframeRef} className="app-preview-frame" src={state.url} title="Target application Preview" />
             )
