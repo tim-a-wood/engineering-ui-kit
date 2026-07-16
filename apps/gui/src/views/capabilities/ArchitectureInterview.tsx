@@ -7,6 +7,7 @@ import type {
   ApplicationSpecification,
   ArchitectureSpecification,
   CapDiagnostic,
+  FoundationPlan,
   InterviewPacket,
 } from '@engineering-ui-kit/core'
 import {
@@ -21,6 +22,7 @@ import {
 import type { CapabilityPacketExportResult, EuikBridge } from '../../bridge'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
 import { CapabilityHandoffCard } from './CapabilityHandoffCard'
+import { FoundationReview } from './FoundationReview'
 import { presentDiagnosticsForGuided } from './capabilityPresentation'
 
 type Props = {
@@ -51,6 +53,8 @@ export function ArchitectureInterview({
   const guided = projection === 'guided'
   const [product, setProduct] = useState<ApplicationSpecification | undefined>()
   const [draft, setDraft] = useState<ArchitectureSpecification | undefined>()
+  const [approvedArch, setApprovedArch] = useState<ArchitectureSpecification | undefined>()
+  const [foundation, setFoundation] = useState<{ draft?: FoundationPlan; approved?: FoundationPlan }>({})
   const [packet, setPacket] = useState<InterviewPacket | undefined>()
   const [exportResult, setExportResult] = useState<CapabilityPacketExportResult | undefined>()
   const [proposal, setProposal] = useState<ArchitectureProposalInput | undefined>()
@@ -67,6 +71,8 @@ export function ArchitectureInterview({
     const arch = await bridge.capabilitiesGetArchitecture(projectId)
     setProduct(asApp(app.approved) ?? asApp(app.draft))
     setDraft(asArch(arch.draft) ?? asArch(arch.approved))
+    setApprovedArch(asArch(arch.approved))
+    setFoundation(await bridge.capabilitiesGetFoundation(projectId))
   }
 
   useEffect(() => {
@@ -286,6 +292,18 @@ export function ArchitectureInterview({
 
       {!architectureApproved ? (
         <p className="capabilities-note">Module interviews remain blocked until architecture approval.</p>
+      ) : null}
+
+      {architectureApproved && approvedArch ? (
+        <FoundationReview
+          bridge={bridge}
+          projectId={projectId}
+          plan={foundation.draft ?? foundation.approved}
+          approvedFoundation={foundation.approved}
+          approvedArchitecture={approvedArch}
+          projection={projection}
+          onChanged={() => void refresh()}
+        />
       ) : null}
     </section>
   )

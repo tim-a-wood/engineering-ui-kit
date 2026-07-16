@@ -45,11 +45,13 @@ import {
   transitionJob,
   discoverRepository,
   proposeDeployables,
+  proposeFoundation,
   type ApplicationSpecification,
   type ArchitectureSpecification,
   type CapabilityHandoffMarkdownInput,
   type CapabilityRunScope,
   type DeployableSpecification,
+  type FoundationPlan,
   type FreshnessRecord,
   type FrontendBinding,
   type InboundBinding,
@@ -114,6 +116,10 @@ const CAP_CHANNELS = {
   listInboundBindings: 'capabilities:list-inbound-bindings',
   saveInboundBindingDraft: 'capabilities:save-inbound-binding-draft',
   approveInboundBinding: 'capabilities:approve-inbound-binding',
+  proposeFoundation: 'capabilities:propose-foundation',
+  getFoundation: 'capabilities:get-foundation',
+  saveFoundationDraft: 'capabilities:save-foundation-draft',
+  approveFoundation: 'capabilities:approve-foundation',
 } as const
 
 export type CapabilityBridgeChannels = typeof CAP_CHANNELS
@@ -1562,6 +1568,44 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
       kind: deployable.kind,
       name: deployable.name,
     }))
+  })
+
+  // --- WP5A foundation planning (CAP-TEST-074/075) ---------------------
+
+  ipcMain.handle(
+    CAP_CHANNELS.proposeFoundation,
+    (_e, input: { projectId: string; answers?: { id: string; choice: string }[] }) => {
+      requireString(input.projectId, 'projectId')
+      caps.ensureInitialized(input.projectId)
+      const architecture = caps.getApprovedArchitecture(input.projectId)
+      if (!architecture) throw new Error('architecture must be approved before proposing a foundation')
+      const project = workspace.getProject(input.projectId)
+      const discovery = project ? discoverRepository(buildRepositoryEvidence(project.repoPath)) : undefined
+      return proposeFoundation({ architecture, discovery, answers: input.answers })
+    },
+  )
+
+  ipcMain.handle(CAP_CHANNELS.getFoundation, (_e, projectId: string) => {
+    requireString(projectId, 'projectId')
+    caps.ensureInitialized(projectId)
+    return { draft: caps.getFoundationDraft(projectId), approved: caps.getApprovedFoundation(projectId) }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.saveFoundationDraft, (_e, projectId: string, plan: FoundationPlan) => {
+    requireString(projectId, 'projectId')
+    caps.saveFoundationDraft(projectId, plan)
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.approveFoundation, (_e, projectId: string, plan: FoundationPlan) => {
+    requireString(projectId, 'projectId')
+    if (plan.readiness.status !== 'ready') {
+      return {
+        ok: false as const,
+        reason: `cannot approve a foundation plan with readiness status "${plan.readiness.status}"`,
+      }
+    }
+    return { ok: true as const, approved: caps.approveFoundation(projectId, plan) }
   })
 
   ipcMain.handle(CAP_CHANNELS.listInboundBindings, (_e, projectId: string) => {

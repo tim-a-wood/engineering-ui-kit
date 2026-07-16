@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import type { ArchitectureSpecification, CapabilityModuleRecord } from '@engineering-ui-kit/core'
+import type { ArchitectureSpecification, CapabilityModuleRecord, FoundationPlan } from '@engineering-ui-kit/core'
 import type { EuikBridge, TaskPacketFields } from '../../bridge'
 import { Icon } from '../../icons'
 import { ModulesView } from './ModulesView'
@@ -19,6 +19,9 @@ type Props = {
   records: CapabilityModuleRecord[]
   onChanged: () => void
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
+  /** WP5A bullet (d)/(e) — the project's approved foundation plan and the build-handoff gate derived from it. */
+  approvedFoundation?: FoundationPlan
+  foundationGate?: { enabled: boolean; reason?: string }
 }
 
 export function GuidedBuild(props: Props) {
@@ -119,6 +122,8 @@ export function GuidedBuild(props: Props) {
             externalSelectedModuleId={selected}
             onSelectModule={setSelected}
             onStartUiBuild={props.onStartUiBuild}
+            approvedFoundation={props.approvedFoundation}
+            foundationGate={props.foundationGate}
           />
         ) : (
           <p role="status" className="capabilities-note">Select a module to work on.</p>

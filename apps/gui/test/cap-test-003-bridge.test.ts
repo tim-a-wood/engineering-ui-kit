@@ -54,6 +54,10 @@ const CANONICAL_CAP_METHODS = [
   'capabilitiesMarkDeltaTargetComplete',
   'capabilitiesRunModuleVerification',
   'capabilitiesVerifyApprovedModule',
+  'capabilitiesProposeFoundation',
+  'capabilitiesGetFoundation',
+  'capabilitiesSaveFoundationDraft',
+  'capabilitiesApproveFoundation',
 ] as const
 
 describe('CAP-TEST-003 capabilities bridge surface', () => {

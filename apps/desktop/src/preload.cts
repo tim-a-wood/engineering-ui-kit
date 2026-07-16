@@ -83,6 +83,10 @@ const CHANNELS = {
   capabilitiesMarkDeltaTargetComplete: 'capabilities:mark-delta-target-complete',
   capabilitiesRunModuleVerification: 'capabilities:run-module-verification',
   capabilitiesVerifyApprovedModule: 'capabilities:verify-approved-module',
+  capabilitiesProposeFoundation: 'capabilities:propose-foundation',
+  capabilitiesGetFoundation: 'capabilities:get-foundation',
+  capabilitiesSaveFoundationDraft: 'capabilities:save-foundation-draft',
+  capabilitiesApproveFoundation: 'capabilities:approve-foundation',
 } as const
 
 // Compile-time bridge parity guard: the preload channel surface must match the
