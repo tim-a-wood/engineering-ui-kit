@@ -98,6 +98,28 @@ function packagedLaunchArgs() {
   return process.platform === 'linux' ? ['--no-sandbox'] : []
 }
 
+async function closePackagedApp(app) {
+  if (!app) return
+  let settled = false
+  const close = app.close().then(
+    () => { settled = true },
+    () => { settled = true },
+  )
+  await Promise.race([close, new Promise((resolve) => setTimeout(resolve, 10_000))])
+  if (settled) return
+
+  // Playwright waits for Electron to exit. On Windows a generated npm/Vite
+  // descendant can retain inherited handles after the last window closes, so
+  // bound shutdown and terminate the complete packaged-app process tree.
+  const child = app.process()
+  if (process.platform === 'win32' && child.pid) {
+    spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
+  } else {
+    try { child.kill('SIGKILL') } catch { /* already exited */ }
+  }
+  await Promise.race([close, new Promise((resolve) => setTimeout(resolve, 5_000))])
+}
+
 async function expectVisible(locator, description) {
   await locator.waitFor({ state: 'visible', timeout: TIMEOUT }).catch((error) => {
     throw new Error(`${description} was not visible: ${error.message}`)
@@ -353,7 +375,7 @@ async function runTypeScriptUiJourney(electron) {
     evidence.error = error instanceof Error ? error.stack : String(error)
     throw error
   } finally {
-    await app.close().catch(() => {})
+    await closePackagedApp(app)
     stopPort(fixture.uiUrl)
     fs.writeFileSync(path.join(EVIDENCE_DIR, 'typescript-ui.json'), JSON.stringify(evidence, null, 2) + '\n')
   }
@@ -470,7 +492,7 @@ async function runPythonHeadlessJourney(electron) {
     evidence.error = error instanceof Error ? error.stack : String(error)
     throw error
   } finally {
-    await app.close().catch(() => {})
+    await closePackagedApp(app)
     fs.writeFileSync(path.join(EVIDENCE_DIR, 'python-headless.json'), JSON.stringify(evidence, null, 2) + '\n')
   }
 }
@@ -593,7 +615,7 @@ async function runMixedReactPythonJourney(electron) {
     evidence.error = error instanceof Error ? error.stack : String(error)
     throw error
   } finally {
-    await app.close().catch(() => {})
+    await closePackagedApp(app)
     stopPort(fixture.uiUrl)
     stopPort('http://127.0.0.1:3000')
     fs.writeFileSync(path.join(EVIDENCE_DIR, 'mixed-react-python.json'), JSON.stringify(evidence, null, 2) + '\n')
@@ -712,7 +734,7 @@ async function runExistingRepositoryJourney(electron) {
     evidence.error = error instanceof Error ? error.stack : String(error)
     throw error
   } finally {
-    await app.close().catch(() => {})
+    await closePackagedApp(app)
     fs.writeFileSync(path.join(EVIDENCE_DIR, 'existing-repository.json'), JSON.stringify(evidence, null, 2) + '\n')
   }
 }
@@ -799,7 +821,7 @@ async function runFailureRecoveryJourney(electron) {
     evidence.afterFailureHash = snapshotHash(restoredAfterFailure)
     if (JSON.stringify(restoredAfterFailure) !== JSON.stringify(baseline)) throw new Error('mid-transaction failure did not restore the original repository exactly')
     evidence.screenshots.push(await shot(page, '41-mid-transaction-failure-restored'))
-    await app.close()
+    await closePackagedApp(app)
     app = undefined
 
     app = await electron.launch({
@@ -842,7 +864,7 @@ async function runFailureRecoveryJourney(electron) {
     evidence.error = error instanceof Error ? error.stack : String(error)
     throw error
   } finally {
-    await app?.close().catch(() => {})
+    await closePackagedApp(app)
     fs.writeFileSync(path.join(EVIDENCE_DIR, 'failure-recovery.json'), JSON.stringify(evidence, null, 2) + '\n')
   }
 }
@@ -864,11 +886,17 @@ try {
   const { _electron } = await import('playwright')
   const selected = new Set((process.env.EUIK_PACKAGED_JOURNEYS ?? 'typescript-ui,python-headless,mixed,existing,recovery').split(',').map((value) => value.trim()).filter(Boolean))
   const results = []
-  if (selected.has('typescript-ui')) results.push(await runTypeScriptUiJourney(_electron))
-  if (selected.has('python-headless')) results.push(await runPythonHeadlessJourney(_electron))
-  if (selected.has('mixed')) results.push(await runMixedReactPythonJourney(_electron))
-  if (selected.has('existing')) results.push(await runExistingRepositoryJourney(_electron))
-  if (selected.has('recovery')) results.push(await runFailureRecoveryJourney(_electron))
+  const runJourney = async (name, journey) => {
+    console.log(`[journey:start] ${name}`)
+    const result = await journey(_electron)
+    console.log(`[journey:pass] ${name}`)
+    return result
+  }
+  if (selected.has('typescript-ui')) results.push(await runJourney('typescript-ui', runTypeScriptUiJourney))
+  if (selected.has('python-headless')) results.push(await runJourney('python-headless', runPythonHeadlessJourney))
+  if (selected.has('mixed')) results.push(await runJourney('mixed', runMixedReactPythonJourney))
+  if (selected.has('existing')) results.push(await runJourney('existing', runExistingRepositoryJourney))
+  if (selected.has('recovery')) results.push(await runJourney('recovery', runFailureRecoveryJourney))
   if (results.length === 0) throw new Error('EUIK_PACKAGED_JOURNEYS did not select a known journey')
   console.log(JSON.stringify(results, null, 2))
   if (results.some((result) => !result.passed)) process.exitCode = 1
