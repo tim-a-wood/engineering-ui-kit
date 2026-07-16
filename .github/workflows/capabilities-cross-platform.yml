@@ -62,7 +62,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Install Playwright Chromium
-        if: runner.os == 'Windows'
+        if: runner.os != 'Linux'
         run: npx playwright install chromium
 
       - name: Build consumed library packages (core + runtime dist)
@@ -102,8 +102,12 @@ jobs:
       # ---- §1 reproducible test set (each runs even if a prior suite failed, so a
       #      single run surfaces every platform defect at once) --------------------
       - name: Core (contracts, generation, apply, migration, foundation, verification)
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && runner.os != 'Linux' }}
         run: npm run test --workspace=@engineering-ui-kit/core
+
+      - name: Core (Linux real browser and Electron under Xvfb)
+        if: ${{ !cancelled() && runner.os == 'Linux' }}
+        run: xvfb-run -a env EUIK_ELECTRON_NO_SANDBOX=1 npm run test --workspace=@engineering-ui-kit/core
 
       - name: TypeScript runtime
         if: ${{ !cancelled() }}
