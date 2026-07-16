@@ -258,7 +258,9 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
           selector: '[data-cap-id="run-capability"]',
         })
         if (!nodeId) {
-          lastState = `${lastState}; marked control not ready yet; mainFrameLoading=${guest.isLoadingMainFrame()}`
+          const { outerHTML = '' } = await guest.debugger.sendCommand('DOM.getOuterHTML', { nodeId: root.nodeId })
+          const documentPreview = outerHTML.replace(/\s+/g, ' ').slice(0, 600)
+          lastState = `${lastState}; marked control not ready yet; mainFrameLoading=${guest.isLoadingMainFrame()}; document=${documentPreview || '(empty)'}`
           await new Promise((resolve) => setTimeout(resolve, 100))
           continue
         }
