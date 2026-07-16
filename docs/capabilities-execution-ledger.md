@@ -53,7 +53,7 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP8 | Real connection verification runner + `ConnectionVerificationRecord` | WP7 | cap-sonnet-implementer + Opus review | `capabilities/verificationRunner.ts` (Node) | `a17f77a` (merged) | core 297/297 clean exit (no leaks); real HTTP+CLI launch→trigger→CAP-CONTRACT-029 (AJV-valid); simulation≠pass (separate fn, no bypass); test-adapter→partial/outstanding; redaction; process-cleanup pid-death-verified; CAP-TEST-094 | **gate-green** (Electron/Python launch presets + freshness-aggregation → WP8-followups) |
 | WP9A | Migration prep: existing-repo planner + 3 fixtures + legacy diagnostic | WP1, WP2 | cap-sonnet-implementer (symlinked worktree) | `generation/existingRepoMigration.ts`, `fixtures/existing-repos/` | `79d2fa3` (merged) | pure planner (additive, node-free); react-ts/python/react-python fixtures; CAP-TEST-102; core 199/199 | **gate-green** (apply=WP9B) |
 | WP9B | Adoption finalization: additive existing-repo apply + runtime-upgrade preview | WP7, WP8, WP9A | cap-sonnet-implementer | `generation/upgradePreview.ts` + adoption tests | `25dec77` (merged) | core 308/308; CAP-TEST-103/104/105; react-ts+python adopted additively (originals byte-identical, rollback restores); react-python boundary preserved; upgrade never silent | **gate-green** (legacy runtime.js compat-adapter execution + conformance-replaces-compatibility gate deferred) |
-| WP10 | Platform matrix + docs + Experimental-exit evidence | WP9B | matrix/docs (Sonnet) + coordinator sign-off | docs, CI, evidence index | — | full matrix (§18) | todo |
+| WP10 | Platform matrix + docs + Experimental-exit evidence | WP9B | coordinator sign-off | [`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md) | `2b0c837` (+doc) | **full macOS matrix green** (core 308, runtime-ts 95, gui 165, desktop typecheck, python 130, examples 15+7+8+7/3); DoD scorecard 8/10 met (#5 WP5A, #9 cross-platform CI partial); pass caught+fixed a latent SCHED-ENUM regression | **macOS gate-green; remains `Experimental`** (Windows/Linux CI + WP5A before badge removal) |
 
 ## WP0 classification of the dirty baseline diff
 
@@ -129,31 +129,38 @@ WP6B added 4 bridge methods (`capabilitiesListDeployables`/`ListInboundBindings`
 
 **REDACTION-JSON — hardening candidate (WP8 found it):** the frozen `redaction.ts` `redactSensitiveText` only matches unquoted `key: value`/`key=value` + `Bearer …`; it does NOT mask JSON-quoted secret-looking keys (`"apiKey":"…"`). WP8's `verificationRunner.ts` added a local `redactSensitiveKeys` deep-walk as defense-in-depth. Consider hardening `redactSensitiveText` itself (small; affects existing cap-test-047 — verify) so all secret sinks (evidence/logs/diagnostics) are covered uniformly.
 
-## RESUME HERE — next session (second half)
+## RESUME HERE — current state
 
-**Runtimes + generators + editors + both-language E2E slices COMPLETE** at HEAD `4ebe6e3` on `claude/cap-era-integration` (pushed).
-Both runtimes fully E2E-proven at the integrated tree: Python 15 (HTTP/CLI/schedule), TS 15 (headless HTTP/CLI + React web + Electron IPC).
-Contract surface FROZEN at `14f9f7f` (hash `1cb8df5e…`) — do NOT change parity.ts `CONTRACT_REQUIRED_FIELDS`,
-types.ts contract types, or schemas; §17.6 change-request protocol for any defect.
+**The executable core of CAP-ERA-001 is COMPLETE, integrated, and E2E-proven** on
+`claude/cap-era-integration` (pushed). Contract surface FROZEN at `14f9f7f` (hash `1cb8df5e…`) — do NOT
+change parity.ts `CONTRACT_REQUIRED_FIELDS`, types.ts contract types, or schemas; §17.6 change-request
+protocol for any defect.
 
-**Done + integrated:** WP0, WP1a/b (contracts+schema2.0), WP2 (generation/planning), **WP3A COMPLETE**
-(TS runtime core+Node/browser hosts+React+Electron, 89 tests), **WP4A COMPLETE** (Python runtime core+FastAPI/CLI/worker, 127 pytest),
-WP6A (journey/entry-point model), WP9A (existing-repo migration prep), WP3B-gen + **WP4B-gen** (TS+Python
-code generators, core 266 tests), **WP6B** (trigger-first Connect editors over InboundBinding, gui 165 tests, mock-backed). See the table.
+**Done + integrated (all gate-green):** WP0, WP1a/b (contracts + schema 2.0 + migration), WP2 (generation/
+planning), WP3A (TS runtime: core + Node/browser + React + Electron), WP4A (Python runtime: core + FastAPI/
+CLI/worker), WP3B-gen + WP4B-gen (both code generators), WP3B-slices + WP4B-slices-py (runnable TS + Python
+examples, real E2E), **WP4B-react-python** (`fb503e5`, React↔Python over generated OpenAPI, CAP-TEST-066/069,
+DoD #4), WP5B (real Deployable/InboundBinding persistence + desktop IPC), WP6A/WP6B (journey model + trigger-
+first Connect editors), WP7-apply + WP7-rest (transactional generate→apply→rollback), WP8 (real connection
+verification), WP9A + **WP9B** (`25dec77`, additive existing-repo adoption + runtime-upgrade preview,
+CAP-TEST-103/104/105, DoD #2/#8), SCHED-ENUM reconciled (`c4e8981`). See the status table.
 
-Fresh coordinator: `git checkout claude/cap-era-integration`, confirm HEAD `a17f77a`, read the
-"Open issues", "Parallel-execution model", and "Python environment" notes above, then release the remaining lanes
-(≤4 concurrent `cap-sonnet-implementer`, 90 steps each; route each per the model):
-- **✅ SCHED-ENUM reconciliation DONE** (`c4e8981`) — runtimes + generators emit contract enums 1:1.
-- **WP3B-slices** → TS runnable example apps (`examples/`: headless / React web / Electron) driving the generators — coordinator checkout (npm install). Gate CAP-TEST-057..061 (real E2E triggers).
-- **WP4B-slices** → Python runnable slices + React↔Python via generated OpenAPI + cross-language parity fixtures (Python worktree+venv). Gate CAP-TEST-065..069.
-- **WP5A/WP5B** → Design/Build foundation UI (gui) + bridge/IPC plan/apply/rollback + **CONNECT-BACKING** (real DeployableSpecification/InboundBinding persistence + the 4 desktop IPC handlers — see Open issues). Gate CAP-TEST-070..075.
-- **WP6B** → Connect editors over InboundBinding (gui); needs new bridge methods `capabilitiesListDeployables`/`capabilitiesListInboundBindings` (WP6A flagged). Gate CAP-TEST-076..083 (rest).
-- **WP7** → real inbound-source generation + transactional staging/apply/rollback (delicate). **WP8** → real connection evidence + verification. **WP9B** → adoption finalization (needs WP7+WP8). **WP10** → platform matrix + docs.
-Cross-language parity (TS vs Python) is checked after WP3B+WP4B integrate.
+**WP10 matrix pass done** — full **macOS** suite green (see
+[`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md)): core 308,
+runtime-ts 95, gui 165, desktop typecheck, python 130, examples 15 + 7 + 8 + (7 TS / 3 py). DoD scorecard:
+**8/10 fully met**. The pass caught + fixed a latent SCHED-ENUM regression in the Python schedule example
+(`2b0c837`). **Capabilities remains `Experimental`** pending the two honest gaps below.
 
-After WP2 integrates, release WP9A. Integrate narrow commits centrally; run affected tests per §17.9;
-run the full gate at wave end. Size each packet to fit one agent context and commit at checkpoints.
+**Remaining (all tracked; none block the executable core):**
+- **WP5A** — Foundation planning UI (deployables/allocations in the interview + Design/Build; enrich module
+  specs). *DoD #5.* Route: coordinator checkout or symlinked worktree (no new npm deps; React present).
+- **Cross-platform CI** — run the §1 command set on Windows + Linux runners. *DoD #9 / §18 ⬚ cells.*
+- **Legacy `runtime.js` compat-adapter execution** + "conformance replaces compatibility" retirement gate.
+- **WP7-followups / WP8-followups / RUNTIME-DIST / REDACTION-JSON** — see "Open issues".
+
+To provision Python locally: repo-root `.venv` (git-ignored) — see the "Python environment" note above and
+§1 of the platform-matrix doc. To resume: `git checkout claude/cap-era-integration`, read "Open issues" +
+"Parallel-execution model" + "Python environment", then pick up WP5A (the last feature lane).
 
 The WP1b notes below are RETAINED FOR REFERENCE ONLY (already implemented in `14f9f7f`).
 
