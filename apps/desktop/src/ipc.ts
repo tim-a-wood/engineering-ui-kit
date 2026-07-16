@@ -872,9 +872,12 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
 
     return await new Promise<SelectionEvidence | null>((resolve, reject) => {
       let timer: ReturnType<typeof setTimeout>
+      let probeTimer: ReturnType<typeof setInterval>
       let settled = false
+      let started = false
       const cleanup = () => {
         clearTimeout(timer!)
+        clearInterval(probeTimer!)
         guest.off('ipc-message', onMessage)
         guest.off('destroyed', onDestroyed)
       }
@@ -887,6 +890,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       }
       const onDestroyed = () => finish(null, new Error('the target-app Preview closed during element selection'))
       const onMessage = (_ipcEvent: Electron.Event, channel: string, ...args: unknown[]) => {
+        if (channel === 'euik-preview-picker:ready') {
+          if (!started) {
+            started = true
+            clearInterval(probeTimer!)
+            guest.send('euik-preview-picker:start')
+          }
+          return
+        }
         if (channel !== 'euik-preview-picker:result') return
         const value = args[0]
         if (value === null || value === undefined) {
@@ -906,7 +917,11 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       guest.on('ipc-message', onMessage)
       guest.once('destroyed', onDestroyed)
       timer = setTimeout(() => finish(null, new Error('element selection timed out; try again')), 5 * 60 * 1000)
-      guest.send('euik-preview-picker:start')
+      const probe = () => {
+        if (!guest.isDestroyed()) guest.send('euik-preview-picker:probe')
+      }
+      probeTimer = setInterval(probe, 100)
+      probe()
     })
   })
 

@@ -10,6 +10,8 @@ import { ipcRenderer } from 'electron'
 const START_CHANNEL = 'euik-preview-picker:start'
 const CANCEL_CHANNEL = 'euik-preview-picker:cancel'
 const RESULT_CHANNEL = 'euik-preview-picker:result'
+const PROBE_CHANNEL = 'euik-preview-picker:probe'
+const READY_CHANNEL = 'euik-preview-picker:ready'
 
 let cancelActive: (() => void) | undefined
 
@@ -111,3 +113,5 @@ function attachPicker(): void {
 
 ipcRenderer.on(START_CHANNEL, attachPicker)
 ipcRenderer.on(CANCEL_CHANNEL, () => cancelActive?.())
+ipcRenderer.on(PROBE_CHANNEL, () => ipcRenderer.send(READY_CHANNEL))
+ipcRenderer.send(READY_CHANNEL)
