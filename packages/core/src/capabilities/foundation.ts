@@ -190,7 +190,7 @@ export function proposeFoundation(input: {
     issues.push({ id: ambiguity.id, text: ambiguity.question })
   }
   const status: FoundationPlan['readiness']['status'] =
-    finalResult.deployables.length === 0 ? 'blocked' : unresolvedAmbiguities.length > 0 ? 'ambiguous' : 'ready'
+    unresolvedAmbiguities.length > 0 ? 'ambiguous' : finalResult.deployables.length === 0 ? 'blocked' : 'ready'
 
   const bodyWithoutHash = {
     schemaVersion: '1.0' as const,
