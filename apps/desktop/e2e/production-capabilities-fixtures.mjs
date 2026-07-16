@@ -10,6 +10,15 @@ export function createTypeScriptUiFixture(root, projectId = 'production-ui', por
     scripts: { dev: `vite --host 127.0.0.1 --port ${port} --strictPort` },
     devDependencies: { vite: '^6.4.0' },
   }, null, 2) + '\n')
+  // GitHub's Windows temporary directory is exposed through an 8.3 path
+  // containing `~`. Vite deliberately rejects every such path while its
+  // default filesystem policy is strict, even when it is the configured
+  // project root. This isolated fixture serves only its generated repository.
+  fs.writeFileSync(path.join(root, 'vite.config.js'), [
+    "import { defineConfig } from 'vite'",
+    'export default defineConfig({ server: { fs: { strict: false } } })',
+    '',
+  ].join('\n'))
   fs.writeFileSync(path.join(root, 'index.html'), '<!doctype html><html><head><title>Capability UI</title><style>body{margin:0}#run-capability{position:absolute;left:20px;top:20px;width:200px;height:60px}h1{margin:100px 20px 10px}output{margin:20px}</style></head><body><main><button id="run-capability" data-cap-id="run-capability">Run capability</button><h1>Capability UI</h1><output id="result">Not run</output></main><script type="module" src="/src/main.js"></script></body></html>\n')
   fs.writeFileSync(path.join(root, 'src/main.js'), [
     "const generatedClients = import.meta.glob('./generated/browser/inbound/*.g.ts')",
@@ -206,7 +215,7 @@ export function createMixedReactPythonFixture(root, projectId = 'production-mixe
   }, null, 2) + '\n')
   fs.writeFileSync(path.join(root, 'vite.config.js'), [
     "import { defineConfig } from 'vite'",
-    "export default defineConfig({ server: { proxy: { '/echo': 'http://127.0.0.1:3000' } } })",
+    "export default defineConfig({ server: { fs: { strict: false }, proxy: { '/echo': 'http://127.0.0.1:3000' } } })",
     '',
   ].join('\n'))
   fs.writeFileSync(path.join(root, 'pyproject.toml'), [
