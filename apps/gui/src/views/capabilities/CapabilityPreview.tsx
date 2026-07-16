@@ -24,7 +24,6 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
     const [state, setState] = useState<PreviewState>({ status: 'idle' })
     const webviewRef = useRef<HTMLWebViewElement | null>(null)
     const guestReadyRef = useRef(false)
-    const guestReadyWaiters = useRef(new Set<() => void>())
     const guestListenersRef = useRef<{
       node: HTMLWebViewElement
       ready: EventListener
@@ -47,8 +46,6 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
       const loading: EventListener = () => { guestReadyRef.current = false }
       const ready: EventListener = () => {
         guestReadyRef.current = true
-        for (const resolve of guestReadyWaiters.current) resolve()
-        guestReadyWaiters.current.clear()
       }
       guestListenersRef.current = { node, ready, loading }
       node.addEventListener('did-start-loading', loading)
@@ -56,20 +53,23 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
     }, [])
 
     const waitForGuestReady = useCallback(async () => {
-      if (guestReadyRef.current) return
-      await new Promise<void>((resolve, reject) => {
-        let timer: ReturnType<typeof setTimeout>
-        const ready = () => {
-          clearTimeout(timer)
-          guestReadyWaiters.current.delete(ready)
-          resolve()
+      const deadline = Date.now() + 30_000
+      while (Date.now() < deadline) {
+        if (guestReadyRef.current) return
+        const guest = webviewRef.current as unknown as {
+          getURL?: () => string
+          isLoading?: () => boolean
+        } | null
+        // `dom-ready` can fire between custom-element connection and React's
+        // ref callback on slower Windows runners. The current guest state is
+        // authoritative when that one-shot event was missed.
+        if (guest?.getURL?.() && guest.isLoading?.() === false) {
+          guestReadyRef.current = true
+          return
         }
-        timer = setTimeout(() => {
-          guestReadyWaiters.current.delete(ready)
-          reject(new Error('The target-app Preview is still loading. Reload it, then try selecting an element again.'))
-        }, 30_000)
-        guestReadyWaiters.current.add(ready)
-      })
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+      throw new Error('The target-app Preview is still loading. Reload it, then try selecting an element again.')
     }, [])
 
     const start = async () => {
