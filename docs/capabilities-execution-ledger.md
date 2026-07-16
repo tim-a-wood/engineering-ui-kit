@@ -42,7 +42,7 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP4A | Python runtime: core + FastAPI/CLI/worker hosts + adapters | WP1 | cap-sonnet-implementer (worktrees) | `runtimes/python/` | `338ac7f` (merged) | **127 pytest** at integrated tree; outcome→HTTP/CLI mapping frozen for parity; conftest fixes `.pth`/UF_HIDDEN | **gate-green** (Python runtime complete) |
 | WP4B-gen | Python code generators (Pydantic/protocols/inbound/OpenAPI) | WP2, WP4A | cap-sonnet-implementer (symlinked worktree) | `generation/python.ts`,`python-emit.ts` | `619cdbb` (merged) | pure/deterministic; core 266/266; CAP-TEST-062/063/064; verified vs real WP4A runtime | **gate-green** |
 | WP4B-slices-py | Python runnable HTTP/CLI/schedule slices — real E2E | WP4B-gen | cap-sonnet-implementer (Python worktree) | `examples/capabilities-python-reference/` | `1cc204f` (merged) | **15 pytest at integrated tree** (TestClient→dispatch→op; CronJob.poll under injected clock; real traversal) | **gate-green** |
-| WP4B-react-python | React↔Python via generated OpenAPI + cross-lang parity fixtures | WP4B-gen, WP3A-react | — | `examples/capabilities-react-python-reference/` | — | CAP-TEST-066/069 | todo |
+| WP4B-react-python | React↔Python via generated OpenAPI + cross-lang parity fixtures | WP4B-gen, WP3A-react | cap-sonnet-implementer (hybrid worktree) | `examples/capabilities-react-python-reference/` | `fb503e5` (merged) | **Python 3/3 pytest + TS 7/7 vitest** at integrated tree; CAP-TEST-066 (React/TS → real spawned FastAPI subprocess, real HTTP round-trip, success + domain rejection); CAP-TEST-069 (same canonical fixture bytes accepted/rejected by TS Ajv + live Python; generated OpenAPI agrees with served /openapi.json) — **DoD #4 met** | **gate-green** (needs coordinator `.venv`; see Python env note) |
 | WP5A | Foundation planning UI | WP1, WP2 | foundation workbench (Sonnet) | Design/Build UI | — | CAP-TEST-070..075 | todo |
 | WP5B | Foundation runtime integration | WP3B, WP4B, WP5A | foundation workbench (Sonnet) | bridge/IPC | — | (part of WP5 gate) | todo |
 | WP6A | Inbound binding + journey state | WP1 | cap-sonnet-implementer (coordinator checkout) | `journeys.ts`, `capabilitiesUiState.ts` | `a9492d4` | CAP-TEST-076/079/081; core 193/193, gui 162/162; private-default, multi-binding, no-UI-can't-skip | **gate-green** (GUI deployable/binding bridge wiring → WP6B) |
@@ -93,6 +93,14 @@ NO sudo, fully reversible (delete the dir):
 - Shared sanity venv: `/Users/timwood/.local/uikit-python/venv-cap`. Per-packet venvs live in the
   worktree (gitignored). Node worktrees remain unusable without a full `npm install` (workspace
   symlinks), so node lanes run in the coordinator checkout; Python/isolated lanes run in worktrees.
+- **Coordinator-root `.venv` (durable, gitignored via root `.gitignore` `.venv/`)** — provisioned for
+  the cross-language react-python E2E and WP10 matrix: `python3.11 -m venv .venv` then
+  `.venv/bin/python -m pip install --use-feature=truststore -e runtimes/python fastapi uvicorn httpx pytest`.
+  CAP-TEST-066's server-spawn helper resolves the interpreter as
+  `CAPABILITIES_PYTHON_INTERPRETER ?? <repoRoot>/.venv/bin/python`, so this venv MUST exist at the repo
+  root (or the env var must be set) for the react-python vitest suite to pass from the main checkout.
+  NB: a stale Jul-3 system-Python `.venv` had to be `rm -rf`'d and recreated (its `python`→`python3`
+  symlink pointed at CommandLineTools 3.9.6); recreate cleanly if it reappears at 3.9.x.
 
 ## Parallel-execution model (proven)
 
