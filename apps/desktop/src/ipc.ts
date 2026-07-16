@@ -7,6 +7,7 @@ import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell, web
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawn, type ChildProcess } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { buildCfHdropBuffer, buildFilenamesPboardPlist, buildUriList } from './uploadSetTransfer.js'
 import {
   Workspace,
@@ -146,6 +147,14 @@ function seedSampleProjects(workspace: Workspace): void {
 
 /* Dev servers started via Launch App, keyed by project id; killed on quit. */
 const launchedApps = new Map<string, ChildProcess>()
+type PreviewPickSession = {
+  ownerId: number
+  guestId: number
+  status: 'pending' | 'done' | 'error'
+  evidence?: SelectionEvidence | null
+  message?: string
+}
+const previewPickSessions = new Map<string, PreviewPickSession>()
 
 function killLaunchedApp(child: ChildProcess): void {
   if (child.pid === undefined) return
@@ -864,7 +873,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     return { url: launchUrl, started, rebuilt }
   })
 
-  ipcMain.handle(BRIDGE_CHANNELS.pickPreviewElement, async (event, guestId: number): Promise<SelectionEvidence | null> => {
+  ipcMain.handle(BRIDGE_CHANNELS.pickPreviewElement, (event, guestId: number): { selectionId: string } => {
     if (!Number.isSafeInteger(guestId) || guestId <= 0) throw new Error('invalid target-app Preview guest')
     const guest = webContents.fromId(guestId)
     if (!guest || guest.isDestroyed() || guest.getType() !== 'webview' || guest.hostWebContents?.id !== event.sender.id) {
@@ -874,57 +883,86 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     if (!['http:', 'https:'].includes(target.protocol) || !['127.0.0.1', 'localhost', '::1'].includes(target.hostname)) {
       throw new Error('element selection is limited to the configured local application Preview')
     }
+    const selectionId = randomUUID()
+    const session: PreviewPickSession = { ownerId: event.sender.id, guestId, status: 'pending' }
+    previewPickSessions.set(selectionId, session)
 
-    const readyDeadline = Date.now() + 30_000
-    while (guest.isLoadingMainFrame()) {
-      if (guest.isDestroyed()) throw new Error('the target-app Preview closed before element selection')
-      if (Date.now() >= readyDeadline) throw new Error('the target-app Preview is still loading; reload it and try again')
-      await new Promise((resolve) => setTimeout(resolve, 50))
-    }
-
-    if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
-    const evaluateInGuest = async (expression: string, userGesture = false): Promise<unknown> => {
-      const evaluated = await guest.debugger.sendCommand('Runtime.evaluate', {
-        expression,
-        returnByValue: true,
-        userGesture,
-      }) as {
-        result?: { value?: unknown; description?: string }
-        exceptionDetails?: { text?: string; exception?: { description?: string } }
-      }
-      if (evaluated.exceptionDetails) {
-        throw new Error(
-          evaluated.exceptionDetails.exception?.description
-          ?? evaluated.exceptionDetails.text
-          ?? evaluated.result?.description
-          ?? 'target-app Preview script failed',
-        )
-      }
-      return evaluated.result?.value
-    }
-
-    await evaluateInGuest(DESKTOP_PREVIEW_PICKER_INSTALL_JS, true)
-    const selectionDeadline = Date.now() + 5 * 60 * 1000
-    try {
-      for (;;) {
-        if (guest.isDestroyed()) throw new Error('the target-app Preview closed during element selection')
-        const state = await evaluateInGuest(DESKTOP_PREVIEW_PICKER_RESULT_JS) as { done?: unknown; value?: unknown }
-        if (state?.done === true) {
-          const value = state.value
-          if (value === null || value === undefined) return null
-          if (
-            typeof value !== 'object'
-            || typeof (value as Partial<SelectionEvidence>).selector !== 'string'
-            || typeof (value as Partial<SelectionEvidence>).elementTag !== 'string'
-          ) throw new Error('the target-app Preview returned invalid selection evidence')
-          return value as SelectionEvidence
+    setImmediate(() => {
+      void (async () => {
+        const readyDeadline = Date.now() + 30_000
+        while (guest.isLoadingMainFrame()) {
+          if (guest.isDestroyed()) throw new Error('the target-app Preview closed before element selection')
+          if (Date.now() >= readyDeadline) throw new Error('the target-app Preview is still loading; reload it and try again')
+          await new Promise((resolve) => setTimeout(resolve, 50))
         }
-        if (Date.now() >= selectionDeadline) throw new Error('element selection timed out; try again')
-        await new Promise((resolve) => setTimeout(resolve, 50))
-      }
-    } finally {
-      if (!guest.isDestroyed()) await evaluateInGuest(DESKTOP_PREVIEW_PICKER_CANCEL_JS).catch(() => undefined)
-    }
+        if (session.status !== 'pending') return
+        if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
+        const evaluateInGuest = async (expression: string, userGesture = false): Promise<unknown> => {
+          const evaluated = await guest.debugger.sendCommand('Runtime.evaluate', {
+            expression,
+            returnByValue: true,
+            userGesture,
+          }) as {
+            result?: { value?: unknown; description?: string }
+            exceptionDetails?: { text?: string; exception?: { description?: string } }
+          }
+          if (evaluated.exceptionDetails) {
+            throw new Error(
+              evaluated.exceptionDetails.exception?.description
+              ?? evaluated.exceptionDetails.text
+              ?? evaluated.result?.description
+              ?? 'target-app Preview script failed',
+            )
+          }
+          return evaluated.result?.value
+        }
+        await evaluateInGuest(DESKTOP_PREVIEW_PICKER_INSTALL_JS, true)
+        const selectionDeadline = Date.now() + 5 * 60 * 1000
+        try {
+          while (session.status === 'pending') {
+            if (guest.isDestroyed()) throw new Error('the target-app Preview closed during element selection')
+            const state = await evaluateInGuest(DESKTOP_PREVIEW_PICKER_RESULT_JS) as { done?: unknown; value?: unknown }
+            if (state?.done === true) {
+              const value = state.value
+              if (value !== null && value !== undefined && (
+                typeof value !== 'object'
+                || typeof (value as Partial<SelectionEvidence>).selector !== 'string'
+                || typeof (value as Partial<SelectionEvidence>).elementTag !== 'string'
+              )) throw new Error('the target-app Preview returned invalid selection evidence')
+              session.evidence = (value ?? null) as SelectionEvidence | null
+              session.status = 'done'
+              return
+            }
+            if (Date.now() >= selectionDeadline) throw new Error('element selection timed out; try again')
+            await new Promise((resolve) => setTimeout(resolve, 50))
+          }
+        } finally {
+          if (!guest.isDestroyed()) await evaluateInGuest(DESKTOP_PREVIEW_PICKER_CANCEL_JS).catch(() => undefined)
+        }
+      })().catch((cause) => {
+        session.status = 'error'
+        session.message = cause instanceof Error ? cause.message : String(cause)
+      })
+    })
+    return { selectionId }
+  })
+
+  ipcMain.handle('app:poll-preview-element', (event, selectionId: string) => {
+    const session = previewPickSessions.get(selectionId)
+    if (!session || session.ownerId !== event.sender.id) throw new Error('preview selection session not found')
+    if (session.status === 'pending') return { status: 'pending' as const }
+    previewPickSessions.delete(selectionId)
+    if (session.status === 'error') return { status: 'error' as const, message: session.message }
+    return { status: 'done' as const, evidence: session.evidence ?? null }
+  })
+
+  ipcMain.handle('app:cancel-preview-element', (event, selectionId: string) => {
+    const session = previewPickSessions.get(selectionId)
+    if (!session || session.ownerId !== event.sender.id) return { cancelled: false }
+    previewPickSessions.delete(selectionId)
+    session.status = 'done'
+    session.evidence = null
+    return { cancelled: true }
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.openExternal, async (_e, url: string) => {

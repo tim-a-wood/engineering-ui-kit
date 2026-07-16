@@ -124,6 +124,26 @@ const bridge: Record<string, (...args: any[]) => any> = Object.fromEntries( // e
   ]),
 )
 
+bridge.pickPreviewElement = async (guestId: number) => {
+  const started = await ipcRenderer.invoke(CHANNELS.pickPreviewElement, guestId) as { selectionId: string }
+  const deadline = Date.now() + 5 * 60 * 1000 + 30_000
+  try {
+    for (;;) {
+      const state = await ipcRenderer.invoke('app:poll-preview-element', started.selectionId) as {
+        status: 'pending' | 'done' | 'error'
+        evidence?: unknown
+        message?: string
+      }
+      if (state.status === 'done') return state.evidence ?? null
+      if (state.status === 'error') throw new Error(state.message ?? 'Preview element selection failed')
+      if (Date.now() >= deadline) throw new Error('Element selection timed out; try again')
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+  } finally {
+    await ipcRenderer.invoke('app:cancel-preview-element', started.selectionId).catch(() => undefined)
+  }
+}
+
 bridge.getDroppedFilePath = (file: File) => webUtils.getPathForFile(file)
 
 contextBridge.exposeInMainWorld('euik', bridge)
