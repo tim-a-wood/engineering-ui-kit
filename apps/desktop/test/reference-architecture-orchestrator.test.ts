@@ -185,4 +185,39 @@ describe('production reference-architecture orchestrator', () => {
     expect(orchestrator.integration.getCompositionManifest('project-1', 'embedded-library')?.registrations)
       .toEqual([expect.objectContaining({ contractId: 'operation.test' })])
   })
+
+  it('projects bindings approved after factory configuration into the next composition plan', () => {
+    const { orchestrator } = seed()
+    orchestrator.integration.saveModuleSpecification({
+      ...specification(),
+      providedOperations: [{ operationId: 'operation.test', contractVersion: '1.0.0' }],
+      providedPorts: ['operation.test'],
+    })
+    orchestrator.saveCompositionConfiguration({
+      projectId: 'project-1', deployableId: 'embedded-library', explicit: true,
+      targets: [{ contractId: 'operation.test', implementationTarget: 'src/modules/module-1/operation_test.ts#createOperationTest' }],
+    })
+    const binding = {
+      schemaVersion: '1.0' as const, kind: 'embedded-library' as const,
+      bindingId: 'binding.operation.test', version: '1.0.0', projectId: 'project-1',
+      deployableId: 'embedded-library', operationId: 'operation.test', operationVersion: '1.0.0',
+      inputMappings: [], outputMappings: [], validationBehavior: 'reject invalid input',
+      domainRejectionBehavior: 'return a typed rejection', technicalFailureBehavior: 'return a safe failure',
+      timeoutBehavior: 'return timed out', cancellationBehavior: 'return cancelled', retryBehavior: 'none',
+      duplicateSubmissionBehavior: 'reject duplicates', exposure: 'private' as const, generatedTargets: [],
+      approvalState: 'approved', exportedCallable: 'runOperationTest', reason: 'approved library boundary',
+    }
+    orchestrator.capabilities.approveInboundBinding('project-1', binding)
+
+    orchestrator.previewGeneration('project-1', 'embedded-library')
+
+    expect(orchestrator.integration.getCompositionManifest('project-1', 'embedded-library')).toEqual(
+      expect.objectContaining({
+        inboundAdapterRefs: ['binding.operation.test'],
+        operationRoutes: [{
+          inboundBindingId: 'binding.operation.test', operationId: 'operation.test', operationVersion: '1.0.0',
+        }],
+      }),
+    )
+  })
 })

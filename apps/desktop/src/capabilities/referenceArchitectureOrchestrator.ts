@@ -18,6 +18,7 @@ import {
   assembleGenerationPlan,
   buildOwnershipManifest,
   canonicalHash,
+  canonicalRecordHash,
   generatedContentHash,
   promoteInterviewToModuleImplementationSpecification,
   rollbackGenerationApply,
@@ -199,6 +200,14 @@ function textFilesBelow(root: string): { relativePath: string; contents: string 
 }
 
 function locateTypeScriptRuntime(): string | undefined {
+  const resourceCandidate = path.resolve(
+    (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath ?? '',
+    'capabilities-runtime-typescript',
+  )
+  if (fs.existsSync(path.join(resourceCandidate, 'dist/index.js'))
+    && fs.existsSync(path.join(resourceCandidate, 'dist/index.d.ts'))) {
+    return resourceCandidate
+  }
   try {
     const entry = createRequire(import.meta.url).resolve('@engineering-ui-kit/capabilities-runtime')
     return path.resolve(path.dirname(entry), '..')
@@ -676,7 +685,33 @@ export class ReferenceArchitectureOrchestrator {
     return this.compositionConfiguration(input.projectId, input.deployableId)
   }
 
+  /**
+   * Operation routes and inbound adapter references are projections of the
+   * currently approved bindings, not additional user-authored decisions.
+   * Refresh them before every plan so a connection approved after composition
+   * factories were configured cannot leave the manifest permanently stale.
+   */
+  private synchronizeDerivedCompositionRoutes(projectId: string, deployableId: string): void {
+    const current = this.integration.getCompositionManifest(projectId, deployableId)
+    if (!current) return
+    const bindings = this.capabilities.listInboundBindings(projectId)
+      .map((record) => record.approved)
+      .filter((binding): binding is InboundBinding => binding !== undefined && binding.deployableId === deployableId)
+    const operationRoutes = bindings.map((binding) => ({
+      operationId: binding.operationId,
+      operationVersion: binding.operationVersion,
+      inboundBindingId: binding.bindingId,
+    })).sort((a, b) => a.inboundBindingId.localeCompare(b.inboundBindingId))
+    const inboundAdapterRefs = bindings.map((binding) => binding.bindingId).sort()
+    if (canonicalHash(current.operationRoutes) === canonicalHash(operationRoutes)
+      && canonicalHash(current.inboundAdapterRefs) === canonicalHash(inboundAdapterRefs)) return
+    const { compositionHash: _priorHash, ...priorBody } = current
+    const body = { ...priorBody, operationRoutes, inboundAdapterRefs }
+    this.integration.saveCompositionManifest({ ...body, compositionHash: canonicalHash(body) })
+  }
+
   previewGeneration(projectId: string, deployableId: string): GenerationPreviewResult {
+    this.synchronizeDerivedCompositionRoutes(projectId, deployableId)
     const inputs = this.collectInputs(projectId, deployableId)
     const latestApply = this.integration.getLatestApplyRecord(projectId, deployableId)
     const ownershipManifests = latestApply?.ownershipManifests ?? []
@@ -754,7 +789,7 @@ export class ReferenceArchitectureOrchestrator {
               binding: canonicalHash(binding),
               operation: canonicalHash(operation),
             }
-            return canonicalHash(record.hashes) === canonicalHash(expected)
+            return canonicalRecordHash(record.hashes) === canonicalRecordHash(expected)
           })
           .map((record) => record.verificationId)
       } catch {

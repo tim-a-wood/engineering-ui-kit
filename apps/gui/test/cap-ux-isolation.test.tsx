@@ -544,6 +544,21 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
     expect(screen.getByText('Connected')).toBeTruthy()
   })
 
+  it('applies preview selection evidence that arrives after the UI editor opened', async () => {
+    const baseProps = {
+      bridge: makeBridge(), projectId: 'p1', records, deployables: uiDeployables,
+      onSelectionEvidence: () => {}, previewRef: { current: null }, onChanged: () => {},
+    }
+    const { rerender } = render(<GuidedConnect {...baseProps} selectionEvidence={undefined} />)
+    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    expect(screen.queryByLabelText('Capability')).toBeNull()
+
+    rerender(<GuidedConnect {...baseProps} selectionEvidence={evidence} />)
+
+    expect(await screen.findByLabelText('Capability')).toBeTruthy()
+    expect(screen.getByText('Place', { selector: '.cap-connect-confirmed strong' })).toBeTruthy()
+  })
+
   it('"decide later" defers without launching a preview and never completes Connect on its own', async () => {
     const baseProject = project('p1', 'Service')
     const updateProject = vi.fn(async (_id, patch) => ({ ...baseProject, ...patch }))

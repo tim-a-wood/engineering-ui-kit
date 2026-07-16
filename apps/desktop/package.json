@@ -8,6 +8,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.preload.json",
     "package:dir": "electron-builder --config electron-builder.yml --dir",
+    "test:capabilities:production-packaged": "node e2e/capabilities-production-packaged.mjs",
     "start": "electron .",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.preload.json --noEmit"
   },

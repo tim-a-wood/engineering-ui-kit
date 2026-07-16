@@ -1,4 +1,5 @@
 export * from './parity.js'
+export * from './hash.js'
 export * from './types.js'
 export * from './diagnostics.js'
 export * from './validation.js'

@@ -143,9 +143,18 @@ export function IntegrationWorkspace({ bridge, projectId, state, projection, onC
                   )}>Roll back</button> : null}
                   {plan && apply?.status === 'applied' && apply.planId === plan.planId && apply.planHash === plan.planHash ? <button type="button" className="btn btn-primary btn-compact" disabled={busy} onClick={() => void act(
                     deployable.deployableId,
-                    () => bridge.capabilitiesRunIntegrationCommands({
-                      projectId, deployableId: deployable.deployableId, planId: plan.planId, planHash: plan.planHash, explicit: true,
-                    }),
+                    async () => {
+                      const run = await bridge.capabilitiesRunIntegrationCommands({
+                        projectId, deployableId: deployable.deployableId, planId: plan.planId, planHash: plan.planHash, explicit: true,
+                      })
+                      if (run.status !== 'passed') {
+                        const failed = run.results.find((result) => result.status !== 'passed')
+                        throw new Error(failed
+                          ? `Install, build, and test failed while running "${failed.command}"${failed.exitCode === null ? '' : ` (exit ${failed.exitCode})`}.`
+                          : 'Install, build, and test did not pass.')
+                      }
+                      return run
+                    },
                     'Install, build, and test commands completed.',
                   )}>Install, build &amp; test</button> : null}
                 </div>

@@ -12,6 +12,14 @@ files:
     to: gui/dist
 # Ship the built-in sample projects seeded on first run.
 extraResources:
+  # electron-builder intentionally prunes declaration files from normal
+  # production dependencies. Generation needs the complete runtime package,
+  # including .d.ts files, so targets can pass the real TypeScript build gate.
+  - from: ../../packages/capabilities-runtime-ts
+    to: capabilities-runtime-typescript
+    filter:
+      - package.json
+      - 'dist/**/*'
   - from: ../../runtimes/python
     to: capabilities-runtime-python
     filter:

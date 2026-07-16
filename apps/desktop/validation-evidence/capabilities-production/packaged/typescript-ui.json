@@ -1,0 +1,13 @@
+{
+  "journey": "typescript-ui",
+  "executablePath": "/Users/timwood/Documents/UI Framework/release/mac-arm64/Engineering UI Kit.app/Contents/MacOS/Engineering UI Kit",
+  "packaged": true,
+  "scratch": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-production-ui-AhNjQX",
+  "screenshots": [
+    "apps/desktop/validation-evidence/capabilities-production/packaged/01-ui-build-applied.png",
+    "apps/desktop/validation-evidence/capabilities-production/packaged/02-ui-connected.png",
+    "apps/desktop/validation-evidence/capabilities-production/packaged/03-ui-real-verification.png",
+    "apps/desktop/validation-evidence/capabilities-production/packaged/04-ui-rolled-back.png"
+  ],
+  "passed": true
+}

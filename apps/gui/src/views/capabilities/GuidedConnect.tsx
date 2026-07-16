@@ -186,9 +186,22 @@ export function GuidedConnect(props: Props) {
         onSaved={finishEditing}
       />
     )
-    // draftSeed forces a fresh draft (new bindingId) each time the user re-enters a kind after saving.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [triggerChoice, editorDeployableId, operations.length, draftSeed])
+    // draftSeed forces a fresh draft (new bindingId) each time the user re-enters
+    // a kind after saving. Selection evidence and project setup are production
+    // inputs too: omitting them leaves UiBindingEditor holding stale props and
+    // silently discards a real preview selection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- callbacks only dispatch stable parent state setters
+  }, [
+    triggerChoice,
+    editorDeployableId,
+    operations,
+    draftSeed,
+    props.selectionEvidence,
+    props.project,
+    props.architectureVersion,
+    props.architectureHash,
+    uiDeployable?.kind,
+  ])
 
   return (
     <section className="cap-connect" aria-label="Connect capabilities to a trigger">
