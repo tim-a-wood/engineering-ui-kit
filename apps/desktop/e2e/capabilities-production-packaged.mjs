@@ -75,12 +75,27 @@ function packagedExecutable() {
     if (found) return found
   }
   if (process.platform === 'linux') {
-    const found = fs.readdirSync(path.join(REPO_ROOT, 'release'), { recursive: true })
-      .map((entry) => path.join(REPO_ROOT, 'release', String(entry)))
-      .find((entry) => /engineering-ui-kit$/i.test(path.basename(entry)) && fs.statSync(entry).isFile())
+    const unpacked = path.join(REPO_ROOT, 'release/linux-unpacked')
+    // electron-builder derives the Linux executable name from the scoped
+    // workspace package on some runners even when productName is configured.
+    // Select the unpacked app executable by structure instead of display name.
+    const found = fs.readdirSync(unpacked)
+      .map((entry) => path.join(unpacked, entry))
+      .filter((entry) => {
+        const stat = fs.statSync(entry)
+        return stat.isFile() && (stat.mode & 0o111) !== 0 && !/^chrome(?:-|_)/i.test(path.basename(entry))
+      })
+      .sort((left, right) => fs.statSync(right).size - fs.statSync(left).size)[0]
     if (found) return found
   }
   throw new Error(`No unpacked packaged executable found for ${process.platform}`)
+}
+
+function packagedLaunchArgs() {
+  // GitHub-hosted Linux runners cannot configure Electron's setuid sandbox.
+  // Xvfb still drives the real packaged binary; this flag changes only the
+  // runner's Chromium process isolation, not application behavior or evidence.
+  return process.platform === 'linux' ? ['--no-sandbox'] : []
 }
 
 async function expectVisible(locator, description) {
@@ -206,6 +221,7 @@ async function runTypeScriptUiJourney(electron) {
   const executablePath = packagedExecutable()
   const app = await electron.launch({
     executablePath,
+    args: packagedLaunchArgs(),
     env: {
       ...process.env,
       EUIK_DATA_DIR: dataDir,
@@ -356,6 +372,7 @@ async function runPythonHeadlessJourney(electron) {
   const executablePath = packagedExecutable()
   const app = await electron.launch({
     executablePath,
+    args: packagedLaunchArgs(),
     env: { ...process.env, EUIK_DATA_DIR: dataDir, EUIK_TEST_MODE: '1', EUIK_TEST_PICK_DIR: fixtureRepo },
     timeout: TIMEOUT,
   })
@@ -471,6 +488,7 @@ async function runMixedReactPythonJourney(electron) {
   const executablePath = packagedExecutable()
   const app = await electron.launch({
     executablePath,
+    args: packagedLaunchArgs(),
     env: { ...process.env, EUIK_DATA_DIR: dataDir, EUIK_TEST_MODE: '1', EUIK_TEST_PICK_DIR: fixtureRepo, NO_PROXY: '127.0.0.1,localhost' },
     timeout: TIMEOUT,
   })
@@ -602,6 +620,7 @@ async function runExistingRepositoryJourney(electron) {
   const executablePath = packagedExecutable()
   const app = await electron.launch({
     executablePath,
+    args: packagedLaunchArgs(),
     env: { ...process.env, EUIK_DATA_DIR: dataDir, EUIK_TEST_MODE: '1', EUIK_TEST_PICK_DIR: fixtureRepo },
     timeout: TIMEOUT,
   })
@@ -721,6 +740,7 @@ async function runFailureRecoveryJourney(electron) {
   try {
     app = await electron.launch({
       executablePath,
+      args: packagedLaunchArgs(),
       env: {
         ...process.env, EUIK_DATA_DIR: dataDir, EUIK_TEST_MODE: '1', EUIK_TEST_PICK_DIR: fixtureRepo,
         EUIK_TEST_FAIL_GENERATION_RENAME_AT: '2',
@@ -784,6 +804,7 @@ async function runFailureRecoveryJourney(electron) {
 
     app = await electron.launch({
       executablePath,
+      args: packagedLaunchArgs(),
       env: { ...process.env, EUIK_DATA_DIR: dataDir, EUIK_TEST_MODE: '1', EUIK_TEST_PICK_DIR: fixtureRepo },
       timeout: TIMEOUT,
     })

@@ -17,7 +17,11 @@ describe('CAP-TEST-119 generated Electron renderer/preload/main target', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'euik-electron-generated-')); roots.push(root)
     if (process.env.EUIK_KEEP_TEST_ROOTS) console.log(`EUIK electron fixture: ${root}`)
     const repoRoot = path.resolve(import.meta.dirname, '../../../..')
-    fs.symlinkSync(path.join(repoRoot, 'node_modules'), path.join(root, 'node_modules'), 'dir')
+    fs.symlinkSync(
+      path.join(repoRoot, 'node_modules'),
+      path.join(root, 'node_modules'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    )
     fs.mkdirSync(path.join(root, 'src/domain'), { recursive: true })
     fs.writeFileSync(path.join(root, 'src/domain/echo.ts'), [
       "import { Outcome } from '@engineering-ui-kit/capabilities-runtime'",
@@ -33,9 +37,12 @@ describe('CAP-TEST-119 generated Electron renderer/preload/main target', () => {
     const main = '.engineering-ui/capabilities/build/src/generated/electron-main/electron/binding.echo.electron.verification-main.g.js'
     fs.writeFileSync(path.join(root, 'tsconfig.json'), JSON.stringify({ compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', rootDir: '.', outDir: '.engineering-ui/capabilities/build', strict: true, skipLibCheck: true, types: ['node'], allowSyntheticDefaultImports: true }, include: ['src/**/*.ts', 'src/**/*.mts'] }))
     fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ type: 'module', main }))
-    execFileSync(path.join(repoRoot, 'node_modules/.bin/tsc'), ['-p', 'tsconfig.json'], { cwd: root, stdio: 'inherit' })
+    execFileSync(process.execPath, [path.join(repoRoot, 'node_modules/typescript/bin/tsc'), '-p', 'tsconfig.json'], { cwd: root, stdio: 'inherit' })
     const hashes: ConnectionVerificationRecord['hashes'] = { binding: canonicalHash(binding), operation: canonicalHash(operation), architecture: 'architecture-hash', composition: composition.compositionHash, generatedOwnership: 'ownership-hash', source: 'source-hash' }
-    const record = await runConnectionVerification({ verificationId: 'verification-electron-real', projectId: 'project-1', binding, deployable, hashes, launch: { command: (await import('electron')).default, args: ['.'], cwd: root }, trigger: { kind: 'electron-ipc', input: {} }, correlationId: 'correlation-electron-real' })
+    const electronArgs = process.platform === 'linux' && process.env.EUIK_ELECTRON_NO_SANDBOX === '1'
+      ? ['--no-sandbox', '.']
+      : ['.']
+    const record = await runConnectionVerification({ verificationId: 'verification-electron-real', projectId: 'project-1', binding, deployable, hashes, launch: { command: (await import('electron')).default, args: electronArgs, cwd: root }, trigger: { kind: 'electron-ipc', input: {} }, correlationId: 'correlation-electron-real' })
     expect(record.verificationStatus, JSON.stringify(record, null, 2)).toBe('pass')
     expect(record.observedPath).toEqual({ inboundAdapter: 'ui:binding.echo.electron', compositionRoot: 'src/composition/electron-main.ts', operation: 'echo.run@1.0.0', outboundAdapters: [] })
   }, 30_000)
