@@ -2,8 +2,9 @@
  * Production Capabilities packaged-app acceptance journey.
  *
  * This harness intentionally drives only rendered controls in a real packaged
- * artifact. It never calls window.euik, page.evaluate, core helpers, or an IPC
- * handler to create workflow state. A green result therefore proves that the
+ * artifact. It never calls window.euik, mutates workflow state through page
+ * evaluation, calls core helpers, or dispatches IPC directly. A green result
+ * therefore proves that the
  * packaged renderer, preload bridge, desktop orchestrator, generators,
  * transactional apply, generated runtime, target app, and verifier cooperate.
  */
@@ -223,20 +224,13 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
   const frame = preview.locator('webview')
   const box = await frame.boundingBox()
   if (!box) throw new Error('Target preview webview has no visible bounds')
-  // Playwright host-page input does not cross an Electron <webview> guest
-  // boundary. Resolve the marked control's real box and send a native mouse
-  // sequence to the guest webContents. This remains a rendered interaction,
-  // not JavaScript execution, state injection, or a bridge/IPC shortcut.
-  const clicked = await app.evaluate(async ({ webContents }, url) => {
-    let guest
-    const deadline = Date.now() + 10_000
-    while (!guest && Date.now() < deadline) {
-      const candidates = webContents.getAllWebContents()
-      guest = candidates.find((contents) => contents.getURL().startsWith(url))
-        ?? candidates.find((contents) => contents.getType() === 'webview')
-      if (!guest) await new Promise((resolve) => setTimeout(resolve, 100))
-    }
-    if (!guest) return false
+  // Read only the rendered webview's Electron identity, then resolve the
+  // marked control's actual guest box and send native mouse input. No workflow
+  // state, bridge call, IPC command, or JavaScript click is used.
+  const guestId = await frame.evaluate((element) => element.getWebContentsId())
+  const clicked = await app.evaluate(async ({ webContents }, id) => {
+    const guest = webContents.fromId(id)
+    if (!guest || guest.isDestroyed()) return false
     if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
     const { root } = await guest.debugger.sendCommand('DOM.getDocument', { depth: 1 })
     const { nodeId } = await guest.debugger.sendCommand('DOM.querySelector', {
@@ -251,8 +245,8 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
     await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 })
     await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 })
     return true
-  }, targetUrl)
-  if (!clicked) throw new Error('Target preview guest webContents was not found')
+  }, guestId)
+  if (!clicked) throw new Error('Target preview guest or marked capability control was not available')
   await waitForStatus(page, expectedSelection)
 }
 

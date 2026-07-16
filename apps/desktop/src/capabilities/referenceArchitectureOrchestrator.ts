@@ -119,7 +119,10 @@ export function platformExecutable(
  * operators are deliberately rejected; process authority remains bounded to
  * one executable plus literal argv.
  */
-function parseApprovedCommand(commandText: string): { command: string; args: string[] } {
+export function parseApprovedCommand(
+  commandText: string,
+  platform: NodeJS.Platform = process.platform,
+): { command: string; args: string[] } {
   const text = commandText.trim()
   if (!text) throw new Error('the approved deployable has no launch command')
   if (/[\n\r;&|<>`$]/.test(text)) {
@@ -138,6 +141,11 @@ function parseApprovedCommand(commandText: string): { command: string; args: str
       continue
     }
     if (character === '\\' && quote !== 'single') {
+      if (platform === 'win32') {
+        token += character
+        started = true
+        continue
+      }
       escaping = true
       started = true
       continue
@@ -167,7 +175,7 @@ function parseApprovedCommand(commandText: string): { command: string; args: str
   if (started) tokens.push(token)
   const [command, ...args] = tokens
   if (!command) throw new Error('the approved deployable has no launch executable')
-  return { command: platformExecutable(command), args }
+  return { command: platformExecutable(command, platform), args }
 }
 
 async function urlReachable(url: string): Promise<boolean> {
@@ -396,7 +404,7 @@ export function buildRuntimeDistribution(deployable: DeployableSpecification, ta
 function pythonCommandFor(targetRoot: string): string {
   const relative = process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python'
   return fs.existsSync(path.join(targetRoot, ...relative.split('/')))
-    ? relative
+    ? process.platform === 'win32' ? '.\\.venv\\Scripts\\python.exe' : relative
     : process.platform === 'win32' ? 'python' : 'python3'
 }
 

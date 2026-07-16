@@ -18,6 +18,7 @@ import { Workspace } from '@engineering-ui-kit/core'
 import {
   ReferenceArchitectureOrchestrator,
   buildRuntimeDistribution,
+  parseApprovedCommand,
   platformExecutable,
 } from '../src/capabilities/referenceArchitectureOrchestrator.js'
 
@@ -120,6 +121,13 @@ describe('production reference-architecture orchestrator', () => {
     expect(platformExecutable('npm.cmd', 'win32')).toBe('npm.cmd')
     expect(platformExecutable('node', 'win32')).toBe('node')
     expect(platformExecutable('npm', 'darwin')).toBe('npm')
+  })
+
+  it('preserves a native Windows executable path without invoking a shell', () => {
+    expect(parseApprovedCommand('.\\.venv\\Scripts\\python.exe -m worker.py', 'win32')).toEqual({
+      command: '.\\.venv\\Scripts\\python.exe',
+      args: ['-m', 'worker.py'],
+    })
   })
 
   it('persists a recoverable failed state after a genuine mid-transaction rollback', () => {
