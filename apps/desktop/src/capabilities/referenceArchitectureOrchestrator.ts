@@ -236,6 +236,8 @@ function buildRuntimeDistribution(deployable: DeployableSpecification, targetRoo
     result.commands.push('npx tsc -p tsconfig.engineering-ui.json')
     if (deployable.kind === 'http-api') {
       result.commands.push(`node .engineering-ui/capabilities/build/src/generated/${deployable.deployableId.replaceAll('/', '-')}/host.g.js`)
+    } else if (deployable.kind === 'cli') {
+      result.commands.push(`node .engineering-ui/capabilities/build/src/generated/${deployable.deployableId.replaceAll('/', '-')}/cli-host.g.js`)
     }
   } else {
     const runtimeRoot = locatePythonRuntime()
@@ -263,6 +265,8 @@ function buildRuntimeDistribution(deployable: DeployableSpecification, targetRoo
     result.commands.push(`${pythonCommand} -m pip install -r requirements.engineering-ui.txt`)
     if (deployable.kind === 'http-api') {
       result.commands.push(`${pythonCommand} src/generated/${deployable.deployableId.replace(/[^A-Za-z0-9]+/g, '_').toLowerCase()}/host_g.py`)
+    } else if (deployable.kind === 'cli') {
+      result.commands.push(`${pythonCommand} src/generated/${deployable.deployableId.replace(/[^A-Za-z0-9]+/g, '_').toLowerCase()}/cli_host_g.py`)
     }
   }
   return result
@@ -276,11 +280,11 @@ function pythonCommandFor(targetRoot: string): string {
 }
 
 function generatedLaunchCommand(deployable: DeployableSpecification, targetRoot: string): string | undefined {
-  if (deployable.kind !== 'http-api') return undefined
+  if (deployable.kind !== 'http-api' && deployable.kind !== 'cli') return undefined
   const id = deployable.deployableId.replaceAll('/', '-')
   return deployable.runtimeLanguage === 'python'
-    ? `${pythonCommandFor(targetRoot)} src/generated/${deployable.deployableId.replace(/[^A-Za-z0-9]+/g, '_').toLowerCase()}/host_g.py`
-    : `node .engineering-ui/capabilities/build/src/generated/${id}/host.g.js`
+    ? `${pythonCommandFor(targetRoot)} src/generated/${deployable.deployableId.replace(/[^A-Za-z0-9]+/g, '_').toLowerCase()}/${deployable.kind === 'cli' ? 'cli_host_g.py' : 'host_g.py'}`
+    : `node .engineering-ui/capabilities/build/src/generated/${id}/${deployable.kind === 'cli' ? 'cli-host.g.js' : 'host.g.js'}`
 }
 
 function schemaNode(type: string, knownSchemaIds: ReadonlySet<string>): GeneratedSchemaNode | undefined {

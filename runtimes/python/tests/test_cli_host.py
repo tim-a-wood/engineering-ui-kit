@@ -86,6 +86,39 @@ def test_successful_invocation_writes_the_result_to_stdout_and_exits_zero() -> N
     assert stderr == ""
 
 
+def test_verification_invocation_emits_correlated_execution_path_evidence() -> None:
+    host = CliHost(prog="euik-example")
+    host.add_command(
+        CliCommand(
+            name="greet",
+            operation=GreetOperation(),
+            operation_id="op.greet",
+            observed_path={
+                "inboundAdapter": "cli:binding.greet",
+                "compositionRoot": "src/composition.py",
+                "operation": "op.greet@1.0.0",
+                "outboundAdapters": [],
+            },
+            input_schema=GREET_SCHEMA,
+            build_input=_build_input,
+            add_arguments=_add_arguments,
+        )
+    )
+
+    exit_code, _stdout, stderr = _run(
+        host,
+        ["greet", "ada"],
+        verification_correlation_id="corr-python-cli",
+    )
+
+    assert exit_code == EXIT_SUCCESS
+    line = next(line for line in stderr.splitlines() if line.startswith("EUIK_CONNECTION_EVIDENCE="))
+    evidence = json.loads(line.split("=", 1)[1])
+    assert evidence["correlationId"] == "corr-python-cli"
+    assert evidence["operation"] == "op.greet"
+    assert evidence["observedPath"]["inboundAdapter"] == "cli:binding.greet"
+
+
 def test_domain_rejection_writes_diagnostics_to_stderr_and_exits_nonzero() -> None:
     exit_code, stdout, stderr = _run(make_host(), ["greet", "reject-me"])
 

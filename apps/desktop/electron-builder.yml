@@ -1,10 +1,5 @@
-# Windows-first packaging configuration (PRD §10). Build on a Windows machine:
-#
-#   npm run build --workspaces
-#   npx electron-builder --config apps/desktop/electron-builder.yml --win
-#
-# Output: NSIS installer + portable folder under release/. Code signing is not
-# configured for v0.1 (manual distribution).
+# Cross-platform unpacked builds are the blocking production-E2E artifact.
+# Release archives remain unsigned for v0.1.
 
 appId: com.engineering-ui-kit.workbench
 productName: Engineering UI Kit
@@ -17,6 +12,11 @@ files:
     to: gui/dist
 # Ship the built-in sample projects seeded on first run.
 extraResources:
+  - from: ../../runtimes/python
+    to: capabilities-runtime-python
+    filter:
+      - pyproject.toml
+      - 'src/**/*'
   - from: ../../examples/work-orders-monolith
     to: examples/work-orders-monolith
     filter:
@@ -42,4 +42,11 @@ nsis:
   allowToChangeInstallationDirectory: true
   perMachine: false
 mac:
-  target: [] # macOS packaging intentionally out of scope for v0.1
+  target:
+    - zip
+  artifactName: engineering-ui-kit-${version}-mac-${arch}.${ext}
+linux:
+  target:
+    - AppImage
+    - tar.gz
+  artifactName: engineering-ui-kit-${version}-linux-${arch}.${ext}

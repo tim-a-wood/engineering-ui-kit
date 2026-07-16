@@ -19,7 +19,7 @@ import type {
   ExposureLevel,
   ModuleManifest,
 } from '@engineering-ui-kit/core'
-import { evaluateConnectEntryPoints, type DeployableConnectStatus } from '@engineering-ui-kit/core'
+import { evaluateConnectEntryPoints, type DeployableConnectStatus } from '@engineering-ui-kit/core/browser'
 import type { GuideTopicId } from '../../guides'
 
 export type StageId = 'define' | 'architect' | 'build' | 'connect' | 'verify'

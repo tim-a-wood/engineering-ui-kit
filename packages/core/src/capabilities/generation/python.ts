@@ -613,6 +613,8 @@ function planCliAdapter(input: PythonInboundAdapterGenerationInput, binding: Ext
     '    return CliCommand(',
     `        name=${JSON.stringify(binding.command)},`,
     '        operation=operation,',
+    `        operation_id=${JSON.stringify(binding.operationId)},`,
+    ...(input.observedPath ? [`        observed_path=${JSON.stringify(input.observedPath)},`] : []),
     `        input_schema=${inputSchemaExpr},`,
     '        build_input=_build_input,',
     '        add_arguments=_add_arguments,',

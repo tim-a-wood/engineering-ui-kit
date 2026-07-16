@@ -27,6 +27,13 @@ export interface CliParseError {
 export interface CliCommand<Input = unknown> {
   readonly name: string
   readonly operation: Operation<Input, unknown, unknown, unknown>
+  /** Canonical generated path used only to prove real verification traversal. */
+  readonly observedPath?: {
+    readonly inboundAdapter: string
+    readonly compositionRoot: string
+    readonly operation: string
+    readonly outboundAdapters: ReadonlyArray<string>
+  }
   /** Parses the remaining argv tokens (after the command name) into the operation's input, or returns a parse error. */
   parseArgs(args: ReadonlyArray<string>): { ok: true; input: Input } | { ok: false; error: CliParseError }
 }
@@ -49,6 +56,8 @@ export interface RunCliOptions {
   readonly stderr?: CliWritable
   /** Defaults to `process`; inject a fake in tests to avoid registering real OS signal handlers. */
   readonly signals?: CliSignalSource
+  /** Set only by the privileged verification runner; omitted for normal CLI use. */
+  readonly verificationCorrelationId?: string
 }
 
 export const CLI_EXIT_USAGE_ERROR = 2
@@ -111,6 +120,13 @@ export async function runCli(argv: ReadonlyArray<string>, options: RunCliOptions
 
       if (Outcome.isSuccess(outcome)) {
         stdout.write(`${JSON.stringify(outcome.value)}\n`)
+        if (options.verificationCorrelationId && command.observedPath) {
+          stderr.write(`EUIK_CONNECTION_EVIDENCE=${JSON.stringify({
+            correlationId: options.verificationCorrelationId,
+            operation: command.operation.code,
+            observedPath: command.observedPath,
+          })}\n`)
+        }
         return CLI_EXIT_SUCCESS
       }
       if (Outcome.isRejected(outcome)) {

@@ -40,6 +40,8 @@ class CliCommand:
     operation: "Operation[Any]"
     input_schema: Mapping[str, Any]
     build_input: BuildInput
+    operation_id: Optional[str] = None
+    observed_path: Optional[Mapping[str, Any]] = None
     add_arguments: AddArguments = field(default=_default_add_arguments)
     context_factory: CliContextFactory = field(default=default_cli_context_factory)
     reads_stdin: bool = False
@@ -80,6 +82,7 @@ class CliHost:
         cancellation: Optional[CancellationToken] = None,
         install_signal_handlers: bool = True,
         signals: Sequence[int] = DEFAULT_CANCELLATION_SIGNALS,
+        verification_correlation_id: Optional[str] = None,
     ) -> int:
         """Parses `argv`, dispatches the selected command's operation, and
         returns a process exit code (never raises for a normal
@@ -106,7 +109,21 @@ class CliHost:
             context = command.context_factory(correlation_id, args)
             context = replace(context, cancellation=cancellation)
             outcome = dispatch(command.operation, input_value, context, input_schema=command.input_schema)
-            return _emit_outcome(outcome, stdout, stderr)
+            exit_code = _emit_outcome(outcome, stdout, stderr)
+            if outcome.kind == "success" and verification_correlation_id and command.observed_path:
+                stderr.write(
+                    "EUIK_CONNECTION_EVIDENCE="
+                    + json.dumps(
+                        {
+                            "correlationId": verification_correlation_id,
+                            "operation": command.operation_id,
+                            "observedPath": command.observed_path,
+                        },
+                        separators=(",", ":"),
+                    )
+                    + "\n"
+                )
+            return exit_code
         finally:
             if restore_signals is not None:
                 restore_signals()

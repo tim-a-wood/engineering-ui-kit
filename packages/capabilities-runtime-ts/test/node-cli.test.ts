@@ -71,6 +71,29 @@ describe('runCli', () => {
     expect(stderr.lines).toEqual([])
   })
 
+  it('emits correlated path evidence only for an explicit verification invocation', async () => {
+    const command: CliCommand<void> = {
+      name: 'prove',
+      operation: { code: 'op.prove', execute: () => Outcome.success('ok') },
+      observedPath: {
+        inboundAdapter: 'cli:binding.prove', compositionRoot: 'src/composition.ts',
+        operation: 'op.prove@1.0.0', outboundAdapters: [],
+      },
+      parseArgs: () => ({ ok: true, input: undefined }),
+    }
+    const stdout = captureWritable()
+    const stderr = captureWritable()
+    const exitCode = await runCli(['prove'], {
+      commands: [command as unknown as CliCommand<never>], configuration, secretResolver,
+      stdout: stdout.writable, stderr: stderr.writable, signals: fakeSignals(),
+      verificationCorrelationId: 'corr-cli-proof',
+    })
+    expect(exitCode).toBe(CLI_EXIT_SUCCESS)
+    expect(stderr.lines.join('')).toContain('EUIK_CONNECTION_EVIDENCE=')
+    expect(stderr.lines.join('')).toContain('corr-cli-proof')
+    expect(stderr.lines.join('')).toContain('op.prove')
+  })
+
   it('exits nonzero on a domain rejection', async () => {
     const rejectCommand: CliCommand<void> = {
       name: 'reject',

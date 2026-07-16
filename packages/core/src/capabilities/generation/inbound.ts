@@ -196,6 +196,7 @@ function planCliAdapter(input: InboundAdapterGenerationInput, binding: Extract<I
     `export const ${constName}: CliCommand<${types.inputType}> = {`,
     `  name: ${JSON.stringify(binding.command)},`,
     '  operation,',
+    ...(input.observedPath ? [`  observedPath: ${JSON.stringify(input.observedPath)},`] : []),
     `  parseArgs(args: ReadonlyArray<string>): { ok: true; input: ${types.inputType} } | { ok: false; error: CliParseError } {`,
     parseArgsBody,
     '  },',

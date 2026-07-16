@@ -376,6 +376,46 @@ function planTypescriptFiles(input: {
     files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
   }
 
+  const cliBindings = input.bindings.filter((binding): binding is Extract<InboundBinding, { kind: 'cli' }> => binding.kind === 'cli')
+  if (cliBindings.length) {
+    const hostPath = `${basePath}/cli-host.g.ts`
+    const commandNames = cliBindings.map((binding) => `${toCamelCase(binding.bindingId)}Command`)
+    const header = generatedFileHeader({
+      generatorVersion: input.generatorVersion,
+      referenceProfileVersion: input.referenceProfileVersion,
+      sourceContractHashes: cliBindings.map((binding) => `${binding.bindingId}@${binding.version}`),
+    })
+    const imports = renderImportBlock([
+      { moduleSpecifier: input.runtimePackageName, namedImports: ['MapConfigurationReader', 'ResolvedSecret'] },
+      { moduleSpecifier: input.runtimePackageName, namedImports: ['SecretReference', 'SecretResolver'], typeOnly: true },
+      { moduleSpecifier: `${input.runtimePackageName}/node`, namedImports: ['runCli'] },
+      { moduleSpecifier: `${input.runtimePackageName}/node`, namedImports: ['CliCommand'], typeOnly: true },
+      ...cliBindings.map((binding) => ({
+        moduleSpecifier: relativeModuleSpecifier(hostPath, `${basePath}/inbound/${binding.bindingId}.g.ts`),
+        namedImports: [`${toCamelCase(binding.bindingId)}Command`],
+      })),
+    ])
+    const body = [
+      'const configuration = new MapConfigurationReader(',
+      '  Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string")),',
+      ')',
+      'const secretResolver: SecretResolver = {',
+      '  resolve(reference: SecretReference): ResolvedSecret {',
+      '    const value = process.env[reference.ref]',
+      '    if (value === undefined) throw new Error(`Missing secret environment reference: ${reference.ref}`)',
+      '    return new ResolvedSecret(reference, value)',
+      '  },',
+      '}',
+      `const commands = [${commandNames.join(', ')}] as unknown as ReadonlyArray<CliCommand<never>>`,
+      'const exitCode = await runCli(process.argv.slice(2), {',
+      '  commands, configuration, secretResolver,',
+      '  verificationCorrelationId: process.env.EUIK_VERIFICATION_CORRELATION_ID,',
+      '})',
+      'process.exitCode = exitCode',
+    ]
+    files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
+  }
+
   if (httpBindings.length) {
     const openApi = planOpenApiDocument({
       generatorVersion: input.generatorVersion,
@@ -634,6 +674,36 @@ function planPythonFiles(input: {
       '    import os',
       '    import uvicorn',
       '    uvicorn.run(app, host="127.0.0.1", port=int(os.environ.get("PORT", "3000")))',
+    ]
+    files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
+  }
+
+  const cliBindings = input.bindings.filter((binding): binding is Extract<InboundBinding, { kind: 'cli' }> => binding.kind === 'cli')
+  if (cliBindings.length) {
+    const hostPath = `${basePath}/cli_host_g.py`
+    const header = generatedPythonFileHeader({
+      generatorVersion: input.generatorVersion,
+      referenceProfileVersion: input.referenceProfileVersion,
+      sourceContractHashes: cliBindings.map((binding) => `${binding.bindingId}@${binding.version}`),
+    })
+    const imports = renderPythonImportBlock([
+      { moduleSpecifier: 'os', names: [] },
+      { moduleSpecifier: 'sys', names: [] },
+      { moduleSpecifier: `${input.runtimePackageName}.cli`, names: ['CliHost'] },
+      ...cliBindings.map((binding) => ({
+        moduleSpecifier: pythonModuleSpecifierFromPath(`${basePath}/inbound/${toSnakeCase(binding.bindingId)}_g.py`),
+        names: [`build_${toSnakeCase(binding.bindingId)}_command`],
+      })),
+    ])
+    const body = [
+      `host = CliHost(prog=${JSON.stringify(input.deployable.name)})`,
+      ...cliBindings.map((binding) => `host.add_command(build_${toSnakeCase(binding.bindingId)}_command())`),
+      '',
+      'if __name__ == "__main__":',
+      '    raise SystemExit(host.run(',
+      '        sys.argv[1:],',
+      '        verification_correlation_id=os.environ.get("EUIK_VERIFICATION_CORRELATION_ID"),',
+      '    ))',
     ]
     files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
   }

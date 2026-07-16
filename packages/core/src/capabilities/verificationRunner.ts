@@ -364,7 +364,13 @@ async function runHttpVerification(
   }
 }
 
-async function runCliVerification(launch: Launch, trigger: CliTrigger): Promise<StepOutcome> {
+async function runCliVerification(
+  launch: Launch,
+  trigger: CliTrigger,
+  expectedOperationId: string,
+  correlationId: string,
+  expectedObservedPath: ConnectionVerificationRecord['observedPath'],
+): Promise<StepOutcome> {
   if (isInProcessLaunch(launch)) {
     return {
       ok: false,
@@ -378,17 +384,17 @@ async function runCliVerification(launch: Launch, trigger: CliTrigger): Promise<
   const args = [...(launch.args ?? []), ...(trigger.args ?? [])]
   const child = spawn(launch.command, args, {
     cwd: launch.cwd,
-    env: { ...process.env, ...launch.env },
+    env: { ...process.env, ...launch.env, EUIK_VERIFICATION_CORRELATION_ID: correlationId },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 
   let stdout = ''
   let stderr = ''
   child.stdout?.on('data', (chunk: Buffer) => {
-    stdout += chunk.toString('utf8')
+    if (stdout.length < 16_384) stdout += chunk.toString('utf8').slice(0, 16_384 - stdout.length)
   })
   child.stderr?.on('data', (chunk: Buffer) => {
-    stderr += chunk.toString('utf8')
+    if (stderr.length < 16_384) stderr += chunk.toString('utf8').slice(0, 16_384 - stderr.length)
   })
 
   const exitResult = await new Promise<{ code: number | null; timedOut: boolean; spawnError?: Error }>((resolve) => {
@@ -422,12 +428,33 @@ async function runCliVerification(launch: Launch, trigger: CliTrigger): Promise<
       reasonCodes: ['launch-timeout'],
     }
   }
-  const summary = redactSensitiveText(`${stdout}${stderr ? ` [stderr] ${stderr}` : ''}`).trim().slice(0, 200)
+  const evidenceLine = `${stdout}\n${stderr}`.split(/\r?\n/).find((line) => line.startsWith('EUIK_CONNECTION_EVIDENCE='))
+  let evidence: { correlationId?: string; operation?: string; observedPath?: ConnectionVerificationRecord['observedPath'] } | undefined
+  try {
+    evidence = evidenceLine
+      ? JSON.parse(evidenceLine.slice('EUIK_CONNECTION_EVIDENCE='.length)) as typeof evidence
+      : undefined
+  } catch {
+    evidence = undefined
+  }
+  const exitPassed = exitResult.code === 0
+  const pathObserved = Boolean(
+    evidence
+    && evidence.correlationId === correlationId
+    && evidence.operation === expectedOperationId
+    && JSON.stringify(evidence.observedPath) === JSON.stringify(expectedObservedPath),
+  )
+  const summaryText = `${stdout}${stderr ? ` [stderr] ${stderr.replace(/^EUIK_CONNECTION_EVIDENCE=.*$/gm, '').trim()}` : ''}`
+  const summary = redactSensitiveText(summaryText).trim().slice(0, 200)
   return {
-    ok: exitResult.code === 0,
-    healthState: exitResult.code === 0 ? 'healthy' : 'degraded',
-    outcomeSummary: `exit code ${exitResult.code}${summary ? ` (output: ${summary})` : ''}`,
-    reasonCodes: exitResult.code === 0 ? [] : ['cli-nonzero-exit'],
+    ok: exitPassed && pathObserved,
+    healthState: exitPassed && pathObserved ? 'healthy' : 'degraded',
+    outcomeSummary: `exit code ${exitResult.code}; execution path ${pathObserved ? 'observed' : 'not observed'}${summary ? ` (output: ${summary})` : ''}`,
+    reasonCodes: [
+      ...(!exitPassed ? ['cli-nonzero-exit'] : []),
+      ...(exitPassed && !pathObserved ? ['execution-path-not-observed'] : []),
+    ],
+    observedPathPatch: pathObserved ? evidence!.observedPath : undefined,
   }
 }
 
@@ -507,7 +534,7 @@ export async function runConnectionVerification(
     if (input.trigger.kind === 'http') {
       step = await runHttpVerification(input.launch, input.trigger, input.binding.operationId, correlationId, observedPathBase)
     } else if (input.trigger.kind === 'cli') {
-      step = await runCliVerification(input.launch, input.trigger)
+      step = await runCliVerification(input.launch, input.trigger, input.binding.operationId, correlationId, observedPathBase)
     } else {
       step = await runInProcessTrigger(input.launch, input.trigger)
     }

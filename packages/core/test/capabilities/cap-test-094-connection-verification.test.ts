@@ -214,8 +214,21 @@ describe('CAP-TEST-094 real connection verification evidence', () => {
     expectSchemaValid(record)
   })
 
-  it('real CLI pass: spawns a real cli entry with real argv and captures the exit-code outcome', async () => {
-    const launch = nodeEvalLaunch("process.stdout.write('cli-ok'); process.exitCode = 0;")
+  it('real CLI pass: requires correlated generated execution-path evidence, not only exit zero', async () => {
+    const launch = nodeEvalLaunch(`
+      process.stdout.write('cli-ok');
+      process.stderr.write('EUIK_CONNECTION_EVIDENCE=' + JSON.stringify({
+        correlationId: process.env.EUIK_VERIFICATION_CORRELATION_ID,
+        operation: 'op.run-report',
+        observedPath: {
+          inboundAdapter: 'cli:bind-cli-1',
+          compositionRoot: 'src/composition/http-api.ts',
+          operation: 'op.run-report@1.0.0',
+          outboundAdapters: [],
+        },
+      }) + '\\n');
+      process.exitCode = 0;
+    `)
     const record = await runConnectionVerification({
       verificationId: 'ver-cli-1',
       projectId: 'proj-1',
@@ -231,6 +244,17 @@ describe('CAP-TEST-094 real connection verification evidence', () => {
     expect(record.outcomeSummary).toContain('exit code 0')
     expect(record.outcomeSummary).toContain('cli-ok')
     expectSchemaValid(record)
+  })
+
+  it('a zero-exit CLI without correlated execution-path evidence fails', async () => {
+    const record = await runConnectionVerification({
+      verificationId: 'ver-cli-no-path', projectId: 'proj-1', binding: cliBinding(),
+      deployable: deployable({ deployableId: 'cli-tool', kind: 'cli' }), hashes: HASHES,
+      launch: nodeEvalLaunch("process.stdout.write('looks-successful'); process.exitCode = 0;"),
+      trigger: { kind: 'cli' },
+    })
+    expect(record.verificationStatus).toBe('fail')
+    expect(record.reasonCodes).toContain('execution-path-not-observed')
   })
 
   it('a real CLI process with a nonzero exit is failed evidence', async () => {
