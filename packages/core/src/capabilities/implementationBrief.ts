@@ -7,9 +7,13 @@ import type { ModuleDataSchema, ModuleInterviewResponse } from './moduleIntervie
 import type {
   ArchitectureModuleDefinition,
   ArchitectureSpecification,
+  DeployableKind,
+  DeployableSpecification,
+  ModuleImplementationSpecification,
   ModuleManifest,
   ModuleType,
   OperationContract,
+  RuntimeLanguage,
 } from './types.js'
 
 export type RepositoryImplementationContext = {
@@ -87,6 +91,25 @@ export type ModuleImplementationBrief = {
     workflowTraces: ArchitectureSpecification['workflowTraces']
   }
   repositoryContext: RepositoryImplementationContext
+  /**
+   * Generated-deployment references (WP5A-core enrichment): which deployable
+   * hosts this module, plus its generated composition root, commands, and
+   * generated contract/type targets. Present only when a `deployable` (and,
+   * optionally, its `ModuleImplementationSpecification`) is supplied to
+   * `buildModuleImplementationBrief` — omitted for backward compatibility
+   * otherwise.
+   */
+  deployment?: {
+    deployableId: string
+    kind: DeployableKind
+    runtimeLanguage: RuntimeLanguage
+    runtimeVersionRange: string
+    compositionRootPath: string
+    commands: DeployableSpecification['commands']
+    generatedContractRefs: string[]
+    generatedTypeTargets: string[]
+    acceptanceCommands: string[]
+  }
   implementationPlan: string[]
   verificationPlan: {
     suiteIds: string[]
@@ -286,6 +309,10 @@ export function buildModuleImplementationBrief(input: {
   repository: RepositoryImplementationContext
   availableOperationContracts?: OperationContract[]
   availableDataSchemas?: ModuleDataSchema[]
+  /** WP5A-core enrichment: the deployable hosting this module, if a foundation plan has been proposed/approved. */
+  deployable?: DeployableSpecification
+  /** WP5A-core enrichment: this module's canonical implementation specification, if generated. */
+  specification?: ModuleImplementationSpecification
   now?: () => Date
 }): ModuleImplementationBrief {
   const availableOperationContracts = input.availableOperationContracts ?? []
@@ -352,6 +379,22 @@ export function buildModuleImplementationBrief(input: {
     },
     architectureContext: architectureSlice(input.architecture, input.manifest.moduleId),
     repositoryContext: input.repository,
+    ...(input.deployable
+      ? {
+          deployment: {
+            deployableId: input.deployable.deployableId,
+            kind: input.deployable.kind,
+            runtimeLanguage: input.deployable.runtimeLanguage,
+            runtimeVersionRange: input.deployable.runtimeVersionRange,
+            compositionRootPath: input.deployable.compositionRootPath,
+            commands: input.deployable.commands,
+            generatedContractRefs: input.specification?.canonicalSchemaRefs ?? [...referencedSchemaIds],
+            generatedTypeTargets: input.specification?.generatedTypeTargets ?? [],
+            acceptanceCommands:
+              input.specification?.acceptanceCommands ?? Object.values(input.repository.configuredVerificationCommands),
+          },
+        }
+      : {}),
     implementationPlan: implementationPlan(input.manifest, input.interview, input.repository),
     verificationPlan: {
       suiteIds: input.manifest.verificationSuiteIds,

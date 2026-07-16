@@ -15,6 +15,7 @@ import type {
   ModuleManifest,
 } from './types.js'
 import type { ModuleInterviewResponse } from './moduleInterview.js'
+import type { FoundationPlan } from './foundation.js'
 import { withDefaultExposure } from './journeys.js'
 
 function atomicWriteJson(filePath: string, value: unknown): void {
@@ -42,6 +43,8 @@ export type CapabilityIndex = {
   bindings: Record<string, { draft?: boolean; approvedRevision?: string }>
   deployables: Record<string, { draft?: boolean; approvedRevision?: string }>
   inboundBindings: Record<string, { draft?: boolean; approvedRevision?: string }>
+  /** WP5A-core: approved-revision key (the plan's own `contentHash`) for the project's single `FoundationPlan`. */
+  foundationApprovedRevision?: string
 }
 
 export type SchemaMeta = {
@@ -455,6 +458,63 @@ export class CapabilityWorkspace {
         draft: this.getDeployableDraft(projectId, deployableId),
         approved: this.getApprovedDeployable(projectId, deployableId),
       }))
+  }
+
+  // --- FoundationPlan (WP5A-core foundation planning; not a frozen CAP-CONTRACT) ---
+
+  /**
+   * Persists the project's single foundation-planning draft (mirrors the
+   * architecture draft's one-current-file-per-project convention, since a
+   * `FoundationPlan` is a project-wide plan rather than a per-id record).
+   */
+  saveFoundationDraft(projectId: string, plan: FoundationPlan): void {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    atomicWriteJson(path.join(this.root(projectId), 'foundation', 'drafts', 'current.json'), plan)
+  }
+
+  getFoundationDraft(projectId: string): FoundationPlan | undefined {
+    return readJson(path.join(this.root(projectId), 'foundation', 'drafts', 'current.json'))
+  }
+
+  /**
+   * Approves a foundation plan. Rejects any plan whose `readiness.status` is
+   * not `'ready'` (ambiguous or blocked plans cannot be approved). This is a
+   * separate approval step from `approveArchitecture` — approving the
+   * architecture never implicitly approves its foundation. On success, also
+   * approves every constituent deployable via the existing `approveDeployable`
+   * (tolerating a byte-identical re-approval as a no-op, consistent with that
+   * method's own content-hash-keyed idempotency).
+   */
+  approveFoundation(projectId: string, plan: FoundationPlan): FoundationPlan {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    if (plan.readiness.status !== 'ready') {
+      throw new Error(`cannot approve a foundation plan with readiness status "${plan.readiness.status}"`)
+    }
+    this.ensureInitialized(projectId)
+    const revision = canonicalHash(plan)
+    atomicWriteJson(path.join(this.root(projectId), 'foundation', 'approved', `${revision}.json`), plan)
+    const index = this.getIndex(projectId)
+    index.foundationApprovedRevision = revision
+    this.saveIndex(projectId, index)
+    for (const deployable of plan.deployables) {
+      try {
+        this.approveDeployable(projectId, deployable)
+      } catch (error) {
+        if (!(error instanceof Error && /already exists/.test(error.message))) throw error
+      }
+    }
+    return plan
+  }
+
+  getApprovedFoundation(projectId: string, revision?: string): FoundationPlan | undefined {
+    const rev = revision ?? this.getIndex(projectId).foundationApprovedRevision
+    if (!rev) return undefined
+    return readJson(path.join(this.root(projectId), 'foundation', 'approved', `${rev}.json`))
   }
 
   // --- CAP-CONTRACT-028 InboundBinding (WP5B connect backing) --------------
