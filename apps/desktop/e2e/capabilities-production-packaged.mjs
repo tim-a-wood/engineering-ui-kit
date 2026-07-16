@@ -224,11 +224,10 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
   const frame = preview.locator('webview')
   const box = await frame.boundingBox()
   if (!box) throw new Error('Target preview webview has no visible bounds')
-  // Read only the rendered webview's Electron identity, then resolve the
-  // marked control's actual guest box and send native mouse input. If a
-  // headless Windows guest drops CDP mouse input, the still-present picker
-  // marker authorizes a DOM click fallback on that same rendered control.
-  // Neither path injects workflow state, calls the bridge, or dispatches IPC.
+  // Read only the rendered webview's Electron identity, resolve the marked
+  // control's actual guest box, and send a native WebContents mouse event.
+  // The production picker observes that real guest input; this driver never
+  // injects workflow state, calls the bridge, or dispatches IPC.
   const guestId = await frame.evaluate((element) => element.getWebContentsId())
   const clickResult = await app.evaluate(async ({ webContents }, input) => {
     const deadline = Date.now() + 30_000
@@ -248,36 +247,22 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
       try {
         if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
         const { result } = await guest.debugger.sendCommand('Runtime.evaluate', {
-          expression: 'document.querySelector(\'[data-euik-picker-ready="true"]\') ? document.querySelector(\'[data-cap-id="run-capability"]\') : null',
+          expression: 'document.querySelector(\'[data-cap-id="run-capability"]\')',
           returnByValue: false,
         })
         if (!result.objectId || result.subtype === 'null') {
-          const preferences = guest.getLastWebPreferences()
-          const preload = preferences.preload || '(none)'
-          const fileSystem = process.getBuiltinModule('node:fs')
-          lastState = `${lastState}; picker or marked control not ready yet; preload=${preload}; preloadExists=${preload === '(none)' ? false : fileSystem.existsSync(preload)}; sandbox=${preferences.sandbox}; mainFrameLoading=${guest.isLoadingMainFrame()}`
+          lastState = `${lastState}; marked control not ready yet; mainFrameLoading=${guest.isLoadingMainFrame()}`
           await new Promise((resolve) => setTimeout(resolve, 100))
           continue
         }
         const { model } = await guest.debugger.sendCommand('DOM.getBoxModel', { objectId: result.objectId })
         const x = (model.content[0] + model.content[2] + model.content[4] + model.content[6]) / 4
         const y = (model.content[1] + model.content[3] + model.content[5] + model.content[7]) / 4
-        await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y })
-        await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 })
-        await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 })
-        await new Promise((resolve) => setTimeout(resolve, 250))
-        const { result: pickerAfterNativeInput } = await guest.debugger.sendCommand('Runtime.evaluate', {
-          expression: 'Boolean(document.querySelector(\'[data-euik-picker-ready="true"]\'))',
-          returnByValue: true,
-        })
-        if (pickerAfterNativeInput.value === true) {
-          await guest.debugger.sendCommand('Runtime.callFunctionOn', {
-            objectId: result.objectId,
-            functionDeclaration: 'function () { this.click() }',
-            returnByValue: true,
-          })
-          lastState = `${lastState}; native guest input was dropped, rendered-control fallback used`
-        }
+        guest.focus()
+        guest.sendInputEvent({ type: 'mouseMove', x, y })
+        guest.sendInputEvent({ type: 'mouseDown', x, y, button: 'left', clickCount: 1 })
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        guest.sendInputEvent({ type: 'mouseUp', x, y, button: 'left', clickCount: 1 })
         return { clicked: true, detail: lastState }
       } catch (error) {
         lastState = `${lastState}; ${error instanceof Error ? error.message : String(error)}`
