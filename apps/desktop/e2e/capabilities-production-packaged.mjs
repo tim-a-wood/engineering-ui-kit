@@ -220,6 +220,11 @@ async function answerFoundationQuestions(page) {
 async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Selected Run capability') {
   await click(page.getByRole('button', { name: 'Select preview element' }), 'select preview element')
   await expectVisible(page.getByRole('button', { name: 'Click an element…' }), 'active target element picker')
+  // React renders the active state before the async preload invocation has
+  // necessarily crossed IPC and installed the guest's native mouse listener.
+  // A user naturally takes longer than this to move into the Preview; retain
+  // that real interaction ordering in the automated packaged journey.
+  await page.waitForTimeout(300)
   const preview = page.getByLabel('Target application Preview')
   const frame = preview.locator('webview')
   const box = await frame.boundingBox()
@@ -675,6 +680,12 @@ async function runMixedReactPythonJourney(electron) {
     await expectVisible(httpCard.getByText('pass', { exact: true }), 'current HTTP passing evidence')
     const httpBindingId = (await httpCard.locator('h4').textContent())?.trim()
     if (!httpBindingId) throw new Error('HTTP verification card did not expose its binding id')
+    // A completed verification refreshes the canonical project projection.
+    // Re-open the same Design area through rendered navigation before driving
+    // the second, cross-language verification rather than retaining a stale
+    // card locator across that refresh.
+    await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode after HTTP verification')
+    await click(page.getByRole('tab', { name: 'Verification' }), 'Verification tab after HTTP verification')
     const uiCard = page.locator('.cap-verification-card').filter({ hasText: 'ui entry point' })
     await click(uiCard.getByRole('button', { name: 'Run real verification' }), 'Run React-to-Python verification')
     await expectVisible(uiCard.getByText('pass', { exact: true }), 'current mixed passing evidence')
