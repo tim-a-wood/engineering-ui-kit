@@ -1,0 +1,134 @@
+name: Capabilities cross-platform matrix
+
+# CAP-ERA-001 DoD #9 / handoff §18: run the exact §1 reproducible test set from
+# docs/capabilities-platform-matrix-and-evidence.md on Windows and Linux so the
+# TypeScript + Python conformance matrices are proven beyond the macOS dev box.
+# The feature stays `Experimental` until this is green on both platforms; the
+# badge removal itself is a separate product decision.
+
+on:
+  push:
+    branches: [claude/cap-era-integration, main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cap-xplat-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  matrix:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      NODE_VERSION: '22'
+      PYTHON_VERSION: '3.11'
+    defaults:
+      run:
+        # Git Bash is preinstalled on windows-latest; using bash everywhere keeps
+        # the `$VENV_PY` / `cd … && …` invocations identical across both OSes.
+        shell: bash
+    steps:
+      - name: Line-ending portability guard
+        # GitHub's Windows runners default to core.autocrlf=true, which rewrites
+        # LF→CRLF on checkout and would corrupt byte-identical fixtures, content
+        # hashes, and multi-line generator template literals. Force LF checkout.
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Node workspaces (deterministic)
+        run: npm ci
+
+      - name: Build consumed library packages (core + runtime dist)
+        # core/runtime expose their public API from gitignored dist/*; gui tests
+        # and the desktop typecheck resolve @engineering-ui-kit/core via dist, so
+        # it must be built before those steps. apps/* and examples/* are NOT built
+        # (their vite/electron builds are irrelevant to the vitest/tsc test set).
+        run: |
+          npm run build --workspace=@engineering-ui-kit/core
+          npm run build --workspace=@engineering-ui-kit/capabilities-runtime
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Create repo-root .venv and resolve interpreter
+        # The React↔Python E2E spawns a real FastAPI server, resolving the
+        # interpreter as `CAPABILITIES_PYTHON_INTERPRETER ?? <root>/.venv/bin/python`.
+        # Windows venvs live under Scripts/python.exe, POSIX under bin/python.
+        run: |
+          python -m venv .venv
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            VENV_PY="$(pwd)/.venv/Scripts/python.exe"
+          else
+            VENV_PY="$(pwd)/.venv/bin/python"
+          fi
+          echo "VENV_PY=$VENV_PY" >> "$GITHUB_ENV"
+          echo "CAPABILITIES_PYTHON_INTERPRETER=$VENV_PY" >> "$GITHUB_ENV"
+          "$VENV_PY" --version
+
+      - name: Install Python runtime + test dependencies into .venv
+        run: |
+          "$VENV_PY" -m pip install --upgrade pip
+          "$VENV_PY" -m pip install -e runtimes/python fastapi uvicorn httpx pytest
+
+      # ---- §1 reproducible test set (each runs even if a prior suite failed, so a
+      #      single run surfaces every platform defect at once) --------------------
+      - name: Core (contracts, generation, apply, migration, foundation, verification)
+        if: ${{ !cancelled() }}
+        run: npm run test --workspace=@engineering-ui-kit/core
+
+      - name: TypeScript runtime
+        if: ${{ !cancelled() }}
+        run: npm run test --workspace=@engineering-ui-kit/capabilities-runtime
+
+      - name: Foundation GUI
+        if: ${{ !cancelled() }}
+        run: npm run test --workspace=@engineering-ui-kit/gui
+
+      - name: Desktop typecheck (privileged bridge/IPC)
+        if: ${{ !cancelled() }}
+        run: npm run typecheck --workspace=@engineering-ui-kit/desktop
+
+      - name: Python runtime
+        if: ${{ !cancelled() }}
+        run: '"$VENV_PY" -m pytest runtimes/python -q'
+
+      - name: Example — TS reference (React-in-one-deployable, HTTP, CLI, schedule, Electron IPC)
+        if: ${{ !cancelled() }}
+        run: cd examples/capabilities-ts-reference && npx vitest run
+
+      - name: Example — React reference
+        if: ${{ !cancelled() }}
+        run: cd examples/capabilities-react-reference && npx vitest run
+
+      - name: Example — Python reference (HTTP, CLI, schedule)
+        if: ${{ !cancelled() }}
+        run: '"$VENV_PY" -m pytest examples/capabilities-python-reference -q'
+
+      - name: Example — React↔Python over generated OpenAPI (TS side, spawns real FastAPI)
+        if: ${{ !cancelled() }}
+        run: cd examples/capabilities-react-python-reference && npx vitest run
+
+      - name: Example — React↔Python over generated OpenAPI (Python side)
+        if: ${{ !cancelled() }}
+        run: '"$VENV_PY" -m pytest examples/capabilities-react-python-reference -q'
