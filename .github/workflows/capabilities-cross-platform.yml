@@ -1,9 +1,9 @@
 name: Capabilities cross-platform matrix
 
 # CAP-ERA-001 DoD #9 / handoff §18: run the exact §1 reproducible test set from
-# docs/capabilities-platform-matrix-and-evidence.md on Windows and Linux so the
-# TypeScript + Python conformance matrices are proven beyond the macOS dev box.
-# The feature stays `Experimental` until this is green on both platforms; the
+# docs/capabilities-platform-matrix-and-evidence.md on macOS, Windows, and Linux
+# including the real packaged desktop journeys rather than library tests alone.
+# The feature stays `Experimental` until this is green on every supported platform; the
 # badge removal itself is a separate product decision.
 
 on:
@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
     env:
       NODE_VERSION: '22'
       PYTHON_VERSION: '3.11'
@@ -140,3 +140,39 @@ jobs:
       - name: Example — React↔Python over generated OpenAPI (Python side)
         if: ${{ !cancelled() }}
         run: '"$VENV_PY" -m pytest examples/capabilities-react-python-reference -q'
+
+      - name: Build packaged desktop application
+        if: ${{ !cancelled() }}
+        run: |
+          npm run build --workspace=@engineering-ui-kit/gui
+          npm run build --workspace=@engineering-ui-kit/desktop
+          npm run package:dir --workspace=@engineering-ui-kit/desktop
+
+      - name: Packaged desktop journeys A-E (Linux under Xvfb)
+        if: ${{ !cancelled() && runner.os == 'Linux' }}
+        env:
+          EUIK_PACKAGED_SKIP_BUILD: '1'
+          EUIK_PACKAGED_JOURNEYS: typescript-ui,python-headless,mixed,existing,recovery
+          EUIK_PACKAGED_TIMEOUT_MS: '120000'
+          EUIK_PACKAGED_JOURNEY_TIMEOUT_MS: '1800000'
+        run: xvfb-run -a npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+
+      - name: Packaged desktop journeys A-E (macOS/Windows)
+        if: ${{ !cancelled() && runner.os != 'Linux' }}
+        env:
+          EUIK_PACKAGED_SKIP_BUILD: '1'
+          EUIK_PACKAGED_JOURNEYS: typescript-ui,python-headless,mixed,existing,recovery
+          EUIK_PACKAGED_TIMEOUT_MS: '120000'
+          EUIK_PACKAGED_JOURNEY_TIMEOUT_MS: '1800000'
+        run: npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+
+      - name: Upload packaged application and acceptance evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: capabilities-packaged-${{ matrix.os }}
+          path: |
+            release/
+            apps/desktop/validation-evidence/capabilities-production/packaged/
+          retention-days: 7
+          if-no-files-found: error
