@@ -25,8 +25,31 @@ fs.mkdirSync(EVIDENCE_DIR, { recursive: true })
 for (const stale of ['failure.json', 'failure.png', 'python-failure.png', 'mixed-failure.png', 'existing-failure.png', 'recovery-failure.png']) fs.rmSync(path.join(EVIDENCE_DIR, stale), { force: true })
 
 function run(command, args, cwd = REPO_ROOT) {
-  const result = spawnSync(command, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' })
+  const executable = process.platform === 'win32' && ['npm', 'npx', 'pnpm', 'yarn'].includes(command.toLowerCase())
+    ? `${command}.cmd`
+    : command
+  const result = spawnSync(executable, args, { cwd, stdio: 'inherit', shell: false })
   if (result.status !== 0) throw new Error(`${command} ${args.join(' ')} failed with exit ${result.status}`)
+}
+
+function collectCommandLogs(dataDir, projectId, prefix) {
+  const root = path.join(dataDir, 'projects', projectId, 'capabilities', 'integration', 'command-output')
+  if (!fs.existsSync(root)) return []
+  const sourceFiles = []
+  const visit = (directory) => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const absolute = path.join(directory, entry.name)
+      if (entry.isDirectory()) visit(absolute)
+      else if (entry.isFile() && entry.name.endsWith('.combined.log')) sourceFiles.push(absolute)
+    }
+  }
+  visit(root)
+  return sourceFiles.sort().map((source, index) => {
+    const destination = path.join(EVIDENCE_DIR, `${prefix}-command-${index + 1}.log`)
+    // Command output is already bounded and redacted by the privileged runner.
+    fs.copyFileSync(source, destination)
+    return path.relative(REPO_ROOT, destination)
+  })
 }
 
 function repositorySnapshot(root) {
@@ -196,9 +219,18 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
     const guest = webContents.getAllWebContents().find((contents) => contents.getURL().startsWith(url))
     if (!guest) return false
     if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
-    await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 100, y: 50 })
-    await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mousePressed', x: 100, y: 50, button: 'left', clickCount: 1 })
-    await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 100, y: 50, button: 'left', clickCount: 1 })
+    const { root } = await guest.debugger.sendCommand('DOM.getDocument', { depth: 1 })
+    const { nodeId } = await guest.debugger.sendCommand('DOM.querySelector', {
+      nodeId: root.nodeId,
+      selector: '[data-cap-id="run-capability"]',
+    })
+    if (!nodeId) return false
+    const { model } = await guest.debugger.sendCommand('DOM.getBoxModel', { nodeId })
+    const x = (model.content[0] + model.content[2] + model.content[4] + model.content[6]) / 4
+    const y = (model.content[1] + model.content[3] + model.content[5] + model.content[7]) / 4
+    await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y })
+    await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 })
+    await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 })
     return true
   }, targetUrl)
   if (!clicked) throw new Error('Target preview guest webContents was not found')
@@ -484,6 +516,7 @@ async function runPythonHeadlessJourney(electron) {
     evidence.passed = true
     return evidence
   } catch (error) {
+    evidence.commandLogs = collectCommandLogs(dataDir, fixture.projectId, 'python-headless')
     const page = app.windows()[0]
     if (page) {
       evidence.screenshots.push(await shot(page, 'python-failure').catch(() => ''))
@@ -607,6 +640,7 @@ async function runMixedReactPythonJourney(electron) {
     evidence.passed = true
     return evidence
   } catch (error) {
+    evidence.commandLogs = collectCommandLogs(dataDir, fixture.projectId, 'mixed')
     const page = app.windows()[0]
     if (page) {
       evidence.screenshots.push(await shot(page, 'mixed-failure').catch(() => ''))
