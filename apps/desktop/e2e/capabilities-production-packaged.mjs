@@ -228,25 +228,48 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
   // marked control's actual guest box and send native mouse input. No workflow
   // state, bridge call, IPC command, or JavaScript click is used.
   const guestId = await frame.evaluate((element) => element.getWebContentsId())
-  const clicked = await app.evaluate(async ({ webContents }, id) => {
-    const guest = webContents.fromId(id)
-    if (!guest || guest.isDestroyed()) return false
-    if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
-    const { root } = await guest.debugger.sendCommand('DOM.getDocument', { depth: 1 })
-    const { nodeId } = await guest.debugger.sendCommand('DOM.querySelector', {
-      nodeId: root.nodeId,
-      selector: '[data-cap-id="run-capability"]',
-    })
-    if (!nodeId) return false
-    const { model } = await guest.debugger.sendCommand('DOM.getBoxModel', { nodeId })
-    const x = (model.content[0] + model.content[2] + model.content[4] + model.content[6]) / 4
-    const y = (model.content[1] + model.content[3] + model.content[5] + model.content[7]) / 4
-    await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y })
-    await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 })
-    await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 })
-    return true
-  }, guestId)
-  if (!clicked) throw new Error('Target preview guest or marked capability control was not available')
+  const clickResult = await app.evaluate(async ({ webContents }, input) => {
+    const deadline = Date.now() + 30_000
+    let lastState = 'guest unavailable'
+    while (Date.now() < deadline) {
+      const guest = webContents.fromId(input.guestId)
+        ?? webContents.getAllWebContents().find((contents) => contents.getURL().startsWith(input.targetUrl))
+      if (!guest || guest.isDestroyed()) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        continue
+      }
+      lastState = `guest ${guest.id} at ${guest.getURL() || '(no URL)'}`
+      if (!guest.getURL().startsWith(input.targetUrl)) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        continue
+      }
+      try {
+        if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
+        const { root } = await guest.debugger.sendCommand('DOM.getDocument', { depth: 1 })
+        const { nodeId } = await guest.debugger.sendCommand('DOM.querySelector', {
+          nodeId: root.nodeId,
+          selector: '[data-cap-id="run-capability"]',
+        })
+        if (!nodeId) {
+          lastState = `${lastState}; marked control not rendered yet`
+          await new Promise((resolve) => setTimeout(resolve, 100))
+          continue
+        }
+        const { model } = await guest.debugger.sendCommand('DOM.getBoxModel', { nodeId })
+        const x = (model.content[0] + model.content[2] + model.content[4] + model.content[6]) / 4
+        const y = (model.content[1] + model.content[3] + model.content[5] + model.content[7]) / 4
+        await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y })
+        await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 })
+        await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 })
+        return { clicked: true, detail: lastState }
+      } catch (error) {
+        lastState = `${lastState}; ${error instanceof Error ? error.message : String(error)}`
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+    }
+    return { clicked: false, detail: lastState }
+  }, { guestId, targetUrl })
+  if (!clickResult.clicked) throw new Error(`Target preview control was not available: ${clickResult.detail}`)
   await waitForStatus(page, expectedSelection)
 }
 

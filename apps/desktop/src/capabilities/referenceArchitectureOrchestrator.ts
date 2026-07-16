@@ -1174,6 +1174,11 @@ export class ReferenceArchitectureOrchestrator {
             webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
           })
           await verificationWindow.loadURL(launchUrl)
+          // Vite and similar development hosts can perform an immediate
+          // dependency-optimization reload after the first load event. A
+          // trigger sent during that reload is discarded before application
+          // listeners attach, so wait for the target document to settle.
+          await new Promise((resolve) => setTimeout(resolve, 1_000))
           return {
             invoke: async (payload?: unknown) => {
               const requested = payload as { correlationId?: string } | undefined
