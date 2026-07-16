@@ -878,7 +878,8 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       const cleanup = () => {
         clearTimeout(timer!)
         clearInterval(probeTimer!)
-        guest.off('ipc-message', onMessage)
+        ipcMain.off('euik-preview-picker:ready', onReady)
+        ipcMain.off('euik-preview-picker:result', onResult)
         guest.off('destroyed', onDestroyed)
       }
       const finish = (value: SelectionEvidence | null, cause?: Error) => {
@@ -889,17 +890,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
         else resolve(value)
       }
       const onDestroyed = () => finish(null, new Error('the target-app Preview closed during element selection'))
-      const onMessage = (_ipcEvent: Electron.Event, channel: string, ...args: unknown[]) => {
-        if (channel === 'euik-preview-picker:ready') {
-          if (!started) {
-            started = true
-            clearInterval(probeTimer!)
-            guest.send('euik-preview-picker:start')
-          }
-          return
-        }
-        if (channel !== 'euik-preview-picker:result') return
-        const value = args[0]
+      const onReady = (ipcEvent: Electron.IpcMainEvent) => {
+        if (ipcEvent.sender.id !== guest.id || started) return
+        started = true
+        clearInterval(probeTimer!)
+        guest.send('euik-preview-picker:start')
+      }
+      const onResult = (ipcEvent: Electron.IpcMainEvent, value: unknown) => {
+        if (ipcEvent.sender.id !== guest.id) return
         if (value === null || value === undefined) {
           finish(null)
           return
@@ -914,7 +912,8 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
         }
         finish(value as SelectionEvidence)
       }
-      guest.on('ipc-message', onMessage)
+      ipcMain.on('euik-preview-picker:ready', onReady)
+      ipcMain.on('euik-preview-picker:result', onResult)
       guest.once('destroyed', onDestroyed)
       timer = setTimeout(() => finish(null, new Error('element selection timed out; try again')), 5 * 60 * 1000)
       const probe = () => {
