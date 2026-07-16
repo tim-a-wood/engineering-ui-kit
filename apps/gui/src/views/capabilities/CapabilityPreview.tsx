@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { Project, SelectionEvidence } from '@engineering-ui-kit/core'
 import type { EuikBridge } from '../../bridge'
 import { PREVIEW_BINDING_PICKER_JS } from './previewSelection'
@@ -23,9 +23,54 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
   function CapabilityPreview({ bridge, projectId, project }, ref) {
     const [state, setState] = useState<PreviewState>({ status: 'idle' })
     const webviewRef = useRef<HTMLWebViewElement | null>(null)
+    const guestReadyRef = useRef(false)
+    const guestReadyWaiters = useRef(new Set<() => void>())
+    const guestListenersRef = useRef<{
+      node: HTMLWebViewElement
+      ready: EventListener
+      loading: EventListener
+    } | null>(null)
     const iframeRef = useRef<HTMLIFrameElement | null>(null)
     const isElectron = typeof window !== 'undefined' && window.euikMode === 'electron'
     const setupRequired = state.status === 'error' && /project setup required|dependencies are not installed/i.test(state.message)
+
+    const setWebviewRef = useCallback((node: HTMLWebViewElement | null) => {
+      const previous = guestListenersRef.current
+      if (previous) {
+        previous.node.removeEventListener('dom-ready', previous.ready)
+        previous.node.removeEventListener('did-start-loading', previous.loading)
+        guestListenersRef.current = null
+      }
+      webviewRef.current = node
+      guestReadyRef.current = false
+      if (!node) return
+      const loading: EventListener = () => { guestReadyRef.current = false }
+      const ready: EventListener = () => {
+        guestReadyRef.current = true
+        for (const resolve of guestReadyWaiters.current) resolve()
+        guestReadyWaiters.current.clear()
+      }
+      guestListenersRef.current = { node, ready, loading }
+      node.addEventListener('did-start-loading', loading)
+      node.addEventListener('dom-ready', ready)
+    }, [])
+
+    const waitForGuestReady = useCallback(async () => {
+      if (guestReadyRef.current) return
+      await new Promise<void>((resolve, reject) => {
+        let timer: ReturnType<typeof setTimeout>
+        const ready = () => {
+          clearTimeout(timer)
+          guestReadyWaiters.current.delete(ready)
+          resolve()
+        }
+        timer = setTimeout(() => {
+          guestReadyWaiters.current.delete(ready)
+          reject(new Error('The target-app Preview is still loading. Reload it, then try selecting an element again.'))
+        }, 30_000)
+        guestReadyWaiters.current.add(ready)
+      })
+    }, [])
 
     const start = async () => {
       if (!projectId) return
@@ -79,6 +124,7 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
         if (state.status !== 'ready') {
           throw new Error('The target-app Preview is not ready.')
         }
+        await waitForGuestReady()
         const guest = webviewRef.current as unknown as {
           executeJavaScript?: (code: string) => Promise<unknown>
         } | null
@@ -87,7 +133,7 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
         }
         return (await guest.executeJavaScript(PREVIEW_BINDING_PICKER_JS)) as SelectionEvidence | null
       },
-    }), [isElectron, state])
+    }), [isElectron, state, waitForGuestReady])
 
     const reload = () => {
       if (isElectron) {
@@ -113,7 +159,7 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
           </div>
           {state.status === 'ready' ? (
             isElectron ? (
-              <webview ref={webviewRef} className="app-preview-frame" src={state.url} />
+              <webview ref={setWebviewRef} className="app-preview-frame" src={state.url} />
             ) : (
               <iframe ref={iframeRef} className="app-preview-frame" src={state.url} title="Target application Preview" />
             )
