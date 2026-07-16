@@ -49,10 +49,16 @@ function createWindow(): void {
       return
     }
     const preload = previewPreloadPath()
+    const requestedPreload = webPreferences.preload
+    const normalized = (value: string) => process.platform === 'win32'
+      ? path.resolve(value).toLowerCase()
+      : path.resolve(value)
     if (
       !['http:', 'https:'].includes(target.protocol)
       || !['127.0.0.1', 'localhost', '::1'].includes(target.hostname)
       || !fs.existsSync(preload)
+      || !requestedPreload
+      || normalized(requestedPreload) !== normalized(preload)
     ) {
       event.preventDefault()
       return

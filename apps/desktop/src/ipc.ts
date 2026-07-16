@@ -6,6 +6,7 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell, webContents } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { buildCfHdropBuffer, buildFilenamesPboardPlist, buildUriList } from './uploadSetTransfer.js'
 import {
@@ -857,6 +858,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     // system browser when asked (the default, and the legacy behavior).
     if (options?.open !== false) await shell.openExternal(launchUrl)
     return { url: launchUrl, started, rebuilt }
+  })
+
+  ipcMain.handle(BRIDGE_CHANNELS.getPreviewPreloadUrl, () => {
+    const preloadPath = app.isPackaged
+      ? path.join(process.resourcesPath, 'previewGuestPreload.cjs')
+      : path.join(app.getAppPath(), 'dist', 'preload', 'previewGuestPreload.cjs')
+    if (!fs.existsSync(preloadPath)) throw new Error('the target-app Preview picker is unavailable in this build')
+    return pathToFileURL(preloadPath).toString()
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.pickPreviewElement, async (event, guestId: number): Promise<SelectionEvidence | null> => {

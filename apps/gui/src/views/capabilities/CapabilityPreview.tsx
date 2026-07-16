@@ -14,7 +14,7 @@ type Props = {
 
 type PreviewState =
   | { status: 'idle' | 'starting' | 'installing' }
-  | { status: 'ready'; url: string }
+  | { status: 'ready'; url: string; preloadUrl: string }
   | { status: 'error'; message: string }
 
 type PreviewWebview = HTMLWebViewElement & {
@@ -79,8 +79,11 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
       if (!projectId) return
       setState({ status: 'starting' })
       try {
-        const launched = await bridge.launchApp(projectId, { open: false })
-        setState({ status: 'ready', url: launched.url })
+        const [launched, preloadUrl] = await Promise.all([
+          bridge.launchApp(projectId, { open: false }),
+          bridge.getPreviewPreloadUrl(),
+        ])
+        setState({ status: 'ready', url: launched.url, preloadUrl })
       } catch (cause) {
         setState({
           status: 'error',
@@ -161,7 +164,7 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
           </div>
           {state.status === 'ready' ? (
             isElectron ? (
-              <webview ref={setWebviewRef} className="app-preview-frame" src={state.url} />
+              <webview preload={state.preloadUrl} ref={setWebviewRef} className="app-preview-frame" src={state.url} />
             ) : (
               <iframe ref={iframeRef} className="app-preview-frame" src={state.url} title="Target application Preview" />
             )
