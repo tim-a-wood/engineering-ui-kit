@@ -124,6 +124,7 @@ export function GuidedConnect(props: Props) {
           projectId={projectId}
           project={props.project}
           deployableId={editorDeployableId}
+          transport={uiDeployable?.kind === 'electron-main' ? 'electron-ipc' : 'browser-local'}
           operations={operations}
           selectionEvidence={props.selectionEvidence}
           onSelectionEvidence={props.onSelectionEvidence}

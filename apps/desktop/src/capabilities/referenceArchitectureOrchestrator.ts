@@ -7,7 +7,7 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
@@ -122,6 +122,42 @@ function parseApprovedCommand(commandText: string): { command: string; args: str
   return { command, args }
 }
 
+async function urlReachable(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_000) })
+    return response.status < 500
+  } catch {
+    return false
+  }
+}
+
+async function waitForUrl(url: string, timeoutMs: number): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    if (await urlReachable(url)) return
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+  throw new Error(`the configured UI did not become reachable within ${timeoutMs}ms`)
+}
+
+async function stopSpawnedProcess(child: ChildProcess | undefined): Promise<void> {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return
+  const signal = (value: NodeJS.Signals) => {
+    try {
+      if (process.platform !== 'win32' && child.pid) process.kill(-child.pid, value)
+      else child.kill(value)
+    } catch {
+      try { child.kill(value) } catch { /* already exited */ }
+    }
+  }
+  signal('SIGTERM')
+  await Promise.race([
+    new Promise<void>((resolve) => child.once('exit', () => resolve())),
+    new Promise<void>((resolve) => setTimeout(resolve, 1_000)),
+  ])
+  if (child.exitCode === null && child.signalCode === null) signal('SIGKILL')
+}
+
 function readCurrentOwnedSourceHashes(
   repoRoot: string,
   manifests: readonly GeneratedOwnershipManifest[],
@@ -216,6 +252,9 @@ function buildRuntimeDistribution(deployable: DeployableSpecification, targetRoo
       : {}
     devDependencies.typescript = typeof devDependencies.typescript === 'string' ? devDependencies.typescript : '^5.8.0'
     devDependencies['@types/node'] = typeof devDependencies['@types/node'] === 'string' ? devDependencies['@types/node'] : '^22.15.0'
+    if (deployable.kind === 'electron-main') {
+      devDependencies.electron = typeof devDependencies.electron === 'string' ? devDependencies.electron : '43.0.0'
+    }
     packageJson.devDependencies = Object.fromEntries(Object.entries(devDependencies).sort(([a], [b]) => a.localeCompare(b)))
     result.files.push({ path: 'package.json', contents: `${JSON.stringify(packageJson, null, 2)}\n`, ownership: 'editable', reason: 'register the bundled reference-architecture runtime dependency' })
     result.files.push({
@@ -226,7 +265,7 @@ function buildRuntimeDistribution(deployable: DeployableSpecification, targetRoo
           outDir: '.engineering-ui/capabilities/build', strict: true, skipLibCheck: true,
           esModuleInterop: true, types: ['node'],
         },
-        include: ['src/**/*.ts', 'src/**/*.tsx', deployable.compositionRootPath],
+        include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.mts', deployable.compositionRootPath],
       }, null, 2)}\n`,
       ownership: 'generated',
       reason: 'compile generated TypeScript adapters, composition, and host with a deterministic preset',
@@ -279,7 +318,27 @@ function pythonCommandFor(targetRoot: string): string {
     : process.platform === 'win32' ? 'python' : 'python3'
 }
 
-function generatedLaunchCommand(deployable: DeployableSpecification, targetRoot: string): string | undefined {
+function generatedLaunchCommand(
+  deployable: DeployableSpecification,
+  targetRoot: string,
+  binding?: InboundBinding,
+): string | undefined {
+  if (binding?.kind === 'embedded-library') {
+    const id = deployable.deployableId.replaceAll('/', '-')
+    return deployable.runtimeLanguage === 'python'
+      ? `${pythonCommandFor(targetRoot)} src/generated/${deployable.deployableId.replace(/[^A-Za-z0-9]+/g, '_').toLowerCase()}/embedded/${binding.bindingId.replace(/[^A-Za-z0-9]+/g, '_').toLowerCase()}_host_g.py`
+      : `node .engineering-ui/capabilities/build/src/generated/${id}/embedded/${binding.bindingId}.host.g.js`
+  }
+  if (binding?.kind === 'schedule') {
+    const id = deployable.deployableId.replaceAll('/', '-')
+    return deployable.runtimeLanguage === 'python'
+      ? `${pythonCommandFor(targetRoot)} src/generated/${deployable.deployableId.replace(/[^A-Za-z0-9]+/g, '_').toLowerCase()}/worker/${binding.bindingId.replace(/[^A-Za-z0-9]+/g, '_').toLowerCase()}_host_g.py`
+      : `node .engineering-ui/capabilities/build/src/generated/${id}/worker/${binding.bindingId}.host.g.js`
+  }
+  if (binding?.kind === 'ui' && binding.transport === 'electron-ipc') {
+    const id = deployable.deployableId.replaceAll('/', '-')
+    return `npx electron .engineering-ui/capabilities/build/src/generated/${id}/electron/${binding.bindingId}.verification-main.g.js`
+  }
   if (deployable.kind !== 'http-api' && deployable.kind !== 'cli') return undefined
   const id = deployable.deployableId.replaceAll('/', '-')
   return deployable.runtimeLanguage === 'python'
@@ -885,9 +944,6 @@ export class ReferenceArchitectureOrchestrator {
     const operation = collected.operations.find((candidate) =>
       candidate.operationId === binding.operationId && candidate.version === binding.operationVersion)
     if (!operation) throw new Error('approved operation contract for binding was not found')
-    const launchText = collected.deployable.commands.launch ?? generatedLaunchCommand(collected.deployable, collected.project.repoPath)
-    if (!launchText) throw new Error('configure and approve a launch command for this deployable before verification')
-    const launchCommand = parseApprovedCommand(launchText)
     const source = readCurrentOwnedSourceHashes(collected.project.repoPath, apply.ownershipManifests)
     if (!source.hashes) throw new Error(source.issue ?? 'generated-owned verification source is unavailable')
 
@@ -899,21 +955,83 @@ export class ReferenceArchitectureOrchestrator {
       generatedOwnership: canonicalHash(apply.ownershipManifests),
       source: canonicalHash(source.hashes),
     }
-    const launch = {
-      command: launchCommand.command,
-      args: launchCommand.args,
-      cwd: collected.project.repoPath,
-      env: collected.deployable.runtimeLanguage === 'python' ? {
-        PYTHONPATH: [
-          collected.project.repoPath,
-          path.join(collected.project.repoPath, '.engineering-ui/capabilities/runtime/python/src'),
-          process.env.PYTHONPATH,
-        ].filter(Boolean).join(path.delimiter),
-      } : undefined,
-      healthPath: collected.deployable.runtimeLanguage === 'python' ? '/healthz' : '/health',
-      readyTimeoutMs: 15_000,
-    }
-    const trigger = binding.kind === 'http'
+    const correlationId = crypto.randomUUID()
+    let launch: Parameters<typeof runConnectionVerification>[0]['launch']
+    let trigger: Parameters<typeof runConnectionVerification>[0]['trigger']
+    if (binding.kind === 'ui' && binding.transport === 'browser-local') {
+      const launchUrl = collected.project.launchUrl
+      const selector = binding.selectionEvidence?.selector
+      if (!launchUrl) throw new Error('configure the actual application UI URL before verifying this browser-local connection')
+      if (!selector) throw new Error('select the actual UI element before verifying this browser-local connection')
+      if (binding.trigger === 'load') throw new Error('load-trigger browser verification requires an explicit application readiness marker')
+      launch = {
+        kind: 'in-process',
+        start: async () => {
+          let child: ChildProcess | undefined
+          if (!(await urlReachable(launchUrl))) {
+            if (!collected.project.launchCommand) throw new Error('the configured UI is not running and has no approved launch command')
+            const approved = parseApprovedCommand(collected.project.launchCommand)
+            child = spawn(approved.command, approved.args, {
+              cwd: collected.project.repoPath, env: process.env, stdio: ['ignore', 'pipe', 'pipe'],
+              detached: process.platform !== 'win32',
+            })
+            await waitForUrl(launchUrl, 45_000)
+          }
+          const { BrowserWindow } = await import('electron')
+          const verificationWindow = new BrowserWindow({
+            show: false,
+            webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+          })
+          await verificationWindow.loadURL(launchUrl)
+          return {
+            invoke: async (payload?: unknown) => {
+              const requested = payload as { correlationId?: string } | undefined
+              const requestedCorrelationId = requested?.correlationId
+              if (!requestedCorrelationId) return { ok: false, outcome: 'verification correlation id missing' }
+              const script = `(() => new Promise((resolve) => {
+                globalThis.__EUIK_VERIFICATION_CORRELATION_ID = ${JSON.stringify(requestedCorrelationId)};
+                const timeout = setTimeout(() => { cleanup(); resolve({ ok: false, outcome: 'UI trigger did not emit capability evidence' }); }, 10000);
+                const listener = (event) => { cleanup(); resolve({ ok: true, outcome: 'UI element reached the browser-local capability', body: event.detail }); };
+                const cleanup = () => { clearTimeout(timeout); globalThis.removeEventListener('euik-capability-invoked', listener); delete globalThis.__EUIK_VERIFICATION_CORRELATION_ID; };
+                globalThis.addEventListener('euik-capability-invoked', listener, { once: true });
+                const element = document.querySelector(${JSON.stringify(selector)});
+                if (!element) { cleanup(); resolve({ ok: false, outcome: 'Selected UI element is not present in the launched application' }); return; }
+                ${binding.trigger === 'submit'
+                  ? `(element.closest('form') ?? element).dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));`
+                  : binding.trigger === 'change'
+                    ? `element.dispatchEvent(new Event('change', { bubbles: true }));`
+                    : `(element instanceof HTMLElement ? element.click() : element.dispatchEvent(new MouseEvent('click', { bubbles: true })));`}
+              }))()`
+              return verificationWindow.webContents.executeJavaScript(script, true) as Promise<{ ok: boolean; outcome?: string; body?: unknown }>
+            },
+            close: async () => {
+              if (!verificationWindow.isDestroyed()) verificationWindow.destroy()
+              await stopSpawnedProcess(child)
+            },
+          }
+        },
+      }
+      trigger = { kind: 'ui', input: { correlationId } }
+    } else {
+      const launchText = generatedLaunchCommand(collected.deployable, collected.project.repoPath, binding)
+        ?? collected.deployable.commands.launch
+      if (!launchText) throw new Error('configure and approve a launch command for this deployable before verification')
+      const launchCommand = parseApprovedCommand(launchText)
+      launch = {
+        command: launchCommand.command,
+        args: launchCommand.args,
+        cwd: collected.project.repoPath,
+        env: collected.deployable.runtimeLanguage === 'python' ? {
+          PYTHONPATH: [
+            collected.project.repoPath,
+            path.join(collected.project.repoPath, '.engineering-ui/capabilities/runtime/python/src'),
+            process.env.PYTHONPATH,
+          ].filter(Boolean).join(path.delimiter),
+        } : undefined,
+        healthPath: collected.deployable.runtimeLanguage === 'python' ? '/healthz' : '/health',
+        readyTimeoutMs: 15_000,
+      }
+      const selectedTrigger = binding.kind === 'http'
       ? { kind: 'http' as const, method: binding.method, path: binding.path, body: {} }
       : binding.kind === 'cli'
         ? {
@@ -922,9 +1040,15 @@ export class ReferenceArchitectureOrchestrator {
               ? binding.argumentMappings.map(() => '')
               : ['{}'])],
           }
+        : binding.kind === 'embedded-library'
+          ? { kind: 'embedded-library' as const, input: {} }
+        : binding.kind === 'schedule'
+          ? { kind: 'schedule' as const }
+        : binding.kind === 'ui' && binding.transport === 'electron-ipc'
+          ? { kind: 'electron-ipc' as const, input: {} }
         : undefined
-    if (!trigger) {
-      throw new Error(`real verification for inbound binding kind "${binding.kind}" is not configured yet`)
+      if (!selectedTrigger) throw new Error(`real verification for inbound binding kind "${binding.kind}" is not configured yet`)
+      trigger = selectedTrigger
     }
 
     const record = await runConnectionVerification({
@@ -935,6 +1059,7 @@ export class ReferenceArchitectureOrchestrator {
       hashes,
       launch,
       trigger,
+      correlationId,
       observedPathOverrides: { outboundAdapters: [...composition.outboundAdapterRefs].sort() },
     })
     this.integration.saveConnectionVerification(record)

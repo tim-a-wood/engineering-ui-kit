@@ -13,3 +13,5 @@ export type { OperationCallOptions, OperationClientOptions } from './browser/cli
 export { OperationClient } from './browser/client.js'
 export { BrowserConfigurationReader, readBrowserConfigurationFromGlobal } from './browser/configuration.js'
 export { createCorrelationId, CORRELATION_ID_HEADER } from './browser/correlation.js'
+export { BrowserLocalTransport } from './browser/local-transport.js'
+export type { BrowserLocalOperation, BrowserLocalTransportOptions } from './browser/local-transport.js'

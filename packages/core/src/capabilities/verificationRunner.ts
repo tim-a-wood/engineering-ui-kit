@@ -55,7 +55,14 @@ export type InProcessTrigger = {
   timeoutMs?: number
 }
 
-export type VerificationTrigger = HttpTrigger | CliTrigger | InProcessTrigger
+export type EvidenceProcessTrigger = {
+  kind: 'schedule' | 'embedded-library' | 'ui' | 'electron-ipc'
+  args?: string[]
+  input?: unknown
+  timeoutMs?: number
+}
+
+export type VerificationTrigger = HttpTrigger | CliTrigger | InProcessTrigger | EvidenceProcessTrigger
 
 // ---------------------------------------------------------------------------
 // Launch descriptors — how to bring the real target up.
@@ -152,7 +159,7 @@ function triggerInputForRedaction(trigger: VerificationTrigger): unknown {
   if (trigger.kind === 'cli') {
     return { args: trigger.args ?? [] }
   }
-  return { input: trigger.input }
+  return { input: trigger.input, ...('args' in trigger ? { args: trigger.args ?? [] } : {}) }
 }
 
 /**
@@ -191,14 +198,22 @@ async function killChild(child: ChildProcess): Promise<void> {
       resolve()
     }
     child.once('exit', finish)
+    const signal = (value: NodeJS.Signals) => {
+      try {
+        if (process.platform !== 'win32' && child.pid) process.kill(-child.pid, value)
+        else child.kill(value)
+      } catch {
+        try { child.kill(value) } catch { /* already gone */ }
+      }
+    }
     try {
-      child.kill('SIGTERM')
+      signal('SIGTERM')
     } catch {
       /* already gone */
     }
     const killTimer = setTimeout(() => {
       try {
-        child.kill('SIGKILL')
+        signal('SIGKILL')
       } catch {
         /* already gone */
       }
@@ -326,6 +341,7 @@ async function runHttpVerification(
     cwd: launch.cwd,
     env: { ...process.env, ...launch.env, [portEnvVar]: String(port) },
     stdio: ['ignore', 'pipe', 'pipe'],
+    detached: process.platform !== 'win32',
   })
   let launchOutput = ''
   const captureLaunchOutput = (chunk: Buffer) => {
@@ -366,7 +382,7 @@ async function runHttpVerification(
 
 async function runCliVerification(
   launch: Launch,
-  trigger: CliTrigger,
+  trigger: CliTrigger | EvidenceProcessTrigger,
   expectedOperationId: string,
   correlationId: string,
   expectedObservedPath: ConnectionVerificationRecord['observedPath'],
@@ -381,11 +397,21 @@ async function runCliVerification(
   }
 
   const timeoutMs = trigger.timeoutMs ?? 10_000
-  const args = [...(launch.args ?? []), ...(trigger.args ?? [])]
+  const args = [
+    ...(launch.args ?? []),
+    ...(trigger.args ?? []),
+    ...(trigger.kind !== 'cli' && trigger.input !== undefined ? [JSON.stringify(trigger.input)] : []),
+  ]
   const child = spawn(launch.command, args, {
     cwd: launch.cwd,
-    env: { ...process.env, ...launch.env, EUIK_VERIFICATION_CORRELATION_ID: correlationId },
+    env: {
+      ...process.env,
+      ...launch.env,
+      EUIK_VERIFICATION_CORRELATION_ID: correlationId,
+      ...(trigger.kind === 'electron-ipc' ? { EUIK_VERIFICATION_AUTO_EXIT: '1' } : {}),
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
+    detached: process.platform !== 'win32',
   })
 
   let stdout = ''
@@ -421,10 +447,11 @@ async function runCliVerification(
     }
   }
   if (exitResult.timedOut) {
+    const output = redactSensitiveText(`${stdout}${stderr ? ` [stderr] ${stderr}` : ''}`).trim().slice(0, 2_000)
     return {
       ok: false,
       healthState: 'unreachable',
-      outcomeSummary: `cli process timed out after ${timeoutMs}ms`,
+      outcomeSummary: `cli process timed out after ${timeoutMs}ms${output ? ` (output: ${output})` : ''}`,
       reasonCodes: ['launch-timeout'],
     }
   }
@@ -445,7 +472,7 @@ async function runCliVerification(
     && JSON.stringify(evidence.observedPath) === JSON.stringify(expectedObservedPath),
   )
   const summaryText = `${stdout}${stderr ? ` [stderr] ${stderr.replace(/^EUIK_CONNECTION_EVIDENCE=.*$/gm, '').trim()}` : ''}`
-  const summary = redactSensitiveText(summaryText).trim().slice(0, 200)
+  const summary = redactSensitiveText(summaryText).trim().slice(0, 2_000)
   return {
     ok: exitPassed && pathObserved,
     healthState: exitPassed && pathObserved ? 'healthy' : 'degraded',
@@ -458,7 +485,11 @@ async function runCliVerification(
   }
 }
 
-async function runInProcessTrigger(launch: Launch, trigger: InProcessTrigger): Promise<StepOutcome> {
+async function runInProcessTrigger(
+  launch: Launch,
+  trigger: InProcessTrigger | EvidenceProcessTrigger,
+  expected?: { operationId: string; correlationId: string; observedPath: ConnectionVerificationRecord['observedPath'] },
+): Promise<StepOutcome> {
   if (!isInProcessLaunch(launch)) {
     return {
       ok: false,
@@ -487,11 +518,24 @@ async function runInProcessTrigger(launch: Launch, trigger: InProcessTrigger): P
         setTimeout(() => reject(new Error('in-process trigger timed out')), timeoutMs)
       }),
     ])
+    const evidence = result.body as { correlationId?: string; operation?: string; observedPath?: ConnectionVerificationRecord['observedPath'] } | undefined
+    const pathObserved = !expected || Boolean(
+      evidence
+      && evidence.correlationId === expected.correlationId
+      && evidence.operation === expected.operationId
+      && JSON.stringify(evidence.observedPath) === JSON.stringify(expected.observedPath),
+    )
     return {
-      ok: result.ok,
-      healthState: result.ok ? 'healthy' : 'degraded',
-      outcomeSummary: result.outcome ?? (result.ok ? 'in-process invocation succeeded' : 'in-process invocation reported failure'),
-      reasonCodes: result.ok ? [] : ['in-process-invocation-failed'],
+      ok: result.ok && pathObserved,
+      healthState: result.ok && pathObserved ? 'healthy' : 'degraded',
+      outcomeSummary: result.outcome ?? (result.ok
+        ? pathObserved ? 'in-process invocation succeeded with execution-path evidence' : 'in-process invocation did not emit execution-path evidence'
+        : 'in-process invocation reported failure'),
+      reasonCodes: [
+        ...(!result.ok ? ['in-process-invocation-failed'] : []),
+        ...(result.ok && !pathObserved ? ['execution-path-not-observed'] : []),
+      ],
+      observedPathPatch: pathObserved && evidence?.observedPath ? evidence.observedPath : undefined,
     }
   } catch (error) {
     return {
@@ -533,10 +577,14 @@ export async function runConnectionVerification(
   try {
     if (input.trigger.kind === 'http') {
       step = await runHttpVerification(input.launch, input.trigger, input.binding.operationId, correlationId, observedPathBase)
-    } else if (input.trigger.kind === 'cli') {
-      step = await runCliVerification(input.launch, input.trigger, input.binding.operationId, correlationId, observedPathBase)
-    } else {
+    } else if (input.trigger.kind === 'in-process') {
       step = await runInProcessTrigger(input.launch, input.trigger)
+    } else if (input.trigger.kind === 'ui' && isInProcessLaunch(input.launch)) {
+      step = await runInProcessTrigger(input.launch, input.trigger, {
+        operationId: input.binding.operationId, correlationId, observedPath: observedPathBase,
+      })
+    } else {
+      step = await runCliVerification(input.launch, input.trigger, input.binding.operationId, correlationId, observedPathBase)
     }
   } catch (error) {
     step = {

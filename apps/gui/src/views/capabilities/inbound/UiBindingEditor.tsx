@@ -91,6 +91,7 @@ type Props = {
   projectId: string
   project?: Project
   deployableId: string
+  transport?: UiInboundBinding['transport']
   operations: { operationId: string; operationVersion: string }[]
   selectionEvidence?: SelectionEvidence
   onSelectionEvidence: (e: SelectionEvidence | undefined) => void
@@ -222,7 +223,7 @@ export function UiBindingEditor(props: Props) {
     busyRef.current = true
     setBusy(true)
     try {
-      const inbound = createUiBinding(binding, deployableId)
+      const inbound = createUiBinding(binding, deployableId, props.transport)
       await bridge.capabilitiesSaveInboundBindingDraft(projectId, inbound)
       const result = await bridge.capabilitiesApproveInboundBinding(projectId, inbound)
       if (!result.ok) {

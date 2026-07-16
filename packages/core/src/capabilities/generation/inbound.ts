@@ -240,9 +240,10 @@ function planScheduleAdapter(
     `  cronExpression: ${JSON.stringify(binding.cronExpression)},`,
     `  timeZone: ${JSON.stringify(binding.timezone)},`,
     '  operation,',
-    `  input: () => (${renderInputMappingExpression(binding.inputMappings)}) as ${types.inputType},`,
+    `  input: () => (${renderInputMappingExpression(binding.inputMappings)}) as unknown as ${types.inputType},`,
     `  overlapPolicy: ${JSON.stringify(overlapPolicy)},`,
     `  misfirePolicy: ${JSON.stringify(misfirePolicy)},`,
+    ...(input.observedPath ? [`  observedPath: ${JSON.stringify(input.observedPath)},`] : []),
     '}',
   ].join('\n')
 
@@ -289,29 +290,44 @@ function planUiAdapter(input: InboundAdapterGenerationInput, binding: Extract<In
   const types = resolveOperationTypes(input.operationTypes, input.filePath)
   const functionName = `create${toPascalCase(binding.bindingId)}Client`
 
-  const importDecls: ImportDeclarationInput[] = [
-    { moduleSpecifier: `${runtimePackageName}/browser`, namedImports: ['OperationClientOptions'], typeOnly: true },
-    { moduleSpecifier: `${runtimePackageName}/browser`, namedImports: ['OperationClient'] },
-  ]
+  const electronIpc = binding.transport === 'electron-ipc'
+  const browserLocal = binding.transport === 'browser-local'
+  const operationImport = browserLocal ? resolveOperationImport(input).importDecl : undefined
+  const importDecls: ImportDeclarationInput[] = electronIpc
+    ? [
+        { moduleSpecifier: `${runtimePackageName}/browser`, namedImports: ['OperationClient'] },
+        { moduleSpecifier: `${runtimePackageName}/browser`, namedImports: ['OperationCallOptions'], typeOnly: true },
+        { moduleSpecifier: `${runtimePackageName}/electron/renderer-transport`, namedImports: ['CapabilitiesIpcBridge'], typeOnly: true },
+        { moduleSpecifier: `${runtimePackageName}/electron/renderer-transport`, namedImports: ['ElectronRendererTransport'] },
+      ]
+    : browserLocal
+      ? [
+          { moduleSpecifier: `${runtimePackageName}/browser`, namedImports: ['BrowserLocalTransport', 'OperationClient', 'createCorrelationId'] },
+          { moduleSpecifier: `${runtimePackageName}/browser`, namedImports: ['OperationCallOptions'], typeOnly: true },
+          operationImport!,
+        ]
+      : [
+        { moduleSpecifier: `${runtimePackageName}/browser`, namedImports: ['OperationClientOptions'], typeOnly: true },
+        { moduleSpecifier: `${runtimePackageName}/browser`, namedImports: ['OperationClient'] },
+      ]
   if (types.typeImportSpecifier) {
     importDecls.push({ moduleSpecifier: types.typeImportSpecifier, namedImports: types.typeImports, typeOnly: true })
   }
   const importBlock = renderImportBlock(importDecls)
 
   const diagnostics: string[] = []
-  if (binding.transport === 'electron-ipc') {
-    diagnostics.push(
-      `binding "${binding.bindingId}": transport "electron-ipc" emits a transport-agnostic client only; typed preload/main IPC generation is deferred (CAP-ERA-001 WP3B executable slices / WP7)`,
-    )
-  }
 
   const body = [
     `/** transport: ${binding.transport}; trigger: ${binding.trigger}; exposure: ${binding.exposure} */`,
-    `export function ${functionName}(options: OperationClientOptions) {`,
-    '  const client = new OperationClient(options)',
+    `export function ${functionName}(${electronIpc ? 'bridge: CapabilitiesIpcBridge' : browserLocal ? '' : 'options: OperationClientOptions'}) {`,
+    electronIpc
+      ? '  const client = new OperationClient({ transport: new ElectronRendererTransport({ bridge }) })'
+      : browserLocal
+        ? `  const client = new OperationClient({ correlationIdFactory: () => (globalThis as unknown as { __EUIK_VERIFICATION_CORRELATION_ID?: string }).__EUIK_VERIFICATION_CORRELATION_ID ?? createCorrelationId(), transport: new BrowserLocalTransport({ operations: [{ operationCode: ${JSON.stringify(binding.operationId)}, operation: operation as never }]${input.observedPath ? `, observedPath: ${JSON.stringify(input.observedPath)}` : ''} }) })`
+      : '  const client = new OperationClient(options)',
     '  return {',
-    `    call: (input: ${types.inputType}) =>`,
-    `      client.call<${types.successType}, ${types.domainRejectionType}, ${types.technicalFailureType}>(${JSON.stringify(binding.operationId)}, input),`,
+    `    call: (input: ${types.inputType}${electronIpc || browserLocal ? ', callOptions?: OperationCallOptions' : ''}) =>`,
+    `      client.call<${types.successType}, ${types.domainRejectionType}, ${types.technicalFailureType}>(${JSON.stringify(electronIpc ? `electron-ipc:${binding.bindingId}` : binding.operationId)}, input${electronIpc || browserLocal ? ', callOptions' : ''}),`,
     '  }',
     '}',
   ].join('\n')

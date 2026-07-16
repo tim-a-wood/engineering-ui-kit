@@ -12,6 +12,8 @@ import type { Outcome } from '../outcome.js'
 import type { Transport, TransportRequest } from '../browser/transport.js'
 import type { CapabilitiesIpcBridge } from './channel.js'
 
+export type { CapabilitiesIpcBridge } from './channel.js'
+
 export interface ElectronRendererTransportOptions {
   readonly bridge: CapabilitiesIpcBridge
 }

@@ -96,6 +96,7 @@ class CronJob:
         overlap_policy: OverlapPolicy = OverlapPolicy.SKIP,
         misfire_policy: MisfirePolicy = MisfirePolicy.RUN_ONCE,
         container: Optional[Container] = None,
+        observed_path: Optional[Mapping[str, Any]] = None,
     ) -> None:
         self.name = name
         self.schedule = schedule
@@ -106,6 +107,7 @@ class CronJob:
         self.overlap_policy = overlap_policy
         self.misfire_policy = misfire_policy
         self.container = container
+        self.observed_path = observed_path
         self._next_run_at: Optional[datetime] = None
         self._running = False
         #: Occurrences deferred by `overlap_policy=QUEUE` while a previous
@@ -119,6 +121,10 @@ class CronJob:
         """
 
         self._next_run_at = self.schedule.next_run_after(clock.now())
+
+    def run_now(self, scheduled_for: datetime) -> AnyOutcome:
+        """Executes this approved job definition once through its normal operation boundary."""
+        return self._execute(scheduled_for)
 
     @property
     def next_run_at(self) -> Optional[datetime]:

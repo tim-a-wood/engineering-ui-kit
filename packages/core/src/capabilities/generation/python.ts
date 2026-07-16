@@ -667,6 +667,7 @@ function planScheduleAdapter(
     `        overlap_policy=OverlapPolicy.${overlapPolicy},`,
     `        misfire_policy=MisfirePolicy.${misfirePolicy},`,
     '        container=container,',
+    ...(input.observedPath ? [`        observed_path=${JSON.stringify(input.observedPath)},`] : []),
     '    )',
   ].join('\n')
 
@@ -696,7 +697,7 @@ function planEmbeddedLibraryAdapter(
 
   const body = [
     `def ${functionName}(input: ${types.inputType}, context: Context) -> AnyOutcome:`,
-    `    """exposure: ${binding.exposure}; reason: ${JSON.stringify(binding.reason)}"""`,
+    `    # exposure: ${binding.exposure}; reason: ${JSON.stringify(binding.reason)}`,
     `    return dispatch(operation, input, context, input_schema=${inputSchemaExpr})`,
   ].join('\n')
 

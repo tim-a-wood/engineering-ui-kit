@@ -67,6 +67,8 @@ import {
   renderImportBlock,
   renderPythonImportBlock,
   renderVirtualFileBody,
+  sanitizeIdentifier,
+  sanitizePythonIdentifier,
   sortByKey,
   toCamelCase,
   toPascalCase,
@@ -337,6 +339,111 @@ function planTypescriptFiles(input: {
     files.push(adapterResult.file)
   }
 
+  const electronBindings = input.bindings.filter((binding): binding is Extract<InboundBinding, { kind: 'ui' }> =>
+    binding.kind === 'ui' && binding.transport === 'electron-ipc')
+  if (electronBindings.length) {
+    const mainPath = `${basePath}/electron/main-host.g.ts`
+    const preloadPath = `${basePath}/electron/preload.g.mts`
+    const header = generatedFileHeader({
+      generatorVersion: input.generatorVersion,
+      referenceProfileVersion: input.referenceProfileVersion,
+      sourceContractHashes: electronBindings.map((binding) => `${binding.bindingId}@${binding.version}`),
+    })
+    const operationNames = [...new Set(electronBindings.map((binding) => toCamelCase(binding.operationId)))].sort()
+    const mainImports = renderImportBlock([
+      { moduleSpecifier: input.runtimePackageName, namedImports: ['MapConfigurationReader', 'ResolvedSecret'] },
+      { moduleSpecifier: input.runtimePackageName, namedImports: ['SecretReference', 'SecretResolver'], typeOnly: true },
+      { moduleSpecifier: `${input.runtimePackageName}/electron/main`, namedImports: ['registerCapabilitiesIpcHost'] },
+      { moduleSpecifier: relativeModuleSpecifier(mainPath, resolvedOperationsFilePath), namedImports: operationNames },
+    ])
+    const mainBody = [
+      'const configuration = new MapConfigurationReader(Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string")))',
+      'const secretResolver: SecretResolver = { resolve(reference: SecretReference) {',
+      '  const value = process.env[reference.ref]',
+      '  if (value === undefined) throw new Error(`Missing secret environment reference: ${reference.ref}`)',
+      '  return new ResolvedSecret(reference, value)',
+      '} }',
+      'export const capabilitiesIpcHost = registerCapabilitiesIpcHost({',
+      '  configuration, secretResolver, operations: [',
+      ...electronBindings.map((binding) => `    { operationCode: ${JSON.stringify(`electron-ipc:${binding.bindingId}`)}, operation: ${toCamelCase(binding.operationId)} as never, observedPath: ${JSON.stringify({
+        inboundAdapter: `${binding.kind}:${binding.bindingId}`,
+        compositionRoot: input.deployable.compositionRootPath,
+        operation: `${binding.operationId}@${binding.operationVersion}`,
+        outboundAdapters: [...(input.composition?.outboundAdapterRefs ?? [])].sort(),
+      })} },`),
+      '  ],',
+      '  onInvocationComplete({ request, outcome, observedPath }) {',
+      '    const expected = process.env.EUIK_VERIFICATION_CORRELATION_ID',
+      '    if (expected && request.correlationId === expected && outcome.kind === "success" && observedPath) {',
+      '      process.stderr.write("EUIK_CONNECTION_EVIDENCE=" + JSON.stringify({ correlationId: request.correlationId, operation: observedPath.operation.split("@")[0], observedPath }) + "\\n")',
+      '      if (process.env.EUIK_VERIFICATION_AUTO_EXIT === "1") setTimeout(() => process.exit(0), 25)',
+      '    }',
+      '  },',
+      '})',
+    ]
+    files.push({ path: mainPath, contents: renderVirtualFileBody([header, mainImports, mainBody.join('\n')]) })
+    const preloadImports = renderImportBlock([
+      { moduleSpecifier: `${input.runtimePackageName}/electron/preload`, namedImports: ['exposeCapabilitiesIpcBridge'] },
+    ])
+    files.push({
+      path: preloadPath,
+      contents: renderVirtualFileBody([header, preloadImports, 'exposeCapabilitiesIpcBridge()']),
+    })
+
+    for (const binding of electronBindings) {
+      const verificationMainPath = `${basePath}/electron/${binding.bindingId}.verification-main.g.ts`
+      const verificationRendererPath = `${basePath}/electron/${binding.bindingId}.verification-renderer.g.ts`
+      const verificationHtmlPath = `${basePath}/electron/${binding.bindingId}.verification.g.html`
+      const mainImports = renderImportBlock([
+        { moduleSpecifier: 'electron', namedImports: ['app', 'BrowserWindow'] },
+        { moduleSpecifier: 'node:path', namedImports: ['default as path'] },
+        { moduleSpecifier: 'node:url', namedImports: ['fileURLToPath'] },
+      ])
+      const mainBody = [
+        `import ${JSON.stringify(relativeModuleSpecifier(verificationMainPath, mainPath))}`,
+        'process.stderr.write("[euik-verification] Electron main started\\n")',
+        'const correlationId = process.env.EUIK_VERIFICATION_CORRELATION_ID',
+        'if (!correlationId) throw new Error("Electron verification requires EUIK_VERIFICATION_CORRELATION_ID")',
+        'void app.whenReady().then(async () => {',
+        'process.stderr.write("[euik-verification] Electron ready\\n")',
+        'const here = path.dirname(fileURLToPath(import.meta.url))',
+        'const window = new BrowserWindow({ show: false, webPreferences: {',
+        `  preload: path.join(here, ${JSON.stringify('preload.g.mjs')}),`,
+        '  contextIsolation: true, nodeIntegration: false, sandbox: false,',
+        '} })',
+        'window.webContents.on("console-message", (_event, _level, message) => process.stderr.write(`[renderer] ${message}\\n`))',
+        'window.webContents.on("preload-error", (_event, _preloadPath, error) => process.stderr.write(`[preload] ${error.stack ?? error.message}\\n`))',
+        'window.webContents.on("did-fail-load", (_event, code, description) => process.stderr.write(`[load] ${code}: ${description}\\n`))',
+        `await window.loadFile(path.resolve(process.cwd(), ${JSON.stringify(verificationHtmlPath)}), { query: { correlationId } })`,
+        'process.stderr.write("[euik-verification] Renderer loaded\\n")',
+        '})',
+      ]
+      files.push({ path: verificationMainPath, contents: renderVirtualFileBody([header, mainImports, mainBody.join('\n')]) })
+
+      const clientFactory = `create${toPascalCase(binding.bindingId)}Client`
+      const rendererImports = renderImportBlock([
+        { moduleSpecifier: relativeModuleSpecifier(verificationRendererPath, `${basePath}/inbound/${binding.bindingId}.g.ts`), namedImports: [clientFactory] },
+        { moduleSpecifier: `${input.runtimePackageName}/electron/renderer-transport`, namedImports: ['CapabilitiesIpcBridge'], typeOnly: true },
+      ])
+      const rendererBody = [
+        'const correlationId = new URLSearchParams(globalThis.location.search).get("correlationId")',
+        'if (!correlationId) throw new Error("verification correlation id is missing")',
+        'const bridge = (globalThis as unknown as { capabilitiesIpc: CapabilitiesIpcBridge }).capabilitiesIpc',
+        'if (!bridge) throw new Error("typed capabilities IPC preload bridge is missing")',
+        `const outcome = await ${clientFactory}(bridge).call({} as never, { correlationId })`,
+        'document.body.dataset.verificationOutcome = outcome.kind',
+      ]
+      files.push({ path: verificationRendererPath, contents: renderVirtualFileBody([header, rendererImports, rendererBody.join('\n')]) })
+      files.push({
+        path: verificationHtmlPath,
+        contents: `<!doctype html>\n<html><head><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'">\n<script type="importmap">${JSON.stringify({ imports: {
+          [`${input.runtimePackageName}/browser`]: `../../../../node_modules/${input.runtimePackageName}/dist/browser.js`,
+          [`${input.runtimePackageName}/electron/renderer-transport`]: `../../../../node_modules/${input.runtimePackageName}/dist/electron/renderer-transport.js`,
+        } })}</script></head><body><main>Running capability verification…</main><script type="module" src="../../../../.engineering-ui/capabilities/build/${verificationRendererPath.replace(/\.ts$/, '.js')}"></script></body></html>\n`,
+      })
+    }
+  }
+
   const httpBindings = input.bindings.filter((binding): binding is Extract<InboundBinding, { kind: 'http' }> => binding.kind === 'http')
   if (httpBindings.length) {
     const hostPath = `${basePath}/host.g.ts`
@@ -412,6 +519,82 @@ function planTypescriptFiles(input: {
       '  verificationCorrelationId: process.env.EUIK_VERIFICATION_CORRELATION_ID,',
       '})',
       'process.exitCode = exitCode',
+    ]
+    files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
+  }
+
+  const embeddedBindings = input.bindings.filter((binding): binding is Extract<InboundBinding, { kind: 'embedded-library' }> => binding.kind === 'embedded-library')
+  for (const binding of embeddedBindings) {
+    const hostPath = `${basePath}/embedded/${binding.bindingId}.host.g.ts`
+    const callable = sanitizeIdentifier(binding.exportedCallable)
+    const observedPath = {
+      inboundAdapter: `${binding.kind}:${binding.bindingId}`,
+      compositionRoot: input.deployable.compositionRootPath,
+      operation: `${binding.operationId}@${binding.operationVersion}`,
+      outboundAdapters: [...(input.composition?.outboundAdapterRefs ?? [])].sort(),
+    }
+    const header = generatedFileHeader({
+      generatorVersion: input.generatorVersion,
+      referenceProfileVersion: input.referenceProfileVersion,
+      sourceContractHashes: [`${binding.bindingId}@${binding.version}`],
+    })
+    const imports = renderImportBlock([
+      { moduleSpecifier: input.runtimePackageName, namedImports: ['MapConfigurationReader', 'ResolvedSecret'] },
+      { moduleSpecifier: input.runtimePackageName, namedImports: ['SecretReference', 'SecretResolver'], typeOnly: true },
+      { moduleSpecifier: `${input.runtimePackageName}/node`, namedImports: ['createNodeContext'] },
+      { moduleSpecifier: relativeModuleSpecifier(hostPath, `${basePath}/inbound/${binding.bindingId}.g.ts`), namedImports: [callable] },
+    ])
+    const body = [
+      'const correlationId = process.env.EUIK_VERIFICATION_CORRELATION_ID ?? `embedded-${Date.now()}`',
+      'const configuration = new MapConfigurationReader(Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string")))',
+      'const secretResolver: SecretResolver = { resolve(reference: SecretReference) {',
+      '  const value = process.env[reference.ref]',
+      '  if (value === undefined) throw new Error(`Missing secret environment reference: ${reference.ref}`)',
+      '  return new ResolvedSecret(reference, value)',
+      '} }',
+      'const input = process.argv[2] ? JSON.parse(process.argv[2]) : undefined',
+      `const outcome = await ${callable}(input, createNodeContext({ correlationId, configuration, secretResolver }))`,
+      'if (outcome.kind === "success" && process.env.EUIK_VERIFICATION_CORRELATION_ID) {',
+      `  process.stderr.write('EUIK_CONNECTION_EVIDENCE=' + JSON.stringify({ correlationId, operation: ${JSON.stringify(binding.operationId)}, observedPath: ${JSON.stringify(observedPath)} }) + '\\n')`,
+      '}',
+      'process.exitCode = outcome.kind === "success" ? 0 : 1',
+    ]
+    files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
+  }
+
+  const scheduleBindings = input.bindings.filter((binding): binding is Extract<InboundBinding, { kind: 'schedule' }> => binding.kind === 'schedule')
+  for (const binding of scheduleBindings) {
+    const hostPath = `${basePath}/worker/${binding.bindingId}.host.g.ts`
+    const jobName = `${toCamelCase(binding.bindingId)}Job`
+    const observedPath = {
+      inboundAdapter: `${binding.kind}:${binding.bindingId}`,
+      compositionRoot: input.deployable.compositionRootPath,
+      operation: `${binding.operationId}@${binding.operationVersion}`,
+      outboundAdapters: [...(input.composition?.outboundAdapterRefs ?? [])].sort(),
+    }
+    const header = generatedFileHeader({
+      generatorVersion: input.generatorVersion, referenceProfileVersion: input.referenceProfileVersion,
+      sourceContractHashes: [`${binding.bindingId}@${binding.version}`],
+    })
+    const imports = renderImportBlock([
+      { moduleSpecifier: input.runtimePackageName, namedImports: ['MapConfigurationReader', 'ResolvedSecret'] },
+      { moduleSpecifier: input.runtimePackageName, namedImports: ['SecretReference', 'SecretResolver'], typeOnly: true },
+      { moduleSpecifier: `${input.runtimePackageName}/node`, namedImports: ['runScheduledJobOnce'] },
+      { moduleSpecifier: relativeModuleSpecifier(hostPath, `${basePath}/inbound/${binding.bindingId}.g.ts`), namedImports: [jobName] },
+    ])
+    const body = [
+      'const correlationId = process.env.EUIK_VERIFICATION_CORRELATION_ID ?? `schedule-${Date.now()}`',
+      'const configuration = new MapConfigurationReader(Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string")))',
+      'const secretResolver: SecretResolver = { resolve(reference: SecretReference) {',
+      '  const value = process.env[reference.ref]',
+      '  if (value === undefined) throw new Error(`Missing secret environment reference: ${reference.ref}`)',
+      '  return new ResolvedSecret(reference, value)',
+      '} }',
+      `const outcome = await runScheduledJobOnce(${jobName} as never, { correlationId, configuration, secretResolver })`,
+      'if (outcome.kind === "success" && process.env.EUIK_VERIFICATION_CORRELATION_ID) {',
+      `  process.stderr.write('EUIK_CONNECTION_EVIDENCE=' + JSON.stringify({ correlationId, operation: ${JSON.stringify(binding.operationId)}, observedPath: ${JSON.stringify(observedPath)} }) + '\\n')`,
+      '}',
+      'process.exitCode = outcome.kind === "success" ? 0 : 1',
     ]
     files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
   }
@@ -704,6 +887,72 @@ function planPythonFiles(input: {
       '        sys.argv[1:],',
       '        verification_correlation_id=os.environ.get("EUIK_VERIFICATION_CORRELATION_ID"),',
       '    ))',
+    ]
+    files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
+  }
+
+  const embeddedBindings = input.bindings.filter((binding): binding is Extract<InboundBinding, { kind: 'embedded-library' }> => binding.kind === 'embedded-library')
+  for (const binding of embeddedBindings) {
+    const hostPath = `${basePath}/embedded/${toSnakeCase(binding.bindingId)}_host_g.py`
+    const callable = sanitizePythonIdentifier(toSnakeCase(binding.exportedCallable))
+    const observedPath = {
+      inboundAdapter: `${binding.kind}:${binding.bindingId}`,
+      compositionRoot: input.deployable.compositionRootPath,
+      operation: `${binding.operationId}@${binding.operationVersion}`,
+      outboundAdapters: [...(input.composition?.outboundAdapterRefs ?? [])].sort(),
+    }
+    const header = generatedPythonFileHeader({
+      generatorVersion: input.generatorVersion,
+      referenceProfileVersion: input.referenceProfileVersion,
+      sourceContractHashes: [`${binding.bindingId}@${binding.version}`],
+    })
+    const imports = renderPythonImportBlock([
+      { moduleSpecifier: 'json', names: [] },
+      { moduleSpecifier: 'os', names: [] },
+      { moduleSpecifier: 'sys', names: [] },
+      { moduleSpecifier: `${input.runtimePackageName}.core`, names: ['Context'] },
+      { moduleSpecifier: pythonModuleSpecifierFromPath(`${basePath}/inbound/${toSnakeCase(binding.bindingId)}_g.py`), names: [callable] },
+    ])
+    const body = [
+      'correlation_id = os.environ.get("EUIK_VERIFICATION_CORRELATION_ID", "embedded-local")',
+      'input_value = json.loads(sys.argv[1]) if len(sys.argv) > 1 else None',
+      `outcome = ${callable}(input_value, Context(correlation_id=correlation_id))`,
+      'if outcome.kind == "success" and os.environ.get("EUIK_VERIFICATION_CORRELATION_ID"):',
+      `    evidence = {"correlationId": correlation_id, "operation": ${JSON.stringify(binding.operationId)}, "observedPath": ${JSON.stringify(observedPath)}}`,
+      '    sys.stderr.write("EUIK_CONNECTION_EVIDENCE=" + json.dumps(evidence, separators=(",", ":")) + "\\n")',
+      'raise SystemExit(0 if outcome.kind == "success" else 1)',
+    ]
+    files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
+  }
+
+  const scheduleBindings = input.bindings.filter((binding): binding is Extract<InboundBinding, { kind: 'schedule' }> => binding.kind === 'schedule')
+  for (const binding of scheduleBindings) {
+    const hostPath = `${basePath}/worker/${toSnakeCase(binding.bindingId)}_host_g.py`
+    const jobBuilder = `build_${toSnakeCase(binding.bindingId)}_job`
+    const observedPath = {
+      inboundAdapter: `${binding.kind}:${binding.bindingId}`,
+      compositionRoot: input.deployable.compositionRootPath,
+      operation: `${binding.operationId}@${binding.operationVersion}`,
+      outboundAdapters: [...(input.composition?.outboundAdapterRefs ?? [])].sort(),
+    }
+    const header = generatedPythonFileHeader({
+      generatorVersion: input.generatorVersion, referenceProfileVersion: input.referenceProfileVersion,
+      sourceContractHashes: [`${binding.bindingId}@${binding.version}`],
+    })
+    const imports = renderPythonImportBlock([
+      { moduleSpecifier: 'datetime', names: ['datetime', 'timezone'] },
+      { moduleSpecifier: 'json', names: [] },
+      { moduleSpecifier: 'os', names: [] },
+      { moduleSpecifier: 'sys', names: [] },
+      { moduleSpecifier: pythonModuleSpecifierFromPath(`${basePath}/inbound/${toSnakeCase(binding.bindingId)}_g.py`), names: [jobBuilder] },
+    ])
+    const body = [
+      'correlation_id = os.environ.get("EUIK_VERIFICATION_CORRELATION_ID", "schedule-local")',
+      `outcome = ${jobBuilder}().run_now(datetime.now(timezone.utc))`,
+      'if outcome.kind == "success" and os.environ.get("EUIK_VERIFICATION_CORRELATION_ID"):',
+      `    evidence = {"correlationId": correlation_id, "operation": ${JSON.stringify(binding.operationId)}, "observedPath": ${JSON.stringify(observedPath)}}`,
+      '    sys.stderr.write("EUIK_CONNECTION_EVIDENCE=" + json.dumps(evidence, separators=(",", ":")) + "\\n")',
+      'raise SystemExit(0 if outcome.kind == "success" else 1)',
     ]
     files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
   }

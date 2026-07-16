@@ -24,6 +24,12 @@ import { validateIpcCancelRequest, validateIpcOperationRequest } from './channel
 export interface ElectronIpcOperation {
   readonly operationCode: string
   readonly operation: Operation<unknown, unknown, unknown, unknown>
+  readonly observedPath?: {
+    readonly inboundAdapter: string
+    readonly compositionRoot: string
+    readonly operation: string
+    readonly outboundAdapters: ReadonlyArray<string>
+  }
 }
 
 export interface CapabilitiesIpcMainHandlerOptions {
@@ -32,6 +38,11 @@ export interface CapabilitiesIpcMainHandlerOptions {
   readonly secretResolver: SecretResolver
   readonly logger?: Logger
   readonly tracer?: Tracer
+  readonly onInvocationComplete?: (evidence: {
+    request: { operationCode: string; correlationId: string }
+    outcome: Outcome<unknown, unknown, unknown>
+    observedPath?: ElectronIpcOperation['observedPath']
+  }) => Promise<void> | void
 }
 
 export const IPC_BAD_REQUEST_CODE = 'invalid-ipc-request'
@@ -58,7 +69,7 @@ export function createCapabilitiesIpcMainHandler(
 ): CapabilitiesIpcMainHandler {
   const logger = options.logger ?? NOOP_LOGGER
   const tracer = options.tracer ?? NOOP_TRACER
-  const operationsByCode = new Map(options.operations.map((entry) => [entry.operationCode, entry.operation]))
+  const operationsByCode = new Map(options.operations.map((entry) => [entry.operationCode, entry]))
   const inFlight = new Map<string, CancellationController>()
 
   return {
@@ -72,8 +83,8 @@ export function createCapabilitiesIpcMainHandler(
         return Outcome.failed(IPC_BAD_REQUEST_CODE, 'The IPC request did not match the expected shape.', false)
       }
       const request = validation.value
-      const operation = operationsByCode.get(request.operationCode)
-      if (!operation) {
+      const registered = operationsByCode.get(request.operationCode)
+      if (!registered) {
         return Outcome.failed(
           IPC_UNKNOWN_OPERATION_CODE,
           `No operation is registered for "${request.operationCode}".`,
@@ -93,7 +104,13 @@ export function createCapabilitiesIpcMainHandler(
           logger,
           tracer,
         })
-        return await dispatch(operation, request.input, context)
+        const outcome = await dispatch(registered.operation, request.input, context)
+        await options.onInvocationComplete?.({
+          request: { operationCode: request.operationCode, correlationId: request.correlationId },
+          outcome,
+          observedPath: registered.observedPath,
+        })
+        return outcome
       } catch (error) {
         logger.error('unhandled exception in Electron IPC host', {
           correlationId: request.correlationId,

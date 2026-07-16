@@ -45,8 +45,9 @@ export type {
   ScheduledJobDefinition,
   ScheduledWorkerOptions,
   TimerHandle,
+  RunScheduledJobOnceOptions,
 } from './node/schedule.js'
-export { ScheduledWorker } from './node/schedule.js'
+export { ScheduledWorker, runScheduledJobOnce } from './node/schedule.js'
 
 export type { TelemetrySink, ProcessLifecycleOptions, ProcessStartResult } from './node/lifecycle.js'
 export { ProcessLifecycle } from './node/lifecycle.js'

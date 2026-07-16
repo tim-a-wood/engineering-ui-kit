@@ -31,6 +31,10 @@
       "types": "./dist/electron/renderer.d.ts",
       "default": "./dist/electron/renderer.js"
     },
+    "./electron/renderer-transport": {
+      "types": "./dist/electron/renderer-transport.d.ts",
+      "default": "./dist/electron/renderer-transport.js"
+    },
     "./electron/preload": {
       "types": "./dist/electron/preload.d.ts",
       "default": "./dist/electron/preload.js"

@@ -131,8 +131,12 @@ export function createEmbeddedLibraryBinding(input: NewBindingBase): EmbeddedLib
 }
 
 /** Migrates a working `FrontendBinding` draft into a `ui` InboundBinding (lossless; CAP-CONTRACT-013 -> 028). */
-export function createUiBinding(binding: FrontendBinding, deployableId: string): UiInboundBinding {
-  return frontendBindingToInboundBinding(binding, { deployableId })
+export function createUiBinding(
+  binding: FrontendBinding,
+  deployableId: string,
+  transport: UiInboundBinding['transport'] = 'browser-local',
+): UiInboundBinding {
+  return { ...frontendBindingToInboundBinding(binding, { deployableId }), transport }
 }
 
 /**

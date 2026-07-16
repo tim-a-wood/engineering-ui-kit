@@ -61,6 +61,40 @@ export interface ScheduledJobDefinition<Input> {
   readonly input: () => Input | Promise<Input>
   readonly overlapPolicy?: OverlapPolicy
   readonly misfirePolicy?: MisfirePolicy
+  readonly observedPath?: {
+    readonly inboundAdapter: string
+    readonly compositionRoot: string
+    readonly operation: string
+    readonly outboundAdapters: ReadonlyArray<string>
+  }
+}
+
+export type RunScheduledJobOnceOptions = {
+  readonly configuration: ConfigurationReader
+  readonly secretResolver: SecretResolver
+  readonly correlationId?: string
+  readonly clock?: Clock
+  readonly logger?: Logger
+  readonly tracer?: Tracer
+  readonly cancellation?: CancellationController
+}
+
+/** Executes one approved scheduled-job definition immediately through the same dispatch/context boundary. */
+export async function runScheduledJobOnce(
+  definition: ScheduledJobDefinition<never>,
+  options: RunScheduledJobOnceOptions,
+): Promise<Outcome<unknown, unknown, unknown>> {
+  const correlationId = options.correlationId ?? createCorrelationId()
+  const cancellation = options.cancellation ?? new CancellationController()
+  return runWithCorrelationId(correlationId, async () => {
+    const input = await definition.input()
+    const context = createNodeContext({
+      correlationId, configuration: options.configuration, secretResolver: options.secretResolver,
+      cancellation, clock: options.clock ?? SYSTEM_CLOCK, logger: options.logger ?? NOOP_LOGGER,
+      tracer: options.tracer ?? NOOP_TRACER,
+    })
+    return dispatch(definition.operation, input, context)
+  })
 }
 
 export interface TimerHandle {
@@ -278,20 +312,11 @@ export class ScheduledWorker {
     const correlationId = createCorrelationId()
     const span = this.tracer.startSpan(`schedule ${job.definition.name}`, { correlationId, scheduledForMs: dueAtMs })
     try {
-      await runWithCorrelationId(correlationId, async () => {
-        const input = await job.definition.input()
-        const context = createNodeContext({
-          correlationId,
-          configuration: this.options.configuration,
-          secretResolver: this.options.secretResolver,
-          cancellation,
-          clock: this.clock,
-          logger: this.logger,
-          tracer: this.tracer,
-        })
-        const outcome = await dispatch(job.definition.operation, input, context)
-        this.options.onRunComplete?.(job.definition.name, outcome)
+      const outcome = await runScheduledJobOnce(job.definition, {
+        correlationId, configuration: this.options.configuration, secretResolver: this.options.secretResolver,
+        clock: this.clock, logger: this.logger, tracer: this.tracer, cancellation,
       })
+      this.options.onRunComplete?.(job.definition.name, outcome)
     } catch (error) {
       this.logger.error('scheduled job threw outside dispatch', {
         job: job.definition.name,

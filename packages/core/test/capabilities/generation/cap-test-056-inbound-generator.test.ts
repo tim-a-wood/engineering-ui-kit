@@ -168,19 +168,22 @@ describe('CAP-TEST-056 inbound.ts adapter planning', () => {
     expect(contents).toContain('return dispatch(operation, input, context)')
   })
 
-  it('ui: emits a transport-agnostic OperationClient wrapper referencing the frozen operationId', () => {
+  it('ui: emits a browser-local transport wired to the resolved operation', () => {
     const result = planInboundAdapter(baseInput(UI_BINDING))
     const contents = result.file.contents
-    expect(contents).toContain("import { OperationClient } from '@engineering-ui-kit/capabilities-runtime/browser'")
-    expect(contents).toContain('export function createBindingOrdersCreateUiClient(options: OperationClientOptions) {')
-    expect(contents).toContain('call<CreateOrderSuccess, CreateOrderDomainRejectionCode, CreateOrderTechnicalErrorCode>("orders.create", input)')
+    expect(contents).toContain("import { BrowserLocalTransport, OperationClient, createCorrelationId } from '@engineering-ui-kit/capabilities-runtime/browser'")
+    expect(contents).toContain('BrowserLocalTransport')
+    expect(contents).toContain('export function createBindingOrdersCreateUiClient() {')
+    expect(contents).toContain('call<CreateOrderSuccess, CreateOrderDomainRejectionCode, CreateOrderTechnicalErrorCode>("orders.create", input, callOptions)')
   })
 
-  it('ui: an electron-ipc transport flags a depth-deferred diagnostic but still emits a structurally valid file', () => {
+  it('ui: an electron-ipc transport emits a typed renderer bridge client without a deferred diagnostic', () => {
     const binding: UiInboundBinding = { ...UI_BINDING, transport: 'electron-ipc' }
     const result = planInboundAdapter(baseInput(binding))
-    expect(result.diagnostics.some((message) => message.includes('electron-ipc'))).toBe(true)
+    expect(result.diagnostics).toEqual([])
     expect(result.file.contents).toContain('transport: electron-ipc')
+    expect(result.file.contents).toContain('ElectronRendererTransport')
+    expect(result.file.contents).toContain('bridge: CapabilitiesIpcBridge')
   })
 
   it('falls back to "unknown"/"never" operation types when operationTypes is not supplied', () => {
