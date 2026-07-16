@@ -153,23 +153,70 @@ jobs:
           npm run build --workspace=@engineering-ui-kit/desktop
           npm run package:dir --workspace=@engineering-ui-kit/desktop
 
-      - name: Packaged desktop journeys A-E (Linux under Xvfb)
-        if: ${{ !cancelled() && runner.os == 'Linux' }}
+      - name: Packaged journey A — TypeScript UI
+        if: ${{ !cancelled() }}
+        timeout-minutes: 8
         env:
           EUIK_PACKAGED_SKIP_BUILD: '1'
-          EUIK_PACKAGED_JOURNEYS: typescript-ui,python-headless,mixed,existing,recovery
+          EUIK_PACKAGED_JOURNEYS: typescript-ui
           EUIK_PACKAGED_TIMEOUT_MS: '120000'
-          EUIK_PACKAGED_JOURNEY_TIMEOUT_MS: '1800000'
-        run: xvfb-run -a npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          EUIK_PACKAGED_JOURNEY_TIMEOUT_MS: '420000'
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then xvfb-run -a npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          else npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          fi
 
-      - name: Packaged desktop journeys A-E (macOS/Windows)
-        if: ${{ !cancelled() && runner.os != 'Linux' }}
+      - name: Packaged journey B — Headless Python
+        if: ${{ !cancelled() }}
+        timeout-minutes: 8
         env:
           EUIK_PACKAGED_SKIP_BUILD: '1'
-          EUIK_PACKAGED_JOURNEYS: typescript-ui,python-headless,mixed,existing,recovery
+          EUIK_PACKAGED_JOURNEYS: python-headless
           EUIK_PACKAGED_TIMEOUT_MS: '120000'
-          EUIK_PACKAGED_JOURNEY_TIMEOUT_MS: '1800000'
-        run: npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          EUIK_PACKAGED_JOURNEY_TIMEOUT_MS: '420000'
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then xvfb-run -a npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          else npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          fi
+
+      - name: Packaged journey C — Mixed React/Python
+        if: ${{ !cancelled() }}
+        timeout-minutes: 8
+        env:
+          EUIK_PACKAGED_SKIP_BUILD: '1'
+          EUIK_PACKAGED_JOURNEYS: mixed
+          EUIK_PACKAGED_TIMEOUT_MS: '120000'
+          EUIK_PACKAGED_JOURNEY_TIMEOUT_MS: '420000'
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then xvfb-run -a npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          else npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          fi
+
+      - name: Packaged journey D — Existing repository
+        if: ${{ !cancelled() }}
+        timeout-minutes: 8
+        env:
+          EUIK_PACKAGED_SKIP_BUILD: '1'
+          EUIK_PACKAGED_JOURNEYS: existing
+          EUIK_PACKAGED_TIMEOUT_MS: '120000'
+          EUIK_PACKAGED_JOURNEY_TIMEOUT_MS: '420000'
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then xvfb-run -a npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          else npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          fi
+
+      - name: Packaged journey E — Failure/restart recovery
+        if: ${{ !cancelled() }}
+        timeout-minutes: 8
+        env:
+          EUIK_PACKAGED_SKIP_BUILD: '1'
+          EUIK_PACKAGED_JOURNEYS: recovery
+          EUIK_PACKAGED_TIMEOUT_MS: '120000'
+          EUIK_PACKAGED_JOURNEY_TIMEOUT_MS: '420000'
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then xvfb-run -a npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          else npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop
+          fi
 
       - name: Upload packaged application and acceptance evidence
         if: ${{ always() }}
