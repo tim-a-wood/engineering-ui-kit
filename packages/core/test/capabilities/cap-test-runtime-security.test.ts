@@ -60,6 +60,7 @@ describe('CAP-TEST-036 redaction', () => {
     expect(text).not.toContain('/Users/tim/secret')
     expect(assertNoCanaryLeak({ ok: true }, ['CANARY-TOKEN'])).toEqual([])
     expect(assertNoCanaryLeak({ token: 'CANARY-TOKEN' }, ['CANARY-TOKEN'])).toEqual(['CANARY-TOKEN'])
+    expect(redactSensitiveText('{"apiKey":"quoted-canary"}')).not.toContain('quoted-canary')
   })
 })
 

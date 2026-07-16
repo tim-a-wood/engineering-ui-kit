@@ -58,6 +58,8 @@ import {
   planContractTypes,
   planInboundAdapter,
   planPythonInboundAdapter,
+  planPythonCompositionRootModule,
+  planOpenApiDocument,
   planPythonModels,
   planPythonProtocols,
   pythonModuleSpecifierFromPath,
@@ -82,6 +84,7 @@ import type {
   FileChangeAction,
   GenerationFileChange,
   GenerationPlan,
+  HttpInboundBinding,
   InboundBinding,
   ModuleImplementationSpecification,
   OperationContract,
@@ -91,9 +94,30 @@ export type AssembleGenerationPlanInput = {
   readonly deployable: DeployableSpecification
   readonly modules?: readonly ModuleImplementationSpecification[]
   readonly inboundBindings: readonly InboundBinding[]
+  /** Approved HTTP entry points on other deployables consumed by this deployable. */
+  readonly remoteHttpBindings?: readonly HttpInboundBinding[]
   readonly schemas: readonly GeneratedSchemaDefinition[]
   readonly operations: readonly OperationContract[]
   readonly composition?: CompositionManifest
+  /** Material prerequisites the desktop orchestration layer could not resolve. */
+  readonly blockers?: readonly string[]
+  /** Evidence-backed choices that require user resolution before apply. */
+  readonly ambiguityQuestions?: readonly { id: string; question: string; choices: string[] }[]
+  /** Previously applied ownership used to block regeneration over modified generated files. */
+  readonly ownershipManifests?: readonly import('./types.js').GeneratedOwnershipManifest[]
+  /** Current hashes for owned generated paths, paired with `ownershipManifests`. */
+  readonly currentContentHashesByPath?: Readonly<Record<string, string>>
+  /** Actual repository state determined by the privileged caller. */
+  readonly targetCleanState?: import('./types.js').CleanState
+  /** Privileged caller-supplied runtime/package infrastructure files. */
+  readonly additionalFiles?: readonly {
+    path: string
+    contents: string
+    ownership: import('./types.js').GeneratedClassification
+    reason: string
+  }[]
+  readonly dependencyChanges?: readonly import('./types.js').GenerationDependencyChange[]
+  readonly additionalCommands?: readonly string[]
   /** Absolute or process-relative path to the target repository root. */
   readonly targetRoot: string
   readonly runtimePackageName?: string
@@ -120,7 +144,7 @@ export type AssembleGenerationPlanResult = {
  * "contract-change requests".
  */
 export const PYTHON_COMPOSITION_GAP_NOTE =
-  'composition-root generation for "python" deployables is deferred: generation/* has no Python composition-root generator (only generation/composition.ts, which emits TypeScript)'
+  'legacy compatibility note: Python composition-root generation is now supported by planPythonCompositionRootModule'
 
 function deployableBasePath(deployableId: string): string {
   return `src/generated/${toPosixPath(deployableId).replace(/\//g, '-')}`
@@ -155,6 +179,7 @@ function buildResolvedOperationsFileTs(input: {
   operationRefs: readonly OperationRef[]
   composition: CompositionManifest | undefined
   compositionRootPath: string | undefined
+  runtimePackageName: string
   generatorVersion: string
   referenceProfileVersion: string
 }): GeneratedVirtualFile {
@@ -167,6 +192,7 @@ function buildResolvedOperationsFileTs(input: {
   const registrationByContractId = new Map((input.composition?.registrations ?? []).map((r) => [r.contractId, r]))
   const importNames = new Set<string>()
   const sections: string[] = []
+  let rootBuilderName: string | undefined
 
   for (const ref of input.operationRefs) {
     const exportName = toCamelCase(ref.operationId)
@@ -176,10 +202,22 @@ function buildResolvedOperationsFileTs(input: {
       const tokenName = compositionTokenName(ref.operationId)
       importNames.add(builderName)
       importNames.add(tokenName)
+      rootBuilderName = builderName
       sections.push(
         [
           `// operation: ${ref.operationId}@${ref.version} (resolved via composition registration "${registration.contractId}")`,
-          `export const ${exportName} = ${builderName}().resolve(${tokenName})`,
+          `export const ${exportName} = {`,
+          `  code: ${JSON.stringify(ref.operationId)},`,
+          '  async execute(input, context) {',
+          '    const scope = compositionRoot.createChildScope()',
+          '    try {',
+          `      const operation = scope.resolve(${tokenName}) as Operation<unknown, unknown, unknown, unknown>`,
+          '      return await operation.execute(input, context)',
+          '    } finally {',
+          '      await scope.dispose()',
+          '    }',
+          '  },',
+          '} satisfies Operation<unknown, unknown, unknown, unknown>',
         ].join('\n'),
       )
     } else {
@@ -194,17 +232,21 @@ function buildResolvedOperationsFileTs(input: {
     }
   }
 
-  const importBlock =
-    importNames.size > 0 && input.compositionRootPath
-      ? renderImportBlock([{ moduleSpecifier: relativeModuleSpecifier(input.filePath, input.compositionRootPath), namedImports: [...importNames].sort() }])
-      : ''
+  const importBlock = renderImportBlock([
+    ...(importNames.size > 0 ? [{ moduleSpecifier: input.runtimePackageName, namedImports: ['Operation'], typeOnly: true }] : []),
+    ...(importNames.size > 0 && input.compositionRootPath
+      ? [{ moduleSpecifier: relativeModuleSpecifier(input.filePath, input.compositionRootPath), namedImports: [...importNames].sort() }]
+      : []),
+  ])
 
-  return { path: input.filePath, contents: renderVirtualFileBody([header, importBlock, ...sections]) }
+  const rootLine = rootBuilderName ? `const compositionRoot = ${rootBuilderName}().createRootScope()` : ''
+  return { path: input.filePath, contents: renderVirtualFileBody([header, importBlock, rootLine, ...sections]) }
 }
 
 function planTypescriptFiles(input: {
   deployable: DeployableSpecification
   bindings: readonly InboundBinding[]
+  remoteHttpBindings: readonly HttpInboundBinding[]
   schemas: readonly GeneratedSchemaDefinition[]
   operations: readonly OperationContract[]
   composition: CompositionManifest | undefined
@@ -221,11 +263,11 @@ function planTypescriptFiles(input: {
   const contracts = planContractTypes({
     generatorVersion: input.generatorVersion,
     referenceProfileVersion: input.referenceProfileVersion,
+    runtimePackageName: input.runtimePackageName,
     schemas: input.schemas,
     operations: input.operations,
     typesFilePath,
     operationsFilePath,
-    runtimePackageName: input.runtimePackageName,
   })
   diagnostics.push(...contracts.diagnostics)
 
@@ -253,6 +295,7 @@ function planTypescriptFiles(input: {
     compositionRootPath: compositionFile ? input.deployable.compositionRootPath : undefined,
     generatorVersion: input.generatorVersion,
     referenceProfileVersion: input.referenceProfileVersion,
+    runtimePackageName: input.runtimePackageName,
   })
   files.push(resolvedOperationsFile)
 
@@ -274,6 +317,12 @@ function planTypescriptFiles(input: {
       operationModulePath: resolvedOperationsFilePath,
       operationExportName: toCamelCase(binding.operationId),
       runtimePackageName: input.runtimePackageName,
+      observedPath: {
+        inboundAdapter: `${binding.kind}:${binding.bindingId}`,
+        compositionRoot: input.deployable.compositionRootPath,
+        operation: `${binding.operationId}@${binding.operationVersion}`,
+        outboundAdapters: [...(input.composition?.outboundAdapterRefs ?? [])].sort(),
+      },
       operationTypes: baseName
         ? {
             typesModulePath: operationsFilePath,
@@ -288,6 +337,112 @@ function planTypescriptFiles(input: {
     files.push(adapterResult.file)
   }
 
+  const httpBindings = input.bindings.filter((binding): binding is Extract<InboundBinding, { kind: 'http' }> => binding.kind === 'http')
+  if (httpBindings.length) {
+    const hostPath = `${basePath}/host.g.ts`
+    const routeImports = httpBindings.map((binding) => ({
+      moduleSpecifier: relativeModuleSpecifier(hostPath, `${basePath}/inbound/${binding.bindingId}.g.ts`),
+      namedImports: [`${toCamelCase(binding.bindingId)}Route`],
+    }))
+    const routeNames = httpBindings.map((binding) => `${toCamelCase(binding.bindingId)}Route`)
+    const header = generatedFileHeader({
+      generatorVersion: input.generatorVersion,
+      referenceProfileVersion: input.referenceProfileVersion,
+      sourceContractHashes: httpBindings.map((binding) => `${binding.bindingId}@${binding.version}`),
+    })
+    const imports = renderImportBlock([
+      { moduleSpecifier: input.runtimePackageName, namedImports: ['MapConfigurationReader', 'ResolvedSecret'] },
+      { moduleSpecifier: input.runtimePackageName, namedImports: ['SecretReference', 'SecretResolver'], typeOnly: true },
+      { moduleSpecifier: `${input.runtimePackageName}/node`, namedImports: ['createNodeHttpHost'] },
+      ...routeImports,
+    ])
+    const body = [
+      'const configuration = new MapConfigurationReader(',
+      '  Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string")),',
+      ')',
+      'const secretResolver: SecretResolver = {',
+      '  resolve(reference: SecretReference): ResolvedSecret {',
+      '    const value = process.env[reference.ref]',
+      '    if (value === undefined) throw new Error(`Missing secret environment reference: ${reference.ref}`)',
+      '    return new ResolvedSecret(reference, value)',
+      '  },',
+      '}',
+      `export const host = createNodeHttpHost({ routes: [${routeNames.join(', ')}], configuration, secretResolver })`,
+      'const requestedPort = process.env.PORT ? Number(process.env.PORT) : 3000',
+      'const { port } = await host.start(requestedPort)',
+      `console.log(${JSON.stringify(`${input.deployable.deployableId} listening on http://127.0.0.1:`)} + port)`,
+      "for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => void host.stop().finally(() => process.exit(0)))",
+    ]
+    files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
+  }
+
+  if (httpBindings.length) {
+    const openApi = planOpenApiDocument({
+      generatorVersion: input.generatorVersion,
+      referenceProfileVersion: input.referenceProfileVersion,
+      title: input.deployable.name,
+      apiVersion: '1.0.0',
+      schemas: input.schemas,
+      operations: input.operations,
+      httpBindings,
+      documentFilePath: `${basePath}/openapi.g.json`,
+    })
+    diagnostics.push(...openApi.diagnostics)
+    files.push(openApi.file)
+  }
+
+  if (input.remoteHttpBindings.length) {
+    const clientPath = `${basePath}/clients/remote-http.g.ts`
+    const operationsByKey = new Map(input.operations.map((operation) => [operationKey(operation), operation]))
+    const imports = new Set<string>(['Outcome'])
+    const sections: string[] = []
+    for (const binding of sortByKey([...input.remoteHttpBindings], (candidate) => candidate.bindingId)) {
+      const operation = operationsByKey.get(operationKey({ operationId: binding.operationId, version: binding.operationVersion }))
+      if (!operation) {
+        diagnostics.push(`remote HTTP binding "${binding.bindingId}" has no matching operation contract`)
+        continue
+      }
+      const baseName = operationTypeBaseName(operation)
+      const inputType = `${baseName}Input`
+      const successType = `${baseName}Success`
+      const rejectionType = `${baseName}DomainRejectionCode`
+      const technicalType = `${baseName}TechnicalErrorCode`
+      for (const name of [inputType, successType, rejectionType, technicalType]) imports.add(name)
+      const functionName = `${toCamelCase(binding.bindingId)}Client`
+      sections.push([
+        `/** ${binding.operationId}@${binding.operationVersion} via ${binding.method} ${binding.path} on ${binding.deployableId}. */`,
+        `export async function ${functionName}(`,
+        `  input: ${inputType},`,
+        `  options: { baseUrl: string; signal?: AbortSignal; headers?: Readonly<Record<string, string>> },`,
+        `): Promise<Outcome<${successType}, ${rejectionType}, ${technicalType}>> {`,
+        '  const correlationId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`',
+        `  const response = await fetch(new URL(${JSON.stringify(binding.path)}, options.baseUrl), {`,
+        `    method: ${JSON.stringify(binding.method)},`,
+        `    headers: { 'content-type': 'application/json', 'x-correlation-id': correlationId, ...(options.headers ?? {}) },`,
+        "    body: input === undefined ? undefined : JSON.stringify(input),",
+        '    signal: options.signal,',
+        '  })',
+        '  const body = await response.json() as Record<string, unknown>',
+        "  if (body.kind === 'failed') return { ...body, safeMessage: body.safe_message, causeRef: body.cause_ref } as Outcome<" + `${successType}, ${rejectionType}, ${technicalType}>`,
+        "  if (body.kind === 'timed_out') return { ...body, kind: 'timedOut' } as Outcome<" + `${successType}, ${rejectionType}, ${technicalType}>`,
+        `  return body as Outcome<${successType}, ${rejectionType}, ${technicalType}>`,
+        '}',
+      ].join('\n'))
+    }
+    if (sections.length) {
+      const header = generatedFileHeader({
+        generatorVersion: input.generatorVersion,
+        referenceProfileVersion: input.referenceProfileVersion,
+        sourceContractHashes: input.remoteHttpBindings.map((binding) => `${binding.bindingId}@${binding.version}`),
+      })
+      const importBlock = renderImportBlock([
+        { moduleSpecifier: input.runtimePackageName, namedImports: ['Outcome'], typeOnly: true },
+        { moduleSpecifier: relativeModuleSpecifier(clientPath, operationsFilePath), namedImports: [...imports].filter((name) => name !== 'Outcome'), typeOnly: true },
+      ])
+      files.push({ path: clientPath, contents: renderVirtualFileBody([header, importBlock, ...sections]) })
+    }
+  }
+
   return { files, diagnostics }
 }
 
@@ -300,22 +455,51 @@ function buildResolvedOperationsFilePy(input: {
   operationRefs: readonly OperationRef[]
   generatorVersion: string
   referenceProfileVersion: string
+  composition: CompositionManifest | undefined
+  compositionRootPath: string | undefined
 }): GeneratedVirtualFile {
   const header = generatedPythonFileHeader({
     generatorVersion: input.generatorVersion,
     referenceProfileVersion: input.referenceProfileVersion,
     sourceContractHashes: input.operationRefs.map((ref) => `${ref.operationId}@${ref.version}`),
   })
-  const importBlock = renderPythonImportBlock([{ moduleSpecifier: 'typing', names: ['Any'] }])
+  const registrationByContractId = new Map((input.composition?.registrations ?? []).map((registration) => [registration.contractId, registration]))
+  const compositionImports = new Set<string>()
   const sections = input.operationRefs.map((ref) => {
     const exportName = toSnakeCase(ref.operationId)
+    const registration = registrationByContractId.get(ref.operationId)
+    if (registration && input.composition && input.compositionRootPath) {
+      const builderName = `build_${toSnakeCase(input.composition.compositionId)}_container`
+      const keyName = `${toSnakeCase(ref.operationId).toUpperCase()}_KEY`
+      compositionImports.add(builderName)
+      compositionImports.add(keyName)
+      const proxyName = `_${toPascalCase(ref.operationId)}ResolvedOperation`
+      return [
+        `# operation: ${ref.operationId}@${ref.version} (resolved through the approved composition root)`,
+        `class ${proxyName}:`,
+        '    def execute(self, input: Any, context: Any) -> Any:',
+        '        with _container.create_scope() as scope:',
+        `            return scope.resolve(${keyName}).execute(input, context)`,
+        '',
+        `${exportName} = ${proxyName}()`,
+      ].join('\n')
+    }
     return [
       `# operation: ${ref.operationId}@${ref.version}`,
-      `# ${PYTHON_COMPOSITION_GAP_NOTE}; deferred to full DI wiring — see WP8 runtime integration.`,
+      '# no approved composition registration resolves this operation',
       `${exportName}: Any = None`,
     ].join('\n')
   })
-  return { path: input.filePath, contents: renderVirtualFileBody([header, importBlock, ...sections]) }
+  const importBlock = renderPythonImportBlock([
+    { moduleSpecifier: 'typing', names: ['Any'] },
+    ...(compositionImports.size && input.compositionRootPath
+      ? [{ moduleSpecifier: pythonModuleSpecifierFromPath(input.compositionRootPath), names: [...compositionImports] }]
+      : []),
+  ])
+  const containerLine = compositionImports.size
+    ? `_container = build_${toSnakeCase(input.composition!.compositionId)}_container()`
+    : ''
+  return { path: input.filePath, contents: renderVirtualFileBody([header, importBlock, containerLine, ...sections]) }
 }
 
 function planPythonFiles(input: {
@@ -323,15 +507,16 @@ function planPythonFiles(input: {
   bindings: readonly InboundBinding[]
   schemas: readonly GeneratedSchemaDefinition[]
   operations: readonly OperationContract[]
+  composition: CompositionManifest | undefined
   runtimePackageName: string
   generatorVersion: string
   referenceProfileVersion: string
 }): { files: GeneratedVirtualFile[]; diagnostics: string[] } {
-  const diagnostics: string[] = [PYTHON_COMPOSITION_GAP_NOTE]
-  const basePath = deployableBasePath(input.deployable.deployableId)
-  const modelsFilePath = `${basePath}/models.g.py`
-  const protocolsFilePath = `${basePath}/protocols.g.py`
-  const resolvedOperationsFilePath = `${basePath}/resolved.g.py`
+  const diagnostics: string[] = []
+  const basePath = `src/generated/${toSnakeCase(input.deployable.deployableId)}`
+  const modelsFilePath = `${basePath}/models_g.py`
+  const protocolsFilePath = `${basePath}/protocols_g.py`
+  const resolvedOperationsFilePath = `${basePath}/resolved_g.py`
 
   const models = planPythonModels({
     generatorVersion: input.generatorVersion,
@@ -354,12 +539,29 @@ function planPythonFiles(input: {
 
   const files: GeneratedVirtualFile[] = [models.file, protocols.file]
 
+  let compositionFile: GeneratedVirtualFile | undefined
+  if (input.composition) {
+    const compositionResult = planPythonCompositionRootModule({
+      manifest: input.composition,
+      generatorVersion: input.generatorVersion,
+      referenceProfileVersion: input.referenceProfileVersion,
+      filePath: input.deployable.compositionRootPath,
+      runtimePackageName: input.runtimePackageName,
+    })
+    diagnostics.push(...compositionResult.diagnostics)
+    diagnostics.push(...compositionResult.issues.map((issue) => `composition "${input.composition!.compositionId}": ${issue.code}: ${issue.message}`))
+    compositionFile = compositionResult.file
+    files.push(compositionFile)
+  }
+
   const operationRefs = distinctOperationRefs(input.bindings)
   const resolvedOperationsFile = buildResolvedOperationsFilePy({
     filePath: resolvedOperationsFilePath,
     operationRefs,
     generatorVersion: input.generatorVersion,
     referenceProfileVersion: input.referenceProfileVersion,
+    composition: input.composition,
+    compositionRootPath: compositionFile ? input.deployable.compositionRootPath : undefined,
   })
   files.push(resolvedOperationsFile)
 
@@ -377,10 +579,16 @@ function planPythonFiles(input: {
       binding,
       generatorVersion: input.generatorVersion,
       referenceProfileVersion: input.referenceProfileVersion,
-      filePath: `${basePath}/inbound/${binding.bindingId}.g.py`,
+      filePath: `${basePath}/inbound/${toSnakeCase(binding.bindingId)}_g.py`,
       operationModulePath: resolvedOperationsFilePath,
       operationExportName: toSnakeCase(binding.operationId),
       runtimePackageName: input.runtimePackageName,
+      observedPath: {
+        inboundAdapter: `${binding.kind}:${binding.bindingId}`,
+        compositionRoot: input.deployable.compositionRootPath,
+        operation: `${binding.operationId}@${binding.operationVersion}`,
+        outboundAdapters: [...(input.composition?.outboundAdapterRefs ?? [])].sort(),
+      },
       // Functional note (contract-change request candidate): despite this field's name/doc comment
       // ("planPythonModels's modelsFilePath"), all four resolved type names below are only ever
       // exported together from the PROTOCOLS file (`planPythonProtocols`'s TypeAlias exports); the
@@ -398,6 +606,51 @@ function planPythonFiles(input: {
     })
     diagnostics.push(...adapterResult.diagnostics)
     files.push(adapterResult.file)
+  }
+
+  const httpBindings = input.bindings.filter((binding): binding is Extract<InboundBinding, { kind: 'http' }> => binding.kind === 'http')
+  if (httpBindings.length) {
+    const hostPath = `${basePath}/host_g.py`
+    const adapterImports = httpBindings.map((binding) => ({
+      moduleSpecifier: pythonModuleSpecifierFromPath(`${basePath}/inbound/${toSnakeCase(binding.bindingId)}_g.py`),
+      names: [`register_${toSnakeCase(binding.bindingId)}_route`],
+    }))
+    const header = generatedPythonFileHeader({
+      generatorVersion: input.generatorVersion,
+      referenceProfileVersion: input.referenceProfileVersion,
+      sourceContractHashes: httpBindings.map((binding) => `${binding.bindingId}@${binding.version}`),
+    })
+    const imports = renderPythonImportBlock([
+      { moduleSpecifier: `${input.runtimePackageName}.http`, names: ['HttpOperationHost'] },
+      ...adapterImports,
+    ])
+    const body = [
+      `host = HttpOperationHost(title=${JSON.stringify(input.deployable.name)})`,
+      ...httpBindings.map((binding) => `register_${toSnakeCase(binding.bindingId)}_route(host)`),
+      'host.assert_openapi_consistent()',
+      'app = host.app',
+      '',
+      'if __name__ == "__main__":',
+      '    import os',
+      '    import uvicorn',
+      '    uvicorn.run(app, host="127.0.0.1", port=int(os.environ.get("PORT", "3000")))',
+    ]
+    files.push({ path: hostPath, contents: renderVirtualFileBody([header, imports, body.join('\n')]) })
+  }
+
+  if (httpBindings.length) {
+    const openApi = planOpenApiDocument({
+      generatorVersion: input.generatorVersion,
+      referenceProfileVersion: input.referenceProfileVersion,
+      title: input.deployable.name,
+      apiVersion: '1.0.0',
+      schemas: input.schemas,
+      operations: input.operations,
+      httpBindings,
+      documentFilePath: `${basePath}/openapi.g.json`,
+    })
+    diagnostics.push(...openApi.diagnostics)
+    files.push(openApi.file)
   }
 
   return { files, diagnostics }
@@ -468,6 +721,7 @@ export function assembleGenerationPlan(input: AssembleGenerationPlanInput): Asse
     generated = planTypescriptFiles({
       deployable: input.deployable,
       bindings,
+      remoteHttpBindings: sortByKey([...(input.remoteHttpBindings ?? [])], (binding) => binding.bindingId),
       schemas: input.schemas,
       operations: input.operations,
       composition: input.composition,
@@ -481,6 +735,7 @@ export function assembleGenerationPlan(input: AssembleGenerationPlanInput): Asse
       bindings,
       schemas: input.schemas,
       operations: input.operations,
+      composition: input.composition,
       runtimePackageName: input.runtimePackageName ?? DEFAULT_PYTHON_RUNTIME_PACKAGE_NAME,
       generatorVersion,
       referenceProfileVersion,
@@ -491,7 +746,11 @@ export function assembleGenerationPlan(input: AssembleGenerationPlanInput): Asse
   const fileChanges: GenerationFileChange[] = []
   const virtualFiles: GenerationApplyVirtualFile[] = []
 
-  for (const file of sortByKey([...generated.files], (f) => f.path)) {
+  const plannedFiles = [
+    ...generated.files.map((file) => ({ ...file, ownership: 'generated' as const, reason: `generated for deployable "${input.deployable.deployableId}" (${input.deployable.runtimeLanguage})` })),
+    ...(input.additionalFiles ?? []),
+  ]
+  for (const file of sortByKey(plannedFiles, (f) => f.path)) {
     const postimageHash = generatedContentHash(file.contents)
     const existingHash = readExistingContentHash(targetRootAbs, file.path)
     if (existingHash === postimageHash) {
@@ -503,8 +762,8 @@ export function assembleGenerationPlan(input: AssembleGenerationPlanInput): Asse
     fileChanges.push({
       path: file.path,
       action,
-      ownership: 'generated',
-      reason: `generated for deployable "${input.deployable.deployableId}" (${input.deployable.runtimeLanguage})`,
+      ownership: file.ownership,
+      reason: file.reason,
       ...(action === 'update' ? { preimageHash: existingHash } : {}),
       postimageHash,
     })
@@ -554,6 +813,7 @@ export function assembleGenerationPlan(input: AssembleGenerationPlanInput): Asse
   }
 
   const commands = [
+    ...(input.additionalCommands ?? []),
     input.deployable.commands.build,
     input.deployable.commands.test,
     input.deployable.commands.launch,
@@ -567,15 +827,28 @@ export function assembleGenerationPlan(input: AssembleGenerationPlanInput): Asse
     inputRecords,
     generatorVersion,
     referenceProfileVersion,
-    targetRepository: { root: input.targetRoot, cleanState: 'clean' },
-    dependencyChanges: [],
+    // Compatibility default for pure/library callers. Production desktop
+    // orchestration always supplies the actual git state and never relies on
+    // this default.
+    targetRepository: { root: input.targetRoot, cleanState: input.targetCleanState ?? 'clean' },
+    dependencyChanges: [...(input.dependencyChanges ?? [])],
     fileChanges,
     commands,
     warnings: uniqueSorted(generated.diagnostics),
+    ambiguityQuestions: input.ambiguityQuestions ? [...input.ambiguityQuestions] : undefined,
     rollbackStrategy: 'staged-rename-with-journal',
+    ownershipManifests: input.ownershipManifests,
+    currentContentHashesByPath: input.currentContentHashesByPath,
   }
 
-  const plan = buildGenerationPlan(planInput)
+  const assembled = buildGenerationPlan(planInput)
+  const extraBlockers = uniqueSorted(input.blockers ?? [])
+  const { planHash: _assembledHash, ...assembledBody } = assembled
+  void _assembledHash
+  const planWithoutHash = { ...assembledBody, blockers: uniqueSorted([...assembled.blockers, ...extraBlockers]) }
+  const plan = extraBlockers.length === 0
+    ? assembled
+    : { ...planWithoutHash, planHash: canonicalRecordHash(planWithoutHash) }
 
   return { plan, virtualFiles: sortByKey(virtualFiles, (f) => f.path) }
 }

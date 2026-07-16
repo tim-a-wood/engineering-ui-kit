@@ -90,6 +90,19 @@ function makeRawZip(entries: Record<string, string>): string {
 const baseOptions = () => ({ runId: 'test-run', targetRoot })
 
 describe('inspectOverlay hard blockers', () => {
+  it('blocks external overlays from generated-owned paths', () => {
+    const zipPath = makeZip({ 'src/generated/http-api/types.g.ts': 'hostile overwrite' })
+    const summary = inspectOverlay(zipPath, {
+      ...baseOptions(),
+      capabilityAllowedPaths: ['src'],
+      protectedPaths: ['src/generated/http-api/types.g.ts'],
+    })
+    expect(summary.canApply).toBe(false)
+    expect(summary.hardBlockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ ruleId: 'CAP-OVERLAY-OWNERSHIP-001' }),
+    ]))
+  })
+
   it('blocks absolute unix paths (AI-HANDOFF-031)', () => {
     const zipPath = makeRawZip({ '/etc/passwd': 'x' })
     const summary = inspectOverlay(zipPath, baseOptions())

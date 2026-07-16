@@ -43,6 +43,8 @@ class HttpOperationHost:
         context_factory: ContextFactory = default_context_factory,
         success_status: int = 200,
         summary: Optional[str] = None,
+        operation_id: Optional[str] = None,
+        observed_path: Optional[Mapping[str, Any]] = None,
     ) -> None:
         add_operation_route(
             self.app,
@@ -53,6 +55,8 @@ class HttpOperationHost:
             context_factory=context_factory,
             success_status=success_status,
             summary=summary,
+            operation_id=operation_id,
+            observed_path=observed_path,
         )
         self._registered_routes[(method.upper(), path)] = input_schema
 

@@ -214,6 +214,7 @@ function tsAssembleInput(targetRoot: string, overrides: Partial<AssembleGenerati
     operations: TS_OPERATIONS,
     composition: TS_COMPOSITION,
     targetRoot,
+    targetCleanState: 'clean',
     generatorVersion: '0.1.0',
     referenceProfileVersion: '1.0.0',
     planId: 'plan-cap-test-087-ts',
@@ -300,7 +301,7 @@ const PY_DEPLOYABLE: DeployableSpecification = {
   runtimeVersionRange: '>=3.11',
   moduleIds: ['mod.orders.py'],
   inboundBindingIds: ['binding.orders.create.http.py'],
-  compositionRootPath: 'src/composition/py_api.g.py',
+  compositionRootPath: 'src/composition/py_api_g.py',
   commands: { build: 'true', test: 'pytest', launch: 'uvicorn app:app' },
   configurationRefs: [],
   secretReferenceIds: [],
@@ -314,6 +315,7 @@ function pyAssembleInput(targetRoot: string): AssembleGenerationPlanInput {
     schemas: PY_SCHEMAS,
     operations: PY_OPERATIONS,
     targetRoot,
+    targetCleanState: 'clean',
     generatorVersion: '0.1.0',
     referenceProfileVersion: '1.0.0',
     planId: 'plan-cap-test-087-py',
@@ -354,8 +356,9 @@ describe('CAP-TEST-087 generate -> apply: headless TypeScript deployable', () =>
 
     const resolvedContents = readFile(root, 'src/generated/http-api/resolved.g.ts')
     expect(resolvedContents).toContain('GENERATED FILE — DO NOT EDIT.')
-    expect(resolvedContents).toContain('export const ordersCreate = buildHttpApiContainer().resolve(ordersCreateToken)')
-    expect(resolvedContents).toContain('export const ordersList = buildHttpApiContainer().resolve(ordersListToken)')
+    expect(resolvedContents).toContain('const compositionRoot = buildHttpApiContainer().createRootScope()')
+    expect(resolvedContents).toContain('const operation = scope.resolve(ordersCreateToken)')
+    expect(resolvedContents).toContain('const operation = scope.resolve(ordersListToken)')
 
     const httpAdapterContents = readFile(root, 'src/generated/http-api/inbound/binding.orders.create.http.g.ts')
     expect(httpAdapterContents).toContain('GENERATED FILE — DO NOT EDIT.')
@@ -404,16 +407,16 @@ describe('CAP-TEST-087 generate -> apply: headless Python deployable', () => {
     const result = applyGenerationPlan({ plan, targetRoot: root, virtualFiles, runId: input.runId })
     expect(result.appliedFiles.length).toBe(plan.fileChanges.length)
 
-    const modelsContents = readFile(root, 'src/generated/py-api/models.g.py')
+    const modelsContents = readFile(root, 'src/generated/py_api/models_g.py')
     expect(modelsContents).toContain('GENERATED FILE — DO NOT EDIT.')
     expect(modelsContents).toContain('class CreateOrderInput(BaseModel):')
     expect(modelsContents).toContain('class CreateOrderSuccess(BaseModel):')
 
-    const protocolsContents = readFile(root, 'src/generated/py-api/protocols.g.py')
+    const protocolsContents = readFile(root, 'src/generated/py_api/protocols_g.py')
     expect(protocolsContents).toContain('GENERATED FILE — DO NOT EDIT.')
     expect(protocolsContents).toContain('class OrdersCreateV1_0_0Operation(Protocol):')
 
-    const adapterContents = readFile(root, 'src/generated/py-api/inbound/binding.orders.create.http.py.g.py')
+    const adapterContents = readFile(root, 'src/generated/py_api/inbound/binding_orders_create_http_py_g.py')
     expect(adapterContents).toContain('GENERATED FILE — DO NOT EDIT.')
     expect(adapterContents).toContain('def register_binding_orders_create_http_py_route(host: HttpOperationHost) -> None:')
     expect(adapterContents).toContain('method="POST"')

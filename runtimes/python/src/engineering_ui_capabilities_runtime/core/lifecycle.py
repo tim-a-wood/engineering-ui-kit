@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Protocol
 
 
 class Lifecycle(str, Enum):
@@ -34,7 +34,11 @@ class ScopeRequiredError(Exception):
     """
 
 
-Factory = Callable[["Container"], Any]
+class Resolver(Protocol):
+    def resolve(self, key: str) -> Any: ...
+
+
+Factory = Callable[[Resolver], Any]
 Disposer = Callable[[Any], None]
 
 
@@ -51,9 +55,9 @@ class _InstanceLedger:
     instances: dict[str, Any] = field(default_factory=dict)
     creation_order: list[str] = field(default_factory=list)
 
-    def get_or_create(self, reg: Registration, container: "Container") -> Any:
+    def get_or_create(self, reg: Registration, resolver: Resolver) -> Any:
         if reg.key not in self.instances:
-            self.instances[reg.key] = reg.factory(container)
+            self.instances[reg.key] = reg.factory(resolver)
             self.creation_order.append(reg.key)
         return self.instances[reg.key]
 
@@ -84,8 +88,8 @@ class Scope:
         if reg.lifecycle is Lifecycle.SINGLETON:
             return self._container._resolve_singleton(reg)
         if reg.lifecycle is Lifecycle.TRANSIENT:
-            return reg.factory(self._container)
-        return self._ledger.get_or_create(reg, self._container)
+            return reg.factory(self)
+        return self._ledger.get_or_create(reg, self)
 
     def dispose(self) -> None:
         if self._disposed:

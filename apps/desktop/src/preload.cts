@@ -87,6 +87,14 @@ const CHANNELS = {
   capabilitiesGetFoundation: 'capabilities:get-foundation',
   capabilitiesSaveFoundationDraft: 'capabilities:save-foundation-draft',
   capabilitiesApproveFoundation: 'capabilities:approve-foundation',
+  capabilitiesGetIntegrationState: 'capabilities:get-integration-state',
+  capabilitiesPreviewGeneration: 'capabilities:preview-generation',
+  capabilitiesApplyGeneration: 'capabilities:apply-generation',
+  capabilitiesRollbackGeneration: 'capabilities:rollback-generation',
+  capabilitiesRunConnectionVerification: 'capabilities:run-connection-verification',
+  capabilitiesListConnectionVerifications: 'capabilities:list-connection-verifications',
+  capabilitiesSaveCompositionConfiguration: 'capabilities:save-composition-configuration',
+  capabilitiesRunIntegrationCommands: 'capabilities:run-integration-commands',
 } as const
 
 // Compile-time bridge parity guard: the preload channel surface must match the

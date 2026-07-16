@@ -223,6 +223,7 @@ const ALL_GENERATED_PATHS = [
   'src/generated/http-api/resolved.g.ts',
   'src/generated/http-api/inbound/binding.orders.create.http.g.ts',
   'src/generated/http-api/inbound/binding.orders.list.cli.g.ts',
+  'src/generated/http-api/openapi.g.json',
 ]
 
 describe('CAP-TEST-088 impact-scoped regeneration', () => {
@@ -236,17 +237,21 @@ describe('CAP-TEST-088 impact-scoped regeneration', () => {
     const beforeContents = new Map(ALL_GENERATED_PATHS.map((p) => [p, readFile(root, p)]))
 
     // Change ONE binding's own field (the HTTP route path). This affects only
-    // that binding's inbound-adapter file: it does not change any schema,
-    // operation contract, or composition registration.
+    // that binding's inbound-adapter file and the OpenAPI description of that
+    // route; it does not change any schema, operation contract, or composition
+    // registration.
     const changed = assembleGenerationPlan(
       assembleInput(root, { httpBindingOverrides: { path: '/orders/v2' }, runId: 'run-changed', planId: 'plan-changed' }),
     )
 
     const changedPaths = changed.plan.fileChanges.map((c) => c.path).sort()
-    expect(changedPaths).toEqual(['src/generated/http-api/inbound/binding.orders.create.http.g.ts'])
+    expect(changedPaths).toEqual([
+      'src/generated/http-api/inbound/binding.orders.create.http.g.ts',
+      'src/generated/http-api/openapi.g.json',
+    ])
     expect(changed.plan.fileChanges[0]!.action).toBe('update')
     expect(changed.plan.fileChanges[0]!.preimageHash).toBeDefined()
-    expect(changed.virtualFiles.map((f) => f.path)).toEqual(['src/generated/http-api/inbound/binding.orders.create.http.g.ts'])
+    expect(changed.virtualFiles.map((f) => f.path).sort()).toEqual(changedPaths)
 
     // Apply the scoped plan.
     const applyResult = applyGenerationPlan({
@@ -255,7 +260,7 @@ describe('CAP-TEST-088 impact-scoped regeneration', () => {
       virtualFiles: changed.virtualFiles,
       runId: 'run-changed',
     })
-    expect(applyResult.appliedFiles.map((f) => f.path)).toEqual(['src/generated/http-api/inbound/binding.orders.create.http.g.ts'])
+    expect(applyResult.appliedFiles.map((f) => f.path).sort()).toEqual(changedPaths)
 
     // The impacted file changed on disk...
     const newAdapterContents = readFile(root, 'src/generated/http-api/inbound/binding.orders.create.http.g.ts')
@@ -264,7 +269,7 @@ describe('CAP-TEST-088 impact-scoped regeneration', () => {
 
     // ...and every other generated file is byte-for-byte unchanged.
     for (const p of ALL_GENERATED_PATHS) {
-      if (p === 'src/generated/http-api/inbound/binding.orders.create.http.g.ts') continue
+      if (changedPaths.includes(p)) continue
       expect(readFile(root, p)).toBe(beforeContents.get(p))
     }
   })

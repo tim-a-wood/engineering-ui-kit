@@ -138,7 +138,17 @@ const server = http.createServer((req, res) => {
     let body = '';
     req.on('data', (c) => { body += c; });
     req.on('end', () => {
-      res.writeHead(200, { 'content-type': 'application/json' });
+      res.writeHead(200, {
+        'content-type': 'application/json',
+        'x-correlation-id': req.headers['x-correlation-id'],
+        'x-euik-observed-operation': 'op.create-widget',
+        'x-euik-observed-path': JSON.stringify({
+          inboundAdapter: 'http:bind-http-1',
+          compositionRoot: 'src/composition/http-api.ts',
+          operation: 'op.create-widget@1.0.0',
+          outboundAdapters: [],
+        }),
+      });
       res.end(JSON.stringify({ kind: 'success', received: JSON.parse(body || '{}') }));
     });
     return;
@@ -220,6 +230,24 @@ describe('CAP-TEST-094 real connection verification evidence', () => {
     expect(record.triggerKind).toBe('cli')
     expect(record.outcomeSummary).toContain('exit code 0')
     expect(record.outcomeSummary).toContain('cli-ok')
+    expectSchemaValid(record)
+  })
+
+  it('a real CLI process with a nonzero exit is failed evidence', async () => {
+    const record = await runConnectionVerification({
+      verificationId: 'ver-cli-nonzero',
+      projectId: 'proj-1',
+      binding: cliBinding(),
+      deployable: deployable({ deployableId: 'cli-tool', kind: 'cli' }),
+      hashes: HASHES,
+      launch: nodeEvalLaunch('process.exitCode = 7;'),
+      trigger: { kind: 'cli' },
+    })
+
+    expect(record.verificationStatus).toBe('fail')
+    expect(record.healthState).toBe('degraded')
+    expect(record.reasonCodes).toContain('cli-nonzero-exit')
+    expect(record.outcomeSummary).toContain('exit code 7')
     expectSchemaValid(record)
   })
 

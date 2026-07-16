@@ -9,8 +9,10 @@ const CANARY_PATTERNS = [
   /[A-Za-z]:\\[^\s"']+/g,
 ]
 
+const QUOTED_SECRET_VALUE = /((?:"|')?(?:api[_-]?key|token|password|secret|authorization|credential)(?:"|')?\s*:\s*)(["'])(.*?)(\2)/gi
+
 export function redactSensitiveText(text: string): string {
-  let out = text
+  let out = text.replace(QUOTED_SECRET_VALUE, '$1$2[redacted]$4')
   for (const pattern of CANARY_PATTERNS) {
     out = out.replace(pattern, '[redacted]')
   }

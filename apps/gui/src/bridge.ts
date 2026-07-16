@@ -28,6 +28,10 @@ import type {
   DeltaQueueState,
   Settings,
   VerificationResult,
+  CapabilityIntegrationState,
+  GenerationApplyRecord,
+  GenerationPlan,
+  ConnectionVerificationRecord,
 } from '@engineering-ui-kit/core'
 import { installMockBridge } from './mockBridge'
 
@@ -285,6 +289,48 @@ export type EuikBridge = {
     projectId: string,
     plan: FoundationPlan,
   ): Promise<{ ok: boolean; approved?: FoundationPlan; reason?: string }>
+  capabilitiesGetIntegrationState(projectId: string): Promise<CapabilityIntegrationState>
+  capabilitiesPreviewGeneration(input: {
+    projectId: string
+    deployableId: string
+  }): Promise<{ plan: GenerationPlan; status: 'plan-ready' | 'blocked' }>
+  capabilitiesApplyGeneration(input: {
+    projectId: string
+    deployableId: string
+    planId: string
+    planHash: string
+    explicit: boolean
+    acceptDirtyWorktree?: boolean
+  }): Promise<GenerationApplyRecord>
+  capabilitiesRollbackGeneration(input: {
+    projectId: string
+    deployableId: string
+    rollbackId: string
+    explicit: boolean
+  }): Promise<GenerationApplyRecord>
+  capabilitiesRunConnectionVerification(input: {
+    projectId: string
+    deployableId: string
+    bindingId: string
+    explicit: boolean
+  }): Promise<ConnectionVerificationRecord>
+  capabilitiesListConnectionVerifications(input: {
+    projectId: string
+    deployableId?: string
+  }): Promise<ConnectionVerificationRecord[]>
+  capabilitiesSaveCompositionConfiguration(input: {
+    projectId: string
+    deployableId: string
+    targets: { contractId: string; implementationTarget: string }[]
+    explicit: boolean
+  }): Promise<import('@engineering-ui-kit/core').CompositionConfigurationState>
+  capabilitiesRunIntegrationCommands(input: {
+    projectId: string
+    deployableId: string
+    planId: string
+    planHash: string
+    explicit: boolean
+  }): Promise<import('@engineering-ui-kit/core').IntegrationCommandRun>
 }
 
 declare global {

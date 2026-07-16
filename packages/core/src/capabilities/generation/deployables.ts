@@ -46,7 +46,8 @@ function extensionFor(language: RuntimeLanguage): string {
 function buildDefaultCompositionPath(candidate: DeployableKindEvidence, discovery: RepositoryDiscoveryResult): string {
   const root = discovery.sourceRoots[0]
   const base = root ? `${root}/composition` : 'composition'
-  return normalizeRepoRelativePath(`${base}/${candidate.kind}.${extensionFor(candidate.language)}`)
+  const fileName = candidate.language === 'python' ? candidate.kind.replaceAll('-', '_') : candidate.kind
+  return normalizeRepoRelativePath(`${base}/${fileName}.${extensionFor(candidate.language)}`)
 }
 
 function compositionEvidence(candidate: DeployableKindEvidence, discovery: RepositoryDiscoveryResult): string {

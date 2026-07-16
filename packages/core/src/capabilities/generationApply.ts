@@ -173,6 +173,13 @@ type ValidatedPlan = {
 function revalidate(input: ApplyGenerationPlanInput, targetRootAbs: string): ValidatedPlan {
   const issues: string[] = []
 
+  for (const blocker of input.plan.blockers) {
+    issues.push(`PLAN-BLOCKER: ${blocker}`)
+  }
+  for (const ambiguity of input.plan.ambiguityQuestions) {
+    issues.push(`PLAN-AMBIGUITY: ${ambiguity.question} (${ambiguity.choices.join(', ')})`)
+  }
+
   if (!RUN_ID_PATTERN.test(input.runId)) {
     issues.push(`runId "${input.runId}" must be a non-empty identifier with no path separators`)
   }

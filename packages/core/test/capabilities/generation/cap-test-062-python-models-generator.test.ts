@@ -163,7 +163,7 @@ describe('CAP-TEST-062 python.ts model + protocol generator', () => {
     expect(contents).toContain('OrdersCreateV1_0_0DomainRejectionCode: TypeAlias = Literal["sku-not-found", "sku-out-of-stock"]')
     expect(contents).toContain('OrdersCreateV1_0_0TechnicalErrorCode: TypeAlias = Literal["inventory-service-unavailable"]')
     expect(contents).toContain(
-      'OrdersCreateV1_0_0Outcome: TypeAlias = Union[Success[OrdersCreateV1_0_0Success], Rejected[OrdersCreateV1_0_0DomainRejectionCode], Failed, Cancelled, TimedOut]',
+      'OrdersCreateV1_0_0Outcome: TypeAlias = Union[Success[OrdersCreateV1_0_0Success], Rejected[Any], Failed, Cancelled, TimedOut]',
     )
     expect(contents).toContain('class OrdersCreateV1_0_0Operation(Protocol):')
     expect(contents).toContain('code: Literal["orders.create"]')

@@ -18,7 +18,9 @@ describe('createNodeHttpHost', () => {
     }
 
     const host = createNodeHttpHost({
-      routes: [{ method: 'POST', path: '/double', operation: doubleOperation }],
+      routes: [{ method: 'POST', path: '/double', operation: doubleOperation, observedPath: {
+        inboundAdapter: 'http:double', compositionRoot: 'src/composition/http.ts', operation: 'double@1.0.0', outboundAdapters: [],
+      } }],
       configuration,
       secretResolver,
     })
@@ -33,6 +35,8 @@ describe('createNodeHttpHost', () => {
 
       expect(response.status).toBe(200)
       expect(response.headers.get('x-correlation-id')).toBeTruthy()
+      expect(response.headers.get('x-euik-observed-operation')).toBe('double')
+      expect(JSON.parse(response.headers.get('x-euik-observed-path') ?? '{}')).toMatchObject({ operation: 'double@1.0.0' })
       const body = (await response.json()) as { kind: string; value: number }
       expect(body).toEqual({ kind: 'success', value: 42 })
     } finally {

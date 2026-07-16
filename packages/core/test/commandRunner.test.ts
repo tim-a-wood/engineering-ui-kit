@@ -51,6 +51,19 @@ describe('runCommand', () => {
     expect(result.stderrPath && fs.readFileSync(result.stderrPath, 'utf8')).toContain('warn')
     fs.rmSync(dir, { recursive: true, force: true })
   })
+
+  it('redacts quoted JSON secrets before persisting bounded command output', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'euik-cmd-redact-'))
+    const result = await runCommand({
+      runId: 'r-redact', commandLabel: 'redact',
+      commandText: `node -e "console.log(JSON.stringify({apiKey:'secret-canary-value'}))"`,
+      workingDirectory: process.cwd(), outputDir: dir,
+    })
+    const output = result.combinedOutputPath ? fs.readFileSync(result.combinedOutputPath, 'utf8') : ''
+    expect(output).not.toContain('secret-canary-value')
+    expect(output).toContain('[redacted]')
+    fs.rmSync(dir, { recursive: true, force: true })
+  })
 })
 
 describe('probeFreePort', () => {

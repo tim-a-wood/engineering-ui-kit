@@ -231,26 +231,59 @@ async function waitForReady(port: number, launch: SpawnLaunch): Promise<boolean>
   }
 }
 
-async function sendHttpTrigger(port: number, trigger: HttpTrigger): Promise<StepOutcome> {
+const CORRELATION_ID_HEADER = 'x-correlation-id'
+const OBSERVED_OPERATION_HEADER = 'x-euik-observed-operation'
+const OBSERVED_PATH_HEADER = 'x-euik-observed-path'
+
+async function sendHttpTrigger(
+  port: number,
+  trigger: HttpTrigger,
+  expectedOperationId: string,
+  correlationId: string,
+  expectedObservedPath: ConnectionVerificationRecord['observedPath'],
+): Promise<StepOutcome> {
   const timeoutMs = trigger.timeoutMs ?? 5_000
   const url = `http://127.0.0.1:${port}${trigger.path}`
   try {
     const response = await fetch(url, {
       method: trigger.method,
-      headers:
-        trigger.body !== undefined ? { 'content-type': 'application/json', ...(trigger.headers ?? {}) } : trigger.headers,
+      headers: {
+        ...(trigger.body !== undefined ? { 'content-type': 'application/json' } : {}),
+        ...(trigger.headers ?? {}),
+        [CORRELATION_ID_HEADER]: correlationId,
+      },
       body: trigger.body !== undefined ? JSON.stringify(trigger.body) : undefined,
       signal: AbortSignal.timeout(timeoutMs),
     })
     // Draining the body confirms the real round trip completed; its content
     // never enters the record (only the status code is recorded).
     await response.text()
-    const reachedOperation = response.status !== 404
+    const echoedCorrelationId = response.headers.get(CORRELATION_ID_HEADER)
+    const observedOperation = response.headers.get(OBSERVED_OPERATION_HEADER)
+    const observedPathHeader = response.headers.get(OBSERVED_PATH_HEADER)
+    let observedPath: ConnectionVerificationRecord['observedPath'] | undefined
+    try {
+      observedPath = observedPathHeader ? JSON.parse(observedPathHeader) as ConnectionVerificationRecord['observedPath'] : undefined
+    } catch {
+      observedPath = undefined
+    }
+    const routeMatched = response.status !== 404
+    const correlationMatched = echoedCorrelationId === correlationId
+    const operationMatched = observedOperation === expectedOperationId
+    const pathMatched = Boolean(observedPath && JSON.stringify(observedPath) === JSON.stringify(expectedObservedPath))
+    const reachedOperation = routeMatched && correlationMatched && operationMatched && pathMatched
+    const reasonCodes = [
+      ...(!routeMatched ? ['route-not-matched'] : []),
+      ...(routeMatched && !correlationMatched ? ['correlation-not-observed'] : []),
+      ...(routeMatched && !operationMatched ? ['operation-not-observed'] : []),
+      ...(routeMatched && !pathMatched ? ['execution-path-not-observed'] : []),
+    ]
     return {
       ok: reachedOperation,
-      healthState: response.status < 500 ? 'healthy' : 'degraded',
-      outcomeSummary: `${trigger.method} ${trigger.path} -> HTTP ${response.status}`,
-      reasonCodes: reachedOperation ? [] : ['route-not-matched'],
+      healthState: reachedOperation && response.status < 500 ? 'healthy' : 'degraded',
+      outcomeSummary: `${trigger.method} ${trigger.path} -> HTTP ${response.status}; observed operation ${observedOperation ?? '(missing)'}`,
+      reasonCodes,
+      observedPathPatch: pathMatched ? observedPath : undefined,
     }
   } catch (error) {
     return {
@@ -262,7 +295,13 @@ async function sendHttpTrigger(port: number, trigger: HttpTrigger): Promise<Step
   }
 }
 
-async function runHttpVerification(launch: Launch, trigger: HttpTrigger): Promise<StepOutcome> {
+async function runHttpVerification(
+  launch: Launch,
+  trigger: HttpTrigger,
+  expectedOperationId: string,
+  correlationId: string,
+  expectedObservedPath: ConnectionVerificationRecord['observedPath'],
+): Promise<StepOutcome> {
   if (isInProcessLaunch(launch)) {
     let handle: InProcessLaunchResult | undefined
     try {
@@ -275,7 +314,7 @@ async function runHttpVerification(launch: Launch, trigger: HttpTrigger): Promis
           reasonCodes: ['launch-port-missing'],
         }
       }
-      return await sendHttpTrigger(handle.port, trigger)
+      return await sendHttpTrigger(handle.port, trigger, expectedOperationId, correlationId, expectedObservedPath)
     } finally {
       if (handle) await Promise.resolve(handle.close())
     }
@@ -286,8 +325,14 @@ async function runHttpVerification(launch: Launch, trigger: HttpTrigger): Promis
   const child = spawn(launch.command, launch.args ?? [], {
     cwd: launch.cwd,
     env: { ...process.env, ...launch.env, [portEnvVar]: String(port) },
-    stdio: 'ignore',
+    stdio: ['ignore', 'pipe', 'pipe'],
   })
+  let launchOutput = ''
+  const captureLaunchOutput = (chunk: Buffer) => {
+    if (launchOutput.length < 16_384) launchOutput += chunk.toString('utf8').slice(0, 16_384 - launchOutput.length)
+  }
+  child.stdout?.on('data', captureLaunchOutput)
+  child.stderr?.on('data', captureLaunchOutput)
   try {
     const spawnFailed = await new Promise<boolean>((resolve) => {
       child.once('error', () => resolve(true))
@@ -307,11 +352,13 @@ async function runHttpVerification(launch: Launch, trigger: HttpTrigger): Promis
       return {
         ok: false,
         healthState: 'unreachable',
-        outcomeSummary: `launched process never became ready on port ${port} within the readiness timeout`,
+        outcomeSummary: redactSensitiveText(
+          `launched process never became ready on port ${port} within the readiness timeout${launchOutput.trim() ? `: ${launchOutput.trim()}` : ''}`,
+        ),
         reasonCodes: ['launch-not-ready'],
       }
     }
-    return await sendHttpTrigger(port, trigger)
+    return await sendHttpTrigger(port, trigger, expectedOperationId, correlationId, expectedObservedPath)
   } finally {
     await killChild(child)
   }
@@ -377,10 +424,10 @@ async function runCliVerification(launch: Launch, trigger: CliTrigger): Promise<
   }
   const summary = redactSensitiveText(`${stdout}${stderr ? ` [stderr] ${stderr}` : ''}`).trim().slice(0, 200)
   return {
-    ok: true,
+    ok: exitResult.code === 0,
     healthState: exitResult.code === 0 ? 'healthy' : 'degraded',
     outcomeSummary: `exit code ${exitResult.code}${summary ? ` (output: ${summary})` : ''}`,
-    reasonCodes: [],
+    reasonCodes: exitResult.code === 0 ? [] : ['cli-nonzero-exit'],
   }
 }
 
@@ -458,7 +505,7 @@ export async function runConnectionVerification(
   let step: StepOutcome
   try {
     if (input.trigger.kind === 'http') {
-      step = await runHttpVerification(input.launch, input.trigger)
+      step = await runHttpVerification(input.launch, input.trigger, input.binding.operationId, correlationId, observedPathBase)
     } else if (input.trigger.kind === 'cli') {
       step = await runCliVerification(input.launch, input.trigger)
     } else {

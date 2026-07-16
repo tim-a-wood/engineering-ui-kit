@@ -23,6 +23,8 @@ from ..core.outcomes import AnyOutcome
 from .mapping import CORRELATION_HEADER, outcome_envelope, outcome_status_code
 
 ContextFactory = Callable[[str, Request], Context]
+OBSERVED_OPERATION_HEADER = "x-euik-observed-operation"
+OBSERVED_PATH_HEADER = "x-euik-observed-path"
 
 #: Endpoint signature FastAPI/Starlette will call for a registered route.
 Endpoint = Callable[[Request], Awaitable[JSONResponse]]
@@ -42,10 +44,17 @@ def outcome_to_response(
     correlation_id: str,
     *,
     success_status: int = 200,
+    operation_id: Optional[str] = None,
+    observed_path: Optional[Mapping[str, Any]] = None,
 ) -> JSONResponse:
     status_code = outcome_status_code(outcome, success_status=success_status)
     body = outcome_envelope(outcome)
-    return JSONResponse(status_code=status_code, content=body, headers={CORRELATION_HEADER: correlation_id})
+    headers = {CORRELATION_HEADER: correlation_id}
+    if operation_id:
+        headers[OBSERVED_OPERATION_HEADER] = operation_id
+    if observed_path:
+        headers[OBSERVED_PATH_HEADER] = json.dumps(dict(observed_path), separators=(",", ":"))
+    return JSONResponse(status_code=status_code, content=body, headers=headers)
 
 
 def _invalid_json_response(correlation_id: str) -> JSONResponse:
@@ -59,6 +68,8 @@ def create_operation_endpoint(
     *,
     context_factory: ContextFactory = default_context_factory,
     success_status: int = 200,
+    operation_id: Optional[str] = None,
+    observed_path: Optional[Mapping[str, Any]] = None,
 ) -> Endpoint:
     """Builds an ASGI endpoint function suitable for `app.add_api_route`.
 
@@ -79,7 +90,13 @@ def create_operation_endpoint(
             input_value = {}
         context = context_factory(correlation_id, request)
         outcome = dispatch(operation, input_value, context, input_schema=input_schema)
-        return outcome_to_response(outcome, correlation_id, success_status=success_status)
+        return outcome_to_response(
+            outcome,
+            correlation_id,
+            success_status=success_status,
+            operation_id=operation_id,
+            observed_path=observed_path,
+        )
 
     return endpoint
 
@@ -94,6 +111,8 @@ def add_operation_route(
     context_factory: ContextFactory = default_context_factory,
     success_status: int = 200,
     summary: Optional[str] = None,
+    operation_id: Optional[str] = None,
+    observed_path: Optional[Mapping[str, Any]] = None,
 ) -> None:
     """Registers `operation` at `path`/`method`, embedding `input_schema`
     verbatim in the generated OpenAPI document (`openapi_extra`) so the
@@ -106,6 +125,8 @@ def add_operation_route(
         input_schema,
         context_factory=context_factory,
         success_status=success_status,
+        operation_id=operation_id,
+        observed_path=observed_path,
     )
     app.router.add_api_route(
         path,

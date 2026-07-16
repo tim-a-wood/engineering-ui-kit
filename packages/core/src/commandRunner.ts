@@ -12,6 +12,7 @@ import fs from 'node:fs'
 import net from 'node:net'
 import path from 'node:path'
 import type { VerificationResult } from './types.js'
+import { redactSensitiveText } from './capabilities/redaction.js'
 
 export type RunCommandOptions = {
   runId: string
@@ -31,6 +32,13 @@ export async function runCommand(options: RunCommandOptions): Promise<Verificati
   let stdout = ''
   let stderr = ''
   let timedOut = false
+  const maxCapturedBytes = 1_048_576
+  const appendBounded = (current: string, chunk: Buffer): string => {
+    if (Buffer.byteLength(current, 'utf8') >= maxCapturedBytes) return current
+    const next = current + chunk.toString()
+    if (Buffer.byteLength(next, 'utf8') <= maxCapturedBytes) return next
+    return Buffer.from(next, 'utf8').subarray(0, maxCapturedBytes).toString('utf8') + '\n[output truncated]\n'
+  }
 
   const exitCode = await new Promise<number | null>((resolve) => {
     // Run the shell in its own process group (detached) so a timeout can kill the WHOLE tree.
@@ -62,8 +70,8 @@ export async function runCommand(options: RunCommandOptions): Promise<Verificati
       timedOut = true
       killTree('SIGKILL')
     }, timeoutMs)
-    child.stdout.on('data', (d: Buffer) => { stdout += d.toString() })
-    child.stderr.on('data', (d: Buffer) => { stderr += d.toString() })
+    child.stdout.on('data', (d: Buffer) => { stdout = appendBounded(stdout, d) })
+    child.stderr.on('data', (d: Buffer) => { stderr = appendBounded(stderr, d) })
     child.on('close', (code) => {
       clearTimeout(timer)
       resolve(code)
@@ -78,7 +86,7 @@ export async function runCommand(options: RunCommandOptions): Promise<Verificati
   const result: VerificationResult = {
     runId: options.runId,
     commandLabel: options.commandLabel,
-    commandText: options.commandText,
+    commandText: redactSensitiveText(options.commandText),
     workingDirectory: options.workingDirectory,
     startedAt,
     endedAt,
@@ -93,9 +101,11 @@ export async function runCommand(options: RunCommandOptions): Promise<Verificati
     const stdoutPath = path.join(options.outputDir, `${base}.stdout.log`)
     const stderrPath = path.join(options.outputDir, `${base}.stderr.log`)
     const combinedPath = path.join(options.outputDir, `${base}.combined.log`)
-    fs.writeFileSync(stdoutPath, stdout)
-    fs.writeFileSync(stderrPath, stderr)
-    fs.writeFileSync(combinedPath, stdout + (stderr ? `\n--- stderr ---\n${stderr}` : ''))
+    const safeStdout = redactSensitiveText(stdout)
+    const safeStderr = redactSensitiveText(stderr)
+    fs.writeFileSync(stdoutPath, safeStdout)
+    fs.writeFileSync(stderrPath, safeStderr)
+    fs.writeFileSync(combinedPath, safeStdout + (safeStderr ? `\n--- stderr ---\n${safeStderr}` : ''))
     result.stdoutPath = stdoutPath
     result.stderrPath = stderrPath
     result.combinedOutputPath = combinedPath

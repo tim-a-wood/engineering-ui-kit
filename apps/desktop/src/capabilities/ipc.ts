@@ -65,6 +65,7 @@ import {
 import type { Workspace } from '@engineering-ui-kit/core'
 import { createMatlabAdapter } from './matlabAdapter.js'
 import { discover as azureDiscover, importWorkItem as azureImportWorkItem } from './azureAdapter.js'
+import { ReferenceArchitectureOrchestrator } from './referenceArchitectureOrchestrator.js'
 
 const CAP_CHANNELS = {
   ensureInitialized: 'capabilities:ensure-initialized',
@@ -120,6 +121,14 @@ const CAP_CHANNELS = {
   getFoundation: 'capabilities:get-foundation',
   saveFoundationDraft: 'capabilities:save-foundation-draft',
   approveFoundation: 'capabilities:approve-foundation',
+  getIntegrationState: 'capabilities:get-integration-state',
+  previewGeneration: 'capabilities:preview-generation',
+  applyGeneration: 'capabilities:apply-generation',
+  rollbackGeneration: 'capabilities:rollback-generation',
+  runConnectionVerification: 'capabilities:run-connection-verification',
+  listConnectionVerifications: 'capabilities:list-connection-verifications',
+  saveCompositionConfiguration: 'capabilities:save-composition-configuration',
+  runIntegrationCommands: 'capabilities:run-integration-commands',
 } as const
 
 export type CapabilityBridgeChannels = typeof CAP_CHANNELS
@@ -398,6 +407,7 @@ function secretsDir(dataDir: string): string {
 export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: string): void {
   const caps = new CapabilityWorkspace(dataDir)
   const runs = new CapabilityRunStore(caps)
+  const integration = new ReferenceArchitectureOrchestrator(workspace, dataDir)
   // Real production MATLAB adapter (CAP-DEC-012). Falls back to a deterministic fake worker
   // only under EUIK_TEST_MODE=1 or genuine Engine unavailability; the real matlab.engine path
   // is present and reachable when the Engine exists. The renderer never receives an engine handle.
@@ -682,11 +692,15 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
       if (!project) throw new Error('project not found')
       const run = runs.getRun(input.projectId, input.runId)
       if (!run) throw new Error('capability run not found')
+      const generatedProtectedPaths = (caps.getApprovedFoundation(input.projectId)?.deployables ?? [])
+        .flatMap((deployable) => integration.integration.getLatestApplyRecord(input.projectId, deployable.deployableId)?.ownershipManifests ?? [])
+        .map((manifest) => manifest.filePath)
       const inspection = inspectOverlay(input.zipPath, {
         runId: input.runId,
         targetRoot: project.repoPath,
         expectedFiles: run.expectedPaths.length ? run.expectedPaths : undefined,
         capabilityAllowedPaths: run.allowedPaths,
+        protectedPaths: [...new Set([...run.protectedPaths, ...generatedProtectedPaths])],
       })
       const inspectionRef = runs.saveRunArtifact(
         input.projectId,
@@ -757,6 +771,12 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
         targetRoot: project.repoPath,
         expectedFiles: run.expectedPaths.length ? run.expectedPaths : undefined,
         capabilityAllowedPaths: run.allowedPaths,
+        protectedPaths: [...new Set([
+          ...run.protectedPaths,
+          ...(caps.getApprovedFoundation(input.projectId)?.deployables ?? [])
+            .flatMap((deployable) => integration.integration.getLatestApplyRecord(input.projectId, deployable.deployableId)?.ownershipManifests ?? [])
+            .map((manifest) => manifest.filePath),
+        ])],
       })
       const applied = applyOverlay(input.zipPath, currentInspection, {
         runId: input.runId,
@@ -1596,6 +1616,78 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
     caps.saveFoundationDraft(projectId, plan)
     return { ok: true as const }
   })
+
+  ipcMain.handle(CAP_CHANNELS.getIntegrationState, (_e, projectId: string) => {
+    requireString(projectId, 'projectId')
+    return integration.getState(projectId)
+  })
+
+  ipcMain.handle(CAP_CHANNELS.previewGeneration, (_e, input: { projectId: string; deployableId: string }) => {
+    const projectId = requireString(input.projectId, 'projectId')
+    const deployableId = requireString(input.deployableId, 'deployableId')
+    return integration.previewGeneration(projectId, deployableId)
+  })
+
+  ipcMain.handle(CAP_CHANNELS.applyGeneration, (_e, input: {
+    projectId: string; deployableId: string; planId: string; planHash: string
+    explicit: boolean; acceptDirtyWorktree?: boolean
+  }) => integration.applyGeneration({
+    projectId: requireString(input.projectId, 'projectId'),
+    deployableId: requireString(input.deployableId, 'deployableId'),
+    planId: requireString(input.planId, 'planId'),
+    planHash: requireString(input.planHash, 'planHash'),
+    explicit: input.explicit === true,
+    acceptDirtyWorktree: input.acceptDirtyWorktree === true,
+  }))
+
+  ipcMain.handle(CAP_CHANNELS.rollbackGeneration, (_e, input: {
+    projectId: string; deployableId: string; rollbackId: string; explicit: boolean
+  }) => integration.rollbackGeneration({
+    projectId: requireString(input.projectId, 'projectId'),
+    deployableId: requireString(input.deployableId, 'deployableId'),
+    rollbackId: requireString(input.rollbackId, 'rollbackId'),
+    explicit: input.explicit === true,
+  }))
+
+  ipcMain.handle(CAP_CHANNELS.runConnectionVerification, (_e, input: {
+    projectId: string; deployableId: string; bindingId: string; explicit: boolean
+  }) => integration.verifyConnection({
+    projectId: requireString(input.projectId, 'projectId'),
+    deployableId: requireString(input.deployableId, 'deployableId'),
+    bindingId: requireString(input.bindingId, 'bindingId'),
+    explicit: input.explicit === true,
+  }))
+
+  ipcMain.handle(CAP_CHANNELS.listConnectionVerifications, (_e, input: {
+    projectId: string; deployableId?: string
+  }) => integration.listConnectionVerifications(
+    requireString(input.projectId, 'projectId'),
+    input.deployableId ? requireString(input.deployableId, 'deployableId') : undefined,
+  ))
+
+  ipcMain.handle(CAP_CHANNELS.saveCompositionConfiguration, (_e, input: {
+    projectId: string; deployableId: string
+    targets: { contractId: string; implementationTarget: string }[]
+    explicit: boolean
+  }) => integration.saveCompositionConfiguration({
+    projectId: requireString(input.projectId, 'projectId'),
+    deployableId: requireString(input.deployableId, 'deployableId'),
+    targets: Array.isArray(input.targets) ? input.targets.map((target) => ({
+      contractId: requireString(target.contractId, 'contractId'),
+      implementationTarget: requireString(target.implementationTarget, 'implementationTarget'),
+    })) : [],
+    explicit: input.explicit === true,
+  }))
+
+  ipcMain.handle(CAP_CHANNELS.runIntegrationCommands, (_e, input: {
+    projectId: string; deployableId: string; planId: string; planHash: string; explicit: boolean
+  }) => integration.runIntegrationCommands({
+    projectId: requireString(input.projectId, 'projectId'),
+    deployableId: requireString(input.deployableId, 'deployableId'),
+    planId: requireString(input.planId, 'planId'),
+    planHash: requireString(input.planHash, 'planHash'),
+    explicit: input.explicit === true,
+  }))
 
   ipcMain.handle(CAP_CHANNELS.approveFoundation, (_e, projectId: string, plan: FoundationPlan) => {
     requireString(projectId, 'projectId')

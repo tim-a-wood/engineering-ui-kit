@@ -169,7 +169,7 @@ describe('CAP-TEST-104 react-python: generated HTTP boundary preservation', () =
 
     // Each deployable's generated output lives in its own namespace; the seam is never collapsed.
     for (const p of browserPaths) expect(p.startsWith(`src/generated/${browser.deployableId}/`)).toBe(true)
-    for (const p of httpApiPaths) expect(p.startsWith(`src/generated/${httpApi.deployableId}/`)).toBe(true)
+    for (const p of httpApiPaths) expect(p.startsWith(`src/generated/${httpApi.deployableId.replaceAll('-', '_')}/`)).toBe(true)
     expect(browserPaths.some((p) => httpApiPaths.includes(p))).toBe(false)
 
     // Every original fixture file (frontend/**, backend/**, legacy/**, root manifests) is byte-unchanged.
@@ -238,10 +238,12 @@ describe('CAP-TEST-104 react-python: incremental re-plan yields a minimal diff',
     expect(reconvergedHttpApi.plan.fileChanges).toEqual([])
     expect(reconvergedHttpApi.virtualFiles).toEqual([])
 
-    // Changing ONLY the http-api binding's own field regenerates ONLY that binding's own file.
+    // Changing only the HTTP route regenerates its adapter and the canonical
+    // OpenAPI description consumed by remote clients.
     const changedHttpApi = assembleGenerationPlan(httpApiInput('run-changed-http-api', '/adoption/run/v2'))
     expect(changedHttpApi.plan.fileChanges.map((c) => c.path)).toEqual([
-      `src/generated/${httpApi.deployableId}/inbound/binding.adoption.run.http.g.py`,
+      `src/generated/${httpApi.deployableId.replaceAll('-', '_')}/inbound/binding_adoption_run_http_g.py`,
+      `src/generated/${httpApi.deployableId.replaceAll('-', '_')}/openapi.g.json`,
     ])
     expect(changedHttpApi.plan.fileChanges[0]!.action).toBe('update')
     applyGenerationPlan({

@@ -35,7 +35,18 @@ class GreetOperation:
 
 def make_host() -> HttpOperationHost:
     host = HttpOperationHost()
-    host.add_operation("/greet", GreetOperation(), GREET_SCHEMA)
+    host.add_operation(
+        "/greet",
+        GreetOperation(),
+        GREET_SCHEMA,
+        operation_id="op.greet",
+        observed_path={
+            "inboundAdapter": "http:greet",
+            "compositionRoot": "composition_root.py",
+            "operation": "op.greet@1.0.0",
+            "outboundAdapters": [],
+        },
+    )
     return host
 
 
@@ -45,6 +56,8 @@ def test_real_request_reaches_the_operation_and_returns_success() -> None:
     response = client.post("/greet", json={"name": "ada"})
 
     assert response.status_code == 200
+    assert response.headers["x-euik-observed-operation"] == "op.greet"
+    assert "op.greet@1.0.0" in response.headers["x-euik-observed-path"]
     assert response.json() == {"kind": "success", "value": {"greeting": "hello, ada"}}
 
 

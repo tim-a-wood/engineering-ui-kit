@@ -58,6 +58,14 @@ const CANONICAL_CAP_METHODS = [
   'capabilitiesGetFoundation',
   'capabilitiesSaveFoundationDraft',
   'capabilitiesApproveFoundation',
+  'capabilitiesGetIntegrationState',
+  'capabilitiesPreviewGeneration',
+  'capabilitiesApplyGeneration',
+  'capabilitiesRollbackGeneration',
+  'capabilitiesRunConnectionVerification',
+  'capabilitiesListConnectionVerifications',
+  'capabilitiesSaveCompositionConfiguration',
+  'capabilitiesRunIntegrationCommands',
 ] as const
 
 describe('CAP-TEST-003 capabilities bridge surface', () => {

@@ -33,9 +33,102 @@ import {
   toSnakeCase,
   type PythonImportDeclarationInput,
 } from './python-emit.js'
-import type { HttpInboundBinding, InboundBinding, OperationContract } from '../types.js'
+import type { CompositionManifest, HttpInboundBinding, InboundBinding, OperationContract } from '../types.js'
+import { validateComposition, type CompositionValidationIssue } from './composition.js'
 
 export { DEFAULT_PYTHON_RUNTIME_PACKAGE_NAME, pythonModuleSpecifierFromPath }
+
+// ---------------------------------------------------------------------------
+// Python composition root
+// ---------------------------------------------------------------------------
+
+export type PythonCompositionRootInput = {
+  readonly manifest: CompositionManifest
+  readonly generatorVersion: string
+  readonly referenceProfileVersion: string
+  readonly filePath: string
+  readonly runtimePackageName?: string
+}
+
+export type PythonCompositionRootResult = {
+  readonly file: GeneratedVirtualFile
+  readonly issues: CompositionValidationIssue[]
+  readonly diagnostics: string[]
+}
+
+function pythonImplementationTarget(target: string, contractId: string): { moduleSpecifier: string; exportName: string } {
+  const hash = target.indexOf('#')
+  const modulePath = hash === -1 ? target : target.slice(0, hash)
+  const exportName = hash === -1 ? `create_${toSnakeCase(contractId)}` : target.slice(hash + 1)
+  return { moduleSpecifier: pythonModuleSpecifierFromPath(modulePath), exportName: sanitizePythonIdentifier(exportName) }
+}
+
+/** Deterministic Python counterpart to `planCompositionRootModule`. */
+export function planPythonCompositionRootModule(input: PythonCompositionRootInput): PythonCompositionRootResult {
+  const validation = validateComposition(input.manifest)
+  const registrations = sortByKey([...input.manifest.registrations], (registration) => registration.contractId)
+  const targets = new Map(registrations.map((registration) => [
+    registration.contractId,
+    pythonImplementationTarget(registration.implementationTarget, registration.contractId),
+  ]))
+  const imports: PythonImportDeclarationInput[] = [
+    { moduleSpecifier: `${input.runtimePackageName ?? DEFAULT_PYTHON_RUNTIME_PACKAGE_NAME}.core`, names: ['Container'] },
+  ]
+  for (const target of targets.values()) imports.push({ moduleSpecifier: target.moduleSpecifier, names: [target.exportName] })
+
+  const keyNames = new Map(registrations.map((registration) => [
+    registration.contractId,
+    `${toSnakeCase(registration.contractId).toUpperCase()}_KEY`,
+  ]))
+  const keyLines = registrations.map((registration) =>
+    `${keyNames.get(registration.contractId)} = ${JSON.stringify(registration.contractId)}`)
+  const registrationLines = registrations.flatMap((registration) => {
+    const target = targets.get(registration.contractId)!
+    const dependencies = uniqueSorted([...registration.dependencies])
+      .map((dependency) => `resolver.resolve(${keyNames.get(dependency) ?? JSON.stringify(dependency)})`)
+      .join(', ')
+    const method = registration.lifecycle === 'singleton'
+      ? 'register_singleton'
+      : registration.lifecycle === 'transient'
+        ? 'register_transient'
+        : 'register_request_job'
+    return [
+      `    # provider module: ${registration.providerModuleId}`,
+      `    container.${method}(`,
+      `        ${keyNames.get(registration.contractId)},`,
+      `        lambda resolver: ${target.exportName}(${dependencies}),`,
+      '    )',
+    ]
+  })
+  const routes = sortByKey([...input.manifest.operationRoutes], (route) =>
+    `${route.inboundBindingId} ${route.operationId} ${route.operationVersion}`)
+  const routeLines = [
+    'OPERATION_ROUTES = (',
+    ...routes.map((route) => `    (${JSON.stringify(route.inboundBindingId)}, ${JSON.stringify(route.operationId)}, ${JSON.stringify(route.operationVersion)}),`),
+    ')',
+  ]
+  const functionName = `build_${toSnakeCase(input.manifest.compositionId)}_container`
+  const body = [
+    ...keyLines,
+    '',
+    ...routeLines,
+    '',
+    `def ${functionName}() -> Container:`,
+    '    container = Container()',
+    ...registrationLines,
+    '    return container',
+  ]
+  const header = generatedPythonFileHeader({
+    generatorVersion: input.generatorVersion,
+    referenceProfileVersion: input.referenceProfileVersion,
+    sourceContractHashes: [input.manifest.compositionHash],
+  })
+  return {
+    file: { path: input.filePath, contents: renderVirtualFileBody([header, renderPythonImportBlock(imports), body.join('\n')]) },
+    issues: validation.issues,
+    diagnostics: [],
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Shared schema-node planning
@@ -301,6 +394,7 @@ export function planPythonProtocols(input: PythonProtocolsGenerationInput): Pyth
     const domainRejectionType = renderCodeLiteralType(operation.domainRejections, typingImports)
     const technicalErrorType = renderCodeLiteralType(operation.technicalErrors, typingImports)
     typingImports.add('Literal')
+    typingImports.add('Any')
     const codeLiteral = JSON.stringify(operation.operationId)
 
     return [
@@ -309,7 +403,7 @@ export function planPythonProtocols(input: PythonProtocolsGenerationInput): Pyth
       `${baseName}Success: TypeAlias = ${successTypeName}`,
       `${baseName}DomainRejectionCode: TypeAlias = ${domainRejectionType}`,
       `${baseName}TechnicalErrorCode: TypeAlias = ${technicalErrorType}`,
-      `${baseName}Outcome: TypeAlias = Union[Success[${baseName}Success], Rejected[${baseName}DomainRejectionCode], Failed, Cancelled, TimedOut]`,
+      `${baseName}Outcome: TypeAlias = Union[Success[${baseName}Success], Rejected[Any], Failed, Cancelled, TimedOut]`,
       `class ${baseName}Operation(Protocol):`,
       `    code: Literal[${codeLiteral}]`,
       '',
@@ -364,6 +458,14 @@ export type PythonInboundAdapterGenerationInput = {
   readonly operationExportName?: string
   readonly runtimePackageName?: string
   readonly operationTypes?: PythonInboundOperationTypeNames
+  /** Runtime evidence metadata emitted only after this generated route dispatches. */
+  readonly observedPath?: {
+    readonly inboundAdapter: string
+    readonly compositionRoot: string
+    readonly operation: string
+    readonly outboundAdapters: readonly string[]
+    readonly workflow?: string
+  }
 }
 
 export type PythonInboundAdapterGenerationResult = {
@@ -447,6 +549,8 @@ function planHttpAdapter(input: PythonInboundAdapterGenerationInput, binding: Ex
     '        operation=operation,',
     `        input_schema=${inputSchemaExpr},`,
     `        method=${JSON.stringify(binding.method)},`,
+    `        operation_id=${JSON.stringify(binding.operationId)},`,
+    ...(input.observedPath ? [`        observed_path=${JSON.stringify(input.observedPath)},`] : []),
     '    )',
   ].join('\n')
 

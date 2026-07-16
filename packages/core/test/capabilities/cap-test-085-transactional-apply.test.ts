@@ -96,6 +96,33 @@ afterEach(() => {
 const FIXED_NOW = () => new Date('2026-07-15T00:00:00.000Z')
 
 describe('CAP-TEST-085 transactional generation apply', () => {
+  it('refuses blockers and unresolved ambiguity before touching the repository', () => {
+    const root = repo()
+    writeFile(root, 'existing.txt', 'original\n')
+    const blocked = makePlan(
+      [{
+        path: 'existing.txt',
+        action: 'update',
+        ownership: 'generated',
+        reason: 'must never land',
+        preimageHash: contentHash('original\n'),
+        postimageHash: contentHash('changed\n'),
+      }],
+      {
+        blockers: ['composition target is unresolved'],
+        ambiguityQuestions: [{ id: 'target', question: 'Which implementation target?', choices: ['a', 'b'] }],
+      },
+    )
+
+    expect(() => applyGenerationPlan({
+      plan: blocked,
+      targetRoot: root,
+      virtualFiles: [{ path: 'existing.txt', contents: 'changed\n' }],
+      runId: 'blocked-plan',
+    })).toThrow(/PLAN-BLOCKER.*PLAN-AMBIGUITY/s)
+    expect(readFile(root, 'existing.txt')).toBe('original\n')
+  })
+
   it('applies create + update + delete and verifies postimages', () => {
     const root = repo()
     writeFile(root, 'src/existing.ts', 'export const original = 1\n')

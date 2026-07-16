@@ -61,6 +61,19 @@ def test_request_job_requires_an_active_scope() -> None:
         raise AssertionError("resolving request-job without a scope must raise")
 
 
+def test_request_job_factory_resolves_request_job_dependencies_from_the_same_scope() -> None:
+    container = Container()
+    container.register_request_job("dependency", lambda resolver: Widget("dependency"))
+    container.register_request_job(
+        "service",
+        lambda resolver: (Widget("service"), resolver.resolve("dependency")),
+    )
+
+    with container.create_scope() as scope:
+        service, dependency = scope.resolve("service")
+        assert dependency is scope.resolve("dependency")
+
+
 def test_scope_disposes_its_instances_in_reverse_creation_order() -> None:
     container = Container()
     disposed_order: list[str] = []

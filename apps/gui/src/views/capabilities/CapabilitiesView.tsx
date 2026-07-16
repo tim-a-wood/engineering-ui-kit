@@ -20,6 +20,7 @@ import type {
   ModuleManifest,
   Project,
   SelectionEvidence,
+  CapabilityIntegrationState,
 } from '@engineering-ui-kit/core'
 import type { CapabilityDeployableSummary, EuikBridge, InboundBindingReadRecord, TaskPacketFields } from '../../bridge'
 import { EmptyState, PageHeader } from '../../components'
@@ -28,17 +29,17 @@ import type { GuideTopicId } from '../../guides'
 import { ApplicationDefinition } from './ApplicationDefinition'
 import { ArchitectureInterview } from './ArchitectureInterview'
 import { ArchitectureView } from './ArchitectureView'
-import { BindingEditor } from './BindingEditor'
 import { CapabilityJourney } from './CapabilityJourney'
-import { CapabilityPreview, type CapabilityPreviewHandle } from './CapabilityPreview'
+import type { CapabilityPreviewHandle } from './CapabilityPreview'
 import { GuidedConnect } from './GuidedConnect'
 import { GuidedBuild } from './GuidedBuild'
 import { DeltaQueue } from './DeltaQueue'
 import { ModulesView } from './ModulesView'
 import { ImpactQueue } from './ImpactQueue'
 import { NeedsAttention } from './NeedsAttention'
-import { PreviewBindingPicker } from './PreviewBindingPicker'
 import { VerificationPanel } from './VerificationPanel'
+import { IntegrationWorkspace } from './IntegrationWorkspace'
+import { ConnectionVerificationPanel } from './ConnectionVerificationPanel'
 import {
   deriveJourney,
   stageById,
@@ -109,6 +110,7 @@ export function CapabilitiesView({
   const [deployables, setDeployables] = useState<CapabilityDeployableSummary[]>([])
   const [inboundBindingRecords, setInboundBindingRecords] = useState<InboundBindingReadRecord[]>([])
   const [foundation, setFoundation] = useState<{ draft?: FoundationPlan; approved?: FoundationPlan }>({})
+  const [integrationState, setIntegrationState] = useState<CapabilityIntegrationState>({ schemaVersion: '1.0', projectId: '', deployables: [], updatedAt: '' })
   const [selectionEvidence, setSelectionEvidence] = useState<SelectionEvidence | undefined>()
   const [viewing, setViewing] = useState<StageId>('define')
   const [designSection, setDesignSection] = useState<DesignSection>('application')
@@ -137,8 +139,9 @@ export function CapabilitiesView({
       deployables,
       inboundBindings: inboundBindingProjections,
       connectDisposition: selectedProject?.capabilitiesConnectDisposition,
+      integration: integrationState,
     }),
-    [application, architecture, moduleRecords, bindingRecords, deployables, inboundBindingProjections, selectedProject?.capabilitiesConnectDisposition],
+    [application, architecture, moduleRecords, bindingRecords, deployables, inboundBindingProjections, selectedProject?.capabilitiesConnectDisposition, integrationState],
   )
   const journey = useMemo(() => deriveJourney(journeyInput), [journeyInput])
   const effectiveAttentionItems = useMemo(() => {
@@ -155,7 +158,7 @@ export function CapabilitiesView({
 
   const fetchWorkspace = useCallback(
     async (id: string) => {
-      const [app, arch, attention, modules, bindings, deployableList, inboundBindings, foundationResult] = await Promise.all([
+      const [app, arch, attention, modules, bindings, deployableList, inboundBindings, foundationResult, integration] = await Promise.all([
         bridge.capabilitiesGetApplication(id),
         bridge.capabilitiesGetArchitecture(id),
         bridge.capabilitiesListNeedsAttention(id),
@@ -164,8 +167,9 @@ export function CapabilitiesView({
         bridge.capabilitiesListDeployables(id),
         bridge.capabilitiesListInboundBindings(id),
         bridge.capabilitiesGetFoundation(id),
+        bridge.capabilitiesGetIntegrationState(id),
       ])
-      return { application: app, architecture: arch, attention, modules, bindings, deployableList, inboundBindings, foundation: foundationResult }
+      return { application: app, architecture: arch, attention, modules, bindings, deployableList, inboundBindings, foundation: foundationResult, integration }
     },
     [bridge],
   )
@@ -179,6 +183,7 @@ export function CapabilitiesView({
     setDeployables([])
     setInboundBindingRecords([])
     setFoundation({})
+    setIntegrationState({ schemaVersion: '1.0', projectId: '', deployables: [], updatedAt: '' })
     setSelectionEvidence(undefined)
     setGuidedPanel('journey')
   }
@@ -203,6 +208,7 @@ export function CapabilitiesView({
         setDeployables(d.deployableList)
         setInboundBindingRecords(d.inboundBindings)
         setFoundation(d.foundation)
+        setIntegrationState(d.integration)
         const project = projects.find((candidate) => candidate.id === id)
         const derived = deriveJourney({
           application: d.application,
@@ -212,6 +218,7 @@ export function CapabilitiesView({
           deployables: d.deployableList,
           inboundBindings: projectInboundBindings(d.inboundBindings),
           connectDisposition: project?.capabilitiesConnectDisposition,
+          integration: d.integration,
         })
         setViewing(derived.firstIncompleteStageId)
         setDesignSection(stageToDesignSection(derived.firstIncompleteStageId))
@@ -263,6 +270,7 @@ export function CapabilitiesView({
     setDeployables(d.deployableList)
     setInboundBindingRecords(d.inboundBindings)
     setFoundation(d.foundation)
+    setIntegrationState(d.integration)
   }, [projectId, fetchWorkspace])
 
   const architectureProjection = useMemo(() => {
@@ -455,8 +463,8 @@ export function CapabilitiesView({
           archSpec={archSpec}
           selectionEvidence={selectionEvidence}
           bindingRecords={bindingRecords}
-          deployables={deployables}
           inboundBindingRecords={inboundBindingRecords}
+          deployables={deployables}
           previewRef={previewRef}
           stageHeadingRef={stageHeadingRef}
           onView={viewStage}
@@ -468,6 +476,7 @@ export function CapabilitiesView({
           onStartUiBuild={onStartUiBuild}
           approvedFoundation={foundation.approved}
           foundationGate={foundationGate}
+          integrationState={integrationState}
         />
       ) : (
         <DesignBody
@@ -485,10 +494,14 @@ export function CapabilitiesView({
           architecture={architecture}
           selectionEvidence={selectionEvidence}
           bindingRecords={bindingRecords}
+          inboundBindingRecords={inboundBindingRecords}
+          deployables={deployables}
           previewRef={previewRef}
           onChanged={refresh}
+          onProjectsChanged={onProjectsChanged}
           approvedFoundation={foundation.approved}
           foundationGate={foundationGate}
+          integrationState={integrationState}
           onSelectionEvidence={setSelectionEvidence}
         />
       )}
@@ -524,6 +537,7 @@ export function GuidedBody(props: {
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
   approvedFoundation?: FoundationPlan
   foundationGate?: { enabled: boolean; reason?: string }
+  integrationState: CapabilityIntegrationState
 }) {
   const stage = stageById(props.journey, props.viewing)
   const stageLabel = stage.label
@@ -640,6 +654,7 @@ function GuidedStage(props: {
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
   approvedFoundation?: FoundationPlan
   foundationGate?: { enabled: boolean; reason?: string }
+  integrationState: CapabilityIntegrationState
 }) {
   const { bridge, projectId, stage } = props
 
@@ -691,6 +706,7 @@ function GuidedStage(props: {
           onStartUiBuild={props.onStartUiBuild}
           approvedFoundation={props.approvedFoundation}
           foundationGate={props.foundationGate}
+          integrationState={props.integrationState}
         />
       )
     case 'connect':
@@ -721,32 +737,45 @@ function GuidedStage(props: {
         )
       }
       return (
-        <GuidedConnect
-          key={projectId}
-          bridge={bridge}
-          projectId={projectId}
-          project={props.project}
-          records={props.moduleRecords}
-          deployables={props.deployables}
-          inboundBindingRecords={props.inboundBindingRecords}
-          selectionEvidence={props.selectionEvidence}
-          onSelectionEvidence={props.onSelectionEvidence}
-          architectureVersion={props.archSpec?.revision}
-          architectureHash={props.archSpec?.contentHash}
-          previewRef={props.previewRef}
-          onChanged={props.onChanged}
-          onProjectChanged={props.onProjectsChanged}
-        />
+        <>
+          <GuidedConnect
+            key={projectId}
+            bridge={bridge}
+            projectId={projectId}
+            project={props.project}
+            records={props.moduleRecords}
+            deployables={props.deployables}
+            inboundBindingRecords={props.inboundBindingRecords}
+            selectionEvidence={props.selectionEvidence}
+            onSelectionEvidence={props.onSelectionEvidence}
+            architectureVersion={props.archSpec?.revision}
+            architectureHash={props.archSpec?.contentHash}
+            previewRef={props.previewRef}
+            onChanged={props.onChanged}
+            onProjectChanged={props.onProjectsChanged}
+          />
+          <IntegrationWorkspace
+            bridge={bridge}
+            projectId={projectId}
+            state={props.integrationState}
+            projection="guided"
+            onChanged={props.onChanged}
+          />
+        </>
       )
     case 'verify':
       return (
-        <VerificationPanel
-          bridge={bridge}
-          projectId={projectId}
-          projection="guided"
-          records={props.moduleRecords}
-          onVerified={props.onChanged}
-        />
+        <>
+          <ConnectionVerificationPanel
+            bridge={bridge}
+            projectId={projectId}
+            bindings={props.inboundBindingRecords}
+            integrationState={props.integrationState}
+            projection="guided"
+            onChanged={props.onChanged}
+          />
+          <VerificationPanel bridge={bridge} projectId={projectId} projection="guided" records={props.moduleRecords} onVerified={props.onChanged} />
+        </>
       )
   }
 }
@@ -783,11 +812,15 @@ export function DesignBody(props: {
   architecture: { draft?: unknown; approved?: unknown }
   selectionEvidence: SelectionEvidence | undefined
   bindingRecords: CapabilityBindingRecord[]
+  inboundBindingRecords: InboundBindingReadRecord[]
+  deployables: CapabilityDeployableSummary[]
   previewRef: React.RefObject<CapabilityPreviewHandle | null>
   onChanged: () => void
+  onProjectsChanged?: () => Promise<void> | void
   onSelectionEvidence: (e: SelectionEvidence | undefined) => void
   approvedFoundation?: FoundationPlan
   foundationGate?: { enabled: boolean; reason?: string }
+  integrationState: CapabilityIntegrationState
 }) {
   const { bridge, projectId } = props
   return (
@@ -830,52 +863,53 @@ export function DesignBody(props: {
           </>
         )}
         {props.section === 'modules' && (
-          <ModulesView
-            bridge={bridge}
-            projectId={projectId}
-            architectureApproved={Boolean(props.architecture.approved)}
-            projection="design"
-            records={props.moduleRecords}
-            onChanged={async () => props.onChanged()}
-            onOpenArchitecture={() => props.onSection('architecture')}
-            approvedFoundation={props.approvedFoundation}
-            foundationGate={props.foundationGate}
-          />
+          <>
+            <IntegrationWorkspace bridge={bridge} projectId={projectId} state={props.integrationState} projection="design" onChanged={props.onChanged} />
+            <ModulesView
+              bridge={bridge}
+              projectId={projectId}
+              architectureApproved={Boolean(props.architecture.approved)}
+              projection="design"
+              records={props.moduleRecords}
+              onChanged={async () => props.onChanged()}
+              onOpenArchitecture={() => props.onSection('architecture')}
+              approvedFoundation={props.approvedFoundation}
+              foundationGate={props.foundationGate}
+            />
+          </>
         )}
         {props.section === 'connections' && (
           <div className="capabilities-connections">
-            <CapabilityPreview ref={props.previewRef} bridge={bridge} projectId={projectId} project={props.project} />
-            <PreviewBindingPicker
-              disabled={!projectId}
-              pickFromPreview={() =>
-                props.previewRef.current?.pickElement() ??
-                Promise.reject(new Error('Start Preview before selecting an element.'))
-              }
-              onEvidenceReady={props.onSelectionEvidence}
-              onCancel={() => props.onSelectionEvidence(undefined)}
-            />
-            <BindingEditor
+            <GuidedConnect
               bridge={bridge}
               projectId={projectId}
-              projection="design"
+              project={props.project}
+              records={props.moduleRecords}
+              deployables={props.deployables}
+              inboundBindingRecords={props.inboundBindingRecords}
               selectionEvidence={props.selectionEvidence}
+              onSelectionEvidence={props.onSelectionEvidence}
               architectureVersion={props.archSpec?.revision}
               architectureHash={props.archSpec?.contentHash}
-              records={props.moduleRecords}
-              initialBinding={props.bindingRecords[0]?.draft ?? props.bindingRecords[0]?.approved}
+              previewRef={props.previewRef}
               onChanged={props.onChanged}
+              onProjectChanged={props.onProjectsChanged}
             />
+            <IntegrationWorkspace bridge={bridge} projectId={projectId} state={props.integrationState} projection="design" onChanged={props.onChanged} />
           </div>
         )}
         {props.section === 'verification' && (
-          <VerificationPanel
-            bridge={bridge}
-            projectId={projectId}
-            projection="design"
-            records={props.moduleRecords}
-            onVerified={props.onChanged}
-            onOpenModules={() => props.onSection('modules')}
-          />
+          <>
+            <ConnectionVerificationPanel
+              bridge={bridge}
+              projectId={projectId}
+              bindings={props.inboundBindingRecords}
+              integrationState={props.integrationState}
+              projection="design"
+              onChanged={props.onChanged}
+            />
+            <VerificationPanel bridge={bridge} projectId={projectId} projection="design" records={props.moduleRecords} onVerified={props.onChanged} onOpenModules={() => props.onSection('modules')} />
+          </>
         )}
       </section>
     </div>

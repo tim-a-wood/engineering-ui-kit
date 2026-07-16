@@ -12,6 +12,7 @@
 
 import type {
   ArchitectureSpecification,
+  CapabilityIntegrationState,
   CapabilityBindingRecord,
   CapabilityModuleRecord,
   DeployableKind,
@@ -97,6 +98,12 @@ export type JourneyInput = {
    * inbound entry point (§5.4/§12.4).
    */
   connectDisposition?: 'connect-now' | 'no-ui' | 'deferred'
+  /**
+   * Persisted production generation/apply/verification lifecycle. When this
+   * is supplied, approved interviews alone cannot complete Build and approved
+   * bindings alone cannot complete Connect/Verify.
+   */
+  integration?: CapabilityIntegrationState
 }
 
 export type Journey = {
@@ -160,7 +167,29 @@ export function deriveJourney(input: JourneyInput): Journey {
   const buildTotal = allocatedModuleIds.length
   const buildDone = allocatedModuleIds.filter((id) => approvedById.has(id)).length
   const buildHasModules = buildTotal > 0
-  const buildComplete = buildHasModules && buildDone === buildTotal
+  const modulesApproved = buildHasModules && buildDone === buildTotal
+  const integrationDeployables = input.integration?.deployables ?? []
+  const hasProductionIntegration = input.integration !== undefined
+  const currentGenerationApplied = !hasProductionIntegration || (
+    integrationDeployables.length > 0
+    && integrationDeployables.every((item) => Boolean(
+      item.currentPlan
+      && item.latestApply?.status === 'applied'
+      && item.latestApply.planId === item.currentPlan.planId
+      && item.latestApply.planHash === item.currentPlan.planHash
+      && item.status === 'applied',
+    ))
+  )
+  const currentCommandsPassed = !hasProductionIntegration || (
+    integrationDeployables.length > 0
+    && integrationDeployables.every((item) => Boolean(
+      item.currentPlan
+      && item.latestCommandRun?.status === 'passed'
+      && item.latestCommandRun.planId === item.currentPlan.planId
+      && item.latestCommandRun.planHash === item.currentPlan.planHash,
+    ))
+  )
+  const buildComplete = modulesApproved && currentGenerationApplied && currentCommandsPassed
 
   // ---- Connect applicability (CAP-ERA-001 §5.1/§5.4/§12.4) ----
   // Driven by deployable entry points, not by UI module types: a deployable is
@@ -186,18 +215,29 @@ export function deriveJourney(input: JourneyInput): Journey {
   // and can never be silently marked complete (§5.4/CAP-TEST-079).
   const connectDeferred = input.connectDisposition === 'deferred'
   const connectUnlocked = buildComplete && hasApprovedOperation
-  const connectComplete = connectUnlocked && (!requiresConnect || (entryPoints.allRequiredSatisfied && !connectDeferred))
+  const connectComplete = connectUnlocked && currentGenerationApplied
+    && (!requiresConnect || (entryPoints.allRequiredSatisfied && !connectDeferred))
 
   // ---- Verify ----
-  const verifyReady = approved.filter((m) => {
-    const rec = input.modules.find((r) => r.moduleId === m.moduleId)
-    return rec?.freshness?.primaryState === 'ready'
-  }).length
-  const verifyTotal = approved.length
+  const requiredBindings = inboundBindings.filter((binding) => binding.approved)
+  const passingBindingIds = new Set(
+    integrationDeployables.flatMap((item) => item.connectionVerifications
+      .filter((record) => item.currentConnectionVerificationIds.includes(record.verificationId)))
+      .filter((record) => record.verificationStatus === 'pass' && !record.usedTestAdapter)
+      .map((record) => record.bindingId),
+  )
+  const verifyReady = hasProductionIntegration
+    ? requiredBindings.filter((binding) => passingBindingIds.has(binding.bindingId)).length
+    : approved.filter((m) => {
+        const rec = input.modules.find((r) => r.moduleId === m.moduleId)
+        return rec?.freshness?.primaryState === 'ready'
+      }).length
+  const verifyTotal = hasProductionIntegration ? requiredBindings.length : approved.length
   // connectComplete is true when Connect is satisfied OR not-applicable (both imply Build
   // complete + an approved operation). A locked Connect leaves Verify locked too.
   const verifyUnlocked = connectComplete
-  const verifyComplete = verifyUnlocked && verifyTotal > 0 && verifyReady === verifyTotal
+  const verifyComplete = verifyUnlocked
+    && (verifyTotal > 0 ? verifyReady === verifyTotal : hasProductionIntegration && currentGenerationApplied)
 
   const stages: JourneyStage[] = []
 
@@ -248,11 +288,22 @@ export function deriveJourney(input: JourneyInput): Journey {
       ? 'Approve Design first.'
       : !buildHasModules
         ? 'The architecture allocates no modules.'
-        : buildComplete
-          ? `All ${buildTotal} modules approved.`
-          : `${buildDone} of ${buildTotal} approved.`,
+        : !modulesApproved
+          ? `${buildDone} of ${buildTotal} approved.`
+          : buildComplete
+            ? hasProductionIntegration
+              ? `All ${buildTotal} modules approved and deployable infrastructure built and tested.`
+              : `All ${buildTotal} modules approved.`
+            : integrationDeployables.length === 0
+              ? 'Approve the deployable foundation before generating infrastructure.'
+              : currentGenerationApplied
+                ? 'Run the approved install, build, and test commands.'
+                : 'Generate and apply the deployable infrastructure.',
     prerequisiteReason: !archApproved ? 'Requires an approved solution design.' : undefined,
-    progress: archApproved && buildHasModules ? { done: buildDone, total: buildTotal } : undefined,
+    progress: archApproved && buildHasModules ? {
+      done: buildDone + (hasProductionIntegration && currentGenerationApplied && currentCommandsPassed ? 1 : 0),
+      total: buildTotal + (hasProductionIntegration ? 1 : 0),
+    } : undefined,
     helpTopic: STAGE_HELP.build,
     nextStageId: 'connect',
     satisfied: buildComplete,

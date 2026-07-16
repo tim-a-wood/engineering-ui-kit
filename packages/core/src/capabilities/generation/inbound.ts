@@ -56,6 +56,14 @@ export type InboundAdapterGenerationInput = {
   readonly operationExportName?: string
   readonly runtimePackageName?: string
   readonly operationTypes?: InboundOperationTypeNames
+  /** Runtime evidence metadata emitted only after this generated route dispatches. */
+  readonly observedPath?: {
+    readonly inboundAdapter: string
+    readonly compositionRoot: string
+    readonly operation: string
+    readonly outboundAdapters: readonly string[]
+    readonly workflow?: string
+  }
 }
 
 export type InboundAdapterGenerationResult = {
@@ -139,6 +147,7 @@ function planHttpAdapter(input: InboundAdapterGenerationInput, binding: Extract<
     `  method: ${JSON.stringify(binding.method)},`,
     `  path: ${JSON.stringify(binding.path)},`,
     '  operation,',
+    ...(input.observedPath ? [`  observedPath: ${JSON.stringify(input.observedPath)},`] : []),
     '}',
   ].join('\n')
 

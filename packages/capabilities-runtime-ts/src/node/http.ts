@@ -32,7 +32,18 @@ export interface HttpRoute {
   readonly method: string
   readonly path: string
   readonly operation: Operation<unknown, unknown, unknown, unknown>
+  readonly observedPath?: {
+    readonly inboundAdapter: string
+    readonly compositionRoot: string
+    readonly operation: string
+    readonly outboundAdapters: readonly string[]
+    readonly workflow?: string
+  }
 }
+
+/** Evidence header emitted only after a matched route dispatches its operation. */
+export const OBSERVED_OPERATION_HEADER = 'x-euik-observed-operation'
+export const OBSERVED_PATH_HEADER = 'x-euik-observed-path'
 
 export interface NodeHttpHostOptions {
   readonly routes: ReadonlyArray<HttpRoute>
@@ -201,6 +212,8 @@ export function createNodeHttpHost(options: NodeHttpHostOptions): NodeHttpHost {
           tracer,
         })
         const outcome = await dispatch(route.operation, input, context)
+        response.setHeader(OBSERVED_OPERATION_HEADER, route.operation.code)
+        if (route.observedPath) response.setHeader(OBSERVED_PATH_HEADER, JSON.stringify(route.observedPath))
         const { status, body } = outcomeToResponse(outcome)
         if (!response.writableEnded) writeJson(response, status, body)
       } catch (error) {

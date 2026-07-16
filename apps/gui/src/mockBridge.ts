@@ -23,6 +23,10 @@ import type {
   Project,
   Settings,
   VerificationResult,
+  CapabilityIntegrationState,
+  GenerationApplyRecord,
+  GenerationPlan,
+  ConnectionVerificationRecord,
 } from '@engineering-ui-kit/core'
 import {
   buildNeedsAttention,
@@ -56,6 +60,9 @@ type CapProjectState = {
   /** WP5A — the project's single foundation-planning draft/approved record (CAP-TEST-074/075). */
   foundationDraft?: FoundationPlan
   foundationApproved?: FoundationPlan
+  generationPlans: Map<string, GenerationPlan>
+  generationApplies: Map<string, GenerationApplyRecord>
+  connectionVerifications: Map<string, ConnectionVerificationRecord>
 }
 
 /* 4x3 placeholder PNGs (blue-ish before, teal-ish after) for evidence mocks. */
@@ -104,6 +111,9 @@ export function installMockBridge(): EuikBridge {
         deployables: new Map(),
         inboundBindingDrafts: new Map(),
         inboundBindingApproved: new Map(),
+        generationPlans: new Map(),
+        generationApplies: new Map(),
+        connectionVerifications: new Map(),
       }
       capByProject.set(projectId, state)
     }
@@ -538,6 +548,72 @@ export function installMockBridge(): EuikBridge {
       state.foundationApproved = plan
       state.foundationDraft = undefined
       return { ok: true, approved: plan }
+    },
+    async capabilitiesGetIntegrationState(projectId) {
+      const state = ensureCap(projectId)
+      const deployables = [...ensureDeployables(projectId).values()].map((deployable) => {
+        const currentPlan = state.generationPlans.get(deployable.deployableId)
+        const latestApply = state.generationApplies.get(deployable.deployableId)
+        return {
+          deployableId: deployable.deployableId,
+          status: latestApply?.status ?? (currentPlan ? (currentPlan.blockers.length ? 'blocked' : 'plan-ready') : 'ready-to-generate'),
+          attention: currentPlan ? [] : ['Generate and review the reference-architecture plan.'],
+          currentPlan,
+          latestApply,
+          connectionVerifications: [...state.connectionVerifications.values()].filter((record) => record.deployableId === deployable.deployableId),
+          currentConnectionVerificationIds: [],
+        }
+      }) satisfies CapabilityIntegrationState['deployables']
+      return { schemaVersion: '1.0', projectId, deployables, updatedAt: now() }
+    },
+    async capabilitiesPreviewGeneration(input) {
+      const state = ensureCap(input.projectId)
+      const plan: GenerationPlan = {
+        schemaVersion: '1.0', planId: `mock-plan-${input.deployableId}`, projectId: input.projectId,
+        inputRecords: [], generatorVersion: '1.0.0', referenceProfileVersion: '1.0.0',
+        targetRepository: { root: '.', cleanState: 'clean' }, dependencyChanges: [], fileChanges: [], commands: [],
+        warnings: [], blockers: ['Browser mock cannot produce filesystem-backed generation artifacts. Open the desktop app.'],
+        ambiguityQuestions: [], rollbackStrategy: 'staged-rename-with-journal', planHash: `mock-${input.deployableId}`,
+      }
+      state.generationPlans.set(input.deployableId, plan)
+      return { plan, status: 'blocked' as const }
+    },
+    async capabilitiesApplyGeneration(input) {
+      if (!input.explicit) throw new Error('generation apply requires explicit user action')
+      const state = ensureCap(input.projectId)
+      const plan = state.generationPlans.get(input.deployableId)
+      if (!plan || plan.planId !== input.planId || plan.planHash !== input.planHash) throw new Error('generation plan mismatch')
+      if (plan.blockers.length) throw new Error(`generation apply refused: ${plan.blockers.join(' ')}`)
+      const record: GenerationApplyRecord = {
+        schemaVersion: '1.0', projectId: input.projectId, deployableId: input.deployableId,
+        planId: plan.planId, planHash: plan.planHash, applyRunId: `mock-apply-${input.deployableId}`,
+        status: 'applied', rollbackId: `mock-apply-${input.deployableId}`,
+        ownershipManifests: [], commands: [], startedAt: now(), completedAt: now(),
+      }
+      state.generationApplies.set(input.deployableId, record)
+      return record
+    },
+    async capabilitiesRollbackGeneration(input) {
+      if (!input.explicit) throw new Error('generation rollback requires explicit user action')
+      const state = ensureCap(input.projectId)
+      const current = state.generationApplies.get(input.deployableId)
+      if (!current || current.rollbackId !== input.rollbackId) throw new Error('rollback mismatch')
+      const record: GenerationApplyRecord = { ...current, status: 'rolled-back', ownershipManifests: [], completedAt: now() }
+      state.generationApplies.set(input.deployableId, record)
+      return record
+    },
+    async capabilitiesRunConnectionVerification() {
+      throw new Error('Real connection verification requires the desktop app so it can launch and clean up the generated target.')
+    },
+    async capabilitiesListConnectionVerifications(input) {
+      return [...ensureCap(input.projectId).connectionVerifications.values()]
+        .filter((record) => !input.deployableId || record.deployableId === input.deployableId)
+    },
+    async capabilitiesSaveCompositionConfiguration() {
+      throw new Error('Composition configuration is persisted by the desktop app against the real project workspace.')
+    },
+    async capabilitiesRunIntegrationCommands() {
+      throw new Error('Install, build, and test commands require the desktop app and a real project repository.')
     },
     async capabilitiesSaveModuleDraft(projectId, draft, interviewResponse) {
       const manifest = draft as ModuleManifest

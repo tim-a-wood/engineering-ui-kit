@@ -6,11 +6,12 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import type { ArchitectureSpecification, CapabilityModuleRecord, FoundationPlan } from '@engineering-ui-kit/core'
+import type { ArchitectureSpecification, CapabilityIntegrationState, CapabilityModuleRecord, FoundationPlan } from '@engineering-ui-kit/core'
 import type { EuikBridge, TaskPacketFields } from '../../bridge'
 import { Icon } from '../../icons'
 import { ModulesView } from './ModulesView'
 import { humanizeIdentifier, moduleTypeLabel } from './capabilityPresentation'
+import { IntegrationWorkspace } from './IntegrationWorkspace'
 
 type Props = {
   bridge: EuikBridge
@@ -22,6 +23,7 @@ type Props = {
   /** WP5A bullet (d)/(e) — the project's approved foundation plan and the build-handoff gate derived from it. */
   approvedFoundation?: FoundationPlan
   foundationGate?: { enabled: boolean; reason?: string }
+  integrationState: CapabilityIntegrationState
 }
 
 export function GuidedBuild(props: Props) {
@@ -60,7 +62,9 @@ export function GuidedBuild(props: Props) {
   }
 
   return (
-    <div className="cap-build">
+    <div className="cap-build-stack">
+      <IntegrationWorkspace bridge={props.bridge} projectId={props.projectId} state={props.integrationState} projection="guided" onChanged={props.onChanged} />
+      <div className="cap-build">
       <aside className="cap-build-list" role="navigation" aria-label="Allocated modules">
         <div className="cap-build-list-head">
           <div>
@@ -128,6 +132,7 @@ export function GuidedBuild(props: Props) {
         ) : (
           <p role="status" className="capabilities-note">Select a module to work on.</p>
         )}
+      </div>
       </div>
     </div>
   )

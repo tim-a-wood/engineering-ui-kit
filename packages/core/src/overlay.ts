@@ -25,6 +25,8 @@ export type InspectOptions = {
   expectedFiles?: string[]
   /** Capability-run hard scope (CAP-PKT-013). Paths outside this set are hard blockers. */
   capabilityAllowedPaths?: string[]
+  /** Paths owned by deterministic generation or otherwise forbidden to an external overlay. */
+  protectedPaths?: string[]
   largeFileBytes?: number
   fullRepoDumpThreshold?: number
   now?: () => Date
@@ -141,6 +143,19 @@ export function inspectOverlay(zipPath: string, options: InspectOptions): Overla
           ruleId: 'CAP-OVERLAY-SCOPE-001',
           path: normalized,
           message: 'path outside persisted capability allowedPaths',
+        })
+        continue
+      }
+    }
+
+    if (options.protectedPaths?.length) {
+      const protectedRoots = options.protectedPaths.map((p) => p.replace(/\\/g, '/').replace(/\/+$/, ''))
+      const protectedMatch = protectedRoots.find((root) => normalized === root || normalized.startsWith(root + '/'))
+      if (protectedMatch) {
+        summary.hardBlockers.push({
+          ruleId: 'CAP-OVERLAY-OWNERSHIP-001',
+          path: normalized,
+          message: `external overlay cannot overwrite generated-owned path "${protectedMatch}"`,
         })
         continue
       }

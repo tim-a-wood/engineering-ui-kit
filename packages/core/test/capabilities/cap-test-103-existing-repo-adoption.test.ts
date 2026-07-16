@@ -126,8 +126,11 @@ function runAdditiveAdoptionScenario(scenario: Scenario): void {
   expect(plan.fileChanges.every((change) => change.ownership === 'generated')).toBe(true)
 
   const generatedPaths = plan.fileChanges.map((change) => change.path).sort()
+  const generatedDeployableId = deployable.runtimeLanguage === 'python'
+    ? deployable.deployableId.replace(/[^A-Za-z0-9]+/g, '_').toLowerCase()
+    : deployable.deployableId
   for (const generatedPath of generatedPaths) {
-    expect(generatedPath.startsWith(`src/generated/${deployable.deployableId}/`)).toBe(true)
+    expect(generatedPath.startsWith(`src/generated/${generatedDeployableId}/`)).toBe(true)
     expect(pristineFiles).not.toContain(generatedPath)
   }
 
