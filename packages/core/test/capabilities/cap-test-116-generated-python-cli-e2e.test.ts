@@ -77,6 +77,7 @@ describe('CAP-TEST-116 generated Python CLI target', () => {
     applyGenerationPlan({ plan: assembled.plan, targetRoot: root, virtualFiles: assembled.virtualFiles, runId: 'run-python-cli-real' })
 
     const repoRoot = path.resolve(import.meta.dirname, '../../../..')
+    const python = path.join(repoRoot, process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python')
     const hashes: ConnectionVerificationRecord['hashes'] = {
       binding: canonicalHash(binding), operation: canonicalHash(operation), architecture: 'architecture-hash',
       composition: composition.compositionHash, generatedOwnership: 'ownership-hash', source: 'source-hash',
@@ -84,7 +85,7 @@ describe('CAP-TEST-116 generated Python CLI target', () => {
     const record = await runConnectionVerification({
       verificationId: 'verification-python-cli-real', projectId: 'project-1', binding, deployable, hashes,
       launch: {
-        command: path.join(repoRoot, '.venv/bin/python'), args: ['src/generated/python_cli/cli_host_g.py'], cwd: root,
+        command: python, args: ['src/generated/python_cli/cli_host_g.py'], cwd: root,
         env: { PYTHONPATH: [root, path.join(repoRoot, 'runtimes/python/src')].join(path.delimiter) },
       },
       trigger: { kind: 'cli', args: ['echo', 'hello'] }, correlationId: 'correlation-python-cli-real',

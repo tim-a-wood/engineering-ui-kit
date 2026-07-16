@@ -76,7 +76,7 @@ describe('CAP-TEST-112 generated Python HTTP target', () => {
     applyGenerationPlan({ plan: assembled.plan, targetRoot: root, virtualFiles: assembled.virtualFiles, runId: 'run-python-real' })
 
     const repoRoot = path.resolve(import.meta.dirname, '../../../..')
-    const python = path.join(repoRoot, '.venv/bin/python')
+    const python = path.join(repoRoot, process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python')
     const hashes: ConnectionVerificationRecord['hashes'] = {
       binding: canonicalHash(binding), operation: canonicalHash(operation), architecture: 'architecture-hash',
       composition: composition.compositionHash, generatedOwnership: 'ownership-hash', source: 'source-hash',

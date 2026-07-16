@@ -81,7 +81,7 @@ describe('CAP-TEST-115 generated TypeScript CLI target', () => {
       include: ['src/**/*.ts'],
     }))
     fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ type: 'module' }))
-    execFileSync(path.join(repoRoot, 'node_modules/.bin/tsc'), ['-p', 'tsconfig.json'], { cwd: root, stdio: 'inherit' })
+    execFileSync(process.execPath, [path.join(repoRoot, 'node_modules/typescript/bin/tsc'), '-p', 'tsconfig.json'], { cwd: root, stdio: 'inherit' })
 
     const hashes: ConnectionVerificationRecord['hashes'] = {
       binding: canonicalHash(binding), operation: canonicalHash(operation), architecture: 'architecture-hash',

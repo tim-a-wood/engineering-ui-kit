@@ -31,7 +31,8 @@ describe('CAP-TEST-118 generated Python schedule and embedded-library targets', 
     const assembled = assembleGenerationPlan({ deployable, inboundBindings: [schedule, embedded], composition, operations: [operation], schemas: [{ schemaId: 'job.input', typeName: 'JobInput', schema: { kind: 'object', properties: [] } }, { schemaId: 'job.output', typeName: 'JobOutput', schema: { kind: 'object', properties: [{ name: 'ran', schema: { kind: 'boolean' }, required: true }] } }], targetRoot: root, targetCleanState: 'clean', generatorVersion: '1.0.0', referenceProfileVersion: '1.0.0', planId: 'plan-process', runId: 'run-process' })
     applyGenerationPlan({ plan: assembled.plan, targetRoot: root, virtualFiles: assembled.virtualFiles, runId: 'run-process' })
     const repoRoot = path.resolve(import.meta.dirname, '../../../..')
-    const launch = (host: string) => ({ command: path.join(repoRoot, '.venv/bin/python'), args: [host], cwd: root, env: { PYTHONPATH: [root, path.join(repoRoot, 'runtimes/python/src')].join(path.delimiter) } })
+    const python = path.join(repoRoot, process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python')
+    const launch = (host: string) => ({ command: python, args: [host], cwd: root, env: { PYTHONPATH: [root, path.join(repoRoot, 'runtimes/python/src')].join(path.delimiter) } })
     const verify = (binding: ScheduleInboundBinding | EmbeddedLibraryInboundBinding, host: string) => {
       const hashes: ConnectionVerificationRecord['hashes'] = { binding: canonicalHash(binding), operation: canonicalHash(operation), architecture: 'architecture-hash', composition: composition.compositionHash, generatedOwnership: 'ownership-hash', source: 'source-hash' }
       return runConnectionVerification({ verificationId: `verification-${binding.kind}`, projectId: 'project-1', binding, deployable, hashes, launch: launch(host), trigger: { kind: binding.kind, input: {} }, correlationId: `correlation-${binding.kind}` })

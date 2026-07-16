@@ -190,6 +190,21 @@ async function waitForUrl(url: string, timeoutMs: number): Promise<void> {
 
 async function stopSpawnedProcess(child: ChildProcess | undefined): Promise<void> {
   if (!child || child.exitCode !== null || child.signalCode !== null) return
+  if (process.platform === 'win32' && child.pid) {
+    // npm.cmd and similar shims create a descendant process for the actual
+    // server. Killing only the shim leaves Vite/Python alive, keeps Electron's
+    // stdio handles open, and contaminates subsequent verification runs.
+    try {
+      execFileSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
+        stdio: 'ignore',
+        timeout: 5_000,
+      })
+      return
+    } catch {
+      try { child.kill('SIGKILL') } catch { /* already exited */ }
+      return
+    }
+  }
   const signal = (value: NodeJS.Signals) => {
     try {
       if (process.platform !== 'win32' && child.pid) process.kill(-child.pid, value)
@@ -1158,7 +1173,7 @@ export class ReferenceArchitectureOrchestrator {
               if (!requestedCorrelationId) return { ok: false, outcome: 'verification correlation id missing' }
               const script = `(() => new Promise((resolve) => {
                 globalThis.__EUIK_VERIFICATION_CORRELATION_ID = ${JSON.stringify(requestedCorrelationId)};
-                const timeout = setTimeout(() => { cleanup(); resolve({ ok: false, outcome: 'UI trigger did not emit capability evidence' }); }, 10000);
+                const timeout = setTimeout(() => { cleanup(); resolve({ ok: false, outcome: 'UI trigger did not emit capability evidence' }); }, 30000);
                 const listener = (event) => { cleanup(); resolve({ ok: true, outcome: 'UI element reached the browser-local capability', body: event.detail }); };
                 const cleanup = () => { clearTimeout(timeout); globalThis.removeEventListener('euik-capability-invoked', listener); delete globalThis.__EUIK_VERIFICATION_CORRELATION_ID; };
                 globalThis.addEventListener('euik-capability-invoked', listener, { once: true });
@@ -1180,7 +1195,11 @@ export class ReferenceArchitectureOrchestrator {
           }
         },
       }
-      trigger = { kind: 'ui', input: { correlationId } }
+      // First-load compilation on a clean generated UI can exceed the core
+      // runner's conservative five-second default on CI and slower workstations.
+      // Keep the real interaction bounded, but allow the launched application
+      // enough time to execute its first generated client request.
+      trigger = { kind: 'ui', input: { correlationId }, timeoutMs: 35_000 }
     } else {
       const launchText = generatedLaunchCommand(collected.deployable, collected.project.repoPath, binding)
         ?? collected.deployable.commands.launch

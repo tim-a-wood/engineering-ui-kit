@@ -68,7 +68,7 @@ describe('CAP-TEST-117 generated schedule and embedded-library targets', () => {
     applyGenerationPlan({ plan: assembled.plan, targetRoot: root, virtualFiles: assembled.virtualFiles, runId: 'run-process' })
     fs.writeFileSync(path.join(root, 'tsconfig.json'), JSON.stringify({ compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', rootDir: '.', outDir: 'dist', strict: true, skipLibCheck: true, types: ['node'] }, include: ['src/**/*.ts'] }))
     fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ type: 'module' }))
-    execFileSync(path.join(repoRoot, 'node_modules/.bin/tsc'), ['-p', 'tsconfig.json'], { cwd: root, stdio: 'inherit' })
+    execFileSync(process.execPath, [path.join(repoRoot, 'node_modules/typescript/bin/tsc'), '-p', 'tsconfig.json'], { cwd: root, stdio: 'inherit' })
 
     const verify = async (binding: ScheduleInboundBinding | EmbeddedLibraryInboundBinding, host: string) => {
       const hashes: ConnectionVerificationRecord['hashes'] = { binding: canonicalHash(binding), operation: canonicalHash(operation), architecture: 'architecture-hash', composition: composition.compositionHash, generatedOwnership: 'ownership-hash', source: 'source-hash' }
