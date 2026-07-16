@@ -80,6 +80,18 @@ export type LegacyRuntimeDiagnostic = {
   migrationPath: string
 }
 
+/** Evidence required before a legacy direct-invocation adapter may be retired (§14.2/WP9). */
+export type LegacyRuntimeConformanceEvidence = {
+  generatedContractsImplemented: boolean
+  compositionRootRegistered: boolean
+  realConnectionVerified: boolean
+}
+
+export type LegacyRuntimeCompatibilityDecision = {
+  status: 'retain' | 'retire'
+  missingEvidence: string[]
+}
+
 const LEGACY_RUNTIME_MODULE_PATTERN = /(^|\/)runtime\.(mjs|js)$/i
 const LANGUAGE_EXTENSIONS: Record<RuntimeLanguage, string[]> = {
   typescript: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'],
@@ -116,6 +128,25 @@ export function detectLegacyRuntimeModules(evidence: RepositoryEvidence): Legacy
       + 'composition root and inbound binding, implement the generated operation contract behind the existing behavior, '
       + 'then replace direct invocation with an actual connection (real launch, real trigger) before retiring the adapter.',
   }))
+}
+
+/**
+ * Decide whether compatibility may be removed. Direct legacy invocation is
+ * intentionally not an input: it proves continuity during migration, not
+ * reference-architecture conformance. The adapter can retire only after all
+ * three independent conformance gates have passed.
+ */
+export function evaluateLegacyRuntimeCompatibility(
+  evidence: LegacyRuntimeConformanceEvidence,
+): LegacyRuntimeCompatibilityDecision {
+  const missingEvidence: string[] = []
+  if (!evidence.generatedContractsImplemented) missingEvidence.push('generated-contracts-implemented')
+  if (!evidence.compositionRootRegistered) missingEvidence.push('composition-root-registered')
+  if (!evidence.realConnectionVerified) missingEvidence.push('real-connection-verified')
+  return {
+    status: missingEvidence.length === 0 ? 'retire' : 'retain',
+    missingEvidence,
+  }
 }
 
 function extensionForLanguage(language: RuntimeLanguage): string {
