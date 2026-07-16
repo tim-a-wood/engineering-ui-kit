@@ -12,7 +12,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { createTypeScriptUiFixture } from './production-capabilities-fixtures.mjs'
+import { createPythonHeadlessFixture, createTypeScriptUiFixture } from './production-capabilities-fixtures.mjs'
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const EVIDENCE_DIR = path.join(REPO_ROOT, 'apps/desktop/validation-evidence/capabilities-production/packaged')
@@ -21,7 +21,7 @@ const TIMEOUT = Number(process.env.EUIK_PACKAGED_TIMEOUT_MS ?? 60_000)
 const JOURNEY_TIMEOUT = Number(process.env.EUIK_PACKAGED_JOURNEY_TIMEOUT_MS ?? 360_000)
 
 fs.mkdirSync(EVIDENCE_DIR, { recursive: true })
-for (const stale of ['failure.json', 'failure.png']) fs.rmSync(path.join(EVIDENCE_DIR, stale), { force: true })
+for (const stale of ['failure.json', 'failure.png', 'python-failure.png']) fs.rmSync(path.join(EVIDENCE_DIR, stale), { force: true })
 
 function run(command, args, cwd = REPO_ROOT) {
   const result = spawnSync(command, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' })
@@ -299,6 +299,121 @@ async function runTypeScriptUiJourney(electron) {
   }
 }
 
+async function runPythonHeadlessJourney(electron) {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'euik-production-python-'))
+  const fixtureRepo = path.join(scratch, 'repo')
+  const dataDir = path.join(scratch, 'data')
+  fs.mkdirSync(fixtureRepo, { recursive: true })
+  fs.mkdirSync(dataDir, { recursive: true })
+  const fixture = createPythonHeadlessFixture(fixtureRepo)
+  const workspacePython = path.join(REPO_ROOT, process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python')
+  const python = process.env.PYTHON ?? (fs.existsSync(workspacePython) ? workspacePython : process.platform === 'win32' ? 'python' : 'python3')
+  run(python, ['-m', 'venv', path.join(fixtureRepo, '.venv')])
+  const executablePath = packagedExecutable()
+  const app = await electron.launch({
+    executablePath,
+    env: { ...process.env, EUIK_DATA_DIR: dataDir, EUIK_TEST_MODE: '1', EUIK_TEST_PICK_DIR: fixtureRepo },
+    timeout: TIMEOUT,
+  })
+  const evidence = { journey: 'python-headless-schedule', executablePath, packaged: false, scratch, screenshots: [], passed: false }
+  try {
+    const page = await app.firstWindow({ timeout: TIMEOUT })
+    page.setDefaultTimeout(TIMEOUT)
+    await page.waitForLoadState('domcontentloaded')
+    if (!await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)) throw new Error('Electron reports app.isPackaged=false')
+    evidence.packaged = true
+
+    await click(page.getByRole('button', { name: 'New Project' }).first(), 'New Project')
+    await page.getByLabel('Project name').fill('Production Python Journey')
+    await click(page.getByRole('button', { name: 'Browse' }), 'repository Browse')
+    await click(page.getByRole('button', { name: 'Create Project' }), 'Create Project')
+    await click(page.getByRole('button', { name: 'Capabilities' }), 'Capabilities navigation')
+    await page.getByLabel('Capabilities project').selectOption({ label: 'Production Python Journey' })
+
+    await chooseInterviewFile(page, fixture.responseFiles.product, 'Application definition')
+    await waitForStatus(page, 'Interview imported')
+    await click(page.getByRole('button', { name: 'Approve definition' }), 'Approve definition')
+    await waitForStatus(page, 'Approved application revision')
+    await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode')
+    await click(page.getByRole('tab', { name: 'Architecture' }), 'Architecture tab')
+    await waitEnabled(page.getByRole('button', { name: 'Export architecture interview' }), 'loaded architecture interview')
+    await chooseInterviewFile(page, fixture.responseFiles.architecture, 'Architecture interview')
+    await waitForStatus(page, 'Imported architecture proposal')
+    await click(page.getByRole('button', { name: 'Approve architecture' }), 'Approve architecture')
+    await waitForStatus(page, 'Architecture approved')
+    await click(page.getByRole('button', { name: 'Propose foundation plan' }), 'Propose foundation plan')
+    await waitEnabled(page.getByRole('button', { name: 'Approve foundation' }), 'ready Python foundation approval')
+    await click(page.getByRole('button', { name: 'Approve foundation' }), 'Approve foundation')
+    await waitForStatus(page, 'Approved foundation plan')
+
+    await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab')
+    const selectedModule = page.getByRole('button', { name: 'Select module mod.job' })
+    await expectVisible(selectedModule, 'allocated Python module')
+    const moduleDeadline = Date.now() + TIMEOUT
+    while (Date.now() < moduleDeadline && await selectedModule.getAttribute('aria-current') !== 'true') await page.waitForTimeout(100)
+    const moduleImport = page.locator('[aria-label="Import module interview response"] input[type=file]')
+    await moduleImport.first().setInputFiles(fixture.responseFiles.module)
+    await waitForStatus(page, 'Imported module draft')
+    await click(page.getByRole('button', { name: 'Approve module' }).first(), 'Approve module')
+    await waitForStatus(page, 'Approved module')
+
+    const factory = page.getByLabel(`Implementation factory for ${fixture.operationId}`)
+    await factory.fill('src/domain/run_job.py#create_job_run')
+    await click(page.getByRole('button', { name: 'Save composition factories' }), 'Save composition factories')
+    await waitForStatus(page, 'Composition configuration saved')
+    await click(page.getByRole('button', { name: 'Preview generation' }), 'Preview generation')
+    await waitForStatus(page, 'Generation plan is ready')
+    const acceptDirty = page.getByLabel(/I reviewed and accept applying this plan/)
+    if (await acceptDirty.count()) await acceptDirty.check()
+    await click(page.getByRole('button', { name: 'Apply generation plan' }), 'Apply Python generation plan')
+    await waitForStatus(page, 'Reference-architecture infrastructure applied')
+    await click(page.getByRole('button', { name: 'Install, build & test' }), 'Install Python runtime')
+    await waitForStatus(page, 'Install, build, and test commands completed')
+    evidence.screenshots.push(await shot(page, '11-python-build-applied'))
+
+    await click(page.getByRole('tab', { name: 'Connections' }), 'Connections tab')
+    if (await page.getByRole('button', { name: /Existing or new UI/i }).count()) throw new Error('Headless project incorrectly offered a UI entry point')
+    await click(page.getByRole('button', { name: /Scheduled or background/i }), 'schedule trigger choice')
+    await page.getByLabel('Capability', { exact: true }).selectOption(`${fixture.operationId}@1.0.0`)
+    await page.getByLabel('Cron expression').fill('* * * * *')
+    await page.getByLabel('Timezone').fill('UTC')
+    await click(page.getByRole('button', { name: 'Approve entry point' }), 'Approve scheduled entry point')
+    const configured = page.getByRole('region', { name: 'Configured entry points' })
+    await expectVisible(configured, 'approved scheduled entry point')
+    await expectVisible(configured.getByText('Approved', { exact: true }), 'approved scheduled status')
+
+    await click(page.getByRole('button', { name: 'Regenerate plan' }).last(), 'Regenerate Python plan after schedule')
+    await waitForStatus(page, 'Generation plan is ready')
+    const acceptDirtyBound = page.getByLabel(/I reviewed and accept applying this plan/).last()
+    if (await acceptDirtyBound.count()) await acceptDirtyBound.check()
+    await waitEnabled(page.getByRole('button', { name: 'Apply generation plan' }).last(), 'scheduled Python generation apply')
+    await click(page.getByRole('button', { name: 'Apply generation plan' }).last(), 'Apply scheduled Python plan')
+    await waitForStatus(page, 'Reference-architecture infrastructure applied')
+    await click(page.getByRole('button', { name: 'Install, build & test' }).last(), 'Build scheduled Python plan')
+    await waitForStatus(page, 'Install, build, and test commands completed')
+    evidence.screenshots.push(await shot(page, '12-python-schedule-connected'))
+
+    await click(page.getByRole('tab', { name: 'Verification' }), 'Verification tab')
+    await click(page.getByRole('button', { name: 'Run real verification' }), 'Run Python schedule verification')
+    await waitForStatus(page, 'real target launched')
+    await expectVisible(page.getByText('pass', { exact: true }).first(), 'current Python passing evidence')
+    evidence.screenshots.push(await shot(page, '13-python-real-verification'))
+    evidence.passed = true
+    return evidence
+  } catch (error) {
+    const page = app.windows()[0]
+    if (page) {
+      evidence.screenshots.push(await shot(page, 'python-failure').catch(() => ''))
+      evidence.visibleText = await page.locator('body').innerText().catch(() => '')
+    }
+    evidence.error = error instanceof Error ? error.stack : String(error)
+    throw error
+  } finally {
+    await app.close().catch(() => {})
+    fs.writeFileSync(path.join(EVIDENCE_DIR, 'python-headless.json'), JSON.stringify(evidence, null, 2) + '\n')
+  }
+}
+
 const watchdog = setTimeout(() => {
   console.error(`Packaged production journey exceeded ${JOURNEY_TIMEOUT}ms`)
   process.exit(1)
@@ -314,9 +429,13 @@ try {
     run('npm', ['run', 'package:dir', '-w', 'apps/desktop'])
   }
   const { _electron } = await import('playwright')
-  const result = await runTypeScriptUiJourney(_electron)
-  console.log(JSON.stringify(result, null, 2))
-  if (!result.passed) process.exitCode = 1
+  const selected = new Set((process.env.EUIK_PACKAGED_JOURNEYS ?? 'typescript-ui,python-headless').split(',').map((value) => value.trim()).filter(Boolean))
+  const results = []
+  if (selected.has('typescript-ui')) results.push(await runTypeScriptUiJourney(_electron))
+  if (selected.has('python-headless')) results.push(await runPythonHeadlessJourney(_electron))
+  if (results.length === 0) throw new Error('EUIK_PACKAGED_JOURNEYS did not select a known journey')
+  console.log(JSON.stringify(results, null, 2))
+  if (results.some((result) => !result.passed)) process.exitCode = 1
 } catch (error) {
   const failure = { passed: false, error: error instanceof Error ? error.stack : String(error), completedAt: new Date().toISOString() }
   fs.writeFileSync(path.join(EVIDENCE_DIR, 'failure.json'), JSON.stringify(failure, null, 2) + '\n')

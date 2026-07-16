@@ -294,7 +294,10 @@ function buildRuntimeDistribution(deployable: DeployableSpecification, targetRoo
       return result
     }
     const vendorRoot = '.engineering-ui/capabilities/runtime/python'
-    for (const relativePath of ['pyproject.toml', ...textFilesBelow(path.join(runtimeRoot, 'src')).map((file) => `src/${file.relativePath}`)]) {
+    const pythonRuntimeSources = textFilesBelow(path.join(runtimeRoot, 'src'))
+      .filter((file) => !/(^|\/)(?:[^/]+\.egg-info|__pycache__)(?:\/|$)|\.pyc$/i.test(file.relativePath))
+      .map((file) => `src/${file.relativePath}`)
+    for (const relativePath of ['pyproject.toml', 'README.md', ...pythonRuntimeSources]) {
       result.files.push({
         path: `${vendorRoot}/${relativePath}`,
         contents: fs.readFileSync(path.join(runtimeRoot, relativePath), 'utf8'),
@@ -304,7 +307,11 @@ function buildRuntimeDistribution(deployable: DeployableSpecification, targetRoo
     }
     result.files.push({
       path: 'requirements.engineering-ui.txt',
-      contents: `-e ./${vendorRoot}\n`,
+      // A normal local-path install works with the older pip bundled by some
+      // supported Python 3.11 installations. Editable PEP 660 installs would
+      // unnecessarily require a newer pip just to consume generated runtime
+      // infrastructure.
+      contents: `./${vendorRoot}\n`,
       ownership: 'generated',
       reason: 'install the bundled Python reference-architecture runtime and its declared dependencies',
     })

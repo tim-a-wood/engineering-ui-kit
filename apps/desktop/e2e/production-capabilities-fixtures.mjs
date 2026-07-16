@@ -95,3 +95,91 @@ export function createTypeScriptUiFixture(root, projectId = 'production-ui', por
   fs.writeFileSync(responseFiles.module, JSON.stringify(moduleResponse, null, 2))
   return { projectId, responseFiles, operationId: OPERATION_ID, uiUrl: `http://127.0.0.1:${port}` }
 }
+
+export function createPythonHeadlessFixture(root, projectId = 'production-python') {
+  fs.mkdirSync(path.join(root, 'src/domain'), { recursive: true })
+  fs.writeFileSync(path.join(root, 'pyproject.toml'), [
+    '[project]',
+    'name = "euik-production-python-fixture"',
+    'version = "0.0.0"',
+    'requires-python = ">=3.11"',
+    'dependencies = []',
+    '',
+  ].join('\n'))
+  fs.writeFileSync(path.join(root, 'src/domain/run_job.py'), [
+    'from engineering_ui_capabilities_runtime.core import Outcome',
+    'class JobRunOperation:',
+    '    def execute(self, input, context):',
+    '        return Outcome.success({"ran": True})',
+    'def create_job_run():',
+    '    return JobRunOperation()',
+    '',
+  ].join('\n'))
+
+  const product = {
+    schemaVersion: '1.0', projectId, id: 'app.production-python', revision: '1', status: 'draft',
+    purpose: 'Run an approved background capability without a user interface.',
+    outcomes: ['The scheduled job executes through the approved Python boundary.'],
+    actors: [{ id: 'scheduler', text: 'Background scheduler' }], goals: [{ id: 'run', text: 'Run the background job' }],
+    useCases: [{ id: 'use.run', text: 'Run a scheduled background job' }],
+    scenarios: [{ id: 'scenario.run', text: 'The scheduler triggers the job and records success' }],
+    information: [{ id: 'job-result', text: 'Job execution result' }],
+    rules: [{ id: 'rule.headless', text: 'The application has no user interface.' }], externalSystems: [],
+    constraints: [{ id: 'constraint.python', text: 'Runs locally using Python 3.11 or newer.' }],
+    scope: { inScope: ['Scheduled Python operation'], outOfScope: ['User interface'] },
+    acceptanceCases: [{ id: 'accept.run', description: 'Trigger the scheduled job', expectedOutcome: 'The operation reports ran=true.' }],
+    sources: [{ id: 'source.fixture', text: 'Packaged production headless journey fixture' }], unresolvedQuestions: [], contentHash: 'pending',
+  }
+  const manifest = {
+    schemaVersion: '1.0', architectureVersion: '1.0', moduleId: 'mod.job', moduleVersion: '1.0.0', moduleType: 'domain',
+    name: 'Background job', responsibility: 'Execute the approved background job operation.',
+    ownedConcerns: ['job-execution'], excludedConcerns: ['presentation'],
+    providedOperations: [{ operationId: 'job.run', contractVersion: '1.0.0' }], requiredOperations: [],
+    verificationSuiteIds: ['suite.job'], runtimeAllocation: 'local-embedded', events: [], ownedPaths: ['src/domain'],
+  }
+  const architecture = {
+    schemaVersion: '1.0', projectId, id: 'arch.production-python', revision: '1', status: 'proposed',
+    applicationSpecId: product.id, applicationSpecRevision: product.revision, applicationSpecHash: 'pending',
+    capabilityProjections: [{ id: 'cap.job', name: 'Background job', moduleIds: [manifest.moduleId] }],
+    moduleIds: [manifest.moduleId], dependencyEdges: [],
+    operationAllocations: [{ operationId: 'job.run', moduleId: manifest.moduleId }], adapterAllocations: [],
+    workflowTraces: [{ useCaseId: 'use.run', moduleIds: [manifest.moduleId] }], proposals: [], unresolvedQuestions: [],
+    gateResult: { gateId: 'CAP-GATE-002', passed: false, diagnostics: [] }, contentHash: 'pending',
+  }
+  const architectureProposal = {
+    architecture, manifests: [manifest], moduleNeedTraces: [{ moduleId: manifest.moduleId, needIds: ['use.run'] }],
+    moduleJustifications: [{ moduleId: manifest.moduleId, justification: 'distinct-rules' }],
+  }
+  const domainDetailIds = [
+    'responsibility', 'exclusions', 'vocabulary', 'inputs-outputs', 'units-ranges', 'rules-invariants',
+    'preconditions-postconditions', 'exceptional-outcomes', 'worked-examples', 'sources-assumptions', 'required-capabilities',
+  ]
+  const moduleResponse = {
+    moduleId: manifest.moduleId, moduleType: manifest.moduleType, name: manifest.name, moduleVersion: manifest.moduleVersion,
+    responsibility: manifest.responsibility, ownedConcerns: manifest.ownedConcerns, excludedConcerns: manifest.excludedConcerns,
+    providedOperations: manifest.providedOperations, requiredOperations: [], verificationSuiteIds: manifest.verificationSuiteIds,
+    runtimeAllocation: manifest.runtimeAllocation, events: [], ownedPaths: manifest.ownedPaths, configurationSchemaRef: null,
+    operationContracts: [{
+      schemaVersion: '1.0', operationId: 'job.run', version: '1.0.0', behavior: 'command',
+      inputSchemaRef: 'job.input', outputSchemaRef: 'job.output', preconditions: [], postconditions: ['Reports successful execution.'],
+      domainRejections: [], technicalErrors: ['unexpected'], sideEffects: [], idempotency: 'idempotent', timeoutClass: 'short',
+      cancellable: false, artifactTypes: [], provenanceFields: [],
+    }],
+    dataSchemas: [
+      { schemaId: 'job.input', description: 'Scheduled job input', fields: [] },
+      { schemaId: 'job.output', description: 'Scheduled job result', fields: [{ name: 'ran', type: 'boolean', required: true, description: 'Whether the job ran', constraints: [] }] },
+    ],
+    answers: domainDetailIds.map((id) => ({ id, text: `Confirmed ${id} behavior for the packaged headless journey.`, status: 'confirmed' })),
+    acceptanceCases: [{ id: 'module.accept.run', description: 'Run on schedule', expectedOutcome: 'Returns ran=true.' }],
+    rules: [{ id: 'module.rule.headless', text: 'No UI dependency is introduced.' }],
+  }
+  const responsesDir = path.join(root, '.e2e-responses')
+  fs.mkdirSync(responsesDir, { recursive: true })
+  const responseFiles = {
+    product: path.join(responsesDir, 'product.json'), architecture: path.join(responsesDir, 'architecture.json'), module: path.join(responsesDir, 'module.json'),
+  }
+  fs.writeFileSync(responseFiles.product, JSON.stringify(product, null, 2))
+  fs.writeFileSync(responseFiles.architecture, JSON.stringify(architectureProposal, null, 2))
+  fs.writeFileSync(responseFiles.module, JSON.stringify(moduleResponse, null, 2))
+  return { projectId, responseFiles, operationId: 'job.run' }
+}

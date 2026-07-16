@@ -24,7 +24,11 @@ extraResources:
     to: capabilities-runtime-python
     filter:
       - pyproject.toml
+      - README.md
       - 'src/**/*'
+      - '!src/**/*.egg-info/**'
+      - '!src/**/__pycache__/**'
+      - '!src/**/*.pyc'
   - from: ../../examples/work-orders-monolith
     to: examples/work-orders-monolith
     filter:
