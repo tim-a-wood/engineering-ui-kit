@@ -43,8 +43,8 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP4B-gen | Python code generators (Pydantic/protocols/inbound/OpenAPI) | WP2, WP4A | cap-sonnet-implementer (symlinked worktree) | `generation/python.ts`,`python-emit.ts` | `619cdbb` (merged) | pure/deterministic; core 266/266; CAP-TEST-062/063/064; verified vs real WP4A runtime | **gate-green** |
 | WP4B-slices-py | Python runnable HTTP/CLI/schedule slices — real E2E | WP4B-gen | cap-sonnet-implementer (Python worktree) | `examples/capabilities-python-reference/` | `1cc204f` (merged) | **15 pytest at integrated tree** (TestClient→dispatch→op; CronJob.poll under injected clock; real traversal) | **gate-green** |
 | WP4B-react-python | React↔Python via generated OpenAPI + cross-lang parity fixtures | WP4B-gen, WP3A-react | cap-sonnet-implementer (hybrid worktree) | `examples/capabilities-react-python-reference/` | `fb503e5` (merged) | **Python 3/3 pytest + TS 7/7 vitest** at integrated tree; CAP-TEST-066 (React/TS → real spawned FastAPI subprocess, real HTTP round-trip, success + domain rejection); CAP-TEST-069 (same canonical fixture bytes accepted/rejected by TS Ajv + live Python; generated OpenAPI agrees with served /openapi.json) — **DoD #4 met** | **gate-green** (needs coordinator `.venv`; see Python env note) |
-| WP5A | Foundation planning UI | WP1, WP2 | foundation workbench (Sonnet) | Design/Build UI | — | CAP-TEST-070..075 | todo |
-| WP5B | Foundation runtime integration | WP3B, WP4B, WP5A | foundation workbench (Sonnet) | bridge/IPC | — | (part of WP5 gate) | todo |
+| WP5A | Foundation planning UI (pure `FoundationPlan`: deployable/allocation proposals + per-module allocation explanations + ambiguity resolve/persist + separate approval + handoff/staleness gate; enriched module brief `deployment`; foundation-review UI in both projections + Build/handoff prerequisite gate + From-spec generated-ref enrichment) | WP1, WP2 | cap-sonnet-implementer (core: symlinked worktree; gui: coord checkout) | core `foundation.ts`(new)/`implementationBrief.ts`/`persistence.ts` + barrels; `apps/gui` `FoundationReview.tsx`(new)/`ArchitectureInterview`/`ModulesView`/`CapabilitiesView`/`GuidedBuild`/`bridge`/`mockBridge`; `apps/desktop` `ipc.ts`/`bridgeApi.ts`/`preload.cts` | `1b394df` (core) + `90725d6` (gui) merged | **core 317/317 + gui 174/174** at integrated tree; CAP-TEST-071 (UI+headless import→deployable proposals), 072 (ambiguity asks-once + persists), 073 (foundation approval SEPARATE from architecture + handoff staleness re-block + brief.deployment), 074 (Build/handoff prerequisite gate, guided+design), 075 (Guided/Design project same records + From-spec generated contract/path/command refs); desktop typecheck clean; **real** desktop foundation IPC wired (no mock-only debt) | **gate-green** (DoD #5 met) |
+| WP5B | Foundation runtime integration: real `DeployableSpecification`+`InboundBinding` persistence (schema-2.0-aware, private-default, multi-binding) + 4 desktop IPC handlers | WP3B, WP4B, WP5A | cap-sonnet-implementer | `persistence.ts` + `apps/desktop/src/capabilities/ipc.ts` | `6023f59` (merged; see CONNECT-BACKING resolution) | CAP-TEST-070 connect-backing persistence; `listDeployables` proposes via `proposeDeployables` when empty | **gate-green** (WP5 gate CAP-TEST-070..075 now complete together with WP5A) |
 | WP6A | Inbound binding + journey state | WP1 | cap-sonnet-implementer (coordinator checkout) | `journeys.ts`, `capabilitiesUiState.ts` | `a9492d4` | CAP-TEST-076/079/081; core 193/193, gui 162/162; private-default, multi-binding, no-UI-can't-skip | **gate-green** (GUI deployable/binding bridge wiring → WP6B) |
 | WP6B | Connect editors (trigger-first, per-host, private-default, multi-binding) | WP2, WP6A | cap-sonnet-implementer (coord checkout, 3 resumes) | `GuidedConnect.tsx` + `inbound/*` editors + bridge/mock | `61a3148` (+preload fix) | gui 165/165; CAP-TEST-076..083; desktop typecheck restored | **gate-green (real IPC/persistence → WP5B, see Open issues)** |
 | WP7-apply | §11.3 transactional generation apply + rollback (`applyGenerationPlan`/`rollbackGenerationApply`) | WP2 | cap-sonnet-implementer + Opus review | `capabilities/generationApply.ts` (Node) | `7b70435` (merged) | core 284/284; **13 safety tests** (forced-failure-@-each-phase byte-identical restore; traversal/symlink/stale/modified refusal; rollback idempotent); reviewed | **gate-green** (CAP-TEST-085/086/089/092) |
@@ -53,7 +53,7 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP8 | Real connection verification runner + `ConnectionVerificationRecord` | WP7 | cap-sonnet-implementer + Opus review | `capabilities/verificationRunner.ts` (Node) | `a17f77a` (merged) | core 297/297 clean exit (no leaks); real HTTP+CLI launch→trigger→CAP-CONTRACT-029 (AJV-valid); simulation≠pass (separate fn, no bypass); test-adapter→partial/outstanding; redaction; process-cleanup pid-death-verified; CAP-TEST-094 | **gate-green** (Electron/Python launch presets + freshness-aggregation → WP8-followups) |
 | WP9A | Migration prep: existing-repo planner + 3 fixtures + legacy diagnostic | WP1, WP2 | cap-sonnet-implementer (symlinked worktree) | `generation/existingRepoMigration.ts`, `fixtures/existing-repos/` | `79d2fa3` (merged) | pure planner (additive, node-free); react-ts/python/react-python fixtures; CAP-TEST-102; core 199/199 | **gate-green** (apply=WP9B) |
 | WP9B | Adoption finalization: additive existing-repo apply + runtime-upgrade preview | WP7, WP8, WP9A | cap-sonnet-implementer | `generation/upgradePreview.ts` + adoption tests | `25dec77` (merged) | core 308/308; CAP-TEST-103/104/105; react-ts+python adopted additively (originals byte-identical, rollback restores); react-python boundary preserved; upgrade never silent | **gate-green** (legacy runtime.js compat-adapter execution + conformance-replaces-compatibility gate deferred) |
-| WP10 | Platform matrix + docs + Experimental-exit evidence | WP9B | coordinator sign-off | [`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md) | `2b0c837` (+doc) | **full macOS matrix green** (core 308, runtime-ts 95, gui 165, desktop typecheck, python 130, examples 15+7+8+7/3); DoD scorecard 8/10 met (#5 WP5A, #9 cross-platform CI partial); pass caught+fixed a latent SCHED-ENUM regression | **macOS gate-green; remains `Experimental`** (Windows/Linux CI + WP5A before badge removal) |
+| WP10 | Platform matrix + docs + Experimental-exit evidence | WP9B | coordinator sign-off | [`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md) | `2b0c837` (+doc); re-run post-WP5A | **full macOS matrix green post-WP5A** (core 317, runtime-ts 95, gui 174, desktop typecheck, python 130, examples 15+7+8+7/3); DoD scorecard **9/10** met (only #9 cross-platform CI remains); WP10 pass caught+fixed a latent SCHED-ENUM regression | **macOS gate-green; remains `Experimental`** (Windows/Linux CI is the last badge-removal gate) |
 
 ## WP0 classification of the dirty baseline diff
 
@@ -140,27 +140,33 @@ protocol for any defect.
 planning), WP3A (TS runtime: core + Node/browser + React + Electron), WP4A (Python runtime: core + FastAPI/
 CLI/worker), WP3B-gen + WP4B-gen (both code generators), WP3B-slices + WP4B-slices-py (runnable TS + Python
 examples, real E2E), **WP4B-react-python** (`fb503e5`, React↔Python over generated OpenAPI, CAP-TEST-066/069,
-DoD #4), WP5B (real Deployable/InboundBinding persistence + desktop IPC), WP6A/WP6B (journey model + trigger-
-first Connect editors), WP7-apply + WP7-rest (transactional generate→apply→rollback), WP8 (real connection
-verification), WP9A + **WP9B** (`25dec77`, additive existing-repo adoption + runtime-upgrade preview,
-CAP-TEST-103/104/105, DoD #2/#8), SCHED-ENUM reconciled (`c4e8981`). See the status table.
+DoD #4), WP5B (real Deployable/InboundBinding persistence + desktop IPC), **WP5A** (`1b394df`+`90725d6`,
+foundation planning: `FoundationPlan` proposer + allocation explanations + ambiguity resolve/persist +
+separate approval + handoff/staleness gate + brief `deployment` enrichment + foundation-review UI +
+Build prerequisite gate + From-spec generated-refs, CAP-TEST-071..075, **DoD #5**), WP6A/WP6B (journey model +
+trigger-first Connect editors), WP7-apply + WP7-rest (transactional generate→apply→rollback), WP8 (real
+connection verification), WP9A + **WP9B** (`25dec77`, additive existing-repo adoption + runtime-upgrade
+preview, CAP-TEST-103/104/105, DoD #2/#8), SCHED-ENUM reconciled (`c4e8981`). See the status table.
+**The last feature lane (WP5A) is now done — every DoD requirement except cross-platform CI (#9) is met.**
 
-**WP10 matrix pass done** — full **macOS** suite green (see
-[`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md)): core 308,
-runtime-ts 95, gui 165, desktop typecheck, python 130, examples 15 + 7 + 8 + (7 TS / 3 py). DoD scorecard:
-**8/10 fully met**. The pass caught + fixed a latent SCHED-ENUM regression in the Python schedule example
-(`2b0c837`). **Capabilities remains `Experimental`** pending the two honest gaps below.
+**WP10 matrix — re-run green post-WP5A** (see
+[`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md)): core **317**,
+runtime-ts 95, gui **174**, desktop typecheck, python 130, examples 15 + 7 + 8 + (7 TS / 3 py). DoD scorecard:
+**9/10 fully met** (only #9 cross-platform CI remains). No regressions; the react↔python TS suite re-spawned a
+real FastAPI subprocess and passed. **Capabilities remains `Experimental`** pending the single honest gap below.
 
 **Remaining (all tracked; none block the executable core):**
-- **WP5A** — Foundation planning UI (deployables/allocations in the interview + Design/Build; enrich module
-  specs). *DoD #5.* Route: coordinator checkout or symlinked worktree (no new npm deps; React present).
-- **Cross-platform CI** — run the §1 command set on Windows + Linux runners. *DoD #9 / §18 ⬚ cells.*
+- **Cross-platform CI** — run the §1 command set on Windows + Linux runners. *DoD #9 / §18 ⬚ cells — the last
+  Experimental-exit gate.*
 - **Legacy `runtime.js` compat-adapter execution** + "conformance replaces compatibility" retirement gate.
 - **WP7-followups / WP8-followups / RUNTIME-DIST / REDACTION-JSON** — see "Open issues".
+- **WP5A followup (non-blocking):** `brief.deployment.generatedContractRefs`/`generatedTypeTargets` are wired
+  and tested but render empty in live UI until a `ModuleImplementationSpecification` exists (WP7 generation
+  scope populates them); the surfacing mechanism is complete.
 
 To provision Python locally: repo-root `.venv` (git-ignored) — see the "Python environment" note above and
 §1 of the platform-matrix doc. To resume: `git checkout claude/cap-era-integration`, read "Open issues" +
-"Parallel-execution model" + "Python environment", then pick up WP5A (the last feature lane).
+"Parallel-execution model" + "Python environment", then pick up cross-platform CI (DoD #9), the last gate.
 
 The WP1b notes below are RETAINED FOR REFERENCE ONLY (already implemented in `14f9f7f`).
 
@@ -220,3 +226,8 @@ canary never survives redaction).
 - Proven parallelism model: symlinked-node_modules worktree works for no-new-deps standalone/core lanes (keeps coordinator checkout free for integration); Python lanes use their own worktree+venv; lanes needing new npm deps (example apps, gui) use the coordinator checkout one at a time.
 - WP4A-hosts merged `338ac7f` — **Python runtime complete** (127 pytest: core+http+cli+worker+adapters). WP9A merged `79d2fa3` — existing-repo migration prep (CAP-TEST-102, core 199/199). Cleaned up 4 merged worktrees/branches.
 - **BOTH RUNTIMES COMPLETE.** integration HEAD `79d2fa3`. Remaining: WP3A React/Electron adapters; WP3B/WP4B (generators + slices); WP5 (Design/Build foundation UI + bridge); WP6B (Connect editors); WP7 (real generation + transactional apply); WP8 (real evidence/verify); WP9B (adoption finalization); WP10 (matrix + docs). react 19 / electron 43 / @types/react present in node_modules (React/Electron lanes need no new install).
+- **WP5A COMPLETE (the last feature lane)** — split into two delegated packets, both `cap-sonnet-implementer`, coordinator-reviewed + integrated `--no-ff`:
+  - **WP5A-core** (`1b394df`) in a symlinked worktree (core-only, relative-import tests): new pure `foundation.ts` (`FoundationPlan` + `proposeFoundation` reusing `proposeDeployables`; per-module allocation explanations; ambiguity resolve-by-re-proposal that asks once + persists; `foundationHandoffGate` staleness re-block), additive `CapabilityWorkspace` foundation persistence (`saveFoundationDraft`/`getFoundationDraft`/`approveFoundation`[rejects non-ready + approves constituent deployables, SEPARATE from `approveArchitecture`]/`getApprovedFoundation`), `ModuleImplementationBrief.deployment` enrichment. CAP-TEST-071/072/073; **core 308→317**; frozen surface untouched (`types.ts` never edited — all new types live in `foundation.ts`).
+  - **WP5A-gui** (`90725d6`) in the coordinator checkout: `FoundationReview.tsx` rendered from `ArchitectureInterview` in BOTH projections; Build/handoff **prerequisite gate** in `ModulesView` (guided + design) via `foundationHandoffGate`; From-spec spec enriched with generated contract/path/command refs at `buildUiModuleTaskFields` (single source of truth); 4 new `EuikBridge` foundation methods with **real** desktop IPC wiring (`ipc.ts`/`bridgeApi.ts`/`preload.cts`, reusing `listDeployables`' discovery) — no mock-only debt. CAP-TEST-074/075; **gui 165→174**; desktop typecheck clean.
+  - **WP5 gate CAP-TEST-070..075 now complete** (070 = WP5B connect-backing pulled forward; 071–075 = WP5A). Numbering note: 070 was consumed by WP5B, so WP5A realized its planning bullets as 071–075.
+- **Full platform matrix re-run green post-WP5A** at integrated HEAD `90725d6`: core **317**, runtime-ts 95, gui **174**, desktop typecheck clean, python 130, examples 15 + 7 + 8 + (7 TS / 3 py). **DoD 8/10 → 9/10** (#5 met; only #9 cross-platform CI remains). Capabilities still `Experimental` pending Windows/Linux CI. Not pushed (awaiting explicit request).

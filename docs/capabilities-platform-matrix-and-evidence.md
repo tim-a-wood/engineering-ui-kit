@@ -19,9 +19,9 @@ Every suite below was run green at the integrated tree. Commands are copy-pastea
 
 | Surface | Command | Result |
 |---|---|---|
-| Core (contracts, generation, apply, migration, verification) | `npm run test --workspace=@engineering-ui-kit/core` | **308 passed** |
+| Core (contracts, generation, apply, migration, **foundation planning**, verification) | `npm run test --workspace=@engineering-ui-kit/core` | **317 passed** (WP5A: +CAP-TEST-071/072/073) |
 | TypeScript runtime | `npm run test --workspace=@engineering-ui-kit/capabilities-runtime` | **95 passed** |
-| Foundation GUI | `npm run test --workspace=@engineering-ui-kit/gui` | **165 passed** |
+| Foundation GUI | `npm run test --workspace=@engineering-ui-kit/gui` | **174 passed** (WP5A: +CAP-TEST-074/075) |
 | Desktop (privileged bridge/IPC) | `npm run typecheck --workspace=@engineering-ui-kit/desktop` | **clean** |
 | Python runtime | `.venv/bin/python -m pytest runtimes/python -q` | **130 passed** |
 | Example — TS reference (React-in-one-deployable, HTTP, CLI, schedule, Electron IPC) | `cd examples/capabilities-ts-reference && npx vitest run` | **7 passed** |
@@ -90,14 +90,14 @@ CI runners. This is the primary gap for §18's "all required matrix cells pass".
 | 2 | Existing repo adopted via reviewable migration overlay without losing behavior | ✅ | WP9A `planExistingRepoMigration` (no-loss assessment) + WP9B CAP-TEST-103/104: originals byte-identical after additive apply, rollback restores exactly. |
 | 3 | React web, Electron IPC, HTTP, CLI, scheduled triggers — all real E2E | ✅ | `capabilities-ts-reference` (React/HTTP/CLI/schedule/Electron IPC), `capabilities-react-reference`, `capabilities-python-reference` (HTTP/CLI/schedule). |
 | 4 | React invokes a Python capability through generated OpenAPI | ✅ | WP4B-react-python CAP-TEST-066 (React/TS → real spawned FastAPI, live round-trip) + CAP-TEST-069 (generated OpenAPI agrees with served `/openapi.json`; shared canonical fixtures accepted/rejected identically). |
-| 5 | Module handoffs contain implementable specs + generated contracts/paths/tests | ◐ | `implementationBrief`/`moduleInterview` produce specs and the generators produce contracts/paths; **enriching module specifications with generated contract/path/command references in the Design/Build UI is WP5A (open).** |
+| 5 | Module handoffs contain implementable specs + generated contracts/paths/tests | ✅ | **WP5A (`1b394df`+`90725d6`).** Foundation planning surfaces deployables/language/hosts/allocations with auto-proposed + explained allocations (`proposeFoundation`), a foundation review in Design (both projections) with a separate approval and a Build/handoff prerequisite gate, and enriches the module brief (`ModuleImplementationBrief.deployment`) + the From-spec Build launch with generated contract/path/command references. CAP-TEST-071..075. |
 | 6 | Connect writes and verifies real integration code | ✅ | WP6B trigger-first editors + WP5B real `Deployable`/`InboundBinding` persistence + WP8 `runConnectionVerification` (real launch+trigger; simulation can never `pass`). |
 | 7 | "No UI" produces a headless connection path | ✅ | `embedded-library` inbound binding generates a headless callable (TS + Python generators + runtime dispatch); no UI host required. |
 | 8 | Ownership conflicts, atomic rollback, secret leakage, auth defaults, runtime upgrades tested | ✅ | `generationApply` 13 forced-failure/tamper tests; redaction + canary; private-default/protected-denial; WP9B `planRuntimeUpgradePreview` (preview-only, blocks silent upgrades). |
 | 9 | TS + Python conformance matrices pass on the supported platform set | ◐ | Full matrix green on **macOS**; **Windows + Linux CI runs are the remaining work** (see §2). |
 | 10 | Generated targets run with EUIK/Claude Code/Cursor/Copilot/desktop closed | ✅ | Examples run under plain `vitest`/`pytest` with no editor, no desktop, and no GUI process; Python invokes no Node. |
 
-**Fully met: 8 of 10. Partial: #5 (WP5A foundation UI) and #9 (cross-platform CI).**
+**Fully met: 9 of 10. Partial: #9 (cross-platform CI) only.** (#5 met by WP5A, `1b394df`+`90725d6`.)
 
 ---
 
@@ -111,15 +111,18 @@ schedule example (a post-merge enum rename), which is exactly the kind of drift 
 surface.
 
 **Decision: Capabilities remains `Experimental`.** Removing the badge is a separate product decision
-(handoff §WP10.6) and should wait on the two honest gaps above:
+(handoff §WP10.6) and now waits on a **single** remaining gap:
 
 1. **Cross-platform matrix (§18 / DoD #9)** — run this identical suite on Windows and Linux CI runners.
-2. **Foundation-orchestration UI (WP5A / DoD #5)** — surface deployables/allocations and generated
-   contract references in the Design/Build workflow.
 
-Neither gap undermines the executable core: both language runtimes, both code generators, the
-generate→apply→rollback pipeline, real connection verification, and every trigger's real E2E are
-proven and reproducible today.
+(DoD #5 — foundation-orchestration UI — is now **met** by WP5A: deployables/allocations are surfaced and
+explained in the architecture interview, a foundation review with a separate approval + Build prerequisite
+gate is in the Design workflow, and generated contract/path/command references enrich the module brief and
+the From-spec Build launch. Re-run matrix green: core 317, gui 174, all other suites unchanged.)
+
+This last gap does not undermine the executable core: both language runtimes, both code generators, the
+generate→apply→rollback pipeline, real connection verification, foundation planning, and every trigger's
+real E2E are proven and reproducible today.
 
 ---
 
@@ -127,9 +130,8 @@ proven and reproducible today.
 
 Detail and rationale for each item live in the ledger's "Open issues" section.
 
-- **WP5A** — Foundation planning UI (deployables/language/hosts/allocations in the architecture
-  interview; foundation review in Design approval + Build prerequisite; enrich module specs). *(DoD #5)*
-- **Cross-platform CI** — Windows + Linux matrix runs. *(DoD #9 / §18 ⬚ cells)*
+- ~~**WP5A** — Foundation planning UI~~ **DONE** (`1b394df`+`90725d6`, CAP-TEST-071..075, DoD #5 met).
+- **Cross-platform CI** — Windows + Linux matrix runs. *(DoD #9 / §18 ⬚ cells — the last Experimental-exit gate.)*
 - **Legacy `runtime.js` compatibility-adapter execution** — the review-level migration + additive
   apply are proven; actually wrapping/invoking a legacy `runtime.js` and the "conformance replaces
   compatibility" retirement gate are deferred (handoff-acknowledged).
