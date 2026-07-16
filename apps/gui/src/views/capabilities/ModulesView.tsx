@@ -14,7 +14,9 @@ import type {
   CapabilityRunScope,
   CapabilityModuleRecord,
   CapDiagnostic,
+  FoundationPlan,
   InterviewPacket,
+  ModuleImplementationBrief,
   ModuleManifest,
   OverlayInspectionSummary,
 } from '@engineering-ui-kit/core'
@@ -47,16 +49,47 @@ type Props = {
   progressive?: boolean
   onOpenArchitecture?: () => void
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
+  /** WP5A (CAP-TEST-070/WP5B backing) — the project's approved foundation plan, if any, for From-spec deployment enrichment. */
+  approvedFoundation?: FoundationPlan
+  /** WP5A bullet (d) — blocks the implementation handoff (agent build / implementation packet) until an approved, non-stale foundation exists. Defaults to enabled for callers that predate foundation planning. */
+  foundationGate?: { enabled: boolean; reason?: string }
 }
+
+/** Mirrors `ModuleImplementationBrief['deployment']` — the generated deployment references a From-spec build should carry (bullet e). */
+export type UiModuleDeploymentContext = NonNullable<ModuleImplementationBrief['deployment']>
 
 function asArch(value: unknown): ArchitectureSpecification | undefined {
   if (!value || typeof value !== 'object') return undefined
   return value as ArchitectureSpecification
 }
 
+/** Best-effort deployment context for a module from an approved foundation plan (bullet e enrichment). */
+export function deploymentContextFor(
+  foundation: FoundationPlan | undefined,
+  moduleId: string,
+): UiModuleDeploymentContext | undefined {
+  const allocation = foundation?.allocations.find((candidate) => candidate.moduleId === moduleId)
+  const deployable = allocation
+    ? foundation?.deployables.find((candidate) => candidate.deployableId === allocation.deployableId)
+    : undefined
+  if (!deployable) return undefined
+  return {
+    deployableId: deployable.deployableId,
+    kind: deployable.kind,
+    runtimeLanguage: deployable.runtimeLanguage,
+    runtimeVersionRange: deployable.runtimeVersionRange,
+    compositionRootPath: deployable.compositionRootPath,
+    commands: deployable.commands,
+    generatedContractRefs: [],
+    generatedTypeTargets: [],
+    acceptanceCommands: Object.values(deployable.commands),
+  }
+}
+
 export function buildUiModuleTaskFields(
   manifest: ModuleManifest,
   architecture: ArchitectureSpecification,
+  deployment?: UiModuleDeploymentContext,
 ): TaskPacketFields {
   const bullets = (values: string[], fallback: string) => values.length
     ? values.map((value) => `- ${value}`).join('\n')
@@ -104,6 +137,11 @@ export function buildUiModuleTaskFields(
     `## Responsive and accessible behavior\n- Design desktop, tablet, narrow-window, and keyboard-only layouts; content must reflow without horizontal page scrolling.\n- Use semantic landmarks, headings, labels, descriptions, and status announcements. Preserve logical focus order and restore focus after dialogs.\n- Provide visible focus, sufficient contrast, non-color status cues, meaningful empty/error copy, and reduced-motion behavior.\n- Keep primary actions obvious, secondary actions quieter, and dense technical details progressively disclosed.` ,
     `## Visual and interaction quality\n- Follow the repository’s established design system, semantic tokens, components, spacing, and typography.\n- Establish a clear information hierarchy with aligned panels, consistent control placement, restrained decoration, and deliberate whitespace.\n- Reuse existing components before introducing new ones. Do not imitate a generic dashboard when the approved workflow calls for a more focused task surface.`,
     `## Verification targets\n- Every listed responsibility, owned concern, provided operation, required operation, and workflow is visibly accounted for.\n- Each relevant state can be reached with deterministic sample data.\n- Keyboard, focus, validation, responsive, and failure behaviors have automated or documented verification.\n- Type checking, tests, and the production build pass without weakening existing coverage.`,
+    ...(deployment
+      ? [
+          `## Generated deployment references\nThis module is hosted by the approved foundation plan's \`${deployment.deployableId}\` deployable (${deployment.kind}, ${deployment.runtimeLanguage} ${deployment.runtimeVersionRange}).\n\nComposition root: \`${deployment.compositionRootPath}\`\n\nCommands:\n${bullets(Object.entries(deployment.commands).map(([label, command]) => `${label}: ${command}`), 'No generated commands recorded.')}\n\nGenerated contract references:\n${bullets(deployment.generatedContractRefs, 'No generated contract references recorded.')}\n\nGenerated type targets:\n${bullets(deployment.generatedTypeTargets, 'No generated type targets recorded.')}\n\nAcceptance commands:\n${bullets(deployment.acceptanceCommands, 'No generated acceptance commands recorded.')}`,
+        ]
+      : []),
   ].join('\n\n')
   return {
     taskTitle: `Build UI from approved capability spec: ${manifest.name}`,
@@ -136,6 +174,16 @@ export function buildUiModuleTaskFields(
       `Module manifest: ${manifest.moduleId} @ ${manifest.moduleVersion}`,
       `Runtime allocation: ${humanizeIdentifier(manifest.runtimeAllocation)}`,
       `Verification suites: ${manifest.verificationSuiteIds.join(', ') || 'none recorded'}`,
+      ...(deployment
+        ? [
+            `Deployable: ${deployment.deployableId} (${deployment.kind}, ${deployment.runtimeLanguage} ${deployment.runtimeVersionRange})`,
+            `Composition root: ${deployment.compositionRootPath}`,
+            ...Object.entries(deployment.commands).map(([label, command]) => `Command (${label}): ${command}`),
+            ...deployment.generatedContractRefs.map((ref) => `Generated contract: ${ref}`),
+            ...deployment.generatedTypeTargets.map((ref) => `Generated type target: ${ref}`),
+            ...deployment.acceptanceCommands.map((command) => `Acceptance command: ${command}`),
+          ]
+        : []),
     ].join('\n'),
   }
 }
@@ -153,6 +201,8 @@ export function ModulesView({
   progressive = false,
   onOpenArchitecture,
   onStartUiBuild,
+  approvedFoundation,
+  foundationGate = { enabled: true },
 }: Props) {
   const guided = projection === 'guided'
   const [architecture, setArchitecture] = useState<ArchitectureSpecification | undefined>()
@@ -246,6 +296,8 @@ export function ModulesView({
         progressive={progressive}
         onChanged={onChanged}
         onStartUiBuild={onStartUiBuild}
+        approvedFoundation={approvedFoundation}
+        foundationGate={foundationGate}
       />
     </section>
   )
@@ -264,9 +316,13 @@ function ModuleWorkspace(props: {
   progressive: boolean
   onChanged: () => Promise<void>
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
+  approvedFoundation?: FoundationPlan
+  foundationGate: { enabled: boolean; reason?: string }
 }) {
-  const { bridge, projectId, moduleId, architecture, record, isApproved, projection, progressive } = props
+  const { bridge, projectId, moduleId, architecture, record, isApproved, projection, progressive, foundationGate } = props
   const guided = projection === 'guided'
+  const handoffBlocked = !foundationGate.enabled
+  const foundationPrerequisiteMessage = `Foundation must be approved first.${foundationGate.reason ? ` ${foundationGate.reason}` : ''}`
   const architectureModule = architecture?.moduleDefinitions?.find((definition) => definition.moduleId === moduleId)
   const selectedType = architectureModule?.moduleType ?? inferModuleType(moduleId, architectureModule?.name)
   const [packet, setPacket] = useState<InterviewPacket | undefined>()
@@ -411,7 +467,7 @@ function ModuleWorkspace(props: {
   }
 
   async function exportImplementation() {
-    if (busy || !isApproved) return
+    if (busy || !isApproved || handoffBlocked) return
     setBusy(true)
     try {
       const exported = await bridge.capabilitiesExportImplementationPacket({ projectId, moduleId })
@@ -440,11 +496,12 @@ function ModuleWorkspace(props: {
 
   async function startUiAgentBuild() {
     const manifest = record?.approved
-    if (busy || !manifest || !architecture || !props.onStartUiBuild) return
+    if (busy || !manifest || !architecture || !props.onStartUiBuild || handoffBlocked) return
     setBusy(true)
     setMessage('Preparing the UI build workspace with this module’s approved context…')
     try {
-      await props.onStartUiBuild(projectId, buildUiModuleTaskFields(manifest, architecture))
+      const deployment = deploymentContextFor(props.approvedFoundation, manifest.moduleId)
+      await props.onStartUiBuild(projectId, buildUiModuleTaskFields(manifest, architecture, deployment))
     } catch (error) {
       if (mounted.current) setMessage(error instanceof Error ? error.message : String(error))
     } finally {
@@ -569,19 +626,24 @@ function ModuleWorkspace(props: {
       )}
       {buildStep === 'handoff' && (
         <div className="cap-ui-build-options">
+          {handoffBlocked ? (
+            <p className="capabilities-note cap-foundation-prerequisite" role="status">
+              {foundationPrerequisiteMessage}
+            </p>
+          ) : null}
           {selectedType === 'experience' && props.onStartUiBuild ? (
             <div className="cap-ui-build-agent">
               <span className="capabilities-eyebrow">Recommended for UI modules</span>
               <strong>Build the UI with the agent</strong>
               <p>Open Build &amp; Test with this module’s approved responsibilities, operations, paths, and architecture boundaries already prepared.</p>
-              <button type="button" className="btn btn-primary btn-compact" onClick={() => void startUiAgentBuild()} disabled={busy}>
+              <button type="button" className="btn btn-primary btn-compact" onClick={() => void startUiAgentBuild()} disabled={busy || handoffBlocked}>
                 {Icon.sparkle(14)} Build UI with agent
               </button>
             </div>
           ) : null}
           <div className="cap-ui-build-manual">
             <strong>{selectedType === 'experience' ? 'Or use an external implementation handoff' : 'Create the implementation handoff'}</strong>
-            <button type="button" className="btn btn-secondary btn-compact" onClick={() => void exportImplementation()} disabled={busy}>Create implementation handoff</button>
+            <button type="button" className="btn btn-secondary btn-compact" onClick={() => void exportImplementation()} disabled={busy || handoffBlocked}>Create implementation handoff</button>
           </div>
         </div>
       )}
@@ -738,8 +800,13 @@ function ModuleWorkspace(props: {
 
           <section aria-label="Module implementation lifecycle">
             <h3>Implementation lifecycle</h3>
+            {isApproved && handoffBlocked ? (
+              <p className="capabilities-note cap-foundation-prerequisite" role="status">
+                {foundationPrerequisiteMessage}
+              </p>
+            ) : null}
             <div className="capabilities-toolbar" role="group" aria-label="Implementation actions">
-              <button type="button" className="btn btn-primary btn-compact" disabled={busy || !isApproved} onClick={() => void exportImplementation()}>Export implementation packet</button>
+              <button type="button" className="btn btn-primary btn-compact" disabled={busy || !isApproved || handoffBlocked} onClick={() => void exportImplementation()}>Export implementation packet</button>
               <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !implementationRunId} onClick={() => void selectAndInspectOverlay()}>Select and inspect overlay</button>
               <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !inspection?.canApply || (inspection.warnings.length > 0 && !warningsAccepted)} onClick={() => void applyInspectedOverlay()}>Apply reviewed overlay</button>
               <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !isApproved} onClick={() => void verifyApprovedModule()}>Verify module</button>

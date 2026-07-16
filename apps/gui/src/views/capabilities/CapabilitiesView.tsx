@@ -10,12 +10,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { projectArchitecture } from '@engineering-ui-kit/core/browser'
+import { foundationHandoffGate, projectArchitecture } from '@engineering-ui-kit/core/browser'
 import type {
   ArchitectureSpecification,
   AttentionItem,
   CapabilityModuleRecord,
   CapabilityBindingRecord,
+  FoundationPlan,
   ModuleManifest,
   Project,
   SelectionEvidence,
@@ -107,6 +108,7 @@ export function CapabilitiesView({
   const [bindingRecords, setBindingRecords] = useState<CapabilityBindingRecord[]>([])
   const [deployables, setDeployables] = useState<CapabilityDeployableSummary[]>([])
   const [inboundBindingRecords, setInboundBindingRecords] = useState<InboundBindingReadRecord[]>([])
+  const [foundation, setFoundation] = useState<{ draft?: FoundationPlan; approved?: FoundationPlan }>({})
   const [selectionEvidence, setSelectionEvidence] = useState<SelectionEvidence | undefined>()
   const [viewing, setViewing] = useState<StageId>('define')
   const [designSection, setDesignSection] = useState<DesignSection>('application')
@@ -153,7 +155,7 @@ export function CapabilitiesView({
 
   const fetchWorkspace = useCallback(
     async (id: string) => {
-      const [app, arch, attention, modules, bindings, deployableList, inboundBindings] = await Promise.all([
+      const [app, arch, attention, modules, bindings, deployableList, inboundBindings, foundationResult] = await Promise.all([
         bridge.capabilitiesGetApplication(id),
         bridge.capabilitiesGetArchitecture(id),
         bridge.capabilitiesListNeedsAttention(id),
@@ -161,8 +163,9 @@ export function CapabilitiesView({
         bridge.capabilitiesListBindings(id),
         bridge.capabilitiesListDeployables(id),
         bridge.capabilitiesListInboundBindings(id),
+        bridge.capabilitiesGetFoundation(id),
       ])
-      return { application: app, architecture: arch, attention, modules, bindings, deployableList, inboundBindings }
+      return { application: app, architecture: arch, attention, modules, bindings, deployableList, inboundBindings, foundation: foundationResult }
     },
     [bridge],
   )
@@ -175,6 +178,7 @@ export function CapabilitiesView({
     setBindingRecords([])
     setDeployables([])
     setInboundBindingRecords([])
+    setFoundation({})
     setSelectionEvidence(undefined)
     setGuidedPanel('journey')
   }
@@ -198,6 +202,7 @@ export function CapabilitiesView({
         setBindingRecords(d.bindings)
         setDeployables(d.deployableList)
         setInboundBindingRecords(d.inboundBindings)
+        setFoundation(d.foundation)
         const project = projects.find((candidate) => candidate.id === id)
         const derived = deriveJourney({
           application: d.application,
@@ -257,6 +262,7 @@ export function CapabilitiesView({
     setBindingRecords(d.bindings)
     setDeployables(d.deployableList)
     setInboundBindingRecords(d.inboundBindings)
+    setFoundation(d.foundation)
   }, [projectId, fetchWorkspace])
 
   const architectureProjection = useMemo(() => {
@@ -272,6 +278,15 @@ export function CapabilitiesView({
   }, [architecture, moduleRecords, projection])
 
   const archSpec = (architecture.approved ?? architecture.draft) as ArchitectureSpecification | undefined
+  const approvedArchSpec = architecture.approved as ArchitectureSpecification | undefined
+
+  /** WP5A bullet (d) — blocks the module implementation/From-spec-Build handoff until an approved, non-stale foundation exists. */
+  const foundationGate = useMemo(() => {
+    if (!approvedArchSpec) {
+      return { enabled: false, reason: 'Architecture must be approved before the foundation can be planned.' }
+    }
+    return foundationHandoffGate({ approvedFoundation: foundation.approved, approvedArchitecture: approvedArchSpec })
+  }, [foundation.approved, approvedArchSpec])
 
   function switchProjection(next: CapabilitiesProjection) {
     if (next === projection) return
@@ -451,6 +466,8 @@ export function CapabilitiesView({
           onClosePanel={() => setGuidedPanel('journey')}
           onProjectsChanged={onProjectsChanged}
           onStartUiBuild={onStartUiBuild}
+          approvedFoundation={foundation.approved}
+          foundationGate={foundationGate}
         />
       ) : (
         <DesignBody
@@ -470,6 +487,8 @@ export function CapabilitiesView({
           bindingRecords={bindingRecords}
           previewRef={previewRef}
           onChanged={refresh}
+          approvedFoundation={foundation.approved}
+          foundationGate={foundationGate}
           onSelectionEvidence={setSelectionEvidence}
         />
       )}
@@ -503,6 +522,8 @@ export function GuidedBody(props: {
   onClosePanel: () => void
   onProjectsChanged?: () => Promise<void> | void
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
+  approvedFoundation?: FoundationPlan
+  foundationGate?: { enabled: boolean; reason?: string }
 }) {
   const stage = stageById(props.journey, props.viewing)
   const stageLabel = stage.label
@@ -617,6 +638,8 @@ function GuidedStage(props: {
   onView: (id: StageId) => void
   onProjectsChanged?: () => Promise<void> | void
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
+  approvedFoundation?: FoundationPlan
+  foundationGate?: { enabled: boolean; reason?: string }
 }) {
   const { bridge, projectId, stage } = props
 
@@ -666,6 +689,8 @@ function GuidedStage(props: {
           records={props.moduleRecords}
           onChanged={props.onChanged}
           onStartUiBuild={props.onStartUiBuild}
+          approvedFoundation={props.approvedFoundation}
+          foundationGate={props.foundationGate}
         />
       )
     case 'connect':
@@ -761,6 +786,8 @@ export function DesignBody(props: {
   previewRef: React.RefObject<CapabilityPreviewHandle | null>
   onChanged: () => void
   onSelectionEvidence: (e: SelectionEvidence | undefined) => void
+  approvedFoundation?: FoundationPlan
+  foundationGate?: { enabled: boolean; reason?: string }
 }) {
   const { bridge, projectId } = props
   return (
@@ -811,6 +838,8 @@ export function DesignBody(props: {
             records={props.moduleRecords}
             onChanged={async () => props.onChanged()}
             onOpenArchitecture={() => props.onSection('architecture')}
+            approvedFoundation={props.approvedFoundation}
+            foundationGate={props.foundationGate}
           />
         )}
         {props.section === 'connections' && (
