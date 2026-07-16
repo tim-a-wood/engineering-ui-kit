@@ -3,7 +3,12 @@
  * It observes one rendered click and returns serializable selection evidence;
  * it cannot access the host renderer, bridge, filesystem, or IPC surface.
  */
-export const DESKTOP_PREVIEW_PICKER_JS = `new Promise((resolve) => {
+export const DESKTOP_PREVIEW_PICKER_JS = `(() => {
+  const stateKey = '__euikPreviewPickerV1';
+  const previous = globalThis[stateKey];
+  if (previous && typeof previous.cancel === 'function') previous.cancel();
+  const state = { done: false, value: null, cancel: null };
+  globalThis[stateKey] = state;
   const highlight = document.createElement('div');
   highlight.setAttribute('data-euik-picker-ready', 'true');
   highlight.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:2px solid #2a5a8c;background:rgba(42,90,140,0.14);border-radius:4px;left:0;top:0;width:0;height:0';
@@ -38,7 +43,14 @@ export const DESKTOP_PREVIEW_PICKER_JS = `new Promise((resolve) => {
     window.removeEventListener('beforeunload', cancel);
     highlight.remove();
   };
-  const cancel = () => { cleanup(); resolve(null); };
+  const finish = (value) => {
+    if (state.done) return;
+    cleanup();
+    state.value = value;
+    state.done = true;
+  };
+  const cancel = () => finish(null);
+  state.cancel = cancel;
   const move = (event) => {
     if (!(event.target instanceof Element) || event.target === highlight) return;
     const box = event.target.getBoundingClientRect();
@@ -48,9 +60,8 @@ export const DESKTOP_PREVIEW_PICKER_JS = `new Promise((resolve) => {
   const click = (event) => {
     event.preventDefault(); event.stopPropagation();
     const element = event.target;
-    cleanup();
-    if (!(element instanceof Element)) { resolve(null); return; }
-    resolve({
+    if (!(element instanceof Element)) { finish(null); return; }
+    finish({
       route: location.hash || location.pathname || '/',
       documentTitle: document.title || '',
       selector: selector(element),
@@ -67,4 +78,17 @@ export const DESKTOP_PREVIEW_PICKER_JS = `new Promise((resolve) => {
   document.addEventListener('click', click, true);
   document.addEventListener('keydown', key, true);
   window.addEventListener('beforeunload', cancel);
-})`
+  return true;
+})()`
+
+export const DESKTOP_PREVIEW_PICKER_RESULT_JS = `(() => {
+  const state = globalThis.__euikPreviewPickerV1;
+  return state && state.done ? { done: true, value: state.value } : { done: false };
+})()`
+
+export const DESKTOP_PREVIEW_PICKER_CANCEL_JS = `(() => {
+  const state = globalThis.__euikPreviewPickerV1;
+  if (state && typeof state.cancel === 'function') state.cancel();
+  delete globalThis.__euikPreviewPickerV1;
+  return true;
+})()`

@@ -49,7 +49,11 @@ import {
   buildTaskPacketMarkdown,
 } from './standardsTemplate.js'
 import { registerCapabilityIpcHandlers } from './capabilities/ipc.js'
-import { DESKTOP_PREVIEW_PICKER_JS } from './previewPicker.js'
+import {
+  DESKTOP_PREVIEW_PICKER_CANCEL_JS,
+  DESKTOP_PREVIEW_PICKER_JS,
+  DESKTOP_PREVIEW_PICKER_RESULT_JS,
+} from './previewPicker.js'
 
 function requireProject(workspace: Workspace, projectId: string): Project {
   const project = workspace.getProject(projectId)
@@ -871,25 +875,38 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       throw new Error('element selection is limited to the configured local application Preview')
     }
     if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
-    let timer: ReturnType<typeof setTimeout>
     try {
-      const evaluated = await Promise.race([
-        guest.debugger.sendCommand('Runtime.evaluate', {
-          expression: DESKTOP_PREVIEW_PICKER_JS,
-          awaitPromise: true,
+      await guest.debugger.sendCommand('Runtime.evaluate', {
+        expression: DESKTOP_PREVIEW_PICKER_JS,
+        returnByValue: true,
+        userGesture: true,
+      })
+      const deadline = Date.now() + 5 * 60 * 1000
+      let value: unknown
+      for (;;) {
+        if (guest.isDestroyed()) throw new Error('the target-app Preview closed during element selection')
+        const evaluated = await guest.debugger.sendCommand('Runtime.evaluate', {
+          expression: DESKTOP_PREVIEW_PICKER_RESULT_JS,
           returnByValue: true,
-          userGesture: true,
-        }),
-        new Promise<never>((_resolve, reject) => {
-          timer = setTimeout(() => reject(new Error('element selection timed out; try again')), 5 * 60 * 1000)
-        }),
-      ]) as { result?: { value?: unknown } }
-      const value = evaluated.result?.value
+        }) as { result?: { value?: unknown } }
+        const state = evaluated.result?.value as { done?: unknown; value?: unknown } | undefined
+        if (state?.done === true) {
+          value = state.value
+          break
+        }
+        if (Date.now() >= deadline) throw new Error('element selection timed out; try again')
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      }
       if (value === null || value === undefined) return null
       if (!value || typeof value !== 'object') throw new Error('the target-app Preview returned invalid selection evidence')
       return value as SelectionEvidence
     } finally {
-      clearTimeout(timer!)
+      if (!guest.isDestroyed()) {
+        await guest.debugger.sendCommand('Runtime.evaluate', {
+          expression: DESKTOP_PREVIEW_PICKER_CANCEL_JS,
+          returnByValue: true,
+        }).catch(() => undefined)
+      }
     }
   })
 
