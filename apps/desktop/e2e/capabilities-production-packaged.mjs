@@ -245,17 +245,16 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
       }
       try {
         if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
-        const { root } = await guest.debugger.sendCommand('DOM.getDocument', { depth: 1 })
-        const { nodeId } = await guest.debugger.sendCommand('DOM.querySelector', {
-          nodeId: root.nodeId,
-          selector: '[data-cap-id="run-capability"]',
+        const { result } = await guest.debugger.sendCommand('Runtime.evaluate', {
+          expression: 'document.querySelector(\'[data-cap-id="run-capability"]\')',
+          returnByValue: false,
         })
-        if (!nodeId) {
+        if (!result.objectId || result.subtype === 'null') {
           lastState = `${lastState}; marked control not rendered yet`
           await new Promise((resolve) => setTimeout(resolve, 100))
           continue
         }
-        const { model } = await guest.debugger.sendCommand('DOM.getBoxModel', { nodeId })
+        const { model } = await guest.debugger.sendCommand('DOM.getBoxModel', { objectId: result.objectId })
         const x = (model.content[0] + model.content[2] + model.content[4] + model.content[6]) / 4
         const y = (model.content[1] + model.content[3] + model.content[5] + model.content[7]) / 4
         await guest.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y })
