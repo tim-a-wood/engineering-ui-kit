@@ -57,13 +57,13 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
       while (Date.now() < deadline) {
         if (guestReadyRef.current) return
         const guest = webviewRef.current as unknown as {
+          getWebContentsId?: () => number
           getURL?: () => string
-          isLoading?: () => boolean
         } | null
         // `dom-ready` can fire between custom-element connection and React's
-        // ref callback on slower Windows runners. The current guest state is
-        // authoritative when that one-shot event was missed.
-        if (guest?.getURL?.() && guest.isLoading?.() === false) {
+        // ref callback on slower Windows runners. A live guest identity at the
+        // requested URL is authoritative when that one-shot event was missed.
+        if ((guest?.getWebContentsId?.() ?? 0) > 0 && guest?.getURL?.()) {
           guestReadyRef.current = true
           return
         }

@@ -283,7 +283,10 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
     }
     return { clicked: false, detail: lastState }
   }, { guestId, targetUrl })
-  if (!clickResult.clicked) throw new Error(`Target preview control was not available: ${clickResult.detail}`)
+  if (!clickResult.clicked) {
+    const pickerError = await page.locator('.preview-binding-picker [role="alert"]').textContent().catch(() => '')
+    throw new Error(`Target preview control was not available: ${clickResult.detail}${pickerError ? `; UI reported: ${pickerError}` : ''}`)
+  }
   await waitForStatus(page, expectedSelection)
 }
 
