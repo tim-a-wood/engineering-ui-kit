@@ -12,6 +12,10 @@ files:
     to: gui/dist
 # Ship the built-in sample projects seeded on first run.
 extraResources:
+  # WebView preloads are loaded by a separate renderer process. Keep this one
+  # outside app.asar so Windows Chromium can resolve the file URL reliably.
+  - from: dist/preload/previewGuestPreload.cjs
+    to: previewGuestPreload.cjs
   # electron-builder intentionally prunes declaration files from normal
   # production dependencies. Generation needs the complete runtime package,
   # including .d.ts files, so targets can pass the real TypeScript build gate.

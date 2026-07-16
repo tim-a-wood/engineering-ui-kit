@@ -860,7 +860,9 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.getPreviewPreloadUrl, () => {
-    const preloadPath = path.join(app.getAppPath(), 'dist', 'preload', 'previewGuestPreload.cjs')
+    const preloadPath = app.isPackaged
+      ? path.join(process.resourcesPath, 'previewGuestPreload.cjs')
+      : path.join(app.getAppPath(), 'dist', 'preload', 'previewGuestPreload.cjs')
     if (!fs.existsSync(preloadPath)) throw new Error('the target-app Preview picker is unavailable in this build')
     return pathToFileURL(preloadPath).toString()
   })

@@ -29,6 +29,8 @@ type PreviewIpcMessage = Event & { channel?: string; args?: unknown[] }
 const PREVIEW_PICK_START = 'euik-preview-picker:start'
 const PREVIEW_PICK_CANCEL = 'euik-preview-picker:cancel'
 const PREVIEW_PICK_RESULT = 'euik-preview-picker:result'
+const PREVIEW_PICK_PROBE = 'euik-preview-picker:probe'
+const PREVIEW_PICK_READY = 'euik-preview-picker:ready'
 
 /** Target application preview. Selection executes inside the Electron guest. */
 export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
@@ -36,6 +38,7 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
     const [state, setState] = useState<PreviewState>({ status: 'idle' })
     const webviewRef = useRef<HTMLWebViewElement | null>(null)
     const guestReadyRef = useRef(false)
+    const pickerPreloadReadyRef = useRef(false)
     const pendingPickRef = useRef<{
       resolve: (value: SelectionEvidence | null) => void
       reject: (cause: Error) => void
@@ -71,16 +74,23 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
       settlePendingPick(null)
       webviewRef.current = node
       guestReadyRef.current = false
+      pickerPreloadReadyRef.current = false
       if (!node) return
       const loading: EventListener = () => {
         guestReadyRef.current = false
+        pickerPreloadReadyRef.current = false
         settlePendingPick(null)
       }
       const ready: EventListener = () => {
         guestReadyRef.current = true
+        ;(node as PreviewWebview).send?.(PREVIEW_PICK_PROBE)
       }
       const message: EventListener = (rawEvent) => {
         const event = rawEvent as PreviewIpcMessage
+        if (event.channel === PREVIEW_PICK_READY) {
+          pickerPreloadReadyRef.current = true
+          return
+        }
         if (event.channel !== PREVIEW_PICK_RESULT) return
         const value = event.args?.[0]
         if (value === null || value === undefined) {
@@ -106,18 +116,18 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
     const waitForGuestReady = useCallback(async () => {
       const deadline = Date.now() + 30_000
       while (Date.now() < deadline) {
-        if (guestReadyRef.current) return
         const guest = webviewRef.current as PreviewWebview | null
         // `dom-ready` can fire between custom-element connection and React's
         // ref callback on slower Windows runners. A live guest identity at the
         // requested URL is authoritative when that one-shot event was missed.
         if ((guest?.getWebContentsId?.() ?? 0) > 0 && guest?.getURL?.()) {
           guestReadyRef.current = true
-          return
+          guest.send?.(PREVIEW_PICK_PROBE)
+          if (pickerPreloadReadyRef.current) return
         }
         await new Promise((resolve) => setTimeout(resolve, 100))
       }
-      throw new Error('The target-app Preview is still loading. Reload it, then try selecting an element again.')
+      throw new Error('The target-app Preview picker did not load. Reload the Preview, then try selecting an element again.')
     }, [])
 
     const start = async () => {
