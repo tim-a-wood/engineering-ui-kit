@@ -443,6 +443,7 @@ export function installMockBridge(): EuikBridge {
       if (!project?.launchUrl) throw new Error('no launch URL configured for this project')
       return { url: project.launchUrl, started: false, rebuilt: false }
     },
+    async pickPreviewElement() { return null },
     async copyUploadSet(runId) {
       const run = runs.get(runId)
       if (!run) throw new Error(`run not found: ${runId}`)

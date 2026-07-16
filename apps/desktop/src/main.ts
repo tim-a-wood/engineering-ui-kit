@@ -63,6 +63,12 @@ function createWindow(): void {
     webPreferences.sandbox = true
     webPreferences.webSecurity = true
   })
+  mainWindow.webContents.on('did-attach-webview', (_event, guest) => {
+    guest.setWindowOpenHandler(() => ({ action: 'deny' }))
+    guest.on('preload-error', (_preloadEvent, preloadPath, error) => {
+      console.error(`[target-preview preload] ${preloadPath}: ${error.message}`)
+    })
+  })
 
   mainWindow.once('ready-to-show', () => mainWindow?.show())
   mainWindow.on('closed', () => { mainWindow = null })

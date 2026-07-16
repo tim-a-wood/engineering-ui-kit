@@ -26,6 +26,7 @@ import type {
   ImpactClassification,
   DeltaQueueState,
   Settings,
+  SelectionEvidence,
   VerificationResult,
   CapabilityIntegrationState,
   GenerationApplyRecord,
@@ -156,6 +157,7 @@ export type EuikBridge = {
   copyUploadSet(runId: string): Promise<{ files: number }>
   /** Open the project's app in the browser, starting its dev server first if needed. */
   launchApp(projectId: string, options?: { open?: boolean }): Promise<{ url: string; started: boolean; rebuilt: boolean }>
+  pickPreviewElement(guestId: number): Promise<SelectionEvidence | null>
 
   openExternal(url: string): Promise<void>
   openPath(path: string): Promise<void>
@@ -369,6 +371,7 @@ export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
   startUploadDrag: 'dnd:start-upload-drag',
   copyUploadSet: 'clipboard:copy-upload-set',
   launchApp: 'app:launch-target',
+  pickPreviewElement: 'app:pick-preview-element',
   openExternal: 'shell:open-external',
   openPath: 'shell:open-path',
   showInFolder: 'shell:show-in-folder',

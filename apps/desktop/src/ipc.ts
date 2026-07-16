@@ -3,7 +3,7 @@
  * child processes, or persistence — always through @engineering-ui-kit/core.
  */
 
-import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell, webContents } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawn, type ChildProcess } from 'node:child_process'
@@ -29,6 +29,7 @@ import {
   type OverlayInspectionSummary,
   type Project,
   type Settings,
+  type SelectionEvidence,
   type VerificationResult,
 } from '@engineering-ui-kit/core'
 import {
@@ -856,6 +857,57 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     // system browser when asked (the default, and the legacy behavior).
     if (options?.open !== false) await shell.openExternal(launchUrl)
     return { url: launchUrl, started, rebuilt }
+  })
+
+  ipcMain.handle(BRIDGE_CHANNELS.pickPreviewElement, async (event, guestId: number): Promise<SelectionEvidence | null> => {
+    if (!Number.isSafeInteger(guestId) || guestId <= 0) throw new Error('invalid target-app Preview guest')
+    const guest = webContents.fromId(guestId)
+    if (!guest || guest.isDestroyed() || guest.getType() !== 'webview' || guest.hostWebContents?.id !== event.sender.id) {
+      throw new Error('the target-app Preview guest is unavailable or does not belong to this window')
+    }
+    const target = new URL(guest.getURL())
+    if (!['http:', 'https:'].includes(target.protocol) || !['127.0.0.1', 'localhost', '::1'].includes(target.hostname)) {
+      throw new Error('element selection is limited to the configured local application Preview')
+    }
+
+    return await new Promise<SelectionEvidence | null>((resolve, reject) => {
+      let timer: ReturnType<typeof setTimeout>
+      let settled = false
+      const cleanup = () => {
+        clearTimeout(timer!)
+        guest.off('ipc-message', onMessage)
+        guest.off('destroyed', onDestroyed)
+      }
+      const finish = (value: SelectionEvidence | null, cause?: Error) => {
+        if (settled) return
+        settled = true
+        cleanup()
+        if (cause) reject(cause)
+        else resolve(value)
+      }
+      const onDestroyed = () => finish(null, new Error('the target-app Preview closed during element selection'))
+      const onMessage = (_ipcEvent: Electron.Event, channel: string, ...args: unknown[]) => {
+        if (channel !== 'euik-preview-picker:result') return
+        const value = args[0]
+        if (value === null || value === undefined) {
+          finish(null)
+          return
+        }
+        if (
+          typeof value !== 'object'
+          || typeof (value as Partial<SelectionEvidence>).selector !== 'string'
+          || typeof (value as Partial<SelectionEvidence>).elementTag !== 'string'
+        ) {
+          finish(null, new Error('the target-app Preview returned invalid selection evidence'))
+          return
+        }
+        finish(value as SelectionEvidence)
+      }
+      guest.on('ipc-message', onMessage)
+      guest.once('destroyed', onDestroyed)
+      timer = setTimeout(() => finish(null, new Error('element selection timed out; try again')), 5 * 60 * 1000)
+      guest.send('euik-preview-picker:start')
+    })
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.openExternal, async (_e, url: string) => {
