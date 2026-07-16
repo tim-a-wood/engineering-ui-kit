@@ -6,7 +6,6 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell, webContents } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { buildCfHdropBuffer, buildFilenamesPboardPlist, buildUriList } from './uploadSetTransfer.js'
 import {
@@ -50,6 +49,11 @@ import {
   buildTaskPacketMarkdown,
 } from './standardsTemplate.js'
 import { registerCapabilityIpcHandlers } from './capabilities/ipc.js'
+import {
+  DESKTOP_PREVIEW_PICKER_CANCEL_JS,
+  DESKTOP_PREVIEW_PICKER_INSTALL_JS,
+  DESKTOP_PREVIEW_PICKER_RESULT_JS,
+} from './previewPicker.js'
 
 function requireProject(workspace: Workspace, projectId: string): Project {
   const project = workspace.getProject(projectId)
@@ -860,14 +864,6 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     return { url: launchUrl, started, rebuilt }
   })
 
-  ipcMain.handle(BRIDGE_CHANNELS.getPreviewPreloadUrl, () => {
-    const preloadPath = app.isPackaged
-      ? path.join(process.resourcesPath, 'previewGuestPreload.cjs')
-      : path.join(app.getAppPath(), 'dist', 'preload', 'previewGuestPreload.cjs')
-    if (!fs.existsSync(preloadPath)) throw new Error('the target-app Preview picker is unavailable in this build')
-    return pathToFileURL(preloadPath).toString()
-  })
-
   ipcMain.handle(BRIDGE_CHANNELS.pickPreviewElement, async (event, guestId: number): Promise<SelectionEvidence | null> => {
     if (!Number.isSafeInteger(guestId) || guestId <= 0) throw new Error('invalid target-app Preview guest')
     const guest = webContents.fromId(guestId)
@@ -879,58 +875,35 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       throw new Error('element selection is limited to the configured local application Preview')
     }
 
-    return await new Promise<SelectionEvidence | null>((resolve, reject) => {
-      let timer: ReturnType<typeof setTimeout>
-      let probeTimer: ReturnType<typeof setInterval>
-      let settled = false
-      let started = false
-      const cleanup = () => {
-        clearTimeout(timer!)
-        clearInterval(probeTimer!)
-        ipcMain.off('euik-preview-picker:ready', onReady)
-        ipcMain.off('euik-preview-picker:result', onResult)
-        guest.off('destroyed', onDestroyed)
-      }
-      const finish = (value: SelectionEvidence | null, cause?: Error) => {
-        if (settled) return
-        settled = true
-        cleanup()
-        if (cause) reject(cause)
-        else resolve(value)
-      }
-      const onDestroyed = () => finish(null, new Error('the target-app Preview closed during element selection'))
-      const onReady = (ipcEvent: Electron.IpcMainEvent) => {
-        if (ipcEvent.sender.id !== guest.id || started) return
-        started = true
-        clearInterval(probeTimer!)
-        guest.send('euik-preview-picker:start')
-      }
-      const onResult = (ipcEvent: Electron.IpcMainEvent, value: unknown) => {
-        if (ipcEvent.sender.id !== guest.id) return
-        if (value === null || value === undefined) {
-          finish(null)
-          return
+    const readyDeadline = Date.now() + 30_000
+    while (guest.isLoadingMainFrame()) {
+      if (guest.isDestroyed()) throw new Error('the target-app Preview closed before element selection')
+      if (Date.now() >= readyDeadline) throw new Error('the target-app Preview is still loading; reload it and try again')
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+
+    await guest.executeJavaScript(DESKTOP_PREVIEW_PICKER_INSTALL_JS, true)
+    const selectionDeadline = Date.now() + 5 * 60 * 1000
+    try {
+      for (;;) {
+        if (guest.isDestroyed()) throw new Error('the target-app Preview closed during element selection')
+        const state = await guest.executeJavaScript(DESKTOP_PREVIEW_PICKER_RESULT_JS) as { done?: unknown; value?: unknown }
+        if (state?.done === true) {
+          const value = state.value
+          if (value === null || value === undefined) return null
+          if (
+            typeof value !== 'object'
+            || typeof (value as Partial<SelectionEvidence>).selector !== 'string'
+            || typeof (value as Partial<SelectionEvidence>).elementTag !== 'string'
+          ) throw new Error('the target-app Preview returned invalid selection evidence')
+          return value as SelectionEvidence
         }
-        if (
-          typeof value !== 'object'
-          || typeof (value as Partial<SelectionEvidence>).selector !== 'string'
-          || typeof (value as Partial<SelectionEvidence>).elementTag !== 'string'
-        ) {
-          finish(null, new Error('the target-app Preview returned invalid selection evidence'))
-          return
-        }
-        finish(value as SelectionEvidence)
+        if (Date.now() >= selectionDeadline) throw new Error('element selection timed out; try again')
+        await new Promise((resolve) => setTimeout(resolve, 50))
       }
-      ipcMain.on('euik-preview-picker:ready', onReady)
-      ipcMain.on('euik-preview-picker:result', onResult)
-      guest.once('destroyed', onDestroyed)
-      timer = setTimeout(() => finish(null, new Error('element selection timed out; try again')), 5 * 60 * 1000)
-      const probe = () => {
-        if (!guest.isDestroyed()) guest.send('euik-preview-picker:probe')
-      }
-      probeTimer = setInterval(probe, 100)
-      probe()
-    })
+    } finally {
+      if (!guest.isDestroyed()) await guest.executeJavaScript(DESKTOP_PREVIEW_PICKER_CANCEL_JS).catch(() => undefined)
+    }
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.openExternal, async (_e, url: string) => {

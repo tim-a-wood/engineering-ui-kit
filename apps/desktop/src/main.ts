@@ -5,7 +5,6 @@
  */
 
 import { app, BrowserWindow } from 'electron'
-import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { registerIpcHandlers } from './ipc.js'
@@ -13,12 +12,6 @@ import { registerIpcHandlers } from './ipc.js'
 const here = path.dirname(fileURLToPath(import.meta.url))
 
 let mainWindow: BrowserWindow | null = null
-
-function previewPreloadPath(): string {
-  return app.isPackaged
-    ? path.join(process.resourcesPath, 'previewGuestPreload.cjs')
-    : path.join(app.getAppPath(), 'dist', 'preload', 'previewGuestPreload.cjs')
-}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -48,36 +41,21 @@ function createWindow(): void {
       event.preventDefault()
       return
     }
-    const preload = previewPreloadPath()
-    const requestedPreload = webPreferences.preload
-    const normalized = (value: string) => process.platform === 'win32'
-      ? path.resolve(value).toLowerCase()
-      : path.resolve(value)
     if (
       !['http:', 'https:'].includes(target.protocol)
       || !['127.0.0.1', 'localhost', '::1'].includes(target.hostname)
-      || !fs.existsSync(preload)
-      || !requestedPreload
-      || normalized(requestedPreload) !== normalized(preload)
     ) {
       event.preventDefault()
       return
     }
-    webPreferences.preload = preload
+    delete webPreferences.preload
     webPreferences.nodeIntegration = false
     webPreferences.contextIsolation = true
     webPreferences.sandbox = true
     webPreferences.webSecurity = true
-    console.log(`[target-preview attach] ${preload}`)
   })
   mainWindow.webContents.on('did-attach-webview', (_event, guest) => {
     guest.setWindowOpenHandler(() => ({ action: 'deny' }))
-    guest.on('console-message', (details) => {
-      if (details.message.startsWith('[euik-preview-preload]')) console.log(details.message)
-    })
-    guest.on('preload-error', (_preloadEvent, preloadPath, error) => {
-      console.error(`[target-preview preload] ${preloadPath}: ${error.message}`)
-    })
   })
 
   mainWindow.once('ready-to-show', () => mainWindow?.show())
