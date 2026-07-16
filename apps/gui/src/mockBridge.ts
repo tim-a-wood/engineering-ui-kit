@@ -12,6 +12,7 @@ import type {
   AttentionItem,
   DeployableKind,
   EvidenceCapture,
+  FoundationPlan,
   FreshnessRecord,
   FrontendBinding,
   HandoffRun,
@@ -29,6 +30,7 @@ import {
   deltaQueueState,
   assertTargetExportable,
   evaluateBindingApprovalGate,
+  proposeFoundation,
   runModuleVerification,
 } from '@engineering-ui-kit/core/browser'
 import type { BuildPacketResult, CapabilityDeployableSummary, InboundBindingReadRecord, EuikBridge, PrepareContextResult, RunEvidence, TaskPacketFields } from './bridge'
@@ -51,6 +53,9 @@ type CapProjectState = {
   deployables: Map<string, CapabilityDeployableSummary>
   inboundBindingDrafts: Map<string, InboundBinding>
   inboundBindingApproved: Map<string, InboundBinding>
+  /** WP5A — the project's single foundation-planning draft/approved record (CAP-TEST-074/075). */
+  foundationDraft?: FoundationPlan
+  foundationApproved?: FoundationPlan
 }
 
 /* 4x3 placeholder PNGs (blue-ish before, teal-ish after) for evidence mocks. */
@@ -510,6 +515,29 @@ export function installMockBridge(): EuikBridge {
       state.architectureApproved = approved
       state.architectureDraft = undefined
       return { ok: true, approved, gate: { gateId: 'CAP-GATE-002', passed: true, diagnostics: [] } }
+    },
+    async capabilitiesProposeFoundation(input) {
+      const state = ensureCap(input.projectId)
+      const architecture = state.architectureApproved
+      if (!architecture) throw new Error('architecture must be approved before proposing a foundation')
+      return proposeFoundation({ architecture, answers: input.answers })
+    },
+    async capabilitiesGetFoundation(projectId) {
+      const state = ensureCap(projectId)
+      return { draft: state.foundationDraft, approved: state.foundationApproved }
+    },
+    async capabilitiesSaveFoundationDraft(projectId, plan) {
+      ensureCap(projectId).foundationDraft = plan
+      return { ok: true as const }
+    },
+    async capabilitiesApproveFoundation(projectId, plan) {
+      if (plan.readiness.status !== 'ready') {
+        return { ok: false, reason: `cannot approve a foundation plan with readiness status "${plan.readiness.status}"` }
+      }
+      const state = ensureCap(projectId)
+      state.foundationApproved = plan
+      state.foundationDraft = undefined
+      return { ok: true, approved: plan }
     },
     async capabilitiesSaveModuleDraft(projectId, draft, interviewResponse) {
       const manifest = draft as ModuleManifest

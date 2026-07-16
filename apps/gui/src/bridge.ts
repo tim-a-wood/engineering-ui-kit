@@ -15,6 +15,7 @@ import type {
   DeployableKind,
   ElementLoss,
   EvidenceCapture,
+  FoundationPlan,
   HandoffRun,
   InboundBinding,
   OverlayInspectionSummary,
@@ -266,6 +267,24 @@ export type EuikBridge = {
     moduleId: string
     explicit: boolean
   }): Promise<RunModuleVerificationResult>
+  /**
+   * WP5A — foundation planning (CAP-TEST-074/075). Proposes a `FoundationPlan`
+   * (deployables + module allocations + ambiguity resolution) from the
+   * project's approved architecture, resolving any previously surfaced
+   * ambiguities named in `answers`. Pure re-derivation: re-running with the
+   * same `answers` is idempotent.
+   */
+  capabilitiesProposeFoundation(input: {
+    projectId: string
+    answers?: { id: string; choice: string }[]
+  }): Promise<FoundationPlan>
+  capabilitiesGetFoundation(projectId: string): Promise<{ draft?: FoundationPlan; approved?: FoundationPlan }>
+  capabilitiesSaveFoundationDraft(projectId: string, plan: FoundationPlan): Promise<{ ok: true }>
+  /** Rejects (`ok: false`, with `reason`) unless `plan.readiness.status === 'ready'`. */
+  capabilitiesApproveFoundation(
+    projectId: string,
+    plan: FoundationPlan,
+  ): Promise<{ ok: boolean; approved?: FoundationPlan; reason?: string }>
 }
 
 declare global {

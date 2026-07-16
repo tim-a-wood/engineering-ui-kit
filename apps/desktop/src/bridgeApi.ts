@@ -14,6 +14,7 @@ import type {
   DeployableKind,
   ElementLoss,
   EvidenceCapture,
+  FoundationPlan,
   HandoffRun,
   InboundBinding,
   OverlayInspectionSummary,
@@ -279,6 +280,17 @@ export type EuikBridge = {
     moduleId: string
     explicit: boolean
   }): Promise<RunModuleVerificationResult>
+  /** WP5A — foundation planning (CAP-TEST-074/075). See `apps/gui/src/bridge.ts` for the renderer-facing contract. */
+  capabilitiesProposeFoundation(input: {
+    projectId: string
+    answers?: { id: string; choice: string }[]
+  }): Promise<FoundationPlan>
+  capabilitiesGetFoundation(projectId: string): Promise<{ draft?: FoundationPlan; approved?: FoundationPlan }>
+  capabilitiesSaveFoundationDraft(projectId: string, plan: FoundationPlan): Promise<{ ok: true }>
+  capabilitiesApproveFoundation(
+    projectId: string,
+    plan: FoundationPlan,
+  ): Promise<{ ok: boolean; approved?: FoundationPlan; reason?: string }>
 }
 
 export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
@@ -359,4 +371,8 @@ export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
   capabilitiesMarkDeltaTargetComplete: 'capabilities:mark-delta-target-complete',
   capabilitiesRunModuleVerification: 'capabilities:run-module-verification',
   capabilitiesVerifyApprovedModule: 'capabilities:verify-approved-module',
+  capabilitiesProposeFoundation: 'capabilities:propose-foundation',
+  capabilitiesGetFoundation: 'capabilities:get-foundation',
+  capabilitiesSaveFoundationDraft: 'capabilities:save-foundation-draft',
+  capabilitiesApproveFoundation: 'capabilities:approve-foundation',
 }
