@@ -90,8 +90,9 @@ jobs:
           else
             VENV_PY="$(pwd)/.venv/bin/python"
           fi
+          CAPABILITIES_PYTHON_INTERPRETER="$("$VENV_PY" -c 'import sys; print(sys.executable)')"
           echo "VENV_PY=$VENV_PY" >> "$GITHUB_ENV"
-          echo "CAPABILITIES_PYTHON_INTERPRETER=$VENV_PY" >> "$GITHUB_ENV"
+          echo "CAPABILITIES_PYTHON_INTERPRETER=$CAPABILITIES_PYTHON_INTERPRETER" >> "$GITHUB_ENV"
           "$VENV_PY" --version
 
       - name: Install Python runtime + test dependencies into .venv
