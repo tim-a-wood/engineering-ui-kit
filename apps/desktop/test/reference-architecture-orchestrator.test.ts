@@ -110,6 +110,28 @@ function seed() {
 }
 
 describe('production reference-architecture orchestrator', () => {
+  it('persists a recoverable failed state after a genuine mid-transaction rollback', () => {
+    const { orchestrator, repoRoot, dataDir } = seed()
+    const preview = orchestrator.previewGeneration('project-1', 'embedded-library')
+    process.env.EUIK_TEST_MODE = '1'
+    process.env.EUIK_TEST_FAIL_GENERATION_RENAME_AT = '2'
+    try {
+      expect(() => orchestrator.applyGeneration({
+        projectId: 'project-1', deployableId: 'embedded-library', planId: preview.plan.planId,
+        planHash: preview.plan.planHash, explicit: true,
+      })).toThrow(/fully rolled back/)
+    } finally {
+      delete process.env.EUIK_TEST_FAIL_GENERATION_RENAME_AT
+      delete process.env.EUIK_TEST_MODE
+    }
+
+    expect(fs.existsSync(path.join(repoRoot, 'src/generated/embedded-library/types.g.ts'))).toBe(false)
+    const restarted = new ReferenceArchitectureOrchestrator(new Workspace(dataDir), dataDir)
+    const recovered = restarted.getState('project-1').deployables[0]
+    expect(recovered?.status).toBe('failed')
+    expect(recovered?.latestApply?.error).toMatch(/fully rolled back/)
+  })
+
   it('projects a no-loss migration preview for a non-empty existing repository', () => {
     const { orchestrator, repoRoot } = seed()
     fs.mkdirSync(path.join(repoRoot, 'src'), { recursive: true })

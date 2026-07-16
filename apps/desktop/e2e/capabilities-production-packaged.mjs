@@ -22,7 +22,7 @@ const TIMEOUT = Number(process.env.EUIK_PACKAGED_TIMEOUT_MS ?? 60_000)
 const JOURNEY_TIMEOUT = Number(process.env.EUIK_PACKAGED_JOURNEY_TIMEOUT_MS ?? 360_000)
 
 fs.mkdirSync(EVIDENCE_DIR, { recursive: true })
-for (const stale of ['failure.json', 'failure.png', 'python-failure.png', 'mixed-failure.png', 'existing-failure.png']) fs.rmSync(path.join(EVIDENCE_DIR, stale), { force: true })
+for (const stale of ['failure.json', 'failure.png', 'python-failure.png', 'mixed-failure.png', 'existing-failure.png', 'recovery-failure.png']) fs.rmSync(path.join(EVIDENCE_DIR, stale), { force: true })
 
 function run(command, args, cwd = REPO_ROOT) {
   const result = spawnSync(command, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' })
@@ -641,6 +641,10 @@ async function runExistingRepositoryJourney(electron) {
     await waitForStatus(page, 'Approved foundation plan')
 
     await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab')
+    await expectVisible(page.getByRole('article', { name: 'Integration for embedded-library' }), 'loaded existing deployable integration')
+    const existingModule = page.getByRole('button', { name: 'Select module mod.job' })
+    await click(existingModule, 'Select existing module')
+    await expectVisible(page.getByLabel('Import module interview response'), 'existing module interview import')
     const migration = await expectVisible(page.getByRole('region', { name: 'Existing repository migration preview' }), 'existing repository migration preview')
     await expectVisible(migration.getByText('No data loss identified', { exact: true }), 'no-loss migration assessment')
     await expectVisible(migration.getByText('Repository conventions were detected without a blocking migration ambiguity.', { exact: false }), 'migration readiness')
@@ -694,6 +698,134 @@ async function runExistingRepositoryJourney(electron) {
   }
 }
 
+async function runFailureRecoveryJourney(electron) {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'euik-production-recovery-'))
+  const fixtureRepo = path.join(scratch, 'repo')
+  const dataDir = path.join(scratch, 'data')
+  fs.mkdirSync(fixtureRepo, { recursive: true })
+  fs.mkdirSync(dataDir, { recursive: true })
+  const fixture = createExistingRepositoryFixture(fixtureRepo, 'production-recovery')
+  run('git', ['init'], fixtureRepo)
+  run('git', ['config', 'user.email', 'packaged-journey@example.invalid'], fixtureRepo)
+  run('git', ['config', 'user.name', 'Packaged Journey'], fixtureRepo)
+  run('git', ['add', '.'], fixtureRepo)
+  run('git', ['commit', '-m', 'recovery baseline'], fixtureRepo)
+  const baseline = repositorySnapshot(fixtureRepo)
+  const baselineHash = snapshotHash(baseline)
+  const executablePath = packagedExecutable()
+  const evidence = {
+    journey: 'mid-transaction-failure-restart-recovery', executablePath, packaged: false, scratch,
+    baselineHash, screenshots: [], passed: false,
+  }
+  let app
+  try {
+    app = await electron.launch({
+      executablePath,
+      env: {
+        ...process.env, EUIK_DATA_DIR: dataDir, EUIK_TEST_MODE: '1', EUIK_TEST_PICK_DIR: fixtureRepo,
+        EUIK_TEST_FAIL_GENERATION_RENAME_AT: '2',
+      },
+      timeout: TIMEOUT,
+    })
+    let page = await app.firstWindow({ timeout: TIMEOUT })
+    page.setDefaultTimeout(TIMEOUT)
+    await page.waitForLoadState('domcontentloaded')
+    if (!await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)) throw new Error('Electron reports app.isPackaged=false')
+    evidence.packaged = true
+
+    await click(page.getByRole('button', { name: 'New Project' }).first(), 'New Project')
+    await page.getByLabel('Project name').fill('Production Failure Recovery')
+    await click(page.getByRole('button', { name: 'Browse' }), 'repository Browse')
+    await click(page.getByRole('button', { name: 'Create Project' }), 'Create Project')
+    await click(page.getByRole('button', { name: 'Capabilities' }), 'Capabilities navigation')
+    await page.getByLabel('Capabilities project').selectOption({ label: 'Production Failure Recovery' })
+    await chooseInterviewFile(page, fixture.responseFiles.product, 'Application definition')
+    await waitForStatus(page, 'Interview imported')
+    await click(page.getByRole('button', { name: 'Approve definition' }), 'Approve definition')
+    await waitForStatus(page, 'Approved application revision')
+    await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode')
+    await click(page.getByRole('tab', { name: 'Architecture' }), 'Architecture tab')
+    await waitEnabled(page.getByRole('button', { name: 'Export architecture interview' }), 'loaded architecture interview')
+    await chooseInterviewFile(page, fixture.responseFiles.architecture, 'Architecture interview')
+    await waitForStatus(page, 'Imported architecture proposal')
+    await click(page.getByRole('button', { name: 'Approve architecture' }), 'Approve architecture')
+    await waitForStatus(page, 'Architecture approved')
+    await click(page.getByRole('button', { name: 'Propose foundation plan' }), 'Propose foundation plan')
+    const foundationQuestions = page.getByRole('group', { name: 'Open foundation questions' })
+    if (await foundationQuestions.count()) await answerFoundationQuestions(page)
+    await waitEnabled(page.getByRole('button', { name: 'Approve foundation' }), 'ready recovery foundation approval')
+    await click(page.getByRole('button', { name: 'Approve foundation' }), 'Approve foundation')
+    await waitForStatus(page, 'Approved foundation plan')
+    await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab')
+    await expectVisible(page.getByRole('article', { name: 'Integration for embedded-library' }), 'loaded recovery deployable integration')
+    const recoveryModule = page.getByRole('button', { name: 'Select module mod.job' })
+    await click(recoveryModule, 'Select recovery module')
+    await expectVisible(page.getByLabel('Import module interview response'), 'recovery module interview import')
+    const moduleImport = page.locator('[aria-label="Import module interview response"] input[type=file]')
+    await moduleImport.first().setInputFiles(fixture.responseFiles.module)
+    await waitForStatus(page, 'Imported module draft')
+    await click(page.getByRole('button', { name: 'Approve module' }).first(), 'Approve recovery module')
+    await waitForStatus(page, 'Approved module')
+    await page.getByLabel(`Implementation factory for ${fixture.operationId}`).fill('src/domain/run_job.py#create_job_run')
+    await click(page.getByRole('button', { name: 'Save composition factories' }), 'Save recovery composition factory')
+    await waitForStatus(page, 'Composition configuration saved')
+    await click(page.getByRole('button', { name: 'Preview generation' }), 'Preview recovery generation')
+    await waitForStatus(page, 'Generation plan is ready')
+    await waitEnabled(page.getByRole('button', { name: 'Apply generation plan' }), 'failure-injected generation apply')
+    await click(page.getByRole('button', { name: 'Apply generation plan' }), 'Apply with injected failure')
+    await waitForStatus(page, 'repository was fully restored')
+    await page.getByText('repository was fully restored', { exact: false }).last().scrollIntoViewIfNeeded()
+    const restoredAfterFailure = repositorySnapshot(fixtureRepo)
+    evidence.afterFailureHash = snapshotHash(restoredAfterFailure)
+    if (JSON.stringify(restoredAfterFailure) !== JSON.stringify(baseline)) throw new Error('mid-transaction failure did not restore the original repository exactly')
+    evidence.screenshots.push(await shot(page, '41-mid-transaction-failure-restored'))
+    await app.close()
+    app = undefined
+
+    app = await electron.launch({
+      executablePath,
+      env: { ...process.env, EUIK_DATA_DIR: dataDir, EUIK_TEST_MODE: '1', EUIK_TEST_PICK_DIR: fixtureRepo },
+      timeout: TIMEOUT,
+    })
+    page = await app.firstWindow({ timeout: TIMEOUT })
+    page.setDefaultTimeout(TIMEOUT)
+    await page.waitForLoadState('domcontentloaded')
+    await click(page.getByRole('button', { name: 'Capabilities' }), 'Capabilities navigation after restart')
+    await page.getByLabel('Capabilities project').selectOption({ label: 'Production Failure Recovery' })
+    await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode after restart')
+    await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab after restart')
+    const card = page.getByRole('article', { name: 'Integration for embedded-library' })
+    const recoveredAlert = await expectVisible(card.getByRole('alert'), 'persisted failed apply recovery')
+    await recoveredAlert.scrollIntoViewIfNeeded()
+    await expectVisible(card.getByText('failed', { exact: true }), 'persisted failed lifecycle status')
+    const retry = card.getByRole('button', { name: 'Apply generation plan' })
+    await waitEnabled(retry, 'retry generation apply after restart')
+    evidence.screenshots.push(await shot(page, '42-recoverable-state-after-restart'))
+    await click(retry, 'Retry generation after restart')
+    await waitForStatus(page, 'Reference-architecture infrastructure applied')
+    await page.getByText('Reference-architecture infrastructure applied', { exact: false }).last().scrollIntoViewIfNeeded()
+    evidence.screenshots.push(await shot(page, '43-retry-succeeded'))
+    await click(card.getByRole('button', { name: 'Roll back' }), 'Roll back successful retry')
+    await waitForStatus(page, 'Generation was rolled back')
+    const restoredAfterRetry = repositorySnapshot(fixtureRepo)
+    evidence.finalHash = snapshotHash(restoredAfterRetry)
+    if (JSON.stringify(restoredAfterRetry) !== JSON.stringify(baseline)) throw new Error('final rollback did not restore the original repository exactly')
+    evidence.passed = true
+    return evidence
+  } catch (error) {
+    const page = app?.windows()[0]
+    if (page) {
+      evidence.screenshots.push(await shot(page, 'recovery-failure').catch(() => ''))
+      evidence.visibleText = await page.locator('body').innerText().catch(() => '')
+    }
+    evidence.error = error instanceof Error ? error.stack : String(error)
+    throw error
+  } finally {
+    await app?.close().catch(() => {})
+    fs.writeFileSync(path.join(EVIDENCE_DIR, 'failure-recovery.json'), JSON.stringify(evidence, null, 2) + '\n')
+  }
+}
+
 const watchdog = setTimeout(() => {
   console.error(`Packaged production journey exceeded ${JOURNEY_TIMEOUT}ms`)
   process.exit(1)
@@ -709,12 +841,13 @@ try {
     run('npm', ['run', 'package:dir', '-w', 'apps/desktop'])
   }
   const { _electron } = await import('playwright')
-  const selected = new Set((process.env.EUIK_PACKAGED_JOURNEYS ?? 'typescript-ui,python-headless,mixed,existing').split(',').map((value) => value.trim()).filter(Boolean))
+  const selected = new Set((process.env.EUIK_PACKAGED_JOURNEYS ?? 'typescript-ui,python-headless,mixed,existing,recovery').split(',').map((value) => value.trim()).filter(Boolean))
   const results = []
   if (selected.has('typescript-ui')) results.push(await runTypeScriptUiJourney(_electron))
   if (selected.has('python-headless')) results.push(await runPythonHeadlessJourney(_electron))
   if (selected.has('mixed')) results.push(await runMixedReactPythonJourney(_electron))
   if (selected.has('existing')) results.push(await runExistingRepositoryJourney(_electron))
+  if (selected.has('recovery')) results.push(await runFailureRecoveryJourney(_electron))
   if (results.length === 0) throw new Error('EUIK_PACKAGED_JOURNEYS did not select a known journey')
   console.log(JSON.stringify(results, null, 2))
   if (results.some((result) => !result.passed)) process.exitCode = 1

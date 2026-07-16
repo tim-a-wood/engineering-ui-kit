@@ -52,6 +52,35 @@ export type GenerationPreviewResult = {
   status: 'plan-ready' | 'blocked'
 }
 
+let testApplyFaultConsumed = false
+
+/**
+ * Packaged acceptance-only fault boundary. It still executes the real core
+ * transaction and fails an actual target rename after earlier changes have
+ * landed, allowing the packaged app to prove rollback/restart behavior. The
+ * hook is unreachable unless the existing desktop test mode is explicit.
+ */
+function applyGenerationWithOptionalTestFault(input: Parameters<typeof applyGenerationPlan>[0]) {
+  const requested = process.env.EUIK_TEST_FAIL_GENERATION_RENAME_AT
+  const failAt = requested ? Number(requested) : Number.NaN
+  if (process.env.EUIK_TEST_MODE !== '1' || testApplyFaultConsumed || !Number.isInteger(failAt) || failAt < 2) {
+    return applyGenerationPlan(input)
+  }
+  testApplyFaultConsumed = true
+  const originalRename = fs.renameSync.bind(fs)
+  let renameCount = 0
+  fs.renameSync = ((...args: Parameters<typeof fs.renameSync>) => {
+    renameCount += 1
+    if (renameCount === failAt) throw new Error(`packaged acceptance fault at target rename ${failAt}`)
+    return originalRename(...args)
+  }) as typeof fs.renameSync
+  try {
+    return applyGenerationPlan(input)
+  } finally {
+    fs.renameSync = originalRename as typeof fs.renameSync
+  }
+}
+
 function repositoryCleanState(repoRoot: string): CleanState {
   try {
     const output = execFileSync('git', ['status', '--porcelain'], {
@@ -873,7 +902,7 @@ export class ReferenceArchitectureOrchestrator {
     }
     this.integration.saveApplyRecord(applying)
     try {
-      const result = applyGenerationPlan({
+      const result = applyGenerationWithOptionalTestFault({
         plan: bundle.plan,
         targetRoot: current.project.repoPath,
         virtualFiles: bundle.virtualFiles,

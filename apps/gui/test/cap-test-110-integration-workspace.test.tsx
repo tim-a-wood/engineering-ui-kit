@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { CapabilityIntegrationState, GenerationPlan } from '@engineering-ui-kit/core'
 import type { EuikBridge } from '../src/bridge'
 import { IntegrationWorkspace } from '../src/views/capabilities/IntegrationWorkspace'
+
+afterEach(cleanup)
 
 function plan(overrides: Partial<GenerationPlan> = {}): GenerationPlan {
   return {
@@ -24,6 +26,27 @@ function state(currentPlan?: GenerationPlan): CapabilityIntegrationState {
 }
 
 describe('CAP-TEST-110 visible production integration workspace', () => {
+  it('restores a failed apply after restart as visible, retryable state', async () => {
+    const retry = vi.fn().mockRejectedValue(new Error("Error invoking remote method 'capabilities:apply-generation': GenerationApplyRolledBackError: generation apply failed and was fully rolled back: disk unavailable"))
+    const failed = state(plan())
+    failed.deployables[0]!.status = 'failed'
+    failed.deployables[0]!.latestApply = {
+      schemaVersion: '1.0', projectId: 'project-1', deployableId: 'http-api', planId: 'plan-1', planHash: 'plan-hash-1',
+      applyRunId: 'apply-failed-1', status: 'failed', ownershipManifests: [], commands: [],
+      error: 'generation apply failed and was fully rolled back: injected write failure',
+      startedAt: '2026-07-16T00:00:00.000Z', completedAt: '2026-07-16T00:00:01.000Z',
+    }
+    render(<IntegrationWorkspace bridge={{ capabilitiesApplyGeneration: retry } as unknown as EuikBridge} projectId="project-1" state={failed} projection="guided" onChanged={() => {}} />)
+
+    expect(screen.getByRole('alert').textContent).toContain('restored the repository')
+    const button = screen.getByRole('button', { name: 'Apply generation plan' }) as HTMLButtonElement
+    expect(button.disabled).toBe(false)
+    fireEvent.click(button)
+    await waitFor(() => expect(retry).toHaveBeenCalledOnce())
+    await waitFor(() => expect(document.body.textContent).toContain('Generation failed and the repository was fully restored. disk unavailable'))
+    expect(document.body.textContent).not.toContain('Error invoking remote method')
+  })
+
   it('shows the no-loss existing-repository migration preview before generation', () => {
     const migrationState = state()
     migrationState.migrationPreview = {

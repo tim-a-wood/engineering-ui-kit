@@ -4288,6 +4288,15 @@ code.path-wrap {
 .cap-command-run.failed { border-color: color-mix(in srgb, var(--semantic-status-danger) 42%, var(--semantic-border-subtle)); }
 .cap-command-run ul { display: grid; gap: var(--semantic-spacing-1); margin: 0; padding-left: var(--semantic-spacing-5); }
 .cap-command-run code { overflow-wrap: anywhere; }
+.cap-apply-failure {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+  padding: var(--semantic-spacing-3);
+  border: 1px solid color-mix(in srgb, var(--semantic-status-danger) 42%, var(--semantic-border-subtle));
+  border-radius: var(--semantic-radius-md);
+  background: color-mix(in srgb, var(--semantic-status-danger) 7%, var(--semantic-surface-inset));
+}
+.cap-apply-failure p { margin: 0; }
 .cap-connection-verification {
   display: grid;
   gap: var(--semantic-spacing-4);

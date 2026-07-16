@@ -302,7 +302,9 @@ export function ArchitectureInterview({
           approvedFoundation={foundation.approved}
           approvedArchitecture={approvedArch}
           projection={projection}
-          onChanged={() => void refresh()}
+          onChanged={() => {
+            void refresh().then(() => onApproved?.())
+          }}
         />
       ) : null}
     </section>

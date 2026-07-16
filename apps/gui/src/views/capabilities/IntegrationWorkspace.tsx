@@ -10,6 +10,20 @@ type Props = {
   onChanged: () => void | Promise<void>
 }
 
+function presentIntegrationError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error)
+  const withoutBridgePrefix = raw
+    .replace(/^Error invoking remote method '[^']+':\s*/i, '')
+    .replace(/^GenerationApplyRolledBackError:\s*/i, '')
+  const rollbackMarker = 'generation apply failed and was fully rolled back:'
+  const markerIndex = withoutBridgePrefix.toLowerCase().indexOf(rollbackMarker)
+  if (markerIndex >= 0) {
+    const detail = withoutBridgePrefix.slice(markerIndex + rollbackMarker.length).trim()
+    return `Generation failed and the repository was fully restored.${detail ? ` ${detail}` : ''}`
+  }
+  return withoutBridgePrefix
+}
+
 export function IntegrationWorkspace({ bridge, projectId, state, projection, onChanged }: Props) {
   const [busyDeployable, setBusyDeployable] = useState('')
   const [messages, setMessages] = useState<Record<string, string>>({})
@@ -25,7 +39,7 @@ export function IntegrationWorkspace({ bridge, projectId, state, projection, onC
       setMessages((current) => ({ ...current, [deployableId]: success }))
       await onChanged()
     } catch (error) {
-      setMessages((current) => ({ ...current, [deployableId]: error instanceof Error ? error.message : String(error) }))
+      setMessages((current) => ({ ...current, [deployableId]: presentIntegrationError(error) }))
     } finally {
       setBusyDeployable('')
     }
@@ -92,7 +106,8 @@ export function IntegrationWorkspace({ bridge, projectId, state, projection, onC
             const apply = deployable.latestApply
             const busy = busyDeployable === deployable.deployableId
             const dirty = plan?.targetRepository.cleanState === 'dirty'
-            const canApply = Boolean(plan && !plan.blockers.length && !plan.ambiguityQuestions.length && apply?.planHash !== plan.planHash)
+            const currentPlanApplied = apply?.status === 'applied' && apply.planHash === plan?.planHash
+            const canApply = Boolean(plan && !plan.blockers.length && !plan.ambiguityQuestions.length && !currentPlanApplied)
             return (
               <article key={deployable.deployableId} className="panel-raised cap-integration-card" aria-label={`Integration for ${deployable.deployableId}`}>
                 <header>
@@ -157,6 +172,14 @@ export function IntegrationWorkspace({ bridge, projectId, state, projection, onC
                     <ul>{deployable.latestCommandRun.results.map((result) => (
                       <li key={`${result.label}-${result.startedAt}`}><code>{result.command}</code> — {result.status}{result.exitCode === null ? '' : ` (${result.exitCode})`}</li>
                     ))}</ul>
+                  </div>
+                ) : null}
+
+                {apply?.status === 'failed' ? (
+                  <div className="cap-apply-failure" role="alert">
+                    <strong>The previous apply failed and the transaction restored the repository.</strong>
+                    <p>{apply.error ?? 'No additional failure detail was recorded.'}</p>
+                    <p>Review or regenerate this plan, then retry when the cause is resolved.</p>
                   </div>
                 ) : null}
 
