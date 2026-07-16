@@ -57,6 +57,14 @@ jobs:
       - name: Install Node workspaces (deterministic)
         run: npm ci
 
+      - name: Install Playwright Chromium + Linux dependencies
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright Chromium
+        if: runner.os == 'Windows'
+        run: npx playwright install chromium
+
       - name: Build consumed library packages (core + runtime dist)
         # core/runtime expose their public API from gitignored dist/*; gui tests
         # and the desktop typecheck resolve @engineering-ui-kit/core via dist, so
