@@ -2,7 +2,7 @@
   "journey": "mid-transaction-failure-restart-recovery",
   "executablePath": "/Users/timwood/Documents/UI Framework/release/mac-arm64/Engineering UI Kit.app/Contents/MacOS/Engineering UI Kit",
   "packaged": true,
-  "scratch": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-production-recovery-qFj1u2",
+  "scratch": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-production-recovery-sBEzqI",
   "baselineHash": "386c39530a99995fb83274b8407ea38554ec51a3ff420e461f1821705856d867",
   "screenshots": [
     "apps/desktop/validation-evidence/capabilities-production/packaged/41-mid-transaction-failure-restored.png",

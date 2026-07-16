@@ -98,6 +98,22 @@ function repositoryCleanState(repoRoot: string): CleanState {
 }
 
 /**
+ * Resolve only the well-known Windows command shims that Node cannot execute
+ * directly without a shell. Keeping this mapping explicit preserves the
+ * approved-command boundary while making the same generated launch command
+ * portable across supported desktop platforms.
+ */
+export function platformExecutable(
+  command: string,
+  platform: NodeJS.Platform = process.platform,
+): string {
+  if (platform !== 'win32' || /\.(?:cmd|exe|com|bat)$/i.test(command)) return command
+  return ['npm', 'npx', 'pnpm', 'yarn'].includes(command.toLowerCase())
+    ? `${command}.cmd`
+    : command
+}
+
+/**
  * Parse an approved launch command without invoking a shell. Environment
  * expansion, pipelines, redirection, command substitution, and control
  * operators are deliberately rejected; process authority remains bounded to
@@ -151,7 +167,7 @@ function parseApprovedCommand(commandText: string): { command: string; args: str
   if (started) tokens.push(token)
   const [command, ...args] = tokens
   if (!command) throw new Error('the approved deployable has no launch executable')
-  return { command, args }
+  return { command: platformExecutable(command), args }
 }
 
 async function urlReachable(url: string): Promise<boolean> {

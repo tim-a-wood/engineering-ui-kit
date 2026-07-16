@@ -15,7 +15,11 @@ import {
   type ModuleManifest,
 } from '@engineering-ui-kit/core'
 import { Workspace } from '@engineering-ui-kit/core'
-import { ReferenceArchitectureOrchestrator, buildRuntimeDistribution } from '../src/capabilities/referenceArchitectureOrchestrator.js'
+import {
+  ReferenceArchitectureOrchestrator,
+  buildRuntimeDistribution,
+  platformExecutable,
+} from '../src/capabilities/referenceArchitectureOrchestrator.js'
 
 const roots: string[] = []
 function tempRoot(label: string): string {
@@ -110,6 +114,14 @@ function seed() {
 }
 
 describe('production reference-architecture orchestrator', () => {
+  it('resolves only approved package-manager shims on Windows', () => {
+    expect(platformExecutable('npm', 'win32')).toBe('npm.cmd')
+    expect(platformExecutable('npx', 'win32')).toBe('npx.cmd')
+    expect(platformExecutable('npm.cmd', 'win32')).toBe('npm.cmd')
+    expect(platformExecutable('node', 'win32')).toBe('node')
+    expect(platformExecutable('npm', 'darwin')).toBe('npm')
+  })
+
   it('persists a recoverable failed state after a genuine mid-transaction rollback', () => {
     const { orchestrator, repoRoot, dataDir } = seed()
     const preview = orchestrator.previewGeneration('project-1', 'embedded-library')

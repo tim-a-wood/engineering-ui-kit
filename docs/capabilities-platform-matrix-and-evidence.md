@@ -7,6 +7,14 @@ the separate product decision about the `Experimental` badge. The authoritative 
 lives in [`capabilities-execution-ledger.md`](capabilities-execution-ledger.md); this document is the
 requirement→evidence roll-up required by handoff §18/§19/WP10.
 
+> **2026-07-16 desktop-integration addendum:** the original WP10 run below proved the executable
+> libraries and reference slices, but did not package or drive the production desktop workflow.
+> Production desktop integration is now locally green through packaged journeys A–E; the authoritative
+> completion evidence is
+> [`CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md`](CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md).
+> `.github/workflows/capabilities-cross-platform.yml` now adds macOS and runs those same packaged
+> journeys on macOS, Windows, and Ubuntu. Its final run link is pending the integration-branch push.
+
 Integration branch: `claude/cap-era-integration`. The suite was captured locally on **macOS**
 (darwin 24.6.0, Apple Silicon, Python 3.11.15) and repeated on GitHub-hosted **Windows** and
 **Ubuntu Linux** runners in [Actions run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532).
@@ -19,11 +27,12 @@ Every suite below was run green at the integrated tree. Commands are copy-pastea
 
 | Surface | Command | Result |
 |---|---|---|
-| Core (contracts, generation, apply, migration, **foundation planning**, verification) | `npm run test --workspace=@engineering-ui-kit/core` | **320 passed** (including CAP-TEST-106–108 legacy adoption) |
-| TypeScript runtime | `npm run test --workspace=@engineering-ui-kit/capabilities-runtime` | **95 passed** |
-| Foundation GUI | `npm run test --workspace=@engineering-ui-kit/gui` | **174 passed** (WP5A: +CAP-TEST-074/075) |
+| Core (contracts, generation, apply, migration, **foundation planning**, verification) | `npm run test --workspace=@engineering-ui-kit/core` | **337 passed** (including generated-host CAP-TEST-111–119) |
+| TypeScript runtime | `npm run test --workspace=@engineering-ui-kit/capabilities-runtime` | **96 passed** |
+| Foundation GUI | `npm run test --workspace=@engineering-ui-kit/gui` | **181 passed** (including production integration/recovery UI) |
 | Desktop (privileged bridge/IPC) | `npm run typecheck --workspace=@engineering-ui-kit/desktop` | **clean** |
-| Python runtime | `.venv/bin/python -m pytest runtimes/python -q` | **130 passed** |
+| Python runtime | `.venv/bin/python -m pytest runtimes/python -q` | **133 passed** |
+| Packaged production desktop | `npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop` | **Journeys A–E pass sequentially on macOS** |
 | Example — TS reference (React-in-one-deployable, HTTP, CLI, schedule, Electron IPC) | `cd examples/capabilities-ts-reference && npx vitest run` | **7 passed** |
 | Example — React reference | `cd examples/capabilities-react-reference && npx vitest run` | **8 passed** |
 | Example — Python reference (HTTP, CLI, schedule) | `.venv/bin/python -m pytest examples/capabilities-python-reference -q` | **15 passed** |
@@ -132,19 +141,21 @@ Detail and rationale for each item live in the ledger's "Open issues" section.
   [run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532); DoD #9 met).
 - ~~**Legacy `runtime.js` compatibility-adapter execution**~~ **DONE** (`7ec2588`, CAP-TEST-106–108:
   migrated real-HTTP E2E plus the "conformance replaces compatibility" retirement gate).
-- **WP7-followups** — React source-marker adoption (§10.4), OpenAPI-artifact wiring into apply,
-  registry-diagnostic equivalence, a Python composition-root generator, real DI glue (currently
-  `resolved.g.*` placeholders).
-- **WP8-followups** — Electron/Python launch presets for `runConnectionVerification`; freshness/impact
-  aggregation surfacing.
-- **RUNTIME-DIST** — TS runtime package `exports` resolve only `./dist/*` (unbuilt); consumers use a
-  `src` alias workaround. Add a `source`/`development` export condition or build into consumer
-  resolution before shipping real generated TS apps. Also affects a deep relative import in the
-  react-python example's `generation/contract.ts` (no `@engineering-ui-kit/core` generation subpath export).
-- **REDACTION-JSON** — frozen `redactSensitiveText` misses JSON-quoted secret keys; `verificationRunner`
-  compensates with a deep-walk. Consider hardening the shared helper.
+- ~~**WP7 followups**~~ **DONE in desktop integration:** Python composition roots, real DI factories,
+  generated OpenAPI/client application, registry equivalence, and generated host execution are covered
+  by CAP-TEST-111–119 and packaged journeys A–C.
+- ~~**WP8 followups**~~ **DONE in desktop integration:** Electron/Python launch presets and
+  freshness/impact aggregation are production orchestrator behavior and packaged evidence.
+- ~~**RUNTIME-DIST**~~ **DONE in desktop integration:** complete built TS runtime declarations/code and
+  Python runtime sources ship as desktop resources and are installed into generated targets; packaged
+  A–C build and launch those targets with the desktop acting only as orchestrator.
+- ~~**REDACTION-JSON**~~ **DONE:** the shared helper handles quoted secret keys and the verification
+  runner retains deep-walk defense; hostile tests cover both.
+- **External systems only:** real MATLAB Engine and real Azure DevOps still require installations or
+  credentials and remain separate experimental adapters.
 
 ---
 
-_Last updated after the green Windows/Linux WP10 matrix run. Regenerate the evidence in §1 locally or
-dispatch `.github/workflows/capabilities-cross-platform.yml`._
+_Last updated after the local green production desktop A–E run on 2026-07-16. Dispatch
+`.github/workflows/capabilities-cross-platform.yml` and record the final macOS/Windows/Ubuntu run in
+the desktop integration evidence before declaring the production integration goal complete._

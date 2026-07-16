@@ -49,11 +49,12 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP6B | Connect editors (trigger-first, per-host, private-default, multi-binding) | WP2, WP6A | cap-sonnet-implementer (coord checkout, 3 resumes) | `GuidedConnect.tsx` + `inbound/*` editors + bridge/mock | `61a3148` (+preload fix) | gui 165/165; CAP-TEST-076..083; desktop typecheck restored | **gate-green (real IPC/persistence → WP5B, see Open issues)** |
 | WP7-apply | §11.3 transactional generation apply + rollback (`applyGenerationPlan`/`rollbackGenerationApply`) | WP2 | cap-sonnet-implementer + Opus review | `capabilities/generationApply.ts` (Node) | `7b70435` (merged) | core 284/284; **13 safety tests** (forced-failure-@-each-phase byte-identical restore; traversal/symlink/stale/modified refusal; rollback idempotent); reviewed | **gate-green** (CAP-TEST-085/086/089/092) |
 | WP7-rest (assembly) | Generate→apply assembly (`assembleGenerationPlan`) + impact-scoped regen | WP7-apply, WP3B-gen, WP4B-gen | cap-sonnet-implementer | `capabilities/generationAssembly.ts` (Node) | `12cad75` (merged) | core 291/291; CAP-TEST-087/088; deterministic `planHash`; impact-scoped (1 binding→1 adapter); generate→apply→app-on-disk proven | **gate-green** (deferred → WP7-followups) |
-| WP7-followups | React marker/source adoption (§10.4), OpenAPI-artifact wiring, registry-diagnostic equivalence, Python composition-root generator, real DI wiring (`resolved.g.*` is placeholder glue) | WP7-rest | — | generation | — | CAP-TEST-084/090/091 | todo |
-| WP8 | Real connection verification runner + `ConnectionVerificationRecord` | WP7 | cap-sonnet-implementer + Opus review | `capabilities/verificationRunner.ts` (Node) | `a17f77a` (merged) | core 297/297 clean exit (no leaks); real HTTP+CLI launch→trigger→CAP-CONTRACT-029 (AJV-valid); simulation≠pass (separate fn, no bypass); test-adapter→partial/outstanding; redaction; process-cleanup pid-death-verified; CAP-TEST-094 | **gate-green** (Electron/Python launch presets + freshness-aggregation → WP8-followups) |
+| WP7-followups | OpenAPI/client application, registry equivalence, Python composition roots, real DI factories, generated process hosts | WP7-rest | Codex coordinator | generation assembly + TS/Python generators + desktop runtime distribution | `9068520`..`5e1e913` | CAP-TEST-111–119 plus packaged A–C launch real generated targets | **gate-green** |
+| WP8 | Real connection verification runner + `ConnectionVerificationRecord` | WP7 | cap-sonnet-implementer + Opus review + Codex desktop integration | core runner + production desktop launch presets/freshness UI | `a17f77a` + `9068520`..`5e1e913` | CAP-TEST-094; real HTTP/CLI/schedule/embedded/Electron/browser launch paths; packaged A–C current evidence | **gate-green** |
 | WP9A | Migration prep: existing-repo planner + 3 fixtures + legacy diagnostic | WP1, WP2 | cap-sonnet-implementer (symlinked worktree) | `generation/existingRepoMigration.ts`, `fixtures/existing-repos/` | `79d2fa3` (merged) | pure planner (additive, node-free); react-ts/python/react-python fixtures; CAP-TEST-102; core 199/199 | **gate-green** (apply=WP9B) |
 | WP9B | Adoption finalization: additive existing-repo apply + runtime-upgrade preview | WP7, WP8, WP9A | cap-sonnet-implementer + coordinator completion | `generation/upgradePreview.ts`, legacy compatibility gate + adoption tests | `25dec77` + `7ec2588` | CAP-TEST-103–108; react-ts+python adopted additively (originals byte-identical, rollback restores); react-python boundary preserved; actual legacy `runtime.js` crosses real HTTP before+after apply; compatibility retires only after full conformance; upgrade never silent | **gate-green** |
 | WP10 | Platform matrix + docs + Experimental-exit evidence | WP9B | coordinator sign-off | [`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md) + `.github/workflows/capabilities-cross-platform.yml` | `0245dfb` workflow + `b55384f`/`44f9997`/`ea24e5b` portability fixes + `7ec2588` final WP9 gate | **full matrix green on macOS, Windows, and Ubuntu Linux** (core 320, runtime-ts 95, gui 174, desktop typecheck, python 130, examples 15+7+8+7/3); real CI [run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532); DoD **10/10** | **gate-green; technical Experimental-exit evidence complete** (`Experimental` retained pending separate product decision) |
+| WP11 | Production desktop integration | WP7–WP10 | Codex coordinator | desktop orchestrator/IPC/bridge, Guided+Design Build/Connect/Verify, runtime distribution, production packaged harness, A–E evidence | `9068520`, `f991c0a`, `d4c1220`, `5da30ca`, `e916a69`, `5e1e913`, `5547c7f`, `31f4bdc` | macOS packaged A–E sequentially green; exact existing/recovery hashes; core 337, runtime-ts 96, GUI 181, Python 133; [`CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md`](CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md) | **local gate-green; final three-platform packaged CI pending branch push** |
 
 ## WP0 classification of the dirty baseline diff
 
@@ -124,49 +125,33 @@ lossy mapping. Cross-language (parity) — a focused reconciliation packet. Do N
 **CONNECT-BACKING — ✅ RESOLVED by WP5B (`6023f59`)** — real `DeployableSpecification`+`InboundBinding` persistence in `CapabilityWorkspace` (schema-2.0-aware, private-default, multi-binding) + the 4 desktop IPC handlers (`listDeployables` proposes via `proposeDeployables` when empty). Residual: no shared *core* `InboundBinding` validator yet (desktop approve gate is a minimal inline check; gui has a per-kind presentation validator) — add one if WP7/WP8 needs stricter server-side gating. Original issue for reference:
 WP6B added 4 bridge methods (`capabilitiesListDeployables`/`ListInboundBindings`/`SaveInboundBindingDraft`/`ApproveInboundBinding`) wired through `bridge.ts`+`bridgeApi.ts`+`preload.cts` (parity restored) but backed only by `mockBridge.ts`. WP5B/WP7 must add: (a) real `DeployableSpecification` (CAP-CONTRACT-024) + `InboundBinding` (CAP-CONTRACT-028) persistence in `CapabilityWorkspace` (`persistence.ts`, mirror `listModules`/`saveBindingDraft`/`approveBinding`); (b) the 4 `ipcMain.handle(...)` handlers in `apps/desktop/src/capabilities/ipc.ts`; (c) replace the mock's deployable-synthesis heuristic with the real Design-stage `proposeDeployables` (`generation/deployables.ts`). Until then the desktop Connect path is declared-but-unhandled (gui mock tests pass; real desktop run would 404 those channels).
 
-**RUNTIME-DIST — distribution hardening before shipping generated TS apps:**
-`@engineering-ui-kit/capabilities-runtime` package.json `exports` point only at `./dist/*.js` (gitignored, unbuilt), so downstream TS consumers can't resolve it via `node_modules` without building it. The TS example (`capabilities-ts-reference`) works around it with tsconfig `paths` + a vitest `resolve.alias` to the runtime `src/`. Fix before real generated apps: build the runtime (`npm run build --workspace=@engineering-ui-kit/capabilities-runtime`) into consumer resolution OR add a `"development"`/`"source"` export condition pointing at `src`. Also: TS example packages must be run via `cd <pkg> && npx vitest run` (Vitest loads a nested config only from its own cwd) — document for WP10's matrix.
+**RUNTIME-DIST — ✅ RESOLVED by production desktop integration:**
+the package ships the built TypeScript runtime including declarations and the complete Python runtime
+as application resources. Generation applies local runtime dependencies into targets; packaged A–C
+install, compile, launch, and verify those targets.
 
-**REDACTION-JSON — hardening candidate (WP8 found it):** the frozen `redaction.ts` `redactSensitiveText` only matches unquoted `key: value`/`key=value` + `Bearer …`; it does NOT mask JSON-quoted secret-looking keys (`"apiKey":"…"`). WP8's `verificationRunner.ts` added a local `redactSensitiveKeys` deep-walk as defense-in-depth. Consider hardening `redactSensitiveText` itself (small; affects existing cap-test-047 — verify) so all secret sinks (evidence/logs/diagnostics) are covered uniformly.
+**REDACTION-JSON — ✅ RESOLVED:** shared text redaction handles quoted secret-looking keys and the
+verification runner retains deep-walk defense. Hostile security tests cover both paths.
 
 ## RESUME HERE — current state
 
-**The executable core of CAP-ERA-001 is COMPLETE, integrated, and E2E-proven** on
-`claude/cap-era-integration` (pushed). Contract surface FROZEN at `14f9f7f` (hash `1cb8df5e…`) — do NOT
-change parity.ts `CONTRACT_REQUIRED_FIELDS`, types.ts contract types, or schemas; §17.6 change-request
-protocol for any defect.
+The frozen core contract surface remains at `14f9f7f`; use the documented contract-change protocol
+for any proven schema defect.
 
-**Done + integrated (all gate-green):** WP0, WP1a/b (contracts + schema 2.0 + migration), WP2 (generation/
-planning), WP3A (TS runtime: core + Node/browser + React + Electron), WP4A (Python runtime: core + FastAPI/
-CLI/worker), WP3B-gen + WP4B-gen (both code generators), WP3B-slices + WP4B-slices-py (runnable TS + Python
-examples, real E2E), **WP4B-react-python** (`fb503e5`, React↔Python over generated OpenAPI, CAP-TEST-066/069,
-DoD #4), WP5B (real Deployable/InboundBinding persistence + desktop IPC), **WP5A** (`1b394df`+`90725d6`,
-foundation planning: `FoundationPlan` proposer + allocation explanations + ambiguity resolve/persist +
-separate approval + handoff/staleness gate + brief `deployment` enrichment + foundation-review UI +
-Build prerequisite gate + From-spec generated-refs, CAP-TEST-071..075, **DoD #5**), WP6A/WP6B (journey model +
-trigger-first Connect editors), WP7-apply + WP7-rest (transactional generate→apply→rollback), WP8 (real
-connection verification), WP9A + **WP9B** (`25dec77`+`7ec2588`, additive existing-repo adoption +
-legacy-runtime continuity/retirement gate + runtime-upgrade preview, CAP-TEST-103–108, DoD #2/#8),
-SCHED-ENUM reconciled (`c4e8981`). See the status table.
-**The last feature lane (WP5A) and the cross-platform evidence gate are done — all 10 DoD requirements are met.**
+WP0–WP10 and the new WP11 production desktop integration are implemented. The packaged macOS app
+passes journeys A–E sequentially through rendered controls: TypeScript UI, headless Python, mixed
+React/Python, no-loss existing-repository adoption, and mid-transaction restart recovery. Current
+local counts are core 337, runtime-ts 96, GUI 181, Python 133, plus all reference suites and workspace
+builds. See
+[`CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md`](CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md).
 
-**WP10 matrix — green on the complete supported platform set** (see
-[`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md)): core **320**,
-runtime-ts 95, gui **174**, desktop typecheck, python 130, examples 15 + 7 + 8 + (7 TS / 3 py). DoD scorecard:
-**10/10 fully met**. The same suite passed on macOS and in real Windows+Ubuntu GitHub jobs
-([run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532)); the react↔python
-TS suite re-spawned a real FastAPI subprocess on both CI platforms. **Capabilities remains `Experimental` only
-because badge removal is the separate product decision required by WP10.6, not because evidence is missing.**
-
-**Remaining (all tracked; none are DoD blockers):**
-- **WP7-followups / WP8-followups / RUNTIME-DIST / REDACTION-JSON** — see "Open issues".
-- **WP5A followup (non-blocking):** `brief.deployment.generatedContractRefs`/`generatedTypeTargets` are wired
-  and tested but render empty in live UI until a `ModuleImplementationSpecification` exists (WP7 generation
-  scope populates them); the surfacing mechanism is complete.
+The only remaining completion gate is external: push the integration branch, obtain green packaged
+macOS/Windows/Ubuntu jobs from `.github/workflows/capabilities-cross-platform.yml`, record the run,
+then merge/push and verify `main`. Do not claim the production integration goal complete before that
+run. Real MATLAB and Azure remain separate credential/installation-dependent experimental adapters.
 
 To provision Python locally: repo-root `.venv` (git-ignored) — see the "Python environment" note above and
-§1 of the platform-matrix doc. The initiative is complete; any resumed work should select an explicitly
-approved non-blocking follow-up from "Open issues" rather than reopening a green gate.
+§1 of the platform-matrix doc.
 
 The WP1b notes below are RETAINED FOR REFERENCE ONLY (already implemented in `14f9f7f`).
 

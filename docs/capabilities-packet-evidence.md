@@ -403,10 +403,10 @@ behavior (comments/tables do not count). Commands used:
 | 025 | `apps/desktop/test/cap-test-025-filesystem.test.ts` (real temp project with source/data/artifact roots + a real escaping symlink: approved ops resolve; absolute/traversal/out-of-root rejected; symlink escape fails `isRealPathWithinProjectRoot` where a string prefix check is fooled; resolved results carry no host absolute path) | offline desktop — pass |
 | 026,027,028 | `apps/desktop/test/matlab-adapter.test.ts` (fake-mode: session serialization, cross-project isolation, crash/restart, allowlist reject, snapshot save/restore/corrupt/cross-project) | fake — pass; real-Engine portion **skipped** (`No module named 'matlab'`) — see **Experimental** below |
 | 033,034,035 | `apps/desktop/test/azure-adapter.test.ts` (fake-mode + hostile: least-privilege discovery, work-item import → proposed impact / no approved-spec mutation, pipeline/test/artifact reads, 429 typed-retryable, PAT no-leak, GET-only) | fake — pass; real-network portion **skipped** (no `EUIK_AZURE_ORG`/`EUIK_AZURE_PAT`) — see **Experimental** below |
-| 040 | `apps/desktop/e2e/capabilities-packaged.mjs` | packaged Electron — verification deferred: exits 1, `packaged-status.json` = `status:"unavailable", launched:false` (Electron cannot open a window here) — see **Experimental** below |
+| 040 | `apps/desktop/e2e/capabilities-production-packaged.mjs` (`capabilities-packaged.mjs` delegates to it) | **packaged Electron — pass:** visible production journeys A–E, real generation/apply/rollback/verification, restart recovery; evidence under `apps/desktop/validation-evidence/capabilities-production/packaged/` |
 
 Every offline CAP-TEST ID (001–024, 029–032, 036–039, 041, plus 005/018/019/025) now has a dedicated
-executable test that passes. The only IDs without a green *real-environment* run are the three
+executable test that passes. The only IDs without a green *real-environment* run are the two
 experimental surfaces below, whose production code is present and whose fake/offline behavior is
 fully tested — only the real external execution is deferred.
 
@@ -415,11 +415,6 @@ fully tested — only the real external execution is deferred.
 These ship as **experimental**. The implementation is present and exercised offline; the checks
 below require an environment not available in CI and can be run on a suitably configured machine.
 
-- **Packaged Electron journeys — CAP-TEST-040 / CAP-JRN-001–008.** Run
-  `node apps/desktop/e2e/capabilities-packaged.mjs` on a machine with a real display; require exit 0 +
-  `status:"passed", launched:true` + 8/8 journeys + restart persistence. The renderer journey-driving
-  sequences are unverified end-to-end here and may need selector/return-shape tweaks isolated to the
-  two e2e files.
 - **Real MATLAB Engine execution — CAP-TEST-026/027/028 real path.** Needs a machine with MATLAB and
   the `matlab.engine` Python package; unset `EUIK_TEST_MODE` to exercise the real adapter.
 - **Real Azure DevOps execution — CAP-TEST-033/034/035 real path.** Needs `EUIK_AZURE_ORG` + a
@@ -489,16 +484,17 @@ asserted by an automated DOM test.
 
 ### Visual review
 
-**Not performed as live visual validation.** This environment cannot launch the app (Electron binary
-is not installable; no display), so screenshots at 1440×900 and the 15-state visual walkthrough were
-**not** done. Styling was implemented against the existing design tokens and verified structurally
-via static-markup tests and a clean `vite build`. This is disclosed rather than claimed.
+Live packaged visual validation was completed on macOS on 2026-07-16. Screenshots for UI, headless,
+mixed-language, existing-repository, and failure/restart states are stored under
+`apps/desktop/validation-evidence/capabilities-production/packaged/` and were inspected at native
+resolution after the final sequential A–E run.
 
 ### Packaged Electron status
 
-`node apps/desktop/e2e/capabilities-packaged.mjs` — **unavailable**: the Electron binary cannot be
-fetched/installed in this environment. **CAP-TEST-040 / CAP-JRN-001–008 remain incomplete.** Not
-marked complete; no success is claimed.
+`node apps/desktop/e2e/capabilities-production-packaged.mjs` — **pass** on macOS. The compatibility
+entry point `capabilities-packaged.mjs` delegates to the same authoritative harness. The suite drives
+only rendered controls in a real packaged artifact and proves journeys A–E, including real target
+launches, current connection evidence, exact rollback, and restart recovery.
 
 ### Real MATLAB / Azure status
 
