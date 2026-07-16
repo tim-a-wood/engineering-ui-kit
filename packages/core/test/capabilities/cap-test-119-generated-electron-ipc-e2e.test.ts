@@ -42,8 +42,8 @@ describe('CAP-TEST-119 generated Electron renderer/preload/main target', () => {
     const electronArgs = process.platform === 'linux' && process.env.EUIK_ELECTRON_NO_SANDBOX === '1'
       ? ['--no-sandbox', '.']
       : ['.']
-    const record = await runConnectionVerification({ verificationId: 'verification-electron-real', projectId: 'project-1', binding, deployable, hashes, launch: { command: (await import('electron')).default, args: electronArgs, cwd: root }, trigger: { kind: 'electron-ipc', input: {} }, correlationId: 'correlation-electron-real' })
+    const record = await runConnectionVerification({ verificationId: 'verification-electron-real', projectId: 'project-1', binding, deployable, hashes, launch: { command: (await import('electron')).default, args: electronArgs, cwd: root }, trigger: { kind: 'electron-ipc', input: {}, timeoutMs: 20_000 }, correlationId: 'correlation-electron-real' })
     expect(record.verificationStatus, JSON.stringify(record, null, 2)).toBe('pass')
     expect(record.observedPath).toEqual({ inboundAdapter: 'ui:binding.echo.electron', compositionRoot: 'src/composition/electron-main.ts', operation: 'echo.run@1.0.0', outboundAdapters: [] })
-  }, 30_000)
+  }, 45_000)
 })

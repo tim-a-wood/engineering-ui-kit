@@ -263,6 +263,7 @@ export function attachPreviewPicker(
 /** Injected script string for Electron <webview> guests (extends legacy PICKER_JS). */
 export const PREVIEW_BINDING_PICKER_JS = `new Promise((resolve) => {
   const hl = document.createElement('div');
+  hl.setAttribute('data-euik-picker-ready', 'true');
   hl.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:2px solid #2a5a8c;background:rgba(42,90,140,0.14);border-radius:4px;left:0;top:0;width:0;height:0';
   const tag = document.createElement('div');
   tag.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;background:#2a5a8c;color:#fff;font:600 11px system-ui;padding:2px 8px;border-radius:4px;max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';

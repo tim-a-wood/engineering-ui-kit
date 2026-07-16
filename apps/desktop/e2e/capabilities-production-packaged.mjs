@@ -246,11 +246,11 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
       try {
         if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
         const { result } = await guest.debugger.sendCommand('Runtime.evaluate', {
-          expression: 'document.querySelector(\'[data-cap-id="run-capability"]\')',
+          expression: 'document.querySelector(\'[data-euik-picker-ready="true"]\') ? document.querySelector(\'[data-cap-id="run-capability"]\') : null',
           returnByValue: false,
         })
         if (!result.objectId || result.subtype === 'null') {
-          lastState = `${lastState}; marked control not rendered yet`
+          lastState = `${lastState}; picker or marked control not ready yet`
           await new Promise((resolve) => setTimeout(resolve, 100))
           continue
         }
