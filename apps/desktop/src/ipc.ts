@@ -882,12 +882,33 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       await new Promise((resolve) => setTimeout(resolve, 50))
     }
 
-    await guest.executeJavaScript(DESKTOP_PREVIEW_PICKER_INSTALL_JS, true)
+    if (!guest.debugger.isAttached()) guest.debugger.attach('1.3')
+    const evaluateInGuest = async (expression: string, userGesture = false): Promise<unknown> => {
+      const evaluated = await guest.debugger.sendCommand('Runtime.evaluate', {
+        expression,
+        returnByValue: true,
+        userGesture,
+      }) as {
+        result?: { value?: unknown; description?: string }
+        exceptionDetails?: { text?: string; exception?: { description?: string } }
+      }
+      if (evaluated.exceptionDetails) {
+        throw new Error(
+          evaluated.exceptionDetails.exception?.description
+          ?? evaluated.exceptionDetails.text
+          ?? evaluated.result?.description
+          ?? 'target-app Preview script failed',
+        )
+      }
+      return evaluated.result?.value
+    }
+
+    await evaluateInGuest(DESKTOP_PREVIEW_PICKER_INSTALL_JS, true)
     const selectionDeadline = Date.now() + 5 * 60 * 1000
     try {
       for (;;) {
         if (guest.isDestroyed()) throw new Error('the target-app Preview closed during element selection')
-        const state = await guest.executeJavaScript(DESKTOP_PREVIEW_PICKER_RESULT_JS) as { done?: unknown; value?: unknown }
+        const state = await evaluateInGuest(DESKTOP_PREVIEW_PICKER_RESULT_JS) as { done?: unknown; value?: unknown }
         if (state?.done === true) {
           const value = state.value
           if (value === null || value === undefined) return null
@@ -902,7 +923,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
         await new Promise((resolve) => setTimeout(resolve, 50))
       }
     } finally {
-      if (!guest.isDestroyed()) await guest.executeJavaScript(DESKTOP_PREVIEW_PICKER_CANCEL_JS).catch(() => undefined)
+      if (!guest.isDestroyed()) await evaluateInGuest(DESKTOP_PREVIEW_PICKER_CANCEL_JS).catch(() => undefined)
     }
   })
 
