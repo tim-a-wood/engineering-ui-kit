@@ -125,6 +125,12 @@ at `39d28c6` — **green on macOS, Windows, and Ubuntu**, including packaged jou
 runner. The checked-in packaged evidence below was captured from that run's macOS artifact; the
 Windows and Ubuntu artifacts contain the corresponding platform executions.
 
+Final `main` verification:
+[Actions run 29545605675](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545605675)
+at `c02b87e` — **green on macOS, Windows, and Ubuntu on attempt 2**, including packaged journeys
+A–E and artifact upload on every runner. The rerun followed one transient macOS Playwright click
+stall; the same job then passed without a source change, as had the preceding branch gate.
+
 ## Packaging and distribution
 
 The v0.1 artifacts are intentionally unsigned. `mac.identity: null` prevents local developer

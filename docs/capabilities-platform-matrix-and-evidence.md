@@ -15,7 +15,9 @@ requirement→evidence roll-up required by handoff §18/§19/WP10.
 > `.github/workflows/capabilities-cross-platform.yml` now adds macOS and runs those same packaged
 > journeys on macOS, Windows, and Ubuntu. All three packaged jobs, including journeys A–E, passed in
 > [Actions run 29545112965](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545112965)
-> at production integration fix `39d28c6`.
+> at production integration fix `39d28c6`, then passed on `main` in
+> [run 29545605675](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545605675)
+> at `c02b87e`.
 
 Integration branch: `claude/cap-era-integration`. The suite was captured locally on **macOS**
 (darwin 24.6.0, Apple Silicon, Python 3.11.15) and repeated on GitHub-hosted **Windows** and
@@ -159,4 +161,6 @@ Detail and rationale for each item live in the ledger's "Open issues" section.
 ---
 
 _Last updated after the green production desktop A–E matrix on macOS, Windows, and Ubuntu in
-[Actions run 29545112965](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545112965)._
+[Actions run 29545112965](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545112965)
+and the final `main` verification in
+[run 29545605675](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545605675)._
