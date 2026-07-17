@@ -1,8 +1,8 @@
 {
   "journey": "existing-repository-no-loss",
-  "executablePath": "/Users/timwood/Documents/UI Framework/release/mac-arm64/Engineering UI Kit.app/Contents/MacOS/Engineering UI Kit",
+  "executablePath": "/Users/runner/work/engineering-ui-kit/engineering-ui-kit/release/mac-arm64/Engineering UI Kit.app/Contents/MacOS/Engineering UI Kit",
   "packaged": true,
-  "scratch": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-production-existing-4UF5Dx",
+  "scratch": "/var/folders/8j/sfr9qqcj73j4p6nhwcfpr0th0000gn/T/euik-production-existing-PYhL9G",
   "baselineHash": "430827908965975a2e71b9b80c31e4d69e4329b8a5d4e0d885e2ab5350d9c568",
   "legacyBefore": "LEGACY_BEHAVIOR:preserved",
   "screenshots": [

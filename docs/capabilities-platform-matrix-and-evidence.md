@@ -13,7 +13,9 @@ requirement→evidence roll-up required by handoff §18/§19/WP10.
 > completion evidence is
 > [`CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md`](CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md).
 > `.github/workflows/capabilities-cross-platform.yml` now adds macOS and runs those same packaged
-> journeys on macOS, Windows, and Ubuntu. Its final run link is pending the integration-branch push.
+> journeys on macOS, Windows, and Ubuntu. All three packaged jobs, including journeys A–E, passed in
+> [Actions run 29545112965](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545112965)
+> at production integration fix `39d28c6`.
 
 Integration branch: `claude/cap-era-integration`. The suite was captured locally on **macOS**
 (darwin 24.6.0, Apple Silicon, Python 3.11.15) and repeated on GitHub-hosted **Windows** and
@@ -32,7 +34,7 @@ Every suite below was run green at the integrated tree. Commands are copy-pastea
 | Foundation GUI | `npm run test --workspace=@engineering-ui-kit/gui` | **181 passed** (including production integration/recovery UI) |
 | Desktop (privileged bridge/IPC) | `npm run typecheck --workspace=@engineering-ui-kit/desktop` | **clean** |
 | Python runtime | `.venv/bin/python -m pytest runtimes/python -q` | **133 passed** |
-| Packaged production desktop | `npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop` | **Journeys A–E pass sequentially on macOS** |
+| Packaged production desktop | `npm run test:capabilities:production-packaged --workspace=@engineering-ui-kit/desktop` | **Journeys A–E pass sequentially on macOS, Windows, and Ubuntu** ([run 29545112965](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545112965)) |
 | Example — TS reference (React-in-one-deployable, HTTP, CLI, schedule, Electron IPC) | `cd examples/capabilities-ts-reference && npx vitest run` | **7 passed** |
 | Example — React reference | `cd examples/capabilities-react-reference && npx vitest run` | **8 passed** |
 | Example — Python reference (HTTP, CLI, schedule) | `.venv/bin/python -m pytest examples/capabilities-python-reference -q` | **15 passed** |
@@ -156,6 +158,5 @@ Detail and rationale for each item live in the ledger's "Open issues" section.
 
 ---
 
-_Last updated after the local green production desktop A–E run on 2026-07-16. Dispatch
-`.github/workflows/capabilities-cross-platform.yml` and record the final macOS/Windows/Ubuntu run in
-the desktop integration evidence before declaring the production integration goal complete._
+_Last updated after the green production desktop A–E matrix on macOS, Windows, and Ubuntu in
+[Actions run 29545112965](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545112965)._

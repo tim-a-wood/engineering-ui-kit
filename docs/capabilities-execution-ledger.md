@@ -54,7 +54,7 @@ Status legend: `todo` · `in-progress` · `blocked` · `integrated` · `gate-gre
 | WP9A | Migration prep: existing-repo planner + 3 fixtures + legacy diagnostic | WP1, WP2 | cap-sonnet-implementer (symlinked worktree) | `generation/existingRepoMigration.ts`, `fixtures/existing-repos/` | `79d2fa3` (merged) | pure planner (additive, node-free); react-ts/python/react-python fixtures; CAP-TEST-102; core 199/199 | **gate-green** (apply=WP9B) |
 | WP9B | Adoption finalization: additive existing-repo apply + runtime-upgrade preview | WP7, WP8, WP9A | cap-sonnet-implementer + coordinator completion | `generation/upgradePreview.ts`, legacy compatibility gate + adoption tests | `25dec77` + `7ec2588` | CAP-TEST-103–108; react-ts+python adopted additively (originals byte-identical, rollback restores); react-python boundary preserved; actual legacy `runtime.js` crosses real HTTP before+after apply; compatibility retires only after full conformance; upgrade never silent | **gate-green** |
 | WP10 | Platform matrix + docs + Experimental-exit evidence | WP9B | coordinator sign-off | [`capabilities-platform-matrix-and-evidence.md`](capabilities-platform-matrix-and-evidence.md) + `.github/workflows/capabilities-cross-platform.yml` | `0245dfb` workflow + `b55384f`/`44f9997`/`ea24e5b` portability fixes + `7ec2588` final WP9 gate | **full matrix green on macOS, Windows, and Ubuntu Linux** (core 320, runtime-ts 95, gui 174, desktop typecheck, python 130, examples 15+7+8+7/3); real CI [run 29465586532](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29465586532); DoD **10/10** | **gate-green; technical Experimental-exit evidence complete** (`Experimental` retained pending separate product decision) |
-| WP11 | Production desktop integration | WP7–WP10 | Codex coordinator | desktop orchestrator/IPC/bridge, Guided+Design Build/Connect/Verify, runtime distribution, production packaged harness, A–E evidence | `9068520`, `f991c0a`, `d4c1220`, `5da30ca`, `e916a69`, `5e1e913`, `5547c7f`, `31f4bdc` | macOS packaged A–E sequentially green; exact existing/recovery hashes; core 337, runtime-ts 96, GUI 181, Python 133; [`CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md`](CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md) | **local gate-green; final three-platform packaged CI pending branch push** |
+| WP11 | Production desktop integration | WP7–WP10 | Codex coordinator | desktop orchestrator/IPC/bridge, Guided+Design Build/Connect/Verify, runtime distribution, production packaged harness, A–E evidence | `9068520`, `f991c0a`, `d4c1220`, `5da30ca`, `e916a69`, `5e1e913`, `5547c7f`, `31f4bdc`, `39d28c6` | packaged A–E sequentially green on macOS, Windows, and Ubuntu; exact existing/recovery hashes; core 337, runtime-ts 96, GUI 181, Python 133; [run 29545112965](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545112965); [`CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md`](CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md) | **gate-green; ready for verified main promotion** |
 
 ## WP0 classification of the dirty baseline diff
 
@@ -145,10 +145,11 @@ local counts are core 337, runtime-ts 96, GUI 181, Python 133, plus all referenc
 builds. See
 [`CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md`](CAPABILITIES-DESKTOP-INTEGRATION-EVIDENCE.md).
 
-The only remaining completion gate is external: push the integration branch, obtain green packaged
-macOS/Windows/Ubuntu jobs from `.github/workflows/capabilities-cross-platform.yml`, record the run,
-then merge/push and verify `main`. Do not claim the production integration goal complete before that
-run. Real MATLAB and Azure remain separate credential/installation-dependent experimental adapters.
+The complete integration branch is gate-green in
+[Actions run 29545112965](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545112965):
+packaged journeys A–E pass on macOS, Windows, and Ubuntu. The remaining release operation is to
+fast-forward, push, and verify `main`. Real MATLAB and Azure remain separate
+credential/installation-dependent experimental adapters.
 
 To provision Python locally: repo-root `.venv` (git-ignored) — see the "Python environment" note above and
 §1 of the platform-matrix doc.

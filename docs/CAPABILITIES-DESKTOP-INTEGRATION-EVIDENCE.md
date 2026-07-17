@@ -6,9 +6,10 @@ The executable reference architecture is integrated into the production desktop 
 visibly exercised through the packaged application. This document is the evidence index for
 [`CAPABILITIES-DESKTOP-INTEGRATION-GOAL.md`](CAPABILITIES-DESKTOP-INTEGRATION-GOAL.md).
 
-Local macOS validation completed on 2026-07-16. The cross-platform workflow now builds and drives
-the packaged app on macOS, Windows, and Ubuntu; its final Actions run must be linked here after the
-integration branch is pushed.
+Local macOS validation completed on 2026-07-16. The authoritative cross-platform gate then built
+and drove the packaged app on macOS, Windows, and Ubuntu in
+[Actions run 29545112965](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545112965)
+at production fix `39d28c6`; all required suites and packaged journeys A–E passed on every runner.
 
 ## Production authority
 
@@ -118,8 +119,11 @@ npx vitest run apps/desktop/test
 and `ubuntu-latest`. Each job runs the language/core/GUI/reference matrix, builds an unpacked desktop
 artifact, drives packaged journeys A–E (under Xvfb on Linux), and uploads the artifact plus evidence.
 
-Final run: **pending branch push**. Do not claim the goal complete until all three jobs are green and
-the final `main` run is verified.
+Production integration gate:
+[Actions run 29545112965](https://github.com/tim-a-wood/engineering-ui-kit/actions/runs/29545112965)
+at `39d28c6` — **green on macOS, Windows, and Ubuntu**, including packaged journeys A–E on every
+runner. The checked-in packaged evidence below was captured from that run's macOS artifact; the
+Windows and Ubuntu artifacts contain the corresponding platform executions.
 
 ## Packaging and distribution
 
