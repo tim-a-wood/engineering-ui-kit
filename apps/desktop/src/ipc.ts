@@ -168,6 +168,13 @@ function killLaunchedApp(child: ChildProcess): void {
   }
 }
 
+function stopManagedApp(projectId: string): void {
+  const child = launchedApps.get(projectId)
+  if (!child) return
+  launchedApps.delete(projectId)
+  killLaunchedApp(child)
+}
+
 async function probeUrl(url: string, timeoutMs: number): Promise<boolean> {
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) })
@@ -999,7 +1006,9 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     shell.showItemInFolder(target)
   })
 
-  registerCapabilityIpcHandlers(workspace, workspaceRoot)
+  registerCapabilityIpcHandlers(workspace, workspaceRoot, {
+    generatedSourcesChanged: (projectId) => stopManagedApp(projectId),
+  })
 
   return workspace
 }

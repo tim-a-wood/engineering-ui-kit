@@ -331,7 +331,11 @@ function secretsDir(dataDir: string): string {
   return path.join(dataDir, 'secrets')
 }
 
-export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: string): void {
+export function registerCapabilityIpcHandlers(
+  workspace: Workspace,
+  dataDir: string,
+  lifecycle?: { generatedSourcesChanged?: (projectId: string) => void | Promise<void> },
+): void {
   const caps = new CapabilityWorkspace(dataDir)
   const runs = new CapabilityRunStore(caps)
   const integration = new ReferenceArchitectureOrchestrator(workspace, dataDir)
@@ -1555,26 +1559,39 @@ export function registerCapabilityIpcHandlers(workspace: Workspace, dataDir: str
     return integration.previewGeneration(projectId, deployableId)
   })
 
-  ipcMain.handle(CAP_CHANNELS.applyGeneration, (_e, input: {
+  ipcMain.handle(CAP_CHANNELS.applyGeneration, async (_e, input: {
     projectId: string; deployableId: string; planId: string; planHash: string
     explicit: boolean; acceptDirtyWorktree?: boolean
-  }) => integration.applyGeneration({
-    projectId: requireString(input.projectId, 'projectId'),
-    deployableId: requireString(input.deployableId, 'deployableId'),
-    planId: requireString(input.planId, 'planId'),
-    planHash: requireString(input.planHash, 'planHash'),
-    explicit: input.explicit === true,
-    acceptDirtyWorktree: input.acceptDirtyWorktree === true,
-  }))
+  }) => {
+    const projectId = requireString(input.projectId, 'projectId')
+    const result = integration.applyGeneration({
+      projectId,
+      deployableId: requireString(input.deployableId, 'deployableId'),
+      planId: requireString(input.planId, 'planId'),
+      planHash: requireString(input.planHash, 'planHash'),
+      explicit: input.explicit === true,
+      acceptDirtyWorktree: input.acceptDirtyWorktree === true,
+    })
+    // A managed dev server may have cached import.meta.glob and other source
+    // discovery before this plan created generated adapters. Restart it on the
+    // next Preview/verification launch so the applied filesystem is authority.
+    await lifecycle?.generatedSourcesChanged?.(projectId)
+    return result
+  })
 
-  ipcMain.handle(CAP_CHANNELS.rollbackGeneration, (_e, input: {
+  ipcMain.handle(CAP_CHANNELS.rollbackGeneration, async (_e, input: {
     projectId: string; deployableId: string; rollbackId: string; explicit: boolean
-  }) => integration.rollbackGeneration({
-    projectId: requireString(input.projectId, 'projectId'),
-    deployableId: requireString(input.deployableId, 'deployableId'),
-    rollbackId: requireString(input.rollbackId, 'rollbackId'),
-    explicit: input.explicit === true,
-  }))
+  }) => {
+    const projectId = requireString(input.projectId, 'projectId')
+    const result = integration.rollbackGeneration({
+      projectId,
+      deployableId: requireString(input.deployableId, 'deployableId'),
+      rollbackId: requireString(input.rollbackId, 'rollbackId'),
+      explicit: input.explicit === true,
+    })
+    await lifecycle?.generatedSourcesChanged?.(projectId)
+    return result
+  })
 
   ipcMain.handle(CAP_CHANNELS.runConnectionVerification, (_e, input: {
     projectId: string; deployableId: string; bindingId: string; explicit: boolean
