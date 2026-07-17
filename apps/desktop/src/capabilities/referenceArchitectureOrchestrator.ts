@@ -1171,7 +1171,15 @@ export class ReferenceArchitectureOrchestrator {
           const { BrowserWindow } = await import('electron')
           const verificationWindow = new BrowserWindow({
             show: false,
-            webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+            webPreferences: {
+              contextIsolation: true,
+              nodeIntegration: false,
+              sandbox: true,
+              // This window is intentionally never shown. Windows Chromium
+              // can otherwise suspend its timers and async event handlers,
+              // preventing a real UI trigger from reaching generated code.
+              backgroundThrottling: false,
+            },
           })
           await verificationWindow.loadURL(launchUrl)
           // Vite and similar development hosts can perform an immediate
@@ -1188,8 +1196,19 @@ export class ReferenceArchitectureOrchestrator {
                 globalThis.__EUIK_VERIFICATION_CORRELATION_ID = ${JSON.stringify(requestedCorrelationId)};
                 const timeout = setTimeout(() => { cleanup(); resolve({ ok: false, outcome: 'UI trigger did not emit capability evidence' }); }, 30000);
                 const listener = (event) => { cleanup(); resolve({ ok: true, outcome: 'UI element reached the browser-local capability', body: event.detail }); };
-                const cleanup = () => { clearTimeout(timeout); globalThis.removeEventListener('euik-capability-invoked', listener); delete globalThis.__EUIK_VERIFICATION_CORRELATION_ID; };
+                const describe = (value) => value instanceof Error ? value.message : typeof value === 'string' ? value : 'unknown browser error';
+                const pageError = (event) => { cleanup(); resolve({ ok: false, outcome: 'UI execution failed: ' + describe(event.error ?? event.message) }); };
+                const rejected = (event) => { cleanup(); resolve({ ok: false, outcome: 'UI execution failed: ' + describe(event.reason) }); };
+                const cleanup = () => {
+                  clearTimeout(timeout);
+                  globalThis.removeEventListener('euik-capability-invoked', listener);
+                  globalThis.removeEventListener('error', pageError);
+                  globalThis.removeEventListener('unhandledrejection', rejected);
+                  delete globalThis.__EUIK_VERIFICATION_CORRELATION_ID;
+                };
                 globalThis.addEventListener('euik-capability-invoked', listener, { once: true });
+                globalThis.addEventListener('error', pageError, { once: true });
+                globalThis.addEventListener('unhandledrejection', rejected, { once: true });
                 const element = document.querySelector(${JSON.stringify(selector)});
                 if (!element) { cleanup(); resolve({ ok: false, outcome: 'Selected UI element is not present in the launched application' }); return; }
                 ${binding.trigger === 'submit'
