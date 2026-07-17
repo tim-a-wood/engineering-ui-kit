@@ -1132,6 +1132,7 @@ export class ReferenceArchitectureOrchestrator {
               const approved = parseApprovedCommand(remoteLaunchText)
               const dependency = spawn(approved.command, approved.args, {
                 cwd: collected.project.repoPath,
+                shell: process.platform === 'win32' && /\.(?:cmd|bat)$/i.test(approved.command),
                 env: remoteDeployable.runtimeLanguage === 'python' ? {
                   ...process.env,
                   PORT: '3000',
@@ -1157,7 +1158,10 @@ export class ReferenceArchitectureOrchestrator {
             if (!collected.project.launchCommand) throw new Error('the configured UI is not running and has no approved launch command')
             const approved = parseApprovedCommand(collected.project.launchCommand)
             child = spawn(approved.command, approved.args, {
-              cwd: collected.project.repoPath, env: process.env, stdio: ['ignore', 'pipe', 'pipe'],
+              cwd: collected.project.repoPath,
+              shell: process.platform === 'win32' && /\.(?:cmd|bat)$/i.test(approved.command),
+              env: process.env,
+              stdio: ['ignore', 'pipe', 'pipe'],
               detached: process.platform !== 'win32',
             })
             try {

@@ -334,7 +334,7 @@ function secretsDir(dataDir: string): string {
 export function registerCapabilityIpcHandlers(
   workspace: Workspace,
   dataDir: string,
-  lifecycle?: { generatedSourcesChanged?: (projectId: string) => void | Promise<void> },
+  lifecycle?: { beforeGeneratedSourcesChange?: (projectId: string) => void | Promise<void> },
 ): void {
   const caps = new CapabilityWorkspace(dataDir)
   const runs = new CapabilityRunStore(caps)
@@ -1564,6 +1564,10 @@ export function registerCapabilityIpcHandlers(
     explicit: boolean; acceptDirtyWorktree?: boolean
   }) => {
     const projectId = requireString(input.projectId, 'projectId')
+    // Stop an app-managed dev server before staging or target mutation. File
+    // watchers can retain Windows directory handles, and a running transform
+    // cache cannot be authoritative after generated files change.
+    await lifecycle?.beforeGeneratedSourcesChange?.(projectId)
     const result = integration.applyGeneration({
       projectId,
       deployableId: requireString(input.deployableId, 'deployableId'),
@@ -1572,10 +1576,6 @@ export function registerCapabilityIpcHandlers(
       explicit: input.explicit === true,
       acceptDirtyWorktree: input.acceptDirtyWorktree === true,
     })
-    // A managed dev server may have cached import.meta.glob and other source
-    // discovery before this plan created generated adapters. Restart it on the
-    // next Preview/verification launch so the applied filesystem is authority.
-    await lifecycle?.generatedSourcesChanged?.(projectId)
     return result
   })
 
@@ -1583,13 +1583,13 @@ export function registerCapabilityIpcHandlers(
     projectId: string; deployableId: string; rollbackId: string; explicit: boolean
   }) => {
     const projectId = requireString(input.projectId, 'projectId')
+    await lifecycle?.beforeGeneratedSourcesChange?.(projectId)
     const result = integration.rollbackGeneration({
       projectId,
       deployableId: requireString(input.deployableId, 'deployableId'),
       rollbackId: requireString(input.rollbackId, 'rollbackId'),
       explicit: input.explicit === true,
     })
-    await lifecycle?.generatedSourcesChanged?.(projectId)
     return result
   })
 

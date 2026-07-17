@@ -6,7 +6,7 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell, webContents } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
-import { spawn, type ChildProcess } from 'node:child_process'
+import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { buildCfHdropBuffer, buildFilenamesPboardPlist, buildUriList } from './uploadSetTransfer.js'
 import {
@@ -159,7 +159,7 @@ function killLaunchedApp(child: ChildProcess): void {
   if (child.pid === undefined) return
   try {
     if (process.platform === 'win32') {
-      spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
+      execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
     } else {
       process.kill(-child.pid, 'SIGTERM')
     }
@@ -168,11 +168,34 @@ function killLaunchedApp(child: ChildProcess): void {
   }
 }
 
-function stopManagedApp(projectId: string): void {
+async function stopManagedApp(projectId: string, launchUrl?: string): Promise<void> {
   const child = launchedApps.get(projectId)
   if (!child) return
   launchedApps.delete(projectId)
   killLaunchedApp(child)
+  if (process.platform === 'win32' && launchUrl) {
+    const port = new URL(launchUrl).port
+    if (port && await probeUrl(launchUrl, 250)) {
+      try {
+        const rows = execFileSync('netstat', ['-ano', '-p', 'tcp'], { encoding: 'utf8' }).split(/\r?\n/)
+        const pids = [...new Set(rows
+          .filter((row) => row.includes(`:${port}`) && /LISTENING/i.test(row))
+          .map((row) => row.trim().split(/\s+/).at(-1))
+          .filter((pid): pid is string => Boolean(pid) && pid !== String(process.pid)))]
+        for (const pid of pids) execFileSync('taskkill', ['/PID', pid, '/T', '/F'], { stdio: 'ignore' })
+      } catch {
+        // The first taskkill may already have removed the complete tree.
+      }
+    }
+  }
+  if (!launchUrl) return
+  const deadline = Date.now() + 5_000
+  while (Date.now() < deadline && await probeUrl(launchUrl, 250)) {
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+  if (await probeUrl(launchUrl, 250)) {
+    throw new Error(`could not stop the managed application at ${launchUrl} before changing generated sources`)
+  }
 }
 
 async function probeUrl(url: string, timeoutMs: number): Promise<boolean> {
@@ -1007,7 +1030,10 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
   })
 
   registerCapabilityIpcHandlers(workspace, workspaceRoot, {
-    generatedSourcesChanged: (projectId) => stopManagedApp(projectId),
+    beforeGeneratedSourcesChange: async (projectId) => {
+      const project = workspace.getProject(projectId)
+      await stopManagedApp(projectId, project?.launchUrl)
+    },
   })
 
   return workspace
