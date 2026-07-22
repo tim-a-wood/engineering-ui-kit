@@ -220,7 +220,7 @@ describe('CAP-TEST-038b Capabilities accessibility (behavioral)', () => {
     expect(canProceedWithSelection(confirmed)).toBe(true) // only after explicit confirmation
   })
 
-  // ---- Guided journey: five steps, keyboard reachable, locked non-navigable --
+  // ---- Guided journey: four steps, keyboard reachable, locked non-navigable --
   it('shows Plan and Design separately; unlocked steps are buttons and locked steps are not', () => {
     const stages = deriveJourney({
       application: { approved: {} },
@@ -229,12 +229,12 @@ describe('CAP-TEST-038b Capabilities accessibility (behavioral)', () => {
       bindings: [],
     }).stages
     const html = renderToStaticMarkup(<CapabilityJourney stages={stages} viewing="build" onView={() => {}} />)
-    expect((html.match(/class="cap-journey-step/g) ?? []).length).toBe(5)
+    expect((html.match(/class="cap-journey-step/g) ?? []).length).toBe(4)
     expect(html).toContain('>Plan</span>')
     expect(html).toContain('>Design</span>')
     // Exactly one is the step being viewed.
     expect((html.match(/aria-current="step"/g) ?? []).length).toBe(1)
-    // Locked stages (connect, verify here) are NOT buttons — they cannot be navigated.
+    // Locked stages (Verify here) are NOT buttons — they cannot be navigated.
     expect(html).toContain('class="cap-journey-locked"')
     expect(html).toContain('aria-disabled="true"')
     // Every state is conveyed by text (color-independent), including the lock reason.
@@ -261,7 +261,7 @@ describe('CAP-TEST-038b Capabilities accessibility (behavioral)', () => {
     expect(html).toContain('Blocked')
     expect(html).toMatch(/[✓!]/)
     expect(html).toContain('role="note"')
-    expect(html).toMatch(/without crossing lines/i)
+    expect(html).toContain('How the parts work together')
     // Diagram is a single tab stop with roving -1 children (focus entry semantics).
     expect(html).toContain('aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Enter"')
     expect(html).toMatch(/role="application"[^>]*tabindex="0"|tabindex="0"[^>]*role="application"/i)
@@ -269,8 +269,14 @@ describe('CAP-TEST-038b Capabilities accessibility (behavioral)', () => {
     // Ports-and-adapters semantics are explicit without a crossing SVG graph.
     expect(html).toContain('aria-label="Component types"')
     expect(html).not.toContain('<svg')
-    expect(html).toContain('Requires')
-    expect(html).toContain('Provides')
+    expect(html).toContain('From')
+    expect(html).toContain('To')
+
+    // The technical projection retains exact ports-and-adapters language.
+    const technicalHtml = renderToStaticMarkup(<ArchitectureView projection={sampleProjection()} mode="design" />)
+    expect(technicalHtml).toMatch(/without crossing lines/i)
+    expect(technicalHtml).toContain('Requires')
+    expect(technicalHtml).toContain('Provides')
   })
 
   // ---- Non-color status cues across differing data states -------------------

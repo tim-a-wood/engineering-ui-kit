@@ -350,8 +350,8 @@ describe('CAP-TEST-087 generate -> apply: headless TypeScript deployable', () =>
     const compositionContents = readFile(root, 'src/composition/http-api.g.ts')
     expect(compositionContents).toContain('GENERATED FILE — DO NOT EDIT.')
     expect(compositionContents).toContain("import { LifecycleContainer, createToken } from '@engineering-ui-kit/capabilities-runtime'")
-    expect(compositionContents).toContain('export const ordersCreateToken: ServiceToken = createToken("orders.create")')
-    expect(compositionContents).toContain('export const ordersListToken: ServiceToken = createToken("orders.list")')
+    expect(compositionContents).toContain('export const ordersCreateToken: ServiceToken<ReturnType<typeof createOrdersCreate>> = createToken("orders.create")')
+    expect(compositionContents).toContain('export const ordersListToken: ServiceToken<ReturnType<typeof createOrdersList>> = createToken("orders.list")')
     expect(compositionContents).toContain('export function buildHttpApiContainer(): LifecycleContainer {')
 
     const resolvedContents = readFile(root, 'src/generated/http-api/resolved.g.ts')

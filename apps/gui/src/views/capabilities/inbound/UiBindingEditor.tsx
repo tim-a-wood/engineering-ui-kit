@@ -10,18 +10,11 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  bindingModeLabel,
-  buildConnectionPacket,
-  evaluateBindingApprovalGate,
-  simulateBindingMode,
-} from '@engineering-ui-kit/core/browser'
+import { buildConnectionPacket, evaluateBindingApprovalGate } from '@engineering-ui-kit/core/browser'
 import type {
-  BindingDataMode,
   BindingTrigger,
   FrontendBinding,
   Project,
-  ResultEnvelope,
   SelectionEvidence,
   UiInboundBinding,
 } from '@engineering-ui-kit/core'
@@ -34,7 +27,6 @@ import { canProceedWithSelection } from '../previewSelection'
 import { BEHAVIOR_FIELDS, behaviorLabel, humanizeIdentifier, presentDiagnosticsForGuided, sanitizeGuidedMessage } from '../capabilityPresentation'
 import { createUiBinding, inboundBindingToFrontendBinding } from './inboundBinding'
 
-const DATA_MODES: BindingDataMode[] = ['connected', 'approved-example', 'invalid-input', 'dependency-unavailable', 'timeout']
 const TRIGGERS: BindingTrigger[] = ['activate', 'change', 'submit', 'load']
 const TRIGGER_LABELS: Record<BindingTrigger, string> = {
   activate: 'When clicked or activated',
@@ -64,6 +56,7 @@ function bindingFromCanonical(
   projectId: string,
   evidence: SelectionEvidence,
   initial?: Partial<FrontendBinding>,
+  suggestedOperation?: { operationId: string; operationVersion: string },
 ): FrontendBinding {
   return {
     schemaVersion: '1.0',
@@ -72,8 +65,8 @@ function bindingFromCanonical(
     projectId,
     selectionEvidence: evidence,
     trigger: initial?.trigger ?? 'activate',
-    operationId: initial?.operationId ?? '',
-    operationVersion: initial?.operationVersion ?? '',
+    operationId: initial?.operationId ?? suggestedOperation?.operationId ?? '',
+    operationVersion: initial?.operationVersion ?? suggestedOperation?.operationVersion ?? '',
     inputMappings: initial?.inputMappings ?? [],
     outputMappings: initial?.outputMappings ?? [],
     loadingBehavior: initial?.loadingBehavior ?? '',
@@ -98,6 +91,8 @@ type Props = {
   architectureVersion?: string
   architectureHash?: string
   initial?: UiInboundBinding
+  /** Approved Design/module output used only when it is unambiguous. */
+  suggestedOperation?: { operationId: string; operationVersion: string }
   previewRef: React.RefObject<CapabilityPreviewHandle | null>
   onSaved: () => void
   onProjectChanged?: () => Promise<void> | void
@@ -112,12 +107,11 @@ export function UiBindingEditor(props: Props) {
   )
 
   const evidence = props.selectionEvidence ?? initialFrontend?.selectionEvidence ?? emptyEvidence
-  const [binding, setBinding] = useState<FrontendBinding>(() => bindingFromCanonical(projectId, evidence, initialFrontend))
+  const [binding, setBinding] = useState<FrontendBinding>(() => bindingFromCanonical(projectId, evidence, initialFrontend, props.suggestedOperation))
   const [attempted, setAttempted] = useState(false)
   const [busy, setBusy] = useState(false)
   const busyRef = useRef(false)
   const [status, setStatus] = useState<Status | null>(null)
-  const [ranOutcome, setRanOutcome] = useState<{ label: string; outcome: string; connected: boolean } | null>(null)
   const [uiProject, setUiProject] = useState<Project | undefined>(props.project)
   // A configured launchUrl is not auto-trusted: the user must explicitly confirm it
   // (or edit it) before the target-app Preview launches (CAP-PKT-024/025).
@@ -128,10 +122,9 @@ export function UiBindingEditor(props: Props) {
   const [uiSetupError, setUiSetupError] = useState('')
 
   useEffect(() => {
-    setBinding(bindingFromCanonical(projectId, props.selectionEvidence ?? initialFrontend?.selectionEvidence ?? emptyEvidence, initialFrontend))
+    setBinding(bindingFromCanonical(projectId, props.selectionEvidence ?? initialFrontend?.selectionEvidence ?? emptyEvidence, initialFrontend, props.suggestedOperation))
     setAttempted(false)
     setStatus(null)
-    setRanOutcome(null)
     busyRef.current = false
     setBusy(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -158,7 +151,7 @@ export function UiBindingEditor(props: Props) {
       setUiProject(updated)
       setEditingUi(false)
       setUiConfirmed(true)
-      setStatus({ tone: 'success', text: `Using ${updated.name} as the application UI for this connection.` })
+      setStatus({ tone: 'success', text: `Using ${updated.name} as the application UI for this entry point.` })
       await props.onProjectChanged?.()
     } catch (error) {
       setUiSetupError(error instanceof Error ? error.message : String(error))
@@ -172,46 +165,6 @@ export function UiBindingEditor(props: Props) {
   const behaviorsComplete = BEHAVIOR_FIELDS.every((f) => binding[f].trim() !== '')
   const gate = evaluateBindingApprovalGate(binding)
   const guidedError = (message: string): Status => ({ tone: 'error', text: sanitizeGuidedMessage(message) })
-
-  async function runTest() {
-    if (busyRef.current) return
-    if (!capabilityChosen || !elementSelected || !behaviorsComplete) return
-    busyRef.current = true
-    setBusy(true)
-    setAttempted(true)
-    const mode = binding.dataMode
-    const sim = simulateBindingMode({
-      binding,
-      mode,
-      explicit: mode === 'connected' ? true : undefined,
-      example:
-        mode === 'approved-example'
-          ? { id: 'ex.preview', version: '1.0.0', operationContractVersion: binding.operationVersion, input: {}, expectedResult: { preview: true }, source: 'guided-connect' }
-          : undefined,
-    })
-    try {
-      if (mode === 'connected' && sim.connectedInvokePlan) {
-        const env = (await bridge.capabilitiesInvokeOperation({
-          projectId,
-          operationId: sim.connectedInvokePlan.operationId,
-          args: sim.connectedInvokePlan.args,
-          dataMode: 'connected',
-          explicit: true,
-        })) as ResultEnvelope
-        setRanOutcome({ label: sim.modeLabel, outcome: env.outcome, connected: env.outcome === 'success' })
-        setStatus({ tone: env.outcome === 'success' ? 'success' : 'info', text: `Connected test — ${env.outcome}.` })
-      } else {
-        await bridge.capabilitiesInvokeOperation({ projectId, operationId: binding.operationId || 'binding.simulated', dataMode: mode, explicit: false })
-        setRanOutcome({ label: sim.modeLabel, outcome: sim.envelope.outcome, connected: false })
-        setStatus({ tone: 'info', text: `Simulated ${sim.modeLabel} — ${sim.envelope.outcome} (no live call).` })
-      }
-    } catch (error) {
-      setStatus(guidedError(error instanceof Error ? error.message : String(error)))
-    } finally {
-      busyRef.current = false
-      setBusy(false)
-    }
-  }
 
   async function approve() {
     if (busyRef.current) return
@@ -232,7 +185,7 @@ export function UiBindingEditor(props: Props) {
         return
       }
       buildConnectionPacket({ packetId: `pkt-${binding.bindingId}`, binding, architectureVersion: props.architectureVersion ?? '1.0', architectureHash: props.architectureHash ?? 'pending' })
-      setStatus({ tone: 'success', text: 'Connection approved.' })
+      setStatus({ tone: 'success', text: 'Entry point approved.' })
       props.onSaved()
     } catch (error) {
       setStatus(guidedError(error instanceof Error ? error.message : String(error)))
@@ -262,7 +215,7 @@ export function UiBindingEditor(props: Props) {
                 placeholder="http://localhost:5173"
                 onChange={(event) => { setUiUrl(event.target.value); setUiSetupError('') }}
               />
-              <span>The page Connect will preview and allow you to select elements from.</span>
+              <span>The application page Build will preview so you can select the intended element.</span>
             </label>
             <label className="cap-connect-field">
               Start command <span className="muted">(optional)</span>
@@ -300,7 +253,7 @@ export function UiBindingEditor(props: Props) {
                   Use this UI
                 </button>
               ) : (
-                <span className="status status-ok"><span className="status-dot" aria-hidden="true" /> Connected</span>
+                <span className="status status-ok"><span className="status-dot" aria-hidden="true" /> Selected</span>
               )}
               <button type="button" className="btn btn-secondary btn-compact" onClick={() => { setEditingUi(true); setUiConfirmed(false) }}>
                 Change UI setup
@@ -324,7 +277,7 @@ export function UiBindingEditor(props: Props) {
           ) : (
             <p className="cap-connect-note" role="note">
               {Icon.info(14)} Element selection runs in the packaged desktop app. Open Capabilities there to select an
-              element and continue this connection.
+              element and continue this entry point.
             </p>
           )}
           {elementSelected && (
@@ -389,31 +342,15 @@ export function UiBindingEditor(props: Props) {
       )}
 
       {elementSelected && capabilityChosen && (
-        <section className="cap-connect-step active" aria-label="Test and approve">
-          <header className="cap-connect-step-head"><h3>Test and approve</h3></header>
-          <div className="cap-connect-test" role="group" aria-label="Test and approve">
-            <label className="cap-connect-field">
-              How to test
-              <select aria-label="Test mode" value={binding.dataMode} onChange={(e) => update('dataMode', e.target.value as BindingDataMode)}>
-                {DATA_MODES.map((mode) => (
-                  <option key={mode} value={mode}>{bindingModeLabel(mode)}</option>
-                ))}
-              </select>
-            </label>
-            <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !capabilityChosen || !elementSelected || !behaviorsComplete} onClick={() => void runTest()}>
-              {Icon.play(14)} Run {binding.dataMode === 'connected' ? 'connected test' : 'simulation'}
-            </button>
+        <section className="cap-connect-step active" aria-label="Review and approve">
+          <header className="cap-connect-step-head"><h3>Review and approve</h3></header>
+          <div className="cap-connect-test" role="group" aria-label="Review and approve">
             <button type="button" className="btn btn-primary btn-compact" disabled={busy || !behaviorsComplete} onClick={() => void approve()}>
-              Approve connection
+              Approve entry point
             </button>
           </div>
-          {!behaviorsComplete && <p className="capabilities-note">Describe every behavior above to test or approve.</p>}
-          {ranOutcome && (
-            <p className="cap-connect-outcome" role="status">
-              {ranOutcome.connected ? Icon.check(14) : Icon.info(14)}{' '}
-              {ranOutcome.connected ? 'Connected' : 'Simulated'} · {ranOutcome.label} → {ranOutcome.outcome}
-            </p>
-          )}
+          <p className="capabilities-note">The running entry point is exercised later in Verify, after the shared application setup has been applied.</p>
+          {!behaviorsComplete && <p className="capabilities-note">Describe every behavior above before approving.</p>}
         </section>
       )}
 
@@ -421,7 +358,7 @@ export function UiBindingEditor(props: Props) {
 
       {issues.length > 0 && (
         <section aria-label="Open issues" className="cap-issues">
-          <h3>To finish this connection</h3>
+          <h3>To finish this entry point</h3>
           <ul className="cap-issue-list">{issues.map((issue, i) => <li key={i}>{issue.message}</li>)}</ul>
         </section>
       )}

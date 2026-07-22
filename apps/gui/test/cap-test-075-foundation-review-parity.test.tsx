@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 /**
  * CAP-TEST-075 — WP5 gate bullets (f) and (e):
  *  (f) Guided and Design render the SAME canonical `FoundationPlan` records
@@ -8,13 +10,16 @@
  */
 
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ArchitectureSpecification, FoundationPlan, ModuleManifest } from '@engineering-ui-kit/core'
 import { installMockBridge } from '../src/mockBridge'
 import { FoundationReview } from '../src/views/capabilities/FoundationReview'
 import { BuildWorkspace } from '../src/views/build/BuildWorkspace'
-import { buildUiModuleTaskFields, type UiModuleDeploymentContext } from '../src/views/capabilities/ModulesView'
+import { buildUiModuleTaskFields, deploymentContextFor, type UiModuleDeploymentContext } from '../src/views/capabilities/ModulesView'
 import type { EuikBridge } from '../src/bridge'
+
+afterEach(cleanup)
 
 function architecture(): ArchitectureSpecification {
   return {
@@ -28,7 +33,11 @@ function architecture(): ArchitectureSpecification {
     applicationSpecHash: 'hash-app',
     capabilityProjections: [],
     moduleIds: ['mod.orders', 'mod.ui'],
-    dependencyEdges: [],
+    dependencyEdges: [{
+      fromModuleId: 'mod.ui',
+      toModuleId: 'mod.orders',
+      reason: 'The user interface requests order information from the application service.',
+    }],
     operationAllocations: [],
     adapterAllocations: [],
     workflowTraces: [],
@@ -92,7 +101,7 @@ function plan(): FoundationPlan {
 }
 
 describe('CAP-TEST-075 bullet (f) — Guided and Design project the same foundation records', () => {
-  it('renders identical deployables and module allocations under both projections', () => {
+  it('renders the same user-facing application structure under both projections without exposing technical details', () => {
     const bridge = installMockBridge()
     const arch = architecture()
     const foundationPlan = plan()
@@ -118,21 +127,82 @@ describe('CAP-TEST-075 bullet (f) — Guided and Design project the same foundat
       />,
     )
 
-    // Same deployable identity/topology in both projections.
-    for (const deployable of foundationPlan.deployables) {
-      expect(guidedHtml).toContain(deployable.name)
-      expect(guidedHtml).toContain(deployable.compositionRootPath)
-      expect(designHtml).toContain(deployable.name)
-      expect(designHtml).toContain(deployable.compositionRootPath)
+    for (const html of [guidedHtml, designHtml]) {
+      expect(html).toContain('How the application runs')
+      expect(html).toContain('Deployment diagram')
+      expect(html).toContain('User interface')
+      expect(html).toContain('Application service')
+      expect(html).toContain('Sends requests')
+      expect(html).toContain('1 connection')
+      expect(html).toContain('Technical specification')
+      expect(html).not.toContain('src/composition/browser.ts')
+      expect(html).not.toContain('src/composition/http-api.ts')
+      expect(html).not.toContain('typescript')
     }
 
-    // Same module -> deployable allocation rationale in both projections.
+    // The overview keeps allocation details behind deployment/technical
+    // disclosures.
     for (const allocation of foundationPlan.allocations) {
-      expect(guidedHtml).toContain(allocation.deployableId)
-      expect(guidedHtml).toContain(allocation.rationale)
-      expect(designHtml).toContain(allocation.deployableId)
-      expect(designHtml).toContain(allocation.rationale)
+      expect(guidedHtml).not.toContain(allocation.rationale)
+      expect(designHtml).not.toContain(allocation.rationale)
     }
+    expect(guidedHtml).toContain('User interface. Open deployment details')
+    expect(guidedHtml).toContain('Application service. Open deployment details')
+    expect(designHtml).toContain('User interface. Open deployment details')
+    expect(designHtml).toContain('Application service. Open deployment details')
+    expect(guidedHtml).toContain('Refresh application structure')
+    expect(designHtml).toContain('Refresh application structure')
+  })
+
+  it('opens a deployment detail dialog with responsibilities and interaction reasons', () => {
+    render(
+      <FoundationReview
+        bridge={installMockBridge()}
+        projectId="p1"
+        plan={plan()}
+        approvedFoundation={undefined}
+        approvedArchitecture={architecture()}
+        projection="guided"
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'User interface. Open deployment details' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'User interface' })
+    expect(dialog).toBeTruthy()
+    expect(within(dialog).getByRole('heading', { name: 'What it includes' })).toBeTruthy()
+    expect(within(dialog).getByText('Ui')).toBeTruthy()
+    expect(within(dialog).getByText('Application service')).toBeTruthy()
+    expect(within(dialog).getByText('Sends user requests to the application service and presents the results.')).toBeTruthy()
+    expect(within(dialog).queryByText('The user interface requests order information from the application service.')).toBeNull()
+    expect(screen.queryByText('src/composition/browser.ts')).toBeNull()
+  })
+
+  it('reveals exact runtime, paths, IDs, and allocation rationale only in the technical specification dialog', () => {
+    const foundationPlan = plan()
+    render(
+      <FoundationReview
+        bridge={installMockBridge()}
+        projectId="p1"
+        plan={foundationPlan}
+        approvedFoundation={undefined}
+        approvedArchitecture={architecture()}
+        projection="guided"
+      />,
+    )
+
+    expect(screen.queryByText('src/composition/browser.ts')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Technical specification' }))
+
+    expect(screen.getByRole('dialog', { name: 'Technical specification' })).toBeTruthy()
+    expect(screen.getByText('src/composition/browser.ts')).toBeTruthy()
+    expect(screen.getByText('src/composition/http-api.ts')).toBeTruthy()
+    expect(screen.getByText('non-experience module → backend host `http-api`')).toBeTruthy()
+    expect(screen.getByText('experience module → UI host `browser`')).toBeTruthy()
+    expect(screen.getByText('The user interface requests order information from the application service.')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog', { name: 'Technical specification' })).toBeNull()
   })
 
   it('surfaces unresolved ambiguities as answerable questions identically in both projections', () => {
@@ -159,7 +229,7 @@ describe('CAP-TEST-075 bullet (f) — Guided and Design project the same foundat
       )
       expect(html).toContain('Which language should the default deployable use?')
       // Not ready: approve action must be disabled while ambiguities remain unresolved.
-      expect(html).toMatch(/disabled[^>]*>\s*Approve foundation/)
+      expect(html).toMatch(/disabled[^>]*>\s*Approve application structure/)
     }
   })
 })
@@ -205,6 +275,34 @@ describe('CAP-TEST-075 bullet (e) — enriched From-spec Build launch carries ge
     expect(fields.goal).toContain('npm run build')
     expect(fields.references).toContain(deployment.compositionRootPath)
     expect(fields.references).toContain('schema.orders.v1')
+  })
+
+  it('derives concrete generated operation/type references and acceptance commands from the approved foundation', () => {
+    const context = deploymentContextFor({
+      schemaVersion: '1.0', projectId: 'p1', architectureId: 'arch.1', architectureRevision: '1.0.0',
+      architectureHash: 'hash-arch', contentHash: 'hash-foundation',
+      deployables: [{
+        schemaVersion: '1.0', deployableId: 'browser', name: 'Browser', kind: 'browser',
+        runtimeLanguage: 'typescript', runtimeVersionRange: '>=22', moduleIds: ['mod.ui'], inboundBindingIds: [],
+        compositionRootPath: 'composition/browser.ts', commands: {}, configurationRefs: [], secretReferenceIds: [], proposedLocations: [],
+      }],
+      allocations: [{ moduleId: 'mod.ui', deployableId: 'browser', moduleType: 'experience', rationale: 'UI host' }],
+      resolvedAnswers: [], unresolvedAmbiguities: [], readiness: { status: 'ready', issues: [] },
+    }, manifest.moduleId, {
+      ...manifest,
+      providedOperations: [{ operationId: 'op.ui.render-workbench', contractVersion: '1.0.0' }],
+      requiredOperations: [{ operationId: 'op.workflow.calculate', acceptedContractRange: '^1.0.0', reason: 'calculate' }],
+    })
+
+    expect(context?.generatedContractRefs).toEqual([
+      'op.ui.render-workbench@1.0.0 (src/generated/browser/operations.g.ts)',
+      'op.workflow.calculate@^1.0.0 (src/generated/browser/operations.g.ts)',
+    ])
+    expect(context?.generatedTypeTargets).toEqual([
+      'src/generated/browser/types.g.ts',
+      'src/generated/browser/operations.g.ts',
+    ])
+    expect(context?.acceptanceCommands).toContain('npx tsc -p tsconfig.engineering-ui.json')
   })
 
   it('omits the generated deployment section when no deployment is supplied (backward compatibility)', () => {

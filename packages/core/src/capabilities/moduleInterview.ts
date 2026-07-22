@@ -147,6 +147,8 @@ export function buildModuleInterviewPacket(input: {
   architecture: ArchitectureSpecification
   moduleId: string
   moduleType: ModuleType
+  /** Version the next imported response must use (for example, the next patch during Revisit). */
+  moduleVersion?: string
   dependencyContractIds?: string[]
 }): InterviewPacket {
   const details = applicableDetailsFor(input.moduleType)
@@ -206,6 +208,7 @@ export function buildModuleInterviewPacket(input: {
       hashes: [input.architecture.contentHash],
       facts: [
         `moduleType:${input.moduleType}`,
+        `moduleVersion:${input.moduleVersion ?? '1.0.0'}`,
         `architecture:${input.architecture.id}@${input.architecture.revision}`,
         ...contextualFacts,
         ...details.map((d) => `detail:${d}`),
@@ -252,11 +255,12 @@ export function moduleInterviewOpeningGuidance(packet: InterviewPacket): string 
   return `\nModule-specific opening guidance:
 ${context}
 - Treat the supplied module identity, type, responsibility, allocation, and dependencies as established context. Do not begin by asking the user to restate them.
-- Open with a short plain-language recap of what this module appears to do, then ask only about the most important missing details.
-- Make every opening question concrete and contextual. Include a plausible suggestion or default drawn from the responsibility, workflow traces, and connected modules, and ask the user to accept or change it.
+- Draft concrete answers for every applicable detail from the responsibility, workflow traces, operations, and connected modules before speaking to the user. Do not read the detail checklist back as questions.
+- Open with a short plain-language recap and a compact proposed module brief. Clearly identify the few material assumptions, then ask the user to reply “accept” or list corrections in one response.
+- Ask a follow-up batch only when the reply exposes a material contradiction or a business decision that cannot be safely defaulted. Do not conduct a serial, field-by-field interview.
 - ${typeSuggestions[moduleType] ?? 'Suggest concrete defaults from the supplied architecture context and ask the user to correct or confirm them.'}
 - For every provided operation, establish its command/query/job behavior, concrete input and output fields, preconditions, postconditions, domain rejections, technical errors, side effects, idempotency, timeout, and cancellation behavior. Encode these in operationContracts and dataSchemas in the final response rather than leaving them only in prose.
-- Avoid identifier-heavy or checklist-style wording. Ask no more than three related questions, then wait for the user's answers.\n`
+- Avoid identifier-heavy or checklist-style wording. Keep the confirmation request to at most five concise decision bullets that can be answered together.\n`
 }
 
 export function missingApplicableDetails(
@@ -320,6 +324,29 @@ export function evaluateModuleInterview(response: ModuleInterviewResponse): Modu
   }
   const contracts = new Map((response.operationContracts ?? []).map((contract) => [contract.operationId, contract]))
   const schemaIds = new Set((response.dataSchemas ?? []).map((schema) => schema.schemaId))
+  const supportedScalars = new Set([
+    'string', 'text', 'uuid', 'date', 'datetime', 'timestamp',
+    'integer', 'int', 'number', 'float', 'double', 'decimal',
+    'boolean', 'bool', 'unknown', 'any', 'object', 'json',
+  ])
+  const supportedSchemaType = (value: string): boolean => {
+    const trimmed = value.trim()
+    if (schemaIds.has(trimmed)) return true
+    if (trimmed.toLowerCase().endsWith('[]')) return supportedSchemaType(trimmed.slice(0, -2))
+    return supportedScalars.has(trimmed.toLowerCase())
+  }
+  for (const schema of response.dataSchemas ?? []) {
+    for (const field of schema.fields ?? []) {
+      if (supportedSchemaType(field.type)) continue
+      extras.push(
+        diagnostic('CAP-GATE-003-SCHEMA-TYPE', 'data schema field type must be a supported scalar, array, object, or supplied schemaId', {
+          ruleId: 'CAP-GATE-003',
+          fieldPath: `dataSchemas.${schema.schemaId}.${field.name}`,
+          relatedIds: [schema.schemaId, field.name],
+        }),
+      )
+    }
+  }
   for (const operation of response.providedOperations) {
     const contract = contracts.get(operation.operationId)
     if (!contract || contract.version !== operation.contractVersion) {

@@ -9,6 +9,7 @@ import type {
   FieldDelta,
   GateResult,
   InterviewPacket,
+  Project,
 } from '@engineering-ui-kit/core'
 import {
   buildProductInterviewPacket,
@@ -23,6 +24,7 @@ import { humanizeFieldPath, presentDiagnosticsForGuided } from './capabilityPres
 type Props = {
   bridge: EuikBridge
   projectId: string
+  project?: Pick<Project, 'name' | 'description' | 'repoPath' | 'launchUrl'>
   projection: 'guided' | 'design'
   onChanged?: () => void
   onHelp?: () => void
@@ -51,7 +53,33 @@ function briefText(value: unknown): string {
   return ''
 }
 
-export function ApplicationDefinition({ bridge, projectId, projection, onChanged, onHelp }: Props) {
+function storedFieldStates(
+  record: ApplicationSpecification | undefined,
+  state: 'confirmed' | 'proposed',
+): Record<string, string> {
+  if (!record) return {}
+  const states: Record<string, string> = {}
+  const source = record as unknown as Record<string, unknown>
+  const mark = (path: string, value: unknown) => {
+    const populated = Array.isArray(value) ? value.length > 0 : typeof value === 'string' ? value.trim().length > 0 : Boolean(value)
+    if (populated) states[path] = state
+  }
+  mark('purpose', source.purpose)
+  for (const path of ['outcomes', 'actors', 'goals', 'useCases', 'scenarios', 'information', 'rules', 'externalSystems', 'constraints', 'acceptanceCases', 'sources']) {
+    mark(path, source[path])
+  }
+  const scope = source.scope as { inScope?: unknown[]; outOfScope?: unknown[] } | undefined
+  mark('scope.inScope', scope?.inScope)
+  mark('scope.outOfScope', scope?.outOfScope)
+  const unresolvedQuestions = Array.isArray(source.unresolvedQuestions) ? source.unresolvedQuestions : []
+  for (const [index, question] of unresolvedQuestions.entries()) {
+    const id = question && typeof question === 'object' && 'id' in question ? String(question.id) : String(index + 1)
+    states[`unresolvedQuestions.${id}`] = 'unresolved'
+  }
+  return states
+}
+
+export function ApplicationDefinition({ bridge, projectId, project, projection, onChanged, onHelp }: Props) {
   const guided = projection === 'guided'
   const [draft, setDraft] = useState<ApplicationSpecification | undefined>()
   const [approved, setApproved] = useState<ApplicationSpecification | undefined>()
@@ -68,8 +96,12 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
     if (!projectId) return
     await bridge.capabilitiesEnsureInitialized(projectId)
     const app = await bridge.capabilitiesGetApplication(projectId)
-    setDraft(asApp(app.draft))
-    setApproved(asApp(app.approved))
+    const nextDraft = asApp(app.draft)
+    const nextApproved = asApp(app.approved)
+    setDraft(nextDraft)
+    setApproved(nextApproved)
+    const visible = nextDraft ?? nextApproved
+    setFieldStates(storedFieldStates(visible, visible === nextApproved ? 'confirmed' : 'proposed'))
   }
 
   useEffect(() => {
@@ -92,13 +124,18 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
     setMessage('')
     try {
       const currentDefinition = draft ?? approved
+      const repositoryName = project?.repoPath.split(/[\\/]/).filter(Boolean).at(-1)
       const built = buildProductInterviewPacket({
         packetId: `pkt-product-${projectId}-${Date.now()}`,
         projectId,
         approved: currentDefinition,
-        facts: currentDefinition
-          ? [`currentApplicationSpecification:${JSON.stringify(currentDefinition)}`]
-          : undefined,
+        facts: [
+          project?.name ? `projectName:${project.name}` : '',
+          project?.description ? `projectDescription:${project.description}` : '',
+          repositoryName ? `repositoryName:${repositoryName}` : '',
+          project?.launchUrl ? `applicationLaunchUrl:${project.launchUrl}` : '',
+          currentDefinition ? `currentApplicationSpecification:${JSON.stringify(currentDefinition)}` : '',
+        ].filter(Boolean),
       })
       const exported = await bridge.capabilitiesExportInterviewPacket({
         packetId: built.packetId,
@@ -147,6 +184,7 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
       onChanged?.()
       await refresh()
       setDraft(imported.draft)
+      setFieldStates(imported.fieldStates)
       setDelta(imported.delta.length ? imported.delta : diffApplicationSpecification(approved, imported.draft))
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
@@ -206,6 +244,18 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
     ...((gate?.diagnostics as CapDiagnostic[] | undefined) ?? []),
     ...diagnostics,
   ].filter((diagnostic) => !(openQuestions.length > 0 && diagnostic.code === 'CAP-GATE-001-UNRESOLVED'))
+  const currentApproval = Boolean(approved && visibleDelta.length === 0 && openQuestions.length === 0)
+  const readyToApprove = Boolean(draft && openQuestions.length === 0 && gate?.passed !== false && !currentApproval)
+  const exportLabel = exportResult
+    ? openQuestions.length ? 'Continue in Copilot' : currentApproval ? 'Revise plan' : 'Restart in Copilot'
+    : openQuestions.length ? 'Continue in Copilot' : draft ? 'Revise plan' : 'Start in Copilot'
+  const guidedTaskTitle = currentApproval
+    ? 'Application plan approved'
+    : openQuestions.length
+      ? `Resolve ${openQuestions.length} remaining question${openQuestions.length === 1 ? '' : 's'}`
+      : draft
+        ? 'Review the application brief'
+        : 'Create a first draft with Copilot'
 
   return (
     <section
@@ -213,29 +263,55 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
       role="region"
       aria-label="Application definition"
     >
-      <p className="lede">
-        {guided
-          ? 'Capture what the application must do through a Copilot interview, then approve the definition.'
-          : 'Review the canonical definition, imported field changes, approval state, and technical record details.'}
-      </p>
-
-      <div className="capabilities-toolbar" role="group" aria-label="Application definition actions">
-        <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>
-          {guided
-            ? exportResult
-              ? draft?.unresolvedQuestions?.length ? 'Continue in Copilot' : 'Restart in Copilot'
-              : draft?.unresolvedQuestions?.length ? 'Continue in Copilot' : draft ? 'Revise in Copilot' : 'Start in Copilot'
-            : exportResult ? 'Recreate interview handoff' : 'Create interview handoff'}
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary btn-compact"
-          onClick={() => void approve()}
-          disabled={!projectId || !draft || busy || openQuestions.length > 0 || gate?.passed === false}
-        >
-          Approve definition
-        </button>
-      </div>
+      {guided ? (
+        <div className={`cap-task-command${currentApproval ? ' complete' : ''}`}>
+          <div className="cap-task-command-copy">
+            <p className="capabilities-eyebrow">Application plan</p>
+            <h3>{guidedTaskTitle}</h3>
+            <p>
+              {currentApproval
+                ? 'The agreed outcome and boundaries are ready to guide the solution design.'
+                : openQuestions.length
+                  ? 'Your work is saved. Continue the interview, then import the updated response.'
+                  : draft
+                    ? 'Check the outcome and boundaries below before approving the plan.'
+                    : 'Copilot drafts the outcome, people, workflows, and boundaries from project context, then asks you to accept or correct the important assumptions.'}
+            </p>
+          </div>
+          <div className="capabilities-toolbar cap-task-command-actions" role="group" aria-label="Application definition actions">
+            <button
+              type="button"
+              className={`btn ${!draft || openQuestions.length ? 'btn-primary' : 'btn-secondary'} btn-compact`}
+              onClick={() => void exportPacket()}
+              disabled={!projectId || busy}
+            >
+              {exportLabel}
+            </button>
+            {!currentApproval ? (
+              <button
+                type="button"
+                className={`btn ${readyToApprove ? 'btn-primary' : 'btn-secondary'} btn-compact`}
+                onClick={() => void approve()}
+                disabled={!readyToApprove || busy}
+              >
+                Approve plan
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="lede">Review the canonical definition, imported field changes, approval state, and technical record details.</p>
+          <div className="capabilities-toolbar" role="group" aria-label="Application definition actions">
+            <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>
+              {currentApproval ? 'Revise application plan' : exportResult ? 'Recreate definition handoff' : draft ? 'Continue definition in Copilot' : 'Generate definition draft'}
+            </button>
+            <button type="button" className="btn btn-secondary btn-compact" onClick={() => void approve()} disabled={!projectId || !draft || busy || openQuestions.length > 0 || gate?.passed === false}>
+              Approve plan
+            </button>
+          </div>
+        </>
+      )}
 
       {guided && exportResult && openQuestions.length === 0 ? (
         <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={exportResult} projection="guided" onHelp={onHelp} />
@@ -264,7 +340,14 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
         </details>
       ) : null}
 
-      <InterviewImport onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
+      {guided ? (
+        <details className="cap-interview-import" open={!draft || openQuestions.length > 0}>
+          <summary>{draft ? 'Import an updated Copilot response' : 'Import the Copilot response'}</summary>
+          <InterviewImport onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
+        </details>
+      ) : (
+        <InterviewImport onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
+      )}
 
       {message ? (
         <p role="status" className="capabilities-note cap-interview-status">
@@ -318,15 +401,15 @@ export function ApplicationDefinition({ bridge, projectId, projection, onChanged
           <section className="cap-definition-review" aria-labelledby="cap-definition-review-heading">
             <div className="cap-definition-review-head">
               <div>
-                <h3 id="cap-definition-review-heading">Application brief ready</h3>
-                <p>Review what was captured, then approve it to shape the solution.</p>
+                <h3 id="cap-definition-review-heading">{currentApproval ? 'Approved application plan' : 'Application brief ready'}</h3>
+                <p>{currentApproval ? 'This agreed brief is the foundation for the solution design.' : 'Review what was captured, then approve it to shape the solution.'}</p>
               </div>
-              <span className="cap-ready-label">Ready to approve</span>
+              <span className="cap-ready-label">{currentApproval ? 'Approved' : 'Ready to approve'}</span>
             </div>
             <div className="cap-definition-purpose">
               <span>Purpose</span>
               <p>{draft.purpose}</p>
-              <div className="cap-definition-metrics" aria-label="Brief summary">
+              <div className="cap-definition-metrics" role="group" aria-label="Brief summary">
                 <span><strong>{briefActors.length}</strong> people</span>
                 <span><strong>{briefOutcomes.length}</strong> outcomes</span>
                 <span><strong>{briefUseCases.length}</strong> workflows</span>

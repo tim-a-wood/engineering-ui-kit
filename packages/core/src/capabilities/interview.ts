@@ -405,13 +405,13 @@ export function buildProductInterviewPacket(input: {
   questionBudget?: number
 }): InterviewPacket {
   const approved = input.approved
-  const budget = input.questionBudget ?? 3
+  const budget = input.questionBudget ?? 5
   return buildInterviewPacket({
     packetId: input.packetId,
     projectId: input.projectId,
     interviewKind: 'product',
     gateId: 'CAP-GATE-001',
-    interviewBoundary: `Product interview only. Ask at most ${budget} related questions per conversational turn, wait for the answers, and continue with further turns until every approval-blocking item is resolved. Do not treat this per-turn limit as permission to end the interview. Do not design architecture or implement source.`,
+    interviewBoundary: `Product definition only. Use a draft-first review: synthesize a complete proposed brief from supplied context, then ask the user to accept it or correct the important assumptions. If context is too sparse, ask one kickoff batch of at most ${budget} concise prompts that the user can answer together. Ask a second batch only when a material contradiction or approval-blocking business decision remains. Do not run a field-by-field questionnaire. Do not design architecture or implement source.`,
     inputContext: {
       recordIds: approved ? [approved.id] : [],
       revisions: approved ? [approved.revision] : [],

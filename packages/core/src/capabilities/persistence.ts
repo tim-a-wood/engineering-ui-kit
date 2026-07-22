@@ -42,7 +42,7 @@ export type CapabilityIndex = {
   modules: Record<string, { draft?: boolean; approvedRevision?: string }>
   bindings: Record<string, { draft?: boolean; approvedRevision?: string }>
   deployables: Record<string, { draft?: boolean; approvedRevision?: string }>
-  inboundBindings: Record<string, { draft?: boolean; approvedRevision?: string }>
+  inboundBindings: Record<string, { draft?: boolean; approvedRevision?: string; removedAt?: string }>
   /** WP5A-core: approved-revision key (the plan's own `contentHash`) for the project's single `FoundationPlan`. */
   foundationApprovedRevision?: string
 }
@@ -531,7 +531,11 @@ export class CapabilityWorkspace {
       binding,
     )
     const index = this.getIndex(projectId)
-    index.inboundBindings[binding.bindingId] = { ...index.inboundBindings[binding.bindingId], draft: true }
+    index.inboundBindings[binding.bindingId] = {
+      ...index.inboundBindings[binding.bindingId],
+      draft: true,
+      removedAt: undefined,
+    }
     this.saveIndex(projectId, index)
   }
 
@@ -565,7 +569,7 @@ export class CapabilityWorkspace {
     }
     atomicWriteJson(dest, binding)
     const index = this.getIndex(projectId)
-    index.inboundBindings[binding.bindingId] = { draft: false, approvedRevision: binding.version }
+    index.inboundBindings[binding.bindingId] = { draft: false, approvedRevision: binding.version, removedAt: undefined }
     this.saveIndex(projectId, index)
     return binding
   }
@@ -585,11 +589,32 @@ export class CapabilityWorkspace {
   ): { bindingId: string; draft?: InboundBinding; approved?: InboundBinding }[] {
     const index = this.getIndex(projectId)
     return Object.keys(index.inboundBindings)
+      .filter((bindingId) => !index.inboundBindings[bindingId]?.removedAt)
       .sort((a, b) => a.localeCompare(b))
       .map((bindingId) => ({
         bindingId,
         draft: this.getInboundBindingDraft(projectId, bindingId),
         approved: this.getApprovedInboundBinding(projectId, bindingId),
       }))
+  }
+
+  /**
+   * Removes an entry point from the active application without destroying its
+   * immutable approved revisions. Re-saving the same binding identity restores
+   * it, making the operation deterministic and audit-safe.
+   */
+  archiveInboundBinding(projectId: string, bindingId: string): void {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    const index = this.getIndex(projectId)
+    if (!index.inboundBindings[bindingId]) throw new Error(`inbound binding not found: ${bindingId}`)
+    index.inboundBindings[bindingId] = {
+      ...index.inboundBindings[bindingId],
+      draft: false,
+      removedAt: new Date().toISOString(),
+    }
+    this.saveIndex(projectId, index)
   }
 }

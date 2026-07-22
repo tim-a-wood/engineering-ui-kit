@@ -1,5 +1,5 @@
 /**
- * CAP-TEST-070 — real Connect-stage persistence for `DeployableSpecification`
+ * CAP-TEST-070 — real Build entry-point persistence for `DeployableSpecification`
  * (CAP-CONTRACT-024) and `InboundBinding` (CAP-CONTRACT-028) on
  * `CapabilityWorkspace` (WP5B connect backing, replacing WP6B's mock-only
  * gui bridge).
@@ -70,7 +70,7 @@ function setSchemaVersion(ws: CapabilityWorkspace, projectId: string, version: s
   )
 }
 
-describe('CAP-TEST-070 connect-stage backing persistence', () => {
+describe('CAP-TEST-070 Build entry-point backing persistence', () => {
   it('round-trips a DeployableSpecification: save -> list -> approve -> get', () => {
     const ws = tmpWorkspace()
     const draft = deployable()
@@ -134,6 +134,23 @@ describe('CAP-TEST-070 connect-stage backing persistence', () => {
     expect(listed.every((r) => r.approved?.operationId === first.operationId)).toBe(true)
   })
 
+  it('archives an entry point without deleting its immutable approved revision and can restore the same identity', () => {
+    const ws = tmpWorkspace()
+    const first = httpBinding()
+    ws.approveInboundBinding('proj-1', first)
+
+    ws.archiveInboundBinding('proj-1', first.bindingId)
+    expect(ws.listInboundBindings('proj-1')).toEqual([])
+    expect(ws.getApprovedInboundBinding('proj-1', first.bindingId, first.version)).toEqual(first)
+
+    const revised = httpBinding({ version: '1.0.1', path: '/widgets/v2' })
+    ws.saveInboundBindingDraft('proj-1', revised)
+    ws.approveInboundBinding('proj-1', revised)
+    expect(ws.listInboundBindings('proj-1')).toEqual([
+      expect.objectContaining({ bindingId: first.bindingId, approved: expect.objectContaining({ version: '1.0.1' }) }),
+    ])
+  })
+
   it('throws on deployable and inbound-binding writes when the workspace schema version is from the future', () => {
     const ws = tmpWorkspace()
     ws.ensureInitialized('proj-1')
@@ -144,5 +161,6 @@ describe('CAP-TEST-070 connect-stage backing persistence', () => {
     expect(() => ws.approveDeployable('proj-1', deployable())).toThrow(/read-only/)
     expect(() => ws.saveInboundBindingDraft('proj-1', httpBinding())).toThrow(/read-only/)
     expect(() => ws.approveInboundBinding('proj-1', httpBinding())).toThrow(/read-only/)
+    expect(() => ws.archiveInboundBinding('proj-1', 'bind-http-1')).toThrow(/read-only/)
   })
 })

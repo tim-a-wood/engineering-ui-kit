@@ -1,4 +1,4 @@
-import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { HandoffRun, Project, Settings } from '@engineering-ui-kit/core'
 import { getBridge, type BuildPacketResult, type TaskPacketFields } from './bridge'
 import {
@@ -21,7 +21,11 @@ import { RecipesView, ComponentsView } from './views/catalog'
 import { SettingsView } from './views/SettingsView'
 import { BuildView } from './views/build/BuildView'
 import { VerifyReviewView } from './views/workflow'
-import { CapabilitiesView } from './views/capabilities/CapabilitiesView'
+
+const CapabilitiesView = lazy(async () => {
+  const module = await import('./views/capabilities/CapabilitiesView')
+  return { default: module.CapabilitiesView }
+})
 
 const TIPS: Partial<Record<ViewId, string>> = {
   'copilot-handoff': 'Start with one screen/view for best results.',
@@ -50,6 +54,12 @@ const NAV_GLYPHS: Partial<Record<ViewId, () => ReactNode>> = {
   components: () => Icon.box(),
   projects: () => Icon.folder(),
   settings: () => Icon.gear(),
+}
+
+function initialApplicationView(): ViewId {
+  if (typeof window === 'undefined') return 'copilot-handoff'
+  const location = `${window.location.pathname}${window.location.search}${window.location.hash}`
+  return /(?:^|[/#?&=])capabilities(?:$|[/#?&=])/i.test(location) ? 'capabilities' : 'copilot-handoff'
 }
 
 class ViewErrorBoundary extends Component<{ viewKey: string; children: ReactNode }, { error: Error | null }> {
@@ -83,7 +93,7 @@ class ViewErrorBoundary extends Component<{ viewKey: string; children: ReactNode
 
 export default function App() {
   const bridge = useMemo(() => getBridge(), [])
-  const [view, setView] = useState<ViewId>('copilot-handoff')
+  const [view, setView] = useState<ViewId>(initialApplicationView)
   // LAY-SHELL-001: the nav rail collapses to a 64px icon rail, persisted.
   const [navCollapsed, setNavCollapsed] = useState(() => {
     try { return localStorage.getItem('euik-nav-collapsed') === '1' } catch { return false }
@@ -100,6 +110,7 @@ export default function App() {
   const [packet, setPacket] = useState<BuildPacketResult | null>(null)
   const [recipe, setRecipe] = useState<RecipePrefill | null>(null)
   const [buildWorkspace, setBuildWorkspace] = useState<BuildWorkspaceState>('handoff')
+  const [capabilitiesProjectId, setCapabilitiesProjectId] = useState('')
   const [version, setVersion] = useState('')
   const [guideTopic, setGuideTopic] = useState<GuideTopicId | null>(null)
 
@@ -153,6 +164,11 @@ export default function App() {
 
   const navigate = useCallback(
     (next: ViewId) => {
+      if (next === 'capabilities') {
+        if (activeRun?.projectId) setCapabilitiesProjectId(activeRun.projectId)
+        setView('capabilities')
+        return
+      }
       if (isWorkflowView(next)) {
         if (!activeRun) {
           setView('copilot-handoff')
@@ -166,8 +182,14 @@ export default function App() {
       }
       setView(next)
     },
-    [activeRun],
+    [activeRun, capabilitiesProjectId],
   )
+
+  const openCapabilities = useCallback((projectId?: string) => {
+    const contextualProjectId = projectId ?? activeRun?.projectId ?? ''
+    if (contextualProjectId) setCapabilitiesProjectId(contextualProjectId)
+    setView('capabilities')
+  }, [activeRun?.projectId])
 
   const startUiModuleBuild = useCallback(async (projectId: string, fields: TaskPacketFields) => {
     const run = await bridge.createRun(projectId)
@@ -203,19 +225,24 @@ export default function App() {
             refreshProjects={refreshProjects}
             onStartRun={startRun}
             onOpenStep={navigate}
+            onOpenCapabilities={openCapabilities}
           />
         )
       case 'capabilities':
         return (
-          <CapabilitiesView
-            bridge={bridge}
-            projects={projects}
-            activeProjectId={activeProject?.id}
-            onOpenGuide={setGuideTopic}
-            onNavigateToProjects={() => setView('projects')}
-            onProjectsChanged={refreshProjects}
-            onStartUiBuild={startUiModuleBuild}
-          />
+          <Suspense fallback={<p className="secondary-text" role="status">Loading capabilities…</p>}>
+            <CapabilitiesView
+              bridge={bridge}
+              projects={projects}
+              activeProjectId={capabilitiesProjectId || activeProject?.id}
+              onProjectSelected={setCapabilitiesProjectId}
+              onOpenGuide={setGuideTopic}
+              onNavigateToProjects={() => setView('projects')}
+              onOpenBuildTest={(projectId) => void startRun(projectId)}
+              onProjectsChanged={refreshProjects}
+              onStartUiBuild={startUiModuleBuild}
+            />
+          </Suspense>
         )
       case 'build':
       case 'prepare-context':
@@ -333,7 +360,7 @@ export default function App() {
           <TipCard
             text={
               view === 'capabilities'
-                ? 'Guided follows five steps: Plan, Design, Build, Connect, and Verify. Switch views for the technical detail.'
+                ? 'Guided follows four steps: Plan, Design, Build, and Verify. Entry points are configured in Build before the shared setup is prepared.'
                 : TIPS[view] ?? 'Keep handoffs small and reviewable.'
             }
             linkLabel={view === 'capabilities' ? 'View Capabilities guide' : 'View workflow guide'}

@@ -188,6 +188,24 @@ async function shot(page, name) {
   return path.relative(REPO_ROOT, file)
 }
 
+function monitorRendererErrors(page, evidence) {
+  evidence.rendererErrors ??= []
+  page.on('pageerror', (error) => {
+    evidence.rendererErrors.push({ source: 'pageerror', message: error.message })
+  })
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      evidence.rendererErrors.push({ source: 'console', message: message.text() })
+    }
+  })
+}
+
+function assertNoRendererErrors(evidence) {
+  if (evidence.rendererErrors?.length) {
+    throw new Error(`Renderer emitted errors: ${JSON.stringify(evidence.rendererErrors)}`)
+  }
+}
+
 async function chooseInterviewFile(page, file, regionName) {
   const region = page.getByRole('region', { name: regionName }).last()
   await expectVisible(region, regionName)
@@ -196,7 +214,7 @@ async function chooseInterviewFile(page, file, regionName) {
 }
 
 async function answerFoundationQuestions(page) {
-  const region = page.getByRole('region', { name: 'Foundation plan' })
+  const region = page.getByRole('region', { name: 'Application structure' })
   for (let attempts = 0; attempts < 10 && await region.getByRole('group', { name: 'Open foundation questions' }).count(); attempts += 1) {
     const group = region.getByRole('group', { name: 'Open foundation questions' })
     const selects = group.locator('select')
@@ -211,10 +229,25 @@ async function answerFoundationQuestions(page) {
       if (!await group.count() || await page.getByText('Answer recorded', { exact: false }).count()) break
       await page.waitForTimeout(100)
     }
-    const approve = region.getByRole('button', { name: 'Approve foundation' })
+    const approve = region.getByRole('button', { name: 'Approve application structure' })
     const deadline = Date.now() + TIMEOUT
     while (Date.now() < deadline && await approve.isDisabled() && await group.count()) await page.waitForTimeout(100)
   }
+}
+
+async function ensureTargetPreview(page, description = 'target application Preview') {
+  const preview = page.getByLabel('Target application Preview')
+  const frame = preview.locator('webview')
+  const install = preview.getByRole('button', { name: 'Install dependencies and retry' })
+  const outcome = await Promise.race([
+    frame.waitFor({ state: 'visible', timeout: TIMEOUT }).then(() => 'ready'),
+    install.waitFor({ state: 'visible', timeout: TIMEOUT }).then(() => 'install'),
+  ])
+  if (outcome === 'install') {
+    await click(install, `Install dependencies for ${description}`)
+    await expectVisible(frame, description)
+  }
+  return frame
 }
 
 async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Selected Run capability') {
@@ -288,16 +321,36 @@ async function selectTargetButton(page, app, targetUrl, expectedSelection = 'Sel
 }
 
 async function generateApplyBuild(page, deployableId) {
-  const card = page.getByRole('article', { name: `Integration for ${deployableId}` })
-  await click(card.getByRole('button', { name: /Preview generation|Regenerate plan/ }), `Preview ${deployableId}`)
-  await expectVisible(card.getByText('Generation plan is ready for review.', { exact: false }), `${deployableId} plan-ready status`)
-  const acceptDirty = card.getByLabel(/I reviewed and accept applying this plan/)
+  const names = {
+    browser: 'User interface',
+    'http-api': 'Application service',
+    'electron-main': 'Desktop application',
+    cli: 'Command-line tool',
+    worker: 'Background processing',
+    'embedded-library': 'Built-in application logic',
+  }
+  const card = page.getByRole('article', { name: `Setup for ${names[deployableId] ?? deployableId}` })
+  await click(card.getByRole('button', { name: /Prepare setup|Refresh setup/ }), `Prepare ${deployableId} setup`)
+  await expectVisible(card.getByText('The shared setup is ready for review.', { exact: false }), `${deployableId} setup-ready status`)
+  const acceptDirty = card.getByLabel(/I understand this project has uncommitted changes/)
   if (await acceptDirty.count()) await acceptDirty.check()
-  await waitEnabled(card.getByRole('button', { name: 'Apply generation plan' }), `${deployableId} generation apply`)
-  await click(card.getByRole('button', { name: 'Apply generation plan' }), `Apply ${deployableId}`)
-  await expectVisible(card.getByText('Reference-architecture infrastructure applied.', { exact: false }), `${deployableId} apply status`)
-  await click(card.getByRole('button', { name: 'Install, build & test' }), `Build ${deployableId}`)
-  await waitForIntegrationCommands(card, `${deployableId} command status`)
+  await waitEnabled(card.getByRole('button', { name: 'Apply setup' }), `${deployableId} setup apply`)
+  await click(card.getByRole('button', { name: 'Apply setup' }), `Apply ${deployableId} setup`)
+  await expectVisible(card.getByText('The shared application setup was applied.', { exact: false }), `${deployableId} apply status`)
+  await click(card.getByRole('button', { name: 'Check setup' }), `Check ${deployableId} setup`)
+  await expectVisible(card.getByText('Setup check: Passed', { exact: false }), `${deployableId} command status`)
+}
+
+async function saveCompositionFactory(page, contractId, target) {
+  const setup = page.getByRole('region', { name: 'Shared application setup' })
+  await click(setup.getByRole('button', { name: 'Technical specification' }), 'Shared setup technical specification')
+  const dialog = page.getByRole('dialog', { name: 'Shared setup technical specification' })
+  const factory = dialog.getByLabel(`Implementation factory for ${contractId}`)
+  const technicalCard = factory.locator('xpath=ancestor::article[1]')
+  await factory.fill(target)
+  await click(technicalCard.getByRole('button', { name: 'Save composition factories' }), `Save ${contractId} composition factory`)
+  await expectVisible(technicalCard.getByText('Composition configuration saved.', { exact: false }), `${contractId} composition configuration status`)
+  await click(dialog.getByRole('button', { name: 'Close', exact: true }), 'Close shared setup technical specification')
 }
 
 function stopPort(url) {
@@ -338,6 +391,7 @@ async function runTypeScriptUiJourney(electron) {
   const evidence = { journey: 'typescript-ui', executablePath, packaged: false, scratch, screenshots: [], passed: false }
   try {
     const page = await app.firstWindow({ timeout: TIMEOUT })
+    monitorRendererErrors(page, evidence)
     page.setDefaultTimeout(TIMEOUT)
     await page.waitForLoadState('domcontentloaded')
     const packaged = await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)
@@ -348,27 +402,27 @@ async function runTypeScriptUiJourney(electron) {
     await page.getByLabel('Project name').fill('Production UI Journey')
     await click(page.getByRole('button', { name: 'Browse' }), 'repository Browse')
     await click(page.getByRole('button', { name: 'Create Project' }), 'Create Project')
-    await click(page.getByRole('button', { name: 'Capabilities' }), 'Capabilities navigation')
+    await click(page.getByRole('button', { name: 'Capabilities', exact: true }), 'Capabilities navigation')
     await page.getByLabel('Capabilities project').selectOption({ label: 'Production UI Journey' })
 
     await chooseInterviewFile(page, fixture.responseFiles.product, 'Application definition')
     await waitForStatus(page, 'Interview imported')
-    await click(page.getByRole('button', { name: 'Approve definition' }), 'Approve definition')
+    await click(page.getByRole('button', { name: 'Approve plan' }), 'Approve plan')
     await waitForStatus(page, 'Approved application revision')
 
     await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode')
     await click(page.getByRole('tab', { name: 'Architecture' }), 'Architecture tab')
-    await waitEnabled(page.getByRole('button', { name: 'Export architecture interview' }), 'loaded architecture interview')
+    await waitEnabled(page.getByRole('button', { name: 'Generate architecture draft' }), 'loaded architecture interview')
     await chooseInterviewFile(page, fixture.responseFiles.architecture, 'Architecture interview')
     await waitForStatus(page, 'Imported architecture proposal')
     await click(page.getByRole('button', { name: 'Approve architecture' }), 'Approve architecture')
     await waitForStatus(page, 'Architecture approved')
-    await click(page.getByRole('button', { name: 'Propose foundation plan' }), 'Propose foundation plan')
+    await click(page.getByRole('button', { name: 'Propose application structure' }), 'Propose application structure')
     await expectVisible(page.getByRole('group', { name: 'Open foundation questions' }), 'foundation questions')
     await answerFoundationQuestions(page)
-    await waitEnabled(page.getByRole('button', { name: 'Approve foundation' }), 'ready foundation approval')
-    await click(page.getByRole('button', { name: 'Approve foundation' }), 'Approve foundation')
-    await waitForStatus(page, 'Approved foundation plan')
+    await waitEnabled(page.getByRole('button', { name: 'Approve application structure' }), 'ready application-structure approval')
+    await click(page.getByRole('button', { name: 'Approve application structure' }), 'Approve application structure')
+    await waitForStatus(page, 'Application structure approved')
 
     await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab')
     const selectedModule = page.getByRole('button', { name: `Select module mod.echo.ui` })
@@ -385,22 +439,6 @@ async function runTypeScriptUiJourney(electron) {
     await click(page.getByRole('button', { name: 'Approve module' }).first(), 'Approve module')
     await waitForStatus(page, 'Approved module')
 
-    const factory = page.getByLabel(`Implementation factory for ${fixture.operationId}`)
-    if (await factory.count()) await factory.fill('src/domain/echo_run.ts#createEchoRun')
-    await click(page.getByRole('button', { name: 'Save composition factories' }), 'Save composition factories')
-    await waitForStatus(page, 'Composition configuration saved')
-    await waitEnabled(page.getByRole('button', { name: 'Preview generation' }), 'Preview generation')
-    await click(page.getByRole('button', { name: 'Preview generation' }), 'Preview generation')
-    await waitForStatus(page, 'Generation plan is ready')
-    const acceptDirty = page.getByLabel(/I reviewed and accept applying this plan/)
-    if (await acceptDirty.count()) await acceptDirty.check()
-    await click(page.getByRole('button', { name: 'Apply generation plan' }), 'Apply generation plan')
-    await waitForStatus(page, 'Reference-architecture infrastructure applied')
-    await click(page.getByRole('button', { name: 'Install, build & test' }), 'Install, build and test')
-    await waitForStatus(page, 'Install, build, and test commands completed')
-    evidence.screenshots.push(await shot(page, '01-ui-build-applied'))
-
-    await click(page.getByRole('tab', { name: 'Connections' }), 'Connections tab')
     await click(page.getByRole('button', { name: /existing or new UI/i }), 'UI trigger choice')
     if (!await page.getByLabel('Application UI URL').count()) {
       await click(page.getByRole('button', { name: 'Change UI setup' }), 'Change UI setup')
@@ -410,42 +448,34 @@ async function runTypeScriptUiJourney(electron) {
     await click(page.getByRole('button', { name: 'Save and use this UI' }), 'Save and use this UI')
     const useUi = page.getByRole('button', { name: 'Use this UI', exact: true })
     if (await useUi.count()) await click(useUi, 'Use this UI')
-    await expectVisible(page.locator('webview'), 'target application webview')
+    await ensureTargetPreview(page, 'target application webview')
     await page.waitForTimeout(1_500)
     await selectTargetButton(page, app, fixture.uiUrl)
     await page.getByLabel('Capability', { exact: true }).selectOption(`${fixture.operationId}@1.0.0`)
     for (const input of await page.getByRole('region', { name: 'Define visible behavior' }).locator('input').all()) {
       await input.fill('Show a clear successful result to the user.')
     }
-    await page.getByLabel('Test mode').selectOption('approved-example')
-    await click(page.getByRole('button', { name: 'Run simulation' }), 'Run simulation')
-    await click(page.getByRole('button', { name: 'Approve connection' }), 'Approve connection')
+    await click(page.getByRole('button', { name: 'Approve entry point' }), 'Approve UI entry point')
     const configured = page.getByRole('region', { name: 'Configured entry points' })
     await expectVisible(configured, 'approved configured entry point')
     await expectVisible(configured.getByText('Approved', { exact: true }), 'approved entry-point status')
 
-    const regenerate = page.getByRole('button', { name: 'Regenerate plan' }).last()
-    await click(regenerate, 'Regenerate plan after binding')
-    await waitForStatus(page, 'Generation plan is ready')
-    const acceptDirtyBound = page.getByLabel(/I reviewed and accept applying this plan/).last()
-    if (await acceptDirtyBound.count()) await acceptDirtyBound.check()
-    await waitEnabled(page.getByRole('button', { name: 'Apply generation plan' }).last(), 'bound generation apply')
-    await click(page.getByRole('button', { name: 'Apply generation plan' }).last(), 'Apply bound generation plan')
-    await waitForStatus(page, 'Reference-architecture infrastructure applied')
-    await click(page.getByRole('button', { name: 'Install, build & test' }).last(), 'Build bound generation plan')
-    await waitForStatus(page, 'Install, build, and test commands completed')
-    evidence.screenshots.push(await shot(page, '02-ui-connected'))
+    await saveCompositionFactory(page, fixture.operationId, 'src/domain/echo_run.ts#createEchoRun')
+    await generateApplyBuild(page, 'browser')
+    evidence.screenshots.push(await shot(page, '01-ui-build-ready'))
 
-    await click(page.getByRole('tab', { name: 'Verification' }), 'Verification tab')
-    await click(page.getByRole('button', { name: 'Run real verification' }), 'Run real verification')
+    await click(page.getByRole('button', { name: 'Guided', exact: true }), 'Guided mode for forward Verify handoff')
+    await click(page.getByRole('button', { name: /^Verify\b/ }), 'Verify stage')
+    await click(page.getByRole('button', { name: 'Run live check' }), 'Run live verification')
     await waitForStatus(page, 'real target launched')
-    await expectVisible(page.getByText('pass', { exact: true }).first(), 'current passing verification evidence')
-    evidence.screenshots.push(await shot(page, '03-ui-real-verification'))
+    await expectVisible(page.getByText('Passed', { exact: true }).first(), 'current passing verification evidence')
+    evidence.screenshots.push(await shot(page, '02-ui-real-verification'))
 
-    await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab for rollback')
-    await click(page.getByRole('button', { name: 'Roll back' }), 'Roll back')
-    await waitForStatus(page, 'Generation was rolled back')
-    evidence.screenshots.push(await shot(page, '04-ui-rolled-back'))
+    await click(page.getByRole('button', { name: /^Build All\b/ }), 'Build stage for setup rollback')
+    await click(page.getByRole('button', { name: 'Undo setup' }), 'Undo setup')
+    await waitForStatus(page, 'setup changes were undone')
+    evidence.screenshots.push(await shot(page, '03-ui-rolled-back'))
+    assertNoRendererErrors(evidence)
     evidence.passed = true
     return evidence
   } catch (error) {
@@ -483,6 +513,7 @@ async function runPythonHeadlessJourney(electron) {
   const evidence = { journey: 'python-headless-schedule', executablePath, packaged: false, scratch, screenshots: [], passed: false }
   try {
     const page = await app.firstWindow({ timeout: TIMEOUT })
+    monitorRendererErrors(page, evidence)
     page.setDefaultTimeout(TIMEOUT)
     await page.waitForLoadState('domcontentloaded')
     if (!await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)) throw new Error('Electron reports app.isPackaged=false')
@@ -492,24 +523,24 @@ async function runPythonHeadlessJourney(electron) {
     await page.getByLabel('Project name').fill('Production Python Journey')
     await click(page.getByRole('button', { name: 'Browse' }), 'repository Browse')
     await click(page.getByRole('button', { name: 'Create Project' }), 'Create Project')
-    await click(page.getByRole('button', { name: 'Capabilities' }), 'Capabilities navigation')
+    await click(page.getByRole('button', { name: 'Capabilities', exact: true }), 'Capabilities navigation')
     await page.getByLabel('Capabilities project').selectOption({ label: 'Production Python Journey' })
 
     await chooseInterviewFile(page, fixture.responseFiles.product, 'Application definition')
     await waitForStatus(page, 'Interview imported')
-    await click(page.getByRole('button', { name: 'Approve definition' }), 'Approve definition')
+    await click(page.getByRole('button', { name: 'Approve plan' }), 'Approve plan')
     await waitForStatus(page, 'Approved application revision')
     await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode')
     await click(page.getByRole('tab', { name: 'Architecture' }), 'Architecture tab')
-    await waitEnabled(page.getByRole('button', { name: 'Export architecture interview' }), 'loaded architecture interview')
+    await waitEnabled(page.getByRole('button', { name: 'Generate architecture draft' }), 'loaded architecture interview')
     await chooseInterviewFile(page, fixture.responseFiles.architecture, 'Architecture interview')
     await waitForStatus(page, 'Imported architecture proposal')
     await click(page.getByRole('button', { name: 'Approve architecture' }), 'Approve architecture')
     await waitForStatus(page, 'Architecture approved')
-    await click(page.getByRole('button', { name: 'Propose foundation plan' }), 'Propose foundation plan')
-    await waitEnabled(page.getByRole('button', { name: 'Approve foundation' }), 'ready Python foundation approval')
-    await click(page.getByRole('button', { name: 'Approve foundation' }), 'Approve foundation')
-    await waitForStatus(page, 'Approved foundation plan')
+    await click(page.getByRole('button', { name: 'Propose application structure' }), 'Propose application structure')
+    await waitEnabled(page.getByRole('button', { name: 'Approve application structure' }), 'ready Python application-structure approval')
+    await click(page.getByRole('button', { name: 'Approve application structure' }), 'Approve application structure')
+    await waitForStatus(page, 'Application structure approved')
 
     await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab')
     const selectedModule = page.getByRole('button', { name: 'Select module mod.job' })
@@ -522,21 +553,6 @@ async function runPythonHeadlessJourney(electron) {
     await click(page.getByRole('button', { name: 'Approve module' }).first(), 'Approve module')
     await waitForStatus(page, 'Approved module')
 
-    const factory = page.getByLabel(`Implementation factory for ${fixture.operationId}`)
-    await factory.fill('src/domain/run_job.py#create_job_run')
-    await click(page.getByRole('button', { name: 'Save composition factories' }), 'Save composition factories')
-    await waitForStatus(page, 'Composition configuration saved')
-    await click(page.getByRole('button', { name: 'Preview generation' }), 'Preview generation')
-    await waitForStatus(page, 'Generation plan is ready')
-    const acceptDirty = page.getByLabel(/I reviewed and accept applying this plan/)
-    if (await acceptDirty.count()) await acceptDirty.check()
-    await click(page.getByRole('button', { name: 'Apply generation plan' }), 'Apply Python generation plan')
-    await waitForStatus(page, 'Reference-architecture infrastructure applied')
-    await click(page.getByRole('button', { name: 'Install, build & test' }), 'Install Python runtime')
-    await waitForIntegrationCommands(page, 'Python runtime install')
-    evidence.screenshots.push(await shot(page, '11-python-build-applied'))
-
-    await click(page.getByRole('tab', { name: 'Connections' }), 'Connections tab')
     if (await page.getByRole('button', { name: /Existing or new UI/i }).count()) throw new Error('Headless project incorrectly offered a UI entry point')
     await click(page.getByRole('button', { name: /Scheduled or background/i }), 'schedule trigger choice')
     await page.getByLabel('Capability', { exact: true }).selectOption(`${fixture.operationId}@1.0.0`)
@@ -547,22 +563,17 @@ async function runPythonHeadlessJourney(electron) {
     await expectVisible(configured, 'approved scheduled entry point')
     await expectVisible(configured.getByText('Approved', { exact: true }), 'approved scheduled status')
 
-    await click(page.getByRole('button', { name: 'Regenerate plan' }).last(), 'Regenerate Python plan after schedule')
-    await waitForStatus(page, 'Generation plan is ready')
-    const acceptDirtyBound = page.getByLabel(/I reviewed and accept applying this plan/).last()
-    if (await acceptDirtyBound.count()) await acceptDirtyBound.check()
-    await waitEnabled(page.getByRole('button', { name: 'Apply generation plan' }).last(), 'scheduled Python generation apply')
-    await click(page.getByRole('button', { name: 'Apply generation plan' }).last(), 'Apply scheduled Python plan')
-    await waitForStatus(page, 'Reference-architecture infrastructure applied')
-    await click(page.getByRole('button', { name: 'Install, build & test' }).last(), 'Build scheduled Python plan')
-    await waitForStatus(page, 'Install, build, and test commands completed')
-    evidence.screenshots.push(await shot(page, '12-python-schedule-connected'))
+    await saveCompositionFactory(page, fixture.operationId, 'src/domain/run_job.py#create_job_run')
+    await generateApplyBuild(page, 'embedded-library')
+    evidence.screenshots.push(await shot(page, '11-python-build-ready'))
 
-    await click(page.getByRole('tab', { name: 'Verification' }), 'Verification tab')
-    await click(page.getByRole('button', { name: 'Run real verification' }), 'Run Python schedule verification')
+    await click(page.getByRole('button', { name: 'Guided', exact: true }), 'Guided mode for headless Verify handoff')
+    await click(page.getByRole('button', { name: /^Verify\b/ }), 'Headless Verify stage')
+    await click(page.getByRole('button', { name: 'Run live check' }), 'Run Python schedule verification')
     await waitForStatus(page, 'real target launched')
-    await expectVisible(page.getByText('pass', { exact: true }).first(), 'current Python passing evidence')
-    evidence.screenshots.push(await shot(page, '13-python-real-verification'))
+    await expectVisible(page.getByText('Passed', { exact: true }).first(), 'current Python passing evidence')
+    evidence.screenshots.push(await shot(page, '12-python-real-verification'))
+    assertNoRendererErrors(evidence)
     evidence.passed = true
     return evidence
   } catch (error) {
@@ -600,6 +611,7 @@ async function runMixedReactPythonJourney(electron) {
   const evidence = { journey: 'mixed-react-python-http', executablePath, packaged: false, scratch, screenshots: [], passed: false }
   try {
     const page = await app.firstWindow({ timeout: TIMEOUT })
+    monitorRendererErrors(page, evidence)
     page.setDefaultTimeout(TIMEOUT)
     await page.waitForLoadState('domcontentloaded')
     if (!await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)) throw new Error('Electron reports app.isPackaged=false')
@@ -609,23 +621,23 @@ async function runMixedReactPythonJourney(electron) {
     await page.getByLabel('Project name').fill('Production Mixed Journey')
     await click(page.getByRole('button', { name: 'Browse' }), 'repository Browse')
     await click(page.getByRole('button', { name: 'Create Project' }), 'Create Project')
-    await click(page.getByRole('button', { name: 'Capabilities' }), 'Capabilities navigation')
+    await click(page.getByRole('button', { name: 'Capabilities', exact: true }), 'Capabilities navigation')
     await page.getByLabel('Capabilities project').selectOption({ label: 'Production Mixed Journey' })
     await chooseInterviewFile(page, fixture.responseFiles.product, 'Application definition')
     await waitForStatus(page, 'Interview imported')
-    await click(page.getByRole('button', { name: 'Approve definition' }), 'Approve definition')
+    await click(page.getByRole('button', { name: 'Approve plan' }), 'Approve plan')
     await waitForStatus(page, 'Approved application revision')
     await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode')
     await click(page.getByRole('tab', { name: 'Architecture' }), 'Architecture tab')
-    await waitEnabled(page.getByRole('button', { name: 'Export architecture interview' }), 'loaded architecture interview')
+    await waitEnabled(page.getByRole('button', { name: 'Generate architecture draft' }), 'loaded architecture interview')
     await chooseInterviewFile(page, fixture.responseFiles.architecture, 'Architecture interview')
     await waitForStatus(page, 'Imported architecture proposal')
     await click(page.getByRole('button', { name: 'Approve architecture' }), 'Approve architecture')
     await waitForStatus(page, 'Architecture approved')
-    await click(page.getByRole('button', { name: 'Propose foundation plan' }), 'Propose foundation plan')
-    await waitEnabled(page.getByRole('button', { name: 'Approve foundation' }), 'ready mixed foundation approval')
-    await click(page.getByRole('button', { name: 'Approve foundation' }), 'Approve foundation')
-    await waitForStatus(page, 'Approved foundation plan')
+    await click(page.getByRole('button', { name: 'Propose application structure' }), 'Propose application structure')
+    await waitEnabled(page.getByRole('button', { name: 'Approve application structure' }), 'ready mixed application-structure approval')
+    await click(page.getByRole('button', { name: 'Approve application structure' }), 'Approve application structure')
+    await waitForStatus(page, 'Application structure approved')
 
     await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab')
     for (const [moduleId, responseFile] of [['mod.ui', fixture.responseFiles.uiModule], ['mod.echo', fixture.responseFiles.domainModule]]) {
@@ -640,15 +652,6 @@ async function runMixedReactPythonJourney(electron) {
       await waitForStatus(page, 'Approved module')
     }
 
-    await page.getByLabel(`Implementation factory for ${fixture.uiOperationId}`).fill('src/ui/run.ts#createUiRun')
-    await click(page.getByRole('article', { name: 'Integration for browser' }).getByRole('button', { name: 'Save composition factories' }), 'Save browser factories')
-    await page.getByLabel(`Implementation factory for ${fixture.domainOperationId}`).fill('src/domain/echo.py#create_echo_run')
-    await click(page.getByRole('article', { name: 'Integration for http-api' }).getByRole('button', { name: 'Save composition factories' }), 'Save Python factories')
-    await generateApplyBuild(page, 'browser')
-    await generateApplyBuild(page, 'http-api')
-    evidence.screenshots.push(await shot(page, '21-mixed-deployables-applied'))
-
-    await click(page.getByRole('tab', { name: 'Connections' }), 'Connections tab')
     await click(page.getByRole('button', { name: /HTTP endpoint/i }), 'HTTP trigger choice')
     await page.getByLabel('Capability', { exact: true }).selectOption(`${fixture.domainOperationId}@1.0.0`)
     await page.getByLabel('HTTP path').fill('/echo')
@@ -662,23 +665,23 @@ async function runMixedReactPythonJourney(electron) {
     await click(page.getByRole('button', { name: 'Save and use this UI' }), 'Save mixed UI')
     const useUi = page.getByRole('button', { name: 'Use this UI', exact: true })
     if (await useUi.count()) await click(useUi, 'Use mixed UI')
-    await expectVisible(page.locator('webview'), 'mixed target application webview')
+    await ensureTargetPreview(page, 'mixed target application webview')
     await page.waitForTimeout(1_000)
     await selectTargetButton(page, app, fixture.uiUrl, 'Selected Run mixed capability')
     await page.getByLabel('Capability', { exact: true }).selectOption(`${fixture.uiOperationId}@1.0.0`)
     for (const input of await page.getByRole('region', { name: 'Define visible behavior' }).locator('input').all()) await input.fill('Show the cross-language outcome clearly.')
-    await page.getByLabel('Test mode').selectOption('approved-example')
-    await click(page.getByRole('button', { name: 'Run simulation' }), 'Run mixed simulation')
-    await click(page.getByRole('button', { name: 'Approve connection' }), 'Approve mixed UI entry point')
+    await click(page.getByRole('button', { name: 'Approve entry point' }), 'Approve mixed UI entry point')
     await expectVisible(page.getByRole('region', { name: 'Configured entry points' }).getByText('Approved', { exact: true }).last(), 'approved mixed UI status')
 
+    await saveCompositionFactory(page, fixture.uiOperationId, 'src/ui/run.ts#createUiRun')
+    await saveCompositionFactory(page, fixture.domainOperationId, 'src/domain/echo.py#create_echo_run')
     await generateApplyBuild(page, 'http-api')
     await generateApplyBuild(page, 'browser')
-    evidence.screenshots.push(await shot(page, '22-mixed-http-and-ui-connected'))
+    evidence.screenshots.push(await shot(page, '21-mixed-build-ready'))
 
     await click(page.getByRole('tab', { name: 'Verification' }), 'Verification tab')
-    const httpCard = page.locator('.cap-verification-card').filter({ hasText: 'http entry point' })
-    await click(httpCard.getByRole('button', { name: 'Run real verification' }), 'Run Python HTTP verification')
+    const httpCard = page.locator('.cap-verification-card').filter({ hasText: 'HTTP endpoint' })
+    await click(httpCard.getByRole('button', { name: 'Run live check' }), 'Run Python HTTP verification')
     await expectVisible(httpCard.getByText('pass', { exact: true }), 'current HTTP passing evidence')
     const httpBindingId = (await httpCard.locator('h4').textContent())?.trim()
     if (!httpBindingId) throw new Error('HTTP verification card did not expose its binding id')
@@ -688,11 +691,12 @@ async function runMixedReactPythonJourney(electron) {
     // card locator across that refresh.
     await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode after HTTP verification')
     await click(page.getByRole('tab', { name: 'Verification' }), 'Verification tab after HTTP verification')
-    const uiCard = page.locator('.cap-verification-card').filter({ hasText: 'ui entry point' })
-    await click(uiCard.getByRole('button', { name: 'Run real verification' }), 'Run React-to-Python verification')
+    const uiCard = page.locator('.cap-verification-card').filter({ hasText: 'Existing or new UI' })
+    await click(uiCard.getByRole('button', { name: 'Run live check' }), 'Run React-to-Python verification')
     await expectVisible(uiCard.getByText('pass', { exact: true }), 'current mixed passing evidence')
     await expectVisible(uiCard.getByText(httpBindingId, { exact: true }), 'cross-language outbound HTTP trace')
-    evidence.screenshots.push(await shot(page, '23-mixed-cross-language-verification'))
+    evidence.screenshots.push(await shot(page, '22-mixed-cross-language-verification'))
+    assertNoRendererErrors(evidence)
     evidence.passed = true
     return evidence
   } catch (error) {
@@ -742,6 +746,7 @@ async function runExistingRepositoryJourney(electron) {
   }
   try {
     const page = await app.firstWindow({ timeout: TIMEOUT })
+    monitorRendererErrors(page, evidence)
     page.setDefaultTimeout(TIMEOUT)
     await page.waitForLoadState('domcontentloaded')
     if (!await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)) throw new Error('Electron reports app.isPackaged=false')
@@ -751,34 +756,33 @@ async function runExistingRepositoryJourney(electron) {
     await page.getByLabel('Project name').fill('Production Existing Repository')
     await click(page.getByRole('button', { name: 'Browse' }), 'repository Browse')
     await click(page.getByRole('button', { name: 'Create Project' }), 'Create Project')
-    await click(page.getByRole('button', { name: 'Capabilities' }), 'Capabilities navigation')
+    await click(page.getByRole('button', { name: 'Capabilities', exact: true }), 'Capabilities navigation')
     await page.getByLabel('Capabilities project').selectOption({ label: 'Production Existing Repository' })
     await chooseInterviewFile(page, fixture.responseFiles.product, 'Application definition')
     await waitForStatus(page, 'Interview imported')
-    await click(page.getByRole('button', { name: 'Approve definition' }), 'Approve definition')
+    await click(page.getByRole('button', { name: 'Approve plan' }), 'Approve plan')
     await waitForStatus(page, 'Approved application revision')
     await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode')
     await click(page.getByRole('tab', { name: 'Architecture' }), 'Architecture tab')
-    await waitEnabled(page.getByRole('button', { name: 'Export architecture interview' }), 'loaded architecture interview')
+    await waitEnabled(page.getByRole('button', { name: 'Generate architecture draft' }), 'loaded architecture interview')
     await chooseInterviewFile(page, fixture.responseFiles.architecture, 'Architecture interview')
     await waitForStatus(page, 'Imported architecture proposal')
     await click(page.getByRole('button', { name: 'Approve architecture' }), 'Approve architecture')
     await waitForStatus(page, 'Architecture approved')
-    await click(page.getByRole('button', { name: 'Propose foundation plan' }), 'Propose foundation plan')
+    await click(page.getByRole('button', { name: 'Propose application structure' }), 'Propose application structure')
     const foundationQuestions = page.getByRole('group', { name: 'Open foundation questions' })
     if (await foundationQuestions.count()) await answerFoundationQuestions(page)
-    await waitEnabled(page.getByRole('button', { name: 'Approve foundation' }), 'ready existing foundation approval')
-    await click(page.getByRole('button', { name: 'Approve foundation' }), 'Approve foundation')
-    await waitForStatus(page, 'Approved foundation plan')
+    await waitEnabled(page.getByRole('button', { name: 'Approve application structure' }), 'ready existing application-structure approval')
+    await click(page.getByRole('button', { name: 'Approve application structure' }), 'Approve application structure')
+    await waitForStatus(page, 'Application structure approved')
 
     await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab')
-    await expectVisible(page.getByRole('article', { name: 'Integration for embedded-library' }), 'loaded existing deployable integration')
+    await expectVisible(page.getByRole('article', { name: 'Setup for Built-in application logic' }), 'loaded existing deployable setup')
     const existingModule = page.getByRole('button', { name: 'Select module mod.job' })
     await click(existingModule, 'Select existing module')
     await expectVisible(page.getByLabel('Import module interview response'), 'existing module interview import')
-    const migration = await expectVisible(page.getByRole('region', { name: 'Existing repository migration preview' }), 'existing repository migration preview')
-    await expectVisible(migration.getByText('No data loss identified', { exact: true }), 'no-loss migration assessment')
-    await expectVisible(migration.getByText('Repository conventions were detected without a blocking migration ambiguity.', { exact: false }), 'migration readiness')
+    const migration = await expectVisible(page.getByRole('region', { name: 'Existing project safety review' }), 'existing repository safety review')
+    await expectVisible(migration.getByText('Existing files will be preserved', { exact: true }), 'no-loss migration assessment')
     evidence.screenshots.push(await shot(page, '31-existing-migration-preview'))
 
     const moduleImport = page.locator('[aria-label="Import module interview response"] input[type=file]')
@@ -786,16 +790,15 @@ async function runExistingRepositoryJourney(electron) {
     await waitForStatus(page, 'Imported module draft')
     await click(page.getByRole('button', { name: 'Approve module' }).first(), 'Approve existing module')
     await waitForStatus(page, 'Approved module')
-    await page.getByLabel(`Implementation factory for ${fixture.operationId}`).fill('src/domain/run_job.py#create_job_run')
-    await click(page.getByRole('button', { name: 'Save composition factories' }), 'Save existing composition factory')
-    await waitForStatus(page, 'Composition configuration saved')
-    await click(page.getByRole('button', { name: 'Preview generation' }), 'Preview existing generation')
-    await waitForStatus(page, 'Generation plan is ready')
-    const acceptDirty = page.getByLabel(/I reviewed and accept applying this plan/)
+    await saveCompositionFactory(page, fixture.operationId, 'src/domain/run_job.py#create_job_run')
+    const existingCard = page.getByRole('article', { name: 'Setup for Built-in application logic' })
+    await click(existingCard.getByRole('button', { name: 'Prepare setup' }), 'Prepare existing setup')
+    await expectVisible(existingCard.getByText('The shared setup is ready for review.', { exact: false }), 'existing setup-ready status')
+    const acceptDirty = existingCard.getByLabel(/I understand this project has uncommitted changes/)
     if (await acceptDirty.count()) await acceptDirty.check()
-    await waitEnabled(page.getByRole('button', { name: 'Apply generation plan' }), 'existing generation apply')
-    await click(page.getByRole('button', { name: 'Apply generation plan' }), 'Apply existing generation')
-    await waitForStatus(page, 'Reference-architecture infrastructure applied')
+    await waitEnabled(existingCard.getByRole('button', { name: 'Apply setup' }), 'existing setup apply')
+    await click(existingCard.getByRole('button', { name: 'Apply setup' }), 'Apply existing setup')
+    await expectVisible(existingCard.getByText('The shared application setup was applied.', { exact: false }), 'existing setup applied status')
     const afterApply = repositorySnapshot(fixtureRepo)
     for (const original of baseline) {
       const current = afterApply.find((file) => file.path === original.path)
@@ -804,8 +807,8 @@ async function runExistingRepositoryJourney(electron) {
     evidence.legacyAfterApply = invokeLegacyPython(python, fixtureRepo, fixture.legacyExpected)
     evidence.screenshots.push(await shot(page, '32-existing-additive-apply'))
 
-    await click(page.getByRole('button', { name: 'Roll back' }), 'Roll back existing generation')
-    await waitForStatus(page, 'Generation was rolled back')
+    await click(existingCard.getByRole('button', { name: 'Undo setup' }), 'Undo existing setup')
+    await waitForStatus(page, 'setup changes were undone')
     const restored = repositorySnapshot(fixtureRepo)
     evidence.restoredHash = snapshotHash(restored)
     if (JSON.stringify(restored) !== JSON.stringify(baseline)) {
@@ -813,6 +816,7 @@ async function runExistingRepositoryJourney(electron) {
     }
     evidence.legacyAfterRollback = invokeLegacyPython(python, fixtureRepo, fixture.legacyExpected)
     evidence.screenshots.push(await shot(page, '33-existing-byte-identical-rollback'))
+    assertNoRendererErrors(evidence)
     evidence.passed = true
     return evidence
   } catch (error) {
@@ -860,6 +864,7 @@ async function runFailureRecoveryJourney(electron) {
       timeout: TIMEOUT,
     })
     let page = await app.firstWindow({ timeout: TIMEOUT })
+    monitorRendererErrors(page, evidence)
     page.setDefaultTimeout(TIMEOUT)
     await page.waitForLoadState('domcontentloaded')
     if (!await app.evaluate(({ app: electronApp }) => electronApp.isPackaged)) throw new Error('Electron reports app.isPackaged=false')
@@ -869,27 +874,27 @@ async function runFailureRecoveryJourney(electron) {
     await page.getByLabel('Project name').fill('Production Failure Recovery')
     await click(page.getByRole('button', { name: 'Browse' }), 'repository Browse')
     await click(page.getByRole('button', { name: 'Create Project' }), 'Create Project')
-    await click(page.getByRole('button', { name: 'Capabilities' }), 'Capabilities navigation')
+    await click(page.getByRole('button', { name: 'Capabilities', exact: true }), 'Capabilities navigation')
     await page.getByLabel('Capabilities project').selectOption({ label: 'Production Failure Recovery' })
     await chooseInterviewFile(page, fixture.responseFiles.product, 'Application definition')
     await waitForStatus(page, 'Interview imported')
-    await click(page.getByRole('button', { name: 'Approve definition' }), 'Approve definition')
+    await click(page.getByRole('button', { name: 'Approve plan' }), 'Approve plan')
     await waitForStatus(page, 'Approved application revision')
     await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode')
     await click(page.getByRole('tab', { name: 'Architecture' }), 'Architecture tab')
-    await waitEnabled(page.getByRole('button', { name: 'Export architecture interview' }), 'loaded architecture interview')
+    await waitEnabled(page.getByRole('button', { name: 'Generate architecture draft' }), 'loaded architecture interview')
     await chooseInterviewFile(page, fixture.responseFiles.architecture, 'Architecture interview')
     await waitForStatus(page, 'Imported architecture proposal')
     await click(page.getByRole('button', { name: 'Approve architecture' }), 'Approve architecture')
     await waitForStatus(page, 'Architecture approved')
-    await click(page.getByRole('button', { name: 'Propose foundation plan' }), 'Propose foundation plan')
+    await click(page.getByRole('button', { name: 'Propose application structure' }), 'Propose application structure')
     const foundationQuestions = page.getByRole('group', { name: 'Open foundation questions' })
     if (await foundationQuestions.count()) await answerFoundationQuestions(page)
-    await waitEnabled(page.getByRole('button', { name: 'Approve foundation' }), 'ready recovery foundation approval')
-    await click(page.getByRole('button', { name: 'Approve foundation' }), 'Approve foundation')
-    await waitForStatus(page, 'Approved foundation plan')
+    await waitEnabled(page.getByRole('button', { name: 'Approve application structure' }), 'ready recovery application-structure approval')
+    await click(page.getByRole('button', { name: 'Approve application structure' }), 'Approve application structure')
+    await waitForStatus(page, 'Application structure approved')
     await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab')
-    await expectVisible(page.getByRole('article', { name: 'Integration for embedded-library' }), 'loaded recovery deployable integration')
+    await expectVisible(page.getByRole('article', { name: 'Setup for Built-in application logic' }), 'loaded recovery deployable setup')
     const recoveryModule = page.getByRole('button', { name: 'Select module mod.job' })
     await click(recoveryModule, 'Select recovery module')
     await expectVisible(page.getByLabel('Import module interview response'), 'recovery module interview import')
@@ -898,15 +903,15 @@ async function runFailureRecoveryJourney(electron) {
     await waitForStatus(page, 'Imported module draft')
     await click(page.getByRole('button', { name: 'Approve module' }).first(), 'Approve recovery module')
     await waitForStatus(page, 'Approved module')
-    await page.getByLabel(`Implementation factory for ${fixture.operationId}`).fill('src/domain/run_job.py#create_job_run')
-    await click(page.getByRole('button', { name: 'Save composition factories' }), 'Save recovery composition factory')
-    await waitForStatus(page, 'Composition configuration saved')
-    await click(page.getByRole('button', { name: 'Preview generation' }), 'Preview recovery generation')
-    await waitForStatus(page, 'Generation plan is ready')
-    await waitEnabled(page.getByRole('button', { name: 'Apply generation plan' }), 'failure-injected generation apply')
-    await click(page.getByRole('button', { name: 'Apply generation plan' }), 'Apply with injected failure')
-    await waitForStatus(page, 'repository was fully restored')
-    await page.getByText('repository was fully restored', { exact: false }).last().scrollIntoViewIfNeeded()
+    await saveCompositionFactory(page, fixture.operationId, 'src/domain/run_job.py#create_job_run')
+    const recoveryCard = page.getByRole('article', { name: 'Setup for Built-in application logic' })
+    await click(recoveryCard.getByRole('button', { name: 'Prepare setup' }), 'Prepare recovery setup')
+    await waitEnabled(recoveryCard.getByRole('button', { name: 'Apply setup' }), 'failure-injected setup apply')
+    await click(recoveryCard.getByRole('button', { name: 'Apply setup' }), 'Apply with injected failure')
+    await expectVisible(
+      recoveryCard.getByRole('alert').getByText('The project was safely restored after the setup could not be applied.', { exact: true }),
+      'transactional setup restore status',
+    )
     const restoredAfterFailure = repositorySnapshot(fixtureRepo)
     evidence.afterFailureHash = snapshotHash(restoredAfterFailure)
     if (JSON.stringify(restoredAfterFailure) !== JSON.stringify(baseline)) throw new Error('mid-transaction failure did not restore the original repository exactly')
@@ -921,28 +926,30 @@ async function runFailureRecoveryJourney(electron) {
       timeout: TIMEOUT,
     })
     page = await app.firstWindow({ timeout: TIMEOUT })
+    monitorRendererErrors(page, evidence)
     page.setDefaultTimeout(TIMEOUT)
     await page.waitForLoadState('domcontentloaded')
-    await click(page.getByRole('button', { name: 'Capabilities' }), 'Capabilities navigation after restart')
+    await click(page.getByRole('button', { name: 'Capabilities', exact: true }), 'Capabilities navigation after restart')
     await page.getByLabel('Capabilities project').selectOption({ label: 'Production Failure Recovery' })
     await click(page.getByRole('button', { name: 'Design', exact: true }), 'Design mode after restart')
     await click(page.getByRole('tab', { name: 'Modules' }), 'Modules tab after restart')
-    const card = page.getByRole('article', { name: 'Integration for embedded-library' })
+    const card = page.getByRole('article', { name: 'Setup for Built-in application logic' })
     const recoveredAlert = await expectVisible(card.getByRole('alert'), 'persisted failed apply recovery')
     await recoveredAlert.scrollIntoViewIfNeeded()
-    await expectVisible(card.getByText('failed', { exact: true }), 'persisted failed lifecycle status')
-    const retry = card.getByRole('button', { name: 'Apply generation plan' })
-    await waitEnabled(retry, 'retry generation apply after restart')
+    await expectVisible(card.getByText('Needs attention', { exact: true }), 'persisted failed lifecycle status')
+    const retry = card.getByRole('button', { name: 'Apply setup' })
+    await waitEnabled(retry, 'retry setup apply after restart')
     evidence.screenshots.push(await shot(page, '42-recoverable-state-after-restart'))
-    await click(retry, 'Retry generation after restart')
-    await waitForStatus(page, 'Reference-architecture infrastructure applied')
-    await page.getByText('Reference-architecture infrastructure applied', { exact: false }).last().scrollIntoViewIfNeeded()
+    await click(retry, 'Retry setup after restart')
+    await waitForStatus(page, 'shared application setup was applied')
+    await page.getByText('shared application setup was applied', { exact: false }).last().scrollIntoViewIfNeeded()
     evidence.screenshots.push(await shot(page, '43-retry-succeeded'))
-    await click(card.getByRole('button', { name: 'Roll back' }), 'Roll back successful retry')
-    await waitForStatus(page, 'Generation was rolled back')
+    await click(card.getByRole('button', { name: 'Undo setup' }), 'Undo successful retry')
+    await waitForStatus(page, 'setup changes were undone')
     const restoredAfterRetry = repositorySnapshot(fixtureRepo)
     evidence.finalHash = snapshotHash(restoredAfterRetry)
     if (JSON.stringify(restoredAfterRetry) !== JSON.stringify(baseline)) throw new Error('final rollback did not restore the original repository exactly')
+    assertNoRendererErrors(evidence)
     evidence.passed = true
     return evidence
   } catch (error) {

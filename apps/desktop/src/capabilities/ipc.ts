@@ -31,7 +31,6 @@ import {
   evaluateModuleGate,
   evaluateProductGate,
   importProductInterviewResponse,
-  moduleInterviewOpeningGuidance,
   inspectOverlay,
   applyOverlay,
   invokeLocalRuntime,
@@ -66,6 +65,10 @@ import { createMatlabAdapter } from './matlabAdapter.js'
 import { discover as azureDiscover, importWorkItem as azureImportWorkItem } from './azureAdapter.js'
 import { ReferenceArchitectureOrchestrator } from './referenceArchitectureOrchestrator.js'
 import { buildRepositoryEvidence } from './repositoryEvidence.js'
+import { projectActiveBindingRecords, projectActiveDeployables } from './deployableProjection.js'
+import { interactiveInterviewPrompt } from './interviewPrompt.js'
+
+export { interactiveInterviewPrompt } from './interviewPrompt.js'
 
 const CAP_CHANNELS = {
   ensureInitialized: 'capabilities:ensure-initialized',
@@ -117,6 +120,7 @@ const CAP_CHANNELS = {
   listInboundBindings: 'capabilities:list-inbound-bindings',
   saveInboundBindingDraft: 'capabilities:save-inbound-binding-draft',
   approveInboundBinding: 'capabilities:approve-inbound-binding',
+  archiveInboundBinding: 'capabilities:archive-inbound-binding',
   proposeFoundation: 'capabilities:propose-foundation',
   getFoundation: 'capabilities:get-foundation',
   saveFoundationDraft: 'capabilities:save-foundation-draft',
@@ -183,28 +187,6 @@ function factValue(packet: InterviewPacket, prefix: string): string | undefined 
   return packet.inputContext.facts.find((fact) => fact.startsWith(prefix))?.slice(prefix.length)
 }
 
-function interactiveInterviewPrompt(packet: InterviewPacket): string {
-  const completionRule = packet.outputSchemaRef === 'CAP-CONTRACT-003'
-    ? 'Every required answer must contain a concrete answer and no answer may have status "unresolved". Every provided operation must have one matching operationContracts entry at the same version, and its inputSchemaRef and outputSchemaRef must resolve to concrete dataSchemas entries.'
-    : packet.outputSchemaRef === 'CAP-CONTRACT-002'
-      ? 'The final response must assign every module a name, moduleType, and responsibility; give every dependency edge a concrete reason; cover every module in a workflow trace and moduleNeedTrace; and contain an empty unresolvedQuestions array.'
-      : 'The final response must contain an empty unresolvedQuestions array. Do not leave proposals or assumptions awaiting confirmation.'
-  const moduleOpeningGuidance = moduleInterviewOpeningGuidance(packet)
-  return `Run the interview defined by the embedded capability packet as a live conversation with the user.
-
-Interview protocol:
-1. Start by reviewing the supplied context and identifying only the approval-blocking gaps.
-2. Ask at most three closely related questions in one message, then stop and wait for the user's answers.
-3. Continue in further question-and-answer rounds until every blocking gap has been answered, explicitly accepted as a reasonable default, or deliberately removed from scope.
-4. If the user is unsure, offer a concrete default and ask them to accept or change it. Never silently invent approval.
-5. Before emitting JSON, silently audit the response against the completion rule, repair mechanical omissions, and do not emit while any approval-blocking item remains. A per-turn question limit is not a total interview limit.
-6. Never mark the interview complete and never return a response that merely records questions the user has not answered.
-7. ${completionRule}
-${moduleOpeningGuidance}
-
-After the interview is genuinely complete, return only a new ${packet.outputFileName} using the exact template below. Do not design beyond the interview boundary, implement source code, or approve the application's separate review gate.`
-}
-
 /** Exact importer-facing starter, embedded in the one-file interview handoff. */
 function interviewResponseStarter(packet: InterviewPacket): unknown {
   if (packet.outputSchemaRef === 'CAP-CONTRACT-002') {
@@ -234,8 +216,9 @@ function interviewResponseStarter(packet: InterviewPacket): unknown {
   if (packet.outputSchemaRef === 'CAP-CONTRACT-003') {
     const moduleId = packet.inputContext.recordIds[1] ?? 'mod.example'
     const moduleType = factValue(packet, 'moduleType:') ?? 'domain'
+    const moduleVersion = factValue(packet, 'moduleVersion:') ?? '1.0.0'
     return {
-      moduleId, moduleType, name: 'Replace with module name', moduleVersion: '1.0.0',
+      moduleId, moduleType, name: 'Replace with module name', moduleVersion,
       responsibility: 'Replace with one clear responsibility', ownedConcerns: [], excludedConcerns: [],
       providedOperations: [], requiredOperations: [], verificationSuiteIds: [], runtimeAllocation: 'local-embedded',
       events: [], ownedPaths: [`capabilities/modules/${moduleId}/`], configurationSchemaRef: null,
@@ -1497,8 +1480,9 @@ export function registerCapabilityIpcHandlers(
       .listDeployables(projectId)
       .map((record) => record.approved)
       .filter((deployable): deployable is DeployableSpecification => Boolean(deployable))
-    if (persisted.length > 0) {
-      return persisted.map((deployable) => ({
+    const active = projectActiveDeployables(persisted, caps.getApprovedFoundation(projectId))
+    if (active.length > 0) {
+      return active.map((deployable) => ({
         deployableId: deployable.deployableId,
         kind: deployable.kind,
         name: deployable.name,
@@ -1647,7 +1631,10 @@ export function registerCapabilityIpcHandlers(
   ipcMain.handle(CAP_CHANNELS.listInboundBindings, (_e, projectId: string) => {
     requireString(projectId, 'projectId')
     caps.ensureInitialized(projectId)
-    return caps.listInboundBindings(projectId)
+    return projectActiveBindingRecords(
+      caps.listInboundBindings(projectId),
+      caps.getApprovedFoundation(projectId),
+    )
   })
 
   ipcMain.handle(CAP_CHANNELS.saveInboundBindingDraft, (_e, projectId: string, draft: InboundBinding) => {
@@ -1682,6 +1669,13 @@ export function registerCapabilityIpcHandlers(
     }
     // Multiple inbound bindings may target the same operation — never deduplicated (CAP-ERA-001 §12.4).
     return { ok: true as const, approved: caps.approveInboundBinding(projectId, draft) }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.archiveInboundBinding, (_e, projectId: string, bindingId: string) => {
+    requireString(projectId, 'projectId')
+    requireString(bindingId, 'bindingId')
+    caps.archiveInboundBinding(projectId, bindingId)
+    return { ok: true as const }
   })
 
   // Keep transitionJob referenced for job API completeness in later packets.

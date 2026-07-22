@@ -86,7 +86,7 @@ function ModuleDetails(props: {
   )
 }
 
-export function ArchitectureView({ projection }: Props) {
+export function ArchitectureView({ projection, mode }: Props) {
   const labelId = useId()
   const [selectedId, setSelectedId] = useState<string | null>(projection.nodes[0]?.id ?? null)
   const [detailId, setDetailId] = useState<string | null>(null)
@@ -145,18 +145,22 @@ export function ArchitectureView({ projection }: Props) {
         </div>
         <span className="architecture-revision">Revision {projection.architectureRevision}</span>
       </div>
-      <p className="capabilities-note" role="note">Modules are arranged by architectural responsibility. Every dependency is shown below as its own required-port to provided-port route, so direction and interaction stay readable without crossing lines. Use arrow keys to move and Enter to open details.</p>
+      <p className="capabilities-note" role="note">
+        {mode === 'guided'
+          ? 'See the main parts of the solution, what each part is responsible for, and how work moves between them. Use arrow keys to move and Enter to open details.'
+          : 'Modules are arranged by architectural responsibility. Every dependency is shown below as its own required-port to provided-port route, so direction and interaction stay readable without crossing lines. Use arrow keys to move and Enter to open details.'}
+      </p>
 
       <div className="architecture-map-shell">
         <div className="architecture-map-toolbar">
-          <div className="architecture-map-counts" aria-label="Architecture map summary"><span>{projection.nodes.length} modules</span><span>{projection.edges.length} port connections</span></div>
+          <div className="architecture-map-counts" role="group" aria-label="Architecture map summary"><span>{projection.nodes.length} modules</span><span>{projection.edges.length} port connections</span></div>
           <ul className="architecture-map-legend" aria-label="Component types">
             {ARCHITECTURE_TYPES.map((item) => <li key={item.type}><span className={`architecture-type-swatch type-${item.type}`} aria-hidden="true" />{item.label}</li>)}
-            <li><span className="architecture-port-swatch" aria-hidden="true" />Port connection</li>
+            <li><span className="architecture-port-swatch" aria-hidden="true" />{mode === 'guided' ? 'Interaction' : 'Port connection'}</li>
           </ul>
         </div>
         <div className="architecture-diagram" role="application" aria-label="Architecture diagram" aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Enter" tabIndex={0} onKeyDown={onKeyDown}>
-          <div className={`architecture-lanes architecture-lanes-${lanes.length}`} aria-label="Architecture responsibility lanes">
+          <div className={`architecture-lanes architecture-lanes-${lanes.length}`} role="group" aria-label="Architecture responsibility lanes">
             {lanes.map((lane) => (
               <section key={lane.role} className={`architecture-lane architecture-lane-${lane.role}`} aria-label={lane.label}>
                 <header>
@@ -196,21 +200,26 @@ export function ArchitectureView({ projection }: Props) {
 
           <section className="architecture-routes" aria-label="Port dependency routes">
             <div className="architecture-routes-heading">
-              <div><p className="architecture-eyebrow">Interactions</p><h4>Port-to-port dependency routes</h4></div>
+              <div>
+                <p className="architecture-eyebrow">Interactions</p>
+                <h4>{mode === 'guided' ? 'How the parts work together' : 'Port-to-port dependency routes'}</h4>
+              </div>
               <span>{routes.length} connection{routes.length === 1 ? '' : 's'}</span>
             </div>
             {routes.length ? (
               <ol className="architecture-route-list">
                 {routes.map((route) => (
                   <li key={route.id} className={route.suggested ? 'suggested' : undefined}>
-                    <div className="architecture-route-endpoint source"><small>Requires</small><strong>{route.fromNode!.name}</strong></div>
-                    <div className="architecture-route-wire" aria-label={`${route.fromNode!.name} depends on ${route.toNode!.name}: ${route.reason}`}>
+                    <div className="architecture-route-endpoint source"><small>{mode === 'guided' ? 'From' : 'Requires'}</small><strong>{route.fromNode!.name}</strong></div>
+                    <div className="architecture-route-wire" aria-label={mode === 'guided'
+                      ? `${route.fromNode!.name} works with ${route.toNode!.name}: ${route.reason}`
+                      : `${route.fromNode!.name} depends on ${route.toNode!.name}: ${route.reason}`}>
                       <span className="architecture-route-port" aria-hidden="true" />
                       <span className="architecture-route-reason">{route.reason || 'Uses capability'}</span>
                       <span className="architecture-route-arrow" aria-hidden="true">→</span>
                       <span className="architecture-route-port" aria-hidden="true" />
                     </div>
-                    <div className="architecture-route-endpoint target"><small>Provides</small><strong>{route.toNode!.name}</strong></div>
+                    <div className="architecture-route-endpoint target"><small>{mode === 'guided' ? 'To' : 'Provides'}</small><strong>{route.toNode!.name}</strong></div>
                   </li>
                 ))}
               </ol>

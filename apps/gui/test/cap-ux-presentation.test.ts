@@ -18,6 +18,7 @@ import {
   formatBytes,
   stageToDesignSection,
   designSectionToStage,
+  normalizeDesignSection,
   stageToGuideTopic,
   DESIGN_SECTIONS,
 } from '../src/views/capabilities/capabilityPresentation'
@@ -99,20 +100,20 @@ describe('stage mappings', () => {
   it('maps guided stages to design sections and back', () => {
     expect(stageToDesignSection('define')).toBe('application')
     expect(stageToDesignSection('build')).toBe('modules')
-    expect(designSectionToStage('connections')).toBe('connect')
+    expect(designSectionToStage('modules')).toBe('build')
     expect(designSectionToStage('verification')).toBe('verify')
+    expect(normalizeDesignSection('connections')).toBe('modules')
   })
   it('maps stages to their guide topics', () => {
     expect(stageToGuideTopic('define')).toBe('capabilities-define')
     expect(stageToGuideTopic('verify')).toBe('capabilities-verify')
   })
-  it('exposes the six canonical design areas in order', () => {
+  it('exposes the five canonical design areas in order', () => {
     expect(DESIGN_SECTIONS.map((s) => s.id)).toEqual([
       'application',
       'architecture',
       'attention',
       'modules',
-      'connections',
       'verification',
     ])
   })

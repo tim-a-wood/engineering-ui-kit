@@ -48,9 +48,9 @@ export type JourneyEvidence = {
 }
 
 /**
- * Connect entry-point completeness (CAP-ERA-001 §5.1/§5.4/§12.4, CAP-PKT WP6A).
+ * Build entry-point completeness (CAP-ERA-001 §5.1/§5.4/§12.4, CAP-PKT WP6A).
  *
- * Canonical model for whether a deployable's Connect stage is satisfied. This
+ * Canonical model for whether a deployable's Build entry-point requirement is satisfied. This
  * replaces the earlier "does a UI module exist" heuristic: completeness is
  * driven solely by whether each required (non-`embedded-library`) deployable
  * has at least one *valid* `InboundBinding` (CAP-CONTRACT-028), regardless of

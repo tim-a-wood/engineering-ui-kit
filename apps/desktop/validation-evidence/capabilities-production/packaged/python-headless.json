@@ -1,12 +1,12 @@
 {
   "journey": "python-headless-schedule",
-  "executablePath": "/Users/runner/work/engineering-ui-kit/engineering-ui-kit/release/mac-arm64/Engineering UI Kit.app/Contents/MacOS/Engineering UI Kit",
+  "executablePath": "/Users/timwood/Documents/UI Framework/release/mac-arm64/Engineering UI Kit.app/Contents/MacOS/Engineering UI Kit",
   "packaged": true,
-  "scratch": "/var/folders/8j/sfr9qqcj73j4p6nhwcfpr0th0000gn/T/euik-production-python-ceewj3",
+  "scratch": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-production-python-tsyBTN",
   "screenshots": [
-    "apps/desktop/validation-evidence/capabilities-production/packaged/11-python-build-applied.png",
-    "apps/desktop/validation-evidence/capabilities-production/packaged/12-python-schedule-connected.png",
-    "apps/desktop/validation-evidence/capabilities-production/packaged/13-python-real-verification.png"
+    "apps/desktop/validation-evidence/capabilities-production/packaged/11-python-build-ready.png",
+    "apps/desktop/validation-evidence/capabilities-production/packaged/12-python-real-verification.png"
   ],
-  "passed": true
+  "passed": true,
+  "rendererErrors": []
 }

@@ -164,7 +164,9 @@ describe('CAP-TEST-010 module interviews and CAP-GATE-003', () => {
     const guidance = moduleInterviewOpeningGuidance(packet)
     expect(guidance).toContain('Work Order Domain (domain; architecture role: domain core)')
     expect(guidance).toContain('Do not begin by asking the user to restate them')
-    expect(guidance).toContain('Include a plausible suggestion or default')
+    expect(guidance).toContain('Draft concrete answers for every applicable detail')
+    expect(guidance).toContain('reply “accept” or list corrections in one response')
+    expect(guidance).toContain('Do not conduct a serial, field-by-field interview')
     expect(guidance).toContain('Suggest likely domain vocabulary and invariants')
   })
 
@@ -202,6 +204,22 @@ describe('CAP-TEST-010 module interviews and CAP-GATE-003', () => {
     // MVP: single applicable-detail set per type — no quick/standard/detailed variants.
     expect(Object.keys(MODULE_APPLICABLE_DETAILS)).not.toContain('domain.quick')
     expect(Object.keys(MODULE_APPLICABLE_DETAILS)).not.toContain('domain.detailed')
+  })
+
+  it('blocks data-schema field types the generator cannot materialize', () => {
+    const response = completeResponse('domain')
+    response.dataSchemas![0]!.fields = [{
+      name: 'violations', type: 'ValidationViolation[]', required: true,
+      description: 'Structured validation failures.', constraints: [],
+    }]
+
+    const imported = importModuleInterviewResponse(response)
+
+    expect(imported.ok).toBe(false)
+    expect(imported.diagnostics).toContainEqual(expect.objectContaining({
+      code: 'CAP-GATE-003-SCHEMA-TYPE',
+      fieldPath: `dataSchemas.${response.dataSchemas![0]!.schemaId}.violations`,
+    }))
   })
 
   it('promotes the persisted draft interview when approval happens after a reload', () => {

@@ -210,15 +210,25 @@ export function applyCapabilityMigration(
   fs.mkdirSync(backupDir, { recursive: true })
   fs.cpSync(root, backupDir, { recursive: true })
 
-  // 2) Convert stored ui FrontendBindings to InboundBindings (additive).
+  // 2) Convert stored ui FrontendBindings to canonical InboundBindings
+  //    (additive). Approved records are written first, then any newer draft, so
+  //    the active index preserves both phases and the Build read model can see
+  //    them immediately after migration. The legacy files remain intact for
+  //    rollback and compatibility; they are no longer a second source of
+  //    completeness truth.
   const deployableId = options.deployableId ?? 'ui'
-  for (const { bindingId, draft, approved } of workspace.listBindings(projectId)) {
-    for (const [phase, binding] of [['drafts', draft], ['approved', approved]] as const) {
-      if (!binding) continue
-      const inbound = frontendBindingToInboundBinding(binding, { deployableId })
-      const dest = path.join(root, 'bindings', bindingId, 'inbound', phase, `${binding.version}.json`)
-      fs.mkdirSync(path.dirname(dest), { recursive: true })
-      fs.writeFileSync(dest, JSON.stringify(inbound, null, 2) + '\n')
+  for (const { draft, approved } of workspace.listBindings(projectId)) {
+    if (approved) {
+      workspace.approveInboundBinding(
+        projectId,
+        frontendBindingToInboundBinding(approved, { deployableId }),
+      )
+    }
+    if (draft) {
+      workspace.saveInboundBindingDraft(
+        projectId,
+        frontendBindingToInboundBinding(draft, { deployableId }),
+      )
     }
   }
 

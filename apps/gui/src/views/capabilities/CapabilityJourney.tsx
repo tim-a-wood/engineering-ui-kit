@@ -1,4 +1,4 @@
-/** Guided five-step journey over the canonical capability records. */
+/** Guided four-step journey over the canonical capability records. */
 
 import { Icon } from '../../icons'
 import type { JourneyStage, StageId } from './capabilitiesUiState'

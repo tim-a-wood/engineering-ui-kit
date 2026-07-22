@@ -12,5 +12,8 @@
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "visual:capabilities": "node scripts/capabilities-ux-visual.mjs"
+  },
+  "devDependencies": {
+    "axe-core": "^4.12.1"
   }
 }

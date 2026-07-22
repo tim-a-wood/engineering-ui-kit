@@ -13,9 +13,9 @@ import {
   type RunModuleVerificationResult,
 } from '@engineering-ui-kit/core/browser'
 import type { EuikBridge } from '../../bridge'
-import { EmptyState } from '../../components'
+import { Dialog, EmptyState } from '../../components'
 import { Icon } from '../../icons'
-import { freshnessLabel } from './capabilityPresentation'
+import { freshnessLabel, moduleTypeLabel, sanitizeGuidedMessage } from './capabilityPresentation'
 
 type Props = {
   bridge: EuikBridge
@@ -41,6 +41,7 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [result, setResult] = useState<RunModuleVerificationResult | undefined>()
+  const [technicalOpen, setTechnicalOpen] = useState(false)
 
   useEffect(() => {
     // Keep the selection valid as approved modules and freshness reload.
@@ -75,13 +76,19 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
       })
       setResult(next)
       setMessage(
-        next.eligibleForReady
+        projection === 'guided' && next.eligibleForReady
+          ? 'Verification passed. This module can be marked ready.'
+          : projection === 'guided'
+            ? `Verification needs attention: ${OUTCOME_LABEL[next.record.outcome] ?? 'the checks did not pass'}.`
+            : next.eligibleForReady
           ? `Verification ${next.record.verificationId} passed — eligible for ready.`
           : `Verification ${next.record.verificationId} outcome ${next.record.outcome} — not eligible for ready.`,
       )
       await onVerified()
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error))
+      setMessage(projection === 'guided'
+        ? sanitizeGuidedMessage(error instanceof Error ? error.message : String(error))
+        : error instanceof Error ? error.message : String(error))
       setResult(undefined)
     } finally {
       setBusy(false)
@@ -90,14 +97,21 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
 
   const outcome = result?.record.outcome
   const isSetupFailure = outcome === 'failed-setup'
+  const resultNeedsRepair = Boolean(result && !result.eligibleForReady)
+  const selectedReady = freshness?.primaryState === 'ready'
 
   return (
     <div className="capabilities-verification" role="region" aria-label="Module verification">
-      <p className="lede">
-        {projection === 'guided'
-          ? 'Verify an approved module. The desktop runs its configured checks and records provenance; ready stays gated on an exact pass.'
-          : 'Run configured checks for approved modules and inspect the exact inputs, commands, and recorded outcomes.'}
-      </p>
+      <div className="cap-module-verification-head">
+        <div>
+          <p className="capabilities-eyebrow">Module checks</p>
+          <h3>{projection === 'guided' ? 'Verify each module' : 'Module verification'}</h3>
+          <p>{projection === 'guided'
+            ? 'Choose a module and run its real checks. A module is ready only when every required check passes.'
+            : 'Run configured checks for approved modules and inspect the exact inputs, commands, and recorded outcomes.'}</p>
+        </div>
+        {selectedReady ? <span className="badge approved">Selected module ready</span> : null}
+      </div>
 
       {approved.length === 0 ? (
         <div role="status">
@@ -127,18 +141,18 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
             >
               {approved.map((r) => (
                 <option key={r.moduleId} value={r.moduleId}>
-                  {r.approved?.name ?? r.moduleId} ({r.approved?.moduleType})
+                  {r.approved?.name ?? r.moduleId} ({r.approved ? moduleTypeLabel(r.approved.moduleType) : 'Module'})
                 </option>
               ))}
             </select>
           </label>
           <button
             type="button"
-            className="btn btn-primary btn-compact"
+            className={`btn ${projection === 'guided' && (selectedReady || resultNeedsRepair) ? 'btn-secondary' : 'btn-primary'} btn-compact`}
             disabled={busy || !projectId || !moduleId}
             onClick={() => void runVerification()}
           >
-            {busy ? 'Running…' : projection === 'guided' ? 'Run verification' : 'Verify approved module'}
+            {busy ? 'Running…' : projection === 'guided' ? selectedReady ? 'Run again' : 'Run verification' : 'Verify approved module'}
           </button>
         </div>
       )}
@@ -173,24 +187,21 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
               from a technical or behavioral failure.
             </p>
           ) : null}
-          <dl className="capabilities-ids">
-            <div>
-              <dt>Verification ID</dt>
-              <dd>
-                <code>{result.record.verificationId}</code>
-              </dd>
-            </div>
+          <dl className={projection === 'design' ? 'capabilities-ids' : 'cap-verification-summary'}>
+            {projection === 'design' ? <div>
+              <dt>Verification ID</dt><dd><code>{result.record.verificationId}</code></dd>
+            </div> : null}
             <div>
               <dt>Outcome</dt>
               <dd>{OUTCOME_LABEL[result.record.outcome] ?? result.record.outcome}</dd>
             </div>
             <div>
-              <dt>Eligible for ready</dt>
-              <dd>{result.eligibleForReady ? 'yes' : 'no'}</dd>
+              <dt>{projection === 'guided' ? 'Module readiness' : 'Eligible for ready'}</dt>
+              <dd>{projection === 'guided' ? result.eligibleForReady ? 'Ready' : 'Needs attention' : result.eligibleForReady ? 'yes' : 'no'}</dd>
             </div>
           </dl>
 
-          <section aria-label="Commands">
+          {projection === 'design' ? <section aria-label="Commands">
             <h4>Commands</h4>
             {result.record.commandResults.length === 0 ? (
               <p className="capabilities-note">No commands recorded.</p>
@@ -204,7 +215,7 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
                 ))}
               </ul>
             )}
-          </section>
+          </section> : null}
 
           {projection === 'design' ? (
             <dl className="capabilities-ids">
@@ -235,7 +246,7 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
             </dl>
           ) : null}
 
-          {result.repairContext ? (
+          {result.repairContext && projection === 'design' ? (
             <div className="capabilities-note" role="region" aria-label="Repair packet">
               <h4>Scoped repair packet</h4>
               {'setupAction' in result.repairContext ? (
@@ -248,7 +259,30 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
               )}
             </div>
           ) : null}
+          {projection === 'guided' ? (
+            <div className="cap-verification-result-actions">
+              {resultNeedsRepair && onOpenModules ? (
+                <button type="button" className="btn btn-primary btn-compact" onClick={onOpenModules}>Return to Build</button>
+              ) : null}
+              <button type="button" className="btn btn-secondary btn-compact" onClick={() => setTechnicalOpen(true)}>Technical specification</button>
+            </div>
+          ) : null}
         </section>
+      ) : null}
+
+      {technicalOpen && result ? (
+        <Dialog title="Verification technical specification" wide onClose={() => setTechnicalOpen(false)} actions={<button type="button" className="btn btn-primary" onClick={() => setTechnicalOpen(false)}>Close</button>}>
+          <dl className="capabilities-ids">
+            <div><dt>Verification ID</dt><dd><code>{result.record.verificationId}</code></dd></div>
+            <div><dt>Outcome</dt><dd>{result.record.outcome}</dd></div>
+            <div><dt>Suites</dt><dd>{result.record.suiteIds.join(', ') || '—'}</dd></div>
+            <div><dt>Input hashes</dt><dd>{Object.entries(result.record.inputHashes).map(([key, value]) => `${key}=${value}`).join('; ') || '—'}</dd></div>
+            <div><dt>Evidence references</dt><dd>{result.record.artifacts.join(', ') || '—'}</dd></div>
+            <div><dt>Diagnostics</dt><dd>{result.record.diagnostics.map((diagnostic) => diagnostic.message).join('; ') || '—'}</dd></div>
+          </dl>
+          <section aria-label="Verification commands"><h3>Commands</h3>{result.record.commandResults.length ? <ul>{result.record.commandResults.map((command, index) => <li key={`${command.label}-${index}`}><code>{command.label}</code> — {command.passed ? 'passed' : `failed (exit ${command.exitCode})`}{command.outputSummary ? ` — ${command.outputSummary}` : ''}</li>)}</ul> : <p>No commands recorded.</p>}</section>
+          {result.repairContext ? <section aria-label="Repair details"><h3>Repair details</h3><pre>{JSON.stringify(result.repairContext, null, 2)}</pre></section> : null}
+        </Dialog>
       ) : null}
     </div>
   )

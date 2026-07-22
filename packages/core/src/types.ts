@@ -23,7 +23,7 @@ export type Project = {
   status: 'active' | 'archived'
   launchUrl?: string
   launchCommand?: string
-  /** How the Capabilities Connect stage should handle frontend integration. */
+  /** Legacy hint from the former Connect stage; entry-point completeness is derived from canonical bindings. */
   capabilitiesConnectDisposition?: 'connect-now' | 'no-ui' | 'deferred'
   verificationCommands?: {
     build?: string

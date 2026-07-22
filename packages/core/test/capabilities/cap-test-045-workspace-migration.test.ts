@@ -27,11 +27,18 @@ function schemaVersion(ws: CapabilityWorkspace, projectId: string): string {
 }
 
 describe('CAP-TEST-045 workspace 1.0 -> 2.0 migration', () => {
-  it('migrates, is idempotent on re-apply, and is fully reversible', () => {
+  it('migrates approved and draft Connect-era records into the Build read model, is idempotent, and is reversible', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'euik-cap-045-'))
     const ws = new CapabilityWorkspace(dir)
     const binding = loadFrontendBinding()
     ws.approveBinding('proj-1', binding)
+    const revisedDraft: FrontendBinding = {
+      ...binding,
+      version: '1.0.1',
+      loadingBehavior: 'Keep the approved behavior visible while revising it.',
+      dataMode: 'dependency-unavailable',
+    }
+    ws.saveBindingDraft('proj-1', revisedDraft)
     expect(schemaVersion(ws, 'proj-1')).toBe('1.0')
 
     const first = applyCapabilityMigration(ws, 'proj-1', { deployableId: 'web' })
@@ -43,23 +50,48 @@ describe('CAP-TEST-045 workspace 1.0 -> 2.0 migration', () => {
 
     const inboundPath = path.join(
       ws.root('proj-1'),
-      'bindings',
+      'inbound-bindings',
       binding.bindingId,
-      'inbound',
       'approved',
       `${binding.version}.json`,
     )
     expect(fs.existsSync(inboundPath)).toBe(true)
+    const migrated = ws.listInboundBindings('proj-1')
+    expect(migrated).toHaveLength(1)
+    expect(migrated[0]?.bindingId).toBe(binding.bindingId)
+    expect(migrated[0]?.approved).toMatchObject({
+      bindingId: binding.bindingId,
+      version: binding.version,
+      kind: 'ui',
+      deployableId: 'web',
+      operationId: binding.operationId,
+      operationVersion: binding.operationVersion,
+      exposure: 'private',
+      approvalState: 'migrated',
+      selectionEvidence: binding.selectionEvidence,
+      dataMode: binding.dataMode,
+    })
+    expect(migrated[0]?.draft).toMatchObject({
+      bindingId: binding.bindingId,
+      version: revisedDraft.version,
+      loadingBehavior: revisedDraft.loadingBehavior,
+      dataMode: revisedDraft.dataMode,
+      exposure: 'private',
+      approvalState: 'migrated',
+    })
 
     // Idempotent: re-applying at 2.0 is a no-op.
     const second = applyCapabilityMigration(ws, 'proj-1', { deployableId: 'web' })
     expect(second.evidence.idempotent).toBe(true)
     expect(schemaVersion(ws, 'proj-1')).toBe('2.0')
+    expect(ws.listInboundBindings('proj-1')).toEqual(migrated)
 
     // Reversible: rollback restores 1.0, the original binding, and drops the inbound artifact.
     rollbackCapabilityMigration(ws, 'proj-1', first.backupId!)
     expect(schemaVersion(ws, 'proj-1')).toBe('1.0')
     expect(fs.existsSync(inboundPath)).toBe(false)
     expect(ws.getApprovedBinding('proj-1', binding.bindingId)).toEqual(binding)
+    expect(ws.getBindingDraft('proj-1', binding.bindingId)).toEqual(revisedDraft)
+    expect(ws.listInboundBindings('proj-1')).toEqual([])
   })
 })

@@ -21,6 +21,7 @@ import {
   canonicalRecordHash,
   generatedContentHash,
   planExistingRepoMigration,
+  probeFreePort,
   promoteInterviewToModuleImplementationSpecification,
   rollbackGenerationApply,
   runConnectionVerification,
@@ -46,6 +47,7 @@ import {
 } from '@engineering-ui-kit/core'
 import type { Workspace } from '@engineering-ui-kit/core'
 import { buildRepositoryEvidence } from './repositoryEvidence.js'
+import { isBrowserUiVerificationBinding, projectActiveBindings, projectDerivedOutboundBindingRefs, promoteRemoteUiBindings } from './deployableProjection.js'
 
 export type GenerationPreviewResult = {
   plan: GenerationPlan
@@ -295,7 +297,11 @@ function locatePythonRuntime(): string | undefined {
   return candidates.find((candidate) => fs.existsSync(path.join(candidate, 'pyproject.toml')))
 }
 
-export function buildRuntimeDistribution(deployable: DeployableSpecification, targetRoot: string): RuntimeDistribution {
+export function buildRuntimeDistribution(
+  deployable: DeployableSpecification,
+  targetRoot: string,
+  activeCompositionRootPaths?: readonly string[],
+): RuntimeDistribution {
   const result: RuntimeDistribution = { files: [], dependencies: [], commands: [], blockers: [] }
   if (deployable.runtimeLanguage === 'typescript') {
     const runtimeRoot = locateTypeScriptRuntime()
@@ -335,19 +341,63 @@ export function buildRuntimeDistribution(deployable: DeployableSpecification, ta
       devDependencies.electron = typeof devDependencies.electron === 'string' ? devDependencies.electron : '43.0.0'
     }
     packageJson.devDependencies = Object.fromEntries(Object.entries(devDependencies).sort(([a], [b]) => a.localeCompare(b)))
+    const scripts = typeof packageJson.scripts === 'object' && packageJson.scripts
+      ? { ...(packageJson.scripts as Record<string, unknown>) }
+      : {}
+    // Module verification executes the project's configured commands, whose
+    // greenfield defaults are `npm run typecheck` and `npm run build`. Ensure
+    // newly generated TypeScript projects can satisfy that contract while
+    // preserving any repository-specific scripts already supplied by users.
+    scripts.typecheck = typeof scripts.typecheck === 'string'
+      ? scripts.typecheck
+      : 'tsc -p tsconfig.engineering-ui.json --noEmit'
+    scripts.build = typeof scripts.build === 'string'
+      ? scripts.build
+      : 'tsc -p tsconfig.engineering-ui.json'
+    packageJson.scripts = Object.fromEntries(Object.entries(scripts).sort(([a], [b]) => a.localeCompare(b)))
     result.files.push({ path: 'package.json', contents: `${JSON.stringify(packageJson, null, 2)}\n`, ownership: 'editable', reason: 'register the bundled reference-architecture runtime dependency' })
+    const tsconfigPath = path.join(targetRoot, 'tsconfig.engineering-ui.json')
+    let existingTsconfig: Record<string, unknown> = {}
+    try {
+      existingTsconfig = fs.existsSync(tsconfigPath)
+        ? JSON.parse(fs.readFileSync(tsconfigPath, 'utf8')) as Record<string, unknown>
+        : {}
+    } catch {
+      result.blockers.push('The target tsconfig.engineering-ui.json is not valid JSON, so deployable compilation settings cannot be merged safely.')
+      return result
+    }
+    const existingCompilerOptions = typeof existingTsconfig.compilerOptions === 'object' && existingTsconfig.compilerOptions
+      ? existingTsconfig.compilerOptions as Record<string, unknown>
+      : {}
+    const existingInclude = Array.isArray(existingTsconfig.include)
+      ? existingTsconfig.include.filter((entry): entry is string => typeof entry === 'string')
+      : []
+    const retainedInclude = activeCompositionRootPaths
+      ? existingInclude.filter((entry) => !entry.startsWith('composition/') || activeCompositionRootPaths.includes(entry))
+      : existingInclude
+    const compositionIncludes = activeCompositionRootPaths ?? [deployable.compositionRootPath]
+    const include = [...new Set([
+      'src/**/*.ts', 'src/**/*.tsx', 'src/**/*.mts',
+      ...retainedInclude,
+      ...compositionIncludes,
+    ])]
     result.files.push({
       path: 'tsconfig.engineering-ui.json',
       contents: `${JSON.stringify({
+        ...existingTsconfig,
         compilerOptions: {
           target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', rootDir: '.',
           outDir: '.engineering-ui/capabilities/build', strict: true, skipLibCheck: true,
-          esModuleInterop: true, types: ['node'],
+          esModuleInterop: true, types: ['node'], ...existingCompilerOptions,
         },
-        include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.mts', deployable.compositionRootPath],
+        include,
       }, null, 2)}\n`,
-      ownership: 'generated',
-      reason: 'compile generated TypeScript adapters, composition, and host with a deterministic preset',
+      // This configuration is intentionally shared by every TypeScript
+      // deployable and preserves user compiler options. Treating it as one
+      // deployable's generated asset makes the next deployable's legitimate
+      // merge look like external drift and permanently blocks regeneration.
+      ownership: 'editable',
+      reason: 'merge the shared TypeScript compiler configuration for generated adapters, composition roots, and hosts',
     })
     result.dependencies.push({ packageName: '@engineering-ui-kit/capabilities-runtime', language: 'typescript', toVersion: '0.1.0', fromVersion: prior, reason: 'generated adapters and composition root import the project runtime' })
     result.commands.push('npm install')
@@ -601,22 +651,30 @@ export class ReferenceArchitectureOrchestrator {
     const interviews = allManifests
       .map((manifest) => this.capabilities.getApprovedModuleInterview(projectId, manifest.moduleId))
       .filter((value): value is ModuleInterviewResponse => Boolean(value))
-    const allBindings = this.capabilities.listInboundBindings(projectId)
+    const allBindings = projectActiveBindings(this.capabilities.listInboundBindings(projectId)
       .map((record) => record.approved)
-      .filter((binding): binding is InboundBinding => Boolean(binding))
-    const bindings = allBindings.filter((binding) => binding.deployableId === deployableId)
+      .filter((binding): binding is InboundBinding => Boolean(binding)), foundation)
+      // Binding records are append-only just like deployables. A superseded
+      // foundation must not keep generating routes or clients for a retired
+      // host.
     const composition = this.integration.getCompositionManifest(projectId, deployableId)
     const specifications: ModuleImplementationSpecification[] = manifests.map((manifest) => {
       const interview = interviews.find((candidate) => candidate.moduleId === manifest.moduleId)
       const existing = this.integration.getModuleSpecification(projectId, manifest.moduleId)
-      const specification = existing ?? promoteInterviewToModuleImplementationSpecification({
-        manifest,
-        interview,
-        projectId,
-        deployableId,
-        runtimeLanguage: deployable.runtimeLanguage,
-      })
-      if (!existing) this.integration.saveModuleSpecification(specification)
+      const current = existing
+        && existing.moduleVersion === manifest.moduleVersion
+        && existing.deployableId === deployableId
+        && existing.runtimeLanguage === deployable.runtimeLanguage
+      const specification = current
+        ? existing
+        : promoteInterviewToModuleImplementationSpecification({
+            manifest,
+            interview,
+            projectId,
+            deployableId,
+            runtimeLanguage: deployable.runtimeLanguage,
+          })
+      if (!current) this.integration.saveModuleSpecification(specification)
       return specification
     })
     const schemaResult = convertSchemas(interviews)
@@ -625,7 +683,14 @@ export class ReferenceArchitectureOrchestrator {
       specification.requiredOperations.map((operation) => operation.operationId)))
     const remoteHttpBindings = allBindings.filter((binding): binding is Extract<InboundBinding, { kind: 'http' }> =>
       binding.kind === 'http' && binding.deployableId !== deployableId && requiredOperationIds.has(binding.operationId))
+    const bindings = promoteRemoteUiBindings(
+      allBindings.filter((binding) => binding.deployableId === deployableId),
+      remoteHttpBindings,
+    )
     const blockers = [...schemaResult.blockers, ...operationResult.blockers]
+    if (deployable.kind !== 'embedded-library' && bindings.length === 0) {
+      blockers.push(`Deployable "${deployableId}" requires an approved application entry point before shared setup can be generated.`)
+    }
     if (deployable.runtimeLanguage === 'python'
       && deployable.compositionRootPath.replace(/\.py$/, '').split('/').some((segment) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(segment))) {
       blockers.push(`Python composition root path "${deployable.compositionRootPath}" is not importable; approve a path whose segments use letters, digits, and underscores.`)
@@ -639,6 +704,8 @@ export class ReferenceArchitectureOrchestrator {
     if (composition) {
       for (const issue of validateComposition(composition).issues) blockers.push(issue.message)
       for (const binding of bindings) {
+        const remoteUiBinding = binding.kind === 'ui' && binding.transport === 'generated-http-client'
+        if (remoteUiBinding) continue
         if (!composition.registrations.some((registration) => registration.contractId === binding.operationId)) {
           blockers.push(`Binding "${binding.bindingId}" has no composition registration for operation "${binding.operationId}".`)
         }
@@ -787,15 +854,18 @@ export class ReferenceArchitectureOrchestrator {
     const deployable = this.approvedDeployable(projectId, deployableId)
     const requiredOperationIds = new Set(deployable.moduleIds.flatMap((moduleId) =>
       this.integration.getModuleSpecification(projectId, moduleId)?.requiredOperations.map((operation) => operation.operationId) ?? []))
-    const allApprovedBindings = this.capabilities.listInboundBindings(projectId)
+    const foundation = this.capabilities.getApprovedFoundation(projectId)
+    if (!foundation) throw new Error('approved foundation plan not found')
+    const allPersistedBindings = this.capabilities.listInboundBindings(projectId)
       .map((record) => record.approved)
       .filter((binding): binding is InboundBinding => binding !== undefined)
-    const remoteHttpRefs = allApprovedBindings
-      .filter((binding) => binding.kind === 'http' && binding.deployableId !== deployableId && requiredOperationIds.has(binding.operationId))
-      .map((binding) => binding.bindingId)
-    const approvedBindingIds = new Set(allApprovedBindings.map((binding) => binding.bindingId))
-    const customOutboundRefs = current.outboundAdapterRefs.filter((reference) => !approvedBindingIds.has(reference))
-    const outboundAdapterRefs = [...new Set([...customOutboundRefs, ...remoteHttpRefs])].sort()
+    const outboundAdapterRefs = projectDerivedOutboundBindingRefs(
+      current.outboundAdapterRefs,
+      allPersistedBindings,
+      foundation,
+      deployableId,
+      requiredOperationIds,
+    )
     if (canonicalHash(current.operationRoutes) === canonicalHash(operationRoutes)
       && canonicalHash(current.inboundAdapterRefs) === canonicalHash(inboundAdapterRefs)
       && canonicalHash(current.outboundAdapterRefs) === canonicalHash(outboundAdapterRefs)) return
@@ -816,7 +886,13 @@ export class ReferenceArchitectureOrchestrator {
         currentContentHashesByPath[manifest.filePath] = generatedContentHash(fs.readFileSync(absolute, 'utf8'))
       }
     }
-    const runtime = buildRuntimeDistribution(inputs.deployable, inputs.project.repoPath)
+    const runtime = buildRuntimeDistribution(
+      inputs.deployable,
+      inputs.project.repoPath,
+      inputs.foundation.deployables
+        .filter((candidate) => candidate.runtimeLanguage === 'typescript')
+        .map((candidate) => candidate.compositionRootPath),
+    )
     const planId = `plan-${crypto.randomUUID()}`
     const assembled = assembleGenerationPlan({
       deployable: inputs.deployable,
@@ -851,10 +927,24 @@ export class ReferenceArchitectureOrchestrator {
     const foundation = this.capabilities.getApprovedFoundation(projectId)
     const ids = foundation?.deployables.map((deployable) => deployable.deployableId) ?? []
     const hashes: Record<string, string> = {}
+    const prerequisiteErrors: Record<string, string> = {}
     for (const id of ids) {
-      try { hashes[id] = this.collectInputs(projectId, id).inputHash } catch { /* state remains not-ready */ }
+      try {
+        hashes[id] = this.collectInputs(projectId, id).inputHash
+      } catch (error) {
+        prerequisiteErrors[id] = error instanceof Error ? error.message : String(error)
+      }
     }
     const state = this.integration.buildState(projectId, ids, hashes)
+    for (const deployable of state.deployables) {
+      const prerequisiteError = prerequisiteErrors[deployable.deployableId]
+      if (!prerequisiteError) continue
+      deployable.status = 'blocked'
+      deployable.attention = [
+        `Generation prerequisites are incomplete: ${prerequisiteError}`,
+        ...deployable.attention.filter((item) => item !== 'Generate and review the reference-architecture plan.'),
+      ]
+    }
     const project = this.workspace.getProject(projectId)
     const architecture = this.capabilities.getApprovedArchitecture(projectId)
     if (project && architecture) {
@@ -1002,7 +1092,13 @@ export class ReferenceArchitectureOrchestrator {
       throw new Error('apply the current generation plan before running its commands')
     }
     if (bundle.inputHash !== collected.inputHash) throw new Error('generated integration is stale; regenerate and apply before running commands')
-    const runtime = buildRuntimeDistribution(collected.deployable, collected.project.repoPath)
+    const runtime = buildRuntimeDistribution(
+      collected.deployable,
+      collected.project.repoPath,
+      collected.foundation.deployables
+        .filter((candidate) => candidate.runtimeLanguage === 'typescript')
+        .map((candidate) => candidate.compositionRootPath),
+    )
     if (runtime.blockers.length) throw new Error(runtime.blockers.join(' '))
     const launch = generatedLaunchCommand(collected.deployable, collected.project.repoPath)
     const commands = [...new Set([
@@ -1111,56 +1207,90 @@ export class ReferenceArchitectureOrchestrator {
     const correlationId = crypto.randomUUID()
     let launch: Parameters<typeof runConnectionVerification>[0]['launch']
     let trigger: Parameters<typeof runConnectionVerification>[0]['trigger']
-    if (binding.kind === 'ui' && binding.transport === 'browser-local') {
+    // A browser-local binding is promoted to generated-http-client once a
+    // matching remote HTTP route exists. That changes how generated code
+    // invokes the capability, but it does not change the real verification
+    // surface: the approved UI still has to launch and trigger the selected
+    // element in Chromium. Only Electron IPC bindings use a generated process
+    // host instead of the configured application URL.
+    if (isBrowserUiVerificationBinding(binding)) {
+      const uiBinding = binding as Extract<InboundBinding, { kind: 'ui' }>
       const launchUrl = collected.project.launchUrl
-      const selector = binding.selectionEvidence?.selector
+      const selector = uiBinding.selectionEvidence?.selector
+      const expectedUiEvidence = {
+        correlationId,
+        operation: uiBinding.operationId,
+        observedPath: {
+          inboundAdapter: `ui:${uiBinding.bindingId}`,
+          compositionRoot: collected.deployable.compositionRootPath,
+          operation: `${uiBinding.operationId}@${uiBinding.operationVersion}`,
+          outboundAdapters: [...composition.outboundAdapterRefs].sort(),
+        },
+      }
       if (!launchUrl) throw new Error('configure the actual application UI URL before verifying this browser-local connection')
       if (!selector) throw new Error('select the actual UI element before verifying this browser-local connection')
-      if (binding.trigger === 'load') throw new Error('load-trigger browser verification requires an explicit application readiness marker')
+      if (uiBinding.trigger === 'load') throw new Error('load-trigger browser verification requires an explicit application readiness marker')
       launch = {
         kind: 'in-process',
         start: async () => {
           let child: ChildProcess | undefined
           const dependencyChildren: ChildProcess[] = []
-          for (const remoteBinding of collected.remoteHttpBindings) {
+          let remoteBackendPort: number | undefined
+          // A browser-local UI operation can orchestrate a different remote
+          // operation (for example `ui.run` calling `echo.run`). The approved
+          // composition manifest is the source of truth for those outbound
+          // routes; matching only the UI operation id silently omits the
+          // backend and makes an otherwise-correct mixed application fail at
+          // runtime verification.
+          const outboundBindingIds = new Set(composition.outboundAdapterRefs)
+          const matchingRemoteBindings = collected.remoteHttpBindings.filter((remoteBinding) =>
+            outboundBindingIds.has(remoteBinding.bindingId))
+          const remoteDeployableIds = [...new Set(matchingRemoteBindings.map((remoteBinding) => remoteBinding.deployableId))]
+          if (remoteDeployableIds.length > 1) {
+            throw new Error(`UI verification found more than one remote deployable for ${uiBinding.operationId}; approve a single route before verifying`)
+          }
+          for (const remoteDeployableId of remoteDeployableIds) {
+            const remoteBinding = matchingRemoteBindings.find((candidate) => candidate.deployableId === remoteDeployableId)!
             const remoteDeployable = this.approvedDeployable(input.projectId, remoteBinding.deployableId)
             const remoteLaunchText = generatedLaunchCommand(remoteDeployable, collected.project.repoPath, remoteBinding)
               ?? remoteDeployable.commands.launch
             if (!remoteLaunchText) throw new Error(`remote HTTP deployable "${remoteDeployable.deployableId}" has no approved launch command`)
-            const healthUrl = `http://127.0.0.1:3000/${remoteDeployable.runtimeLanguage === 'python' ? 'healthz' : 'health'}`
-            if (!(await urlReachable(healthUrl))) {
-              const approved = parseApprovedCommand(remoteLaunchText)
-              const dependency = spawn(approved.command, approved.args, {
-                cwd: collected.project.repoPath,
-                shell: process.platform === 'win32' && /\.(?:cmd|bat)$/i.test(approved.command),
-                env: remoteDeployable.runtimeLanguage === 'python' ? {
-                  ...process.env,
-                  PORT: '3000',
-                  PYTHONPATH: [
-                    collected.project.repoPath,
-                    path.join(collected.project.repoPath, '.engineering-ui/capabilities/runtime/python/src'),
-                    process.env.PYTHONPATH,
-                  ].filter(Boolean).join(path.delimiter),
-                } : { ...process.env, PORT: '3000' },
-                stdio: ['ignore', 'pipe', 'pipe'],
-                detached: process.platform !== 'win32',
-              })
-              dependencyChildren.push(dependency)
-              try {
-                await waitForUrl(healthUrl, 15_000)
-              } catch (error) {
-                await stopSpawnedProcess(dependency)
-                throw error
-              }
+            remoteBackendPort = await probeFreePort()
+            const healthUrl = `http://127.0.0.1:${remoteBackendPort}/${remoteDeployable.runtimeLanguage === 'python' ? 'healthz' : 'health'}`
+            const approved = parseApprovedCommand(remoteLaunchText)
+            const dependency = spawn(approved.command, approved.args, {
+              cwd: collected.project.repoPath,
+              shell: process.platform === 'win32' && /\.(?:cmd|bat)$/i.test(approved.command),
+              env: remoteDeployable.runtimeLanguage === 'python' ? {
+                ...process.env,
+                PORT: String(remoteBackendPort),
+                PYTHONPATH: [
+                  collected.project.repoPath,
+                  path.join(collected.project.repoPath, '.engineering-ui/capabilities/runtime/python/src'),
+                  process.env.PYTHONPATH,
+                ].filter(Boolean).join(path.delimiter),
+              } : { ...process.env, PORT: String(remoteBackendPort) },
+              stdio: ['ignore', 'pipe', 'pipe'],
+              detached: process.platform !== 'win32',
+            })
+            dependencyChildren.push(dependency)
+            try {
+              await waitForUrl(healthUrl, 15_000)
+            } catch (error) {
+              await stopSpawnedProcess(dependency)
+              throw error
             }
           }
           if (!(await urlReachable(launchUrl))) {
             if (!collected.project.launchCommand) throw new Error('the configured UI is not running and has no approved launch command')
             const approved = parseApprovedCommand(collected.project.launchCommand)
+            const uiPort = new URL(launchUrl).port
             child = spawn(approved.command, approved.args, {
               cwd: collected.project.repoPath,
               shell: process.platform === 'win32' && /\.(?:cmd|bat)$/i.test(approved.command),
-              env: process.env,
+              env: remoteBackendPort === undefined
+                ? process.env
+                : { ...process.env, PORT: String(remoteBackendPort), ...(uiPort ? { UI_PORT: uiPort } : {}) },
               stdio: ['ignore', 'pipe', 'pipe'],
               detached: process.platform !== 'win32',
             })
@@ -1179,6 +1309,14 @@ export class ReferenceArchitectureOrchestrator {
               contextIsolation: true,
               nodeIntegration: false,
               sandbox: true,
+              // Verification starts remote deployables on ephemeral ports so
+              // it cannot collide with a developer's running services. The
+              // hidden window therefore reaches the same approved route on a
+              // different origin than the application's normal reverse proxy
+              // would expose. Relax CORS only for this never-shown verifier;
+              // the actual application window and generated runtime retain
+              // their normal browser security boundary.
+              webSecurity: remoteBackendPort === undefined,
               // This window is intentionally never shown. Windows Chromium
               // can otherwise suspend its timers and async event handlers,
               // preventing a real UI trigger from reaching generated code.
@@ -1198,26 +1336,52 @@ export class ReferenceArchitectureOrchestrator {
               if (!requestedCorrelationId) return { ok: false, outcome: 'verification correlation id missing' }
               const script = `(() => new Promise((resolve) => {
                 globalThis.__EUIK_VERIFICATION_CORRELATION_ID = ${JSON.stringify(requestedCorrelationId)};
-                const timeout = setTimeout(() => { cleanup(); resolve({ ok: false, outcome: 'UI trigger did not emit capability evidence' }); }, 30000);
-                const listener = (event) => { cleanup(); resolve({ ok: true, outcome: 'UI element reached the browser-local capability', body: event.detail }); };
+                const previousFetch = globalThis.fetch;
+                let settled = false;
+                const finish = (result) => { if (settled) return; settled = true; cleanup(); resolve(result); };
+                const timeout = setTimeout(() => finish({ ok: false, outcome: 'UI trigger did not emit capability evidence' }), 30000);
+                const listener = (event) => finish({ ok: true, outcome: 'UI element reached the browser-local capability', body: event.detail });
                 const describe = (value) => value instanceof Error ? value.message : typeof value === 'string' ? value : 'unknown browser error';
-                const pageError = (event) => { cleanup(); resolve({ ok: false, outcome: 'UI execution failed: ' + describe(event.error ?? event.message) }); };
-                const rejected = (event) => { cleanup(); resolve({ ok: false, outcome: 'UI execution failed: ' + describe(event.reason) }); };
+                const pageError = (event) => finish({ ok: false, outcome: 'UI execution failed: ' + describe(event.error ?? event.message) });
+                const rejected = (event) => finish({ ok: false, outcome: 'UI execution failed: ' + describe(event.reason) });
                 const cleanup = () => {
                   clearTimeout(timeout);
+                  if (${JSON.stringify(remoteBackendPort !== undefined || uiBinding.transport === 'generated-http-client')}) globalThis.fetch = previousFetch;
                   globalThis.removeEventListener('euik-capability-invoked', listener);
                   globalThis.removeEventListener('error', pageError);
                   globalThis.removeEventListener('unhandledrejection', rejected);
                   delete globalThis.__EUIK_VERIFICATION_CORRELATION_ID;
                 };
+                if (${JSON.stringify(remoteBackendPort !== undefined || uiBinding.transport === 'generated-http-client')}) {
+                  globalThis.fetch = async (resource, init = {}) => {
+                    const headers = new Headers(resource instanceof Request ? resource.headers : undefined);
+                    new Headers(init.headers ?? {}).forEach((value, key) => headers.set(key, value));
+                    headers.set('x-correlation-id', ${JSON.stringify(requestedCorrelationId)});
+                    const parsed = new URL(resource instanceof Request ? resource.url : String(resource), globalThis.location.origin);
+                    const rewriteToBackend = ${JSON.stringify(remoteBackendPort !== undefined)} && parsed.origin === globalThis.location.origin;
+                    const rewrittenUrl = rewriteToBackend
+                      ? new URL(parsed.pathname + parsed.search, ${JSON.stringify(remoteBackendPort === undefined ? launchUrl : `http://127.0.0.1:${remoteBackendPort}`)}).toString()
+                      : parsed.toString();
+                    const rewrittenResource = resource instanceof Request
+                      ? new Request(rewrittenUrl, resource)
+                      : rewrittenUrl;
+                    const response = await previousFetch(rewrittenResource, { ...init, headers });
+                    const echoedCorrelation = response.headers.get('x-correlation-id');
+                    const observedOperation = response.headers.get('x-euik-observed-operation');
+                    if (${JSON.stringify(uiBinding.transport === 'generated-http-client')} && echoedCorrelation === ${JSON.stringify(requestedCorrelationId)} && observedOperation === ${JSON.stringify(uiBinding.operationId)}) {
+                      finish({ ok: true, outcome: 'UI element reached the generated HTTP capability', body: ${JSON.stringify(expectedUiEvidence)} });
+                    }
+                    return response;
+                  };
+                }
                 globalThis.addEventListener('euik-capability-invoked', listener, { once: true });
                 globalThis.addEventListener('error', pageError, { once: true });
                 globalThis.addEventListener('unhandledrejection', rejected, { once: true });
                 const element = document.querySelector(${JSON.stringify(selector)});
-                if (!element) { cleanup(); resolve({ ok: false, outcome: 'Selected UI element is not present in the launched application' }); return; }
-                ${binding.trigger === 'submit'
+                if (!element) { finish({ ok: false, outcome: 'Selected UI element is not present in the launched application' }); return; }
+                ${uiBinding.trigger === 'submit'
                   ? `(element.closest('form') ?? element).dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));`
-                  : binding.trigger === 'change'
+                  : uiBinding.trigger === 'change'
                     ? `element.dispatchEvent(new Event('change', { bubbles: true }));`
                     : `(element instanceof HTMLElement ? element.click() : element.dispatchEvent(new MouseEvent('click', { bubbles: true })));`}
               }))()`

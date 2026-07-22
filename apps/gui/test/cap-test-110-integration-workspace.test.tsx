@@ -26,8 +26,23 @@ function state(currentPlan?: GenerationPlan): CapabilityIntegrationState {
 }
 
 describe('CAP-TEST-110 visible production integration workspace', () => {
+  it('disables the first generation preview while required module specifications are incomplete', () => {
+    const blocked = state()
+    blocked.deployables[0]!.status = 'blocked'
+    blocked.deployables[0]!.attention = ['Generation prerequisites are incomplete: approved module not found: mod.ui']
+
+    render(<IntegrationWorkspace bridge={{} as EuikBridge} projectId="project-1" state={blocked} projection="guided" onChanged={() => {}} />)
+
+    expect(document.body.textContent).toContain('Approve the required module details before preparing this part.')
+    expect(document.body.textContent).not.toContain('approved module not found: mod.ui')
+    expect((screen.getByRole('button', { name: 'Prepare setup' }) as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Technical specification' }))
+    expect(screen.getByRole('dialog', { name: 'Shared setup technical specification' }).textContent).toContain('approved module not found: mod.ui')
+  })
+
   it('restores a failed apply after restart as visible, retryable state', async () => {
     const retry = vi.fn().mockRejectedValue(new Error("Error invoking remote method 'capabilities:apply-generation': GenerationApplyRolledBackError: generation apply failed and was fully rolled back: disk unavailable"))
+    const refresh = vi.fn()
     const failed = state(plan())
     failed.deployables[0]!.status = 'failed'
     failed.deployables[0]!.latestApply = {
@@ -36,15 +51,18 @@ describe('CAP-TEST-110 visible production integration workspace', () => {
       error: 'generation apply failed and was fully rolled back: injected write failure',
       startedAt: '2026-07-16T00:00:00.000Z', completedAt: '2026-07-16T00:00:01.000Z',
     }
-    render(<IntegrationWorkspace bridge={{ capabilitiesApplyGeneration: retry } as unknown as EuikBridge} projectId="project-1" state={failed} projection="guided" onChanged={() => {}} />)
+    render(<IntegrationWorkspace bridge={{ capabilitiesApplyGeneration: retry } as unknown as EuikBridge} projectId="project-1" state={failed} projection="guided" onChanged={refresh} />)
 
-    expect(screen.getByRole('alert').textContent).toContain('restored the repository')
-    const button = screen.getByRole('button', { name: 'Apply generation plan' }) as HTMLButtonElement
+    expect(screen.getByRole('alert').textContent).toContain('safely restored')
+    const button = screen.getByRole('button', { name: 'Apply setup' }) as HTMLButtonElement
     expect(button.disabled).toBe(false)
     fireEvent.click(button)
     await waitFor(() => expect(retry).toHaveBeenCalledOnce())
-    await waitFor(() => expect(document.body.textContent).toContain('Generation failed and the repository was fully restored. disk unavailable'))
+    await waitFor(() => expect(refresh).toHaveBeenCalledOnce())
+    await waitFor(() => expect(document.body.textContent).toContain('The setup could not be completed. Open the technical specification for details.'))
     expect(document.body.textContent).not.toContain('Error invoking remote method')
+    fireEvent.click(screen.getByRole('button', { name: 'Technical specification' }))
+    expect(screen.getByRole('dialog', { name: 'Shared setup technical specification' }).textContent).toContain('Generation failed and the repository was fully restored. disk unavailable')
   })
 
   it('shows the no-loss existing-repository migration preview before generation', () => {
@@ -61,18 +79,28 @@ describe('CAP-TEST-110 visible production integration workspace', () => {
 
     render(<IntegrationWorkspace bridge={{} as EuikBridge} projectId="project-1" state={migrationState} projection="design" onChanged={() => {}} />)
 
-    expect(screen.getByRole('region', { name: 'Existing repository migration preview' }).textContent).toContain('No data loss identified')
-    expect(document.body.textContent).toContain('migration-existing-1')
-    expect(document.body.textContent).toContain('src/index.ts')
+    expect(screen.getByRole('region', { name: 'Existing project safety review' }).textContent).toContain('Safe to continue')
+    expect(document.body.textContent).not.toContain('migration-existing-1')
+    expect(document.body.textContent).not.toContain('src/index.ts')
+    fireEvent.click(screen.getByRole('button', { name: 'Technical specification' }))
+    const dialog = screen.getByRole('dialog', { name: 'Shared setup technical specification' })
+    expect(within(dialog).getByRole('region', { name: 'Existing repository migration preview' }).textContent).toContain('No data loss identified')
+    expect(dialog.textContent).toContain('migration-existing-1')
+    expect(dialog.textContent).toContain('src/index.ts')
   })
 
   it('shows exact plan ownership and invokes ID/hash-gated apply', async () => {
     const apply = vi.fn().mockResolvedValue({ status: 'applied' })
     const bridge = { capabilitiesApplyGeneration: apply } as unknown as EuikBridge
     render(<IntegrationWorkspace bridge={bridge} projectId="project-1" state={state(plan())} projection="design" onChanged={() => {}} />)
-    expect(document.body.textContent).toContain('src/generated/types.g.ts')
-    expect(document.body.textContent).toContain('plan-hash-1')
-    fireEvent.click(screen.getByRole('button', { name: 'Apply generation plan' }))
+    expect(document.body.textContent).not.toContain('src/generated/types.g.ts')
+    expect(document.body.textContent).not.toContain('plan-hash-1')
+    fireEvent.click(screen.getByRole('button', { name: 'Technical specification' }))
+    const dialog = screen.getByRole('dialog', { name: 'Shared setup technical specification' })
+    expect(dialog.textContent).toContain('src/generated/types.g.ts')
+    expect(dialog.textContent).toContain('plan-hash-1')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Apply setup' }))
     await waitFor(() => expect(apply).toHaveBeenCalledWith({
       projectId: 'project-1', deployableId: 'http-api', planId: 'plan-1', planHash: 'plan-hash-1',
       explicit: true, acceptDirtyWorktree: false,
@@ -83,8 +111,11 @@ describe('CAP-TEST-110 visible production integration workspace', () => {
     const blocked = plan({ blockers: ['No approved composition manifest exists.'] })
     const rendered = render(<IntegrationWorkspace bridge={{} as EuikBridge} projectId="project-1" state={state(blocked)} projection="guided" onChanged={() => {}} />)
     const view = within(rendered.container)
-    expect(rendered.container.textContent).toContain('No approved composition manifest exists.')
-    expect((view.getByRole('button', { name: 'Apply generation plan' }) as HTMLButtonElement).disabled).toBe(true)
-    expect(view.getByRole('button', { name: 'Regenerate plan' })).toBeTruthy()
+    expect(rendered.container.textContent).not.toContain('No approved composition manifest exists.')
+    expect(rendered.container.textContent).toContain('1 technical item need attention')
+    expect((view.getByRole('button', { name: 'Apply setup' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(view.getByRole('button', { name: 'Refresh setup' })).toBeTruthy()
+    fireEvent.click(view.getByRole('button', { name: 'Technical specification' }))
+    expect(screen.getByRole('dialog', { name: 'Shared setup technical specification' }).textContent).toContain('No approved composition manifest exists.')
   })
 })

@@ -39,7 +39,7 @@ import { installMockBridge } from './mockBridge'
 /**
  * Read-model summary for a CAP-CONTRACT-024 deployable (CAP-ERA-001 §5.1/§12.4).
  * The GUI does not yet persist full `DeployableSpecification` records (that is
- * WP5B/WP7 generation-time scope); this is the minimal projection Connect needs
+ * WP5B/WP7 generation-time scope); this is the minimal projection Build entry points need
  * to decide which inbound trigger choices are relevant for the current app.
  */
 export type CapabilityDeployableSummary = {
@@ -239,13 +239,14 @@ export type EuikBridge = {
   capabilitiesApproveBinding(projectId: string, draft: unknown): Promise<{ ok: boolean; diagnostics?: unknown; approved?: unknown }>
   /** CAP-ERA-001 §5.1/§12.4 — deployables this project's architecture allocates (WP6B read-only projection). */
   capabilitiesListDeployables(projectId: string): Promise<CapabilityDeployableSummary[]>
-  /** CAP-CONTRACT-028 inbound bindings across every deployable/kind — supersedes `capabilitiesListBindings` for Connect completeness. */
+  /** CAP-CONTRACT-028 inbound bindings across every deployable/kind — supersedes `capabilitiesListBindings` for Build completeness. */
   capabilitiesListInboundBindings(projectId: string): Promise<InboundBindingReadRecord[]>
   capabilitiesSaveInboundBindingDraft(projectId: string, draft: InboundBinding): Promise<{ ok: true }>
   capabilitiesApproveInboundBinding(
     projectId: string,
     draft: InboundBinding,
   ): Promise<{ ok: boolean; diagnostics?: unknown; approved?: InboundBinding }>
+  capabilitiesArchiveInboundBinding(projectId: string, bindingId: string): Promise<{ ok: true }>
   capabilitiesListNeedsAttention(projectId: string): Promise<AttentionItem[]>
   capabilitiesCalculateImpact(input: {
     projectId: string

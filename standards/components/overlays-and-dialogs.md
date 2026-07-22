@@ -12,6 +12,8 @@ This file owns dialogs, confirmation dialogs, drawers, popovers, tooltips, conte
 
 Use dialogs for blocking tasks that require focused input or decision. Dialogs shall have an accessible title, clear actions, and focus management.
 
+Use the standard variant for short decisions and compact forms. Use the large variant for structured technical specifications, evidence, or comparisons that need multiple readable columns. A large dialog may grow to approximately `52rem` while retaining the viewport gutter, fixed header/actions, and an independently scrolling body. Do not compress technical content into a narrow dialog when doing so forces identifiers, tables, or relationships into unreadable wrapping.
+
 ## Confirmation Dialog
 
 Use confirmation dialogs for destructive, irreversible, overwrite, or consequential actions. The copy shall name the action, affected artifact, consequence, and safe alternative.

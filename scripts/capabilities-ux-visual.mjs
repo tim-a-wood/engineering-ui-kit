@@ -6,6 +6,7 @@
  * Usage: node scripts/capabilities-ux-visual.mjs
  */
 import { chromium } from 'playwright-core'
+import axe from 'axe-core'
 import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -13,7 +14,7 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
 const distDir = path.resolve(root, '../apps/gui/dist')
-const outDir = path.resolve(root, '../apps/gui/validation-evidence/capabilities-ux')
+const outDir = path.resolve(root, '../apps/gui/validation-evidence/capabilities-guided-redesign')
 fs.mkdirSync(outDir, { recursive: true })
 
 /**
@@ -68,24 +69,91 @@ window.__mkApp = (status) => ({ schemaVersion:'1.0', id:'app.plantops', revision
 window.__mkArch = (ids) => ({ schemaVersion:'1.0', id:'arch.1', revision:'1', status:'approved', applicationSpecId:'app.plantops', applicationSpecRevision:'3', applicationSpecHash:'a1b2c3', capabilityProjections:[], moduleIds:ids, dependencyEdges:[], operationAllocations:[], adapterAllocations:[], workflowTraces:[], proposals:[], unresolvedQuestions:[], gateResult:{gateId:'CAP-GATE-002',passed:true,diagnostics:[]}, contentHash:'archhash1234' });
 window.__mkMod = (id, type, ops) => ({ schemaVersion:'1.0', architectureVersion:'1.0', moduleId:id, moduleVersion:'1.0.0', moduleType:type, name:id.replace('mod.',''), responsibility:'', ownedConcerns:[], excludedConcerns:[], providedOperations:(ops||[]).map(o=>({operationId:o,contractVersion:'2.0'})), requiredOperations:[], verificationSuiteIds:['suite.unit'], runtimeAllocation:'local-embedded', events:[], ownedPaths:[] });
 window.__pid = async () => (await window.euik.listProjects())[0].id;
+window.__approveDesign = async (b, pid, arch) => {
+  await b.capabilitiesApproveArchitecture(pid, arch);
+  let foundation = await b.capabilitiesProposeFoundation({ projectId: pid, answers: [] });
+  if (foundation.unresolvedAmbiguities.length) {
+    const answers = foundation.unresolvedAmbiguities.map((item) => ({ id: item.id, choice: item.choices[0] }));
+    foundation = await b.capabilitiesProposeFoundation({ projectId: pid, answers });
+  }
+  await b.capabilitiesSaveFoundationDraft(pid, foundation);
+  if (foundation.readiness.status === 'ready') await b.capabilitiesApproveFoundation(pid, foundation);
+};
 window.__seed = async (scenario) => {
   const b = window.euik; const pid = await window.__pid(); await b.capabilitiesEnsureInitialized(pid);
   if (scenario === 'define-draft') { await b.capabilitiesSaveApplicationDraft(pid, window.__mkApp('draft')); }
   if (scenario === 'architect-draft') { await b.capabilitiesApproveApplication(pid, window.__mkApp('approved')); await b.capabilitiesSaveArchitectureDraft(pid, {...window.__mkArch(['mod.orders','mod.scheduling']), status:'draft'}); }
   if (scenario === 'partial-modules' || scenario === 'build') {
     await b.capabilitiesApproveApplication(pid, window.__mkApp('approved'));
-    await b.capabilitiesApproveArchitecture(pid, window.__mkArch(['mod.orders','mod.scheduling','mod.reporting']));
+    await window.__approveDesign(b, pid, window.__mkArch(['mod.orders','mod.scheduling','mod.reporting']));
     await b.capabilitiesApproveModule(pid, window.__mkMod('mod.orders','domain',['op.placeOrder']));
   }
   if (scenario === 'connect-active') {
     await b.capabilitiesApproveApplication(pid, window.__mkApp('approved'));
-    await b.capabilitiesApproveArchitecture(pid, window.__mkArch(['mod.orders']));
+    await window.__approveDesign(b, pid, window.__mkArch(['mod.orders']));
     await b.capabilitiesApproveModule(pid, window.__mkMod('mod.orders','experience',['op.placeOrder','op.cancelOrder']));
   }
   if (scenario === 'complete') {
     await b.capabilitiesApproveApplication(pid, window.__mkApp('approved'));
-    await b.capabilitiesApproveArchitecture(pid, window.__mkArch(['mod.orders','mod.scheduling']));
+    await window.__approveDesign(b, pid, window.__mkArch(['mod.orders','mod.scheduling']));
     for (const id of ['mod.orders','mod.scheduling']) { await b.capabilitiesApproveModule(pid, window.__mkMod(id,'domain',['op.'+id.slice(4)])); await b.capabilitiesVerifyApprovedModule({ projectId: pid, moduleId: id, explicit: true }); }
+    const deployables = await b.capabilitiesListDeployables(pid);
+    const visualBindings = deployables.map((deployable, index) => ({
+      schemaVersion: '1.0', kind: 'http', bindingId: 'visual-binding-' + deployable.deployableId,
+      version: '1.0.0', projectId: pid, deployableId: deployable.deployableId,
+      operationId: index === 0 ? 'op.orders' : 'op.scheduling', operationVersion: '2.0',
+      inputMappings: [], outputMappings: [], validationBehavior: 'validate input',
+      domainRejectionBehavior: 'show a clear rejection', technicalFailureBehavior: 'show a safe error',
+      timeoutBehavior: 'show a timeout', cancellationBehavior: 'allow cancellation', retryBehavior: 'manual retry',
+      duplicateSubmissionBehavior: 'ignore duplicates', exposure: 'private', generatedTargets: [],
+      approvalState: 'approved', method: 'POST', path: '/visual/' + (index + 1),
+    }));
+    for (const binding of visualBindings) await b.capabilitiesApproveInboundBinding(pid, binding);
+    b.capabilitiesGetIntegrationState = async (projectId) => ({
+      schemaVersion: '1.0', projectId, updatedAt: new Date().toISOString(),
+      deployables: deployables.map((deployable) => {
+        const planId = 'visual-plan-' + deployable.deployableId;
+        const planHash = 'visual-hash-' + deployable.deployableId;
+        const now = new Date().toISOString();
+        const binding = visualBindings.find((item) => item.deployableId === deployable.deployableId);
+        const verificationId = 'visual-verification-' + deployable.deployableId;
+        const verification = binding ? {
+          schemaVersion: '1.0', verificationId, projectId, bindingId: binding.bindingId,
+          deployableId: deployable.deployableId,
+          hashes: { binding: 'binding-hash', operation: 'operation-hash', architecture: 'architecture-hash', composition: 'composition-hash', generatedOwnership: 'ownership-hash', source: 'source-hash' },
+          launchCommand: 'visual fixture', triggerKind: binding.kind, redactedTriggerInput: '{}',
+          outcomeSummary: 'The real application path reached the intended capability.',
+          correlationId: 'visual-correlation-' + deployable.deployableId,
+          observedPath: { inboundAdapter: binding.kind + ' adapter', compositionRoot: 'application setup', operation: binding.operationId, outboundAdapters: [] },
+          startedAt: now, completedAt: now, durationMs: 42, healthState: 'healthy',
+          usedTestAdapter: false, externalEvidenceStatus: 'complete', evidenceArtifactRefs: [],
+          verificationStatus: 'pass', reasonCodes: [],
+        } : null;
+        return {
+          deployableId: deployable.deployableId,
+          status: 'applied', attention: [],
+          currentPlan: {
+            schemaVersion: '1.0', planId, planHash, projectId,
+            inputRecords: [], generatorVersion: 'visual', referenceProfileVersion: 'visual',
+            targetRepository: { root: '.', cleanState: 'clean' }, dependencyChanges: [],
+            fileChanges: [], commands: [], warnings: [], blockers: [], ambiguityQuestions: [],
+            rollbackStrategy: 'visual-fixture',
+          },
+          latestApply: {
+            schemaVersion: '1.0', projectId, deployableId: deployable.deployableId,
+            status: 'applied', planId, planHash, applyRunId: 'visual-apply-' + deployable.deployableId,
+            ownershipManifests: [], commands: [], startedAt: now, completedAt: now,
+          },
+          latestCommandRun: {
+            schemaVersion: '1.0', projectId, deployableId: deployable.deployableId,
+            status: 'passed', planId, planHash, commandRunId: 'visual-command-' + deployable.deployableId,
+            results: [], startedAt: now, completedAt: now,
+          },
+          connectionVerifications: verification ? [verification] : [],
+          currentConnectionVerificationIds: verification ? [verificationId] : [],
+        };
+      }),
+    });
   }
   return pid;
 };
@@ -108,6 +176,7 @@ async function selectFirstProject(page) {
 const PORT = 4318
 const shots = []
 const failures = []
+const axeReports = []
 function assert(cond, message) {
   if (cond) return
   failures.push(message)
@@ -133,6 +202,32 @@ async function shot(page, name) {
   await assertNoOverflow(page, name)
   shots.push(name)
   console.log('  ✓', name)
+}
+
+async function viewportShot(page, name) {
+  const file = path.join(outDir, name + '.png')
+  await page.screenshot({ path: file, fullPage: false })
+  await assertNoOverflow(page, name)
+  shots.push(name)
+  console.log('  ✓', name)
+}
+
+async function assertAxe(page, label) {
+  await page.addScriptTag({ content: axe.source })
+  const report = await page.evaluate(async () => window.axe.run(document, {
+    runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'] },
+    resultTypes: ['violations', 'incomplete'],
+  }))
+  const severe = report.violations.filter((violation) => violation.impact === 'critical' || violation.impact === 'serious')
+  axeReports.push({
+    label,
+    url: report.url,
+    timestamp: report.timestamp,
+    violations: report.violations,
+    incomplete: report.incomplete,
+    criticalOrSerious: severe.length,
+  })
+  assert(severe.length === 0, `${label}: axe found ${severe.length} critical/serious accessibility violation(s)`)
 }
 
 const run = async () => {
@@ -175,9 +270,9 @@ const run = async () => {
   }
 
   // Assertions on the handoff view: required header actions reachable + active stage visible.
-  assert(await page.locator('.page-header-actions').getByRole('button', { name: /guide$/i }).isVisible(), 'header guide action is reachable')
+  assert(await page.locator('.cap-workspace-controls').getByRole('button', { name: /guide$/i }).isVisible(), 'workspace guide action is reachable')
   assert(await page.getByRole('button', { name: 'Guided' }).isVisible(), 'Guided/Design control is reachable')
-  assert(await page.locator('.cap-stage-head h2').first().isVisible(), 'active stage heading is visible')
+  assert(await page.locator('.cap-stage-identity h2').first().isVisible(), 'active stage heading is visible')
 
   await scenario('04-define-draft', 'define-draft')
   await scenario('05-architecture-draft', 'architect-draft')
@@ -189,14 +284,14 @@ const run = async () => {
     assert(selectedName.length > 0 && !selectedName.startsWith('mod.'), `Build module name is humanized (got "${selectedName}")`)
     // A not-started module must offer the interview step, not a later lifecycle action.
     if (/Not started/i.test(selectedState)) {
-      assert(/Create the module interview/i.test(nextLabel), `not-started module shows interview step (got "${nextLabel}")`)
+      assert(/Generate the module draft/i.test(nextLabel), `not-started module shows draft-first definition step (got "${nextLabel}")`)
     }
   })
   await scenario('07-connect-active', 'connect-active')
   await scenario('08-completed-journey', 'complete')
 
   // Design areas (seed complete so areas have data)
-  const designAreas = ['Application', 'Architecture', 'Needs attention', 'Modules', 'Connections', 'Verification']
+  const designAreas = ['Application', 'Architecture', 'Needs attention', 'Modules', 'Verification']
   const dp = await ctx.newPage()
   await dp.goto('http://localhost:' + PORT + '/', { waitUntil: 'networkidle' })
   await dp.waitForFunction(() => !!window.euik)
@@ -205,7 +300,7 @@ const run = async () => {
   await dp.waitForTimeout(120)
   const dpid = await dp.evaluate(() => window.__pid())
   await dp.selectOption('select[aria-label="Capabilities project"]', dpid)
-  await dp.getByRole('button', { name: 'Design' }).click()
+  await dp.locator('.segmented').getByRole('button', { name: 'Design' }).click()
   await dp.waitForTimeout(200)
   for (let i = 0; i < designAreas.length; i++) {
     await dp.getByRole('tab', { name: designAreas[i] }).click()
@@ -229,7 +324,7 @@ const run = async () => {
   const hpid = await hp.evaluate(() => window.__pid())
   await hp.selectOption('select[aria-label="Capabilities project"]', hpid)
   await hp.waitForTimeout(200)
-  await hp.getByRole('button', { name: /How this works/i }).click()
+  await hp.getByRole('button', { name: /Stage guide/i }).click()
   await hp.waitForTimeout(200)
   await shot(hp, '10b-help-stage-define')
   await hp.close()
@@ -248,7 +343,7 @@ const run = async () => {
     await p.selectOption('select[aria-label="Capabilities project"]', pid)
     await p.waitForTimeout(300)
     // Required header actions remain reachable at narrow width.
-    assert(await p.locator('.page-header-actions').getByRole('button', { name: /guide$/i }).isVisible(), `${name}: guide reachable`)
+    assert(await p.locator('.cap-workspace-controls').getByRole('button', { name: /guide$/i }).isVisible(), `${name}: guide reachable`)
     assert(await p.locator('select[aria-label="Capabilities project"]').isVisible(), `${name}: project selector present`)
     await shot(p, name)
     await c.close()
@@ -257,8 +352,46 @@ const run = async () => {
   await narrowShot(500, 'connect-active', '12-narrow-connect')
   await narrowShot(640, 'complete', '13-reflow-640-complete')
 
-  // Ultra-wide Design binding editor — guards against auto-fill creating a row
-  // of cramped fields with colliding human labels and technical keys.
+  // Acceptance matrix: every Guided stage at the three supported review sizes.
+  // These are viewport captures (not full-page captures), so they prove the
+  // stage identity, principal task, and next action/status are clear on entry.
+  const stageMatrix = [
+    { id: 'plan', seed: 'define-draft', anchor: '.cap-task-command .btn-primary' },
+    { id: 'design', seed: 'architect-draft', anchor: '.cap-task-command .btn-primary' },
+    { id: 'build', seed: 'build', anchor: '.cap-build-action-panel .btn-primary' },
+    { id: 'verify', seed: 'complete', anchor: '.cap-stage-outcome.complete' },
+  ]
+  const viewports = [
+    { width: 1024, height: 768 },
+    { width: 1440, height: 900 },
+    { width: 1920, height: 1080 },
+  ]
+  for (const viewport of viewports) {
+    for (const stage of stageMatrix) {
+      const c = await browser.newContext({ viewport, bypassCSP: true })
+      await c.addInitScript(SEED)
+      const p = await c.newPage()
+      await p.goto('http://localhost:' + PORT + '/', { waitUntil: 'networkidle' })
+      await p.waitForFunction(() => !!window.euik)
+      await p.evaluate((seed) => window.__seed(seed), stage.seed)
+      await p.getByRole('button', { name: 'Capabilities' }).first().click()
+      const pid = await p.evaluate(() => window.__pid())
+      await p.selectOption('select[aria-label="Capabilities project"]', pid)
+      await p.waitForTimeout(300)
+      const stageTitle = await p.locator('.cap-stage-identity h2').first().textContent()
+      assert(stageTitle?.toLowerCase() === stage.id, `${stage.id}-${viewport.width}x${viewport.height}: expected ${stage.id} stage, got ${stageTitle}`)
+      const anchor = p.locator(stage.anchor).first()
+      assert(await anchor.isVisible(), `${stage.id}-${viewport.width}x${viewport.height}: principal action/status is visible`)
+      const box = await anchor.boundingBox()
+      assert(Boolean(box && box.y + box.height <= viewport.height), `${stage.id}-${viewport.width}x${viewport.height}: principal action/status is inside the initial viewport`)
+      await viewportShot(p, `15-${stage.id}-${viewport.width}x${viewport.height}`)
+      if (viewport.width === 1440) await assertAxe(p, stage.id)
+      await c.close()
+    }
+  }
+
+  // Ultra-wide Design module view — guards against cards stretching into
+  // unreadably long rows and keeps the technical projection contained.
   const wide = await browser.newContext({ viewport: { width: 2048, height: 1152 } })
   await wide.addInitScript(SEED)
   const wp = await wide.newPage()
@@ -269,26 +402,18 @@ const run = async () => {
   await wp.waitForTimeout(120)
   const wpid = await wp.evaluate(() => window.__pid())
   await wp.selectOption('select[aria-label="Capabilities project"]', wpid)
-  await wp.getByRole('button', { name: 'Design' }).click()
-  await wp.getByRole('tab', { name: 'Connections' }).click()
+  await wp.locator('.segmented').getByRole('button', { name: 'Design' }).click()
+  await wp.getByRole('tab', { name: 'Modules' }).click()
   await wp.waitForTimeout(250)
-  const wideLayout = await wp.evaluate(() => {
-    const behavior = document.querySelector('.binding-behavior-grid')
-    const evidence = document.querySelector('.binding-editor > .capabilities-ids')
-    return {
-      behaviorColumns: behavior ? getComputedStyle(behavior).gridTemplateColumns.split(' ').filter(Boolean).length : 0,
-      evidenceColumns: evidence ? getComputedStyle(evidence).gridTemplateColumns.split(' ').filter(Boolean).length : 0,
-    }
-  })
-  assert(wideLayout.behaviorColumns === 3, `14-wide-connections: behavior grid has ${wideLayout.behaviorColumns} columns, expected 3`)
-  assert(wideLayout.evidenceColumns === 2, `14-wide-connections: evidence grid has ${wideLayout.evidenceColumns} columns, expected 2`)
-  await wp.locator('.binding-behavior-grid').evaluate((element) => element.scrollIntoView({ block: 'start' }))
+  assert(await wp.locator('.capabilities-modules').isVisible(), '14-wide-modules: module workspace is visible')
+  await wp.locator('.capabilities-modules').evaluate((element) => element.scrollIntoView({ block: 'start' }))
   await wp.waitForTimeout(100)
-  await shot(wp, '14-wide-connections')
+  await shot(wp, '14-wide-modules')
   await wide.close()
 
   await browser.close()
   server.close()
+  fs.writeFileSync(path.join(outDir, 'axe-report.json'), JSON.stringify({ generatedAt: new Date().toISOString(), reports: axeReports }, null, 2))
   console.log('\\nCaptured ' + shots.length + ' screenshots to ' + outDir)
   if (failures.length) {
     console.error('\\n' + failures.length + ' assertion(s) failed:')

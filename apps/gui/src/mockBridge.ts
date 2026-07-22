@@ -53,7 +53,7 @@ type CapProjectState = {
   bindingDrafts: Map<string, FrontendBinding>
   bindingApproved: Map<string, FrontendBinding>
   freshness: Map<string, FreshnessRecord>
-  /** CAP-ERA-001 §5.1/§12.4 — deployables this mock synthesizes for Connect (WP5B/WP7 own real generation-time deployables). */
+  /** CAP-ERA-001 §5.1/§12.4 — deployables this mock synthesizes for Build entry points (WP5B/WP7 own real generation-time deployables). */
   deployables: Map<string, CapabilityDeployableSummary>
   inboundBindingDrafts: Map<string, InboundBinding>
   inboundBindingApproved: Map<string, InboundBinding>
@@ -811,6 +811,12 @@ export function installMockBridge(): EuikBridge {
       state.inboundBindingApproved.set(binding.bindingId, binding)
       state.inboundBindingDrafts.delete(binding.bindingId)
       return { ok: true, approved: binding }
+    },
+    async capabilitiesArchiveInboundBinding(projectId, bindingId) {
+      const state = ensureCap(projectId)
+      state.inboundBindingDrafts.delete(bindingId)
+      state.inboundBindingApproved.delete(bindingId)
+      return { ok: true as const }
     },
     async capabilitiesListNeedsAttention(projectId) {
       return listNeedsAttentionFor(projectId)

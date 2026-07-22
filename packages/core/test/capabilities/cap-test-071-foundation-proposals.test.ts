@@ -133,6 +133,23 @@ describe('CAP-TEST-071 foundation deployable proposals', () => {
     expect(plan.architectureHash).toBe(architecture.contentHash)
   })
 
+  it('keeps discovered composition roots stable across foundation refreshes', () => {
+    const architecture = baseArch({
+      moduleIds: ['mod.experience'],
+      moduleDefinitions: [{ moduleId: 'mod.experience', name: 'Experience', moduleType: 'experience', responsibility: 'ui' }],
+      capabilityProjections: [{ id: 'cap1', name: 'Primary', moduleIds: ['mod.experience'] }],
+      workflowTraces: [{ useCaseId: 'u1', moduleIds: ['mod.experience'] }],
+    })
+
+    const plan = proposeFoundation({
+      architecture,
+      discovery: emptyDiscovery({ frameworks: ['react'], languages: ['typescript'], sourceRoots: ['composition'] }),
+    })
+
+    expect(plan.deployables.find((deployable) => deployable.deployableId === 'browser')?.compositionRootPath)
+      .toBe('composition/browser.ts')
+  })
+
   it('proposes an http-api python deployable for a headless architecture with modules allocated', () => {
     const architecture = baseArch({
       moduleDefinitions: [

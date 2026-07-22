@@ -28,7 +28,7 @@ import {
   type ModuleInterviewResponse,
 } from '@engineering-ui-kit/core/browser'
 import type { CapabilityPacketExportResult, EuikBridge, TaskPacketFields } from '../../bridge'
-import { EmptyState } from '../../components'
+import { Dialog, EmptyState } from '../../components'
 import { Icon } from '../../icons'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
 import { CapabilityHandoffCard } from './CapabilityHandoffCard'
@@ -63,26 +63,45 @@ function asArch(value: unknown): ArchitectureSpecification | undefined {
   return value as ArchitectureSpecification
 }
 
+function runtimeLabel(runtime: ModuleManifest['runtimeAllocation'] | undefined): string {
+  if (runtime === 'local-embedded') return 'Inside this application'
+  if (runtime === 'external-adapter') return 'Through a connected service'
+  return 'Not assigned'
+}
+
 /** Best-effort deployment context for a module from an approved foundation plan (bullet e enrichment). */
 export function deploymentContextFor(
   foundation: FoundationPlan | undefined,
   moduleId: string,
+  manifest?: ModuleManifest,
 ): UiModuleDeploymentContext | undefined {
   const allocation = foundation?.allocations.find((candidate) => candidate.moduleId === moduleId)
   const deployable = allocation
     ? foundation?.deployables.find((candidate) => candidate.deployableId === allocation.deployableId)
     : undefined
   if (!deployable) return undefined
+  const generatedRoot = `src/generated/${deployable.deployableId.replaceAll('/', '-')}`
+  const generatedContractRefs = manifest
+    ? [
+        ...manifest.providedOperations.map((operation) => `${operation.operationId}@${operation.contractVersion} (${generatedRoot}/operations.g.ts)`),
+        ...manifest.requiredOperations.map((operation) => `${operation.operationId}@${operation.acceptedContractRange} (${generatedRoot}/operations.g.ts)`),
+        ...(manifest.configurationSchemaRef ? [manifest.configurationSchemaRef] : []),
+      ]
+    : []
+  const fallbackCommands = deployable.runtimeLanguage === 'typescript'
+    ? { install: 'npm install', build: 'npx tsc -p tsconfig.engineering-ui.json' }
+    : { install: 'python -m pip install -r requirements.engineering-ui.txt' }
+  const commands = Object.keys(deployable.commands).length ? deployable.commands : fallbackCommands
   return {
     deployableId: deployable.deployableId,
     kind: deployable.kind,
     runtimeLanguage: deployable.runtimeLanguage,
     runtimeVersionRange: deployable.runtimeVersionRange,
     compositionRootPath: deployable.compositionRootPath,
-    commands: deployable.commands,
-    generatedContractRefs: [],
-    generatedTypeTargets: [],
-    acceptanceCommands: Object.values(deployable.commands),
+    commands,
+    generatedContractRefs,
+    generatedTypeTargets: [`${generatedRoot}/types.g.ts`, `${generatedRoot}/operations.g.ts`],
+    acceptanceCommands: Object.values(commands),
   }
 }
 
@@ -132,7 +151,7 @@ export function buildUiModuleTaskFields(
     `## Functional requirements\n${numbered(functionalRequirements, 'Represent the approved module responsibility as a complete, usable interface.')}`,
     `## Capability interactions\nOperations this UI provides:\n${bullets(provided, 'No outward operation was recorded; present the module’s information and status without inventing commands.')}\n\nOperations this UI requires:\n${bullets(required, 'No capability dependency was recorded; keep sample data behind a replaceable local interface.')}`,
     `## Information, ownership, and boundaries\nThis UI owns:\n${bullets(owned, 'Presentation of the approved module responsibility.')}\n\nThis UI explicitly does not own:\n${bullets(excluded, 'Domain rules, persistence, orchestration, and external integration outside its approved responsibility.')}\n\nAllowed implementation paths:\n${bullets(manifest.ownedPaths, 'Choose paths that match the repository’s existing UI feature structure and do not modify unrelated modules.')}`,
-    `## Architecture context\nThis module depends on:\n${bullets(dependencies, 'No module dependency is recorded.')}\n\nOther modules depending on this UI:\n${bullets(consumers, 'No downstream module dependency is recorded.')}\n\nKeep every interaction behind the named operation boundary so the local sample implementation can be replaced during Connect without rewriting the UI.`,
+    `## Architecture context\nThis module depends on:\n${bullets(dependencies, 'No module dependency is recorded.')}\n\nOther modules depending on this UI:\n${bullets(consumers, 'No downstream module dependency is recorded.')}\n\nKeep every interaction behind the named operation boundary so the local sample implementation can be replaced when the shared application setup is generated without rewriting the UI.`,
     `## Required experience states\n- Show intentional initial, loading, ready, empty, partial-data, validation-error, capability-rejection, technical-failure, cancelled, and retrying states where relevant.\n- Use local sample fixtures for this build; keep fixtures and state variants outside view markup and make every state easy to exercise.\n- For long-running actions, show progress and cancellation when supported. For destructive or irreversible actions, require clear confirmation.\n- Never leave a blank panel, silent failure, ambiguous disabled action, or color-only status.` ,
     `## Responsive and accessible behavior\n- Design desktop, tablet, narrow-window, and keyboard-only layouts; content must reflow without horizontal page scrolling.\n- Use semantic landmarks, headings, labels, descriptions, and status announcements. Preserve logical focus order and restore focus after dialogs.\n- Provide visible focus, sufficient contrast, non-color status cues, meaningful empty/error copy, and reduced-motion behavior.\n- Keep primary actions obvious, secondary actions quieter, and dense technical details progressively disclosed.` ,
     `## Visual and interaction quality\n- Follow the repository’s established design system, semantic tokens, components, spacing, and typography.\n- Establish a clear information hierarchy with aligned panels, consistent control placement, restrained decoration, and deliberate whitespace.\n- Reuse existing components before introducing new ones. Do not imitate a generic dashboard when the approved workflow calls for a more focused task surface.`,
@@ -149,7 +168,7 @@ export function buildUiModuleTaskFields(
     scope: [
       `Approved module: ${manifest.moduleId} @ ${manifest.moduleVersion}`,
       '- Implement the UI views, reusable presentation components, local state fixtures, and focused UI tests required by the specification.',
-      '- Use sample adapters for approved capability ports so Connect can replace them without changing view components.',
+      '- Use sample adapters for approved capability ports so the shared application setup can replace them without changing view components.',
       `- Account for these provided operations:\n${bullets(provided, 'No outward operation is recorded.')}`,
       `- Account for these required operations:\n${bullets(required, 'No required operation is recorded.')}`,
       `- Work only within approved or repository-consistent UI paths:\n${bullets(manifest.ownedPaths, 'Use the existing UI feature structure.')}`,
@@ -341,6 +360,7 @@ function ModuleWorkspace(props: {
   const [warningsAccepted, setWarningsAccepted] = useState(false)
   const [applied, setApplied] = useState(false)
   const [revisitingInterview, setRevisitingInterview] = useState(false)
+  const [technicalOpen, setTechnicalOpen] = useState(false)
   const mounted = useRef(false)
   useEffect(() => {
     mounted.current = true
@@ -371,7 +391,7 @@ function ModuleWorkspace(props: {
   const belongsToActiveModule = (candidateModuleId: string) =>
     candidateModuleId === moduleId && (architecture?.moduleIds.includes(moduleId) ?? false)
 
-  async function exportPacket() {
+  async function exportPacket(moduleVersion?: string) {
     if (busy) return
     if (!architecture) {
       setMessage('Architecture must be approved before module interviews.')
@@ -386,6 +406,7 @@ function ModuleWorkspace(props: {
         architecture,
         moduleId,
         moduleType: selectedType,
+        moduleVersion,
       })
       const exported = await bridge.capabilitiesExportInterviewPacket({
         packetId: built.packetId, projectId: built.projectId, interviewKind: built.interviewKind,
@@ -500,7 +521,7 @@ function ModuleWorkspace(props: {
     setBusy(true)
     setMessage('Preparing the UI build workspace with this module’s approved context…')
     try {
-      const deployment = deploymentContextFor(props.approvedFoundation, manifest.moduleId)
+      const deployment = deploymentContextFor(props.approvedFoundation, manifest.moduleId, manifest)
       await props.onStartUiBuild(projectId, buildUiModuleTaskFields(manifest, architecture, deployment))
     } catch (error) {
       if (mounted.current) setMessage(error instanceof Error ? error.message : String(error))
@@ -566,18 +587,24 @@ function ModuleWorkspace(props: {
 
   async function revisitInterview() {
     if (busy) return
+    const currentVersion = record?.approved?.moduleVersion ?? '1.0.0'
+    const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(currentVersion)
+    const nextVersion = match
+      ? `${match[1]}.${match[2]}.${Number(match[3]) + 1}`
+      : '1.0.1'
     setRevisitingInterview(true)
     setDraft(undefined)
     setResponse(undefined)
     setDiagnostics([])
     setGatePassed(undefined)
     setInterviewExport(undefined)
-    await exportPacket()
+    await exportPacket(nextVersion)
   }
 
   type BuildStep = 'interview' | 'import' | 'approve' | 'handoff' | 'inspect' | 'accept' | 'apply' | 'verify'
   const implementationStarted = Boolean(implementationExport) || ['packet-exported', 'overlay-inspected', 'overlay-applied'].includes(persistedLifecycleState)
   const implementationApplied = applied || persistedLifecycleState === 'overlay-applied'
+  const moduleReady = record?.freshness?.primaryState === 'ready'
   const buildStep: BuildStep = revisitingInterview
     ? draft ? 'approve' : interviewExport ? 'import' : 'interview'
     : !isApproved
@@ -590,7 +617,7 @@ function ModuleWorkspace(props: {
             : applied ? 'verify'
               : 'inspect'
   const BUILD_STEP_LABEL: Record<BuildStep, string> = {
-    interview: 'Create the module interview', import: 'Import the response', approve: 'Review and approve',
+    interview: 'Generate the module draft', import: 'Import the response', approve: 'Review and approve',
     handoff: 'Create the implementation handoff', inspect: 'Select and inspect the overlay',
     accept: 'Review and accept warnings', apply: 'Apply the reviewed overlay', verify: 'Ready for verification',
   }
@@ -608,8 +635,9 @@ function ModuleWorkspace(props: {
       <p className="cap-build-step-label"><span className="badge">Next</span> {BUILD_STEP_LABEL[buildStep]}</p>
       {buildStep === 'interview' && (
         <>
+          <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>Generate guided draft</button>
+          <p className="capabilities-note">Copilot pre-fills the full module specification from Design and asks you to accept or correct only material assumptions.</p>
           <p className="capabilities-note cap-assigned-module-type"><span className="badge">{moduleTypeLabel(selectedType)}</span> Assigned during Design</p>
-          <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>Create interview</button>
         </>
       )}
       {buildStep === 'import' && (
@@ -661,7 +689,14 @@ function ModuleWorkspace(props: {
         </>
       )}
       {buildStep === 'verify' && (
-        <button type="button" className="btn btn-primary btn-compact" onClick={() => void verifyApprovedModule()} disabled={busy}>Run verification</button>
+        <button
+          type="button"
+          className={`btn ${moduleReady ? 'btn-secondary' : 'btn-primary'} btn-compact`}
+          onClick={() => void verifyApprovedModule()}
+          disabled={busy}
+        >
+          {moduleReady ? 'Re-run verification' : 'Run verification'}
+        </button>
       )}
     </div>
   )
@@ -704,7 +739,7 @@ function ModuleWorkspace(props: {
           <p className="cap-build-outcome-responsibility">{interviewOutcome.responsibility || architectureModule?.responsibility || 'The module interview outcome is ready for review.'}</p>
           <div className="cap-build-outcome-facts">
             <div><span>Module type</span><strong>{moduleTypeLabel(outcomeModuleType)}</strong></div>
-            <div><span>Runs as</span><strong>{interviewOutcome.runtimeAllocation ? humanizeIdentifier(interviewOutcome.runtimeAllocation) : 'Not assigned'}</strong></div>
+            <div><span>Runs</span><strong>{runtimeLabel(interviewOutcome.runtimeAllocation)}</strong></div>
           </div>
 
           <div className="cap-build-operation-map" aria-label="Module operation map">
@@ -745,18 +780,41 @@ function ModuleWorkspace(props: {
             </div>
           </div>
 
-          <div className="cap-build-outcome-footer">
-            <span>{verificationSuiteIds.length} verification suite{verificationSuiteIds.length === 1 ? '' : 's'}</span>
-            <span>Version {interviewOutcome.moduleVersion ?? 'not set'}</span>
+          <div className="cap-build-outcome-actions">
+            <button type="button" className="btn btn-secondary btn-compact" onClick={() => setTechnicalOpen(true)}>
+              Technical specification
+            </button>
+            <button type="button" className="btn btn-secondary btn-compact" onClick={() => void revisitInterview()} disabled={busy || revisitingInterview}>
+              Revisit interview
+            </button>
           </div>
-          <button type="button" className="btn btn-secondary btn-compact" onClick={() => void revisitInterview()} disabled={busy || revisitingInterview}>
-            Revisit interview
-          </button>
+
+          {technicalOpen ? (
+            <Dialog
+              title={`${moduleDisplayName} technical specification`}
+              wide
+              onClose={() => setTechnicalOpen(false)}
+              actions={<button type="button" className="btn btn-primary" onClick={() => setTechnicalOpen(false)}>Close</button>}
+            >
+              <p className="lede">Exact implementation and verification details from the approved module record.</p>
+              <dl className="capabilities-ids">
+                <div><dt>Module ID</dt><dd><code>{interviewOutcome.moduleId}</code></dd></div>
+                <div><dt>Version</dt><dd><code>{interviewOutcome.moduleVersion}</code></dd></div>
+                <div><dt>Runtime allocation</dt><dd><code>{interviewOutcome.runtimeAllocation}</code></dd></div>
+                <div><dt>Verification suites</dt><dd>{verificationSuiteIds.length ? verificationSuiteIds.map((id) => <code key={id}>{id}</code>) : 'None'}</dd></div>
+                <div><dt>Provided operations</dt><dd>{providedOperations.length ? providedOperations.map((operation) => <code key={operation.operationId}>{operation.operationId}@{operation.contractVersion}</code>) : 'None'}</dd></div>
+                <div><dt>Required operations</dt><dd>{requiredOperations.length ? requiredOperations.map((operation) => <code key={operation.operationId}>{operation.operationId}@{operation.acceptedContractRange}</code>) : 'None'}</dd></div>
+                <div><dt>Owned paths</dt><dd>{interviewOutcome.ownedPaths.length ? interviewOutcome.ownedPaths.map((path) => <code key={path}>{path}</code>) : 'None'}</dd></div>
+                <div><dt>Events</dt><dd>{interviewOutcome.events.length ? interviewOutcome.events.map((event) => <code key={event}>{event}</code>) : 'None'}</dd></div>
+                <div><dt>Configuration schema</dt><dd>{interviewOutcome.configurationSchemaRef ? <code>{interviewOutcome.configurationSchemaRef}</code> : 'None'}</dd></div>
+              </dl>
+            </Dialog>
+          ) : null}
         </>
       ) : (
         <div className="cap-build-outcome-empty">
           <span aria-hidden="true">◇</span>
-          <p>The interview outcome will appear here as a clear module boundary, operation map, and ownership summary.</p>
+          <p>The interview outcome will appear here as a clear summary of this module’s responsibilities, interactions, and boundaries.</p>
         </div>
       )}
     </section>
@@ -788,7 +846,7 @@ function ModuleWorkspace(props: {
           ) : null}
 
           <div className="capabilities-toolbar" role="group" aria-label="Module interview actions">
-            <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>Export module interview</button>
+            <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || busy}>{isApproved ? 'Revisit module definition' : 'Generate module draft'}</button>
             <button type="button" className="btn btn-secondary btn-compact" onClick={() => void approve()} disabled={!projectId || !draft || busy || gatePassed === false}>Approve module</button>
           </div>
 

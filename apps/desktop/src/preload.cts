@@ -75,6 +75,7 @@ const CHANNELS = {
   capabilitiesListInboundBindings: 'capabilities:list-inbound-bindings',
   capabilitiesSaveInboundBindingDraft: 'capabilities:save-inbound-binding-draft',
   capabilitiesApproveInboundBinding: 'capabilities:approve-inbound-binding',
+  capabilitiesArchiveInboundBinding: 'capabilities:archive-inbound-binding',
   capabilitiesListNeedsAttention: 'capabilities:list-needs-attention',
   capabilitiesCalculateImpact: 'capabilities:calculate-impact',
   capabilitiesApproveImpact: 'capabilities:approve-impact',

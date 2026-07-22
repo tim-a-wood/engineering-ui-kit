@@ -11,8 +11,10 @@ import {
   type CompositionManifest,
   type DeployableSpecification,
   type FoundationPlan,
+  type ModuleInterviewResponse,
   type ModuleImplementationSpecification,
   type ModuleManifest,
+  type OperationContract,
 } from '@engineering-ui-kit/core'
 import { Workspace } from '@engineering-ui-kit/core'
 import {
@@ -80,7 +82,33 @@ function specification(): ModuleImplementationSpecification {
   }
 }
 
-function seed() {
+function operationContract(): OperationContract {
+  return {
+    schemaVersion: '1.0', operationId: 'operation.test', version: '1.0.0', behavior: 'command',
+    inputSchemaRef: 'operation.test.input', outputSchemaRef: 'operation.test.output',
+    preconditions: [], postconditions: ['The requested operation completes.'], domainRejections: [],
+    technicalErrors: ['unexpected'], sideEffects: [], idempotency: 'idempotent', timeoutClass: 'short',
+    cancellable: false, artifactTypes: [], provenanceFields: [],
+  }
+}
+
+function operationInterview(moduleVersion = '1.0.1'): ModuleInterviewResponse {
+  return {
+    moduleId: 'module-1', moduleType: 'domain', name: 'Module', moduleVersion,
+    responsibility: 'Provide a test operation.', ownedConcerns: ['test'], excludedConcerns: [],
+    providedOperations: [{ operationId: 'operation.test', contractVersion: '1.0.0' }],
+    requiredOperations: [], verificationSuiteIds: [], runtimeAllocation: 'local-embedded', events: [],
+    ownedPaths: ['src/modules/module-1/'], operationContracts: [operationContract()],
+    dataSchemas: [
+      { schemaId: 'operation.test.input', description: 'Input.', fields: [] },
+      { schemaId: 'operation.test.output', description: 'Output.', fields: [] },
+    ],
+    answers: [], acceptanceCases: [{ id: 'operation-test', description: 'Run it.', expectedOutcome: 'It completes.' }],
+    rules: [],
+  }
+}
+
+function seed(options: { approveModule?: boolean; deployable?: DeployableSpecification } = {}) {
   const dataDir = tempRoot('euik-integration-data-')
   const repoRoot = tempRoot('euik-integration-repo-')
   execFileSync('git', ['init'], { cwd: repoRoot, stdio: 'ignore' })
@@ -91,21 +119,22 @@ function seed() {
   workspace.createProject({ id: 'project-1', name: 'Project', repoPath: repoRoot, verificationCommands: [] })
   const capabilities = new CapabilityWorkspace(dataDir)
   const approvedArchitecture = capabilities.approveArchitecture('project-1', architecture())
-  capabilities.approveModule('project-1', manifest())
+  if (options.approveModule !== false) capabilities.approveModule('project-1', manifest())
+  const approvedDeployable = options.deployable ?? deployable()
   const foundationBody = {
     schemaVersion: '1.0' as const, projectId: 'project-1', architectureId: approvedArchitecture.id,
     architectureRevision: approvedArchitecture.revision, architectureHash: approvedArchitecture.contentHash,
-    deployables: [deployable()],
-    allocations: [{ moduleId: 'module-1', deployableId: 'embedded-library', moduleType: 'domain' as const, rationale: 'approved test allocation' }],
+    deployables: [approvedDeployable],
+    allocations: [{ moduleId: 'module-1', deployableId: approvedDeployable.deployableId, moduleType: 'domain' as const, rationale: 'approved test allocation' }],
     resolvedAnswers: [], unresolvedAmbiguities: [], readiness: { status: 'ready' as const, issues: [] },
   }
   const foundation: FoundationPlan = { ...foundationBody, contentHash: canonicalHash(foundationBody) }
   capabilities.approveFoundation('project-1', foundation)
   const orchestrator = new ReferenceArchitectureOrchestrator(workspace, dataDir)
-  orchestrator.integration.saveModuleSpecification(specification())
+  orchestrator.integration.saveModuleSpecification({ ...specification(), deployableId: approvedDeployable.deployableId })
   const compositionBody = {
-    schemaVersion: '1.0' as const, projectId: 'project-1', compositionId: 'embedded-library',
-    applicationRevision: '1', architectureRevision: approvedArchitecture.revision, deployableIds: ['embedded-library'],
+    schemaVersion: '1.0' as const, projectId: 'project-1', compositionId: approvedDeployable.deployableId,
+    applicationRevision: '1', architectureRevision: approvedArchitecture.revision, deployableIds: [approvedDeployable.deployableId],
     registrations: [], operationRoutes: [], inboundAdapterRefs: [], outboundAdapterRefs: [], configurationRefs: [],
     secretReferenceIds: [], telemetryHookRefs: [], healthHookRefs: [], authorizationHookRefs: [],
   }
@@ -115,6 +144,36 @@ function seed() {
 }
 
 describe('production reference-architecture orchestrator', () => {
+  it('blocks generation state until every allocated module is approved', () => {
+    const { orchestrator } = seed({ approveModule: false })
+
+    const state = orchestrator.getState('project-1').deployables[0]
+
+    expect(state?.status).toBe('blocked')
+    expect(state?.attention).toEqual(expect.arrayContaining([
+      expect.stringMatching(/approved module not found: module-1/i),
+    ]))
+  })
+
+  it('blocks shared-setup generation for a required host until an entry point is approved', () => {
+    const host = {
+      ...deployable(),
+      deployableId: 'http-api',
+      name: 'HTTP API',
+      kind: 'http-api' as const,
+      compositionRootPath: 'src/generated/http-api/composition.g.ts',
+      proposedLocations: [{ path: 'src/generated/http-api/composition.g.ts', evidence: 'approved test location', approvalStatus: 'approved' as const }],
+    }
+    const { orchestrator } = seed({ deployable: host })
+
+    const preview = orchestrator.previewGeneration('project-1', 'http-api')
+
+    expect(preview.status).toBe('blocked')
+    expect(preview.plan.blockers).toEqual(expect.arrayContaining([
+      expect.stringMatching(/requires an approved application entry point/i),
+    ]))
+  })
+
   it('resolves only approved package-manager shims on Windows', () => {
     expect(platformExecutable('npm', 'win32')).toBe('npm.cmd')
     expect(platformExecutable('npx', 'win32')).toBe('npx.cmd')
@@ -179,6 +238,76 @@ describe('production reference-architecture orchestrator', () => {
     expect(distribution.files.find((file) => file.path === 'requirements.engineering-ui.txt')?.contents)
       .toContain('uvicorn==0.35.0')
     expect(distribution.dependencies).toContainEqual(expect.objectContaining({ packageName: 'uvicorn', language: 'python' }))
+  })
+
+  it('merges every TypeScript deployable composition root into the generated compiler configuration', () => {
+    const root = tempRoot('euik-typescript-multi-deployable-')
+    fs.writeFileSync(path.join(root, 'tsconfig.engineering-ui.json'), JSON.stringify({
+      compilerOptions: { target: 'ES2022' },
+      include: ['src/**/*.ts', 'composition/browser.ts'],
+    }))
+
+    const distribution = buildRuntimeDistribution({
+      ...deployable(),
+      compositionRootPath: 'composition/http-api.ts',
+    }, root)
+    const tsconfig = JSON.parse(distribution.files.find((file) => file.path === 'tsconfig.engineering-ui.json')!.contents)
+
+    expect(tsconfig.include).toEqual([
+      'src/**/*.ts',
+      'src/**/*.tsx',
+      'src/**/*.mts',
+      'composition/browser.ts',
+      'composition/http-api.ts',
+    ])
+    expect(distribution.files.find((file) => file.path === 'tsconfig.engineering-ui.json')?.ownership).toBe('editable')
+  })
+
+  it('adds greenfield build and typecheck scripts without replacing repository scripts', () => {
+    const root = tempRoot('euik-typescript-package-scripts-')
+    fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({
+      private: true,
+      scripts: { build: 'custom-build', test: 'custom-test' },
+    }))
+
+    const distribution = buildRuntimeDistribution(deployable(), root)
+    const packageJson = JSON.parse(distribution.files.find((file) => file.path === 'package.json')!.contents)
+
+    expect(packageJson.scripts).toEqual({
+      build: 'custom-build',
+      test: 'custom-test',
+      typecheck: 'tsc -p tsconfig.engineering-ui.json --noEmit',
+    })
+  })
+
+  it('removes retired composition roots from the generated compiler configuration', () => {
+    const root = tempRoot('euik-typescript-retired-deployable-')
+    fs.writeFileSync(path.join(root, 'tsconfig.engineering-ui.json'), JSON.stringify({
+      include: ['src/**/*.ts', 'composition/embedded-library.ts', 'composition/browser.ts'],
+    }))
+
+    const distribution = buildRuntimeDistribution({
+      ...deployable(),
+      compositionRootPath: 'composition/http-api.ts',
+    }, root, ['composition/browser.ts', 'composition/http-api.ts'])
+    const tsconfig = JSON.parse(distribution.files.find((file) => file.path === 'tsconfig.engineering-ui.json')!.contents)
+
+    expect(tsconfig.include).toEqual([
+      'src/**/*.ts',
+      'src/**/*.tsx',
+      'src/**/*.mts',
+      'composition/browser.ts',
+      'composition/http-api.ts',
+    ])
+  })
+
+  it('refreshes a persisted module implementation specification when the approved module version changes', () => {
+    const { orchestrator } = seed()
+    orchestrator.capabilities.approveModule('project-1', { ...manifest(), moduleVersion: '1.0.1' })
+
+    orchestrator.getState('project-1')
+
+    expect(orchestrator.integration.getModuleSpecification('project-1', 'module-1')?.moduleVersion).toBe('1.0.1')
   })
 
   it('previews, persists, applies, restores after restart, and rolls back a real generation plan', () => {
@@ -290,5 +419,74 @@ describe('production reference-architecture orchestrator', () => {
         }],
       }),
     )
+  })
+
+  it('generates the approved inbound adapter and route, then marks only shared setup stale when the binding changes', () => {
+    const { orchestrator } = seed()
+    const approvedManifest = {
+      ...manifest(), moduleVersion: '1.0.1',
+      providedOperations: [{ operationId: 'operation.test', contractVersion: '1.0.0' }],
+    }
+    orchestrator.capabilities.approveModule('project-1', approvedManifest, operationInterview())
+    orchestrator.integration.saveModuleSpecification({
+      ...specification(), moduleVersion: '1.0.1',
+      providedOperations: [{ operationId: 'operation.test', contractVersion: '1.0.0' }],
+      providedPorts: ['operation.test'],
+    })
+    orchestrator.saveCompositionConfiguration({
+      projectId: 'project-1', deployableId: 'embedded-library', explicit: true,
+      targets: [{ contractId: 'operation.test', implementationTarget: 'src/modules/module-1/operation_test.ts#createOperationTest' }],
+    })
+    const binding = {
+      schemaVersion: '1.0' as const, kind: 'embedded-library' as const,
+      bindingId: 'binding.operation.test', version: '1.0.0', projectId: 'project-1',
+      deployableId: 'embedded-library', operationId: 'operation.test', operationVersion: '1.0.0',
+      inputMappings: [], outputMappings: [], validationBehavior: 'reject invalid input',
+      domainRejectionBehavior: 'return a typed rejection', technicalFailureBehavior: 'return a safe failure',
+      timeoutBehavior: 'return timed out', cancellationBehavior: 'return cancelled', retryBehavior: 'none',
+      duplicateSubmissionBehavior: 'reject duplicates', exposure: 'private' as const, generatedTargets: [],
+      approvalState: 'approved', exportedCallable: 'runOperationTest', reason: 'approved library boundary',
+    }
+    orchestrator.capabilities.approveInboundBinding('project-1', binding)
+
+    const first = orchestrator.previewGeneration('project-1', 'embedded-library')
+    expect(first.status).toBe('plan-ready')
+    expect(first.plan.inputRecords).toContainEqual(expect.objectContaining({
+      recordId: 'binding:binding.operation.test', revision: '1.0.0',
+    }))
+    expect(first.plan.fileChanges).toContainEqual(expect.objectContaining({
+      path: 'src/generated/embedded-library/inbound/binding.operation.test.g.ts',
+    }))
+    const firstFiles = orchestrator.integration.getGenerationBundle('project-1', first.plan.planId)?.virtualFiles ?? []
+    expect(firstFiles.find((file) => file.path.endsWith('/inbound/binding.operation.test.g.ts'))?.contents)
+      .toContain('runOperationTest')
+    expect(firstFiles.find((file) => file.path === 'src/generated/embedded-library/composition.g.ts')?.contents)
+      .toContain('inboundBindingId: "binding.operation.test"')
+
+    orchestrator.applyGeneration({
+      projectId: 'project-1', deployableId: 'embedded-library', planId: first.plan.planId,
+      planHash: first.plan.planHash, explicit: true,
+    })
+    expect(orchestrator.getState('project-1').deployables[0]?.status).toBe('applied')
+
+    const revised = { ...binding, version: '1.0.1', exportedCallable: 'executeOperationTest' }
+    orchestrator.capabilities.approveInboundBinding('project-1', revised)
+    const stale = orchestrator.getState('project-1').deployables[0]
+    expect(stale?.status).toBe('stale')
+    expect(stale?.attention).toContain('Approved inputs changed after this generation plan was created.')
+    expect(orchestrator.capabilities.getApprovedModule('project-1', 'module-1')).toMatchObject({
+      moduleId: 'module-1', moduleVersion: '1.0.1',
+    })
+
+    const refreshed = orchestrator.previewGeneration('project-1', 'embedded-library')
+    expect(refreshed.status).toBe('plan-ready')
+    expect(refreshed.plan.inputRecords).toContainEqual(expect.objectContaining({
+      recordId: 'binding:binding.operation.test', revision: '1.0.1',
+    }))
+    orchestrator.applyGeneration({
+      projectId: 'project-1', deployableId: 'embedded-library', planId: refreshed.plan.planId,
+      planHash: refreshed.plan.planHash, explicit: true, acceptDirtyWorktree: true,
+    })
+    expect(orchestrator.getState('project-1').deployables[0]?.status).toBe('applied')
   })
 })

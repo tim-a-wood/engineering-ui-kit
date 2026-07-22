@@ -3,7 +3,7 @@
  * CAP-UX state-safety — behavioral / race-condition tests.
  *
  * These drive the real components with @testing-library/react (jsdom) and prove the
- * project/module/connect isolation fixes. They are designed to FAIL against the
+ * project/module/entry-point isolation fixes. They are designed to FAIL against the
  * pre-fix behavior (shared `projectId`, no generation guard, module state that
  * survived selection changes) and pass because of the implementation.
  */
@@ -11,9 +11,9 @@
 import { StrictMode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import type { ApplicationSpecification, CapabilityModuleRecord, ModuleManifest, Project } from '@engineering-ui-kit/core'
+import type { ApplicationSpecification, ArchitectureSpecification, CapabilityModuleRecord, InterviewPacket, ModuleManifest, Project } from '@engineering-ui-kit/core'
 import type { EuikBridge } from '../src/bridge'
-import { CapabilitiesView } from '../src/views/capabilities/CapabilitiesView'
+import { architectureForDisplay, CapabilitiesView } from '../src/views/capabilities/CapabilitiesView'
 import { ModulesView } from '../src/views/capabilities/ModulesView'
 import { GuidedConnect } from '../src/views/capabilities/GuidedConnect'
 import { GuidedBuild } from '../src/views/capabilities/GuidedBuild'
@@ -73,6 +73,24 @@ function selectProject(value: string) {
 }
 
 describe('project isolation', () => {
+  it('carries an active Build & Test project into Capabilities without another selection', async () => {
+    const ensureInitialized = vi.fn(async () => ({ schemaVersion: '1.0', initializedAt: 't' }))
+    const onProjectSelected = vi.fn()
+    render(
+      <CapabilitiesView
+        bridge={makeBridge({ capabilitiesEnsureInitialized: ensureInitialized as never })}
+        projects={projects}
+        activeProjectId="B"
+        onProjectSelected={onProjectSelected}
+      />,
+    )
+
+    await waitFor(() => expect((screen.getByLabelText('Capabilities project') as HTMLSelectElement).value).toBe('B'))
+    await waitFor(() => expect(screen.getByText('Understand the application.')).toBeTruthy())
+    expect(ensureInitialized).toHaveBeenCalledWith('B')
+    expect(onProjectSelected).toHaveBeenCalledWith('B')
+  })
+
   it('discards a late Project A response after the user switches to Project B', async () => {
     const defA = deferred<{ approved?: unknown }>()
     const getApp = vi.fn((pid: string) => (pid === 'A' ? defA.promise : Promise.resolve({})))
@@ -104,7 +122,7 @@ describe('project isolation', () => {
     expect(screen.getByText('Loading this project…')).toBeTruthy()
 
     defB.resolve({})
-    await waitFor(() => expect(screen.getByText('Understand the application.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Understand the application.')).toBeTruthy(), { timeout: 5_000 })
   })
 
   it('disables writes while a project is loading (no stage workspace mounted)', async () => {
@@ -165,8 +183,8 @@ describe('project isolation', () => {
     render(<CapabilitiesView bridge={bridge} projects={projects} />)
 
     selectProject('A')
-    await waitFor(() => expect((screen.getByRole('button', { name: 'Approve definition' }) as HTMLButtonElement).disabled).toBe(false))
-    fireEvent.click(screen.getByRole('button', { name: 'Approve definition' }))
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Approve plan' }) as HTMLButtonElement).disabled).toBe(false))
+    fireEvent.click(screen.getByRole('button', { name: 'Approve plan' }))
     selectProject('B')
     await waitFor(() => expect(screen.getByText('Understand the application.')).toBeTruthy())
 
@@ -179,6 +197,117 @@ describe('project isolation', () => {
 })
 
 describe('architecture import recovery', () => {
+  it('starts a real revision, refreshes the workspace, and prepares a new immutable revision', async () => {
+    const approved: ArchitectureSpecification = {
+      schemaVersion: '1.0', projectId: 'p1', id: 'arch.p1', revision: '1', status: 'approved',
+      applicationSpecId: ARCH_PRODUCT.id, applicationSpecRevision: ARCH_PRODUCT.revision, applicationSpecHash: ARCH_PRODUCT.contentHash,
+      capabilityProjections: [{ id: 'cap.main', name: 'Main', moduleIds: ['mod.main'] }],
+      moduleIds: ['mod.main'],
+      moduleDefinitions: [{ moduleId: 'mod.main', name: 'Main', moduleType: 'domain', responsibility: 'Own the main workflow.' }],
+      dependencyEdges: [], operationAllocations: [], adapterAllocations: [],
+      workflowTraces: [{ useCaseId: 'usecase.main', moduleIds: ['mod.main'] }],
+      proposals: [], unresolvedQuestions: [],
+      gateResult: { gateId: 'CAP-GATE-002', passed: true, diagnostics: [] }, contentHash: 'approved-arch-hash',
+    }
+    const exportInterview = vi.fn(async (_input: unknown) => ({
+      runId: 'run-revise', packetId: 'pkt-revise', recommendedPrompt: 'Revise the design.',
+      files: [{ path: '/tmp/capability-architecture-handoff.md', bytes: 100, sha256: 'abc' }],
+      uploadFiles: ['/tmp/capability-architecture-handoff.md'],
+    }))
+    const saveDraft = vi.fn(async () => ({ ok: true as const }))
+    const onChanged = vi.fn(async () => undefined)
+    const bridge = makeBridge({
+      capabilitiesGetApplication: (async () => ({ approved: ARCH_PRODUCT })) as never,
+      capabilitiesGetArchitecture: (async () => ({ approved })) as never,
+      capabilitiesExportInterviewPacket: exportInterview as never,
+      capabilitiesSaveArchitectureDraft: saveDraft as never,
+    })
+    render(
+      <ArchitectureInterview
+        bridge={bridge}
+        projectId="p1"
+        architectureApproved
+        projection="guided"
+        onChanged={onChanged}
+      />,
+    )
+
+    const revise = await screen.findByRole('button', { name: 'Revise design' })
+    fireEvent.click(revise)
+    await waitFor(() => expect(exportInterview).toHaveBeenCalledTimes(1))
+    const exportedPacket = exportInterview.mock.calls[0]![0] as InterviewPacket
+    expect(exportedPacket.inputContext.facts).toContain(`currentArchitectureSpecification:${JSON.stringify(approved)}`)
+    expect(exportedPacket.inputContext.facts).toContain('architectureRevision:replace approved revision 1 with revision 2')
+    expect(await screen.findByText('Review the revised application structure')).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Approve application structure' }) as HTMLButtonElement).disabled).toBe(true)
+
+    const response = {
+      architecture: {
+        ...approved,
+        status: 'proposed',
+        revision: '1',
+        moduleDefinitions: [{ ...approved.moduleDefinitions![0]!, responsibility: 'Own the revised main workflow.' }],
+        gateResult: { gateId: 'CAP-GATE-002', passed: false, diagnostics: [] },
+        contentHash: 'pending',
+      },
+      moduleNeedTraces: [{ moduleId: 'mod.main', needIds: ['usecase.main'] }],
+      moduleJustifications: [{ moduleId: 'mod.main', justification: 'distinct-rules' }],
+    }
+    fireEvent.change(screen.getByLabelText('Interview response JSON'), { target: { value: JSON.stringify(response) } })
+    fireEvent.click(screen.getAllByRole('button', { name: 'Import proposed structure' })[1]!)
+
+    await waitFor(() => expect(saveDraft).toHaveBeenCalledTimes(1))
+    const revisedDraft = saveDraft.mock.calls[0]![1] as ArchitectureSpecification
+    expect(revisedDraft.revision).toBe('2')
+    expect(revisedDraft.status).toBe('proposed')
+    expect(revisedDraft.contentHash).not.toBe('pending')
+    expect(onChanged).toHaveBeenCalledTimes(1)
+    expect((screen.getByRole('button', { name: 'Approve application structure' }) as HTMLButtonElement).disabled).toBe(false)
+
+    expect(architectureForDisplay({ approved, draft: revisedDraft })).toBe(revisedDraft)
+    expect(architectureForDisplay({ approved, draft: { ...revisedDraft, revision: approved.revision } })).toBe(approved)
+  })
+
+  it('sends validation findings and the rejected JSON to Copilot for correction', async () => {
+    const openExternal = vi.fn(async () => undefined)
+    const writeText = vi.fn(async () => undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    })
+    const bridge = makeBridge({
+      capabilitiesGetApplication: (async () => ({ approved: ARCH_PRODUCT })) as never,
+      capabilitiesGetArchitecture: (async () => ({})) as never,
+      openExternal: openExternal as never,
+    })
+    render(
+      <ArchitectureInterview
+        bridge={bridge}
+        projectId="p1"
+        architectureApproved={false}
+        projection="guided"
+      />,
+    )
+
+    await waitFor(() => expect(screen.getByLabelText('Interview response JSON')).toBeTruthy())
+    const rejected = JSON.stringify({ architecture: { schemaVersion: '1.0' } })
+    fireEvent.change(screen.getByLabelText('Interview response JSON'), { target: { value: rejected } })
+    fireEvent.click(screen.getAllByRole('button', { name: 'Import proposed structure' })[1]!)
+
+    const fixButton = await screen.findByRole('button', { name: 'Fix errors in Copilot' })
+    expect(screen.getByRole('alert', { name: 'Architecture validation issues' })).toBeTruthy()
+    fireEvent.click(fixButton)
+
+    await waitFor(() => expect(openExternal).toHaveBeenCalledWith('https://m365.cloud.microsoft/chat'))
+    expect(writeText).toHaveBeenCalledTimes(1)
+    const prompt = writeText.mock.calls[0]![0]
+    expect(prompt).toContain('architecture.moduleIds is required')
+    expect(prompt).toContain(rejected)
+    expect(prompt).toContain(`applicationSpecHash: ${ARCH_PRODUCT.contentHash}`)
+    expect(prompt).toContain('Return one complete replacement JSON object only')
+    expect(screen.getByText(/fix request on your clipboard/i)).toBeTruthy()
+  })
+
   it('repairs mechanical interview omissions and enables approval without a follow-up interview', async () => {
     const saveDraft = vi.fn(async () => ({ ok: true as const }))
     const bridge = makeBridge({
@@ -223,14 +352,14 @@ describe('architecture import recovery', () => {
       ],
     }
     const paste = screen.getByLabelText('Interview response JSON')
-    const importButtons = screen.getAllByRole('button', { name: 'Import architecture proposal' })
+    const importButtons = screen.getAllByRole('button', { name: 'Import proposed structure' })
     fireEvent.change(paste, { target: { value: JSON.stringify(response) } })
     fireEvent.click(importButtons[1]!)
 
-    await waitFor(() => expect(screen.getByText('Imported architecture proposal as draft. Review cycles and findings, then approve.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Imported the proposed application structure. Review it, then approve when ready.')).toBeTruthy())
     expect(screen.queryByText(/Cannot read properties of undefined/)).toBeNull()
     expect(saveDraft).toHaveBeenCalledTimes(1)
-    expect((screen.getByRole('button', { name: 'Approve architecture' }) as HTMLButtonElement).disabled).toBe(false)
+    expect((screen.getByRole('button', { name: 'Approve application structure' }) as HTMLButtonElement).disabled).toBe(false)
     const saved = saveDraft.mock.calls[0]![1] as ArchitectureSpecification
     expect(saved.dependencyEdges[0]?.reason).toContain('Workflow uses Domain')
     expect(saved.moduleDefinitions).toEqual(expect.arrayContaining([
@@ -264,11 +393,11 @@ describe('architecture import recovery', () => {
     })
     render(<ArchitectureInterview bridge={bridge} projectId="p1" architectureApproved={false} projection="guided" />)
 
-    const approve = screen.getByRole('button', { name: 'Approve architecture' }) as HTMLButtonElement
+    const approve = screen.getByRole('button', { name: 'Approve application structure' }) as HTMLButtonElement
     await waitFor(() => expect(approve.disabled).toBe(false))
     fireEvent.click(approve)
 
-    await waitFor(() => expect(screen.getByText('Architecture approved.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Application structure approved.')).toBeTruthy())
     const normalized = (approveArchitecture.mock.calls as unknown[][])[0]![1] as ArchitectureSpecification
     expect(normalized.dependencyEdges[0]?.reason).toContain('Workflow uses Domain')
     expect(normalized.workflowTraces[0]?.moduleIds).toEqual(['mod.workflow', 'mod.domain'])
@@ -396,9 +525,22 @@ describe('module isolation', () => {
     expect(within(outcome).getByText('Place Order')).toBeTruthy()
     expect(within(outcome).getByText('Order Rules')).toBeTruthy()
     expect(within(outcome).getByText('User Interface')).toBeTruthy()
+    expect(outcome.textContent).not.toContain('suite.orders')
+    expect(outcome.textContent).not.toContain('1.2.0')
+
+    fireEvent.click(within(outcome).getByRole('button', { name: 'Technical specification' }))
+    const technical = screen.getByRole('dialog', { name: 'Order Domain technical specification' })
+    expect(technical.textContent).toContain('suite.orders')
+    expect(technical.textContent).toContain('op.place-order@1.0.0')
+    expect(technical.textContent).toContain('capabilities/modules/mod.orders/')
+    fireEvent.click(within(technical).getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog', { name: 'Order Domain technical specification' })).toBeNull()
 
     fireEvent.click(within(outcome).getByRole('button', { name: 'Revisit interview' }))
     await waitFor(() => expect(exportInterview).toHaveBeenCalledTimes(1))
+    expect(exportInterview).toHaveBeenCalledWith(expect.objectContaining({
+      inputContext: expect.objectContaining({ facts: expect.arrayContaining(['moduleVersion:1.2.1']) }),
+    }))
     expect(await screen.findByRole('region', { name: 'Ready for Copilot' })).toBeTruthy()
     expect(screen.getAllByRole('button', { name: 'Import module interview response' }).some((button) => !(button as HTMLButtonElement).disabled)).toBe(true)
     expect(within(outcome).getByText('Revising')).toBeTruthy()
@@ -433,7 +575,7 @@ describe('module isolation', () => {
     const afterApproval: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: { moduleId: 'mod.orders' } as never }, { moduleId: 'mod.other' }]
     rerender(<GuidedBuild bridge={bridge} projectId="p1" archSpec={architecture as never} records={afterApproval} onChanged={() => {}} />)
     await waitFor(() => expect(screen.getByRole('button', { name: /Other, Not started/i }).getAttribute('aria-current')).toBe('true'))
-    expect(screen.getByText('Create the module interview')).toBeTruthy()
+    expect(screen.getByText('Generate the module draft')).toBeTruthy()
   })
 
   it('offers an agent-assisted build for an approved experience module with approved context', async () => {
@@ -514,7 +656,7 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
     const updateProject = vi.fn(async (_id, patch) => ({ ...configuredProject, ...patch }))
     render(<GuidedConnect bridge={makeBridge({ launchApp: launchApp as never, updateProject: updateProject as never })} projectId="p1" project={configuredProject} records={records} deployables={uiDeployables} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
 
-    expect(screen.getByRole('heading', { name: 'How is this capability triggered?' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Configure application entry points' })).toBeTruthy()
     expect(launchApp).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
@@ -541,7 +683,7 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
       launchUrl: 'http://localhost:4400', launchCommand: 'npm run ui',
     }))
     await waitFor(() => expect(launchApp).toHaveBeenCalledTimes(1))
-    expect(screen.getByText('Connected')).toBeTruthy()
+    expect(screen.getByText('Selected')).toBeTruthy()
   })
 
   it('applies preview selection evidence that arrives after the UI editor opened', async () => {
@@ -559,7 +701,7 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
     expect(screen.getByText('Place', { selector: '.cap-connect-confirmed strong' })).toBeTruthy()
   })
 
-  it('"decide later" defers without launching a preview and never completes Connect on its own', async () => {
+  it('"decide later" defers without launching a preview and never completes Build on its own', async () => {
     const baseProject = project('p1', 'Service')
     const updateProject = vi.fn(async (_id, patch) => ({ ...baseProject, ...patch }))
     const launchApp = vi.fn()
@@ -583,23 +725,23 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
     fillAllBehaviors()
 
-    const approve = screen.getByRole('button', { name: 'Approve connection' })
+    const approve = screen.getByRole('button', { name: 'Approve entry point' })
     fireEvent.click(approve)
     fireEvent.click(approve) // second click in the same tick must be ignored
     await new Promise((r) => setTimeout(r, 0))
     expect(approveInboundBinding).toHaveBeenCalledTimes(1)
   })
 
-  it('withholds Test and Approve until every behavior is described', async () => {
+  it('withholds approval until every behavior is described and leaves runtime proof to Verify', async () => {
     render(<GuidedConnect bridge={makeBridge()} projectId="p1" records={records} deployables={uiDeployables} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
     fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
-    // No behaviors filled yet -> both actions disabled.
-    expect((screen.getByRole('button', { name: 'Approve connection' }) as HTMLButtonElement).disabled).toBe(true)
-    expect((screen.getByRole('button', { name: /Run connected test/i }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Approve entry point' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.queryByRole('button', { name: /Run connected test/i })).toBeNull()
+    expect(screen.getByText(/exercised later in Verify/i)).toBeTruthy()
     fillAllBehaviors()
-    await waitFor(() => expect((screen.getByRole('button', { name: 'Approve connection' }) as HTMLButtonElement).disabled).toBe(false))
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Approve entry point' }) as HTMLButtonElement).disabled).toBe(false))
   })
 
   it('re-initializes (empty behaviors) when the project identity changes', async () => {
@@ -611,7 +753,7 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
     expect((screen.getByLabelText('While it runs') as HTMLInputElement).value).toBe('typed in project 1')
     // Remount under a new project key (as the shell does) -> fresh, empty editor back at the trigger question.
     rerender(<GuidedConnect key="p2" bridge={makeBridge()} projectId="p2" records={records} deployables={uiDeployables} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
-    expect(screen.getByRole('heading', { name: 'How is this capability triggered?' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Configure application entry points' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
     fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
@@ -721,6 +863,68 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
       const list = await bridge.capabilitiesListInboundBindings('p1')
       expect(list.some((r) => r.approved?.exposure === 'public')).toBe(true)
     })
+  })
+
+  it('keeps raw entry-point identifiers in the technical modal and supports audit-safe revise and remove actions', async () => {
+    const approved = {
+      schemaVersion: '1.0' as const, kind: 'http' as const,
+      bindingId: 'binding.raw.orders-entry', version: '1.0.0', projectId: 'p1',
+      deployableId: 'deployable.main', operationId: 'op.placeOrder', operationVersion: '2.0',
+      inputMappings: [], outputMappings: [], validationBehavior: 'reject invalid input',
+      domainRejectionBehavior: 'show the rejection', technicalFailureBehavior: 'show a safe failure',
+      timeoutBehavior: 'show a timeout', cancellationBehavior: 'show cancellation', retryBehavior: 'retry once',
+      duplicateSubmissionBehavior: 'ignore duplicates', exposure: 'protected' as const, generatedTargets: [],
+      approvalState: 'approved', method: 'POST' as const, path: '/orders/place',
+    }
+    const saveDraft = vi.fn(async () => ({ ok: true as const }))
+    const approve = vi.fn(async (_projectId, binding) => ({ ok: true as const, approved: binding }))
+    const archive = vi.fn(async () => ({ ok: true as const }))
+    render(
+      <GuidedConnect
+        bridge={makeBridge({
+          capabilitiesSaveInboundBindingDraft: saveDraft as never,
+          capabilitiesApproveInboundBinding: approve as never,
+          capabilitiesArchiveInboundBinding: archive as never,
+        })}
+        projectId="p1"
+        records={records}
+        deployables={uiDeployables}
+        inboundBindingRecords={[{ bindingId: approved.bindingId, approved }]}
+        architectureVersion="3"
+        architectureHash="architecture-raw-hash"
+        onSelectionEvidence={() => {}}
+        previewRef={{ current: null }}
+        onChanged={() => {}}
+      />,
+    )
+
+    expect(document.body.textContent).not.toContain('binding.raw.orders-entry')
+    expect(document.body.textContent).not.toContain('architecture-raw-hash')
+    fireEvent.click(screen.getByRole('button', { name: 'Technical specification' }))
+    const technical = screen.getByRole('dialog', { name: 'Entry-point technical specification' })
+    expect(technical.textContent).toContain('binding.raw.orders-entry')
+    expect(technical.textContent).toContain('architecture-raw-hash')
+    fireEvent.click(within(technical).getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog', { name: 'Entry-point technical specification' })).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    expect((screen.getByLabelText('Capability') as HTMLSelectElement).value).toBe('op.placeOrder@2.0')
+    expect((screen.getByLabelText('HTTP path') as HTMLInputElement).value).toBe('/orders/place')
+    fireEvent.change(screen.getByLabelText('HTTP path'), { target: { value: '/orders/place-revised' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Approve entry point' }))
+    await waitFor(() => expect(approve).toHaveBeenCalledTimes(1))
+    expect(saveDraft.mock.calls[0]?.[1]).toMatchObject({
+      bindingId: 'binding.raw.orders-entry', version: '1.0.1', path: '/orders/place-revised',
+      operationId: 'op.placeOrder', operationVersion: '2.0', approvalState: 'draft', exposure: 'protected',
+    })
+    expect(approve.mock.calls[0]?.[1]).toMatchObject({
+      bindingId: 'binding.raw.orders-entry', version: '1.0.1', path: '/orders/place-revised',
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm remove' }))
+    await waitFor(() => expect(archive).toHaveBeenCalledWith('p1', 'binding.raw.orders-entry'))
+    expect(screen.getByText(/Entry point removed/i)).toBeTruthy()
   })
 })
 

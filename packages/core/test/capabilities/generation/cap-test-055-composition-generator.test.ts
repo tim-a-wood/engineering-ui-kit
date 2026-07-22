@@ -166,8 +166,8 @@ describe('CAP-TEST-055 composition.ts composition-root planning', () => {
     const contents = result.file.contents
     expect(contents).toContain('GENERATED FILE — DO NOT EDIT.')
     expect(contents).toContain("import { LifecycleContainer, createToken } from '@engineering-ui-kit/capabilities-runtime'")
-    expect(contents).toContain('export const ordersRepositoryToken: ServiceToken = createToken("orders.repository")')
-    expect(contents).toContain('export const ordersServiceToken: ServiceToken = createToken("orders.service")')
+    expect(contents).toContain('export const ordersRepositoryToken: ServiceToken<ReturnType<typeof createOrdersRepository>> = createToken("orders.repository")')
+    expect(contents).toContain('export const ordersServiceToken: ServiceToken<ReturnType<typeof createOrdersService>> = createToken("orders.service")')
     expect(contents).toContain('lifecycle: "singleton"')
     expect(contents).toContain('lifecycle: "request-job"')
     expect(contents).toContain('factory: (scope: ResolutionContext) => createOrdersService(scope.resolve(ordersRepositoryToken))')

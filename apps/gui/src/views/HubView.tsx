@@ -20,6 +20,7 @@ export function HubView(props: {
   refreshProjects: () => Promise<void>
   onStartRun: (projectId: string) => void
   onOpenStep: (view: ViewId) => void
+  onOpenCapabilities: (projectId?: string) => void
 }) {
   const [newProjectOpen, setNewProjectOpen] = useState(false)
   const [continueThumbnail, setContinueThumbnail] = useState<string | null>(null)
@@ -60,11 +61,18 @@ export function HubView(props: {
     <>
       <PageHeader
         title="Build & Test"
-        subtitle="Choose a project to start or continue working with Copilot."
+        subtitle="Plan capabilities, build a change, and verify the result in one project workspace."
         actions={
-          <button type="button" className="btn btn-primary" onClick={() => setNewProjectOpen(true)}>
-            {Icon.plus()} New Project
-          </button>
+          <>
+            {activeProject ? (
+              <button type="button" className="btn btn-secondary" onClick={() => props.onOpenCapabilities(activeProject.id)}>
+                {Icon.box(16)} Plan capabilities
+              </button>
+            ) : null}
+            <button type="button" className="btn btn-primary" onClick={() => setNewProjectOpen(true)}>
+              {Icon.plus()} New Project
+            </button>
+          </>
         }
       />
 
@@ -128,18 +136,29 @@ export function HubView(props: {
           <ul className="project-rows">
             {recent.map((project) => (
               <li key={project.id}>
-                <button type="button" className="project-row" onClick={() => props.onStartRun(project.id)}>
-                  <span className="project-row-icon" aria-hidden="true">{Icon.folder(18)}</span>
-                  <div className="project-row-copy">
-                    <strong>{project.name}</strong>
-                    {project.isSample && <span className="sample-chip" title="Built-in sample project — explore freely">Sample</span>}
-                    <p className="project-meta">
-                      {project.description ? `${project.description} · ` : ''}
-                      {lastUpdatedLabel(project.updatedAt)}
-                    </p>
-                  </div>
-                  <span className="hub-row-arrow" aria-hidden="true">{Icon.chevronRight(16)}</span>
-                </button>
+                <div className="project-row-shell">
+                  <button type="button" className="project-row" aria-label={`Build and test ${project.name}`} onClick={() => props.onStartRun(project.id)}>
+                    <span className="project-row-icon" aria-hidden="true">{Icon.folder(18)}</span>
+                    <div className="project-row-copy">
+                      <strong>{project.name}</strong>
+                      {project.isSample && <span className="sample-chip" title="Built-in sample project — explore freely">Sample</span>}
+                      <p className="project-meta">
+                        {project.description ? `${project.description} · ` : ''}
+                        {lastUpdatedLabel(project.updatedAt)}
+                      </p>
+                    </div>
+                    <span className="project-row-primary-label">Build &amp; Test</span>
+                    <span className="hub-row-arrow" aria-hidden="true">{Icon.chevronRight(16)}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-compact project-row-capabilities"
+                    aria-label={`Plan capabilities for ${project.name}`}
+                    onClick={() => props.onOpenCapabilities(project.id)}
+                  >
+                    {Icon.box(14)} Plan capabilities
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

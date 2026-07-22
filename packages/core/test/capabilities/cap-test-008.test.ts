@@ -106,6 +106,9 @@ describe('CAP-TEST-008 architecture proposal gate', () => {
     expect(packet.gateId).toBe('CAP-GATE-002')
     expect(packet.outputSchemaRef).toBe('CAP-CONTRACT-002')
     expect(packet.safetyNotes.length).toBeGreaterThan(0)
+    expect(packet.inputContext.facts).toContain('actor:a1:operator')
+    expect(packet.inputContext.facts).toContain('inScope:inventory')
+    expect(packet.inputContext.facts.some((fact) => fact.startsWith('acceptanceCase:ac1:'))).toBe(true)
   })
 
   it('passes only a need-traced minimal acyclic proposal', () => {

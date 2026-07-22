@@ -21,7 +21,6 @@ export type GuideTopicId =
   | 'capabilities-define'
   | 'capabilities-architect'
   | 'capabilities-build'
-  | 'capabilities-connect'
   | 'capabilities-verify'
   | 'capabilities-changes'
 
@@ -219,11 +218,11 @@ function EvidenceArt() {
 /* --------------------------------------------------- capabilities artwork */
 
 function CapJourneyArt() {
-  const stages = ['Plan', 'Design', 'Build', 'Connect', 'Verify']
+  const stages = ['Plan', 'Design', 'Build', 'Verify']
   return (
-    <svg viewBox="0 0 520 150" role="img" aria-label="The five-step Capabilities journey">
+    <svg viewBox="0 0 520 150" role="img" aria-label="The four-step Capabilities journey">
       {stages.map((label, i) => {
-        const x = 8 + i * 103
+        const x = 28 + i * 126
         const done = i < 1
         const current = i === 1
         return (
@@ -232,7 +231,7 @@ function CapJourneyArt() {
             <circle cx={x + 18} cy="70" r="11" fill={done ? ok : current ? accent : inset} stroke={done || current ? 'none' : stroke} />
             <text x={x + 18} y="74" textAnchor="middle" fontSize="10" fontWeight="700" fill={done || current ? '#fff' : muted}>{done ? '✓' : i + 1}</text>
             <text x={x + 41} y="94" textAnchor="middle" fontSize="10.5" fontWeight="600" fill="var(--semantic-text-primary)">{label}</text>
-            {i < 4 && <path d={`M${x + 82} 75 H${x + 103}`} stroke={stroke} strokeWidth="1.5" markerEnd="url(#cap-arrow)" />}
+            {i < 3 && <path d={`M${x + 82} 75 H${x + 126}`} stroke={stroke} strokeWidth="1.5" markerEnd="url(#cap-arrow)" />}
           </g>
         )
       })}
@@ -264,30 +263,6 @@ function CapHandoffArt(props: { label: string; aria: string }) {
       <text x="413" y="79" textAnchor="middle" fontSize="9.5" fill={ok}>review</text>
       <defs>
         <marker id="cap-h-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={accent} /></marker>
-      </defs>
-    </svg>
-  )
-}
-
-function CapConnectArt() {
-  return (
-    <svg viewBox="0 0 460 150" role="img" aria-label="Selecting a preview element and connecting it to a capability">
-      <rect x="24" y="28" width="150" height="94" rx="10" fill={panel} stroke={stroke} />
-      <text x="99" y="20" textAnchor="middle" fontSize="9.5" fill={muted}>Preview</text>
-      <rect x="40" y="44" width="118" height="14" rx="4" fill={inset} stroke={stroke} />
-      <rect x="40" y="66" width="70" height="40" rx="6" fill="var(--semantic-accent-primary-tint)" stroke={accent} strokeWidth="1.6" />
-      <text x="75" y="90" textAnchor="middle" fontSize="8.5" fill={accentText}>selected</text>
-      <path d="M178 86 H222" stroke={accent} strokeWidth="1.8" markerEnd="url(#cap-c-arrow)" />
-      <rect x="228" y="40" width="96" height="30" rx="8" fill={panel} stroke={accent} />
-      <text x="276" y="59" textAnchor="middle" fontSize="9.5" fill={accentText}>capability</text>
-      <rect x="228" y="82" width="96" height="30" rx="8" fill={panel} stroke={stroke} />
-      <text x="276" y="101" textAnchor="middle" fontSize="9" fill="var(--semantic-text-secondary)">behavior</text>
-      <path d="M328 86 H372" stroke={stroke} strokeWidth="1.5" markerEnd="url(#cap-c-arrow2)" />
-      <rect x="376" y="64" width="70" height="44" rx="8" fill={panel} stroke={ok} />
-      <text x="411" y="90" textAnchor="middle" fontSize="9.5" fill={ok}>approve</text>
-      <defs>
-        <marker id="cap-c-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={accent} /></marker>
-        <marker id="cap-c-arrow2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={stroke} /></marker>
       </defs>
     </svg>
   )
@@ -349,10 +324,10 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
     group: 'Capabilities',
     label: 'The journey',
     title: 'Capabilities, in one picture',
-    blurb: 'Capabilities turns "what should this application do" into approved, verified modules through five steps: Plan, Design, Build, Connect, Verify. Guided is the task-focused view; the technical view holds the detailed records. Both read the same model.',
+    blurb: 'Capabilities turns "what should this application do" into an approved, verified application through four steps: Plan, Design, Build, and Verify. Guided is the task-focused view; the technical view holds the detailed records. Both read the same model.',
     art: <CapJourneyArt />,
     steps: [
-      { title: 'Guided vs technical view', body: 'Guided follows five steps and shows the next useful action. Plan establishes an understanding of the application; Design shapes the solution. The technical view exposes the same records as six detailed areas.' },
+      { title: 'Guided vs technical view', body: 'Guided follows four steps and shows the next useful action. Plan establishes an understanding of the application; Design shapes the solution. The technical view exposes the same records in more detail.' },
       { title: 'One model', body: 'Switching modes never duplicates or forks your work — both projections read and write the same canonical records.' },
       { title: 'Maintenance', body: 'Needs attention lists modules that have drifted and the one action each needs. Changes assesses the impact of an edit and walks the affected modules in dependency order.' },
     ],
@@ -389,29 +364,15 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
     id: 'capabilities-build',
     group: 'Capabilities',
     label: 'Build',
-    title: 'Interview, approve, and implement each module',
-    blurb: 'Work one allocated module at a time: interview it, approve its manifest, then implement it with an agent-assisted UI build or an external handoff.',
+    title: 'Build the modules, entry points, and shared setup',
+    blurb: 'Complete each module, decide how people or systems start its capabilities, then generate the shared application setup that wires everything together.',
     art: <CapHandoffArt label="Module" aria="Module interview and implementation overlay loop" />,
     steps: [
       { title: 'Select one module', body: 'Pick a module from the list. Its status and the single next action are shown.' },
       { title: 'Interview and approve', body: 'Run the module interview, import the response, and approve the manifest.' },
       { title: 'Choose how to implement', body: 'For UI modules, open Build & Test with the approved module context already prepared. You can still use the external implementation handoff.' },
-      { title: 'Inspect and apply', body: 'Inspect the overlay: blockers can never be applied; warnings need your explicit acceptance. Then mark it ready for verification.' },
-    ],
-  },
-  {
-    id: 'capabilities-connect',
-    group: 'Capabilities',
-    label: 'Connect',
-    title: 'Connect an element to a capability',
-    blurb: 'Choose whether this application connects to a UI now, has no UI, or will handle UI integration later.',
-    art: <CapConnectArt />,
-    steps: [
-      { title: 'Choose how to connect', body: 'Connect a UI now, complete this stage with no UI, or defer UI integration while keeping it in Needs attention.' },
-      { title: 'Start Preview', body: 'Launch the confirmed application UI. Element selection is available in the packaged desktop app.' },
-      { title: 'Select an element', body: 'Pick the element you want to wire up. Its visible text and location are confirmed.' },
-      { title: 'Choose a capability', body: 'Choose exactly one approved operation and describe the visible behavior in plain language.' },
-      { title: 'Test and approve', body: 'Test the connection — connected or simulated — then approve it. Simulations never touch adapters.' },
+      { title: 'Configure entry points', body: 'Review the suggested UI, HTTP, command-line, schedule, or embedded entry points. Confirm the decisions that affect exposure or runtime behavior.' },
+      { title: 'Prepare shared setup', body: 'Generate and apply the shared application files only after required entry points are approved. If an entry point changes, refresh this final Build step.' },
     ],
   },
   {

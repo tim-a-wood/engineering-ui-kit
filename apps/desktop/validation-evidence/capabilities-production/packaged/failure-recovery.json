@@ -1,8 +1,8 @@
 {
   "journey": "mid-transaction-failure-restart-recovery",
-  "executablePath": "/Users/runner/work/engineering-ui-kit/engineering-ui-kit/release/mac-arm64/Engineering UI Kit.app/Contents/MacOS/Engineering UI Kit",
+  "executablePath": "/Users/timwood/Documents/UI Framework/release/mac-arm64/Engineering UI Kit.app/Contents/MacOS/Engineering UI Kit",
   "packaged": true,
-  "scratch": "/var/folders/8j/sfr9qqcj73j4p6nhwcfpr0th0000gn/T/euik-production-recovery-Bpob9k",
+  "scratch": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-production-recovery-cmUsma",
   "baselineHash": "386c39530a99995fb83274b8407ea38554ec51a3ff420e461f1821705856d867",
   "screenshots": [
     "apps/desktop/validation-evidence/capabilities-production/packaged/41-mid-transaction-failure-restored.png",
@@ -10,6 +10,7 @@
     "apps/desktop/validation-evidence/capabilities-production/packaged/43-retry-succeeded.png"
   ],
   "passed": true,
+  "rendererErrors": [],
   "afterFailureHash": "386c39530a99995fb83274b8407ea38554ec51a3ff420e461f1821705856d867",
   "finalHash": "386c39530a99995fb83274b8407ea38554ec51a3ff420e461f1821705856d867"
 }

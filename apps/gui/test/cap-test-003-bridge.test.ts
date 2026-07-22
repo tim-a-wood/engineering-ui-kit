@@ -45,6 +45,7 @@ const CANONICAL_CAP_METHODS = [
   'capabilitiesListInboundBindings',
   'capabilitiesSaveInboundBindingDraft',
   'capabilitiesApproveInboundBinding',
+  'capabilitiesArchiveInboundBinding',
   'capabilitiesListNeedsAttention',
   'capabilitiesCalculateImpact',
   'capabilitiesApproveImpact',

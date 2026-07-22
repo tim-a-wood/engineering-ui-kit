@@ -125,6 +125,34 @@ describe('CAP-TEST-072 foundation ambiguity resolution', () => {
     expect(partiallyAnswered.readiness.status).toBe('ambiguous')
   })
 
+  it('preserves non-experience modules when resolving a greenfield browser host', () => {
+    const mixedArchitecture = architecture({
+      moduleIds: ['mod.ui', 'mod.domain'],
+      moduleDefinitions: [
+        { moduleId: 'mod.ui', name: 'Workbench', moduleType: 'experience', responsibility: 'ui' },
+        { moduleId: 'mod.domain', name: 'Domain', moduleType: 'domain', responsibility: 'rules' },
+      ],
+      capabilityProjections: [{ id: 'cap1', name: 'Primary', moduleIds: ['mod.ui', 'mod.domain'] }],
+      workflowTraces: [{ useCaseId: 'u1', moduleIds: ['mod.ui', 'mod.domain'] }],
+    })
+
+    const plan = proposeFoundation({
+      architecture: mixedArchitecture,
+      discovery: emptyDiscovery(),
+      answers: [{ id: 'ui-deployable-missing', choice: 'browser' }],
+    })
+
+    expect(plan.readiness.status).toBe('ready')
+    expect(plan.deployables.find((deployable) => deployable.deployableId === 'browser')?.moduleIds)
+      .toEqual(['mod.ui'])
+    expect(plan.deployables.find((deployable) => deployable.deployableId === 'http-api')?.moduleIds)
+      .toEqual(['mod.domain'])
+    expect(plan.allocations.map((allocation) => `${allocation.moduleId}:${allocation.deployableId}`)).toEqual([
+      'mod.domain:http-api',
+      'mod.ui:browser',
+    ])
+  })
+
   it('round-trips resolvedAnswers via saveFoundationDraft -> getFoundationDraft', () => {
     const ws = tmpWorkspace()
     const plan = proposeFoundation({

@@ -1,5 +1,5 @@
 /**
- * Shared, pure helpers for the generalized Connect inbound-binding editors
+ * Shared, pure helpers for the generalized Build entry-point editors
  * (CAP-ERA-001 §12.4, CAP-PKT WP6B). Consumes the frozen CAP-CONTRACT-028
  * `InboundBinding` discriminated union — never redefines it.
  *

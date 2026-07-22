@@ -259,6 +259,7 @@ export type EuikBridge = {
     projectId: string,
     draft: InboundBinding,
   ): Promise<{ ok: boolean; diagnostics?: unknown; approved?: InboundBinding }>
+  capabilitiesArchiveInboundBinding(projectId: string, bindingId: string): Promise<{ ok: true }>
   capabilitiesListNeedsAttention(projectId: string): Promise<AttentionItem[]>
   capabilitiesCalculateImpact(input: {
     projectId: string
@@ -411,6 +412,7 @@ export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
   capabilitiesListInboundBindings: 'capabilities:list-inbound-bindings',
   capabilitiesSaveInboundBindingDraft: 'capabilities:save-inbound-binding-draft',
   capabilitiesApproveInboundBinding: 'capabilities:approve-inbound-binding',
+  capabilitiesArchiveInboundBinding: 'capabilities:archive-inbound-binding',
   capabilitiesListNeedsAttention: 'capabilities:list-needs-attention',
   capabilitiesCalculateImpact: 'capabilities:calculate-impact',
   capabilitiesApproveImpact: 'capabilities:approve-impact',

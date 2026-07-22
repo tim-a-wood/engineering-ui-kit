@@ -17,16 +17,14 @@ export type DesignSection =
   | 'architecture'
   | 'attention'
   | 'modules'
-  | 'connections'
   | 'verification'
 
-/** The six canonical Design areas (Section 31), in order. */
+/** The five canonical Design areas, in order. Entry points live within Modules/Build. */
 export const DESIGN_SECTIONS: { id: DesignSection; label: string }[] = [
   { id: 'application', label: 'Application' },
   { id: 'architecture', label: 'Architecture' },
   { id: 'attention', label: 'Needs attention' },
   { id: 'modules', label: 'Modules' },
-  { id: 'connections', label: 'Connections' },
   { id: 'verification', label: 'Verification' },
 ]
 
@@ -34,7 +32,6 @@ const STAGE_TO_DESIGN: Record<StageId, DesignSection> = {
   define: 'application',
   architect: 'architecture',
   build: 'modules',
-  connect: 'connections',
   verify: 'verification',
 }
 
@@ -43,8 +40,15 @@ const DESIGN_TO_STAGE: Record<DesignSection, StageId> = {
   architecture: 'architect',
   attention: 'build',
   modules: 'build',
-  connections: 'connect',
   verification: 'verify',
+}
+
+/** Redirect persisted/deep-linked Connect-era Design locations into Build. */
+export function normalizeDesignSection(section: string | undefined): DesignSection {
+  if (section === 'connections' || section === 'connect') return 'modules'
+  return DESIGN_SECTIONS.some((candidate) => candidate.id === section)
+    ? section as DesignSection
+    : 'application'
 }
 
 /** Map a Guided stage to the Design area that shows the same records. */
@@ -63,7 +67,6 @@ const STAGE_TO_GUIDE: Record<StageId, GuideTopicId> = {
   define: 'capabilities-define',
   architect: 'capabilities-architect',
   build: 'capabilities-build',
-  connect: 'capabilities-connect',
   verify: 'capabilities-verify',
 }
 

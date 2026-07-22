@@ -45,7 +45,12 @@ function extensionFor(language: RuntimeLanguage): string {
 
 function buildDefaultCompositionPath(candidate: DeployableKindEvidence, discovery: RepositoryDiscoveryResult): string {
   const root = discovery.sourceRoots[0]
-  const base = root ? `${root}/composition` : 'composition'
+  const normalizedRoot = root?.replaceAll('\\', '/').replace(/\/+$/, '')
+  const base = normalizedRoot
+    ? normalizedRoot === 'composition' || normalizedRoot.endsWith('/composition')
+      ? normalizedRoot
+      : `${normalizedRoot}/composition`
+    : 'composition'
   const fileName = candidate.language === 'python' ? candidate.kind.replaceAll('-', '_') : candidate.kind
   return normalizeRepoRelativePath(`${base}/${fileName}.${extensionFor(candidate.language)}`)
 }
@@ -146,6 +151,35 @@ export function proposeDeployables(input: DeployableProposalInput): DeployablePr
   const nonExperienceModuleIds = input.architectureModuleIds.filter(
     (moduleId) => !experienceModuleIds.includes(moduleId),
   )
+
+  // A detected browser host is not also a backend/application host. When an
+  // architecture contains non-experience modules, preserve a separately
+  // launchable local HTTP backend instead of dropping those modules or placing
+  // them in an embedded library that a browser cannot call across a deployable
+  // boundary. Headless projects without a browser still retain the embedded
+  // library default above.
+  const hasBrowserCandidate = candidates.some((candidate) => candidate.kind === 'browser')
+  const hasBackendCandidate = BACKEND_PRIORITY.some((kind) =>
+    candidates.some((candidate) => candidate.kind === kind),
+  )
+  if (hasBrowserCandidate && nonExperienceModuleIds.length > 0 && !hasBackendCandidate) {
+    if (input.discovery.languages.length <= 1) {
+      const language = (input.discovery.languages[0] as RuntimeLanguage | undefined) ?? 'typescript'
+      candidates.push({
+        kind: 'http-api',
+        language,
+        evidence: input.discovery.languages.length === 1
+          ? `single detected runtime language "${language}" for the browser application's local backend`
+          : 'greenfield browser project with non-experience modules; defaulting the local HTTP backend to TypeScript',
+      })
+    } else if (!ambiguities.some((ambiguity) => ambiguity.id === 'deployable-language')) {
+      ambiguities.push({
+        id: 'deployable-language',
+        question: 'Multiple runtime languages were detected for non-experience modules. Which language should the local HTTP backend use?',
+        choices: sortByKey(input.discovery.languages, (value) => value),
+      })
+    }
+  }
 
   const uiCandidate = candidates.find((c) => c.kind === 'browser') ?? candidates.find((c) => c.kind === 'electron-main')
   const backendCandidate = BACKEND_PRIORITY

@@ -12,6 +12,7 @@ import type {
 } from '@engineering-ui-kit/core'
 import {
   buildArchitectureInterviewPacket,
+  canonicalHash,
   detectCycles,
   evaluateArchitectureProposal,
   importArchitectureProposal,
@@ -20,6 +21,8 @@ import {
   type ArchitectureProposalInput,
 } from '@engineering-ui-kit/core/browser'
 import type { CapabilityPacketExportResult, EuikBridge } from '../../bridge'
+import { Icon } from '../../icons'
+import { COPILOT_URL, copyText } from '../workflowShared'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
 import { CapabilityHandoffCard } from './CapabilityHandoffCard'
 import { FoundationReview } from './FoundationReview'
@@ -30,7 +33,9 @@ type Props = {
   projectId: string
   architectureApproved: boolean
   projection: 'guided' | 'design'
-  onApproved?: () => void
+  onChanged?: () => void | Promise<void>
+  /** Backward-compatible alias for callers that only refreshed after approval. */
+  onApproved?: () => void | Promise<void>
 }
 
 function asApp(value: unknown): ApplicationSpecification | undefined {
@@ -43,14 +48,80 @@ function asArch(value: unknown): ArchitectureSpecification | undefined {
   return value as ArchitectureSpecification
 }
 
+export function nextArchitectureRevision(revision: string): string {
+  const match = revision.match(/^(.*?)(\d+)$/)
+  if (!match) return `${revision}.1`
+  return `${match[1]}${Number(match[2]) + 1}`
+}
+
+function prepareRevisedArchitecture(
+  draft: ArchitectureSpecification,
+  approved: ArchitectureSpecification,
+): ArchitectureSpecification {
+  const { approvedAt: _approvedAt, approvedBy: _approvedBy, ...withoutApproval } = draft
+  const revised = {
+    ...withoutApproval,
+    revision: nextArchitectureRevision(approved.revision),
+    status: 'proposed' as const,
+  }
+  return {
+    ...revised,
+    contentHash: canonicalHash({ ...revised, contentHash: undefined }),
+  }
+}
+
+export function buildArchitectureCorrectionPrompt(input: {
+  product: ApplicationSpecification
+  response: string
+  diagnostics: CapDiagnostic[]
+  cycles: string[][]
+}): string {
+  const cycleFindings = input.diagnostics.some((diagnostic) => diagnostic.code === 'CAP-AR-006')
+    ? []
+    : input.cycles.map((cycle) => `- CAP-AR-006: module dependency cycle detected (${cycle.join(' -> ')})`)
+  const findings = [
+    ...input.diagnostics.map((diagnostic) => {
+      const context = [
+        diagnostic.fieldPath ? `field: ${diagnostic.fieldPath}` : '',
+        diagnostic.relatedIds?.length ? `related IDs: ${diagnostic.relatedIds.join(', ')}` : '',
+      ].filter(Boolean).join('; ')
+      return `- ${diagnostic.code}: ${diagnostic.message}${context ? ` (${context})` : ''}`
+    }),
+    ...cycleFindings,
+  ]
+
+  return [
+    'Correct the architecture proposal JSON below so it passes every listed validation finding.',
+    '',
+    'Preserve valid requirements, IDs, and design intent. Make only the changes needed to produce a complete valid architecture response. Do not omit required fields, leave unresolved questions, or introduce dependency cycles.',
+    '',
+    'Authoritative application context:',
+    `- projectId: ${input.product.projectId}`,
+    `- applicationSpecId: ${input.product.id}`,
+    `- applicationSpecRevision: ${input.product.revision}`,
+    `- applicationSpecHash: ${input.product.contentHash}`,
+    `- valid use case IDs: ${input.product.useCases.map((useCase) => useCase.id).join(', ') || '(none)'}`,
+    '',
+    'Validation findings:',
+    ...findings,
+    '',
+    'Return one complete replacement JSON object only, with no markdown fence or commentary. Use the architecture response envelope with architecture, moduleNeedTraces, and moduleJustifications. Every module must have a name, moduleType, responsibility, workflow trace, need trace, and justification. Every dependency edge must have a concrete reason.',
+    '',
+    'Rejected JSON:',
+    input.response,
+  ].join('\n')
+}
+
 export function ArchitectureInterview({
   bridge,
   projectId,
   architectureApproved,
   projection,
+  onChanged,
   onApproved,
 }: Props) {
   const guided = projection === 'guided'
+  const notifyChanged = onChanged ?? onApproved
   const [product, setProduct] = useState<ApplicationSpecification | undefined>()
   const [draft, setDraft] = useState<ArchitectureSpecification | undefined>()
   const [approvedArch, setApprovedArch] = useState<ArchitectureSpecification | undefined>()
@@ -63,6 +134,8 @@ export function ArchitectureInterview({
   const [gatePassed, setGatePassed] = useState<boolean | undefined>()
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  const [lastImportedText, setLastImportedText] = useState('')
+  const [revisionStarted, setRevisionStarted] = useState(false)
 
   async function refresh() {
     if (!projectId) return
@@ -92,17 +165,31 @@ export function ArchitectureInterview({
 
   async function exportPacket() {
     if (!product) {
-      setMessage('Approve a product specification before architecture interview.')
+      setMessage(guided ? 'Finish and approve Plan before designing how the application works.' : 'Approve a product specification before architecture interview.')
       return
     }
     setBusy(true)
     setMessage('')
     try {
-      const built = buildArchitectureInterviewPacket({
+      const basePacket = buildArchitectureInterviewPacket({
         packetId: `pkt-arch-${projectId}-${Date.now()}`,
         projectId,
         application: product,
       })
+      const currentArchitecture = approvedArch ?? draft
+      const built: InterviewPacket = currentArchitecture
+        ? {
+            ...basePacket,
+            inputContext: {
+              ...basePacket.inputContext,
+              facts: [
+                ...basePacket.inputContext.facts,
+                `currentArchitectureSpecification:${JSON.stringify(currentArchitecture)}`,
+                `architectureRevision:replace approved revision ${currentArchitecture.revision} with revision ${nextArchitectureRevision(currentArchitecture.revision)}`,
+              ],
+            },
+          }
+        : basePacket
       const exported = await bridge.capabilitiesExportInterviewPacket({
         packetId: built.packetId,
         projectId: built.projectId,
@@ -114,6 +201,7 @@ export function ArchitectureInterview({
       })
       setPacket(built)
       setExportResult(exported)
+      if (architectureApproved) setRevisionStarted(true)
       setMessage(guided ? '' : `Exported ${exported.files.length} architecture handoff files for ${built.packetId}.`)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
@@ -124,25 +212,37 @@ export function ArchitectureInterview({
 
   async function handleImport(result: InterviewImportResult) {
     if (!product) {
-      setMessage('Product specification required for architecture import.')
+      setMessage(guided ? 'Finish and approve Plan before importing the proposed application structure.' : 'Product specification required for architecture import.')
       return
     }
+    if (approvedArch) setRevisionStarted(true)
+    setLastImportedText(result.rawText)
     setBusy(true)
     setMessage('')
     try {
       const parsed = result.parsed ?? JSON.parse(result.rawText)
       const imported = importArchitectureProposal(product, parsed)
-      setDraft(imported.draft)
-      setProposal(imported.proposal)
+      const importedDraft = imported.draft && approvedArch
+        ? prepareRevisedArchitecture(imported.draft, approvedArch)
+        : imported.draft
+      const importedProposal = imported.proposal && importedDraft
+        ? { ...imported.proposal, architecture: importedDraft }
+        : imported.proposal
+      setDraft(importedDraft)
+      setProposal(importedProposal)
       setDiagnostics(imported.diagnostics)
       setGatePassed(imported.ok)
       setCycles(imported.evaluation?.cycles ?? [])
-      if (imported.draft) {
-        await bridge.capabilitiesSaveArchitectureDraft(projectId, imported.draft)
+      if (importedDraft) {
+        await bridge.capabilitiesSaveArchitectureDraft(projectId, importedDraft)
+        if (approvedArch) setRevisionStarted(true)
+        await notifyChanged?.()
       }
       setMessage(
         imported.ok
-          ? 'Imported architecture proposal as draft. Review cycles and findings, then approve.'
+          ? guided
+            ? 'Imported the proposed application structure. Review it, then approve when ready.'
+            : 'Imported architecture proposal as draft. Review cycles and findings, then approve.'
           : guided
             ? `Imported with ${imported.diagnostics.length} issue(s) to resolve before approval.`
             : `Imported draft blocked by CAP-GATE-002 (${imported.diagnostics.length} finding(s)).`,
@@ -152,6 +252,39 @@ export function ArchitectureInterview({
     } finally {
       setBusy(false)
     }
+  }
+
+  async function fixErrorsInCopilot() {
+    if (!product) return
+    const response = lastImportedText || JSON.stringify(proposal ?? (draft ? { architecture: draft } : {}), null, 2)
+    const prompt = buildArchitectureCorrectionPrompt({
+      product,
+      response,
+      diagnostics,
+      cycles: draft ? detectCycles(projectDerivedGraph(draft)) : cycles,
+    })
+    setBusy(true)
+    let copied = false
+    let opened = false
+    try {
+      copied = await copyText(prompt)
+    } catch {
+      copied = false
+    }
+    try {
+      await bridge.openExternal(COPILOT_URL)
+      opened = true
+    } catch {
+      opened = false
+    }
+    setMessage(opened
+      ? copied
+        ? 'Copilot opened with the fix request on your clipboard. Paste it into the chat, then import the replacement JSON.'
+        : 'Copilot opened, but the fix request could not be copied. Copy the findings and rejected JSON manually.'
+      : copied
+        ? 'The fix request was copied, but Copilot could not be opened. Open Copilot and paste the request to get replacement JSON.'
+        : 'The fix request could not be copied and Copilot could not be opened. Copy the findings and rejected JSON manually.')
+    setBusy(false)
   }
 
   async function approve() {
@@ -188,8 +321,9 @@ export function ArchitectureInterview({
         setMessage('Approval rejected by architecture gate.')
         return
       }
-      setMessage('Architecture approved.')
-      onApproved?.()
+      setMessage(guided ? 'Application structure approved.' : 'Architecture approved.')
+      setRevisionStarted(false)
+      await notifyChanged?.()
       await refresh()
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
@@ -198,8 +332,22 @@ export function ArchitectureInterview({
     }
   }
 
+  const hasPendingRevision = Boolean(approvedArch && draft && draft.revision !== approvedArch.revision)
+  const revising = revisionStarted || hasPendingRevision
+  const currentApproval = architectureApproved && !revising
+  const awaitingRevisedImport = Boolean(architectureApproved && revisionStarted && !hasPendingRevision)
   const graph = draft ? projectDerivedGraph(draft) : undefined
   const liveCycles = draft ? detectCycles(projectDerivedGraph(draft)) : cycles
+  const readyToApprove = Boolean(draft && gatePassed !== false && !currentApproval && !awaitingRevisedImport)
+  const guidedTaskTitle = currentApproval
+    ? 'Application parts approved'
+    : revising
+      ? 'Review the revised application structure'
+    : liveCycles.length || diagnostics.length
+      ? 'Resolve the remaining design issues'
+      : draft
+        ? 'Review how the application will work'
+        : 'Generate a solution draft with Copilot'
 
   return (
     <section
@@ -207,28 +355,57 @@ export function ArchitectureInterview({
       role="region"
       aria-label="Architecture interview"
     >
-      <p className="lede">
-        {projection === 'guided'
-          ? 'Propose the module structure through a Copilot interview, review dependencies and cycles, then approve the architecture.'
-          : 'Review the proposed structure, dependencies, approval state, and technical record details.'}
-      </p>
-      <p role="status">{message || (architectureApproved ? 'Architecture is approved.' : 'Architecture not yet approved.')}</p>
-
-      <div className="capabilities-toolbar" role="group" aria-label="Architecture interview actions">
-        <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || !product || busy}>
-          {guided
-            ? exportResult ? 'Restart in Copilot' : 'Continue in Copilot'
-            : 'Export architecture interview'}
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary btn-compact"
-          onClick={() => void approve()}
-          disabled={!projectId || !draft || busy || gatePassed === false}
-        >
-          Approve architecture
-        </button>
-      </div>
+      {guided ? (
+        <div className={`cap-task-command${currentApproval ? ' complete' : ''}`}>
+          <div className="cap-task-command-copy">
+            <p className="capabilities-eyebrow">Solution design</p>
+            <h3>{guidedTaskTitle}</h3>
+            <p>
+              {currentApproval
+                ? 'The main parts and their responsibilities are agreed. Review how they run together below to finish Design.'
+                : revising
+                  ? awaitingRevisedImport
+                    ? 'Import the updated Copilot response to review the replacement design.'
+                    : 'Review the replacement design below, then approve it when ready.'
+                : liveCycles.length || diagnostics.length
+                  ? 'The proposed structure is saved. Resolve the highlighted issues before approval.'
+                  : draft
+                    ? 'Review the application parts and their interaction below before approving the design.'
+                    : 'Copilot proposes the main application parts from the approved plan. You review one concise set of assumptions instead of answering a field-by-field questionnaire.'}
+            </p>
+            {message ? <p role="status" className="cap-task-command-status">{message}</p> : null}
+          </div>
+          <div className="capabilities-toolbar cap-task-command-actions" role="group" aria-label="Architecture interview actions">
+            <button
+              type="button"
+              className={`btn ${draft ? 'btn-secondary' : 'btn-primary'} btn-compact`}
+              onClick={() => void exportPacket()}
+              disabled={!projectId || !product || busy}
+            >
+              {currentApproval ? 'Revise design' : exportResult ? 'Restart in Copilot' : 'Continue in Copilot'}
+            </button>
+            {!currentApproval ? (
+              <button
+                type="button"
+                className={`btn ${readyToApprove ? 'btn-primary' : 'btn-secondary'} btn-compact`}
+                onClick={() => void approve()}
+                disabled={!readyToApprove || busy}
+              >
+                Approve application structure
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="lede">Review the proposed structure, dependencies, approval state, and technical record details.</p>
+          <p role="status">{message || (currentApproval ? 'Architecture is approved.' : revising ? 'An architecture revision is in progress.' : 'Architecture not yet approved.')}</p>
+          <div className="capabilities-toolbar" role="group" aria-label="Architecture interview actions">
+            <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || !product || busy}>{currentApproval ? 'Revise architecture' : 'Generate architecture draft'}</button>
+            <button type="button" className="btn btn-secondary btn-compact" onClick={() => void approve()} disabled={!projectId || !readyToApprove || busy}>Approve architecture</button>
+          </div>
+        </>
+      )}
 
       {guided && exportResult ? (
         <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={exportResult} projection="guided" />
@@ -241,38 +418,60 @@ export function ArchitectureInterview({
         </details>
       ) : null}
 
-      <InterviewImport
-        label="Import architecture proposal"
-        onImport={(r) => void handleImport(r)}
-        disabled={!projectId || !product || busy}
-      />
+      {guided ? (
+        <details className="cap-interview-import" open={!draft || revising || liveCycles.length > 0 || diagnostics.length > 0}>
+          <summary>{draft ? 'Import an updated Copilot response' : 'Import the proposed structure'}</summary>
+          <InterviewImport label="Import proposed structure" onImport={(r) => void handleImport(r)} disabled={!projectId || !product || busy} projection={projection} />
+        </details>
+      ) : (
+        <InterviewImport label="Import architecture proposal" onImport={(r) => void handleImport(r)} disabled={!projectId || !product || busy} projection={projection} />
+      )}
 
-      {liveCycles.length > 0 ? (
-        <div role="alert" aria-label="Dependency cycles">
-          <strong>Dependency cycles</strong>
-          <ul>
-            {liveCycles.map((cycle) => (
-              <li key={cycle.join('→')}>{cycle.join(' → ')}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      {liveCycles.length > 0 || diagnostics.length > 0 ? (
+        <section className="cap-fix-errors" role="alert" aria-label="Architecture validation issues">
+          <div className="cap-fix-errors-head">
+            <div>
+              <strong>{guided ? 'The proposed structure needs changes' : 'Architecture validation issues'}</strong>
+              <p>Send these findings and the rejected response to Copilot to get corrected JSON.</p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary btn-compact"
+              onClick={() => void fixErrorsInCopilot()}
+              disabled={busy || !product}
+            >
+              {Icon.sparkle(14)} Fix errors in Copilot
+            </button>
+          </div>
 
-      {diagnostics.length > 0 ? (
-        guided ? (
-          <ul aria-label="Open issues" className="cap-issue-list">
-            {presentDiagnosticsForGuided(diagnostics).map((issue, i) => <li key={i}>{issue.message}</li>)}
-          </ul>
-        ) : (
-          <ul aria-label="Architecture gate diagnostics">
-            {diagnostics.map((d, i) => (
-              <li key={`${d.code}-${i}`}>
-                {d.code}: {d.message}
-                {d.relatedIds?.length ? ` (${d.relatedIds.join(', ')})` : ''}
-              </li>
-            ))}
-          </ul>
-        )
+          {liveCycles.length > 0 ? (
+            <div aria-label={guided ? 'Parts that depend on each other in a loop' : 'Dependency cycles'}>
+              <strong>{guided ? 'Parts that depend on each other in a loop' : 'Dependency cycles'}</strong>
+              <ul>
+                {liveCycles.map((cycle) => (
+                  <li key={cycle.join('→')}>{cycle.join(' → ')}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {diagnostics.length > 0 ? (
+            guided ? (
+              <ul aria-label="Open issues" className="cap-issue-list">
+                {presentDiagnosticsForGuided(diagnostics).map((issue, i) => <li key={i}>{issue.message}</li>)}
+              </ul>
+            ) : (
+              <ul aria-label="Architecture gate diagnostics" className="cap-issue-list">
+                {diagnostics.map((d, i) => (
+                  <li key={`${d.code}-${i}`}>
+                    {d.code}: {d.message}
+                    {d.relatedIds?.length ? ` (${d.relatedIds.join(', ')})` : ''}
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : null}
+        </section>
       ) : null}
 
       {projection === 'design' && graph ? (
@@ -291,10 +490,12 @@ export function ArchitectureInterview({
       ) : null}
 
       {!architectureApproved ? (
-        <p className="capabilities-note">Module interviews remain blocked until architecture approval.</p>
+        <p className="capabilities-note">
+          {guided ? 'Build interviews become available after the application structure is approved.' : 'Module interviews remain blocked until architecture approval.'}
+        </p>
       ) : null}
 
-      {architectureApproved && approvedArch ? (
+      {currentApproval && approvedArch ? (
         <FoundationReview
           bridge={bridge}
           projectId={projectId}
@@ -303,7 +504,7 @@ export function ArchitectureInterview({
           approvedArchitecture={approvedArch}
           projection={projection}
           onChanged={() => {
-            void refresh().then(() => onApproved?.())
+            void refresh().then(() => notifyChanged?.())
           }}
         />
       ) : null}

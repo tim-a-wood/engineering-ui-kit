@@ -34,7 +34,7 @@ export type ConnectEntryPointModel = {
   anyExposureElevated: boolean
 }
 
-/** Pure browser-safe Connect completeness projection over canonical records. */
+/** Pure browser-safe Build entry-point completeness projection over canonical records. */
 export function evaluateConnectEntryPoints(
   deployables: DeployableEntryPointInput[],
   bindings: InboundBindingEntryPointInput[],

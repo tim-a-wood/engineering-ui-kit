@@ -56,6 +56,7 @@ describe('Guided vs Design disclosure', () => {
       <DesignBody
         bridge={bridge()}
         projectId="p1"
+        journey={deriveJourney({ application: {}, architecture: {}, modules: [], bindings: [] })}
         section="application"
         onSection={() => {}}
         moduleRecords={noModules}
@@ -71,21 +72,23 @@ describe('Guided vs Design disclosure', () => {
         onSelectionEvidence={() => {}}
       />,
     )
-    for (const label of ['Application', 'Architecture', 'Needs attention', 'Modules', 'Connections', 'Verification']) {
+    for (const label of ['Application', 'Architecture', 'Needs attention', 'Modules', 'Verification']) {
       expect(html).toContain(`>${label}</button>`)
     }
+    expect(html).not.toContain('>Connections</button>')
+    expect(html).not.toContain('>Connect</button>')
     expect(html).toContain('role="tablist"')
   })
 
   it('a locked Guided stage never renders its editor (defensive gating)', () => {
-    // App approved only -> Connect is locked. Viewing it must show a blocker, not the binding editor.
+    // App approved only -> Verify is locked. Viewing it must show a blocker, not its internals.
     const journey = deriveJourney({ application: { approved: {} }, architecture: {}, modules: [], bindings: [] })
     const html = renderToStaticMarkup(
       <GuidedBody
         bridge={bridge()}
         projectId="p1"
         journey={journey}
-        viewing="connect"
+        viewing="verify"
         panel="journey"
         moduleRecords={noModules}
         attentionItems={[]}
@@ -167,7 +170,7 @@ function manifest(moduleId: string, ops: string[]): ModuleManifest {
   }
 }
 
-describe('Guided Connect (trigger-first, multi-host InboundBinding — WP6B)', () => {
+describe('Build entry points (multi-host InboundBinding)', () => {
   const records: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: manifest('mod.orders', ['op.placeOrder']) }]
   const uiDeployables = [{ deployableId: 'deployable.ui', kind: 'browser' as const, name: 'Application UI' }, { deployableId: 'deployable.main', kind: 'http-api' as const, name: 'Application' }]
   const headlessOnlyDeployables = [{ deployableId: 'deployable.main', kind: 'http-api' as const, name: 'Application' }]
@@ -187,8 +190,9 @@ describe('Guided Connect (trigger-first, multi-host InboundBinding — WP6B)', (
     />,
   )
 
-  it('opens with "How is this capability triggered?" offering every host kind when a UI deployable exists', () => {
-    expect(withUi).toContain('How is this capability triggered?')
+  it('offers design-derived suggestions and every host kind when a UI deployable exists', () => {
+    expect(withUi).toContain('Configure application entry points')
+    expect(withUi).toContain('Suggested')
     expect(withUi).toContain('Existing or new UI')
     expect(withUi).toContain('HTTP endpoint')
     expect(withUi).toContain('Command line')
@@ -208,7 +212,7 @@ describe('Guided Connect (trigger-first, multi-host InboundBinding — WP6B)', (
   it('does not render an editor or diagnostics before a trigger is chosen', () => {
     expect(withUi).not.toContain('aria-label="Capability"')
     expect(withUi).not.toContain('While it runs')
-    expect(withUi).not.toContain('To finish this connection')
+    expect(withUi).not.toContain('To finish this entry point')
   })
 
   it('lists configured entry points with kind, capability, status, and exposure — never a raw binding id', () => {
@@ -236,8 +240,10 @@ describe('Guided Connect (trigger-first, multi-host InboundBinding — WP6B)', (
     expect(html).toContain('HTTP endpoint')
     expect(html).toContain('Place Order')
     expect(html).toContain('Approved')
-    expect(html).toContain('protected')
+    expect(html).toContain('Protected')
     expect(html).toContain('Add another entry point')
+    expect(html).toContain('>Edit</button>')
+    expect(html).toContain('>Remove</button>')
     expect(html).not.toContain('binding.http.1')
   })
 })
@@ -254,13 +260,26 @@ describe('Guided Build (two-region, single next action)', () => {
     expect(html).toMatch(/aria-label="[^"]*, Not started"/)
   })
   it('right region shows only the next relevant action, not every lifecycle button', () => {
-    // First-incomplete module (mod.b) -> "Create interview" only.
-    expect(html).toContain('Create interview')
+    // First-incomplete module (mod.b) -> draft-first confirmation only.
+    expect(html).toContain('Generate guided draft')
+    expect(html).toContain('accept or correct only material assumptions')
     expect(html).toContain('Assigned during Design')
     expect(html).not.toContain('Module interview type')
     expect(html).not.toContain('Export implementation packet')
     expect(html).not.toContain('Apply reviewed overlay')
     expect(html).not.toContain('Verify module')
+  })
+  it('renders all four Build sections in the required forward order', () => {
+    const modules = html.indexOf('Build modules')
+    const entryPoints = html.indexOf('Configure application entry points')
+    const setup = html.indexOf('Prepare the shared application setup')
+    const readiness = html.indexOf('Confirm Build readiness')
+    expect(modules).toBeGreaterThan(-1)
+    expect(modules).toBeLessThan(entryPoints)
+    expect(entryPoints).toBeLessThan(setup)
+    expect(setup).toBeLessThan(readiness)
+    expect(html).toContain('Approve every module above before adding application entry points')
+    expect(html).toContain('Approve every module above before preparing the shared setup')
   })
 })
 

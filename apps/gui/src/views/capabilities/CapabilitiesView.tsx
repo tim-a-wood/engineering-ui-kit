@@ -2,9 +2,9 @@
  * Capabilities top-level page.
  *
  * Guided and Design are two projections over ONE canonical model. Guided walks a
- * five-step journey (Plan → Design → Build → Connect → Verify) and gates
+ * four-step journey (Plan → Design → Build → Verify) and gates
  * locked stages so impossible downstream workflows can never be opened. Design
- * exposes the same records as the six canonical areas (Section 31). No projection
+ * exposes the same records as the five canonical areas. No projection
  * or stepper state is persisted (CAP-DEC-001/002) — the journey is derived on
  * every render from canonical records.
  */
@@ -42,6 +42,7 @@ import { IntegrationWorkspace } from './IntegrationWorkspace'
 import { ConnectionVerificationPanel } from './ConnectionVerificationPanel'
 import {
   deriveJourney,
+  stageFromCapabilitiesNavigation,
   stageById,
   STAGE_LABELS,
   type CapabilityInboundBindingRecord,
@@ -51,6 +52,7 @@ import {
 import {
   DESIGN_SECTIONS,
   designSectionToStage,
+  normalizeDesignSection,
   stageToDesignSection,
   stageToGuideTopic,
   type DesignSection,
@@ -60,9 +62,24 @@ export type CapabilitiesProjection = 'guided' | 'design'
 
 type GuidedPanel = 'journey' | 'attention' | 'changes'
 
+const GUIDED_STAGE_DESCRIPTION: Record<StageId, string> = {
+  define: 'Agree what the application must achieve and where its boundaries are.',
+  architect: 'Shape the main parts of the solution and how they work together.',
+  build: 'Complete each module, configure how the application starts, and prepare the shared setup.',
+  verify: 'Run the real checks, review the evidence, and resolve anything that is not ready.',
+}
+
+const GUIDED_STAGE_STATE_LABEL = {
+  complete: 'Complete',
+  current: 'In progress',
+  available: 'Ready to start',
+  locked: 'Locked',
+  'not-applicable': 'Not required',
+} as const
+
 /**
  * Projects the raw CAP-CONTRACT-028 read model (draft/approved per bindingId)
- * into the minimal shape `deriveJourney` needs to evaluate Connect entry-point
+ * into the minimal shape `deriveJourney` needs to evaluate Build entry-point
  * completeness (CAP-ERA-001 §5.1/§12.4). Every record's own kind/exposure
  * ride along unchanged; nothing here decides completeness itself.
  */
@@ -81,12 +98,25 @@ function projectInboundBindings(records: InboundBindingReadRecord[]): Capability
   })
 }
 
+export function architectureForDisplay(architecture: {
+  draft?: unknown
+  approved?: unknown
+}): ArchitectureSpecification | undefined {
+  const approved = architecture.approved as ArchitectureSpecification | undefined
+  const draft = architecture.draft as ArchitectureSpecification | undefined
+  return draft && (!approved || draft.revision !== approved.revision)
+    ? draft
+    : approved ?? draft
+}
+
 type Props = {
   bridge: EuikBridge
   projects: Project[]
   activeProjectId?: string
+  onProjectSelected?: (projectId: string) => void
   onOpenGuide?: (topic: GuideTopicId) => void
   onNavigateToProjects?: () => void
+  onOpenBuildTest?: (projectId: string) => void
   onProjectsChanged?: () => Promise<void> | void
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
 }
@@ -94,8 +124,11 @@ type Props = {
 export function CapabilitiesView({
   bridge,
   projects,
+  activeProjectId,
+  onProjectSelected,
   onOpenGuide,
   onNavigateToProjects,
+  onOpenBuildTest,
   onProjectsChanged,
   onStartUiBuild,
 }: Props) {
@@ -127,6 +160,9 @@ export function CapabilitiesView({
   const projectSelectRef = useRef<HTMLSelectElement | null>(null)
   const stageHeadingRef = useRef<HTMLHeadingElement | null>(null)
   const viewRef = useRef<HTMLDivElement | null>(null)
+  const requestedStageRef = useRef<StageId | undefined>(
+    typeof window === 'undefined' ? undefined : stageFromCapabilitiesNavigation(window.location.href),
+  )
 
   const selectedProject = projects.find((project) => project.id === projectId)
   const inboundBindingProjections = useMemo(() => projectInboundBindings(inboundBindingRecords), [inboundBindingRecords])
@@ -134,6 +170,7 @@ export function CapabilitiesView({
     () => ({
       application,
       architecture,
+      foundation,
       modules: moduleRecords,
       bindings: bindingRecords,
       deployables,
@@ -141,20 +178,21 @@ export function CapabilitiesView({
       connectDisposition: selectedProject?.capabilitiesConnectDisposition,
       integration: integrationState,
     }),
-    [application, architecture, moduleRecords, bindingRecords, deployables, inboundBindingProjections, selectedProject?.capabilitiesConnectDisposition, integrationState],
+    [application, architecture, foundation, moduleRecords, bindingRecords, deployables, inboundBindingProjections, selectedProject?.capabilitiesConnectDisposition, integrationState],
   )
   const journey = useMemo(() => deriveJourney(journeyInput), [journeyInput])
   const effectiveAttentionItems = useMemo(() => {
-    if (selectedProject?.capabilitiesConnectDisposition !== 'deferred') return attentionItems
+    const hasMissingEntryPoint = journey.entryPoints.some((item) => item.requiresEntryPoint && !item.satisfied)
+    if (selectedProject?.capabilitiesConnectDisposition !== 'deferred' || !hasMissingEntryPoint) return attentionItems
     if (attentionItems.some((item) => item.reasonCodes.includes('ui-connection-deferred'))) return attentionItems
     return [...attentionItems, {
       moduleId: 'ui.connection',
       primaryState: 'needs-review' as const,
       reasonCodes: ['ui-connection-deferred'],
-      blocker: 'UI connection deferred',
-      nextAction: 'Return to Connect and configure the application UI',
+      blocker: 'Entry-point configuration deferred',
+      nextAction: 'Return to Build and configure how this application is started',
     }]
-  }, [attentionItems, selectedProject?.capabilitiesConnectDisposition])
+  }, [attentionItems, journey.entryPoints, selectedProject?.capabilitiesConnectDisposition])
 
   const fetchWorkspace = useCallback(
     async (id: string) => {
@@ -213,6 +251,7 @@ export function CapabilitiesView({
         const derived = deriveJourney({
           application: d.application,
           architecture: d.architecture,
+          foundation: d.foundation,
           modules: d.modules,
           bindings: d.bindings,
           deployables: d.deployableList,
@@ -220,8 +259,14 @@ export function CapabilitiesView({
           connectDisposition: project?.capabilitiesConnectDisposition,
           integration: d.integration,
         })
-        setViewing(derived.firstIncompleteStageId)
-        setDesignSection(stageToDesignSection(derived.firstIncompleteStageId))
+        const requestedStage = requestedStageRef.current
+        const requestedDescriptor = requestedStage ? derived.stages.find((stage) => stage.id === requestedStage) : undefined
+        const initialStage = requestedDescriptor && requestedDescriptor.state !== 'locked'
+          ? requestedDescriptor.id
+          : derived.firstIncompleteStageId
+        setViewing(initialStage)
+        setDesignSection(stageToDesignSection(initialStage))
+        requestedStageRef.current = undefined
         setLoadState('ready')
       } catch (error) {
         if (gen !== loadGenRef.current || id !== activeProjectRef.current) return
@@ -238,6 +283,7 @@ export function CapabilitiesView({
       loadGenRef.current++
       activeProjectRef.current = id
       setProjectId(id)
+      onProjectSelected?.(id)
       clearRecords()
       if (!id) {
         setLoadState('idle')
@@ -245,8 +291,17 @@ export function CapabilitiesView({
       }
       await loadProject(id)
     },
-    [loadProject],
+    [loadProject, onProjectSelected],
   )
+
+  // Entering from Build & Test or a project row carries the project context
+  // into Capabilities. A bare top-level visit remains non-mutating until the
+  // user chooses a project, preserving the explicit-selection safety boundary.
+  useEffect(() => {
+    if (projectId || loadState !== 'idle' || !activeProjectId) return
+    if (!projects.some((project) => project.id === activeProjectId)) return
+    void selectProject(activeProjectId)
+  }, [activeProjectId, loadState, projectId, projects, selectProject])
 
   // Move focus to the stage heading when the viewed stage changes.
   useEffect(() => {
@@ -274,7 +329,7 @@ export function CapabilitiesView({
   }, [projectId, fetchWorkspace])
 
   const architectureProjection = useMemo(() => {
-    const arch = (architecture.approved ?? architecture.draft) as ArchitectureSpecification | undefined
+    const arch = architectureForDisplay(architecture)
     if (!arch) return undefined
     const manifests = moduleRecords
       .map((record) => record.approved ?? record.draft)
@@ -310,9 +365,9 @@ export function CapabilitiesView({
     viewRef.current?.scrollIntoView?.({ block: 'start' })
   }
 
-  function openDesignSection(section: DesignSection) {
-    setDesignSection(section)
-    // Long areas such as Connections must not donate their scroll offset to the
+  function openDesignSection(section: DesignSection | string) {
+    setDesignSection(normalizeDesignSection(section))
+    // Long Design areas must not donate their scroll offset to the
     // next area. Keep the page header and Design navigation in view.
     viewRef.current?.scrollIntoView?.({ block: 'start' })
   }
@@ -327,8 +382,9 @@ export function CapabilitiesView({
   const hasProjects = projects.length > 0
   const attentionCount = effectiveAttentionItems.length
 
-  const headerActions = (
-    <>
+  const workspaceControls = (
+    <div className="cap-workspace-controls" role="group" aria-label="Capabilities workspace controls">
+      <span className="cap-workspace-label">Project workspace</span>
       <label className="cap-project-select">
         <span className="sr-only">Capabilities project</span>
         <select
@@ -367,10 +423,11 @@ export function CapabilitiesView({
         <button
           type="button"
           className={guidedPanel === 'attention' ? 'btn btn-secondary btn-compact active' : 'btn btn-secondary btn-compact'}
+          aria-label={`Needs attention, ${attentionCount} item${attentionCount === 1 ? '' : 's'}`}
           aria-pressed={guidedPanel === 'attention'}
           onClick={() => setGuidedPanel(guidedPanel === 'attention' ? 'journey' : 'attention')}
         >
-          {Icon.alertTriangle(14)} Needs attention
+          {Icon.alertTriangle(14)} <span className="cap-header-action-label">Needs attention</span>
           <span className="badge">{attentionCount}</span>
         </button>
       )}
@@ -378,20 +435,22 @@ export function CapabilitiesView({
         <button
           type="button"
           className={guidedPanel === 'changes' ? 'btn btn-secondary btn-compact active' : 'btn btn-secondary btn-compact'}
+          aria-label="Changes"
           aria-pressed={guidedPanel === 'changes'}
           onClick={() => setGuidedPanel(guidedPanel === 'changes' ? 'journey' : 'changes')}
         >
-          {Icon.layers(14)} Changes
+          {Icon.layers(14)} <span className="cap-header-action-label">Changes</span>
         </button>
       )}
       <button
         type="button"
         className="btn btn-ghost btn-compact"
+        aria-label={projection === 'guided' ? 'Stage guide' : 'Capability guide'}
         onClick={() => onOpenGuide?.(projection === 'guided' ? stageToGuideTopic(viewing) : 'capabilities-overview')}
       >
-        {Icon.help(14)} {projection === 'guided' ? 'Stage guide' : 'Capability guide'}
+        {Icon.help(14)} <span className="cap-header-action-label">{projection === 'guided' ? 'Stage guide' : 'Capability guide'}</span>
       </button>
-    </>
+    </div>
   )
 
   return (
@@ -405,8 +464,14 @@ export function CapabilitiesView({
             ? 'Turn what the application must do into approved, verified modules.'
             : 'Inspect the contracts, modules, connections, and verification behind the same records.'
         }
-        actions={headerActions}
+        actions={projectId && onOpenBuildTest ? (
+          <button type="button" className="btn btn-secondary btn-compact" onClick={() => onOpenBuildTest(projectId)}>
+            {Icon.home(14)} Open Build &amp; Test
+          </button>
+        ) : undefined}
       />
+
+      {workspaceControls}
 
       {!projectId ? (
         <EmptyState
@@ -484,6 +549,7 @@ export function CapabilitiesView({
           bridge={bridge}
           projectId={projectId}
           project={selectedProject}
+          journey={journey}
           section={designSection}
           onSection={openDesignSection}
           moduleRecords={moduleRecords}
@@ -552,7 +618,7 @@ export function GuidedBody(props: {
           onNextAction={(item) => {
             // Route to the relevant Guided stage where possible.
             const target: StageId = item.reasonCodes.includes('ui-connection-deferred')
-              ? 'connect'
+              ? 'build'
               : item.primaryState === 'draft' ? 'build' : 'verify'
             const t = props.journey.stages.find((s) => s.id === target)
             if (t && t.state !== 'locked') props.onView(target)
@@ -575,21 +641,30 @@ export function GuidedBody(props: {
   return (
     <div className="cap-guided">
       <CapabilityJourney stages={props.journey.stages} viewing={props.viewing} onView={props.onView} />
-      <section className="capabilities-panel cap-stage" aria-label={`${stageLabel} stage`} aria-live="polite">
-        <div className="cap-stage-head">
-          <h2 ref={props.stageHeadingRef} tabIndex={-1}>
-            {stageLabel}
-          </h2>
-          <button
-            type="button"
-            className="btn btn-ghost btn-compact"
-            onClick={() => props.onOpenGuide?.(stageToGuideTopic(stage.id))}
-          >
-            {Icon.help(14)} How this works
-          </button>
+      <section
+        className="capabilities-panel cap-stage"
+        data-stage-id={stage.id}
+        data-stage-state={stage.state}
+        aria-label={`${stageLabel} stage`}
+        aria-live="polite"
+      >
+        <div className="cap-stage-hero">
+          <div className="cap-stage-identity">
+            <p className="cap-stage-kicker">
+              Stage {props.journey.stages.findIndex((item) => item.id === stage.id) + 1} of {props.journey.stages.length}
+              <span aria-hidden="true"> · </span>
+              <span>{GUIDED_STAGE_STATE_LABEL[stage.state]}</span>
+            </p>
+            <h2 ref={props.stageHeadingRef} tabIndex={-1}>{stageLabel}</h2>
+            <p>{GUIDED_STAGE_DESCRIPTION[stage.id]}</p>
+          </div>
+          <div className="cap-stage-hero-actions">
+            <StageCompletion journey={props.journey} stageId={stage.id} onView={props.onView} />
+          </div>
         </div>
-        <GuidedStage {...props} stage={stage} />
-        <StageCompletion journey={props.journey} stageId={stage.id} onView={props.onView} />
+        <div className="cap-stage-content">
+          <GuidedStage {...props} stage={stage} />
+        </div>
       </section>
     </div>
   )
@@ -612,9 +687,9 @@ function StageCompletion(props: {
   if (!stage.satisfied || !stage.nextStageId) {
     if (stage.satisfied && props.stageId === 'verify' && props.journey.complete) {
       return (
-        <div className="cap-stage-complete" role="status">
+        <div className="cap-stage-outcome complete" role="status">
           <span className="cap-complete-icon" aria-hidden="true">{Icon.shieldCheck(18)}</span>
-          <p>Every module is approved and ready. The Capabilities journey is complete.</p>
+          <span>Journey complete</span>
         </div>
       )
     }
@@ -623,9 +698,8 @@ function StageCompletion(props: {
   const next = props.journey.stages.find((s) => s.id === stage.nextStageId)
   if (!next || next.state === 'locked') return null
   return (
-    <div className="cap-stage-complete" role="status">
-      <span className="cap-complete-icon" aria-hidden="true">{Icon.check(16)}</span>
-      <button type="button" className="btn btn-primary btn-compact" onClick={() => props.onView(next.id)}>
+    <div className="cap-stage-outcome" role="status">
+      <button type="button" className="btn btn-primary btn-compact cap-stage-next" onClick={() => props.onView(next.id)}>
         Continue to {STAGE_LABELS[next.id]} {Icon.arrowRight(14)}
       </button>
     </div>
@@ -675,6 +749,7 @@ function GuidedStage(props: {
         <ApplicationDefinition
           bridge={bridge}
           projectId={projectId}
+          project={props.project}
           projection="guided"
           onChanged={props.onChanged}
           onHelp={() => props.onOpenGuide?.(stageToGuideTopic('define'))}
@@ -686,9 +761,9 @@ function GuidedStage(props: {
           <ArchitectureInterview
             bridge={bridge}
             projectId={projectId}
-            architectureApproved={stage.state === 'complete'}
+            architectureApproved={Boolean(props.archSpec?.status === 'approved')}
             projection="guided"
-            onApproved={props.onChanged}
+            onChanged={props.onChanged}
           />
           {props.architectureProjection && (
             <ArchitectureView projection={props.architectureProjection} mode="guided" />
@@ -707,61 +782,17 @@ function GuidedStage(props: {
           approvedFoundation={props.approvedFoundation}
           foundationGate={props.foundationGate}
           integrationState={props.integrationState}
+          project={props.project}
+          deployables={props.deployables}
+          inboundBindingRecords={props.inboundBindingRecords}
+          selectionEvidence={props.selectionEvidence}
+          onSelectionEvidence={props.onSelectionEvidence}
+          architectureVersion={props.archSpec?.revision}
+          architectureHash={props.archSpec?.contentHash}
+          previewRef={props.previewRef}
+          onProjectChanged={props.onProjectsChanged}
+          entryPointsReady={props.journey.entryPoints.every((item) => !item.requiresEntryPoint || item.satisfied)}
         />
-      )
-    case 'connect':
-      if (stage.state === 'not-applicable') {
-        const disposition = props.project?.capabilitiesConnectDisposition
-        return (
-          <div className="cap-stage-na" role="status">
-            <p>
-              {disposition === 'no-ui'
-                ? 'This application intentionally has no UI connection. You can continue to Verify.'
-                : disposition === 'deferred'
-                  ? 'UI integration is deferred and remains in Needs attention. You can continue to Verify.'
-                  : 'This application has no user-interface modules, so there is nothing to connect. You can continue to Verify.'}
-            </p>
-            {disposition ? (
-              <button
-                type="button"
-                className="btn btn-secondary btn-compact"
-                onClick={() => void (async () => {
-                  await bridge.updateProject(projectId, { capabilitiesConnectDisposition: undefined })
-                  await props.onProjectsChanged?.()
-                })()}
-              >
-                Change UI decision
-              </button>
-            ) : null}
-          </div>
-        )
-      }
-      return (
-        <>
-          <GuidedConnect
-            key={projectId}
-            bridge={bridge}
-            projectId={projectId}
-            project={props.project}
-            records={props.moduleRecords}
-            deployables={props.deployables}
-            inboundBindingRecords={props.inboundBindingRecords}
-            selectionEvidence={props.selectionEvidence}
-            onSelectionEvidence={props.onSelectionEvidence}
-            architectureVersion={props.archSpec?.revision}
-            architectureHash={props.archSpec?.contentHash}
-            previewRef={props.previewRef}
-            onChanged={props.onChanged}
-            onProjectChanged={props.onProjectsChanged}
-          />
-          <IntegrationWorkspace
-            bridge={bridge}
-            projectId={projectId}
-            state={props.integrationState}
-            projection="guided"
-            onChanged={props.onChanged}
-          />
-        </>
       )
     case 'verify':
       return (
@@ -774,7 +805,14 @@ function GuidedStage(props: {
             projection="guided"
             onChanged={props.onChanged}
           />
-          <VerificationPanel bridge={bridge} projectId={projectId} projection="guided" records={props.moduleRecords} onVerified={props.onChanged} />
+          <VerificationPanel
+            bridge={bridge}
+            projectId={projectId}
+            projection="guided"
+            records={props.moduleRecords}
+            onVerified={props.onChanged}
+            onOpenModules={() => props.onView('build')}
+          />
         </>
       )
   }
@@ -802,6 +840,7 @@ export function DesignBody(props: {
   bridge: EuikBridge
   projectId: string
   project?: Project
+  journey: ReturnType<typeof deriveJourney>
   section: DesignSection
   onSection: (s: DesignSection) => void
   moduleRecords: CapabilityModuleRecord[]
@@ -841,7 +880,7 @@ export function DesignBody(props: {
       </div>
       <section className="capabilities-panel" role="region" aria-label={DESIGN_SECTIONS.find((s) => s.id === props.section)?.label}>
         {props.section === 'application' && (
-          <ApplicationDefinition bridge={bridge} projectId={projectId} projection="design" onChanged={props.onChanged} />
+          <ApplicationDefinition bridge={bridge} projectId={projectId} project={props.project} projection="design" onChanged={props.onChanged} />
         )}
         {props.section === 'architecture' && (
           <>
@@ -850,7 +889,7 @@ export function DesignBody(props: {
               projectId={projectId}
               architectureApproved={Boolean(props.architecture.approved)}
               projection="design"
-              onApproved={props.onChanged}
+              onChanged={props.onChanged}
             />
             {props.architectureProjection && <ArchitectureView projection={props.architectureProjection} mode="design" />}
           </>
@@ -864,7 +903,6 @@ export function DesignBody(props: {
         )}
         {props.section === 'modules' && (
           <>
-            <IntegrationWorkspace bridge={bridge} projectId={projectId} state={props.integrationState} projection="design" onChanged={props.onChanged} />
             <ModulesView
               bridge={bridge}
               projectId={projectId}
@@ -876,10 +914,6 @@ export function DesignBody(props: {
               approvedFoundation={props.approvedFoundation}
               foundationGate={props.foundationGate}
             />
-          </>
-        )}
-        {props.section === 'connections' && (
-          <div className="capabilities-connections">
             <GuidedConnect
               bridge={bridge}
               projectId={projectId}
@@ -894,9 +928,20 @@ export function DesignBody(props: {
               previewRef={props.previewRef}
               onChanged={props.onChanged}
               onProjectChanged={props.onProjectsChanged}
+              modulesReady={Boolean(props.archSpec?.moduleIds.length)
+                && props.archSpec!.moduleIds.every((moduleId) => props.moduleRecords.some((record) => record.moduleId === moduleId && Boolean(record.approved)))}
             />
-            <IntegrationWorkspace bridge={bridge} projectId={projectId} state={props.integrationState} projection="design" onChanged={props.onChanged} />
-          </div>
+            <IntegrationWorkspace
+              bridge={bridge}
+              projectId={projectId}
+              state={props.integrationState}
+              projection="design"
+              entryPointsReady={props.journey.entryPoints.every((item) => !item.requiresEntryPoint || item.satisfied)}
+              modulesReady={Boolean(props.archSpec?.moduleIds.length)
+                && props.archSpec!.moduleIds.every((moduleId) => props.moduleRecords.some((record) => record.moduleId === moduleId && Boolean(record.approved)))}
+              onChanged={props.onChanged}
+            />
+          </>
         )}
         {props.section === 'verification' && (
           <>

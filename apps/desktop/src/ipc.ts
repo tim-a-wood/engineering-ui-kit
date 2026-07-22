@@ -938,21 +938,27 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
           const ownsDebugger = !guest.debugger.isAttached()
           if (ownsDebugger) guest.debugger.attach('1.3')
           try {
-            await guest.debugger.sendCommand('DOM.enable')
-            const located = await guest.debugger.sendCommand('DOM.getNodeForLocation', {
-              x: mouse.x,
-              y: mouse.y,
-              includeUserAgentShadowDOM: true,
-              ignorePointerEventsNone: true,
-            }) as { backendNodeId?: number }
-            if (!located.backendNodeId) throw new Error('no target-app Preview element was found at the click location')
-            const resolved = await guest.debugger.sendCommand('DOM.resolveNode', {
-              backendNodeId: located.backendNodeId,
-            }) as { object?: { objectId?: string } }
-            if (!resolved.object?.objectId) throw new Error('the selected target-app Preview element could not be inspected')
+            // `before-mouse-event` coordinates are already guest viewport CSS
+            // pixels. Evaluating `elementFromPoint` avoids Chromium-version
+            // drift in DOM.getNodeForLocation's optional parameters, which
+            // otherwise makes the packaged picker fail with "Invalid
+            // parameters" before it can inspect an ordinary HTML control.
+            const x = Number(mouse.x)
+            const y = Number(mouse.y)
+            if (!Number.isFinite(x) || !Number.isFinite(y)) {
+              throw new Error('the target-app Preview returned invalid click coordinates')
+            }
+            const resolved = await guest.debugger.sendCommand('Runtime.evaluate', {
+              expression: `document.elementFromPoint(${JSON.stringify(x)}, ${JSON.stringify(y)})`,
+              returnByValue: false,
+              userGesture: true,
+            }) as { result?: { objectId?: string; subtype?: string } }
+            if (!resolved.result?.objectId || resolved.result.subtype === 'null') {
+              throw new Error('no target-app Preview element was found at the click location')
+            }
             const evaluated = await guest.debugger.sendCommand('Runtime.callFunctionOn', {
               functionDeclaration: buildPreviewSelectionEvidenceFunction(),
-              objectId: resolved.object.objectId,
+              objectId: resolved.result.objectId,
               returnByValue: true,
               userGesture: true,
             }) as {

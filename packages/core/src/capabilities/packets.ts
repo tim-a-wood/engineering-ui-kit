@@ -111,11 +111,12 @@ export function buildCapabilityHandoffMarkdown(input: CapabilityHandoffMarkdownI
     ? `\n## ${isInterview ? `Required response template: ${attachedRecord.fileName}` : `Supporting context (input only): ${attachedRecord.fileName}`}\n\n${isInterview ? 'Use this JSON shape for the final response.' : 'Use this record to implement the module. Do not return, rewrite, or wrap this record as the result.'}\n\n\`\`\`json\n${JSON.stringify(attachedRecord.value, null, 2)}\n\`\`\`\n`
     : ''
   const introduction = isInterview
-    ? 'This is the complete interview handoff. Ask the bounded questions first, then produce the requested JSON response only after the interview is complete.'
+    ? 'This is the complete definition handoff. Start with a draft-first confirmation using the supplied context, then produce the requested JSON response only after the user accepts or corrects the material assumptions.'
     : 'This is an implementation task. The embedded capability packet and supporting records are input requirements, not response templates. Implement production source code and tests, then return the code overlay.'
   const outputRules = isInterview
-    ? `- During the interview, ask questions as plain conversation and wait for the user’s answers; do not wrap questions in JSON.
-- After the interview completion rules are satisfied, return only the JSON file named ${deliverable}.
+    ? `- During the review, present the proposed brief and any compact follow-up prompts as plain conversation; do not wrap them in JSON.
+- Do not conduct a serial field-by-field questionnaire. Group material decisions so the user can accept or correct them together.
+- After the definition completion rules are satisfied, return only the JSON file named ${deliverable}.
 - Use exactly the top-level shape shown in the required response template.
 - Replace every “Replace with…” placeholder with interview content.
 - Do not invent wrapper keys such as productDefinition, confirmedRequirements, or gate.

@@ -198,9 +198,10 @@ export function planCompositionRootModule(input: CompositionRootModuleInput): Co
     })),
   ])
 
-  const tokenDeclarations = registrations.map(
-    (registration) => `export const ${compositionTokenName(registration.contractId)}: ServiceToken = createToken(${JSON.stringify(registration.contractId)})`,
-  )
+  const tokenDeclarations = registrations.map((registration) => {
+    const target = targetsByContractId.get(registration.contractId)!
+    return `export const ${compositionTokenName(registration.contractId)}: ServiceToken<ReturnType<typeof ${target.exportName}>> = createToken(${JSON.stringify(registration.contractId)})`
+  })
 
   const registrationStatements = registrations.map((registration) => {
     const target = targetsByContractId.get(registration.contractId)!
