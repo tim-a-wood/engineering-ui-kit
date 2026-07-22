@@ -16,7 +16,7 @@ import type { ArchitectureSpecification, FoundationPlan, ModuleManifest } from '
 import { installMockBridge } from '../src/mockBridge'
 import { FoundationReview } from '../src/views/capabilities/FoundationReview'
 import { BuildWorkspace } from '../src/views/build/BuildWorkspace'
-import { buildUiModuleTaskFields, deploymentContextFor, type UiModuleDeploymentContext } from '../src/views/capabilities/ModulesView'
+import { buildUiModuleTaskFields, deploymentContextFor, type UiModuleDeploymentContext } from '../src/views/capabilities/moduleBuildTask'
 import type { EuikBridge } from '../src/bridge'
 
 afterEach(cleanup)

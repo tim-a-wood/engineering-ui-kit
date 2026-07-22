@@ -1,5 +1,5 @@
 /**
- * Architecture interview — export/import/review/approve (CAP-PKT-009).
+ * Architecture interview workflow — export/import/review/approve (CAP-PKT-009).
  */
 
 import { useEffect, useState } from 'react'
@@ -48,7 +48,7 @@ function asArch(value: unknown): ArchitectureSpecification | undefined {
   return value as ArchitectureSpecification
 }
 
-export function nextArchitectureRevision(revision: string): string {
+function nextArchitectureRevision(revision: string): string {
   const match = revision.match(/^(.*?)(\d+)$/)
   if (!match) return `${revision}.1`
   return `${match[1]}${Number(match[2]) + 1}`
@@ -70,7 +70,7 @@ function prepareRevisedArchitecture(
   }
 }
 
-export function buildArchitectureCorrectionPrompt(input: {
+function buildArchitectureCorrectionPrompt(input: {
   product: ApplicationSpecification
   response: string
   diagnostics: CapDiagnostic[]

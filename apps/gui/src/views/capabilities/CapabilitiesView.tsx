@@ -1,5 +1,5 @@
 /**
- * Capabilities top-level page.
+ * Capabilities top-level project workspace.
  *
  * Guided and Design are two projections over ONE canonical model. Guided walks a
  * four-step journey (Plan → Design → Build → Verify) and gates
@@ -57,6 +57,7 @@ import {
   stageToGuideTopic,
   type DesignSection,
 } from './capabilityPresentation'
+import { architectureForDisplay } from './capabilitiesProjection'
 
 export type CapabilitiesProjection = 'guided' | 'design'
 
@@ -96,17 +97,6 @@ function projectInboundBindings(records: InboundBindingReadRecord[]): Capability
       exposure: rec.exposure,
     }]
   })
-}
-
-export function architectureForDisplay(architecture: {
-  draft?: unknown
-  approved?: unknown
-}): ArchitectureSpecification | undefined {
-  const approved = architecture.approved as ArchitectureSpecification | undefined
-  const draft = architecture.draft as ArchitectureSpecification | undefined
-  return draft && (!approved || draft.revision !== approved.revision)
-    ? draft
-    : approved ?? draft
 }
 
 type Props = {
