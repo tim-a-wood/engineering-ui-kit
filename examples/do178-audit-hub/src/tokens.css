@@ -1,0 +1,85 @@
+/* Semantic token entry point — the single place primitive values live.
+   Dark mode is the normative theme (FND-TOK-004); no light mode is provided.
+   Every component style references these custom properties (ARCH-THEME-001). */
+:root {
+  color-scheme: dark;
+
+  --surface-canvas: #07111f;
+  --surface-panel: #0f172a;
+  --surface-panel-raised: #111827;
+  --surface-inset: #172033;
+  --surface-overlay: #0f172a;
+  --surface-scrim: rgba(2, 6, 23, 0.72);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-disabled: rgba(203, 213, 225, 0.38);
+  --text-inverse: #ffffff;
+
+  --border-subtle: rgba(148, 163, 184, 0.18);
+  --border-strong: rgba(203, 213, 225, 0.34);
+  --border-focus: #5478ff;
+  --border-danger: #ef4444;
+
+  --focus-ring: 0 0 0 2px #5478ff;
+  --focus-ring-offset: 0 0 0 4px rgba(84, 120, 255, 0.16);
+
+  --accent-primary: #2f5bff;
+  --accent-primary-hover: #5478ff;
+  --accent-primary-active: #2443cc;
+  --accent-secondary: #a78bfa;
+  --accent-glow: rgba(47, 91, 255, 0.22);
+
+  --status-success: #34d399;
+  --status-warning: #fbbf24;
+  --status-danger: #f87171;
+  --status-info: #60a5fa;
+  --status-neutral: #94a3b8;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --control-height: 32px;
+  --panel-padding: 16px;
+  --control-height-comfortable: 40px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.22);
+  --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.28);
+  --shadow-overlay: 0 24px 72px rgba(0, 0, 0, 0.46);
+
+  --font-sans: 'Inter Variable', Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --motion-fast: 120ms;
+  --motion-normal: 180ms;
+  --motion-easing: cubic-bezier(0.2, 0, 0, 1);
+
+  --z-overlay: 700;
+  --z-modal: 800;
+
+  --chart-grid: rgba(148, 163, 184, 0.16);
+  --chart-axis: #94a3b8;
+  --chart-crosshair: rgba(203, 213, 225, 0.42);
+  --chart-series-primary: #2f5bff;
+  --chart-series-secondary: #a78bfa;
+  --chart-series-warning: #fbbf24;
+  --chart-series-danger: #f87171;
+}
