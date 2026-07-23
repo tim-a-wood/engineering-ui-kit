@@ -1,0 +1,17 @@
+{
+  "profileId": "DEMO-PROGRAM-OBJECTIVES",
+  "version": "1",
+  "notice": "Program-owned identifiers and satisfaction metadata only; no licensed standard text is included.",
+  "objectives": [
+    {
+      "id": "OBJ-DEMO-VER-001",
+      "title": "Program verification objective — boundary behavior",
+      "phase": "certification",
+      "applicable": true,
+      "status": "satisfied",
+      "revision": "1",
+      "evidenceIds": "VR-DEMO-001",
+      "owner": "Certification"
+    }
+  ]
+}

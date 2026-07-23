@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "moduleId": "mod.evidence-store",
+  "moduleVersion": "1.0.0",
+  "moduleType": "domain",
+  "runtimeLanguage": "typescript",
+  "deployableId": "http-api",
+  "ownedPaths": [
+    "src/modules/evidence-store/"
+  ],
+  "editablePaths": [
+    "src/modules/evidence-store/"
+  ],
+  "responsibility": "Persist immutable canonical evidence snapshots and append-only hub overlays locally, support atomic staging and publication, enforce optimistic revisions, and retrieve deterministic workspace state without owning lifecycle interpretation.",
+  "nonResponsibilities": [
+    "source-adapters",
+    "evidence-normalization",
+    "lifecycle-semantics",
+    "finding-transition-policy",
+    "UI-rendering"
+  ],
+  "providedOperations": [
+    {
+      "operationId": "op.persist-evidence-state",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [],
+  "providedPorts": [
+    "op.persist-evidence-state"
+  ],
+  "requiredPorts": [],
+  "canonicalSchemaRefs": [
+    "op.persist-evidence-state.input",
+    "op.persist-evidence-state.output"
+  ],
+  "generatedTypeTargets": [],
+  "rules": [
+    {
+      "id": "rule.store.immutable",
+      "text": "Published snapshots are immutable."
+    },
+    {
+      "id": "rule.store.atomic",
+      "text": "Every state write is all-or-nothing."
+    },
+    {
+      "id": "rule.store.overlay",
+      "text": "Assurance history is append-only and revision checked."
+    }
+  ],
+  "invariants": [],
+  "examples": [],
+  "edgeCases": [],
+  "failureSemantics": [],
+  "performanceConstraints": [],
+  "cancellationExpectations": "unspecified (migrated)",
+  "timeoutExpectations": "unspecified (migrated)",
+  "concurrencyExpectations": "unspecified (migrated)",
+  "lifecycleRegistration": "request-job",
+  "configurationRefs": [],
+  "secretReferenceIds": [],
+  "persistenceExpectations": "unspecified (migrated)",
+  "telemetryExpectations": "unspecified (migrated)",
+  "healthExpectations": "unspecified (migrated)",
+  "implementationSteps": [],
+  "acceptanceCases": [
+    {
+      "id": "ac.store.atomic",
+      "description": "Publish a validated staged snapshot.",
+      "expectedOutcome": "The snapshot and hash index appear atomically and can no longer be mutated."
+    },
+    {
+      "id": "ac.store.revision",
+      "description": "Append two updates using the same expected overlay revision.",
+      "expectedOutcome": "One succeeds and one is rejected with the current revision; history remains consistent."
+    }
+  ],
+  "acceptanceCommands": [],
+  "unresolvedItems": []
+}

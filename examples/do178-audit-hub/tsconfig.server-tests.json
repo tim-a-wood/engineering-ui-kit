@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.server.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "server/**/*.ts",
+    "src/capabilities/generated/**/*.ts"
+  ],
+  "exclude": [
+    "dist-server",
+    "node_modules"
+  ]
+}

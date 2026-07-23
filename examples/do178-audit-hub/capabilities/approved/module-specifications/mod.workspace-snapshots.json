@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "moduleId": "mod.workspace-snapshots",
+  "moduleVersion": "1.0.0",
+  "moduleType": "domain",
+  "runtimeLanguage": "typescript",
+  "deployableId": "http-api",
+  "ownedPaths": [
+    "src/modules/workspace-snapshots/"
+  ],
+  "editablePaths": [
+    "src/modules/workspace-snapshots/"
+  ],
+  "responsibility": "Own project configuration, objective-profile references, repository definitions, real-versus-sample selection, last-real-project preference, exact revision sets, immutable snapshot identity, baselines, refresh history, and publication state.",
+  "nonResponsibilities": [
+    "artifact-content",
+    "phase-projections",
+    "finding-lifecycle",
+    "artifact-extraction",
+    "source-file-writes"
+  ],
+  "providedOperations": [
+    {
+      "operationId": "op.select-workspace-baseline",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [
+    {
+      "operationId": "op.open-sample",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Resolve the bundled sample workspace."
+    },
+    {
+      "operationId": "op.persist-evidence-state",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Persist selection and snapshot metadata."
+    },
+    {
+      "operationId": "op.access-external-artifacts",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Resolve real-project revisions and source locations."
+    }
+  ],
+  "providedPorts": [
+    "op.select-workspace-baseline"
+  ],
+  "requiredPorts": [
+    "op.open-sample",
+    "op.persist-evidence-state",
+    "op.access-external-artifacts"
+  ],
+  "canonicalSchemaRefs": [
+    "op.select-workspace-baseline.input",
+    "op.select-workspace-baseline.output"
+  ],
+  "generatedTypeTargets": [],
+  "rules": [
+    {
+      "id": "rule.workspace.immutable",
+      "text": "A published snapshot and exact revision set never change."
+    },
+    {
+      "id": "rule.workspace.sample-default",
+      "text": "Zero configured real projects resolves automatically to the sample."
+    },
+    {
+      "id": "rule.workspace.no-secrets",
+      "text": "Project metadata never stores repository credentials or secrets."
+    }
+  ],
+  "invariants": [],
+  "examples": [],
+  "edgeCases": [],
+  "failureSemantics": [],
+  "performanceConstraints": [],
+  "cancellationExpectations": "unspecified (migrated)",
+  "timeoutExpectations": "unspecified (migrated)",
+  "concurrencyExpectations": "unspecified (migrated)",
+  "lifecycleRegistration": "request-job",
+  "configurationRefs": [],
+  "secretReferenceIds": [],
+  "persistenceExpectations": "unspecified (migrated)",
+  "telemetryExpectations": "unspecified (migrated)",
+  "healthExpectations": "unspecified (migrated)",
+  "implementationSteps": [],
+  "acceptanceCases": [
+    {
+      "id": "ac.workspace.sample-fallback",
+      "description": "Resolve startup with zero real projects.",
+      "expectedOutcome": "Sample baseline 2.4.0 is selected with Sample Data and Connect a real project visible."
+    },
+    {
+      "id": "ac.workspace.last-real",
+      "description": "Resolve startup after a real project was selected.",
+      "expectedOutcome": "The last real project opens and Sample remains available under Examples."
+    },
+    {
+      "id": "ac.workspace.failed-refresh",
+      "description": "Record a failed candidate refresh.",
+      "expectedOutcome": "The last valid snapshot remains selected and failure diagnostics remain inspectable."
+    }
+  ],
+  "acceptanceCommands": [],
+  "unresolvedItems": []
+}

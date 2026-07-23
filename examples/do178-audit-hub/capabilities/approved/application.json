@@ -1,0 +1,565 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "id": "app.do178c-audit-hub",
+  "revision": "2",
+  "status": "approved",
+  "purpose": "Provide a reusable internal DO-178C/DO-331 Audit Hub that indexes authoritative lifecycle artifacts into immutable evidence snapshots, exposes phase-oriented evidence exploration and traceability, supports auditable findings and review workflows without changing source artifacts, and opens a rich synthetic sample workspace whenever no real project is configured.",
+  "outcomes": [
+    "Let engineers and auditors reconstruct a complete requirement-to-result evidence chain in under two minutes.",
+    "Expose missing, stale, inconsistent, failed, or unreviewed evidence before formal lifecycle reviews and audits.",
+    "Give every lifecycle area a consistent phase-specific explorer with dossiers, provenance, traces, findings, reviews, and baseline comparison.",
+    "Make the full product immediately evaluable with a deterministic, resettable sample that requires no MATLAB installation, network, or configured project.",
+    "Produce reproducible audit snapshots and synthetic-watermarked evidence packages tied to exact source revisions.",
+    "Keep authoritative requirements, models, code, tests, configuration records, and certification artifacts read-only."
+  ],
+  "actors": [
+    {
+      "id": "actor-vv",
+      "text": "Verification and validation engineer"
+    },
+    {
+      "id": "actor-software",
+      "text": "Software or model-based development engineer"
+    },
+    {
+      "id": "actor-qa",
+      "text": "Software quality assurance engineer"
+    },
+    {
+      "id": "actor-cm",
+      "text": "Configuration management engineer"
+    },
+    {
+      "id": "actor-lead",
+      "text": "Certification lead or authorized representative"
+    },
+    {
+      "id": "actor-auditor",
+      "text": "Internal or external auditor with approved access"
+    },
+    {
+      "id": "actor-admin",
+      "text": "Project evidence administrator"
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-readiness",
+      "text": "Assess lifecycle and objective-profile readiness from one evidence baseline without claiming certification."
+    },
+    {
+      "id": "goal-trace",
+      "text": "Follow bidirectional traces across plans, requirements, models, data dictionaries, code, reviews, tests, results, coverage, problem reports, and certification records."
+    },
+    {
+      "id": "goal-gaps",
+      "text": "Find broken links, stale evidence, coverage gaps, failed tests, missing independence, obsolete references, and unclosed corrective actions."
+    },
+    {
+      "id": "goal-dossier",
+      "text": "Open a complete evidence dossier for any indexed artifact with provenance, revision, relationships, reviews, findings, and source location."
+    },
+    {
+      "id": "goal-compare",
+      "text": "Compare retained baselines and understand change impact across all lifecycle areas."
+    },
+    {
+      "id": "goal-review",
+      "text": "Assign, disposition, correct, reverify, and close hub-local audit findings while preserving a complete activity history."
+    },
+    {
+      "id": "goal-package",
+      "text": "Assemble a reproducible audit package from selected evidence, findings, reviews, and objective mappings."
+    },
+    {
+      "id": "goal-sample",
+      "text": "Explore every main workflow immediately in a realistic built-in sample workspace."
+    }
+  ],
+  "useCases": [
+    {
+      "id": "uc-workspace",
+      "text": "Create, select, and inspect a project workspace, objective profile, contributing repositories, artifact locations, extraction health, exact revision set, and current baseline."
+    },
+    {
+      "id": "uc-sample",
+      "text": "When no real project is configured, automatically open the built-in AeroNav Flight Guidance Computer — Lateral Guidance sample at baseline 2.4.0 with a persistent Sample Data badge and a prominent Connect a real project action."
+    },
+    {
+      "id": "uc-overview",
+      "text": "Open an overview showing lifecycle readiness, evidence inventory, changes since baseline 2.3.0, open findings, ingestion health, and cross-phase evidence flow."
+    },
+    {
+      "id": "uc-planning",
+      "text": "Use the Evidence Explorer Planning area to inspect plans, standards, objective-profile applicability, approvals, deviations, reviews, and findings."
+    },
+    {
+      "id": "uc-requirements",
+      "text": "Use the Requirements area to inspect system and software requirement sets, hierarchy, derived requirements, quality checks, bidirectional traces, reviews, and findings."
+    },
+    {
+      "id": "uc-design",
+      "text": "Use the Design area to inspect architecture, Simulink and Stateflow model structure, interfaces, data dictionaries, design analyses, model reviews, traces, and findings."
+    },
+    {
+      "id": "uc-implementation",
+      "text": "Use the Implementation area to inspect C and H source inventory, functions, generated-versus-handwritten code, interfaces, build metadata, standards evidence, reviews, traces, and findings without providing a full IDE."
+    },
+    {
+      "id": "uc-verification",
+      "text": "Use the Verification area to inspect verification matrices, test definitions, executions, result sets, model and code coverage, analyses, review evidence, failures, and findings."
+    },
+    {
+      "id": "uc-cm",
+      "text": "Use the Configuration Management area to inspect baselines, change records, problem reports, build and release records, configuration status accounting, integrity checks, and findings."
+    },
+    {
+      "id": "uc-qa",
+      "text": "Use the Quality Assurance area to inspect process audits, conformance records, independence evidence, deviations, corrective actions, reviews, and findings."
+    },
+    {
+      "id": "uc-certification",
+      "text": "Use the Certification area to inspect objective cross-references, audit packages, authority questions, open items, accomplishment-summary evidence, and findings without reproducing licensed standard text."
+    },
+    {
+      "id": "uc-dossier",
+      "text": "Open an evidence dossier from any table, graph, metric, change, or finding and inspect metadata, authoritative-source provenance and hash, incoming and outgoing traces, reviews, findings, history, and package membership."
+    },
+    {
+      "id": "uc-chain",
+      "text": "Trace a complete representative chain from SYS-LAT-014 through SWR-HLR-LAT-021, SWR-LLR-LAT-044, LateralGuidance/BankAngleLimiter, lateral_guidance.c::limit_bank_command, TC-LAT-BOUNDARY-008, RequirementsResults_2_4_0, and VR-RESULT-2026-041."
+    },
+    {
+      "id": "uc-gaps",
+      "text": "Detect and navigate an intentionally incomplete evidence chain, broken links, orphaned items, stale hashes, obsolete baseline references, missing reviews, failed tests, unverified problem reports, and coverage gaps."
+    },
+    {
+      "id": "uc-search",
+      "text": "Search and filter across IDs, titles, artifact types, lifecycle areas, repositories, revisions, owners, statuses, severities, review state, and source files, then pivot into traces or dossiers."
+    },
+    {
+      "id": "uc-compare",
+      "text": "Compare baselines 2.3.0 and 2.4.0 to show added, removed, changed, and stale artifacts, relationships, results, reviews, coverage, findings, and impacted downstream evidence."
+    },
+    {
+      "id": "uc-findings",
+      "text": "Create a hub-local finding from evidence, assign an owner and due date, record disposition and corrective action, attach review evidence, mark ready for closure, reverify, and close it with a tamper-evident history."
+    },
+    {
+      "id": "uc-reviews",
+      "text": "Inspect review evidence and independence, record hub-local review decisions and comments, and relate them to artifacts and findings without changing authoritative source files."
+    },
+    {
+      "id": "uc-refresh",
+      "text": "Run or inspect a refresh that scans and classifies supported artifacts, records extraction diagnostics, normalizes evidence, evaluates deterministic rules, and publishes a new immutable snapshot only when processing is reliable."
+    },
+    {
+      "id": "uc-package",
+      "text": "Create and export a deterministic audit package containing a manifest, selected dossiers, trace matrices, review evidence, findings, baseline metadata, hashes, and a synthetic-sample watermark when applicable."
+    },
+    {
+      "id": "uc-reset",
+      "text": "Edit findings, reviews, package selections, dispositions, and display preferences in a sandbox overlay for the sample workspace, then reset all sample changes to the bundled deterministic state."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "sc-1",
+      "text": "A first-time user launches with no projects and immediately sees the complete sample overview rather than a blank state or blocking picker."
+    },
+    {
+      "id": "sc-2",
+      "text": "A V&V engineer follows the known complete lateral-guidance evidence chain and opens each artifact dossier."
+    },
+    {
+      "id": "sc-3",
+      "text": "A QA engineer opens a broken-link finding, assigns it, records corrective evidence, marks it ready for closure, reverifies it, and closes it."
+    },
+    {
+      "id": "sc-4",
+      "text": "A certification lead moves through every lifecycle area and reviews phase-specific readiness, unresolved findings, reviews, and objective mappings."
+    },
+    {
+      "id": "sc-5",
+      "text": "An engineer compares 2.3.0 with 2.4.0 and identifies the effect of bank-angle-limit and navigation-mode-transition changes."
+    },
+    {
+      "id": "sc-6",
+      "text": "A refresh encounters a corrupt or unsupported artifact; explicit diagnostics are shown and the last valid snapshot remains current."
+    },
+    {
+      "id": "sc-7",
+      "text": "A project administrator connects a real project; later launches open the last real project by default while the sample remains available under Examples."
+    },
+    {
+      "id": "sc-8",
+      "text": "An auditor exports a selected package and verifies its manifest, revision set, content hashes, finding state, and synthetic watermark."
+    }
+  ],
+  "information": [
+    {
+      "id": "info-project",
+      "text": "Project identity, DO-178C software level, DO-331 applicability, lifecycle configuration, objective-profile reference, repositories, and artifact locations"
+    },
+    {
+      "id": "info-baseline",
+      "text": "Immutable snapshot and baseline identity, exact repository commits, branch or tag context, timestamps, tool versions, extraction version, and content hashes"
+    },
+    {
+      "id": "info-plans",
+      "text": "Plans, standards, checklists, approvals, deviations, objective applicability, process records, and accomplishment-summary references"
+    },
+    {
+      "id": "info-req",
+      "text": "System requirements, high-level requirements, low-level requirements, derived requirements, classifications, attributes, hierarchy, and requirement reviews from .slreqx extractions"
+    },
+    {
+      "id": "info-trace",
+      "text": "Typed incoming and outgoing trace relationships from .slmx and other configured link sources"
+    },
+    {
+      "id": "info-design",
+      "text": "Architecture, Simulink and Stateflow models, model elements, interfaces, parameters, variants, data dictionaries, analyses, and review evidence from .slx, .sldd, .slreqx, .m, and normalized extractions"
+    },
+    {
+      "id": "info-code",
+      "text": "C and H files, generated and handwritten classification, functions, interfaces, build units, coding-standard results, code reviews, and source hashes"
+    },
+    {
+      "id": "info-test",
+      "text": "Verification cases, procedures, harnesses, simulations, executions, result sets, iterations, expected and actual values, verdicts, anomalies, and reviews from .mldatx, .xlsx, and normalized result extracts"
+    },
+    {
+      "id": "info-coverage",
+      "text": "Imported model and code coverage summaries including statement, decision, condition, and MC/DC where applicable"
+    },
+    {
+      "id": "info-review",
+      "text": "Reviewer, independence role, scope, artifact revision, checklist, comments, decisions, approvals, dates, and evidence attachments"
+    },
+    {
+      "id": "info-finding",
+      "text": "Finding type, severity, lifecycle area, affected evidence, owner, due date, status, disposition, corrective action, re-verification, closure, and immutable activity history"
+    },
+    {
+      "id": "info-cm",
+      "text": "Baselines, change requests, problem reports, build records, releases, configuration indexes, integrity checks, and status-accounting records"
+    },
+    {
+      "id": "info-qa",
+      "text": "Quality audits, conformance results, deviations, corrective actions, independence evidence, and approvals"
+    },
+    {
+      "id": "info-cert",
+      "text": "Configurable objective identifiers and mappings, audit packages, authority questions, open items, and accomplishment-summary evidence without bundled copyrighted objective text"
+    },
+    {
+      "id": "info-sample",
+      "text": "Synthetic AeroNav Flight Guidance Computer — Lateral Guidance dataset with components Mode Manager, Lateral Guidance, and Command Monitor; baselines 2.3.0 and 2.4.0; deterministic people, dates, identifiers, hashes, and relationships"
+    },
+    {
+      "id": "info-sample-scale",
+      "text": "Sample inventory: 10 plans and standards, 18 system requirements, 36 HLRs, 54 LLRs, 6 derived requirements, 7 models or harnesses, 2 data dictionaries, about 140 model elements, 24 C/H files, about 105 functions, 64 tests, about 225 iterations, 6 result sets, about 45 reviews, about 18 change or problem records, 12 findings, and 2 baselines"
+    },
+    {
+      "id": "info-sample-findings",
+      "text": "Twelve sample findings covering derived-requirement feedback, a broken LLR-to-model link, stale data-dictionary review, missing code trace, robustness-test failure, stale result hash, decision-coverage gap, missing independence evidence, obsolete configuration-index reference, unreverified problem report, approved standards deviation, and a finding ready for closure"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule-authority",
+      "text": "Connected engineering artifacts remain authoritative; the hub must not write changes back to requirements, trace, model, dictionary, source, test, result, spreadsheet, review, configuration, quality, or certification files."
+    },
+    {
+      "id": "rule-local-workflow",
+      "text": "Only hub-local findings, reviews, dispositions, package selections, annotations, and sample sandbox state are editable, and every change is auditable."
+    },
+    {
+      "id": "rule-snapshot",
+      "text": "Each published snapshot is immutable and identifies exact source revisions, extraction context, and hashes."
+    },
+    {
+      "id": "rule-publish",
+      "text": "Required extraction and indexing failures prevent candidate publication; evidence gaps remain visible findings and do not by themselves suppress a reliable snapshot."
+    },
+    {
+      "id": "rule-fallback",
+      "text": "A failed or partial refresh never replaces the last valid published snapshot."
+    },
+    {
+      "id": "rule-finding",
+      "text": "Deterministic findings are recalculated per snapshot; human findings retain attribution, history, disposition, and closure evidence."
+    },
+    {
+      "id": "rule-stale",
+      "text": "Evidence is stale when its recorded source revision or dependency hash differs from the selected snapshot, or when a dependency changed without required downstream regeneration or review."
+    },
+    {
+      "id": "rule-phases",
+      "text": "The Evidence Explorer navigation is Overview, Planning, Requirements, Design, Implementation, Verification, Configuration Management, Quality Assurance, and Certification."
+    },
+    {
+      "id": "rule-shared-anatomy",
+      "text": "Every lifecycle area uses a consistent phase header, tailored subnavigation, working evidence table or visualization, evidence inspector, findings drawer, and baseline-compare mode."
+    },
+    {
+      "id": "rule-shared-actions",
+      "text": "Every applicable evidence item supports opening its dossier, following traces, opening a source location, comparing baselines, inspecting provenance and hash, reviewing related findings and reviews, creating a hub-local finding, and adding it to a package."
+    },
+    {
+      "id": "rule-sample-default",
+      "text": "If zero real projects exist, the sample opens automatically with no picker blocker or blank dashboard."
+    },
+    {
+      "id": "rule-sample-real",
+      "text": "After a real project exists, the last real project opens by default and the sample remains selectable under Examples."
+    },
+    {
+      "id": "rule-sample-badge",
+      "text": "The sample always displays a Sample Data badge and a Connect a real project action."
+    },
+    {
+      "id": "rule-sample-overlay",
+      "text": "Bundled sample evidence is immutable; sample findings, reviews, dispositions, packages, and preferences are stored in a resettable sandbox overlay."
+    },
+    {
+      "id": "rule-sample-export",
+      "text": "Every sample export is marked Synthetic sample — not certification evidence in both visible output and manifest metadata."
+    },
+    {
+      "id": "rule-sample-portable",
+      "text": "The sample uses a normalized extraction snapshot representing synthetic proprietary-format artifacts; it must not disguise text or JSON as .slreqx, .slmx, .slx, .sldd, or .mldatx binaries."
+    },
+    {
+      "id": "rule-same-ui",
+      "text": "Sample and real projects use the same canonical APIs, domain model, routes, and components; there is no demo-only parallel interface."
+    },
+    {
+      "id": "rule-objectives",
+      "text": "Do not bundle or reproduce copyrighted DO-178C or DO-331 objective text; use configurable identifiers and organization-provided licensed profiles."
+    },
+    {
+      "id": "rule-claims",
+      "text": "The application may report evidence status against the configured profile but must not claim certification, regulatory approval, or compliance."
+    },
+    {
+      "id": "rule-llr",
+      "text": "Requirement classifications and allocation rules prevent ambiguous duplication between higher-level and low-level requirement views."
+    },
+    {
+      "id": "rule-coverage",
+      "text": "Coverage is imported from authoritative results; the hub does not calculate coverage."
+    },
+    {
+      "id": "rule-compare",
+      "text": "Baseline comparison reports added, removed, changed, and stale evidence without performing semantic merge or conflict resolution."
+    },
+    {
+      "id": "rule-security",
+      "text": "Credentials and secrets are never stored in project configuration, snapshots, logs, packages, or displayed evidence."
+    },
+    {
+      "id": "rule-performance",
+      "text": "Normal browsing, filtering, search, trace navigation, dossier opening, and phase switching should usually respond within two seconds at accepted scale."
+    },
+    {
+      "id": "rule-determinism",
+      "text": "The bundled sample has deterministic identifiers, dates, people, revisions, hashes, relationships, counts, and reset behavior."
+    }
+  ],
+  "externalSystems": [
+    {
+      "id": "ext-files",
+      "text": "Configured local or company-controlled Git workspaces and file stores containing plans, .slreqx, .slmx, .slx, .sldd, .m, .c, .h, .mldatx, .xlsx, coverage, review, CM, QA, and certification evidence"
+    },
+    {
+      "id": "ext-git",
+      "text": "Git repository operations for exact revision resolution, baseline metadata, and optional source hyperlinks"
+    },
+    {
+      "id": "ext-matlab",
+      "text": "Optional licensed MATLAB, Simulink, Simulink Requirements, and Simulink Test tooling or organization-provided extractors for real proprietary artifacts"
+    },
+    {
+      "id": "ext-export",
+      "text": "Local filesystem destination for deterministic audit package exports"
+    }
+  ],
+  "constraints": [
+    {
+      "id": "con-scope",
+      "text": "Medium-sized reusable desktop or local web application with a complete front end and realistic in-memory or local sample behavior."
+    },
+    {
+      "id": "con-offline",
+      "text": "The built-in sample requires no MATLAB installation, network, external service, credential, or repository."
+    },
+    {
+      "id": "con-real",
+      "text": "Real-project ingestion supports configured normalized extracts and may use licensed tooling when available."
+    },
+    {
+      "id": "con-scale",
+      "text": "A real project may aggregate up to 5 repositories and approximately 1,000 requirements, 250,000 model or code elements, 5,000 tests, 1,000,000 trace links, and 2,000 retained snapshots."
+    },
+    {
+      "id": "con-access",
+      "text": "The surrounding company environment controls access; the first release does not implement application-level identity or authorization."
+    },
+    {
+      "id": "con-ui",
+      "text": "The UI is dark-first, dense but legible, keyboard accessible, responsive at common desktop widths, and uses no empty placeholder pages."
+    },
+    {
+      "id": "con-code",
+      "text": "The code view presents searchable metadata and focused excerpts only, not an IDE."
+    },
+    {
+      "id": "con-refresh",
+      "text": "Refresh and extraction may be asynchronous and may take longer than interactive operations."
+    },
+    {
+      "id": "con-retain",
+      "text": "Earlier published snapshots are retained unless removed outside the application by authorized infrastructure."
+    },
+    {
+      "id": "con-no-pipeline",
+      "text": "The hub does not trigger CI or Azure DevOps pipelines."
+    }
+  ],
+  "scope": {
+    "inScope": [
+      "Project and sample workspace selection",
+      "Automatic detailed sample fallback",
+      "Lifecycle Overview",
+      "Planning evidence explorer",
+      "Requirements evidence explorer",
+      "Design evidence explorer",
+      "Implementation evidence explorer",
+      "Verification evidence explorer",
+      "Configuration Management evidence explorer",
+      "Quality Assurance evidence explorer",
+      "Certification evidence explorer",
+      "Evidence dossiers and cross-phase trace graph",
+      "Global search and phase-aware filtering",
+      "Immutable snapshots and 2.3.0 versus 2.4.0 baseline comparison",
+      "Artifact ingestion inventory and extraction diagnostics",
+      "Deterministic and human findings with assignment, correction, reverification, and closure",
+      "Review evidence and independence records",
+      "Configurable objective-profile mappings without standard text",
+      "Deterministic audit-package assembly and export",
+      "Resettable sample sandbox overlay",
+      "Detailed synthetic AeroNav lateral-guidance dataset",
+      "Source provenance, hashes, and native-tool or repository links where available",
+      "Responsive and keyboard-accessible complete front end"
+    ],
+    "outOfScope": [
+      "Editing or writing back to authoritative lifecycle artifacts",
+      "Bundling licensed DO-178C or DO-331 objective text",
+      "Claiming certification, approval, or compliance",
+      "Generating genuine proprietary MATLAB binary fixtures without licensed tooling",
+      "Full IDE or embedded editable MATLAB views",
+      "Semantic merge or conflict resolution",
+      "Triggering external pipelines",
+      "Public internet or external-service dependency for the sample",
+      "Application-level enterprise identity and authorization",
+      "Automated regulatory decisions"
+    ]
+  },
+  "acceptanceCases": [
+    {
+      "id": "ac-1",
+      "description": "Launch with no configured real project.",
+      "expectedOutcome": "AeroNav Flight Guidance Computer — Lateral Guidance baseline 2.4.0 opens automatically with complete overview content, Sample Data badge, and Connect a real project action."
+    },
+    {
+      "id": "ac-2",
+      "description": "Visit every Evidence Explorer lifecycle area.",
+      "expectedOutcome": "Overview, Planning, Requirements, Design, Implementation, Verification, Configuration Management, Quality Assurance, and Certification each contain meaningful phase-specific data, controls, visualizations, dossiers, reviews, and findings."
+    },
+    {
+      "id": "ac-3",
+      "description": "Follow the complete SYS-LAT-014 chain.",
+      "expectedOutcome": "The user navigates through HLR, LLR, model element, C function, test case, result set, and verification record with provenance and hashes preserved."
+    },
+    {
+      "id": "ac-4",
+      "description": "Open the intentionally incomplete chain and each seeded issue.",
+      "expectedOutcome": "The hub explains the precise break, staleness, failure, review, coverage, configuration, or closure condition and links to affected evidence."
+    },
+    {
+      "id": "ac-5",
+      "description": "Compare baselines 2.3.0 and 2.4.0.",
+      "expectedOutcome": "The hub shows bank-angle-limit and navigation-mode-transition changes plus impacted artifacts, traces, reviews, tests, results, coverage, and findings."
+    },
+    {
+      "id": "ac-6",
+      "description": "Exercise global and phase-specific search and filters.",
+      "expectedOutcome": "Results update immediately and open the same canonical dossiers used elsewhere."
+    },
+    {
+      "id": "ac-7",
+      "description": "Drive one sample finding through its workflow.",
+      "expectedOutcome": "Assignment, corrective action, ready-for-closure, reverification, and closure are recorded with actor, timestamp, evidence, and immutable history."
+    },
+    {
+      "id": "ac-8",
+      "description": "Reset the sample workspace after edits.",
+      "expectedOutcome": "All overlay changes are removed and the deterministic bundled state is restored without changing sample evidence."
+    },
+    {
+      "id": "ac-9",
+      "description": "Assemble and export a sample audit package.",
+      "expectedOutcome": "The package includes a deterministic manifest, selected evidence, trace and review summaries, finding state, baseline metadata, hashes, and the Synthetic sample — not certification evidence watermark."
+    },
+    {
+      "id": "ac-10",
+      "description": "Inspect representative artifact inventory.",
+      "expectedOutcome": "The sample visibly represents plans, .slreqx, .slmx, .slx, .sldd, .m, .c, .h, .mldatx, .xlsx, coverage, review, CM, QA, and certification records as normalized synthetic evidence, without counterfeit binary files."
+    },
+    {
+      "id": "ac-11",
+      "description": "Connect or select a real project after using the sample.",
+      "expectedOutcome": "The same routes and components render real normalized evidence; future launches prefer the last real project while Sample remains under Examples."
+    },
+    {
+      "id": "ac-12",
+      "description": "Attempt to mutate an authoritative evidence artifact.",
+      "expectedOutcome": "No such control exists; only hub-local workflow records and sample overlay state can change."
+    },
+    {
+      "id": "ac-13",
+      "description": "Simulate a corrupt or unsupported extraction input.",
+      "expectedOutcome": "Explicit diagnostics appear, the candidate is not published, and the last valid snapshot remains available."
+    },
+    {
+      "id": "ac-14",
+      "description": "Use keyboard navigation and resize the application across common desktop widths.",
+      "expectedOutcome": "All main views, phase navigation, tables, graphs, drawers, dialogs, and actions remain operable with no inaccessible or empty critical state."
+    },
+    {
+      "id": "ac-15",
+      "description": "Use the sample end to end offline.",
+      "expectedOutcome": "Every principal view and workflow operates without MATLAB, network access, credentials, or external services."
+    }
+  ],
+  "sources": [
+    {
+      "id": "source-1",
+      "text": "Current workbench capability plan and project context"
+    },
+    {
+      "id": "source-2",
+      "text": "User-approved product discussion on 2026-07-22 covering use cases, lifecycle phase subviews, and detailed automatic sample fallback"
+    },
+    {
+      "id": "source-3",
+      "text": "FAA recognition boundary and official MathWorks artifact-format behavior considered during product definition"
+    }
+  ],
+  "unresolvedQuestions": [],
+  "contentHash": "21a8b8d730c7c15ab56d62abdc98f82759963007cfeece39080e66daf7f583f8",
+  "approvedAt": "2026-07-22T22:54:47.714Z"
+}

@@ -3,9 +3,27 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 import { cx, demoStateOf, fmtDateTime, formatHash, useRoute } from './core.ts'
 import type { Baseline, DemoState, EvidenceRecord, EvidenceStatus, Finding, FindingSeverity, FindingStatus, Phase, ReviewMethod, ReviewResult, ReviewState } from './core.ts'
-import { PEOPLE, PHASES, PHASE_LABEL, REVIEW_STATE_LABEL, STATUS_LABEL, TYPE_LABEL, WATERMARK, WORKSPACE_NAME, allEvidence, compareBaselines, findings, findings as seedFindings, findingsFor, getEvidence, phaseStats, refreshSourceCounts, reviewRecords, reviewsFor, sampleCounts, searchEvidence, traceFrom } from './fixtures.ts'
+import { PEOPLE, PHASES, PHASE_LABEL, REVIEW_STATE_LABEL, STATUS_LABEL, TYPE_LABEL, WATERMARK, WORKSPACE_NAME, allEvidence, canonicalChain, compareBaselines, findings, findings as seedFindings, findingsFor, getEvidence, hydrateFromSnapshot, phaseStats, refreshSourceCounts, reviewRecords, reviewsFor, sampleCounts, searchEvidence, traceFrom } from './fixtures.ts'
 import { FINDING_STATUS_LABEL, findingWithOverlay, loadOverlay, openFindingIds, overlayReducer, saveOverlay } from './store.ts'
-import type { AuditPackage, OverlayAction, OverlayState, PackageManifestEntry } from './store.ts'
+import type { OverlayAction, OverlayState } from './store.ts'
+import {
+  AuditHubApiError,
+  buildAuditPackage,
+  connectProject,
+  loadRuntimeSnapshot,
+  recordEvidenceReview,
+  resetSampleOverlay,
+  runProjectRefresh,
+  transitionFinding,
+} from './api.ts'
+import type {
+  ConnectProjectInput,
+  ReviewSubmission,
+  RuntimeDiagnostic,
+  RuntimePackageManifest,
+  RuntimePackageRecord,
+  RuntimeWorkspace,
+} from './api.ts'
 
 // ===== from store/store.tsx =====
 // React context around the overlay reducer with localStorage persistence and
@@ -19,6 +37,43 @@ interface StoreValue {
   announce: (message: string) => void
   announcement: string
   now: () => string
+  runtime: {
+    status: 'loading' | 'ready' | 'fallback' | 'error'
+    workspace: RuntimeWorkspace
+    snapshotId: string
+    baselineId: string
+    comparisonBaselineId?: string
+    publishedAt: string
+    availableBaselines: string[]
+    packages: RuntimePackageRecord[]
+    activity: Array<Record<string, unknown>>
+    diagnostics: RuntimeDiagnostic[]
+    error?: string
+  }
+  reloadRuntime: () => Promise<void>
+  connectRuntimeProject: (input: ConnectProjectInput) => Promise<void>
+  refreshRuntime: () => Promise<{
+    status: 'published' | 'sample'
+    diagnostics: RuntimeDiagnostic[]
+  }>
+  resetRuntimeSample: () => Promise<void>
+  recordRuntimeReview: (subject: EvidenceRecord, review: ReviewSubmission) => Promise<void>
+  transitionRuntimeFinding: (
+    findingId: string,
+    status: FindingStatus,
+    payload: Record<string, unknown>,
+  ) => Promise<void>
+  buildRuntimePackage: (selection: {
+    name: string
+    evidenceIds: string[]
+    phaseIds: Phase[]
+    includeFindings: boolean
+    includeReviews: boolean
+  }) => Promise<{
+    packageId: string
+    manifest: RuntimePackageManifest
+    download: { path: string; url: string; contentHash: string }
+  }>
 }
 
 const StoreContext = createContext<StoreValue | null>(null)
@@ -27,6 +82,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [overlay, dispatch] = useReducer(overlayReducer, undefined, () => loadOverlay(window.localStorage))
   const [announcement, setAnnouncement] = useState('')
   const announceTimer = useRef<number | null>(null)
+  const [runtime, setRuntime] = useState<StoreValue['runtime']>({
+    status: 'loading',
+    workspace: {
+      id: 'sample-aeronav',
+      name: WORKSPACE_NAME,
+      kind: 'sample',
+      softwareLevel: 'Level B',
+      do331Applicable: true,
+      watermark: WATERMARK,
+    },
+    snapshotId: 'sample-aeronav-2.4.0',
+    baselineId: '2.4.0',
+    comparisonBaselineId: '2.3.0',
+    publishedAt: '2026-07-22T00:00:00.000Z',
+    availableBaselines: ['2.4.0', '2.3.0'],
+    packages: [],
+    activity: [],
+    diagnostics: [],
+  })
 
   useEffect(() => {
     saveOverlay(window.localStorage, overlay)
@@ -40,6 +114,109 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const now = useCallback(() => new Date().toISOString().slice(0, 16) + 'Z', [])
 
+  const reloadRuntime = useCallback(async () => {
+    setRuntime((current) => ({ ...current, status: 'loading', error: undefined }))
+    try {
+      const snapshot = await loadRuntimeSnapshot()
+      hydrateFromSnapshot(snapshot)
+      const availableBaselines = Array.from(new Set([
+        snapshot.baselineId,
+        ...(snapshot.comparisonBaselineId ? [snapshot.comparisonBaselineId] : []),
+        ...snapshot.baselines.flatMap((entry) => (
+          entry && typeof entry === 'object' && 'id' in entry && typeof entry.id === 'string'
+            ? [entry.id]
+            : []
+        )),
+      ]))
+      dispatch({
+        type: 'baseline/sync',
+        baseline: snapshot.baselineId,
+        comparisonAvailable: Boolean(snapshot.comparisonBaselineId),
+      })
+      setRuntime({
+        status: 'ready',
+        workspace: snapshot.workspace,
+        snapshotId: snapshot.snapshotId,
+        baselineId: snapshot.baselineId,
+        ...(snapshot.comparisonBaselineId ? { comparisonBaselineId: snapshot.comparisonBaselineId } : {}),
+        publishedAt: snapshot.publishedAt,
+        availableBaselines,
+        packages: snapshot.packages ?? [],
+        activity: snapshot.activity ?? [],
+        diagnostics: snapshot.diagnostics ?? [],
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      setRuntime((current) => ({
+        ...current,
+        status: 'fallback',
+        error: message,
+        diagnostics: [],
+      }))
+      announce(`Backend unavailable — using bundled sample: ${message}`)
+    }
+  }, [announce])
+
+  useEffect(() => {
+    void reloadRuntime()
+  }, [reloadRuntime])
+
+  const connectRuntimeProject = useCallback(async (input: ConnectProjectInput) => {
+    await connectProject(input)
+    await reloadRuntime()
+  }, [reloadRuntime])
+
+  const refreshRuntime = useCallback(async () => {
+    if (runtime.workspace.kind === 'sample') {
+      await reloadRuntime()
+      return { status: 'sample' as const, diagnostics: [] }
+    }
+    const result = await runProjectRefresh(runtime.workspace.id)
+    if (result.status !== 'published') {
+      const fatal = result.diagnostics.find((item) => item.severity === 'fatal')
+      throw new AuditHubApiError(
+        fatal?.code ?? 'refresh-not-published',
+        fatal?.message ?? 'The candidate snapshot was not published.',
+        false,
+      )
+    }
+    await reloadRuntime()
+    return { status: 'published' as const, diagnostics: result.diagnostics }
+  }, [reloadRuntime, runtime.workspace.id, runtime.workspace.kind])
+
+  const resetRuntimeSample = useCallback(async () => {
+    if (runtime.workspace.kind === 'sample') {
+      await resetSampleOverlay(runtime.workspace.id)
+      await reloadRuntime()
+    }
+  }, [reloadRuntime, runtime.workspace.id, runtime.workspace.kind])
+
+  const recordRuntimeReview = useCallback(async (subject: EvidenceRecord, review: ReviewSubmission) => {
+    await recordEvidenceReview(runtime.workspace.id, [subject.id], review)
+    await reloadRuntime()
+  }, [reloadRuntime, runtime.workspace.id])
+
+  const transitionRuntimeFinding = useCallback(async (
+    findingId: string,
+    status: FindingStatus,
+    payload: Record<string, unknown>,
+  ) => {
+    await transitionFinding(runtime.workspace.id, findingId, status, payload)
+    await reloadRuntime()
+  }, [reloadRuntime, runtime.workspace.id])
+
+  const buildRuntimePackage = useCallback(async (selection: {
+    name: string
+    evidenceIds: string[]
+    phaseIds: Phase[]
+    includeFindings: boolean
+    includeReviews: boolean
+  }) => {
+    const result = await buildAuditPackage(runtime.workspace.id, runtime.snapshotId, selection)
+    await reloadRuntime()
+    return result
+  }, [reloadRuntime, runtime.snapshotId, runtime.workspace.id])
+
   const value = useMemo<StoreValue>(() => {
     const mergedFindings = findings.map((f) => findingWithOverlay(f, overlay))
     return {
@@ -50,8 +227,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       announce,
       announcement,
       now,
+      runtime,
+      reloadRuntime,
+      connectRuntimeProject,
+      refreshRuntime,
+      resetRuntimeSample,
+      recordRuntimeReview,
+      transitionRuntimeFinding,
+      buildRuntimePackage,
     }
-  }, [overlay, announce, announcement, now])
+  }, [
+    overlay,
+    announce,
+    announcement,
+    now,
+    runtime,
+    reloadRuntime,
+    connectRuntimeProject,
+    refreshRuntime,
+    resetRuntimeSample,
+    recordRuntimeReview,
+    transitionRuntimeFinding,
+    buildRuntimePackage,
+  ])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
@@ -881,19 +1079,50 @@ function NodeRow({
 }
 
 export function TraceView({ focusId, onNavigate }: { focusId: string; onNavigate: (id: string) => void }) {
-  const nodes = traceFrom(focusId)
+  const [expanded, setExpanded] = useState(false)
+  useEffect(() => setExpanded(false), [focusId])
+
+  const allNodes = traceFrom(focusId)
+  const canonicalIndex = canonicalChain.indexOf(focusId)
+  const focusedNodes = canonicalIndex >= 0
+    ? canonicalChain.map((id, index) => ({
+      record: getEvidence(id),
+      id,
+      direction: index < canonicalIndex ? 'upstream' as const : index > canonicalIndex ? 'downstream' as const : 'focus' as const,
+      depth: Math.abs(index - canonicalIndex),
+      gap: getEvidence(id) === undefined,
+    }))
+    : allNodes.filter((node) => node.direction === 'focus' || node.depth === 1)
+  const visibleIds = new Set(focusedNodes.map((node) => node.id))
+  const hiddenCount = allNodes.filter((node) => !visibleIds.has(node.id)).length
+  const nodes = expanded ? allNodes : focusedNodes
   const focus = nodes.find((n) => n.direction === 'focus')
   const upstream = nodes.filter((n) => n.direction === 'upstream').sort((a, b) => b.depth - a.depth)
   const downstream = nodes.filter((n) => n.direction === 'downstream').sort((a, b) => a.depth - b.depth)
   const focusRecord = focus?.record
-  const hasGaps = nodes.some((n) => n.gap) || (focusRecord ? focusRecord.downstream.length === 0 && focusRecord.type === 'llr' : false)
+  const hasGaps = allNodes.some((n) => n.gap) || (focusRecord ? focusRecord.downstream.length === 0 && focusRecord.type === 'llr' : false)
 
   return (
     <div>
       <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', margin: '0 0 var(--space-2)' }}>
-        Direction: upstream sources above the focus record, downstream impacts below.{' '}
+        {expanded
+          ? 'Full bounded impact graph. '
+          : canonicalIndex >= 0
+            ? 'Representative end-to-end evidence path. '
+            : 'Direct upstream sources and downstream impacts. '}
         {hasGaps ? 'Dashed nodes mark trace gaps.' : 'No trace gaps detected on this chain.'}
       </p>
+      {hiddenCount > 0 ? (
+        <button
+          type="button"
+          className="btn btn-sm"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((current) => !current)}
+          style={{ marginBottom: 'var(--space-3)' }}
+        >
+          {expanded ? 'Return to focused path' : `Explore full impact graph (${hiddenCount} more)`}
+        </button>
+      ) : null}
       <ol className="trace-list" aria-label={`Trace chain for ${focusId}`}>
         {upstream.map((n) => (
           <NodeRow key={`u-${n.id}`} record={n.record} id={n.id} gap={n.gap} isFocus={false} onNavigate={onNavigate} />
@@ -994,11 +1223,13 @@ export function Inspector({
   onOpenFinding: (id: string) => void
   onRecordReview: (r: EvidenceRecord) => void
 }) {
-  const { mergedFindings, overlay } = useStore()
+  const { mergedFindings, overlay, runtime } = useStore()
   const [openNote, setOpenNote] = useState<string | null>(null)
   const linkedFindings = findingsFor(record.id).map((f) => mergedFindings.find((m) => m.id === f.id) ?? f)
   const linkedReviews = reviewsFor(record.id)
-  const localReviews = overlay.recordedReviews.filter((r) => r.subjectId === record.id)
+  const localReviews = runtime.workspace.kind === 'sample'
+    ? overlay.recordedReviews.filter((r) => r.subjectId === record.id)
+    : []
 
   return (
     <Drawer
@@ -1023,7 +1254,7 @@ export function Inspector({
             <dt>Revision</dt>
             <dd className="mono">{record.revision}</dd>
             <dt>Baseline</dt>
-            <dd className="mono">{record.baseline === 'both' ? '2.3.0 · 2.4.0' : record.baseline}</dd>
+            <dd className="mono">{record.baseline === 'both' ? runtime.availableBaselines.join(' · ') : record.baseline}</dd>
             <dt>Modified</dt>
             <dd className="mono">{fmtDateTime(record.modified)}</dd>
             <dt>Source kind</dt>
@@ -1064,13 +1295,16 @@ export function Inspector({
               onClick={() => setOpenNote(record.sourcePath)}
               aria-label={`Open source for ${record.id}`}
             >
-              Open source
+              Show source location
             </button>
           </div>
           {openNote !== null ? (
             <p className="inset" style={{ marginTop: 'var(--space-2)', fontSize: 'var(--text-sm)' }} role="status">
-              Read-only sample: source <code>{openNote}</code> is a synthetic reference. In a connected project this
-              opens the artifact in its authoring tool.
+              {runtime.workspace.kind === 'sample' ? (
+                <>Read-only sample: source <code>{openNote}</code> is a synthetic reference.</>
+              ) : (
+                <>Read-only connected source: <code>{openNote}</code>. Use this controlled path in the owning authoring tool.</>
+              )}
             </p>
           ) : null}
         </div>
@@ -1098,7 +1332,7 @@ export function Inspector({
           </dl>
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
             Authoritative evidence is read-only in the hub. Hash and revision identify the exact configuration item in
-            baseline {record.baseline === 'both' ? '2.4.0' : record.baseline}.
+            baseline {record.baseline === 'both' ? runtime.baselineId : record.baseline}.
           </p>
         </div>
       ) : null}
@@ -1166,34 +1400,38 @@ export function Inspector({
 
       {tab === 'baseline' ? (
         <div>
-          <dl className="kv">
-            <dt>In 2.3.0</dt>
-            <dd>{record.baseline === '2.4.0' ? 'Not present (added in 2.4.0)' : `Present · ${record.changeMark === 'changed' ? 'earlier revision' : record.revision}`}</dd>
-            <dt>In 2.4.0</dt>
-            <dd>{record.baseline === '2.3.0' ? 'Removed from baseline' : `Present · ${record.revision}`}</dd>
-            <dt>Delta 2.3.0 → 2.4.0</dt>
-            <dd>
-              <Chip
-                tone={
-                  record.changeMark === 'changed' || record.changeMark === 'added'
-                    ? 'info'
-                    : record.changeMark === 'stale'
-                      ? 'warning'
-                      : record.changeMark === 'impacted'
+          {runtime.comparisonBaselineId ? (
+            <dl className="kv">
+              <dt>Comparison baseline</dt>
+              <dd className="mono">{runtime.comparisonBaselineId}</dd>
+              <dt>Current baseline</dt>
+              <dd className="mono">{runtime.baselineId} · revision {record.revision}</dd>
+              <dt>Delta</dt>
+              <dd>
+                <Chip
+                  tone={
+                    record.changeMark === 'changed' || record.changeMark === 'added'
+                      ? 'info'
+                      : record.changeMark === 'stale' || record.changeMark === 'impacted'
                         ? 'warning'
                         : 'neutral'
-                }
-              >
-                {record.changeMark}
-              </Chip>
-            </dd>
-            <dt>Review state</dt>
-            <dd>{REVIEW_STATE_LABEL[record.reviewState]}</dd>
-          </dl>
+                  }
+                >
+                  {record.changeMark}
+                </Chip>
+              </dd>
+              <dt>Review state</dt>
+              <dd>{REVIEW_STATE_LABEL[record.reviewState]}</dd>
+            </dl>
+          ) : (
+            <Alert tone="info" title="No comparison baseline configured">
+              This record is present in baseline <code>{runtime.baselineId}</code> at revision{' '}
+              <code>{record.revision}</code>. Configure a comparison baseline to calculate history deltas.
+            </Alert>
+          )}
           {record.changeMark === 'changed' ? (
             <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
-              This record changed between baselines — see the phase Compare view for the full delta set (bank-limit and
-              mode-transition changes drive most 2.4.0 impacts).
+              This record changed between baselines. See the phase Compare view for the full propagated impact set.
             </p>
           ) : null}
         </div>
@@ -1210,17 +1448,17 @@ export function Inspector({
 // independence. Validation errors preserve input; success is announced.
 
 export function ReviewDialog({ subject, onClose }: { subject: EvidenceRecord; onClose: () => void }) {
-  const { dispatch, announce, now } = useStore()
+  const { announce, recordRuntimeReview, runtime } = useStore()
   const [reviewer, setReviewer] = useState('')
   const [method, setMethod] = useState<ReviewMethod>('inspection')
   const [result, setResult] = useState<ReviewResult>('passed')
   const [comments, setComments] = useState('')
-  const [date, setDate] = useState('2026-07-22')
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [independent, setIndependent] = useState(true)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
 
-  const submit = () => {
+  const submit = async () => {
     const nextErrors: Record<string, string> = {}
     if (reviewer.trim() === '') nextErrors.reviewer = 'Reviewer is required.'
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) nextErrors.date = 'Date must be YYYY-MM-DD.'
@@ -1232,11 +1470,8 @@ export function ReviewDialog({ subject, onClose }: { subject: EvidenceRecord; on
     if (Object.keys(nextErrors).length > 0) return
     if (submitting) return
     setSubmitting(true)
-    dispatch({
-      type: 'review/record',
-      at: now(),
-      review: {
-        subjectId: subject.id,
+    try {
+      await recordRuntimeReview(subject, {
         phase: subject.phase,
         reviewer: reviewer.trim(),
         method,
@@ -1245,10 +1480,14 @@ export function ReviewDialog({ subject, onClose }: { subject: EvidenceRecord; on
         date,
         revision: subject.revision,
         independent,
-      },
-    })
-    announce(`Review recorded for ${subject.id}.`)
-    onClose()
+        requiresIndependence: subject.type === 'llr',
+      })
+      announce(`Review recorded for ${subject.id} and persisted in the Audit Hub.`)
+      onClose()
+    } catch (error) {
+      setErrors({ submit: error instanceof Error ? error.message : String(error) })
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -1272,8 +1511,8 @@ export function ReviewDialog({ subject, onClose }: { subject: EvidenceRecord; on
         </Alert>
       ) : null}
       <p style={{ marginTop: 0, fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
-        Hub-local review of <code>{subject.id}</code> at revision <code>{subject.revision}</code>. Authoritative
-        evidence stays read-only; this record lives in the sample overlay.
+        Audit Hub review of <code>{subject.id}</code> at revision <code>{subject.revision}</code>. Authoritative
+        evidence stays read-only; this review is persisted in the {runtime.workspace.kind === 'sample' ? 'sample' : 'project'} overlay.
       </p>
       <div className="panel-grid cols-2">
         <Field label="Reviewer" id="rv-reviewer" error={errors.reviewer} hint="Person performing the review">
@@ -1447,19 +1686,20 @@ function Bucket({
 
 export function CompareView({ phase, onOpen }: { phase?: Phase; onOpen: (r: EvidenceRecord) => void }) {
   const buckets = compareBaselines(phase)
+  const { runtime } = useStore()
+  const comparison = runtime.comparisonBaselineId ?? 'comparison'
   return (
-    <section aria-label="Baseline comparison 2.3.0 to 2.4.0">
+    <section aria-label={`Baseline comparison ${comparison} to ${runtime.baselineId}`}>
       <h2 className="section-header">
-        Baseline compare · 2.3.0 ↔ 2.4.0 {phase ? `· ${PHASE_LABEL[phase]}` : '· all phases'}
+        Baseline compare · {comparison} ↔ {runtime.baselineId} {phase ? `· ${PHASE_LABEL[phase]}` : '· all phases'}
       </h2>
       <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', margin: '0 0 var(--space-3)' }}>
-        Baseline 2.4.0 introduces the bank-limit re-scheduling (25° → 27° high-speed segment) and the two-frame
-        mode-transition debounce. Changed records propagate impacts downstream through requirements, design, code,
-        verification, CM, and certification.
+        Changed records propagate impacts downstream through requirements, design, code, verification, configuration
+        management, quality assurance, and certification evidence.
       </p>
       <div className="compare-cols">
-        <Bucket title="Added" tone="info" records={buckets.added} onOpen={onOpen} note="New in 2.4.0" />
-        <Bucket title="Removed" tone="neutral" records={buckets.removed} onOpen={onOpen} note="Present only in 2.3.0" />
+        <Bucket title="Added" tone="info" records={buckets.added} onOpen={onOpen} note={`New in ${runtime.baselineId}`} />
+        <Bucket title="Removed" tone="neutral" records={buckets.removed} onOpen={onOpen} note={`Present only in ${comparison}`} />
         <Bucket title="Changed" tone="info" records={buckets.changed} onOpen={onOpen} note="Revision differs between baselines" />
         <Bucket title="Stale" tone="warning" records={buckets.stale} onOpen={onOpen} note="Evidence or review out of date" />
         <Bucket title="Impacted" tone="warning" records={buckets.impacted} onOpen={onOpen} note="Downstream of a changed record" />
@@ -1473,33 +1713,27 @@ export function CompareView({ phase, onOpen }: { phase?: Phase; onOpen: (r: Evid
 // cancellation, manifest preview with exact revisions and SHA-256 hashes, and
 // the mandatory synthetic watermark on every package surface.
 
-type BuildStage = 'configure' | 'building' | 'done' | 'cancelled'
+type BuildStage = 'configure' | 'building' | 'done' | 'failed'
 
 export function PackageBuilder({ onClose }: { onClose: () => void }) {
-  const { dispatch, overlay, announce, now, openIds } = useStore()
+  const { announce, buildRuntimePackage, openIds, runtime } = useStore()
   const [name, setName] = useState('')
-  const [scope, setScope] = useState<Set<Phase>>(new Set(['requirements', 'verification']))
+  const [scope, setScope] = useState<Set<Phase>>(new Set(PHASES))
   const [includeFindings, setIncludeFindings] = useState(true)
   const [includeReviews, setIncludeReviews] = useState(true)
   const [stage, setStage] = useState<BuildStage>('configure')
-  const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const [createdId, setCreatedId] = useState<string | null>(null)
-  const timerRef = useRef<number | null>(null)
-  const cancelledRef = useRef(false)
+  const [created, setCreated] = useState<{
+    packageId: string
+    manifest: RuntimePackageManifest
+    download: { path: string; url: string; contentHash: string }
+  } | null>(null)
 
   const scopedEvidence = allEvidence.filter((r) => scope.has(r.phase))
   const scopedFindings = includeFindings ? findings.filter((f) => scope.has(f.phase)) : []
   const scopedReviews = includeReviews ? reviewRecords.filter((r) => scope.has(r.phase)) : []
 
-  useEffect(
-    () => () => {
-      if (timerRef.current !== null) window.clearInterval(timerRef.current)
-    },
-    [],
-  )
-
-  const start = () => {
+  const start = async () => {
     if (name.trim() === '') {
       setError('Package name is required.')
       return
@@ -1510,57 +1744,23 @@ export function PackageBuilder({ onClose }: { onClose: () => void }) {
     }
     if (stage === 'building') return // duplicate-action prevention
     setError(null)
-    cancelledRef.current = false
     setStage('building')
-    setProgress(0)
-    timerRef.current = window.setInterval(() => {
-      setProgress((p) => {
-        const next = p + 8
-        if (next >= 100) {
-          if (timerRef.current !== null) window.clearInterval(timerRef.current)
-          if (!cancelledRef.current) finish()
-          return 100
-        }
-        return next
+    try {
+      const result = await buildRuntimePackage({
+        name: name.trim(),
+        evidenceIds: scopedEvidence.map((record) => record.id),
+        phaseIds: [...scope],
+        includeFindings,
+        includeReviews,
       })
-    }, 140)
-  }
-
-  const finish = () => {
-    const manifest: PackageManifestEntry[] = scopedEvidence.slice(0, 400).map((r) => ({
-      id: r.id,
-      title: r.title,
-      revision: r.revision,
-      hash: r.hash,
-      sourcePath: r.sourcePath,
-    }))
-    const pkg: Omit<AuditPackage, 'id'> = {
-      name: name.trim(),
-      createdAt: now(),
-      scopePhases: [...scope],
-      includeFindings,
-      includeReviews,
-      evidenceCount: scopedEvidence.length,
-      findingIds: scopedFindings.map((f) => f.id),
-      reviewIds: scopedReviews.map((r) => r.id),
-      manifest,
-      status: 'complete',
-      watermark: WATERMARK,
+      setCreated(result)
+      setStage('done')
+      announce(`Audit package ${result.packageId} created with ${result.manifest.counts.evidence} evidence items.`)
+    } catch (buildError) {
+      setError(buildError instanceof Error ? buildError.message : String(buildError))
+      setStage('failed')
     }
-    dispatch({ type: 'package/add', pkg, at: now() })
-    setCreatedId('created')
-    setStage('done')
-    announce(`Audit package “${name.trim()}” assembled with ${scopedEvidence.length} evidence items.`)
   }
-
-  const cancel = () => {
-    cancelledRef.current = true
-    if (timerRef.current !== null) window.clearInterval(timerRef.current)
-    setStage('cancelled')
-    dispatch({ type: 'package/cancelled', name: name.trim() || 'Untitled package', at: now() })
-  }
-
-  const latest = overlay.packages[0]
 
   return (
     <Dialog
@@ -1569,8 +1769,8 @@ export function PackageBuilder({ onClose }: { onClose: () => void }) {
       onClose={onClose}
       footer={
         stage === 'building' ? (
-          <button type="button" className="btn" onClick={cancel}>
-            Cancel build
+          <button type="button" className="btn btn-primary" disabled>
+            Building verified package…
           </button>
         ) : stage === 'done' ? (
           <button type="button" className="btn btn-primary" onClick={onClose}>
@@ -1581,22 +1781,22 @@ export function PackageBuilder({ onClose }: { onClose: () => void }) {
             <button type="button" className="btn" onClick={onClose}>
               Close
             </button>
-            <button type="button" className="btn btn-primary" onClick={start} disabled={stage !== 'configure' && stage !== 'cancelled'}>
-              {stage === 'cancelled' ? 'Restart build' : 'Assemble package'}
+            <button type="button" className="btn btn-primary" onClick={() => void start()}>
+              {stage === 'failed' ? 'Retry build' : 'Assemble package'}
             </button>
           </>
         )
       }
     >
-      <Watermark />
-      {stage === 'configure' || stage === 'cancelled' ? (
+      {runtime.workspace.kind === 'sample' ? <Watermark /> : null}
+      {stage === 'configure' || stage === 'failed' ? (
         <>
-          {stage === 'cancelled' ? (
-            <Alert tone="warning" title="Build cancelled">
-              No package was created. Scope and name are preserved — restart when ready.
+          {stage === 'failed' ? (
+            <Alert tone="danger" title="Package build failed">
+              {error}
             </Alert>
           ) : null}
-          {error ? (
+          {error && stage !== 'failed' ? (
             <Alert tone="danger" title="Cannot assemble yet">
               {error}
             </Alert>
@@ -1646,31 +1846,44 @@ export function PackageBuilder({ onClose }: { onClose: () => void }) {
       {stage === 'building' ? (
         <div role="status" aria-live="polite">
           <p>
-            Assembling “{name.trim()}” — collecting {scopedEvidence.length} evidence items, computing manifest hashes…
+            Building “{name.trim()}” from immutable snapshot <code>{runtime.snapshotId}</code> — collecting{' '}
+            {scopedEvidence.length} evidence items, writing exact revisions, and hashing the ZIP archive…
           </p>
           <div className="progress" aria-hidden="true">
-            <span style={{ width: `${progress}%` }} />
+            <span style={{ width: '65%' }} />
           </div>
-          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>{progress}% — deterministic local assembly, no network access.</p>
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+            Server-side deterministic assembly; authoritative lifecycle sources remain read-only.
+          </p>
         </div>
       ) : null}
 
-      {stage === 'done' && createdId !== null && latest ? (
+      {stage === 'done' && created ? (
         <div>
-          <Alert tone="success" title={`Package ${latest.id} created`}>
-            {latest.evidenceCount} evidence items · {latest.findingIds.length} findings · {latest.reviewIds.length} reviews.
+          <Alert tone="success" title={`Package ${created.packageId} created`}>
+            {created.manifest.counts.evidence} evidence items · {created.manifest.counts.findings} findings ·{' '}
+            {created.manifest.counts.reviews} reviews.
           </Alert>
           <dl className="kv">
             <dt>Package ID</dt>
-            <dd className="mono">{latest.id}</dd>
+            <dd className="mono">{created.packageId}</dd>
             <dt>Created</dt>
-            <dd className="mono">{latest.createdAt}</dd>
-            <dt>Scope</dt>
-            <dd>{latest.scopePhases.map((p) => PHASE_LABEL[p]).join(', ')}</dd>
-            <dt>Download</dt>
-            <dd>Manifest ready — stored in the hub-local package register (sample overlay).</dd>
+            <dd className="mono">{created.manifest.createdAt}</dd>
+            <dt>Archive</dt>
+            <dd>
+              <a className="btn btn-primary btn-sm" href={created.download.url} download>
+                Download ZIP
+              </a>
+              <span className="table-meta mono">{created.download.path}</span>
+            </dd>
+            <dt>Archive SHA-256</dt>
+            <dd className="mono">{created.download.contentHash}</dd>
           </dl>
-          <h3 className="section-header">Manifest preview (first 12 of {latest.manifest.length})</h3>
+          <h3 className="section-header">
+            Manifest preview ({created.manifest.entries.length <= 12
+              ? `all ${created.manifest.entries.length}`
+              : `first 12 of ${created.manifest.entries.length}`})
+          </h3>
           <div className="table-scroll">
             <table className="data" aria-label="Package manifest preview">
               <thead>
@@ -1682,7 +1895,7 @@ export function PackageBuilder({ onClose }: { onClose: () => void }) {
                 </tr>
               </thead>
               <tbody>
-                {latest.manifest.slice(0, 12).map((m) => (
+                {created.manifest.entries.slice(0, 12).map((m) => (
                   <tr key={m.id}>
                     <td className="id-cell">{m.id}</td>
                     <td className="id-cell">{m.revision}</td>
@@ -1874,9 +2087,11 @@ function NavLink({ area, label, active }: { area: string; label: string; active:
 type RefreshStage = 'idle' | 'running' | 'cancelled' | 'done' | 'failed' | 'retrying'
 
 function RefreshDialog({ onClose, demoFail }: { onClose: () => void; demoFail: boolean }) {
-  const { dispatch, announce, now } = useStore()
+  const { dispatch, announce, now, runtime, refreshRuntime } = useStore()
   const [stage, setStage] = useState<RefreshStage>('running')
   const [step, setStep] = useState(0)
+  const [failureMessage, setFailureMessage] = useState('')
+  const [diagnosticCount, setDiagnosticCount] = useState(0)
   const timer = useRef<number | null>(null)
   const failedOnce = useRef(false)
 
@@ -1885,24 +2100,35 @@ function RefreshDialog({ onClose, demoFail }: { onClose: () => void; demoFail: b
   const run = () => {
     setStage('running')
     setStep(0)
+    setFailureMessage('')
+    setDiagnosticCount(0)
     timer.current = window.setInterval(() => {
       setStep((s) => {
-        const next = s + 1
-        if (demoFail && !failedOnce.current && next === 4) {
+        const next = Math.min(s + 1, Math.max(0, total - 1))
+        if (runtime.workspace.kind === 'sample' && demoFail && !failedOnce.current && next === 4) {
           failedOnce.current = true
           if (timer.current !== null) window.clearInterval(timer.current)
           setStage('failed')
+          setFailureMessage('Simulated adapter fault while scanning verification results.')
           return s
-        }
-        if (next >= total) {
-          if (timer.current !== null) window.clearInterval(timer.current)
-          setStage('done')
-          dispatch({ type: 'refresh/complete', at: now(), sourceCount: total })
-          announce('Refresh complete — sample snapshot republished.')
         }
         return next
       })
     }, 220)
+    void refreshRuntime().then((result) => {
+      if (timer.current !== null) window.clearInterval(timer.current)
+      setStep(total)
+      setDiagnosticCount(result.diagnostics.length)
+      setStage('done')
+      dispatch({ type: 'refresh/complete', at: now(), sourceCount: total })
+      announce(runtime.workspace.kind === 'sample'
+        ? 'Refresh complete — sample snapshot republished.'
+        : 'Refresh complete — a new immutable project snapshot was published.')
+    }).catch((error) => {
+      if (timer.current !== null) window.clearInterval(timer.current)
+      setFailureMessage(error instanceof Error ? error.message : String(error))
+      setStage('failed')
+    })
   }
 
   useEffect(() => {
@@ -1951,8 +2177,9 @@ function RefreshDialog({ onClose, demoFail }: { onClose: () => void; demoFail: b
       }
     >
       <p style={{ marginTop: 0, fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
-        Deterministic local simulation — re-reads the built-in sample sources and republishes the same snapshot. No
-        network, no MATLAB dependency.
+        {runtime.workspace.kind === 'sample'
+          ? 'Revalidates the deterministic bundled normalized snapshot. No MATLAB installation is required for sample data.'
+          : 'Scans configured read-only sources through the filesystem, Git, MATLAB/Simulink, spreadsheet, C/H, review, and coverage adapters. The current snapshot remains active unless the full candidate passes validation.'}
       </p>
       {stage === 'cancelled' ? (
         <Alert tone="warning" title="Refresh cancelled">
@@ -1960,9 +2187,9 @@ function RefreshDialog({ onClose, demoFail }: { onClose: () => void; demoFail: b
         </Alert>
       ) : null}
       {stage === 'failed' ? (
-        <Alert tone="danger" title="Technical failure while scanning verification results">
-          Simulated adapter fault at source {step + 1} of {total}. The previous snapshot remains active — retry to
-          continue.
+        <Alert tone="danger" title="Candidate snapshot not published">
+          {failureMessage || `Adapter failure at source ${step + 1} of ${total}.`} The previous valid snapshot remains
+          active.
         </Alert>
       ) : null}
       {stage === 'retrying' ? (
@@ -1971,8 +2198,9 @@ function RefreshDialog({ onClose, demoFail }: { onClose: () => void; demoFail: b
         </Alert>
       ) : null}
       {stage === 'done' ? (
-        <Alert tone="success" title="Snapshot republished">
-          {total} sources scanned · 0 fatal diagnostics · counts unchanged (deterministic sample).
+        <Alert tone="success" title={runtime.workspace.kind === 'sample' ? 'Sample snapshot validated' : 'Snapshot published'}>
+          {total} source groups scanned · 0 fatal diagnostics · {diagnosticCount} informational or warning diagnostic
+          {diagnosticCount === 1 ? '' : 's'}.
         </Alert>
       ) : null}
       <div className="progress" aria-hidden="true" style={{ margin: 'var(--space-3) 0' }}>
@@ -2017,6 +2245,19 @@ function RefreshDialog({ onClose, demoFail }: { onClose: () => void; demoFail: b
 }
 
 function ConnectDialog({ onClose }: { onClose: () => void }) {
+  const { connectRuntimeProject, announce } = useStore()
+  const [name, setName] = useState('DO-178C Project')
+  const [rootPath, setRootPath] = useState('')
+  const [softwareLevel, setSoftwareLevel] = useState('Level B')
+  const [do331Applicable, setDo331Applicable] = useState(true)
+  const [baselineId, setBaselineId] = useState('working')
+  const [comparisonBaselineId, setComparisonBaselineId] = useState('')
+  const [objectiveProfilePath, setObjectiveProfilePath] = useState('')
+  const [matlabEnabled, setMatlabEnabled] = useState(true)
+  const [matlabExecutable, setMatlabExecutable] = useState('matlab')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
   const kinds: Array<{ kind: string; expects: string }> = [
     { kind: 'SLREQX', expects: 'requirements/**/*.slreqx — system, HLR, LLR, derived requirement sets' },
     { kind: 'SLMX', expects: 'verification/tests/**/*.slmx — test case and iteration definitions' },
@@ -2027,20 +2268,119 @@ function ConnectDialog({ onClose }: { onClose: () => void }) {
     { kind: 'C/H', expects: 'src/**/*.{c,h} — generated and hand source code' },
     { kind: 'Review evidence', expects: 'qa/reviews/** — review records and checklists' },
     { kind: 'Configuration records', expects: 'cm/** — baselines, change records, problem reports' },
+    { kind: 'Objective profile', expects: 'optional JSON/CSV/XLSX — program-owned objective identifiers and satisfaction links' },
   ]
   return (
     <Dialog title="Connect real project" wide onClose={onClose}>
-      <Alert tone="info" title="Frontend configuration preview">
-        Project adapters are not available in this frontend-only build. This read-only dialog previews the source
-        configuration a connected deployment would use; the AeroNav sample remains active.
+      <Alert tone="info" title="Read-only evidence connection">
+        The Audit Hub indexes configured sources into a new immutable snapshot. It never writes to requirements,
+        models, source code, tests, results, review evidence, or repository history.
       </Alert>
+      {error ? <Alert tone="danger" title="Project could not be published">{error}</Alert> : null}
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          setBusy(true)
+          setError('')
+          void connectRuntimeProject({
+            name,
+            rootPath,
+            softwareLevel,
+            do331Applicable,
+            baselineId,
+            ...(comparisonBaselineId.trim() ? { comparisonBaselineId } : {}),
+            ...(objectiveProfilePath.trim() ? { objectiveProfilePath } : {}),
+            matlabEnabled,
+            ...(matlabExecutable.trim() ? { matlabExecutable } : {}),
+          }).then(() => {
+            announce(`${name} connected and published.`)
+            onClose()
+          }).catch((caught) => {
+            setError(caught instanceof Error ? caught.message : String(caught))
+          }).finally(() => setBusy(false))
+        }}
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)', margin: 'var(--space-3) 0' }}>
+          <Field id="connect-name" label="Project name">
+            <input id="connect-name" className="input" value={name} onChange={(event) => setName(event.target.value)} required />
+          </Field>
+          <Field id="connect-level" label="Software level">
+            <select id="connect-level" className="select" value={softwareLevel} onChange={(event) => setSoftwareLevel(event.target.value)}>
+              {['Level A', 'Level B', 'Level C', 'Level D', 'Level E'].map((level) => <option key={level}>{level}</option>)}
+            </select>
+          </Field>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <Field
+              id="connect-root"
+              label="Project or repository root"
+              hint="Absolute path containing the configured lifecycle evidence. Symbolic links are not followed."
+              error={!rootPath && error ? 'Choose a readable project root.' : undefined}
+            >
+              <input
+                id="connect-root"
+                className="input"
+                value={rootPath}
+                onChange={(event) => setRootPath(event.target.value)}
+                placeholder="/path/to/controlled/project"
+                required
+              />
+            </Field>
+          </div>
+          <Field id="connect-baseline" label="Current baseline">
+            <input id="connect-baseline" className="input" value={baselineId} onChange={(event) => setBaselineId(event.target.value)} required />
+          </Field>
+          <Field id="connect-compare" label="Comparison baseline" hint="Optional">
+            <input id="connect-compare" className="input" value={comparisonBaselineId} onChange={(event) => setComparisonBaselineId(event.target.value)} />
+          </Field>
+          <div className="field">
+            <span className="field-label">Model-based development</span>
+            <label className="hstack" style={{ minHeight: 'var(--control-height)' }}>
+              <input
+                type="checkbox"
+                checked={do331Applicable}
+                onChange={(event) => setDo331Applicable(event.target.checked)}
+              />
+              DO-331 supplement applies
+            </label>
+            <span className="field-hint">Controls program context; it does not change authoritative source files.</span>
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <Field id="connect-objectives" label="Objective-profile file" hint="Optional program-owned JSON, CSV, or XLSX identifiers and satisfaction links; licensed standard text is not bundled.">
+              <input id="connect-objectives" className="input" value={objectiveProfilePath} onChange={(event) => setObjectiveProfilePath(event.target.value)} />
+            </Field>
+          </div>
+          <div className="field">
+            <span className="field-label">MATLAB/Simulink extraction</span>
+            <label className="hstack" style={{ minHeight: 'var(--control-height)' }}>
+              <input type="checkbox" checked={matlabEnabled} onChange={(event) => setMatlabEnabled(event.target.checked)} />
+              Use licensed MATLAB APIs when normalized sidecars are absent
+            </label>
+            <span className="field-hint">Missing MATLAB affects only MATLAB-owned sources and is reported explicitly.</span>
+          </div>
+          <Field id="connect-matlab" label="MATLAB executable">
+            <input
+              id="connect-matlab"
+              className="input"
+              value={matlabExecutable}
+              onChange={(event) => setMatlabExecutable(event.target.value)}
+              disabled={!matlabEnabled}
+            />
+          </Field>
+        </div>
+        <div className="right" style={{ marginBottom: 'var(--space-3)' }}>
+          <button type="button" className="btn" onClick={onClose} disabled={busy}>Cancel</button>
+          <button type="submit" className="btn btn-primary" disabled={busy || !name.trim() || !rootPath.trim()}>
+            {busy ? 'Scanning and validating…' : 'Connect and publish'}
+          </button>
+        </div>
+      </form>
       <div className="table-scroll">
-        <table className="data" aria-label="Adapter configuration preview">
+        <table className="data" aria-label="Available project adapters">
           <thead>
             <tr>
               <th>Source kind</th>
               <th>Expected location and content</th>
-              <th>State</th>
+              <th>Support</th>
             </tr>
           </thead>
           <tbody>
@@ -2048,9 +2388,7 @@ function ConnectDialog({ onClose }: { onClose: () => void }) {
               <tr key={k.kind}>
                 <td className="id-cell">{k.kind}</td>
                 <td style={{ whiteSpace: 'normal' }}>{k.expects}</td>
-                <td>
-                  <Chip tone="neutral">Adapter unavailable</Chip>
-                </td>
+                <td><Chip tone="success">Supported</Chip></td>
               </tr>
             ))}
           </tbody>
@@ -2061,7 +2399,7 @@ function ConnectDialog({ onClose }: { onClose: () => void }) {
 }
 
 function ResetDialog({ onClose }: { onClose: () => void }) {
-  const { dispatch, announce, now } = useStore()
+  const { dispatch, announce, now, resetRuntimeSample } = useStore()
   const [done, setDone] = useState(false)
   return (
     <Dialog
@@ -2082,8 +2420,12 @@ function ResetDialog({ onClose }: { onClose: () => void }) {
               className="btn btn-primary"
               onClick={() => {
                 dispatch({ type: 'reset', at: now() })
-                setDone(true)
-                announce('Sample changes reset to seeded state.')
+                void resetRuntimeSample().then(() => {
+                  setDone(true)
+                  announce('Sample changes reset to seeded state.')
+                }).catch((error) => {
+                  announce(`Sample reset failed: ${error instanceof Error ? error.message : String(error)}`)
+                })
               }}
             >
               Reset sample changes
@@ -2096,7 +2438,7 @@ function ResetDialog({ onClose }: { onClose: () => void }) {
         <Alert tone="success" title="Sample restored">
           Restored: {sampleCounts.findings} findings · {sampleCounts.reviews} seeded reviews · 1 seeded package (
           {sampleCounts.seedPackageId}) · preferences and baseline 2.4.0. Local packages and recorded reviews were
-          cleared; the activity timeline is preserved.
+          cleared; prior sandbox activity was cleared and a reset event was recorded.
         </Alert>
       ) : (
         <>
@@ -2116,10 +2458,12 @@ function ResetDialog({ onClose }: { onClose: () => void }) {
 
 export function Shell({ children }: { children: ReactNode }) {
   const { path, params, navigate, setParams } = useRoute()
-  const { overlay, dispatch, openIds, mergedFindings, announcement, now } = useStore()
+  const { overlay, dispatch, openIds, mergedFindings, announcement, now, runtime } = useStore()
   const area = path[0] ?? 'overview'
   const [dialog, setDialog] = useState<'none' | 'refresh' | 'connect' | 'reset' | 'sample-menu' | 'notifications'>('none')
   const collapsed = overlay.prefs.navCollapsed
+  const comparisonBaseline = runtime.comparisonBaselineId
+  const isLoadingWorkspace = runtime.status === 'loading'
 
   const openFindings = mergedFindings.filter((f) => openIds.has(f.id))
   const overdue = openFindings.filter((f) => f.due < '2026-07-22')
@@ -2134,8 +2478,13 @@ export function Shell({ children }: { children: ReactNode }) {
       <header className="app-header">
         <div className="product">
           <span className="product-name">DO-178C Audit Hub</span>
-          <span className="workspace-name" title={`${WORKSPACE_NAME} · Software Level B · DO-331 applicable`}>
-            {WORKSPACE_NAME}
+          <span
+            className="workspace-name"
+            title={isLoadingWorkspace
+              ? 'Selecting the last real workspace or built-in sample'
+              : `${runtime.workspace.name} · ${runtime.workspace.softwareLevel} · ${runtime.workspace.do331Applicable ? 'DO-331 applicable' : 'DO-331 not configured'}`}
+          >
+            {isLoadingWorkspace ? 'Loading workspace…' : runtime.workspace.name}
           </span>
         </div>
         <div className="header-controls">
@@ -2147,40 +2496,60 @@ export function Shell({ children }: { children: ReactNode }) {
               id="baseline-select"
               className="select"
               value={overlay.prefs.baseline}
+              disabled={isLoadingWorkspace || runtime.availableBaselines.length <= 1}
               onChange={(e) => dispatch({ type: 'baseline/set', baseline: e.target.value as Baseline, at: now() })}
             >
-              <option value="2.4.0">Baseline 2.4.0</option>
-              <option value="2.3.0">Baseline 2.3.0</option>
+              {isLoadingWorkspace
+                ? <option value={overlay.prefs.baseline}>Selecting baseline…</option>
+                : runtime.availableBaselines.map((baseline) => (
+                  <option key={baseline} value={baseline}>Baseline {baseline}</option>
+                ))}
             </select>
           </span>
           <button
             type="button"
             className="btn"
             aria-pressed={overlay.prefs.compare}
+            disabled={isLoadingWorkspace || !comparisonBaseline}
             onClick={() => dispatch({ type: 'compare/set', compare: !overlay.prefs.compare })}
-            title="Compare against baseline 2.3.0"
+            title={comparisonBaseline ? `Compare against baseline ${comparisonBaseline}` : 'Configure a comparison baseline to enable comparison'}
           >
-            Compare 2.3.0
+            {isLoadingWorkspace
+              ? 'Selecting comparison…'
+              : comparisonBaseline
+                ? `Compare ${comparisonBaseline}`
+                : 'No compare baseline'}
           </button>
-          <button type="button" className="btn" onClick={() => setParams({ search: '1' })}>
+          <button type="button" className="btn" disabled={isLoadingWorkspace} onClick={() => setParams({ search: '1' })}>
             Search
           </button>
-          <button type="button" className="btn" onClick={() => setDialog('refresh')}>
+          <button type="button" className="btn" disabled={isLoadingWorkspace} onClick={() => setDialog('refresh')}>
             Refresh
           </button>
           <button
             type="button"
             className="btn"
+            disabled={isLoadingWorkspace}
             onClick={() => setDialog('notifications')}
-            aria-label={`Notifications: ${overdue.length} overdue findings`}
+            aria-label={isLoadingWorkspace ? 'Notifications unavailable while loading' : `Notifications: ${overdue.length} overdue findings`}
           >
-            Alerts ({overdue.length})
+            {isLoadingWorkspace ? 'Alerts (—)' : `Alerts (${overdue.length})`}
           </button>
-          <button type="button" className="sample-badge" onClick={() => setDialog('sample-menu')} aria-haspopup="dialog">
-            Sample Data
-          </button>
+          {isLoadingWorkspace ? <Chip tone="info">Connecting…</Chip> : null}
+          {runtime.status === 'fallback' ? <Chip tone="danger">Offline sample</Chip> : null}
+          {isLoadingWorkspace ? null : runtime.workspace.kind === 'sample' ? (
+            <button type="button" className="sample-badge" onClick={() => setDialog('sample-menu')} aria-haspopup="dialog">
+              Sample Data
+            </button>
+          ) : (
+            <Chip tone="success">Live snapshot</Chip>
+          )}
           <button type="button" className="btn" onClick={() => setDialog('connect')}>
-            Connect real project
+            {isLoadingWorkspace
+              ? 'Configure project'
+              : runtime.workspace.kind === 'sample'
+                ? 'Connect real project'
+                : 'Connect another project'}
           </button>
         </div>
       </header>
@@ -2207,6 +2576,12 @@ export function Shell({ children }: { children: ReactNode }) {
           </button>
         </nav>
         <main className="main" id="main-content">
+          {runtime.status === 'fallback' ? (
+            <Alert tone="warning" title="Backend unavailable — bundled sample active">
+              {runtime.error} The interface remains usable, but project connections, immutable server snapshots, and
+              server-side packages are unavailable until the API reconnects.
+            </Alert>
+          ) : null}
           {children}
         </main>
       </div>
@@ -2218,27 +2593,31 @@ export function Shell({ children }: { children: ReactNode }) {
         <Dialog title="Sample workspace" onClose={() => setDialog('none')}>
           <Watermark />
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
-            {WORKSPACE_NAME} · Software Level B · DO-331 applicable. All evidence is deterministic synthetic fixture
+            {runtime.workspace.name} · {runtime.workspace.softwareLevel} · DO-331 applicable. All evidence is deterministic synthetic fixture
             data; only hub-local findings/reviews/packages/preferences are editable.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', alignItems: 'flex-start' }}>
             <button type="button" className="btn" onClick={() => setDialog('reset')}>
               Reset sample changes…
             </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => {
-                setDialog('none')
-                setParams({ demo: params.get('demo') === null ? 'loading' : null })
-              }}
-            >
-              State demo: {params.get('demo') === null ? 'enable (loading)' : 'disable'}
-            </button>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
-              Developer state demo — set <code>?demo=loading|empty|error|partial</code> on any route to exercise
-              experience states deterministically.
-            </p>
+            {import.meta.env.DEV ? (
+              <>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setDialog('none')
+                    setParams({ demo: params.get('demo') === null ? 'loading' : null })
+                  }}
+                >
+                  State demo: {params.get('demo') === null ? 'enable (loading)' : 'disable'}
+                </button>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
+                  Developer state demo — set <code>?demo=loading|empty|error|partial</code> on any route to exercise
+                  experience states deterministically.
+                </p>
+              </>
+            ) : null}
           </div>
         </Dialog>
       ) : null}
@@ -2308,7 +2687,7 @@ export function LifecyclePage({
   subviews: SubviewDef[]
 }) {
   const { path, params, navigate, setParams } = useRoute()
-  const { overlay, dispatch, mergedFindings, openIds } = useStore()
+  const { overlay, dispatch, mergedFindings, openIds, runtime } = useStore()
   const [reviewTarget, setReviewTarget] = useState<EvidenceRecord | null>(null)
 
   const demo = demoStateOf(params)
@@ -2351,9 +2730,14 @@ export function LifecyclePage({
             type="button"
             className="btn btn-sm"
             aria-pressed={compare}
+            disabled={!runtime.comparisonBaselineId}
             onClick={() => dispatch({ type: 'compare/set', compare: !compare })}
           >
-            {compare ? 'Hide compare (2.3.0)' : 'Compare 2.3.0'}
+            {runtime.comparisonBaselineId
+              ? compare
+                ? `Hide compare (${runtime.comparisonBaselineId})`
+                : `Compare ${runtime.comparisonBaselineId}`
+              : 'No compare baseline'}
           </button>
         </div>
       </header>
@@ -2372,7 +2756,7 @@ export function LifecyclePage({
           Open findings <b>{stats.openFindings}</b>
         </span>
         <span className="stat">
-          Compare <b>{compare ? '2.3.0 ↔ 2.4.0' : 'off'}</b>
+          Compare <b>{compare && runtime.comparisonBaselineId ? `${runtime.comparisonBaselineId} ↔ ${runtime.baselineId}` : 'off'}</b>
         </span>
       </div>
 

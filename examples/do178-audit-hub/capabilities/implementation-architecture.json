@@ -1,0 +1,175 @@
+{
+  "schemaVersion": "1.0",
+  "id": "arch.do178c-audit-hub.implementation",
+  "revision": "1",
+  "status": "implemented",
+  "refines": {
+    "architectureId": "arch.do178c-audit-hub",
+    "architectureRevision": "4",
+    "architectureHash": "b74ed12d692384ee074aa4a6a9b09e233dc9babf264a91bf6d4b9e314368f86d",
+    "groupingModuleId": "mod.external-adapters"
+  },
+  "boundaryRule": "Application and domain code own ports. Each concrete adapter is specific to one external actor or one independently failing integration responsibility. An adapter may implement multiple cohesive ports when one external system supplies them.",
+  "drivingAdapters": [
+    {
+      "moduleId": "mod.adapter.browser-http",
+      "adapterId": "adapter.browser-http",
+      "actorIds": [
+        "actor-vv",
+        "actor-software",
+        "actor-qa",
+        "actor-cm",
+        "actor-lead",
+        "actor-auditor",
+        "actor-admin"
+      ],
+      "implements": [
+        "capability HTTP operation contracts"
+      ],
+      "ownedPath": "src/api.ts"
+    },
+    {
+      "moduleId": "mod.adapter.http-api",
+      "adapterId": "adapter.http-api",
+      "actorIds": [
+        "adapter.browser-http",
+        "actor.automation-client"
+      ],
+      "implements": [
+        "capability HTTP operation contracts"
+      ],
+      "ownedPath": "server/http-api.ts"
+    }
+  ],
+  "drivenAdapterModules": [
+    {
+      "moduleId": "mod.adapter.filesystem-catalog",
+      "name": "Workspace Filesystem Catalog Adapter",
+      "adapterId": "adapter.filesystem",
+      "drivenActorId": "ext.workspace-filesystem",
+      "implements": [
+        "port.artifact-catalog"
+      ],
+      "ownedPath": "server/adapters/filesystem-adapter.ts",
+      "responsibility": "Discover configured authoritative files without following symlinks or escaping the configured root, and return stable metadata and hashes."
+    },
+    {
+      "moduleId": "mod.adapter.git",
+      "name": "Git Revision Adapter",
+      "adapterId": "adapter.git",
+      "drivenActorId": "ext.git-repository",
+      "implements": [
+        "port.revision-source"
+      ],
+      "ownedPath": "server/adapters/git-adapter.ts",
+      "responsibility": "Resolve the exact repository commit, branch, tag context, and dirty state without changing the repository."
+    },
+    {
+      "moduleId": "mod.adapter.matlab-simulink",
+      "name": "MATLAB and Simulink Adapter",
+      "adapterId": "adapter.matlab-simulink",
+      "drivenActorId": "ext.matlab-simulink",
+      "implements": [
+        "port.requirement-source",
+        "port.trace-source",
+        "port.design-source",
+        "port.verification-source"
+      ],
+      "ownedPath": "server/adapters/matlab-simulink-adapter.ts",
+      "responsibility": "Read normalized sidecars or invoke licensed MATLAB tooling for SLREQX, SLMX, SLX, SLDD, and SLDATX artifacts."
+    },
+    {
+      "moduleId": "mod.adapter.spreadsheet",
+      "name": "Tabular Evidence Adapter",
+      "adapterId": "adapter.spreadsheet",
+      "drivenActorId": "ext.tabular-evidence-files",
+      "implements": [
+        "port.tabular-evidence-source"
+      ],
+      "ownedPath": "server/adapters/spreadsheet-adapter.ts",
+      "responsibility": "Normalize controlled CSV and XLSX lifecycle records with sheet and row provenance."
+    },
+    {
+      "moduleId": "mod.adapter.c-source",
+      "name": "C and Header Source Adapter",
+      "adapterId": "adapter.c-source",
+      "drivenActorId": "ext.c-source-files",
+      "implements": [
+        "port.source-code-source"
+      ],
+      "ownedPath": "server/adapters/c-source-adapter.ts",
+      "responsibility": "Index C and H files, functions, interfaces, generated classification, relationships, and content provenance."
+    },
+    {
+      "moduleId": "mod.adapter.review-evidence",
+      "name": "Review Evidence Adapter",
+      "adapterId": "adapter.review-evidence",
+      "drivenActorId": "ext.review-register",
+      "implements": [
+        "port.review-evidence-source"
+      ],
+      "ownedPath": "server/adapters/review-evidence-adapter.ts",
+      "responsibility": "Import review decisions, independence, subjects, dates, comments, and evidence attachments from controlled review registers."
+    },
+    {
+      "moduleId": "mod.adapter.coverage",
+      "name": "Coverage Result Adapter",
+      "adapterId": "adapter.coverage",
+      "drivenActorId": "ext.coverage-results",
+      "implements": [
+        "port.coverage-source"
+      ],
+      "ownedPath": "server/adapters/coverage-adapter.ts",
+      "responsibility": "Import authoritative model and code coverage results without calculating coverage."
+    },
+    {
+      "moduleId": "mod.adapter.objective-profile",
+      "name": "Objective Profile Adapter",
+      "adapterId": "adapter.objective-profile",
+      "drivenActorId": "ext.program-objective-profile",
+      "implements": [
+        "port.objective-profile-source"
+      ],
+      "ownedPath": "server/adapters/objective-profile-adapter.ts",
+      "responsibility": "Import program-owned objective identifiers, applicability, status, and evidence mappings without distributing licensed standard text."
+    },
+    {
+      "moduleId": "mod.adapter.snapshot-store",
+      "name": "Snapshot Store Adapter",
+      "adapterId": "adapter.json-snapshot-store",
+      "drivenActorId": "ext.audit-hub-data-store",
+      "implements": [
+        "port.snapshot-store"
+      ],
+      "ownedPath": "server/adapters/json-snapshot-store.ts",
+      "responsibility": "Persist workspace configuration, immutable snapshots, overlays, packages, and activity through validated atomic JSON writes."
+    },
+    {
+      "moduleId": "mod.adapter.sample-snapshot",
+      "name": "Bundled Sample Snapshot Adapter",
+      "adapterId": "adapter.sample-snapshot",
+      "drivenActorId": "ext.bundled-sample",
+      "implements": [
+        "port.sample-snapshot"
+      ],
+      "ownedPath": "server/adapters/sample-snapshot-adapter.ts",
+      "responsibility": "Load and content-verify the immutable normalized sample used when no real project is configured."
+    },
+    {
+      "moduleId": "mod.adapter.audit-package",
+      "name": "Audit Package Export Adapter",
+      "adapterId": "adapter.audit-package-zip",
+      "drivenActorId": "ext.audit-package-destination",
+      "implements": [
+        "port.audit-package-writer"
+      ],
+      "ownedPath": "server/adapters/audit-package-adapter.ts",
+      "responsibility": "Write deterministic ZIP packages with manifests and hashes to the Audit Hub package destination."
+    }
+  ],
+  "composition": {
+    "ownedPath": "server/composition-root.ts",
+    "rule": "Only the composition root imports concrete adapters; application services receive port implementations.",
+    "runtime": "@engineering-ui-kit/capabilities-runtime"
+  }
+}

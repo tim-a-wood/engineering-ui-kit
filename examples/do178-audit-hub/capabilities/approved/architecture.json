@@ -1,0 +1,567 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "id": "arch.do178c-audit-hub",
+  "revision": "4",
+  "status": "approved",
+  "applicationSpecId": "app.do178c-audit-hub",
+  "applicationSpecRevision": "2",
+  "applicationSpecHash": "21a8b8d730c7c15ab56d62abdc98f82759963007cfeece39080e66daf7f583f8",
+  "capabilityProjections": [
+    {
+      "id": "capability.audit-experience",
+      "name": "Audit Hub Experience",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.workspace-snapshots",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow"
+      ]
+    },
+    {
+      "id": "capability.sample-workspace",
+      "name": "Built-in Sample Workspace",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.workspace-snapshots",
+        "mod.sample-workspace",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "id": "capability.lifecycle-evidence",
+      "name": "Lifecycle Evidence Exploration",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "id": "capability.assurance",
+      "name": "Findings Reviews and Audit Packages",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.assurance-workflow",
+        "mod.evidence-graph",
+        "mod.evidence-store",
+        "mod.external-adapters"
+      ]
+    },
+    {
+      "id": "capability.ingestion",
+      "name": "Artifact Ingestion and Snapshot Publication",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.ingestion-publication",
+        "mod.workspace-snapshots",
+        "mod.evidence-graph",
+        "mod.evidence-store",
+        "mod.external-adapters"
+      ]
+    }
+  ],
+  "moduleIds": [
+    "mod.audit-experience",
+    "mod.workspace-snapshots",
+    "mod.lifecycle-explorer",
+    "mod.evidence-graph",
+    "mod.assurance-workflow",
+    "mod.ingestion-publication",
+    "mod.sample-workspace",
+    "mod.evidence-store",
+    "mod.external-adapters"
+  ],
+  "moduleDefinitions": [
+    {
+      "moduleId": "mod.audit-experience",
+      "name": "Audit Hub Experience",
+      "moduleType": "experience",
+      "responsibility": "Own the complete responsive, accessible Audit Hub front end: workspace selection, Overview, all nine lifecycle-area views and phase subviews, global search, dossiers, trace navigation, baseline comparison, findings, reviews, packages, sample reset, and refresh status."
+    },
+    {
+      "moduleId": "mod.workspace-snapshots",
+      "name": "Workspace & Snapshot Management",
+      "moduleType": "domain",
+      "responsibility": "Own project configuration, objective-profile references, repository definitions, real-versus-sample selection, last-real-project preference, exact revision sets, immutable snapshot identity, baselines, and publication state."
+    },
+    {
+      "moduleId": "mod.lifecycle-explorer",
+      "name": "Lifecycle Explorer",
+      "moduleType": "domain",
+      "responsibility": "Own the phase model, phase-specific subviews, readiness summaries, evidence-table projections, compare projections, and shared lifecycle-area anatomy for Overview, Planning, Requirements, Design, Implementation, Verification, Configuration Management, Quality Assurance, and Certification."
+    },
+    {
+      "moduleId": "mod.evidence-graph",
+      "name": "Evidence Graph",
+      "moduleType": "domain",
+      "responsibility": "Own normalized lifecycle artifact metadata, typed relationships, requirement-to-result chains, provenance and hashes, dossiers, cross-phase search, staleness evaluation, change impact, and trace traversal."
+    },
+    {
+      "moduleId": "mod.assurance-workflow",
+      "name": "Assurance Workflow",
+      "moduleType": "domain",
+      "responsibility": "Own deterministic and human findings, review and independence records, assignment, disposition, corrective action, reverification, closure history, configurable objective mappings, audit-package membership, manifests, and watermark policy."
+    },
+    {
+      "moduleId": "mod.ingestion-publication",
+      "name": "Ingestion & Publication",
+      "moduleType": "domain",
+      "responsibility": "Own scanning, artifact classification, extractor orchestration, normalization, diagnostics, deterministic check execution, refresh progress, reliability gates, and atomic publication while preserving the last valid snapshot."
+    },
+    {
+      "moduleId": "mod.sample-workspace",
+      "name": "Deterministic Sample Workspace",
+      "moduleType": "domain",
+      "responsibility": "Own the bundled AeroNav lateral-guidance normalized snapshot, baselines 2.3.0 and 2.4.0, seeded complete and incomplete chains, twelve findings, deterministic identities and hashes, resettable overlay defaults, and offline fallback behavior."
+    },
+    {
+      "moduleId": "mod.evidence-store",
+      "name": "Evidence Store",
+      "moduleType": "domain",
+      "responsibility": "Persist and query project metadata, immutable snapshots, normalized evidence, graph relationships, search and phase projections, reviews, findings, activity history, sample overlay state, comparison inputs, and package manifests."
+    },
+    {
+      "moduleId": "mod.external-adapters",
+      "name": "External Adapters",
+      "moduleType": "connection",
+      "responsibility": "Provide explicit Git, workspace-filesystem, normalized-extract, optional MATLAB-tooling, source-link, and local-package-export boundaries without leaking credentials or proprietary formats into domain modules."
+    }
+  ],
+  "dependencyEdges": [
+    {
+      "fromModuleId": "mod.audit-experience",
+      "toModuleId": "mod.workspace-snapshots",
+      "reason": "The front end requires current workspace, baseline, revision, sample-state, and refresh-publication context."
+    },
+    {
+      "fromModuleId": "mod.audit-experience",
+      "toModuleId": "mod.lifecycle-explorer",
+      "reason": "The front end renders all lifecycle-area routes and phase-specific projections through one explorer contract."
+    },
+    {
+      "fromModuleId": "mod.audit-experience",
+      "toModuleId": "mod.evidence-graph",
+      "reason": "Search, dossiers, traces, provenance, staleness, and comparison pivots require normalized graph queries."
+    },
+    {
+      "fromModuleId": "mod.audit-experience",
+      "toModuleId": "mod.assurance-workflow",
+      "reason": "Findings, reviews, objective mappings, audit packages, and closure actions are exposed as user workflows."
+    },
+    {
+      "fromModuleId": "mod.audit-experience",
+      "toModuleId": "mod.ingestion-publication",
+      "reason": "The interface starts refreshes and presents progress, diagnostics, reliability gates, and publication results."
+    },
+    {
+      "fromModuleId": "mod.audit-experience",
+      "toModuleId": "mod.sample-workspace",
+      "reason": "Sample badges, reset controls, seeded walkthroughs, and offline fallback status come from the sample boundary."
+    },
+    {
+      "fromModuleId": "mod.workspace-snapshots",
+      "toModuleId": "mod.sample-workspace",
+      "reason": "Workspace selection resolves the built-in sample only when no real project is configured and retains it under Examples afterward."
+    },
+    {
+      "fromModuleId": "mod.workspace-snapshots",
+      "toModuleId": "mod.evidence-store",
+      "reason": "Project definitions, exact revision sets, baselines, snapshot identities, selection history, and publication state require persistence."
+    },
+    {
+      "fromModuleId": "mod.workspace-snapshots",
+      "toModuleId": "mod.external-adapters",
+      "reason": "Real-project revision resolution and source navigation require Git and workspace boundaries."
+    },
+    {
+      "fromModuleId": "mod.lifecycle-explorer",
+      "toModuleId": "mod.workspace-snapshots",
+      "reason": "Each lifecycle projection is scoped to the selected project, snapshot, baseline, and comparison target."
+    },
+    {
+      "fromModuleId": "mod.lifecycle-explorer",
+      "toModuleId": "mod.evidence-graph",
+      "reason": "Phase tables, readiness metrics, evidence flow, and compare views are derived from normalized artifacts and relationships."
+    },
+    {
+      "fromModuleId": "mod.lifecycle-explorer",
+      "toModuleId": "mod.assurance-workflow",
+      "reason": "Every lifecycle area presents contextual reviews, findings, objective mappings, and package membership."
+    },
+    {
+      "fromModuleId": "mod.evidence-graph",
+      "toModuleId": "mod.evidence-store",
+      "reason": "Artifacts, relationships, provenance, hashes, search indexes, staleness inputs, and trace projections are stored behind one persistence boundary."
+    },
+    {
+      "fromModuleId": "mod.assurance-workflow",
+      "toModuleId": "mod.evidence-graph",
+      "reason": "Findings, reviews, objectives, and package items must reference canonical evidence identities and revisions."
+    },
+    {
+      "fromModuleId": "mod.assurance-workflow",
+      "toModuleId": "mod.evidence-store",
+      "reason": "Workflow state, immutable histories, review records, mappings, and package manifests require durable storage."
+    },
+    {
+      "fromModuleId": "mod.assurance-workflow",
+      "toModuleId": "mod.external-adapters",
+      "reason": "Audit package export writes only deterministic local artifacts through a dedicated outbound port."
+    },
+    {
+      "fromModuleId": "mod.ingestion-publication",
+      "toModuleId": "mod.workspace-snapshots",
+      "reason": "A refresh must validate configuration and freeze an exact multi-repository revision set before extraction."
+    },
+    {
+      "fromModuleId": "mod.ingestion-publication",
+      "toModuleId": "mod.evidence-graph",
+      "reason": "Normalized extractor output and deterministic relationship checks must conform to the canonical graph model."
+    },
+    {
+      "fromModuleId": "mod.ingestion-publication",
+      "toModuleId": "mod.assurance-workflow",
+      "reason": "Deterministic rule results become snapshot-scoped findings while preserving human workflow history."
+    },
+    {
+      "fromModuleId": "mod.ingestion-publication",
+      "toModuleId": "mod.evidence-store",
+      "reason": "Candidate evidence, diagnostics, progress, and publication status must be stored atomically."
+    },
+    {
+      "fromModuleId": "mod.ingestion-publication",
+      "toModuleId": "mod.external-adapters",
+      "reason": "Real refreshes need Git, filesystem, normalized-extract, and optional licensed MATLAB integration ports."
+    },
+    {
+      "fromModuleId": "mod.sample-workspace",
+      "toModuleId": "mod.evidence-store",
+      "reason": "Bundled normalized sample evidence and resettable overlay state use the same canonical persistence and query contracts as real projects."
+    }
+  ],
+  "operationAllocations": [
+    {
+      "operationId": "op.render-audit-hub",
+      "moduleId": "mod.audit-experience",
+      "reason": "This module owns the complete user-facing route and interaction shell."
+    },
+    {
+      "operationId": "op.select-workspace-baseline",
+      "moduleId": "mod.workspace-snapshots",
+      "reason": "Selection, fallback, exact revision sets, and baseline identity are workspace rules."
+    },
+    {
+      "operationId": "op.project-lifecycle-area",
+      "moduleId": "mod.lifecycle-explorer",
+      "reason": "Phase-specific navigation, subviews, metrics, tables, and compare projections belong to the explorer model."
+    },
+    {
+      "operationId": "op.query-dossier",
+      "moduleId": "mod.evidence-graph",
+      "reason": "A dossier is a canonical graph projection around one artifact identity and revision."
+    },
+    {
+      "operationId": "op-traverse-evidence-chain",
+      "moduleId": "mod.evidence-graph",
+      "reason": "Typed bidirectional traversal and change impact are graph responsibilities."
+    },
+    {
+      "operationId": "op-search-evidence",
+      "moduleId": "mod.evidence-graph",
+      "reason": "Cross-phase search resolves canonical artifacts and relationships."
+    },
+    {
+      "operationId": "op-manage-finding",
+      "moduleId": "mod.assurance-workflow",
+      "reason": "Assignment, corrective action, reverification, closure, and history are assurance business rules."
+    },
+    {
+      "operationId": "op-record-review",
+      "moduleId": "mod.assurance-workflow",
+      "reason": "Review scope, independence, comments, decisions, and evidence links belong to assurance."
+    },
+    {
+      "operationId": "op-build-audit-package",
+      "moduleId": "mod.assurance-workflow",
+      "reason": "Package selection, manifest, hashes, revision metadata, and watermark enforcement form one assurance workflow."
+    },
+    {
+      "operationId": "op-run-refresh",
+      "moduleId": "mod.ingestion-publication",
+      "reason": "Scanning, extraction, normalization, checks, diagnostics, and atomic publication are one coordinated process."
+    },
+    {
+      "operationId": "op-open-sample",
+      "moduleId": "mod.sample-workspace",
+      "reason": "The deterministic fallback and sample identity are owned by the sample module."
+    },
+    {
+      "operationId": "op-reset-sample-overlay",
+      "moduleId": "mod.sample-workspace",
+      "reason": "Only the sample module knows bundled defaults and reset semantics."
+    },
+    {
+      "operationId": "op-persist-evidence-state",
+      "moduleId": "mod.evidence-store",
+      "reason": "Durable canonical and overlay state is owned by the persistence module."
+    },
+    {
+      "operationId": "op-access-external-artifacts",
+      "moduleId": "mod.external-adapters",
+      "reason": "All technology-specific reads, source links, revision operations, and exports cross explicit adapter ports."
+    }
+  ],
+  "adapterAllocations": [
+    {
+      "adapterId": "mod.external-adapters",
+      "port": "port.git-repository",
+      "reason": "Resolve exact commits, inspect configured repositories, and construct optional company-controlled source links."
+    },
+    {
+      "adapterId": "mod.external-adapters",
+      "port": "port.workspace-files",
+      "reason": "Read configured artifacts and normalized extracts without writing authoritative sources."
+    },
+    {
+      "adapterId": "mod.external-adapters",
+      "port": "port.normalized-extract",
+      "reason": "Accept organization-provided normalized manifests for proprietary or unsupported lifecycle formats."
+    },
+    {
+      "adapterId": "mod.external-adapters",
+      "port": "port.matlab-extraction",
+      "reason": "Optionally invoke licensed MATLAB and Simulink extractors when available for real projects."
+    },
+    {
+      "adapterId": "mod.external-adapters",
+      "port": "port.audit-package-export",
+      "reason": "Write deterministic audit packages to a user-selected local destination with enforced sample watermark metadata."
+    }
+  ],
+  "workflowTraces": [
+    {
+      "useCaseId": "uc-workspace",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.workspace-snapshots",
+        "mod.evidence-store",
+        "mod.external-adapters"
+      ]
+    },
+    {
+      "useCaseId": "uc-sample",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.workspace-snapshots",
+        "mod.sample-workspace",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-overview",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.workspace-snapshots",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-planning",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-requirements",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-design",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-implementation",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-verification",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-cm",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-qa",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-certification",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-dossier",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-chain",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.evidence-graph",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-gaps",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-search",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.evidence-graph",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-compare",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.workspace-snapshots",
+        "mod.lifecycle-explorer",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-findings",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.assurance-workflow",
+        "mod.evidence-graph",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-reviews",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.assurance-workflow",
+        "mod.evidence-graph",
+        "mod.evidence-store"
+      ]
+    },
+    {
+      "useCaseId": "uc-refresh",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.ingestion-publication",
+        "mod.workspace-snapshots",
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.evidence-store",
+        "mod.external-adapters"
+      ]
+    },
+    {
+      "useCaseId": "uc-package",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.assurance-workflow",
+        "mod.evidence-graph",
+        "mod.workspace-snapshots",
+        "mod.evidence-store",
+        "mod.external-adapters"
+      ]
+    },
+    {
+      "useCaseId": "uc-reset",
+      "moduleIds": [
+        "mod.audit-experience",
+        "mod.sample-workspace",
+        "mod.evidence-store"
+      ]
+    }
+  ],
+  "proposals": [
+    "Implement as a modular monolith so the medium-sized sample remains simple to run while module contracts stay reusable for real-project adapters.",
+    "Use one normalized evidence graph for sample and real projects, with immutable snapshot data separated from editable hub-local workflow overlays.",
+    "Keep all nine lifecycle areas in one Lifecycle Explorer module because they share navigation anatomy and projection rules while differing only in tailored phase queries.",
+    "Keep findings, reviews, objective mappings, and package assembly together because they share assurance history, attribution, and evidence-reference invariants.",
+    "Bundle a normalized synthetic sample snapshot and never counterfeit proprietary MATLAB binary formats.",
+    "Keep persistence and external technology boundaries terminal to preserve an acyclic dependency graph."
+  ],
+  "unresolvedQuestions": [],
+  "gateResult": {
+    "gateId": "CAP-GATE-002",
+    "passed": true,
+    "diagnostics": []
+  },
+  "contentHash": "b74ed12d692384ee074aa4a6a9b09e233dc9babf264a91bf6d4b9e314368f86d",
+  "approvedAt": "2026-07-22T23:26:08.614Z"
+}

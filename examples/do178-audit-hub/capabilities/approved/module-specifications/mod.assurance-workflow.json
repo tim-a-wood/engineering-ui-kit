@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "moduleId": "mod.assurance-workflow",
+  "moduleVersion": "1.0.0",
+  "moduleType": "domain",
+  "runtimeLanguage": "typescript",
+  "deployableId": "http-api",
+  "ownedPaths": [
+    "src/modules/assurance-workflow/"
+  ],
+  "editablePaths": [
+    "src/modules/assurance-workflow/"
+  ],
+  "responsibility": "Own hub-local finding lifecycles, assignments, dispositions, corrective actions, reverification and immutable history; record independent reviews; and assemble reproducible audit packages without mutating authoritative lifecycle evidence.",
+  "nonResponsibilities": [
+    "authoritative-artifact-editing",
+    "evidence-parsing",
+    "graph-storage",
+    "user-interface-rendering",
+    "licensed-objective-text"
+  ],
+  "providedOperations": [
+    {
+      "operationId": "op.manage-finding",
+      "contractVersion": "1.0.0"
+    },
+    {
+      "operationId": "op.record-review",
+      "contractVersion": "1.0.0"
+    },
+    {
+      "operationId": "op.build-audit-package",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [
+    {
+      "operationId": "op.query-dossier",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Resolve evidence linked to findings and reviews."
+    },
+    {
+      "operationId": "op-traverse-evidence-chain",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Include trace chains and impacts."
+    },
+    {
+      "operationId": "op.persist-evidence-state",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Persist assurance overlays and package records."
+    }
+  ],
+  "providedPorts": [
+    "op.manage-finding",
+    "op.record-review",
+    "op.build-audit-package"
+  ],
+  "requiredPorts": [
+    "op.query-dossier",
+    "op-traverse-evidence-chain",
+    "op.persist-evidence-state"
+  ],
+  "canonicalSchemaRefs": [
+    "op.manage-finding.input",
+    "op.manage-finding.output",
+    "op.record-review.input",
+    "op.record-review.output",
+    "op.build-audit-package.input",
+    "op.build-audit-package.output"
+  ],
+  "generatedTypeTargets": [],
+  "rules": [
+    {
+      "id": "rule.assurance.append",
+      "text": "Finding and review history is append-only."
+    },
+    {
+      "id": "rule.assurance.close",
+      "text": "Closure requires corrective action evidence and successful reverification."
+    },
+    {
+      "id": "rule.assurance.watermark",
+      "text": "Every sample export is visibly watermarked Synthetic sample — not certification evidence."
+    }
+  ],
+  "invariants": [],
+  "examples": [],
+  "edgeCases": [],
+  "failureSemantics": [],
+  "performanceConstraints": [],
+  "cancellationExpectations": "unspecified (migrated)",
+  "timeoutExpectations": "unspecified (migrated)",
+  "concurrencyExpectations": "unspecified (migrated)",
+  "lifecycleRegistration": "request-job",
+  "configurationRefs": [],
+  "secretReferenceIds": [],
+  "persistenceExpectations": "unspecified (migrated)",
+  "telemetryExpectations": "unspecified (migrated)",
+  "healthExpectations": "unspecified (migrated)",
+  "implementationSteps": [],
+  "acceptanceCases": [
+    {
+      "id": "ac.assurance.finding",
+      "description": "Reverify and close the seeded closure-ready finding.",
+      "expectedOutcome": "The state advances with required independence and complete immutable history."
+    },
+    {
+      "id": "ac.assurance.package",
+      "description": "Export a sample audit package for Lateral Guidance 2.4.0.",
+      "expectedOutcome": "Manifest includes hashes, revisions, reviews, findings, chain evidence, and the synthetic watermark."
+    }
+  ],
+  "acceptanceCommands": [],
+  "unresolvedItems": []
+}

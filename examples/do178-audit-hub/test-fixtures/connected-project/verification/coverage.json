@@ -1,0 +1,8 @@
+{
+  "summary": {
+    "statements": { "pct": 100 },
+    "branches": { "pct": 100 },
+    "conditions": { "pct": 100 },
+    "mcdc": { "pct": 100 }
+  }
+}

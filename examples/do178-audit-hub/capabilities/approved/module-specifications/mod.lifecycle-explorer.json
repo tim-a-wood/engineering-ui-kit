@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "moduleId": "mod.lifecycle-explorer",
+  "moduleVersion": "1.0.0",
+  "moduleType": "domain",
+  "runtimeLanguage": "typescript",
+  "deployableId": "http-api",
+  "ownedPaths": [
+    "src/modules/lifecycle-explorer/"
+  ],
+  "editablePaths": [
+    "src/modules/lifecycle-explorer/"
+  ],
+  "responsibility": "Own the nine-area lifecycle model, phase-specific subviews, readiness summaries, evidence-table and visualization projections, findings context, shared inspector anatomy, and baseline comparisons.",
+  "nonResponsibilities": [
+    "raw-ingestion",
+    "canonical-graph-storage",
+    "finding-transitions",
+    "UI-rendering",
+    "licensed-standard-text"
+  ],
+  "providedOperations": [
+    {
+      "operationId": "op.project-lifecycle-area",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [
+    {
+      "operationId": "op.select-workspace-baseline",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Scope projections to one workspace and baseline."
+    },
+    {
+      "operationId": "op.query-dossier",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Resolve canonical evidence and provenance."
+    },
+    {
+      "operationId": "op-search-evidence",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Apply graph-backed phase filters."
+    },
+    {
+      "operationId": "op.manage-finding",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Include contextual finding state."
+    }
+  ],
+  "providedPorts": [
+    "op.project-lifecycle-area"
+  ],
+  "requiredPorts": [
+    "op.select-workspace-baseline",
+    "op.query-dossier",
+    "op-search-evidence",
+    "op.manage-finding"
+  ],
+  "canonicalSchemaRefs": [
+    "op.project-lifecycle-area.input",
+    "op.project-lifecycle-area.output"
+  ],
+  "generatedTypeTargets": [],
+  "rules": [
+    {
+      "id": "rule.lifecycle.nine",
+      "text": "Navigation always contains the agreed nine lifecycle areas in order."
+    },
+    {
+      "id": "rule.lifecycle.shared",
+      "text": "All areas use canonical dossiers and comparison semantics."
+    },
+    {
+      "id": "rule.lifecycle.objectives",
+      "text": "Certification projections never bundle licensed objective text."
+    }
+  ],
+  "invariants": [],
+  "examples": [],
+  "edgeCases": [],
+  "failureSemantics": [],
+  "performanceConstraints": [],
+  "cancellationExpectations": "unspecified (migrated)",
+  "timeoutExpectations": "unspecified (migrated)",
+  "concurrencyExpectations": "unspecified (migrated)",
+  "lifecycleRegistration": "request-job",
+  "configurationRefs": [],
+  "secretReferenceIds": [],
+  "persistenceExpectations": "unspecified (migrated)",
+  "telemetryExpectations": "unspecified (migrated)",
+  "healthExpectations": "unspecified (migrated)",
+  "implementationSteps": [],
+  "acceptanceCases": [
+    {
+      "id": "ac.lifecycle.all",
+      "description": "Project each area for sample 2.4.0.",
+      "expectedOutcome": "Every area has tailored subviews, populated evidence, visualization, reviews, findings, and inspector actions."
+    },
+    {
+      "id": "ac.lifecycle.compare",
+      "description": "Compare 2.3.0 with 2.4.0.",
+      "expectedOutcome": "Bank-limit and mode-transition changes plus downstream impacts are consistent across areas."
+    }
+  ],
+  "acceptanceCommands": [],
+  "unresolvedItems": []
+}

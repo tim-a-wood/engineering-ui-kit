@@ -182,6 +182,7 @@ export type OverlayAction =
   | { type: 'package/add'; pkg: Omit<AuditPackage, 'id'>; at: string }
   | { type: 'package/cancelled'; name: string; at: string }
   | { type: 'baseline/set'; baseline: Baseline; at: string }
+  | { type: 'baseline/sync'; baseline: Baseline; comparisonAvailable: boolean }
   | { type: 'compare/set'; compare: boolean }
   | { type: 'nav/collapse'; collapsed: boolean }
   | { type: 'refresh/complete'; at: string; sourceCount: number }
@@ -254,6 +255,15 @@ export function overlayReducer(state: OverlayState, action: OverlayAction): Over
       const s = { ...state, prefs: { ...state.prefs, baseline: action.baseline } }
       return logEvent(s, action.at, 'baseline-changed', `Active baseline set to ${action.baseline}.`)
     }
+    case 'baseline/sync':
+      return {
+        ...state,
+        prefs: {
+          ...state.prefs,
+          baseline: action.baseline,
+          compare: action.comparisonAvailable ? state.prefs.compare : false,
+        },
+      }
     case 'compare/set':
       return { ...state, prefs: { ...state.prefs, compare: action.compare } }
     case 'nav/collapse':

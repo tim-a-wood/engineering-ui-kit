@@ -1,0 +1,169 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "moduleId": "mod.audit-experience",
+  "moduleVersion": "1.0.1",
+  "moduleType": "experience",
+  "runtimeLanguage": "typescript",
+  "deployableId": "browser",
+  "ownedPaths": [
+    "src/modules/audit-experience/"
+  ],
+  "editablePaths": [
+    "src/modules/audit-experience/"
+  ],
+  "responsibility": "Own the complete responsive, accessible Audit Hub front end and orchestrate workspace selection, Overview, all nine lifecycle areas and their phase-specific subviews, global search, dossiers, trace navigation, baseline comparison, findings, reviews, packages, sample reset, and refresh status through approved capability contracts.",
+  "nonResponsibilities": [
+    "authoritative-artifact-mutation",
+    "evidence-persistence",
+    "artifact-extraction",
+    "domain-rule-evaluation",
+    "direct-filesystem-or-MATLAB-access"
+  ],
+  "providedOperations": [
+    {
+      "operationId": "op.render-audit-hub",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [
+    {
+      "operationId": "op.select-workspace-baseline",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Resolve workspace, sample fallback, baseline, and revision context."
+    },
+    {
+      "operationId": "op.project-lifecycle-area",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Load phase-specific view projections."
+    },
+    {
+      "operationId": "op.query-dossier",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Open canonical evidence dossiers."
+    },
+    {
+      "operationId": "op-traverse-evidence-chain",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Follow bidirectional evidence chains."
+    },
+    {
+      "operationId": "op-search-evidence",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Run global evidence search and filters."
+    },
+    {
+      "operationId": "op.manage-finding",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Run hub-local finding workflows."
+    },
+    {
+      "operationId": "op.record-review",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Record hub-local review decisions."
+    },
+    {
+      "operationId": "op.build-audit-package",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Assemble and export packages."
+    },
+    {
+      "operationId": "op.run-refresh",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Start and monitor ingestion refreshes."
+    },
+    {
+      "operationId": "op.open-sample",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Load deterministic sample context."
+    },
+    {
+      "operationId": "op.reset-sample-overlay",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Reset sample edits."
+    }
+  ],
+  "providedPorts": [
+    "op.render-audit-hub"
+  ],
+  "requiredPorts": [
+    "op.select-workspace-baseline",
+    "op.project-lifecycle-area",
+    "op.query-dossier",
+    "op-traverse-evidence-chain",
+    "op-search-evidence",
+    "op.manage-finding",
+    "op.record-review",
+    "op.build-audit-package",
+    "op.run-refresh",
+    "op.open-sample",
+    "op.reset-sample-overlay"
+  ],
+  "canonicalSchemaRefs": [
+    "op.render-audit-hub.input",
+    "op.render-audit-hub.output"
+  ],
+  "generatedTypeTargets": [],
+  "rules": [
+    {
+      "id": "rule.audit.routes",
+      "text": "The lifecycle navigation always contains Overview, Planning, Requirements, Design, Implementation, Verification, Configuration Management, Quality Assurance, and Certification in order."
+    },
+    {
+      "id": "rule.audit.shared",
+      "text": "Every lifecycle area uses the shared header, phase subnavigation, visualization, evidence workspace, inspector, findings context, and baseline comparison anatomy."
+    },
+    {
+      "id": "rule.audit.boundary",
+      "text": "All authoritative evidence is read-only and every user mutation is routed to hub-local assurance or sample-overlay operations."
+    },
+    {
+      "id": "rule.audit.watermark",
+      "text": "Sample status stays visible and every sample export says Synthetic sample — not certification evidence."
+    }
+  ],
+  "invariants": [],
+  "examples": [],
+  "edgeCases": [],
+  "failureSemantics": [],
+  "performanceConstraints": [],
+  "cancellationExpectations": "unspecified (migrated)",
+  "timeoutExpectations": "unspecified (migrated)",
+  "concurrencyExpectations": "unspecified (migrated)",
+  "lifecycleRegistration": "request-job",
+  "configurationRefs": [],
+  "secretReferenceIds": [],
+  "persistenceExpectations": "unspecified (migrated)",
+  "telemetryExpectations": "unspecified (migrated)",
+  "healthExpectations": "unspecified (migrated)",
+  "implementationSteps": [],
+  "acceptanceCases": [
+    {
+      "id": "ac.audit.sample",
+      "description": "Open the application with no configured project and walk every main lifecycle route.",
+      "expectedOutcome": "AeroNav sample 2.4.0 opens automatically with persistent Sample Data badge, populated phase-specific subviews, working search and dossiers, and no empty placeholders."
+    },
+    {
+      "id": "ac.audit.trace",
+      "description": "Open SYS-LAT-014 and traverse downstream.",
+      "expectedOutcome": "The full eight-node system-requirement-to-verification-result chain appears with provenance, gaps, linked findings, and keyboard-accessible inspector actions."
+    },
+    {
+      "id": "ac.audit.compare",
+      "description": "Compare baselines 2.3.0 and 2.4.0 from Requirements, Design, Implementation, and Verification.",
+      "expectedOutcome": "Added, removed, changed, stale, and impacted evidence remains consistent across phase views."
+    },
+    {
+      "id": "ac.audit.finding",
+      "description": "Move FND-012 from Ready for Closure through reverification to Closed.",
+      "expectedOutcome": "The UI enforces required evidence and independence, shows immutable history, and updates contextual readiness."
+    },
+    {
+      "id": "ac.audit.package",
+      "description": "Build and export the sample Lateral Guidance audit package.",
+      "expectedOutcome": "Progress, manifest, hashes, revisions, reviews, findings, and the Synthetic sample — not certification evidence watermark are visible."
+    }
+  ],
+  "acceptanceCommands": [],
+  "unresolvedItems": []
+}

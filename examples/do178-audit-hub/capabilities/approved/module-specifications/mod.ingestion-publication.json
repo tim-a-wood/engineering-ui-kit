@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "moduleId": "mod.ingestion-publication",
+  "moduleVersion": "1.0.0",
+  "moduleType": "domain",
+  "runtimeLanguage": "typescript",
+  "deployableId": "http-api",
+  "ownedPaths": [
+    "src/modules/ingestion-publication/"
+  ],
+  "editablePaths": [
+    "src/modules/ingestion-publication/"
+  ],
+  "responsibility": "Orchestrate deterministic refreshes from configured adapters, validate normalized evidence and trace integrity, publish immutable snapshots only after all validation passes, and preserve the last valid snapshot on failure or cancellation.",
+  "nonResponsibilities": [
+    "technology-specific-file-access",
+    "artifact-authoring",
+    "graph-querying",
+    "finding-workflow",
+    "user-interface-rendering"
+  ],
+  "providedOperations": [
+    {
+      "operationId": "op.run-refresh",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [
+    {
+      "operationId": "op.access-external-artifacts",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Read configured lifecycle artifact formats."
+    },
+    {
+      "operationId": "op.persist-evidence-state",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Stage and atomically publish validated snapshots."
+    }
+  ],
+  "providedPorts": [
+    "op.run-refresh"
+  ],
+  "requiredPorts": [
+    "op.access-external-artifacts",
+    "op.persist-evidence-state"
+  ],
+  "canonicalSchemaRefs": [
+    "op.run-refresh.input",
+    "op.run-refresh.output"
+  ],
+  "generatedTypeTargets": [],
+  "rules": [
+    {
+      "id": "rule.refresh.atomic",
+      "text": "A snapshot is published atomically only after every validation succeeds."
+    },
+    {
+      "id": "rule.refresh.readonly",
+      "text": "Adapters never modify lifecycle artifacts."
+    },
+    {
+      "id": "rule.refresh.deterministic",
+      "text": "Identical inputs produce identical normalized identities and hashes."
+    }
+  ],
+  "invariants": [],
+  "examples": [],
+  "edgeCases": [],
+  "failureSemantics": [],
+  "performanceConstraints": [],
+  "cancellationExpectations": "unspecified (migrated)",
+  "timeoutExpectations": "unspecified (migrated)",
+  "concurrencyExpectations": "unspecified (migrated)",
+  "lifecycleRegistration": "request-job",
+  "configurationRefs": [],
+  "secretReferenceIds": [],
+  "persistenceExpectations": "unspecified (migrated)",
+  "telemetryExpectations": "unspecified (migrated)",
+  "healthExpectations": "unspecified (migrated)",
+  "implementationSteps": [],
+  "acceptanceCases": [
+    {
+      "id": "ac.refresh.sample",
+      "description": "Refresh the deterministic sample twice.",
+      "expectedOutcome": "Both runs produce identical counts, identities, hashes, relationships, and selected baseline."
+    },
+    {
+      "id": "ac.refresh.failure",
+      "description": "Inject a malformed trace relationship during staging.",
+      "expectedOutcome": "Publication is rejected, diagnostics identify the source, and the prior snapshot remains active."
+    }
+  ],
+  "acceptanceCommands": [],
+  "unresolvedItems": []
+}

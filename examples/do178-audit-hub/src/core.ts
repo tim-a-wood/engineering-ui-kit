@@ -16,7 +16,10 @@ export type Phase =
   | 'qa'
   | 'certification'
 
-export type Baseline = '2.3.0' | '2.4.0'
+// Baseline identities are program data, not product constants. The bundled
+// sample happens to use 2.3.0/2.4.0, while connected projects may use tags,
+// commits, release names, or controlled baseline identifiers.
+export type Baseline = string
 
 export type SourceKind =
   | 'SLREQX'
@@ -25,10 +28,14 @@ export type SourceKind =
   | 'SLDD'
   | 'SLDATX'
   | 'XLSX'
+  | 'CSV'
   | 'C'
   | 'H'
   | 'REVIEW'
+  | 'COVERAGE'
   | 'CONFIG'
+  | 'NORMALIZED'
+  | 'UNKNOWN'
 
 export type EvidenceType =
   | 'plan'

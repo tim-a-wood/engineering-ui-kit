@@ -1,0 +1,153 @@
+{
+  "schemaVersion": "1.0",
+  "supersedesImplementationShapeOf": "mod.external-adapters@1.0.0",
+  "retainsCapabilityBoundary": "mod.external-adapters",
+  "ports": [
+    {
+      "id": "port.artifact-catalog",
+      "purpose": "Discover configured authoritative artifacts and return stable paths, types, sizes, timestamps, and content hashes."
+    },
+    {
+      "id": "port.revision-source",
+      "purpose": "Resolve repository revision, baseline, tag, branch, dirty state, and commit provenance."
+    },
+    {
+      "id": "port.requirement-source",
+      "purpose": "Extract requirements, attributes, hierarchy, and requirement-set provenance."
+    },
+    {
+      "id": "port.trace-source",
+      "purpose": "Extract typed incoming and outgoing lifecycle trace relationships."
+    },
+    {
+      "id": "port.design-source",
+      "purpose": "Extract model, Stateflow, harness, interface, parameter, variant, and data-dictionary evidence."
+    },
+    {
+      "id": "port.verification-source",
+      "purpose": "Extract test definitions, executions, iterations, result sets, verdicts, and authoritative coverage summaries."
+    },
+    {
+      "id": "port.tabular-evidence-source",
+      "purpose": "Read controlled XLSX/CSV plans, matrices, results, review registers, CM, QA, and certification records."
+    },
+    {
+      "id": "port.source-code-source",
+      "purpose": "Index C/H files, functions, interfaces, generated classification, and content provenance without acting as an IDE."
+    },
+    {
+      "id": "port.review-evidence-source",
+      "purpose": "Import reviews, checklists, independence, decisions, approvals, comments, and attachments."
+    },
+    {
+      "id": "port.coverage-source",
+      "purpose": "Import authoritative model/code coverage results without calculating coverage."
+    },
+    {
+      "id": "port.objective-profile-source",
+      "purpose": "Import program-owned objective identifiers, applicability, status, and satisfaction links without bundling licensed standard text."
+    },
+    {
+      "id": "port.snapshot-store",
+      "purpose": "Atomically stage and publish immutable normalized snapshots and append-only hub overlays."
+    },
+    {
+      "id": "port.sample-snapshot",
+      "purpose": "Load and verify the immutable normalized sample snapshot used when no real project is configured."
+    },
+    {
+      "id": "port.audit-package-writer",
+      "purpose": "Write deterministic audit-package archives without exposing storage technology to assurance workflows."
+    }
+  ],
+  "adapters": [
+    {
+      "id": "adapter.filesystem",
+      "moduleId": "mod.adapter.filesystem-catalog",
+      "drivenActorId": "ext.workspace-filesystem",
+      "implements": ["port.artifact-catalog"],
+      "optional": false,
+      "failureIsolation": "A scan failure produces diagnostics and cannot replace the last valid snapshot."
+    },
+    {
+      "id": "adapter.git",
+      "moduleId": "mod.adapter.git",
+      "drivenActorId": "ext.git-repository",
+      "implements": ["port.revision-source"],
+      "optional": true,
+      "failureIsolation": "Non-Git roots remain usable with explicit revision diagnostics."
+    },
+    {
+      "id": "adapter.matlab-simulink",
+      "moduleId": "mod.adapter.matlab-simulink",
+      "drivenActorId": "ext.matlab-simulink",
+      "implements": ["port.requirement-source", "port.trace-source", "port.design-source", "port.verification-source"],
+      "optional": true,
+      "failureIsolation": "Missing licenses, products, or compatible tool versions affect only MATLAB-owned sources."
+    },
+    {
+      "id": "adapter.spreadsheet",
+      "moduleId": "mod.adapter.spreadsheet",
+      "drivenActorId": "ext.tabular-evidence-files",
+      "implements": ["port.tabular-evidence-source"],
+      "optional": true,
+      "failureIsolation": "Malformed workbooks are isolated per source with row/sheet diagnostics."
+    },
+    {
+      "id": "adapter.c-source",
+      "moduleId": "mod.adapter.c-source",
+      "drivenActorId": "ext.c-source-files",
+      "implements": ["port.source-code-source"],
+      "optional": true,
+      "failureIsolation": "Unsupported syntax is reported per translation unit without blocking unrelated sources."
+    },
+    {
+      "id": "adapter.review-evidence",
+      "moduleId": "mod.adapter.review-evidence",
+      "drivenActorId": "ext.review-register",
+      "implements": ["port.review-evidence-source"],
+      "optional": true,
+      "failureIsolation": "Review records with incomplete identity or independence are imported with explicit findings."
+    },
+    {
+      "id": "adapter.coverage",
+      "moduleId": "mod.adapter.coverage",
+      "drivenActorId": "ext.coverage-results",
+      "implements": ["port.coverage-source"],
+      "optional": true,
+      "failureIsolation": "Coverage is never inferred; missing or unsupported reports remain visible gaps."
+    },
+    {
+      "id": "adapter.objective-profile",
+      "moduleId": "mod.adapter.objective-profile",
+      "drivenActorId": "ext.program-objective-profile",
+      "implements": ["port.objective-profile-source"],
+      "optional": true,
+      "failureIsolation": "An explicitly configured invalid objective profile rejects the candidate snapshot; absence of a profile leaves objective evidence program-configurable."
+    },
+    {
+      "id": "adapter.sample-snapshot",
+      "moduleId": "mod.adapter.sample-snapshot",
+      "drivenActorId": "ext.bundled-sample",
+      "implements": ["port.sample-snapshot"],
+      "optional": false,
+      "failureIsolation": "Bundled normalized data is immutable; user changes are stored only in the resettable overlay."
+    },
+    {
+      "id": "adapter.json-snapshot-store",
+      "moduleId": "mod.adapter.snapshot-store",
+      "drivenActorId": "ext.audit-hub-data-store",
+      "implements": ["port.snapshot-store"],
+      "optional": false,
+      "failureIsolation": "Atomic rename and validation preserve the last published snapshot after interrupted writes."
+    },
+    {
+      "id": "adapter.audit-package-zip",
+      "moduleId": "mod.adapter.audit-package",
+      "drivenActorId": "ext.audit-package-destination",
+      "implements": ["port.audit-package-writer"],
+      "optional": false,
+      "failureIsolation": "A failed package write cannot mutate a published snapshot or authoritative lifecycle artifact."
+    }
+  ]
+}

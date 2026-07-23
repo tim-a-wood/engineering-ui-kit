@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "moduleId": "mod.external-adapters",
+  "moduleVersion": "1.0.0",
+  "moduleType": "connection",
+  "runtimeLanguage": "typescript",
+  "deployableId": "http-api",
+  "ownedPaths": [
+    "src/modules/external-adapters/"
+  ],
+  "editablePaths": [
+    "src/modules/external-adapters/"
+  ],
+  "responsibility": "Provide technology-specific, read-only access to configured lifecycle artifact formats and translate them into normalized evidence records, typed relationships, hashes, provenance, and structured diagnostics.",
+  "nonResponsibilities": [
+    "snapshot-publication",
+    "lifecycle-interpretation",
+    "finding-workflow",
+    "UI-rendering",
+    "source-artifact-mutation"
+  ],
+  "providedOperations": [
+    {
+      "operationId": "op.access-external-artifacts",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [],
+  "providedPorts": [
+    "op.access-external-artifacts"
+  ],
+  "requiredPorts": [],
+  "canonicalSchemaRefs": [
+    "op.access-external-artifacts.input",
+    "op.access-external-artifacts.output"
+  ],
+  "generatedTypeTargets": [],
+  "rules": [
+    {
+      "id": "rule.adapter.readonly",
+      "text": "Adapters never modify configured lifecycle artifacts."
+    },
+    {
+      "id": "rule.adapter.local",
+      "text": "Artifact extraction and hashing run locally."
+    },
+    {
+      "id": "rule.adapter.diagnostics",
+      "text": "Every failure is source-scoped, typed, and safe for audit history."
+    }
+  ],
+  "invariants": [],
+  "examples": [],
+  "edgeCases": [],
+  "failureSemantics": [],
+  "performanceConstraints": [],
+  "cancellationExpectations": "unspecified (migrated)",
+  "timeoutExpectations": "unspecified (migrated)",
+  "concurrencyExpectations": "unspecified (migrated)",
+  "lifecycleRegistration": "request-job",
+  "configurationRefs": [],
+  "secretReferenceIds": [],
+  "persistenceExpectations": "unspecified (migrated)",
+  "telemetryExpectations": "unspecified (migrated)",
+  "healthExpectations": "unspecified (migrated)",
+  "implementationSteps": [],
+  "acceptanceCases": [
+    {
+      "id": "ac.adapter.formats",
+      "description": "Read representative synthetic fixtures for every agreed extension.",
+      "expectedOutcome": "Normalized identities, relationships, hashes, provenance, adapter versions, and deterministic counts match fixtures."
+    },
+    {
+      "id": "ac.adapter.readonly",
+      "description": "Attempt a refresh across read-only source files and cancel mid-read.",
+      "expectedOutcome": "No source changes occur; cancellation and per-source diagnostics are explicit."
+    }
+  ],
+  "acceptanceCommands": [],
+  "unresolvedItems": []
+}

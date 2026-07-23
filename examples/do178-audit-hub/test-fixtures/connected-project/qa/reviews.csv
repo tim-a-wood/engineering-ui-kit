@@ -1,0 +1,3 @@
+Review ID,Review Type,Subject ID,Reviewer,Method,Date,Revision,Result,Independent,Open Actions,Comments
+REV-DEMO-001,Requirements inspection,SWR-LLR-DEMO-001,Jamie Chen,inspection,2026-07-20,7,passed,yes,0,All checklist items satisfied.
+REV-DEMO-002,Code review,src/lateral_guidance.c::limit_bank_command,Riley Morgan,checklist,2026-07-21,4,passed,yes,0,Boundary behavior and defensive checks reviewed.

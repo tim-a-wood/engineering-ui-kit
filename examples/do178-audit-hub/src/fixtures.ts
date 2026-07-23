@@ -6,9 +6,9 @@ import type { AuditRecord, Baseline, BaselineInfo, ChangeMark, ChangeRecord, Evi
 // Shared deterministic fixture builders. All authoritative sample evidence is
 // produced here from stable inputs — no randomness, no wall clock.
 
-export const WORKSPACE_NAME = 'AeroNav Flight Guidance Computer — Lateral Guidance'
-export const SOFTWARE_LEVEL = 'Level B'
-export const WATERMARK = 'Synthetic sample — not certification evidence'
+export let WORKSPACE_NAME = 'AeroNav Flight Guidance Computer — Lateral Guidance'
+export let SOFTWARE_LEVEL = 'Level B'
+export let WATERMARK = 'Synthetic sample — not certification evidence'
 
 export const PEOPLE = [
   'M. Okafor',
@@ -805,7 +805,7 @@ export const testRecords: EvidenceRecord[] = testDefs.map((d) => {
   })
 })
 
-export const TOTAL_ITERATIONS = testRecords.reduce((a, t) => a + (typeof t.meta.iterations === 'number' ? t.meta.iterations : 0), 0)
+export let TOTAL_ITERATIONS = testRecords.reduce((a, t) => a + (typeof t.meta.iterations === 'number' ? t.meta.iterations : 0), 0)
 
 const RESULT_SET_DEFS: Array<{
   id: string
@@ -1811,3 +1811,91 @@ export const sampleCounts = {
   reproChecks: reproChecks.length,
   seedPackageId: seedPackage.id,
 } as const
+
+export interface HydratableSnapshot {
+  workspace: {
+    name: string
+    kind: 'real' | 'sample'
+    softwareLevel: string
+    watermark?: string
+  }
+  evidence: EvidenceRecord[]
+  findings: Finding[]
+  reviews: ReviewRecord[]
+  baselines: unknown[]
+  changes: unknown[]
+  coverage: unknown[]
+  audits: unknown[]
+  openActions: unknown[]
+  reproducibilityChecks: unknown[]
+  deviations: unknown[]
+  removedEvidence: EvidenceRecord[]
+  canonicalChain: string[]
+  refreshSources: Array<{ source: string; kind: string; count: number }>
+  counts: Record<string, number | string>
+  seedPackage?: unknown
+}
+
+/**
+ * Apply a canonical backend snapshot to the legacy fixture-shaped read model.
+ *
+ * Arrays are mutated in place because the existing UI imports their live
+ * references throughout its lifecycle views. This is the compatibility seam
+ * that lets the same components render the bundled sample and real adapter
+ * output while the view modules are incrementally migrated to direct
+ * capability projections.
+ */
+export function hydrateFromSnapshot(snapshot: HydratableSnapshot): void {
+  WORKSPACE_NAME = snapshot.workspace.name
+  SOFTWARE_LEVEL = snapshot.workspace.softwareLevel
+  WATERMARK = snapshot.workspace.watermark
+    ?? (snapshot.workspace.kind === 'sample' ? 'Synthetic sample — not certification evidence' : 'Connected read-only evidence')
+
+  const evidence = snapshot.evidence
+  const replace = <T>(target: T[], values: T[]) => target.splice(0, target.length, ...values)
+  replace(allEvidence, evidence)
+  evidenceById.clear()
+  for (const record of evidence) evidenceById.set(record.id, record)
+
+  replace(planningRecords, evidence.filter((record) => record.phase === 'planning' && (record.type === 'plan' || record.type === 'standard')))
+  replace(environmentRecords, evidence.filter((record) => record.phase === 'planning' && record.type !== 'plan' && record.type !== 'standard'))
+  replace(sysRequirements, evidence.filter((record) => record.type === 'sys-requirement'))
+  replace(hlrRequirements, evidence.filter((record) => record.type === 'hlr'))
+  replace(llrRequirements, evidence.filter((record) => record.type === 'llr'))
+  replace(derivedRequirements, evidence.filter((record) => record.type === 'derived-requirement'))
+  replace(requirementRecords, evidence.filter((record) => record.phase === 'requirements'))
+  replace(modelRecords, evidence.filter((record) => record.type === 'model' || record.type === 'harness'))
+  replace(dictionaryRecords, evidence.filter((record) => record.type === 'data-dictionary'))
+  replace(elementRecords, evidence.filter((record) => record.type === 'model-element'))
+  replace(designRecords, evidence.filter((record) => record.phase === 'design'))
+  replace(sourceFileRecords, evidence.filter((record) => record.type === 'source-file'))
+  replace(functionRecords, evidence.filter((record) => record.type === 'function'))
+  replace(implementationRecords, evidence.filter((record) => record.phase === 'implementation'))
+  replace(testRecords, evidence.filter((record) => record.type === 'test-case'))
+  replace(resultSetRecords, evidence.filter((record) => record.type === 'result-set'))
+  replace(resultRecords, evidence.filter((record) => record.type === 'result'))
+  replace(verificationRecords, evidence.filter((record) => record.phase === 'verification'))
+  replace(objectiveRecords, evidence.filter((record) => record.type === 'objective'))
+  replace(certDocRecords, evidence.filter((record) => record.phase === 'certification' && record.type !== 'objective'))
+  replace(certificationRecords, evidence.filter((record) => record.phase === 'certification'))
+
+  replace(findings, snapshot.findings)
+  replace(reviewRecords, snapshot.reviews)
+  replace(baselines, snapshot.baselines as BaselineInfo[])
+  replace(changeRecords, snapshot.changes as ChangeRecord[])
+  replace(coverageRows, snapshot.coverage as CoverageRow[])
+  replace(auditRecords, snapshot.audits as AuditRecord[])
+  replace(openActions, snapshot.openActions as OpenActionRow[])
+  replace(reproChecks, snapshot.reproducibilityChecks as ReproCheckRow[])
+  replace(deviationRows, snapshot.deviations as DeviationRow[])
+  replace(removedIn240, snapshot.removedEvidence)
+  replace(canonicalChain, snapshot.canonicalChain)
+  replace(refreshSourceCounts, snapshot.refreshSources)
+  TOTAL_ITERATIONS = testRecords.reduce((sum, test) =>
+    sum + (typeof test.meta.iterations === 'number' ? test.meta.iterations : 0), 0)
+
+  Object.assign(sampleCounts, snapshot.counts)
+  if (snapshot.seedPackage && typeof snapshot.seedPackage === 'object') {
+    Object.assign(seedPackage, snapshot.seedPackage)
+  }
+}

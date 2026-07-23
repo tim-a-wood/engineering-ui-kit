@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "moduleId": "mod.sample-workspace",
+  "moduleVersion": "1.0.0",
+  "moduleType": "domain",
+  "runtimeLanguage": "typescript",
+  "deployableId": "http-api",
+  "ownedPaths": [
+    "src/modules/sample-workspace/"
+  ],
+  "editablePaths": [
+    "src/modules/sample-workspace/"
+  ],
+  "responsibility": "Supply the built-in AeroNav Flight Guidance Computer — Lateral Guidance Level B workspace whenever no real project is configured, including two baselines, complete cross-phase evidence, twelve seeded findings, review records, deterministic adapter fixtures, and a resettable sandbox overlay.",
+  "nonResponsibilities": [
+    "real-project-configuration",
+    "proprietary-binaries",
+    "licensed-standard-text",
+    "network-access",
+    "authoritative-artifact-editing"
+  ],
+  "providedOperations": [
+    {
+      "operationId": "op.open-sample",
+      "contractVersion": "1.0.0"
+    },
+    {
+      "operationId": "op.reset-sample-overlay",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [
+    {
+      "operationId": "op.persist-evidence-state",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Materialize sample snapshots and reset the local overlay."
+    }
+  ],
+  "providedPorts": [
+    "op.open-sample",
+    "op.reset-sample-overlay"
+  ],
+  "requiredPorts": [
+    "op.persist-evidence-state"
+  ],
+  "canonicalSchemaRefs": [
+    "op.open-sample.input",
+    "op.open-sample.output",
+    "op.reset-sample-overlay.input",
+    "op.reset-sample-overlay.output"
+  ],
+  "generatedTypeTargets": [],
+  "rules": [
+    {
+      "id": "rule.sample.fallback",
+      "text": "No configured project always yields a usable detailed sample, never an empty shell."
+    },
+    {
+      "id": "rule.sample.synthetic",
+      "text": "Fixtures contain no proprietary binaries or licensed standard text."
+    },
+    {
+      "id": "rule.sample.same-api",
+      "text": "Sample and real workspaces use the same application operations and view components."
+    }
+  ],
+  "invariants": [],
+  "examples": [],
+  "edgeCases": [],
+  "failureSemantics": [],
+  "performanceConstraints": [],
+  "cancellationExpectations": "unspecified (migrated)",
+  "timeoutExpectations": "unspecified (migrated)",
+  "concurrencyExpectations": "unspecified (migrated)",
+  "lifecycleRegistration": "request-job",
+  "configurationRefs": [],
+  "secretReferenceIds": [],
+  "persistenceExpectations": "unspecified (migrated)",
+  "telemetryExpectations": "unspecified (migrated)",
+  "healthExpectations": "unspecified (migrated)",
+  "implementationSteps": [],
+  "acceptanceCases": [
+    {
+      "id": "ac.sample.auto",
+      "description": "Start with no configured project.",
+      "expectedOutcome": "The complete sample opens automatically at baseline 2.4.0 with persistent Sample Data badge and Connect real project action."
+    },
+    {
+      "id": "ac.sample.reset",
+      "description": "Modify a sample finding and preference, then reset.",
+      "expectedOutcome": "Seeded state and counts are restored without affecting any real configuration."
+    }
+  ],
+  "acceptanceCommands": [],
+  "unresolvedItems": []
+}

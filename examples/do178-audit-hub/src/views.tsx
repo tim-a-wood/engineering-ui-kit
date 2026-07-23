@@ -1,11 +1,11 @@
 // Lifecycle and utility views plus the root App routing.
 import { useState } from 'react'
 import { demoStateOf, fmtDate, fmtDateTime, metaNum, metaStr, shortHash, useRoute } from './core.ts'
-import type { ChangeRecord, EvidenceRecord, Finding, ReviewRecord } from './core.ts'
+import type { ChangeRecord, EvidenceRecord, Finding, Phase, ReviewRecord } from './core.ts'
 import { PEOPLE, PHASES, PHASE_LABEL, TOTAL_ITERATIONS, TYPE_LABEL, allEvidence, auditRecords, baselines, canonicalChain, certDocRecords, changeRecords, compareBaselines, coverageRows, derivedRequirements, deviationRows, dictionaryRecords, elementRecords, environmentRecords, functionRecords, getEvidence, hlrRequirements, llrRequirements, modelRecords, objectiveRecords, openActions, phaseStats, planningRecords, removedIn240, reproChecks, resultRecords, resultSetRecords, reviewRecords, seedPackage, sourceFileRecords, sysRequirements, testRecords } from './fixtures.ts'
-import { Alert, BarChart, ChartPanel, Chip, Drawer, EvidenceTable, Field, LifecyclePage, Meter, PackageBuilder, ReviewChip, SearchOverlay, Shell, SkeletonRows, StatusChip, Tabs, Watermark, findingStatusTone, severityTone, useStore } from './components.tsx'
+import { Alert, BarChart, ChartPanel, Chip, Drawer, EmptyState, EvidenceTable, Field, LifecyclePage, Meter, PackageBuilder, ReviewChip, SearchOverlay, Shell, SkeletonRows, StatusChip, Tabs, Watermark, findingStatusTone, severityTone, useStore } from './components.tsx'
 import type { Column, PhaseCtx, QuickFilter, Tone } from './components.tsx'
-import { FINDING_FLOW, FINDING_STATUS_LABEL, REVERIFICATION_EVIDENCE, checkTransition } from './store.ts'
+import { FINDING_FLOW, FINDING_STATUS_LABEL, REVERIFICATION_EVIDENCE } from './store.ts'
 
 // ===== from views/columns.tsx =====
 // Reusable evidence table column definitions shared across lifecycle views.
@@ -69,6 +69,14 @@ export const modifiedCol: Column = {
   sortValue: (r) => r.modified,
 }
 
+export const sourceKindCol: Column = {
+  key: 'source-kind',
+  label: 'Source',
+  idCell: true,
+  render: (record) => record.sourceKind,
+  sortValue: (record) => record.sourceKind,
+}
+
 export const findingsCol: Column = {
   key: 'findings',
   label: 'Findings',
@@ -120,7 +128,7 @@ export const traceCol: Column = {
 
 export const changeCol: Column = {
   key: 'change',
-  label: 'Δ 2.3.0',
+  label: 'Δ baseline',
   render: (r) =>
     r.changeMark === 'unchanged' ? (
       <span style={{ color: 'var(--text-muted)' }}>—</span>
@@ -296,12 +304,13 @@ export function ChangeTable({
 
 export function OverviewView() {
   const { path, navigate } = useRoute()
-  const { mergedFindings, openIds, overlay } = useStore()
+  const { mergedFindings, openIds, overlay, runtime } = useStore()
   const sub = path[1] ?? 'readiness'
   const compare = compareBaselines()
   const open = mergedFindings.filter((f) => openIds.has(f.id))
   const reviewed = allEvidence.filter((r) => r.reviewState === 'approved').length
   const traced = allEvidence.filter((r) => r.upstream.length > 0 || r.downstream.length > 0).length
+  const evidenceDenominator = Math.max(allEvidence.length, 1)
 
   return (
     <div>
@@ -309,8 +318,8 @@ export function OverviewView() {
         <div>
           <h1 className="page-title">Overview</h1>
           <p className="page-subtitle">
-            AeroNav Flight Guidance Computer — Lateral Guidance · Software Level B · DO-331 applicable · baseline{' '}
-            {overlay.prefs.baseline}
+            {runtime.workspace.name} · Software {runtime.workspace.softwareLevel} ·{' '}
+            {runtime.workspace.do331Applicable ? 'DO-331 applicable' : 'DO-331 not configured'} · baseline {runtime.baselineId}
           </p>
         </div>
       </header>
@@ -326,10 +335,11 @@ export function OverviewView() {
           Open findings <b>{open.length}</b>
         </span>
         <span className="stat">
-          Changed vs 2.3.0 <b>{compare.changed.length}</b>
+          {runtime.comparisonBaselineId ? `Changed vs ${runtime.comparisonBaselineId}` : 'Changed records'}{' '}
+          <b>{compare.changed.length}</b>
         </span>
         <span className="stat">
-          Trace coverage <b>{Math.round((traced / allEvidence.length) * 100)}%</b>
+          Trace coverage <b>{Math.round((traced / evidenceDenominator) * 100)}%</b>
         </span>
       </div>
 
@@ -366,7 +376,17 @@ export function OverviewView() {
           </div>
           <div className="panel">
             <h3 className="panel-title">Continue audit</h3>
-            <p className="panel-sub">The canonical bank-limit trace chain and the fastest paths back into open work.</p>
+            <p className="panel-sub">
+              {runtime.workspace.kind === 'sample'
+                ? 'The canonical bank-limit trace chain and the fastest paths back into open work.'
+                : 'The longest normalized evidence chain in the current project snapshot.'}
+            </p>
+            {canonicalChain.length === 0 ? (
+              <Alert tone="warning" title="No connected trace chain">
+                Evidence was indexed, but no multi-record relationship chain was found. Review adapter diagnostics and
+                source trace identifiers.
+              </Alert>
+            ) : null}
             <ol style={{ margin: 0, paddingLeft: 'var(--space-5)', fontSize: 'var(--text-sm)' }}>
               {canonicalChain.map((id) => (
                 <li key={id} style={{ padding: '2px 0' }}>
@@ -385,17 +405,27 @@ export function OverviewView() {
               ))}
             </ol>
             <h3 className="section-header">Coverage</h3>
-            <Meter label="Evidence reviewed" value={reviewed} max={allEvidence.length} valueText={`${Math.round((reviewed / allEvidence.length) * 100)}%`} />
-            <Meter label="Evidence traced" value={traced} max={allEvidence.length} valueText={`${Math.round((traced / allEvidence.length) * 100)}%`} />
-            <Meter label="Findings closed" value={mergedFindings.length - open.length} max={mergedFindings.length} valueText={`${mergedFindings.length - open.length}/${mergedFindings.length}`} />
-            <h3 className="section-header">Changes 2.3.0 → 2.4.0</h3>
-            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', margin: 0 }}>
-              {compare.changed.length} changed · {compare.added.length} added · {compare.removed.length} removed ·{' '}
-              {compare.impacted.length} impacted.{' '}
-              <button type="button" className="btn btn-quiet btn-sm" style={{ padding: 0, height: 'auto' }} onClick={() => navigate(['requirements'], {})}>
-                Review impacts in Requirements →
-              </button>
-            </p>
+            <Meter label="Evidence reviewed" value={reviewed} max={evidenceDenominator} valueText={`${Math.round((reviewed / evidenceDenominator) * 100)}%`} />
+            <Meter label="Evidence traced" value={traced} max={evidenceDenominator} valueText={`${Math.round((traced / evidenceDenominator) * 100)}%`} />
+            <Meter label="Findings closed" value={mergedFindings.length - open.length} max={Math.max(mergedFindings.length, 1)} valueText={`${mergedFindings.length - open.length}/${mergedFindings.length}`} />
+            <h3 className="section-header">
+              {runtime.comparisonBaselineId
+                ? `Changes ${runtime.comparisonBaselineId} → ${runtime.baselineId}`
+                : 'Baseline comparison'}
+            </h3>
+            {runtime.comparisonBaselineId ? (
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', margin: 0 }}>
+                {compare.changed.length} changed · {compare.added.length} added · {compare.removed.length} removed ·{' '}
+                {compare.impacted.length} impacted.{' '}
+                <button type="button" className="btn btn-quiet btn-sm" style={{ padding: 0, height: 'auto' }} onClick={() => navigate(['requirements'], {})}>
+                  Review impacts in Requirements →
+                </button>
+              </p>
+            ) : (
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', margin: 0 }}>
+                Configure a comparison baseline to calculate added, removed, changed, stale, and impacted evidence.
+              </p>
+            )}
           </div>
         </div>
       ) : null}
@@ -443,7 +473,7 @@ export function OverviewView() {
         <div className="panel-grid cols-2">
           <ChartPanel
             title="Finding distribution"
-            scope="12 seeded findings"
+            scope={`${mergedFindings.length} finding${mergedFindings.length === 1 ? '' : 's'}`}
             unit="findings"
             legend={[
               { label: 'High', tone: 'danger' },
@@ -508,6 +538,156 @@ export function OverviewView() {
         </div>
       ) : null}
     </div>
+  )
+}
+
+/**
+ * Reusable connected-project explorer. The rich AeroNav fixture keeps its
+ * specialized domain subviews, while real projects receive consistent,
+ * data-driven subviews that never leak sample-specific names or assumptions.
+ */
+export function ConnectedLifecycleView({ phase }: { phase: Phase }) {
+  const { mergedFindings, runtime } = useStore()
+  const rows = allEvidence.filter((record) => record.phase === phase)
+  const phaseReviews = reviewRecords.filter((review) => review.phase === phase)
+  const phaseFindings = mergedFindings.filter((finding) => finding.phase === phase)
+  const diagnostics = runtime.diagnostics.filter((item) => {
+    if (!item.sourcePath) return true
+    return rows.some((record) => record.sourcePath === item.sourcePath)
+  })
+  const intro = `${rows.length} normalized evidence record${rows.length === 1 ? '' : 's'} for ${PHASE_LABEL[phase].toLowerCase()} in ${runtime.workspace.name}.`
+
+  return (
+    <LifecyclePage
+      phase={phase}
+      intro={intro}
+      subviews={[
+        {
+          key: 'evidence',
+          label: 'Evidence',
+          render: (ctx) => (
+            <EvidenceTable
+              label={`${PHASE_LABEL[phase]} evidence`}
+              rows={rows}
+              columns={[idCol, titleCol(), typeCol, sourceKindCol, revisionCol, statusCol, reviewCol, traceCol, findingsCol]}
+              quickFilters={[
+                { key: 'approved', label: 'Approved / passed', predicate: (record) => ['approved', 'passed', 'satisfied'].includes(record.status) },
+                { key: 'needs-attention', label: 'Needs attention', predicate: (record) => !['approved', 'passed', 'satisfied'].includes(record.status) },
+                { key: 'untraced', label: 'Untraced', predicate: (record) => record.upstream.length + record.downstream.length === 0 },
+              ]}
+              activeQuickFilter={ctx.quickFilter}
+              onQuickFilter={ctx.setQuickFilter}
+              onOpen={ctx.openRecord}
+              onReview={ctx.review}
+              demo={ctx.demo}
+              selectedId={ctx.selectedId}
+            />
+          ),
+        },
+        {
+          key: 'traceability',
+          label: 'Traceability',
+          render: (ctx) => rows.length === 0 ? (
+            <EmptyState
+              title="No phase evidence indexed"
+              hint="Connect or refresh a source that produces evidence for this lifecycle phase."
+            />
+          ) : (
+            <>
+              <div className="stat-row" role="group" aria-label={`${PHASE_LABEL[phase]} traceability summary`}>
+                <span className="stat">Connected <b>{rows.filter((record) => record.upstream.length + record.downstream.length > 0).length}</b></span>
+                <span className="stat">Roots <b>{rows.filter((record) => record.upstream.length === 0).length}</b></span>
+                <span className="stat">Leaves <b>{rows.filter((record) => record.downstream.length === 0).length}</b></span>
+                <span className="stat">Isolated <b>{rows.filter((record) => record.upstream.length + record.downstream.length === 0).length}</b></span>
+              </div>
+              <EvidenceTable
+                label={`${PHASE_LABEL[phase]} trace relationships`}
+                rows={rows}
+                columns={[idCol, titleCol(), sourceKindCol, traceCol, statusCol, findingsCol]}
+                onOpen={ctx.openRecord}
+                onReview={ctx.review}
+                selectedId={ctx.selectedId}
+              />
+            </>
+          ),
+        },
+        {
+          key: 'reviews',
+          label: 'Reviews',
+          render: (ctx) => phaseReviews.length === 0 ? (
+            <EmptyState
+              title="No review records for this phase"
+              hint="Import review evidence or record a review from an evidence row."
+            />
+          ) : (
+            <ReviewTable
+              label={`${PHASE_LABEL[phase]} reviews`}
+              reviews={phaseReviews}
+              onOpenSubject={(id) => ctx.openRecord(id)}
+            />
+          ),
+        },
+        {
+          key: 'findings',
+          label: 'Findings',
+          render: (ctx) => phaseFindings.length === 0 ? (
+            <EmptyState
+              title="No findings in this phase"
+              hint="The current snapshot and Audit Hub overlay contain no findings for this lifecycle phase."
+            />
+          ) : (
+            <div className="panel">
+              {phaseFindings.map((finding) => (
+                <button
+                  key={finding.id}
+                  type="button"
+                  className="finding-card"
+                  onClick={() => ctx.openFinding(finding.id)}
+                >
+                  <span className="mono">{finding.id}</span>
+                  <span className="fc-title">{finding.title}</span>
+                  <Chip tone={findingStatusTone(finding.status)}>{FINDING_STATUS_LABEL[finding.status]}</Chip>
+                </button>
+              ))}
+            </div>
+          ),
+        },
+        {
+          key: 'sources',
+          label: 'Sources & Diagnostics',
+          render: () => (
+            <>
+              <div className="panel" style={{ marginBottom: 'var(--space-3)' }}>
+                <h3 className="panel-title">Normalized source coverage</h3>
+                {[...new Set(rows.map((record) => record.sourceKind))].sort().map((kind) => (
+                  <Meter
+                    key={kind}
+                    label={kind}
+                    value={rows.filter((record) => record.sourceKind === kind).length}
+                    max={Math.max(rows.length, 1)}
+                    valueText={`${rows.filter((record) => record.sourceKind === kind).length} records`}
+                  />
+                ))}
+                {rows.length === 0 ? <p className="panel-sub">No source adapter produced evidence for this phase.</p> : null}
+              </div>
+              {diagnostics.length === 0 ? (
+                <Alert tone="success" title="No applicable adapter diagnostics">
+                  The current published snapshot has no source diagnostics associated with this phase.
+                </Alert>
+              ) : diagnostics.map((item) => (
+                <Alert
+                  key={item.id}
+                  tone={item.severity === 'fatal' || item.severity === 'error' ? 'danger' : item.severity === 'warning' ? 'warning' : 'info'}
+                  title={`${item.adapterId} · ${item.code}`}
+                >
+                  {item.message}{item.sourcePath ? ` Source: ${item.sourcePath}.` : ''}
+                </Alert>
+              ))}
+            </>
+          ),
+        },
+      ]}
+    />
   )
 }
 
@@ -1930,48 +2110,56 @@ export function CertificationView() {
 // evidence + independence; history is immutable and append-only.
 
 function FindingDetail({ finding, onClose, onOpenEvidence }: { finding: Finding; onClose: () => void; onOpenEvidence: (id: string) => void }) {
-  const { overlay, dispatch, announce, now, mergedFindings } = useStore()
+  const { announce, mergedFindings, transitionRuntimeFinding } = useStore()
   const merged = mergedFindings.find((f) => f.id === finding.id) ?? finding
-  const overlayEntry = overlay.findingOverlays[finding.id]
-  const attachedEvidence = overlayEntry?.reverificationEvidence ?? []
+  const [attachedEvidence, setAttachedEvidence] = useState<string[]>([])
   const [note, setNote] = useState('')
   const [verifier, setVerifier] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const flowIdx = FINDING_FLOW.indexOf(merged.status)
   const nextStatus = FINDING_FLOW[flowIdx + 1]
 
-  const doTransition = () => {
+  const doTransition = async () => {
     if (nextStatus === undefined) return
-    const check = checkTransition(merged, nextStatus, overlay, { independentCloser: verifier })
-    if (!check.ok) {
-      setError(check.reason ?? 'Transition rejected.')
-      return
+    if (nextStatus === 'reverified') {
+      if (attachedEvidence.length === 0) {
+        setError('Reverification requires attached reverification evidence.')
+        return
+      }
+      if (verifier.trim() === '') {
+        setError('Reverification requires an independent verifier.')
+        return
+      }
+      if (verifier.trim() === merged.owner) {
+        setError('Verifier must be independent of the finding owner.')
+        return
+      }
     }
     setError(null)
-    dispatch({
-      type: 'finding/transition',
-      findingId: merged.id,
-      to: nextStatus,
-      actor: nextStatus === 'reverified' ? verifier.trim() : 'You (audit hub user)',
-      at: now(),
-      note: note.trim() === '' ? undefined : note.trim(),
-      independentCloser: nextStatus === 'reverified' ? verifier.trim() : undefined,
-      seedFinding: finding,
-    })
-    setNote('')
-    announce(`${merged.id} moved to ${FINDING_STATUS_LABEL[nextStatus]}.`)
+    setSubmitting(true)
+    try {
+      await transitionRuntimeFinding(merged.id, nextStatus, {
+        actor: nextStatus === 'reverified' ? verifier.trim() : 'Audit Hub user',
+        ...(note.trim() ? { note: note.trim() } : {}),
+        ...(nextStatus === 'reverified' ? {
+          reverificationEvidence: attachedEvidence,
+          independentVerifier: verifier.trim(),
+        } : {}),
+      })
+      setNote('')
+      announce(`${merged.id} moved to ${FINDING_STATUS_LABEL[nextStatus]} and was persisted.`)
+    } catch (transitionError) {
+      setError(transitionError instanceof Error ? transitionError.message : String(transitionError))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const attach = () => {
-    dispatch({
-      type: 'finding/attach-evidence',
-      findingId: merged.id,
-      evidence: REVERIFICATION_EVIDENCE,
-      actor: 'You (audit hub user)',
-      at: now(),
-    })
-    announce(`Deterministic reverification evidence attached to ${merged.id}.`)
+    setAttachedEvidence(REVERIFICATION_EVIDENCE)
+    announce(`Reverification evidence staged for ${merged.id}.`)
   }
 
   return (
@@ -2072,8 +2260,8 @@ function FindingDetail({ finding, onClose, onOpenEvidence }: { finding: Finding;
             <textarea id="fnd-note" className="textarea" value={note} onChange={(e) => setNote(e.target.value)} />
           </Field>
           {nextStatus !== undefined ? (
-            <button type="button" className="btn btn-primary" onClick={doTransition}>
-              Move to {FINDING_STATUS_LABEL[nextStatus]}
+            <button type="button" className="btn btn-primary" onClick={() => void doTransition()} disabled={submitting}>
+              {submitting ? 'Persisting transition…' : `Move to ${FINDING_STATUS_LABEL[nextStatus]}`}
             </button>
           ) : null}
         </>
@@ -2098,7 +2286,7 @@ function FindingDetail({ finding, onClose, onOpenEvidence }: { finding: Finding;
 
 export function FindingsView() {
   const { params, setParams, navigate } = useRoute()
-  const { mergedFindings } = useStore()
+  const { mergedFindings, runtime } = useStore()
   const demo = demoStateOf(params)
   const selectedId = params.get('select')
   const selected = mergedFindings.find((f) => f.id === selectedId)
@@ -2112,8 +2300,9 @@ export function FindingsView() {
         <div>
           <h1 className="page-title">Findings</h1>
           <p className="page-subtitle">
-            12 seeded findings across the lifecycle. Transitions are hub-local overlay state on immutable seeded
-            history.
+            {mergedFindings.length} finding{mergedFindings.length === 1 ? '' : 's'} across the lifecycle. Workflow
+            transitions are persisted as an append-only Audit Hub overlay on immutable evidence snapshot{' '}
+            <code>{runtime.snapshotId}</code>.
           </p>
         </div>
       </header>
@@ -2215,19 +2404,19 @@ export function FindingsView() {
 
 export function ReviewsView() {
   const { navigate } = useRoute()
-  const { overlay } = useStore()
+  const { overlay, runtime } = useStore()
   return (
     <div>
       <header className="page-header">
         <div>
           <h1 className="page-title">Reviews</h1>
           <p className="page-subtitle">
-            {reviewRecords.length} seeded review records plus {overlay.recordedReviews.length} hub-local recorded
-            review(s).
+            {reviewRecords.length} imported and Audit Hub review record{reviewRecords.length === 1 ? '' : 's'} for{' '}
+            {runtime.workspace.name}.
           </p>
         </div>
       </header>
-      {overlay.recordedReviews.length > 0 ? (
+      {runtime.workspace.kind === 'sample' && overlay.recordedReviews.length > 0 ? (
         <>
           <h3 className="section-header">Recorded in this hub (overlay)</h3>
           <div className="table-shell standalone" style={{ marginBottom: 'var(--space-4)' }}>
@@ -2266,7 +2455,7 @@ export function ReviewsView() {
           </div>
         </>
       ) : null}
-      <h3 className="section-header">Seeded review register</h3>
+      <h3 className="section-header">{runtime.workspace.kind === 'sample' ? 'Sample review register' : 'Review register'}</h3>
       <ReviewTable
         label="All reviews"
         reviews={reviewRecords}
@@ -2280,7 +2469,7 @@ export function ReviewsView() {
 }
 
 export function PackagesView() {
-  const { overlay } = useStore()
+  const { overlay, runtime } = useStore()
   const [builderOpen, setBuilderOpen] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
   return (
@@ -2296,25 +2485,77 @@ export function PackagesView() {
           </button>
         </div>
       </header>
-      <Watermark />
-      <div className="panel" style={{ marginBottom: 'var(--space-4)' }}>
-        <h3 className="panel-title">
-          {seedPackage.id} — {seedPackage.name}
-        </h3>
-        <p className="panel-sub">
-          Seeded sample package · {seedPackage.createdAt} · {seedPackage.evidenceCount} evidence items ·{' '}
-          {seedPackage.findingCount} findings · {seedPackage.reviewCount} reviews · scope{' '}
-          {seedPackage.scopePhases.join(', ')}.
-        </p>
-        <Chip tone="success">complete</Chip>
-      </div>
-      {overlay.packages.length === 0 ? (
+      {runtime.workspace.kind === 'sample' ? (
+        <>
+          <Watermark />
+          <div className="panel" style={{ marginBottom: 'var(--space-4)' }}>
+            <h3 className="panel-title">
+              {seedPackage.id} — {seedPackage.name}
+            </h3>
+            <p className="panel-sub">
+              Seeded sample package · {seedPackage.createdAt} · {seedPackage.evidenceCount} evidence items ·{' '}
+              {seedPackage.findingCount} findings · {seedPackage.reviewCount} reviews · scope{' '}
+              {seedPackage.scopePhases.join(', ')}.
+            </p>
+            <Chip tone="success">complete</Chip>
+          </div>
+        </>
+      ) : null}
+      {runtime.packages.map((pkg) => (
+        <div key={pkg.packageId} className="panel" style={{ marginBottom: 'var(--space-3)' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
+            <h3 className="panel-title" style={{ margin: 0 }}>
+              {pkg.packageId} — {pkg.manifest.name}
+            </h3>
+            <Chip tone="success">complete</Chip>
+            <span style={{ marginLeft: 'auto', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+              {fmtDateTime(pkg.createdAt)}
+            </span>
+          </div>
+          <p className="panel-sub" style={{ margin: 'var(--space-1) 0' }}>
+            {pkg.manifest.counts.evidence} evidence · {pkg.manifest.counts.findings} findings ·{' '}
+            {pkg.manifest.counts.reviews} reviews · baseline {pkg.manifest.baselineId}
+          </p>
+          <p className="mono" style={{ fontSize: 12, overflowWrap: 'anywhere' }}>
+            {pkg.absolutePath}<br />SHA-256 {pkg.contentHash}
+          </p>
+          <a
+            className="btn btn-primary btn-sm"
+            href={`/api/packages/download/${encodeURIComponent(pkg.packageId)}.zip`}
+            download
+          >
+            Download ZIP
+          </a>{' '}
+          <button type="button" className="btn btn-sm" onClick={() => setExpanded(expanded === pkg.packageId ? null : pkg.packageId)} aria-expanded={expanded === pkg.packageId}>
+            {expanded === pkg.packageId ? 'Hide manifest' : `Show manifest (${pkg.manifest.entries.length} entries)`}
+          </button>
+          {expanded === pkg.packageId ? (
+            <div className="table-scroll" style={{ marginTop: 'var(--space-2)' }}>
+              <table className="data" aria-label={`Manifest for ${pkg.packageId}`}>
+                <thead><tr><th>ID</th><th>Revision</th><th>SHA-256</th><th>Source path</th></tr></thead>
+                <tbody>
+                  {pkg.manifest.entries.slice(0, 20).map((entry) => (
+                    <tr key={entry.id}>
+                      <td className="id-cell">{entry.id}</td>
+                      <td className="id-cell">{entry.revision}</td>
+                      <td className="id-cell" title={entry.hash}>{entry.hash.slice(0, 16)}…</td>
+                      <td className="id-cell" title={entry.sourcePath}>{entry.sourcePath}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </div>
+      ))}
+      {runtime.packages.length === 0 && overlay.packages.length === 0 && runtime.workspace.kind === 'real' ? (
         <div className="panel">
           <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>
-            No hub-local packages yet — build one to see progress, manifest, hashes, and the synthetic watermark.
+            No packages have been built for this project snapshot yet.
           </p>
         </div>
-      ) : (
+      ) : null}
+      {overlay.packages.length > 0 ? (
         overlay.packages.map((p) => (
           <div key={p.id} className="panel" style={{ marginBottom: 'var(--space-3)' }}>
             <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -2366,28 +2607,37 @@ export function PackagesView() {
             ) : null}
           </div>
         ))
-      )}
+      ) : null}
       {builderOpen ? <PackageBuilder onClose={() => setBuilderOpen(false)} /> : null}
     </div>
   )
 }
 
 export function ActivityView() {
-  const { overlay } = useStore()
+  const { overlay, runtime } = useStore()
+  const runtimeActivity = runtime.activity.map((entry, index) => ({
+    id: `runtime-${index}-${String(entry.at ?? '')}`,
+    at: String(entry.at ?? ''),
+    kind: String(entry.kind ?? 'activity'),
+    message: String(entry.message ?? ''),
+  }))
+  const activity = runtimeActivity.length > 0
+    ? runtimeActivity
+    : overlay.activity
   return (
     <div>
       <header className="page-header">
         <div>
           <h1 className="page-title">Activity</h1>
           <p className="page-subtitle">
-            Global hub-local timeline: sample resets, finding transitions, reviews, packages, baseline changes, and
-            refreshes.
+            Audit Hub timeline for finding transitions, reviews, packages, baseline changes, refreshes, and sample
+            resets.
           </p>
         </div>
       </header>
       <div className="panel">
         <ul className="timeline">
-          {overlay.activity.map((e) => (
+          {activity.map((e) => (
             <li key={e.id}>
               <span className="t-at">{fmtDateTime(e.at)}</span>
               <span>
@@ -2408,6 +2658,23 @@ export function ActivityView() {
 // project opens the AeroNav sample on baseline 2.4.0 (no onboarding dead end).
 
 function CurrentView({ area }: { area: string }) {
+  const { runtime } = useStore()
+  if (runtime.status === 'loading') {
+    return (
+      <div>
+        <header className="page-header">
+          <div>
+            <h1 className="page-title">Loading workspace</h1>
+            <p className="page-subtitle">Selecting the last valid project snapshot or the bundled sample fallback.</p>
+          </div>
+        </header>
+        <SkeletonRows rows={8} />
+      </div>
+    )
+  }
+  if (runtime.workspace.kind === 'real' && PHASES.includes(area as Phase)) {
+    return <ConnectedLifecycleView phase={area as Phase} />
+  }
   switch (area) {
     case 'planning':
       return <PlanningView />

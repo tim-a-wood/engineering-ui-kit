@@ -1,0 +1,130 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "architectureId": "arch.do178c-audit-hub",
+  "architectureRevision": "4",
+  "architectureHash": "b74ed12d692384ee074aa4a6a9b09e233dc9babf264a91bf6d4b9e314368f86d",
+  "deployables": [
+    {
+      "schemaVersion": "1.0",
+      "deployableId": "browser",
+      "name": "Browser",
+      "kind": "browser",
+      "runtimeLanguage": "typescript",
+      "runtimeVersionRange": ">=22",
+      "moduleIds": [
+        "mod.audit-experience"
+      ],
+      "inboundBindingIds": [],
+      "compositionRootPath": "composition/browser.ts",
+      "commands": {},
+      "configurationRefs": [],
+      "secretReferenceIds": [],
+      "proposedLocations": [
+        {
+          "path": "composition/browser.ts",
+          "evidence": "evidence-derived source root \"composition\"; manifest dependency \"react\"",
+          "approvalStatus": "proposed"
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "deployableId": "http-api",
+      "name": "Http Api",
+      "kind": "http-api",
+      "runtimeLanguage": "typescript",
+      "runtimeVersionRange": ">=22",
+      "moduleIds": [
+        "mod.assurance-workflow",
+        "mod.evidence-graph",
+        "mod.evidence-store",
+        "mod.external-adapters",
+        "mod.ingestion-publication",
+        "mod.lifecycle-explorer",
+        "mod.sample-workspace",
+        "mod.workspace-snapshots"
+      ],
+      "inboundBindingIds": [],
+      "compositionRootPath": "composition/http-api.ts",
+      "commands": {},
+      "configurationRefs": [],
+      "secretReferenceIds": [],
+      "proposedLocations": [
+        {
+          "path": "composition/http-api.ts",
+          "evidence": "evidence-derived source root \"composition\"; single detected runtime language \"typescript\" for the browser application's local backend",
+          "approvalStatus": "proposed"
+        }
+      ]
+    }
+  ],
+  "allocations": [
+    {
+      "moduleId": "mod.assurance-workflow",
+      "deployableId": "http-api",
+      "moduleType": "domain",
+      "rationale": "non-experience module → backend host `http-api`"
+    },
+    {
+      "moduleId": "mod.audit-experience",
+      "deployableId": "browser",
+      "moduleType": "experience",
+      "rationale": "experience module → UI host `browser`"
+    },
+    {
+      "moduleId": "mod.evidence-graph",
+      "deployableId": "http-api",
+      "moduleType": "domain",
+      "rationale": "non-experience module → backend host `http-api`"
+    },
+    {
+      "moduleId": "mod.evidence-store",
+      "deployableId": "http-api",
+      "moduleType": "domain",
+      "rationale": "non-experience module → backend host `http-api`"
+    },
+    {
+      "moduleId": "mod.external-adapters",
+      "deployableId": "http-api",
+      "moduleType": "connection",
+      "rationale": "non-experience module → backend host `http-api`"
+    },
+    {
+      "moduleId": "mod.ingestion-publication",
+      "deployableId": "http-api",
+      "moduleType": "domain",
+      "rationale": "non-experience module → backend host `http-api`"
+    },
+    {
+      "moduleId": "mod.lifecycle-explorer",
+      "deployableId": "http-api",
+      "moduleType": "domain",
+      "rationale": "non-experience module → backend host `http-api`"
+    },
+    {
+      "moduleId": "mod.sample-workspace",
+      "deployableId": "http-api",
+      "moduleType": "domain",
+      "rationale": "non-experience module → backend host `http-api`"
+    },
+    {
+      "moduleId": "mod.workspace-snapshots",
+      "deployableId": "http-api",
+      "moduleType": "domain",
+      "rationale": "non-experience module → backend host `http-api`"
+    }
+  ],
+  "resolvedAnswers": [
+    {
+      "id": "ui-deployable-missing",
+      "choice": "browser"
+    }
+  ],
+  "unresolvedAmbiguities": [],
+  "readiness": {
+    "status": "ready",
+    "issues": []
+  },
+  "contentHash": "f025d3b115ee688ed8d1fb95e0f8beea0298752485912c7412fdc9347929d0cc"
+}

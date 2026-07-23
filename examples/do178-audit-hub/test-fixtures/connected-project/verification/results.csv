@@ -1,0 +1,3 @@
+ID,Title,Type,Result,Revision,Upstream,Review State,Iterations
+TC-DEMO-BOUNDARY-001,Bank-angle boundary verification,test-case,passed,4,src/lateral_guidance.c::limit_bank_command,approved,6
+VR-DEMO-001,Bank-angle verification result,result,passed,4,TC-DEMO-BOUNDARY-001,approved,6

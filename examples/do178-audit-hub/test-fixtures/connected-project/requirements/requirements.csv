@@ -1,0 +1,4 @@
+ID,Title,Type,Status,Revision,Upstream,Downstream,Review State,Owner
+SYS-DEMO-001,Limit the commanded bank angle,sys-requirement,approved,3,,SWR-HLR-DEMO-001,approved,Systems
+SWR-HLR-DEMO-001,Provide lateral bank-angle limiting,hlr,approved,5,SYS-DEMO-001,SWR-LLR-DEMO-001,approved,Software
+SWR-LLR-DEMO-001,Saturate commands at the configured maximum,llr,approved,7,SWR-HLR-DEMO-001,src/lateral_guidance.c::limit_bank_command,approved,Software

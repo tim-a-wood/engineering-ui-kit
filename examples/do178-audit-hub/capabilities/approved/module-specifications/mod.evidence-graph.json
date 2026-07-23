@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "moduleId": "mod.evidence-graph",
+  "moduleVersion": "1.0.0",
+  "moduleType": "domain",
+  "runtimeLanguage": "typescript",
+  "deployableId": "http-api",
+  "ownedPaths": [
+    "src/modules/evidence-graph/"
+  ],
+  "editablePaths": [
+    "src/modules/evidence-graph/"
+  ],
+  "responsibility": "Own normalized lifecycle evidence metadata, stable identities, typed relationships, complete requirement-to-result chains, provenance, content hashes, dossiers, cross-phase search, staleness evaluation, change impact, and trace traversal.",
+  "nonResponsibilities": [
+    "source-file-parsing",
+    "workspace-selection",
+    "finding-transitions",
+    "UI-rendering",
+    "artifact-mutation"
+  ],
+  "providedOperations": [
+    {
+      "operationId": "op.query-dossier",
+      "contractVersion": "1.0.0"
+    },
+    {
+      "operationId": "op-traverse-evidence-chain",
+      "contractVersion": "1.0.0"
+    },
+    {
+      "operationId": "op-search-evidence",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [
+    {
+      "operationId": "op.persist-evidence-state",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Load and save canonical evidence snapshots."
+    }
+  ],
+  "providedPorts": [
+    "op.query-dossier",
+    "op-traverse-evidence-chain",
+    "op-search-evidence"
+  ],
+  "requiredPorts": [
+    "op.persist-evidence-state"
+  ],
+  "canonicalSchemaRefs": [
+    "op.query-dossier.input",
+    "op.query-dossier.output",
+    "op-traverse-evidence-chain.input",
+    "op-traverse-evidence-chain.output",
+    "op-search-evidence.input",
+    "op-search-evidence.output"
+  ],
+  "generatedTypeTargets": [],
+  "rules": [
+    {
+      "id": "rule.graph.readonly",
+      "text": "Canonical source evidence is immutable inside the hub."
+    },
+    {
+      "id": "rule.graph.identity",
+      "text": "Stable evidence identities and source hashes survive repeatable refreshes."
+    },
+    {
+      "id": "rule.graph.edges",
+      "text": "Every relationship endpoint resolves inside the same published snapshot."
+    }
+  ],
+  "invariants": [],
+  "examples": [],
+  "edgeCases": [],
+  "failureSemantics": [],
+  "performanceConstraints": [],
+  "cancellationExpectations": "unspecified (migrated)",
+  "timeoutExpectations": "unspecified (migrated)",
+  "concurrencyExpectations": "unspecified (migrated)",
+  "lifecycleRegistration": "request-job",
+  "configurationRefs": [],
+  "secretReferenceIds": [],
+  "persistenceExpectations": "unspecified (migrated)",
+  "telemetryExpectations": "unspecified (migrated)",
+  "healthExpectations": "unspecified (migrated)",
+  "implementationSteps": [],
+  "acceptanceCases": [
+    {
+      "id": "ac.graph.chain",
+      "description": "Traverse the canonical lateral-guidance chain in sample baseline 2.4.0.",
+      "expectedOutcome": "All eight evidence nodes resolve in order with provenance and no fabricated binary content."
+    },
+    {
+      "id": "ac.graph.gaps",
+      "description": "Search for broken, stale, failed, and unreviewed evidence.",
+      "expectedOutcome": "Seeded gaps and affected downstream chains are returned deterministically."
+    }
+  ],
+  "acceptanceCommands": [],
+  "unresolvedItems": []
+}

@@ -89,16 +89,17 @@ a:hover {
 
 .shell-body {
   display: grid;
-  grid-template-columns: 232px 1fr;
+  grid-template-columns: 232px minmax(0, 1fr);
   min-height: 0;
 }
 
 .shell-body.nav-collapsed {
-  grid-template-columns: 60px 1fr;
+  grid-template-columns: 60px minmax(0, 1fr);
 }
 
 .app-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: var(--space-3);
   row-gap: var(--space-1);
@@ -106,17 +107,19 @@ a:hover {
   min-height: 52px;
   background: var(--surface-panel);
   border-bottom: 1px solid var(--border-subtle);
-  flex-wrap: wrap;
 }
 
 .app-header .product {
-  display: flex;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 380px);
   align-items: baseline;
   gap: var(--space-2);
+  justify-content: start;
   min-width: 0;
 }
 
 .product-name {
+  display: inline-block;
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
   white-space: nowrap;
@@ -128,16 +131,16 @@ a:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 380px;
+  min-width: 0;
 }
 
 .header-controls {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-left: auto;
+  margin-left: 0;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
   min-width: 0;
 }
 
@@ -611,7 +614,7 @@ input[type='number']::-webkit-inner-spin-button {
   }
 
   .shell-body {
-    grid-template-columns: 60px 1fr;
+    grid-template-columns: 60px minmax(0, 1fr);
   }
 
   .shell-body .nav-label,
@@ -655,6 +658,22 @@ input[type='number']::-webkit-inner-spin-button {
 
 .table-scroll {
   overflow-x: auto;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--border-strong) var(--surface-inset);
+}
+
+.table-scroll::-webkit-scrollbar {
+  height: 10px;
+}
+
+.table-scroll::-webkit-scrollbar-track {
+  background: var(--surface-inset);
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 2px solid var(--surface-inset);
+  border-radius: 999px;
 }
 
 table.data {
@@ -1315,7 +1334,10 @@ table.data tr.row[aria-selected='true'] td {
   margin-top: var(--space-4);
 }
 
-@media (max-width: 1100px) {
+/* Keep the evidence table primary at common laptop widths. A fixed 300 px
+   findings rail otherwise forces important review/trace/action columns behind
+   horizontal scrolling that is difficult to discover on macOS. */
+@media (max-width: 1800px) {
   .phase-grid {
     grid-template-columns: minmax(0, 1fr);
   }
