@@ -24,16 +24,25 @@ import type {
   Settings,
   VerificationResult,
   CapabilityIntegrationState,
+  CapabilityRunScope,
   GenerationApplyRecord,
   GenerationPlan,
   ConnectionVerificationRecord,
 } from '@engineering-ui-kit/core'
 import {
   buildNeedsAttention,
+  buildRunCompletionRecord,
   calculateFreshness,
+  compileFrontendBrief,
+  deriveProjectWorkOverview,
+  analyzePreviewPreflight,
   deltaQueueState,
   assertTargetExportable,
   evaluateBindingApprovalGate,
+  evaluateModuleGate,
+  implementationWaveDeliverable,
+  planImplementationWaves,
+  proposeArchitectureModuleBatch,
   proposeFoundation,
   runModuleVerification,
 } from '@engineering-ui-kit/core/browser'
@@ -63,6 +72,7 @@ type CapProjectState = {
   generationPlans: Map<string, GenerationPlan>
   generationApplies: Map<string, GenerationApplyRecord>
   connectionVerifications: Map<string, ConnectionVerificationRecord>
+  capabilityRuns: Map<string, CapabilityRunScope>
 }
 
 /* 4x3 placeholder PNGs (blue-ish before, teal-ish after) for evidence mocks. */
@@ -90,6 +100,8 @@ export function installMockBridge(): EuikBridge {
   const now = () => new Date().toISOString()
   const projects = new Map<string, Project>()
   const runs = new Map<string, HandoffRun>()
+  const verificationByRun = new Map<string, VerificationResult[]>()
+  const completionByRun = new Map<string, import('@engineering-ui-kit/core').RunCompletionRecord>()
   let lastPacketFields: TaskPacketFields | null = null
   const mockFeedback: { at: string; text: string }[] = []
 
@@ -114,6 +126,7 @@ export function installMockBridge(): EuikBridge {
         generationPlans: new Map(),
         generationApplies: new Map(),
         connectionVerifications: new Map(),
+        capabilityRuns: new Map(),
       }
       capByProject.set(projectId, state)
     }
@@ -248,6 +261,40 @@ export function installMockBridge(): EuikBridge {
       projects.set(projectId, updated)
       return updated
     },
+    async getProjectWorkOverview(projectId) {
+      const state = ensureCap(projectId)
+      const architecture = state.architectureApproved ?? state.architectureDraft
+      const modules = (architecture?.moduleIds ?? [...state.moduleApproved.keys()]).map((moduleId) => ({
+        moduleId,
+        draft: state.moduleDrafts.get(moduleId),
+        approved: state.moduleApproved.get(moduleId),
+        freshness: state.freshness.get(moduleId),
+      }))
+      return deriveProjectWorkOverview({
+        projectId,
+        application: { draft: state.applicationDraft, approved: state.applicationApproved },
+        architecture: { draft: state.architectureDraft, approved: state.architectureApproved },
+        modules,
+        capabilityRuns: [...state.capabilityRuns.values()],
+        handoffRuns: [...runs.values()].filter((run) => run.projectId === projectId),
+        requiresFrontend: projects.get(projectId)?.developmentScope !== 'capabilities',
+      })
+    },
+    async preflightProjectPreview(projectId) {
+      const project = projects.get(projectId)
+      if (!project) throw new Error(`project not found: ${projectId}`)
+      return analyzePreviewPreflight({
+        projectId,
+        repoPath: project.repoPath,
+        launchUrl: project.launchUrl,
+        launchCommand: project.launchCommand,
+        packageJsonExists: true,
+        dependenciesInstalled: true,
+        detectedPackageManager: 'npm',
+        packageScripts: { build: 'vite build', start: 'vite --host 127.0.0.1' },
+        probes: project.launchUrl ? [{ url: project.launchUrl, reachable: true, latencyMs: 1 }] : [],
+      })
+    },
     async listRuns(projectId) {
       return [...runs.values()].filter((r) => !projectId || r.projectId === projectId)
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -264,6 +311,44 @@ export function installMockBridge(): EuikBridge {
       const updated = { ...existing, ...patch, id: existing.id, updatedAt: now() }
       runs.set(runId, updated)
       return updated
+    },
+    async completeRun(input) {
+      const run = runs.get(input.runId)
+      if (!run) throw new Error(`run not found: ${input.runId}`)
+      const record = buildRunCompletionRecord({
+        run,
+        decision: input.decision,
+        verificationResults: verificationByRun.get(input.runId) ?? [],
+        userDecisionNote: input.userDecisionNote,
+      })
+      completionByRun.set(input.runId, record)
+      await this.updateRun(input.runId, {
+        currentStep: 'complete',
+        completionStatus: input.decision,
+        completedAt: record.summary.completedAt,
+        completionSummaryPath: `/mock/${input.runId}/completion-summary.json`,
+      })
+      return record
+    },
+    async getRunCompletion(runId) {
+      return completionByRun.get(runId)
+    },
+    async getProjectWorkflowMetrics(projectId) {
+      const projectRuns = [...runs.values()].filter((run) => run.projectId === projectId)
+      const completedRuns = projectRuns.filter((run) => completionByRun.has(run.id)).length
+      return {
+        schemaVersion: '1.0',
+        projectId,
+        events: projectRuns.length + completedRuns,
+        uniqueRuns: projectRuns.length,
+        completedRuns,
+        blockedActions: 0,
+        failedActions: 0,
+        handoffsExported: projectRuns.filter((run) => Boolean(run.taskPacketPath)).length,
+        medianActionDurationMs: 0,
+        p95ActionDurationMs: 0,
+        byAction: [],
+      }
     },
     async pickDirectory() { return 'C:\\work\\picked-repo' },
     async pickZipFile() { return 'C:\\work\\Downloads\\ui-overlay.zip' },
@@ -426,10 +511,18 @@ export function installMockBridge(): EuikBridge {
       }
     },
     async runVerification(runId, labels): Promise<VerificationResult[]> {
-      return labels.map((label) => ({
+      const results = labels.map((label) => ({
         runId, commandLabel: label, commandText: `npm run ${label}`, workingDirectory: '/mock',
         startedAt: now(), endedAt: now(), exitCode: 0, status: 'passed' as const, wasCancelledByUser: false,
       }))
+      verificationByRun.set(runId, results)
+      const run = runs.get(runId)
+      if (run) {
+        await this.updateRun(runId, {
+          verificationResultPaths: results.map((result) => `/mock/${runId}/verification-result-${result.commandLabel}.json`),
+        })
+      }
+      return results
     },
     async installDependencies(runId): Promise<VerificationResult> {
       return {
@@ -487,6 +580,31 @@ export function installMockBridge(): EuikBridge {
     },
     async capabilitiesExportImplementationPacket(input) {
       const runId = `cap-implementation-${Date.now()}`
+      const createdAt = now()
+      ensureCap(input.projectId).capabilityRuns.set(runId, {
+        schemaVersion: '1.0',
+        runId,
+        kind: 'implementation',
+        projectId: input.projectId,
+        targetOwnerId: input.moduleId,
+        targetKind: 'module',
+        lifecycleState: 'exported',
+        inputRevisions: { module: 'mock' },
+        inputHashes: { module: 'mock' },
+        allowedPaths: [],
+        expectedPaths: [],
+        protectedPaths: [],
+        packetRefs: ['handoff.md'],
+        artifactRefs: ['handoff.md'],
+        transitionHistory: [{
+          at: createdAt,
+          actor: 'mock',
+          fromState: 'draft',
+          toState: 'exported',
+        }],
+        createdAt,
+        updatedAt: createdAt,
+      })
       const files = ['capability-implementation-handoff.md']
         .map((name) => ({ path: `/mock/${runId}/${name}`, bytes: 100, sha256: `mock-${name}` }))
       return {
@@ -496,6 +614,76 @@ export function installMockBridge(): EuikBridge {
         files,
         uploadFiles: files.map((f) => f.path),
         readiness: { status: 'ready' as const, issues: [] },
+      }
+    },
+    async capabilitiesExportImplementationWave(input) {
+      const state = ensureCap(input.projectId)
+      const architecture = state.architectureApproved
+      if (!architecture) throw new Error('approved architecture not found')
+      const plan = planImplementationWaves({
+        projectId: input.projectId,
+        architecture,
+        modules: architecture.moduleIds.map((moduleId) => ({
+          moduleId,
+          approved: state.moduleApproved.get(moduleId),
+        })),
+      })
+      const wave = plan.waves.find((candidate) => candidate.index === input.waveIndex)
+      if (!wave) throw new Error(`implementation wave not found: ${input.waveIndex}`)
+      const moduleIds = input.moduleIds?.length ? input.moduleIds : wave.targets.map((target) => target.moduleId)
+      const groupId = `cap-wave-${Date.now()}`
+      const createdAt = now()
+      const targets = moduleIds.map((moduleId, index) => {
+        const manifest = state.moduleApproved.get(moduleId)
+        if (!manifest || !wave.targets.some((target) => target.moduleId === moduleId)) {
+          throw new Error(`${moduleId} is not in implementation wave ${input.waveIndex}`)
+        }
+        const runId = `cap-implementation-${Date.now()}-${index}`
+        state.capabilityRuns.set(runId, {
+          schemaVersion: '1.0',
+          runId,
+          kind: 'implementation',
+          projectId: input.projectId,
+          targetOwnerId: moduleId,
+          targetKind: manifest.moduleType === 'connection' ? 'adapter' : 'module',
+          parentRunId: groupId,
+          lifecycleState: 'exported',
+          inputRevisions: { module: manifest.moduleVersion, architecture: architecture.revision },
+          inputHashes: { module: `mock-${moduleId}` },
+          allowedPaths: manifest.ownedPaths,
+          expectedPaths: [],
+          protectedPaths: [],
+          packetRefs: [`runs/waves/${groupId}/implementation-wave-${input.waveIndex}.md`],
+          artifactRefs: [`runs/waves/${groupId}/implementation-wave-${input.waveIndex}.md`],
+          transitionHistory: [{
+            at: createdAt,
+            actor: 'mock',
+            fromState: 'draft',
+            toState: 'exported',
+          }],
+          createdAt,
+          updatedAt: createdAt,
+        })
+        return {
+          moduleId,
+          runId,
+          packetId: `pkt-${moduleId}`,
+          deliverable: implementationWaveDeliverable(moduleId),
+          readiness: 'ready' as const,
+        }
+      })
+      const files = [{
+        path: `/mock/${groupId}/implementation-wave-${input.waveIndex}.md`,
+        bytes: 100,
+        sha256: `mock-${groupId}`,
+      }]
+      return {
+        groupId,
+        waveIndex: input.waveIndex,
+        recommendedPrompt: `Implement capability wave ${input.waveIndex}.`,
+        files,
+        uploadFiles: files.map((file) => file.path),
+        targets,
       }
     },
     async capabilitiesStartHandoffDrag() { return { files: 1 } },
@@ -633,6 +821,80 @@ export function installMockBridge(): EuikBridge {
       state.moduleDrafts.delete(approved.moduleId)
       return { ok: true, approved, gate: { gateId: 'CAP-GATE-003', passed: true, diagnostics: [] } }
     },
+    async capabilitiesProposeModuleBatch(projectId) {
+      const state = ensureCap(projectId)
+      const architecture = state.architectureApproved
+      if (!architecture) throw new Error('Approve the architecture before generating module proposals.')
+      const existing = architecture.moduleIds.map((moduleId) => ({
+        moduleId,
+        draft: state.moduleDrafts.get(moduleId),
+        approved: state.moduleApproved.get(moduleId),
+      }))
+      const batch = proposeArchitectureModuleBatch({ projectId, architecture, existing })
+      const savedDraftModuleIds: string[] = []
+      const preservedModuleIds: string[] = []
+      for (const proposal of batch.proposals) {
+        if (state.moduleApproved.has(proposal.moduleId) || state.moduleDrafts.has(proposal.moduleId)) {
+          preservedModuleIds.push(proposal.moduleId)
+        } else {
+          state.moduleDrafts.set(proposal.moduleId, proposal.manifest)
+          savedDraftModuleIds.push(proposal.moduleId)
+        }
+      }
+      return { ...batch, savedDraftModuleIds, preservedModuleIds }
+    },
+    async capabilitiesApproveModuleBatch(input) {
+      if (!input.explicit) throw new Error('Batch approval requires explicit confirmation.')
+      const state = ensureCap(input.projectId)
+      const architecture = state.architectureApproved
+      if (!architecture) throw new Error('Approve the architecture before approving modules.')
+      const selected = [...new Set(input.moduleIds)].filter((moduleId) =>
+        architecture.moduleIds.includes(moduleId),
+      )
+      const results = selected.map((moduleId) => {
+        const approved = state.moduleApproved.get(moduleId)
+        if (approved) return { moduleId, status: 'already-approved' as const, ok: true as const, approved }
+        const draft = state.moduleDrafts.get(moduleId)
+        if (!draft) return { moduleId, status: 'missing' as const, ok: false as const }
+        const gate = evaluateModuleGate(draft)
+        if (!gate.passed) return { moduleId, status: 'blocked' as const, ok: false as const, gate }
+        state.moduleApproved.set(moduleId, draft)
+        state.moduleDrafts.delete(moduleId)
+        return { moduleId, status: 'approved' as const, ok: true as const, gate, approved: draft }
+      })
+      return { ok: results.length > 0 && results.every((result) => result.ok), results }
+    },
+    async capabilitiesPlanImplementationWaves(projectId) {
+      const state = ensureCap(projectId)
+      const architecture = state.architectureApproved
+      if (!architecture) throw new Error('Approve the architecture before planning implementation.')
+      return planImplementationWaves({
+        projectId,
+        architecture,
+        modules: architecture.moduleIds.map((moduleId) => ({
+          moduleId,
+          draft: state.moduleDrafts.get(moduleId),
+          approved: state.moduleApproved.get(moduleId),
+        })),
+      })
+    },
+    async capabilitiesCompileFrontendBrief(input) {
+      const state = ensureCap(input.projectId)
+      const architecture = state.architectureApproved
+      if (!architecture) throw new Error('Approve the architecture before compiling a frontend brief.')
+      const inbound = [...state.inboundBindingApproved.values()]
+      const canonicalIds = new Set(inbound.map((binding) => binding.bindingId))
+      const legacy = [...state.bindingApproved.values()]
+        .filter((binding) => !canonicalIds.has(binding.bindingId))
+      return compileFrontendBrief({
+        projectId: input.projectId,
+        application: state.applicationApproved,
+        architecture,
+        modules: [...state.moduleApproved.values()],
+        bindings: [...inbound, ...legacy],
+        targetModuleIds: input.targetModuleIds,
+      })
+    },
     async capabilitiesListModules(projectId) {
       const state = ensureCap(projectId)
       const architecture = state.architectureApproved ?? state.architectureDraft
@@ -660,12 +922,19 @@ export function installMockBridge(): EuikBridge {
         approved: state.bindingApproved.get(bindingId),
       }))
     },
-    async capabilitiesListRuns() {
-      return []
+    async capabilitiesListRuns(projectId) {
+      return [...ensureCap(projectId).capabilityRuns.values()]
     },
     async capabilitiesCreateRun(run) {
-      const record = run as { runId?: string }
-      return { ...(run as object), runId: record.runId ?? `run-${Date.now()}`, createdAt: now() }
+      const record = run as CapabilityRunScope
+      const created = {
+        ...record,
+        runId: record.runId ?? `run-${Date.now()}`,
+        createdAt: record.createdAt ?? now(),
+        updatedAt: record.updatedAt ?? now(),
+      }
+      ensureCap(created.projectId).capabilityRuns.set(created.runId, created)
+      return created
     },
     async capabilitiesInspectOverlay() {
       return {

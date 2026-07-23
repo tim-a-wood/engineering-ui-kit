@@ -16,7 +16,14 @@ import {
   type CapabilityInboundBindingRecord,
   type JourneyInput,
 } from '../src/views/capabilities/capabilitiesUiState'
-import type { CapabilityIntegrationState, CapabilityModuleRecord, ModuleManifest, ModuleType } from '@engineering-ui-kit/core'
+import type {
+  CapabilityIntegrationState,
+  CapabilityModuleRecord,
+  CapabilityRunScope,
+  ModuleManifest,
+  ModuleType,
+  WorkLifecycleState,
+} from '@engineering-ui-kit/core'
 
 function manifest(moduleId: string, moduleType: ModuleType, ops: string[] = []): ModuleManifest {
   return {
@@ -48,6 +55,34 @@ function moduleRecord(
     freshness: opts.freshness
       ? ({ primaryState: opts.freshness } as CapabilityModuleRecord['freshness'])
       : undefined,
+  }
+}
+
+function implementationRun(
+  moduleId: string,
+  lifecycleState: WorkLifecycleState = 'applied',
+): CapabilityRunScope {
+  return {
+    schemaVersion: '1.0',
+    runId: `run-${moduleId}-${lifecycleState}`,
+    kind: 'implementation',
+    projectId: 'project-1',
+    targetOwnerId: moduleId,
+    lifecycleState,
+    inputRevisions: { module: '1.0.0' },
+    inputHashes: { module: 'hash' },
+    allowedPaths: [],
+    expectedPaths: [],
+    protectedPaths: [],
+    packetRefs: ['handoff.md'],
+    artifactRefs: [],
+    ...(lifecycleState === 'applied' || lifecycleState === 'verified'
+      ? { applicationRef: 'applied.json' }
+      : {}),
+    ...(lifecycleState === 'verified' ? { verificationRef: 'verification.json' } : {}),
+    transitionHistory: [],
+    createdAt: '2026-07-23T00:00:00.000Z',
+    updatedAt: '2026-07-23T00:00:00.000Z',
   }
 }
 
@@ -198,20 +233,21 @@ describe('deriveJourney', () => {
     })
     const build = stageById(j, 'build')
     expect(build.state).toBe('current')
-    expect(build.progress).toEqual({ done: 1, total: 3 })
-    expect(build.shortStatus).toBe('1 of 3 approved.')
+    expect(build.progress).toEqual({ done: 0, total: 3 })
+    expect(build.shortStatus).toBe('1 of 3 module specifications approved.')
   })
 
-  it('all modules approved with no required deployables: Build completes and Verify is current', () => {
+  it('all modules approved without implementation evidence: Build remains current and Verify stays locked', () => {
     const j = deriveJourney({
       ...EMPTY,
       application: { approved: {} },
       architecture: { approved: arch(['mod.a']) },
       modules: [moduleRecord('mod.a', { approved: manifest('mod.a', 'domain', ['op.a']) })],
     })
-    expect(stageById(j, 'build').state).toBe('complete')
-    expect(stageById(j, 'verify').state).toBe('current')
-    expect(j.firstIncompleteStageId).toBe('verify')
+    expect(stageById(j, 'build').state).toBe('current')
+    expect(stageById(j, 'build').shortStatus).toContain('0 of 1 module implementations applied')
+    expect(stageById(j, 'verify').state).toBe('locked')
+    expect(j.firstIncompleteStageId).toBe('build')
   })
 
   it('production integration keeps Build open until infrastructure has been applied', () => {
@@ -220,6 +256,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.ui')],
       deployables: [deployable('dep.browser')],
       inboundBindings: [inboundBinding('binding-1', 'dep.browser')],
     }
@@ -231,7 +268,11 @@ describe('deriveJourney', () => {
     expect(stageById(applied, 'build').state).toBe('complete')
     expect(stageById(applied, 'verify').state).toBe('current')
 
-    const verified = deriveJourney({ ...base, integration: integration('applied', { verifiedBindingIds: ['binding-1'] }) })
+    const verified = deriveJourney({
+      ...base,
+      capabilityRuns: [implementationRun('mod.ui', 'verified')],
+      integration: integration('applied', { verifiedBindingIds: ['binding-1'] }),
+    })
     expect(stageById(verified, 'verify').state).toBe('complete')
   })
 
@@ -247,6 +288,7 @@ describe('deriveJourney', () => {
         application: { approved: {} },
         architecture: { approved: arch(['mod.main']) },
         modules: [moduleRecord('mod.main', { approved: manifest('mod.main', 'domain', ['op.run']) })],
+        capabilityRuns: [implementationRun('mod.main')],
         deployables: [deployable(example.deployableId, example.kind)],
       }
       const beforeEntryPoint = deriveJourney({
@@ -282,6 +324,7 @@ describe('deriveJourney', () => {
       ...EMPTY,
       application: { approved: {} }, architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.ui')],
       deployables: [deployable('dep.browser')], inboundBindings: [inboundBinding('binding-1', 'dep.browser')],
       integration: integration('stale', { planId: 'plan-2', applyPlanId: 'plan-1' }),
     })
@@ -294,6 +337,7 @@ describe('deriveJourney', () => {
       ...EMPTY,
       application: { approved: {} }, architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.ui')],
       deployables: [deployable('dep.browser')], inboundBindings: [inboundBinding('binding-1', 'dep.browser')],
     }
     const stale = deriveJourney({ ...base, integration: integration('stale', { planId: 'plan-2', applyPlanId: 'plan-1' }) })
@@ -312,6 +356,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.a']) },
       modules: [moduleRecord('mod.a', { approved: manifest('mod.a', 'domain', ['op.a']) })],
+      capabilityRuns: [implementationRun('mod.a')],
       deployables: [deployable('dep.lib', 'embedded-library')],
     })
     expect(stageById(j, 'build').state).toBe('complete')
@@ -329,6 +374,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.a']) },
       modules: [moduleRecord('mod.a', { approved: manifest('mod.a', 'domain', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.a')],
       deployables: [deployable('dep.api', 'http-api')],
     })
     const build = stageById(j, 'build')
@@ -344,6 +390,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.a']) },
       modules: [moduleRecord('mod.a', { approved: manifest('mod.a', 'domain', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.a')],
       deployables: [deployable('dep.cli', 'cli')],
       connectDisposition: 'no-ui',
     })
@@ -359,6 +406,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'connection', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.ui')],
       deployables: [deployable('dep.browser', 'browser')],
       inboundBindings: [inboundBinding('b1', 'dep.browser')],
     })
@@ -373,6 +421,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'connection', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.ui')],
       deployables: [deployable('dep.browser', 'browser')],
       inboundBindings: [inboundBinding('b1', 'dep.browser'), inboundBinding('b2', 'dep.browser')],
     })
@@ -389,6 +438,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.ui')],
       deployables: [deployable('dep.browser', 'browser')],
       connectDisposition: 'deferred',
     })
@@ -405,6 +455,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.ui')],
       deployables: [deployable('dep.browser', 'browser')],
       inboundBindings: [inboundBinding('b1', 'dep.browser', { approved: false })],
     })
@@ -420,6 +471,7 @@ describe('deriveJourney', () => {
       ...EMPTY,
       application: { approved: {} }, architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.ui')],
       deployables: [deployable('dep.browser', 'browser')],
       inboundBindings: [inboundBinding('b1', 'dep.browser', { operationId: 'op.retired', operationVersion: '1.0' })],
     })
@@ -433,6 +485,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.ui')],
       deployables: [deployable('dep.browser', 'browser')],
       inboundBindings: [inboundBinding('b1', 'dep.browser')],
     })
@@ -443,6 +496,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.ui')],
       deployables: [deployable('dep.browser', 'browser')],
       inboundBindings: [inboundBinding('b1', 'dep.browser', { exposure: 'public' })],
     })
@@ -457,6 +511,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.ui']) },
       modules: [moduleRecord('mod.ui', { approved: manifest('mod.ui', 'experience', ['op.show']) })],
+      capabilityRuns: [implementationRun('mod.ui')],
       deployables: [deployable('dep.browser', 'browser')],
       inboundBindings: [inboundBinding('bind-approve', 'dep.browser')],
       // Legacy FrontendBinding records no longer drive entry-point completeness.
@@ -471,6 +526,7 @@ describe('deriveJourney', () => {
       application: { approved: {} },
       architecture: { approved: arch(['mod.a']) },
       modules: [moduleRecord('mod.a', { approved: manifest('mod.a', 'domain', []) })],
+      capabilityRuns: [implementationRun('mod.a')],
       deployables: [deployable('dep.api', 'http-api')],
     })
     expect(stageById(j, 'build').state).toBe('current')
@@ -487,6 +543,7 @@ describe('deriveJourney', () => {
         moduleRecord('mod.a', { approved: manifest('mod.a', 'domain', ['op.a']), freshness: 'ready' }),
         moduleRecord('mod.b', { approved: manifest('mod.b', 'domain', ['op.b']), freshness: 'verification-needed' }),
       ],
+      capabilityRuns: [implementationRun('mod.a', 'verified'), implementationRun('mod.b')],
     })
     const verify = stageById(j, 'verify')
     expect(verify.state).toBe('current')

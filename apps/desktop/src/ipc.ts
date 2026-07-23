@@ -11,8 +11,12 @@ import { randomUUID } from 'node:crypto'
 import { buildCfHdropBuffer, buildFilenamesPboardPlist, buildUriList } from './uploadSetTransfer.js'
 import {
   Workspace,
+  CapabilityRunStore,
   CapabilityWorkspace,
   canonicalHash,
+  deriveProjectWorkOverview,
+  lintTaskPacket,
+  analyzePreviewPreflight,
   buildContext,
   buildPacketManifest,
   inspectOverlay,
@@ -24,11 +28,14 @@ import {
   buildReviewContactSheetHtml,
   renderReviewContactSheetPdf,
   buildChangesZip,
+  buildRunCompletionRecord,
+  WorkflowTelemetryStore,
   type AppliedFiles,
   type ApplicationSpecification,
   type EvidenceCapture,
   type OverlayInspectionSummary,
   type Project,
+  type RunCompletionRecord,
   type Settings,
   type SelectionEvidence,
   type VerificationResult,
@@ -207,6 +214,56 @@ async function probeUrl(url: string, timeoutMs: number): Promise<boolean> {
   }
 }
 
+async function previewPreflight(workspace: Workspace, project: Project) {
+  const packageJsonPath = path.join(project.repoPath, 'package.json')
+  const packageJsonExists = fs.existsSync(packageJsonPath)
+  let packageScripts: Record<string, string> = {}
+  if (packageJsonExists) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as { scripts?: Record<string, unknown> }
+      packageScripts = Object.fromEntries(
+        Object.entries(parsed.scripts ?? {})
+          .filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+      )
+    } catch {
+      packageScripts = {}
+    }
+  }
+  const detectedPackageManager =
+    fs.existsSync(path.join(project.repoPath, 'pnpm-lock.yaml')) ? 'pnpm'
+      : fs.existsSync(path.join(project.repoPath, 'yarn.lock')) ? 'yarn'
+        : fs.existsSync(path.join(project.repoPath, 'package-lock.json')) ? 'npm'
+          : 'unknown'
+  const claimedByOtherProjects = new Set(
+    workspace.listProjects()
+      .filter((candidate) => candidate.id !== project.id)
+      .map((candidate) => candidate.launchUrl)
+      .filter((url): url is string => Boolean(url)),
+  )
+  const candidateUrls = new Set<string>()
+  if (project.launchUrl) candidateUrls.add(project.launchUrl)
+  for (const port of [4180, 4181, 4182, 4183, 4184, 4185, 4186, 4187, 4188, 4189, 4190, 4173, 5173, 5402, 5403]) {
+    const url = `http://127.0.0.1:${port}`
+    if (!claimedByOtherProjects.has(url)) candidateUrls.add(url)
+  }
+  const probes = await Promise.all([...candidateUrls].map(async (url) => {
+    const startedAt = Date.now()
+    const reachable = await probeUrl(url, 350)
+    return { url, reachable, latencyMs: Date.now() - startedAt }
+  }))
+  return analyzePreviewPreflight({
+    projectId: project.id,
+    repoPath: project.repoPath,
+    launchUrl: project.launchUrl,
+    launchCommand: project.launchCommand,
+    packageJsonExists,
+    dependenciesInstalled: fs.existsSync(path.join(project.repoPath, 'node_modules')),
+    detectedPackageManager,
+    packageScripts,
+    probes,
+  })
+}
+
 async function waitUntilReachable(url: string, totalMs: number): Promise<void> {
   const deadline = Date.now() + totalMs
   while (Date.now() < deadline) {
@@ -265,6 +322,9 @@ function resolveUploadSet(run: { repoFlatfilePath?: string; taskAndStandardPackP
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataDir?: string): Workspace {
   const workspaceRoot = dataDir ?? path.join(app.getPath('userData'), 'workspace')
   const workspace = new Workspace(workspaceRoot)
+  const capabilityWorkspace = new CapabilityWorkspace(workspaceRoot)
+  const capabilityRunStore = new CapabilityRunStore(capabilityWorkspace)
+  const workflowTelemetry = new WorkflowTelemetryStore(workspaceRoot)
   seedSampleProjects(workspace)
   app.on('will-quit', () => {
     for (const child of launchedApps.values()) killLaunchedApp(child)
@@ -303,15 +363,110 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
   })
   ipcMain.handle(BRIDGE_CHANNELS.updateProject, (_e, projectId: string, patch: Partial<Project>) =>
     workspace.updateProject(projectId, patch))
+  ipcMain.handle(BRIDGE_CHANNELS.getProjectWorkOverview, (_e, projectId: string) => {
+    const project = requireProject(workspace, projectId)
+    capabilityWorkspace.ensureInitialized(projectId)
+    const application = {
+      draft: capabilityWorkspace.getApplicationDraft(projectId),
+      approved: capabilityWorkspace.getApprovedApplication(projectId),
+    }
+    const architecture = {
+      draft: capabilityWorkspace.getArchitectureDraft(projectId),
+      approved: capabilityWorkspace.getApprovedArchitecture(projectId),
+    }
+    const activeArchitecture = architecture.approved ?? architecture.draft
+    const modules = capabilityWorkspace
+      .listModules(projectId, activeArchitecture?.moduleIds)
+      .map((record) => ({
+        ...record,
+        freshness: capabilityRunStore.getFreshness(projectId, record.moduleId),
+      }))
+    return deriveProjectWorkOverview({
+      projectId,
+      application,
+      architecture,
+      modules,
+      capabilityRuns: capabilityRunStore.listRuns(projectId),
+      handoffRuns: workspace.listRuns(projectId),
+      requiresFrontend: project.developmentScope !== 'capabilities',
+    })
+  })
+  ipcMain.handle(BRIDGE_CHANNELS.preflightProjectPreview, async (_e, projectId: string) =>
+    previewPreflight(workspace, requireProject(workspace, projectId)))
 
   ipcMain.handle(BRIDGE_CHANNELS.listRuns, (_e, projectId?: string) => workspace.listRuns(projectId))
   ipcMain.handle(BRIDGE_CHANNELS.createRun, (_e, projectId: string) => {
     requireProject(workspace, projectId)
-    return workspace.createRun({ projectId, currentStep: 'prepare-context' })
+    const started = Date.now()
+    const run = workspace.createRun({ projectId, currentStep: 'prepare-context' })
+    workflowTelemetry.append({
+      projectId,
+      runId: run.id,
+      action: 'run.create',
+      outcome: 'succeeded',
+      startedAt: new Date(started).toISOString(),
+      endedAt: new Date().toISOString(),
+      durationMs: Date.now() - started,
+    })
+    return run
   })
   ipcMain.handle(BRIDGE_CHANNELS.getRun, (_e, runId: string) => workspace.getRun(runId))
   ipcMain.handle(BRIDGE_CHANNELS.updateRun, (_e, runId: string, patch: Record<string, unknown>) =>
     workspace.updateRun(runId, patch))
+  ipcMain.handle(BRIDGE_CHANNELS.completeRun, (_e, input: {
+    runId: string
+    decision: 'approved' | 'needs-follow-up' | 'rejected'
+    userDecisionNote?: string
+  }): RunCompletionRecord => {
+    const started = Date.now()
+    const run = workspace.getRun(input.runId)
+    if (!run) throw new Error(`run not found: ${input.runId}`)
+    const verificationResults = (run.verificationResultPaths ?? [])
+      .filter((filePath) => fs.existsSync(filePath))
+      .map((filePath) => JSON.parse(fs.readFileSync(filePath, 'utf8')) as VerificationResult)
+    let appliedAt: string | undefined
+    if (run.appliedFilesPath && fs.existsSync(run.appliedFilesPath)) {
+      appliedAt = (JSON.parse(fs.readFileSync(run.appliedFilesPath, 'utf8')) as AppliedFiles).appliedAt
+    }
+    const record = buildRunCompletionRecord({
+      run,
+      decision: input.decision,
+      verificationResults,
+      ...(input.userDecisionNote ? { userDecisionNote: input.userDecisionNote } : {}),
+      ...(appliedAt ? { appliedAt } : {}),
+    })
+    const summaryPath = workspace.saveRunArtifact(input.runId, 'completion-summary.json', record.summary)
+    workspace.saveRunArtifact(input.runId, 'completion-timeline.json', record.timeline)
+    workspace.saveRunArtifact(input.runId, 'completion-record.json', record)
+    workspace.updateRun(input.runId, {
+      currentStep: 'complete',
+      completionStatus: input.decision,
+      completionSummaryPath: summaryPath,
+      completedAt: record.summary.completedAt,
+    })
+    workflowTelemetry.append({
+      projectId: run.projectId,
+      runId: run.id,
+      action: 'run.complete',
+      outcome: 'succeeded',
+      startedAt: new Date(started).toISOString(),
+      endedAt: new Date().toISOString(),
+      durationMs: Date.now() - started,
+      counts: record.summary.verificationSummary,
+    })
+    return record
+  })
+  ipcMain.handle(BRIDGE_CHANNELS.getRunCompletion, (_e, runId: string): RunCompletionRecord | undefined => {
+    if (!workspace.getRun(runId)) throw new Error(`run not found: ${runId}`)
+    const filePath = path.join(workspace.runDir(runId), 'completion-record.json')
+    return fs.existsSync(filePath)
+      ? JSON.parse(fs.readFileSync(filePath, 'utf8')) as RunCompletionRecord
+      : undefined
+  })
+  ipcMain.handle(BRIDGE_CHANNELS.getProjectWorkflowMetrics, (_e, projectId: string) => {
+    requireProject(workspace, projectId)
+    return workflowTelemetry.summarize(projectId)
+  })
 
   // Native pickers cannot be driven by automated end-to-end tests; in test
   // mode the paths come from the environment instead.
@@ -355,6 +510,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.prepareContext, (_e, runId: string): PrepareContextResult => {
+    const started = Date.now()
     const run = workspace.getRun(runId)
     if (!run) throw new Error(`run not found: ${runId}`)
     const project = requireProject(workspace, run.projectId)
@@ -373,23 +529,46 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       repoFlatfilePath: flatfilePath,
       repoInventoryPath: inventoryPath,
     })
-    return {
+    const prepared = {
       inventory: result.inventory,
       flatfilePath,
       flatfileBytes: Buffer.byteLength(result.flatfileText),
       warnings: result.inventory.contextWarnings,
     }
+    workflowTelemetry.append({
+      projectId: run.projectId,
+      runId,
+      action: 'context.prepare',
+      outcome: 'succeeded',
+      startedAt: new Date(started).toISOString(),
+      endedAt: new Date().toISOString(),
+      durationMs: Date.now() - started,
+      counts: {
+        includedFiles: result.inventory.includedFileCount,
+        excludedFiles: result.inventory.excludedFileCount,
+        warnings: result.inventory.contextWarnings.length,
+      },
+    })
+    return prepared
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.buildPacket, (_e, runId: string, fields: TaskPacketFields): BuildPacketResult => {
+    const started = Date.now()
     const run = workspace.getRun(runId)
     if (!run) throw new Error(`run not found: ${runId}`)
     const project = requireProject(workspace, run.projectId)
     if (!run.repoFlatfilePath || !fs.existsSync(run.repoFlatfilePath)) {
       throw new Error('prepare context before building the task packet')
     }
+    const lint = lintTaskPacket(fields)
+    if (!lint.valid) {
+      const blockers = lint.diagnostics
+        .filter((diagnostic) => diagnostic.severity === 'blocker')
+        .map((diagnostic) => `${diagnostic.section}: ${diagnostic.message}`)
+      throw new Error(`task packet export blocked:\n${blockers.join('\n')}`)
+    }
     for (const [key, value] of Object.entries(fields)) {
-      if (key === 'references') continue
+      if (key === 'references' || key === 'intentProfile') continue
       if (!String(value ?? '').trim()) throw new Error(`required packet field is empty: ${key}`)
     }
 
@@ -454,7 +633,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     })
     workspace.saveRunArtifact(runId, 'packet-manifest.json', { files: manifest })
 
-    return {
+    const built = {
       taskPacketPath,
       standardPackPath,
       runDir,
@@ -462,6 +641,17 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       uploadFiles: manifest,
       recommendedPrompt,
     }
+    workflowTelemetry.append({
+      projectId: run.projectId,
+      runId,
+      action: 'packet.export',
+      outcome: 'succeeded',
+      startedAt: new Date(started).toISOString(),
+      endedAt: new Date().toISOString(),
+      durationMs: Date.now() - started,
+      counts: { uploadFiles: manifest.length, packBytes: built.packBytes },
+    })
+    return built
   })
 
   // Read a run artifact, including safe nested verification logs.
@@ -692,6 +882,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.inspectOverlay, (_e, runId: string, zipPath: string): OverlayInspectionSummary => {
+    const started = Date.now()
     const run = workspace.getRun(runId)
     if (!run) throw new Error(`run not found: ${runId}`)
     const project = requireProject(workspace, run.projectId)
@@ -705,10 +896,21 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       overlayZipPath: zipPath,
       overlayInspectionSummaryPath: summaryPath,
     })
+    workflowTelemetry.append({
+      projectId: run.projectId,
+      runId,
+      action: 'overlay.inspect',
+      outcome: summary.canApply ? 'succeeded' : 'blocked',
+      startedAt: new Date(started).toISOString(),
+      endedAt: new Date().toISOString(),
+      durationMs: Date.now() - started,
+      counts: { blockers: summary.hardBlockers.length, warnings: summary.warnings.length },
+    })
     return summary
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.applyOverlay, (_e, runId: string, acceptWarnings: boolean) => {
+    const started = Date.now()
     const run = workspace.getRun(runId)
     if (!run) throw new Error(`run not found: ${runId}`)
     const project = requireProject(workspace, run.projectId)
@@ -730,10 +932,21 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       appliedFilesPath: appliedPath,
       verificationResultPaths: [],
     })
+    workflowTelemetry.append({
+      projectId: run.projectId,
+      runId,
+      action: 'overlay.apply',
+      outcome: 'succeeded',
+      startedAt: new Date(started).toISOString(),
+      endedAt: new Date().toISOString(),
+      durationMs: Date.now() - started,
+      counts: { files: applied.files.length },
+    })
     return applied
   })
 
   ipcMain.handle(BRIDGE_CHANNELS.runVerification, async (_e, runId: string, labels: string[]): Promise<VerificationResult[]> => {
+    const started = Date.now()
     const run = workspace.getRun(runId)
     if (!run) throw new Error(`run not found: ${runId}`)
     const project = requireProject(workspace, run.projectId)
@@ -786,6 +999,20 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     }
     const resultPaths = results.map((r) => workspace.saveRunArtifact(runId, `verification-result-${r.commandLabel}.json`, r))
     workspace.updateRun(runId, { verificationResultPaths: resultPaths })
+    workflowTelemetry.append({
+      projectId: run.projectId,
+      runId,
+      action: 'verification.run',
+      outcome: results.length > 0 && results.every((result) => result.status === 'passed') ? 'succeeded' : 'blocked',
+      startedAt: new Date(started).toISOString(),
+      endedAt: new Date().toISOString(),
+      durationMs: Date.now() - started,
+      counts: {
+        commands: results.length,
+        passed: results.filter((result) => result.status === 'passed').length,
+        failed: results.filter((result) => result.status !== 'passed').length,
+      },
+    })
     return results
   })
 

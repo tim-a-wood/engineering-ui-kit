@@ -3,12 +3,12 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import type { AppliedFiles, OverlayInspectionSummary } from '@engineering-ui-kit/core'
-import type { PrepareContextResult, TaskPacketFields } from '../../bridge'
+import type { AppliedFiles, OverlayInspectionSummary, TaskPacketDiagnostic } from '@engineering-ui-kit/core'
+import { lintTaskPacket } from '@engineering-ui-kit/core/browser'
+import type { PrepareContextResult, TaskPacketFields, TaskPacketTextKey } from '../../bridge'
 import { Dialog, PageHeader, type Status } from '../../components'
 import { Icon } from '../../icons'
 import {
-  PACKET_SECTIONS,
   TaskPacketPreviewModal,
   draftPacketMarkdown,
   formatBytes,
@@ -51,7 +51,8 @@ export function BuildView(props: BuildViewProps) {
       ? { ...applyTemplate(initialTemplate, props.project.name), goal: '', references: '' }
       : { taskTitle: '', goal: '', scope: '', constraints: '', acceptanceCriteria: '', references: '' }
   })
-  const [editing, setEditing] = useState<keyof TaskPacketFields | null>(null)
+  const [editing, setEditing] = useState<TaskPacketTextKey | null>(null)
+  const [packetDiagnostics, setPacketDiagnostics] = useState<TaskPacketDiagnostic[]>([])
   const [draft, setDraft] = useState('')
   const [showValidation, setShowValidation] = useState(false)
   const [templateId, setTemplateIdRaw] = useState(() => persistedTemplateId ?? defaultTemplateId(props.preferredTemplate ?? ''))
@@ -166,10 +167,13 @@ export function BuildView(props: BuildViewProps) {
 
   const buildPacket = async (opts?: { skipLocalContextGuard?: boolean }): Promise<boolean> => {
     setShowValidation(true)
-    const emptyKeys = PACKET_SECTIONS.filter((s) => s.required && !fields[s.key].trim()).map((s) => s.title)
-    const titleMissing = !fields.taskTitle.trim()
-    if (titleMissing || emptyKeys.length > 0) {
-      setStatus({ tone: 'error', text: `Required sections are empty: ${[...(titleMissing ? ['Task title'] : []), ...emptyKeys].join(', ')}.` })
+    const lint = lintTaskPacket(fields)
+    setPacketDiagnostics(lint.diagnostics)
+    if (!lint.valid) {
+      setStatus({
+        tone: 'error',
+        text: `Handoff blocked: resolve ${lint.diagnostics.filter((item) => item.severity === 'blocker').length} packet issue(s) before export.`,
+      })
       return false
     }
     if (!opts?.skipLocalContextGuard && !props.run.repoFlatfilePath && !contextResult) {
@@ -224,7 +228,7 @@ export function BuildView(props: BuildViewProps) {
   const onUseTemplate = async () => {
     const template = TASK_TEMPLATES.find((t) => t.id === templateId)
     if (!template) return
-    const dirty = Object.values(fields).some((v) => v.trim().length > 0)
+    const dirty = Object.values(fields).some((value) => typeof value === 'string' && value.trim().length > 0)
     if (dirty && !confirmTemplate) {
       setConfirmTemplate(true)
       setStatus({ tone: 'info', text: 'Applying the template will replace the current section content. Select "Replace content" to confirm.' })
@@ -318,6 +322,7 @@ export function BuildView(props: BuildViewProps) {
     contextBusy,
     packetBusy,
     packetStale,
+    packetDiagnostics,
     contextStale,
     status,
     setStatus,

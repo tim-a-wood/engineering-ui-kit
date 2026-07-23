@@ -11,6 +11,9 @@ import { useEffect, useRef, useState } from 'react'
 import type {
   AppliedFiles,
   OverlayInspectionSummary,
+  PreviewPreflightResult,
+  PreviewRepair,
+  RunCompletionRecord,
   VerificationResult,
 } from '@engineering-ui-kit/core'
 import type { BuildPacketResult, PrepareContextResult, TaskPacketFields } from '../bridge'
@@ -415,7 +418,7 @@ export function CreateTaskPacketView(props: StepProps & {
               onClick={async () => {
                 const template = TASK_TEMPLATES.find((t) => t.id === templateId)
                 if (!template) return
-                const dirty = Object.values(fields).some((v) => v.trim().length > 0)
+                const dirty = Object.values(fields).some((value) => typeof value === 'string' && value.trim().length > 0)
                 if (dirty && !confirmTemplate) {
                   setConfirmTemplate(true)
                   setStatus({ tone: 'info', text: 'Applying the template will replace the current section content. Select "Replace content" to confirm.' })
@@ -964,11 +967,14 @@ export function VerifyReviewView(props: StepProps) {
   const [results, setResults] = useState<VerificationResult[] | null>(null)
   const [busy, setBusy] = useState(false)
   const [completed, setCompleted] = useState(props.run.currentStep === 'complete')
+  const [completion, setCompletion] = useState<RunCompletionRecord>()
   const [reviewPacket, setReviewPacket] = useState<{ path: string; text: string; uploadFiles: string[]; contactSheetPath?: string } | null>(null)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [lastRunAt, setLastRunAt] = useState<string | null>(null)
   const [launchConfigOpen, setLaunchConfigOpen] = useState(false)
   const [preview, setPreview] = useState<{ status: 'idle' | 'starting' | 'ready' | 'error'; url?: string; message?: string }>({ status: 'idle' })
+  const [previewPreflight, setPreviewPreflight] = useState<PreviewPreflightResult>()
+  const [previewRepairBusy, setPreviewRepairBusy] = useState(false)
   const previewStarted = useRef(false)
   const checksStarted = useRef(false)
   const [notes, setNotes] = useState('')
@@ -981,6 +987,18 @@ export function VerifyReviewView(props: StepProps) {
   const [picking, setPicking] = useState(false)
   const [fixBusy, setFixBusy] = useState(false)
   const [installBusy, setInstallBusy] = useState(false)
+
+  useEffect(() => {
+    if (props.run.currentStep !== 'complete') return
+    let cancelled = false
+    void Promise.resolve()
+      .then(() => props.bridge.getRunCompletion(props.run.id))
+      .then((record) => {
+        if (!cancelled && record?.schemaVersion === '1.0') setCompletion(record)
+      })
+      .catch(() => undefined)
+    return () => { cancelled = true }
+  }, [props.bridge, props.run.currentStep, props.run.id])
 
   const defaultPreviewUrl = 'http://127.0.0.1:4180'
 
@@ -998,12 +1016,45 @@ export function VerifyReviewView(props: StepProps) {
   // The app under construction previews by default: start (and rebuild) it
   // in the background on arrival, without opening the system browser.
   const startPreview = async () => {
-    setPreview({ status: 'starting' })
+    setPreview({ status: 'starting', message: 'Checking launch URL, package scripts, dependencies, and local ports…' })
     try {
+      const preflight = await props.bridge.preflightProjectPreview(props.project.id)
+      setPreviewPreflight(preflight)
+      if (preflight.status !== 'ready') {
+        setPreview({ status: 'error', message: preflight.summary, url: preflight.detectedUrl ?? preflight.configuredUrl })
+        return
+      }
+      setPreview({
+        status: 'starting',
+        message: preflight.detectedUrl
+          ? `Using the detected app at ${preflight.detectedUrl}.`
+          : `Preflight passed. Starting ${preflight.configuredUrl ?? 'the configured app'}…`,
+      })
       const result = await props.bridge.launchApp(props.project.id, { open: false })
       setPreview({ status: 'ready', url: result.url })
     } catch (error) {
       setPreview({ status: 'error', message: error instanceof Error ? error.message : String(error) })
+    }
+  }
+
+  const applyPreviewRepair = async (repair: PreviewRepair) => {
+    if (previewRepairBusy) return
+    setPreviewRepairBusy(true)
+    try {
+      if (repair.action === 'update-project' && repair.projectPatch) {
+        await props.bridge.updateProject(props.project.id, repair.projectPatch)
+        await props.refreshProjects()
+        setStatus({ tone: 'success', text: `${repair.label} applied. Retrying preview…` })
+        await startPreview()
+        return
+      }
+      if (repair.action === 'install-dependencies') {
+        await installDependencies()
+      }
+    } catch (error) {
+      setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+    } finally {
+      setPreviewRepairBusy(false)
     }
   }
 
@@ -1202,10 +1253,15 @@ export function VerifyReviewView(props: StepProps) {
   }
 
   const approve = async () => {
-    await props.bridge.updateRun(props.run.id, { currentStep: 'complete', completionStatus: 'approved' })
-    await props.refreshRun()
-    setCompleted(true)
-    setStatus({ tone: 'success', text: 'Handoff approved and completed.' })
+    try {
+      const record = await props.bridge.completeRun({ runId: props.run.id, decision: 'approved' })
+      await props.refreshRun()
+      setCompletion(record)
+      setCompleted(true)
+      setStatus({ tone: 'success', text: 'Handoff approved with a complete evidence timeline.' })
+    } catch (error) {
+      setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+    }
   }
 
   const passed = results?.filter((r) => r.status === 'passed').length ?? 0
@@ -1310,6 +1366,9 @@ export function VerifyReviewView(props: StepProps) {
               }}
               onRetry={() => void startPreview()}
               onOpenExternal={() => { if (preview.url) void props.bridge.openExternal(preview.url) }}
+              preflight={previewPreflight}
+              repairBusy={previewRepairBusy}
+              onRepair={(repair) => void applyPreviewRepair(repair)}
             />
           )
         ) : (
@@ -1318,11 +1377,44 @@ export function VerifyReviewView(props: StepProps) {
             obscured={checksOpen || commentsOpen || evidenceOpen || reviewOpen || launchConfigOpen || Boolean(composer)}
             onRetry={() => void startPreview()}
             onOpenExternal={() => {}}
+            preflight={previewPreflight}
+            repairBusy={previewRepairBusy}
+            onRepair={(repair) => void applyPreviewRepair(repair)}
           />
         )}
       </section>
 
       <StatusLine status={status} />
+
+      {completion ? (
+        <section className="completion-evidence" aria-label="Completion evidence">
+          <div className="completion-evidence-head">
+            <div>
+              <p className="capabilities-eyebrow">Completion evidence</p>
+              <h2>{completion.metrics.evidenceMilestones} milestones recorded</h2>
+            </div>
+            <span className="badge badge-success">
+              {completion.summary.verificationSummary?.passed ?? 0} checks passed
+            </span>
+          </div>
+          <ol className="completion-timeline">
+            {completion.timeline.map((milestone) => (
+              <li key={milestone.id} className={milestone.state}>
+                <span className="completion-timeline-dot" aria-hidden="true">
+                  {milestone.state === 'complete' ? Icon.check(11) : milestone.state === 'blocked' ? Icon.alertTriangle(11) : '·'}
+                </span>
+                <div>
+                  <strong>{milestone.label}</strong>
+                  <span>
+                    {milestone.at ? new Date(milestone.at).toLocaleString() : milestone.state}
+                    {milestone.evidenceRefs.length ? ` · ${milestone.evidenceRefs.length} evidence file(s)` : ''}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
 
       <div className="hstack between">
         <button type="button" className="btn btn-secondary" onClick={() => props.onNavigate('apply-zip-overlay')}>
@@ -1676,6 +1768,9 @@ function AppPreview(props: {
   picking?: boolean
   onPickStart?: () => void
   onPicked?: (target: PickedTarget | null) => void
+  preflight?: PreviewPreflightResult
+  repairBusy?: boolean
+  onRepair?: (repair: PreviewRepair) => void
   /**
    * Electron composites the <webview> guest in its own layer, so host DOM
    * stacked above it (dialogs) bleeds through. While a dialog is open the
@@ -1737,7 +1832,10 @@ function AppPreview(props: {
         </div>
         {props.state.status === 'starting' && (
           <div className="app-preview-frame app-preview-waiting" role="status">
-            Starting the app (rebuilding if already running)…
+            <div>
+              <strong>{props.state.message ?? 'Starting the app…'}</strong>
+              {props.preflight && <PreviewPreflightDetails result={props.preflight} />}
+            </div>
           </div>
         )}
         {(props.state.status === 'idle' || props.state.status === 'error') && (
@@ -1754,7 +1852,23 @@ function AppPreview(props: {
             <div className="placeholder-preview-copy">
               <span className="badge badge-neutral">Placeholder preview</span>
               <strong>Your app will appear here</strong>
-              <p>{props.state.status === 'error' ? 'Nothing is running on the preview port yet.' : 'Waiting for the first build.'}</p>
+              <p>{props.state.status === 'error' ? props.state.message ?? 'Nothing is running on the preview port yet.' : 'Waiting for the first build.'}</p>
+              {props.preflight && <PreviewPreflightDetails result={props.preflight} />}
+              {props.preflight?.repairs.length ? (
+                <div className="hstack" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
+                  {props.preflight.repairs.map((repair) => (
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-compact"
+                      key={repair.id}
+                      disabled={props.repairBusy}
+                      onClick={() => props.onRepair?.(repair)}
+                    >
+                      {repair.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               <button type="button" className="btn btn-secondary btn-compact" onClick={props.onRetry}>Try preview</button>
             </div>
           </div>
@@ -1766,5 +1880,26 @@ function AppPreview(props: {
         )}
       </div>
     </div>
+  )
+}
+
+function PreviewPreflightDetails({ result }: { result: PreviewPreflightResult }) {
+  return (
+    <details className="build-supplementary" style={{ textAlign: 'left', marginTop: 10 }}>
+      <summary>Preview diagnostics</summary>
+      <ul className="readiness-list">
+        {result.checks.map((check) => (
+          <li className="readiness-row" key={check.id}>
+            <span className={`readiness-tick ${check.status === 'pass' ? 'ready' : check.status === 'warning' ? 'stale' : 'missing'}`} aria-hidden="true">
+              {check.status === 'pass' ? '✓' : check.status === 'warning' ? '!' : '×'}
+            </span>
+            <div><strong>{check.label}</strong><small>{check.detail}</small></div>
+          </li>
+        ))}
+      </ul>
+      <p className="mono muted" style={{ fontSize: 11 }}>
+        Probed: {result.probes.map((probe) => `${probe.url} ${probe.reachable ? 'reachable' : 'closed'} (${probe.latencyMs ?? 0}ms)`).join(' · ')}
+      </p>
+    </details>
   )
 }

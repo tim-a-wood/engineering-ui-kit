@@ -12,6 +12,7 @@ import {
   CapabilityWorkspace,
   buildCapabilityHandoffMarkdown,
   buildModuleImplementationBrief,
+  buildImplementationWaveHandoffMarkdown,
   buildImplementationPacket,
   buildInterviewPacket,
   buildNeedsAttention,
@@ -23,6 +24,7 @@ import {
   buildCapabilityGraph,
   calculateFreshness,
   canonicalHash,
+  compileFrontendBrief,
   runModuleVerification,
   runCommand,
   selectVerificationSuites,
@@ -34,6 +36,8 @@ import {
   inspectOverlay,
   applyOverlay,
   invokeLocalRuntime,
+  hasReachedWorkState,
+  normalizeWorkLifecycleState,
   rebuildRegistry,
   resolveProvider,
   resolveProjectRelativePath,
@@ -45,6 +49,8 @@ import {
   discoverRepository,
   proposeDeployables,
   proposeFoundation,
+  proposeArchitectureModuleBatch,
+  planImplementationWaves,
   type ApplicationSpecification,
   type ArchitectureSpecification,
   type CapabilityHandoffMarkdownInput,
@@ -52,12 +58,16 @@ import {
   type DeployableSpecification,
   type FoundationPlan,
   type FreshnessRecord,
+  type FrontendBrief,
   type FrontendBinding,
   type InboundBinding,
   type JobRecord,
   type InterviewPacket,
   type ModuleManifest,
   type ModuleInterviewResponse,
+  type ImplementationWavePlan,
+  type ImplementationPacket,
+  type ModuleImplementationBrief,
   type ResultEnvelope,
 } from '@engineering-ui-kit/core'
 import type { Workspace } from '@engineering-ui-kit/core'
@@ -82,12 +92,17 @@ const CAP_CHANNELS = {
   evaluateArchitectureGate: 'capabilities:evaluate-architecture-gate',
   saveModuleDraft: 'capabilities:save-module-draft',
   approveModule: 'capabilities:approve-module',
+  proposeModuleBatch: 'capabilities:propose-module-batch',
+  approveModuleBatch: 'capabilities:approve-module-batch',
+  planImplementationWaves: 'capabilities:plan-implementation-waves',
+  compileFrontendBrief: 'capabilities:compile-frontend-brief',
   listModules: 'capabilities:list-modules',
   listBindings: 'capabilities:list-bindings',
   evaluateModuleGate: 'capabilities:evaluate-module-gate',
   buildInterviewPacket: 'capabilities:build-interview-packet',
   exportInterviewPacket: 'capabilities:export-interview-packet',
   exportImplementationPacket: 'capabilities:export-implementation-packet',
+  exportImplementationWave: 'capabilities:export-implementation-wave',
   startHandoffDrag: 'capabilities:start-handoff-drag',
   importInterviewResponse: 'capabilities:import-interview-response',
   buildImplementationPacket: 'capabilities:build-implementation-packet',
@@ -273,12 +288,12 @@ function exportCapabilityPacketFiles(input: {
   input.runs.updateRun(input.run.projectId, input.run.runId, {
     packetRefs,
     artifactRefs: packetRefs,
-    lifecycleState: 'packet-exported',
+    lifecycleState: 'exported',
     transitionHistory: [{
       at: input.run.createdAt,
       actor: 'desktop',
       fromState: 'draft',
-      toState: 'packet-exported',
+      toState: 'exported',
       evidenceIds: packetRefs,
     }],
   })
@@ -433,6 +448,97 @@ export function registerCapabilityIpcHandlers(
     return { ok: true as const, approved: caps.approveModule(projectId, draft, interviewResponse), gate }
   })
 
+  ipcMain.handle(CAP_CHANNELS.proposeModuleBatch, (_e, projectId: string) => {
+    requireString(projectId, 'projectId')
+    const architecture = caps.getApprovedArchitecture(projectId)
+    if (!architecture) throw new Error('Approve the architecture before generating module proposals.')
+    const existing = caps.listModules(projectId, architecture.moduleIds)
+    const batch = proposeArchitectureModuleBatch({ projectId, architecture, existing })
+    const savedDraftModuleIds: string[] = []
+    const preservedModuleIds: string[] = []
+    for (const proposal of batch.proposals) {
+      const record = existing.find((candidate) => candidate.moduleId === proposal.moduleId)
+      if (record?.approved || record?.draft) {
+        preservedModuleIds.push(proposal.moduleId)
+        continue
+      }
+      caps.saveModuleDraft(projectId, proposal.manifest)
+      savedDraftModuleIds.push(proposal.moduleId)
+    }
+    return { ...batch, savedDraftModuleIds, preservedModuleIds }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.approveModuleBatch, (
+    _e,
+    input: { projectId: string; moduleIds: string[]; explicit: boolean },
+  ) => {
+    const projectId = requireString(input.projectId, 'projectId')
+    if (!input.explicit) throw new Error('Batch approval requires explicit confirmation.')
+    const architecture = caps.getApprovedArchitecture(projectId)
+    if (!architecture) throw new Error('Approve the architecture before approving modules.')
+    const selected = [...new Set(input.moduleIds)].filter((moduleId) =>
+      architecture.moduleIds.includes(moduleId),
+    )
+    const results = selected.map((moduleId) => {
+      const approved = caps.getApprovedModule(projectId, moduleId)
+      if (approved) return { moduleId, status: 'already-approved' as const, ok: true as const, approved }
+      const draft = caps.getModuleDraft(projectId, moduleId)
+      if (!draft) return { moduleId, status: 'missing' as const, ok: false as const }
+      const gate = evaluateModuleGate(draft)
+      if (!gate.passed) return { moduleId, status: 'blocked' as const, ok: false as const, gate }
+      return {
+        moduleId,
+        status: 'approved' as const,
+        ok: true as const,
+        gate,
+        approved: caps.approveModule(projectId, draft),
+      }
+    })
+    return { ok: results.length > 0 && results.every((result) => result.ok), results }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.planImplementationWaves, (_e, projectId: string): ImplementationWavePlan => {
+    requireString(projectId, 'projectId')
+    const architecture = caps.getApprovedArchitecture(projectId)
+    if (!architecture) throw new Error('Approve the architecture before planning implementation.')
+    return planImplementationWaves({
+      projectId,
+      architecture,
+      modules: caps.listModules(projectId, architecture.moduleIds),
+    })
+  })
+
+  ipcMain.handle(CAP_CHANNELS.compileFrontendBrief, (
+    _e,
+    input: { projectId: string; targetModuleIds?: string[] },
+  ): FrontendBrief => {
+    const projectId = requireString(input.projectId, 'projectId')
+    const architecture = caps.getApprovedArchitecture(projectId)
+    if (!architecture) throw new Error('Approve the architecture before compiling a frontend brief.')
+    const modules = caps.listModules(projectId, architecture.moduleIds)
+      .map((record) => record.approved)
+      .filter((manifest): manifest is ModuleManifest => Boolean(manifest))
+    const inbound = projectActiveBindingRecords(
+      caps.listInboundBindings(projectId),
+      caps.getApprovedFoundation(projectId),
+    )
+      .map((record) => record.approved)
+      .filter((binding): binding is InboundBinding => Boolean(binding))
+    const canonicalIds = new Set(inbound.map((binding) => binding.bindingId))
+    const legacy = caps.listBindings(projectId)
+      .map((record) => record.approved)
+      .filter((binding): binding is FrontendBinding =>
+        Boolean(binding) && !canonicalIds.has(binding!.bindingId))
+    return compileFrontendBrief({
+      projectId,
+      application: caps.getApprovedApplication(projectId),
+      architecture,
+      modules,
+      bindings: [...inbound, ...legacy],
+      targetModuleIds: input.targetModuleIds,
+    })
+  })
+
   ipcMain.handle(CAP_CHANNELS.listModules, (_e, projectId: string) => {
     requireString(projectId, 'projectId')
     caps.ensureInitialized(projectId)
@@ -460,18 +566,28 @@ export function registerCapabilityIpcHandlers(
     const packet = buildInterviewPacket(packetInput)
     const now = new Date().toISOString()
     const runId = `cap-interview-${crypto.randomUUID()}`
+    const targetKind =
+      packet.interviewKind === 'architecture' ? 'architecture'
+        : packet.interviewKind === 'module' ? 'module'
+          : 'product-definition'
+    const targetOwnerId =
+      packet.interviewKind === 'architecture' ? `architecture:${projectId}`
+        : packet.interviewKind === 'module' ? packet.inputContext.recordIds[1] ?? `module:${projectId}`
+          : `product-definition:${projectId}`
     return exportCapabilityPacketFiles({
       caps,
       runs,
       run: {
         schemaVersion: '1.0', runId, kind: 'interview', projectId,
-        targetOwnerId: packet.interviewBoundary, lifecycleState: 'draft',
-        inputRevisions: Object.fromEntries(
-          packet.inputContext.recordIds.map((id, index) => [id, packet.inputContext.revisions[index] ?? 'unknown']),
-        ),
-        inputHashes: Object.fromEntries(
-          packet.inputContext.recordIds.map((id, index) => [id, packet.inputContext.hashes[index] ?? 'unknown']),
-        ),
+        targetOwnerId, targetKind, lifecycleState: 'draft',
+        inputRevisions: Object.fromEntries(packet.inputContext.recordIds.flatMap((id, index) => {
+          const revision = packet.inputContext.revisions[index]
+          return revision ? [[id, revision]] : []
+        })),
+        inputHashes: Object.fromEntries(packet.inputContext.recordIds.flatMap((id, index) => {
+          const hash = packet.inputContext.hashes[index]
+          return hash ? [[id, hash]] : []
+        })),
         allowedPaths: [], expectedPaths: [], protectedPaths: [], packetRefs: [], artifactRefs: [],
         transitionHistory: [], createdAt: now, updatedAt: now,
       },
@@ -498,75 +614,205 @@ export function registerCapabilityIpcHandlers(
     },
   )
 
+  type ModuleImplementationContext = {
+    manifest: ModuleManifest
+    architecture: ArchitectureSpecification
+    packet: ImplementationPacket
+    brief: ModuleImplementationBrief
+    recommendedPrompt: string
+  }
+
+  const implementationContextFor = (
+    projectId: string,
+    moduleId: string,
+  ): ModuleImplementationContext => {
+    const manifest = caps.getApprovedModule(projectId, moduleId)
+    const architecture = caps.getApprovedArchitecture(projectId)
+    const project = workspace.getProject(projectId)
+    if (!manifest) throw new Error(`approved module not found: ${moduleId}`)
+    if (!architecture) throw new Error('approved architecture not found')
+    if (!project) throw new Error('project not found')
+    const interview = caps.getApprovedModuleInterview(projectId, moduleId)
+    const repository = discoverRepositoryImplementationContext({
+      repoRoot: project.repoPath,
+      allowedPaths: manifest.ownedPaths,
+      verificationCommands: project.verificationCommands,
+    })
+    const brief = buildModuleImplementationBrief({
+      manifest,
+      interview,
+      architecture,
+      repository,
+      ...approvedContractContext(caps, projectId, architecture),
+    })
+    const packet = buildImplementationPacket({
+      packetId: `pkt-implementation-${moduleId}-${Date.now()}-${crypto.randomUUID()}`,
+      projectId,
+      targetKind: manifest.moduleType === 'connection' ? 'connection' : 'module',
+      targetId: moduleId,
+      manifest,
+      architectureVersion: architecture.revision,
+      architectureHash: architecture.contentHash,
+      inputHashes: {
+        specification: canonicalHash(manifest),
+        architecture: architecture.contentHash,
+        dependencies: canonicalHash(manifest.requiredOperations),
+      },
+      acceptanceCases: interview?.acceptanceCases?.length
+        ? interview.acceptanceCases
+        : [{
+            id: `accept-${moduleId}`,
+            description: manifest.responsibility,
+            expectedOutcome: 'All declared verification suites pass',
+          }],
+      unchangedBehavior: manifest.excludedConcerns.map((concern) => `Do not add responsibility for ${concern}`),
+    })
+    const providedOperations = manifest.providedOperations.map((operation) => operation.operationId).join(', ') || 'none'
+    const requiredOperations = manifest.requiredOperations.map((operation) => operation.operationId).join(', ') || 'none'
+    return {
+      manifest,
+      architecture,
+      packet,
+      brief,
+      recommendedPrompt: `Implement production source code and tests for “${manifest.name}” (${moduleId}). Its approved responsibility is: ${manifest.responsibility}. Implement its provided operations (${providedOperations}) and consume its required operations (${requiredOperations}) only through the approved architecture boundaries. Follow the implementation plan, precedence rules, detailed interview evidence, reference architecture, and live repository context in the embedded implementation brief. Work only within allowedPaths, preserve unchanged behavior, run the required tests, and return only ${packet.requiredOutput}.`,
+    }
+  }
+
+  const draftImplementationRun = (
+    projectId: string,
+    moduleId: string,
+    context: ModuleImplementationContext,
+    runId: string,
+    now: string,
+    parentRunId?: string,
+  ): CapabilityRunScope & { kind: 'implementation' } => ({
+    schemaVersion: '1.0',
+    runId,
+    kind: 'implementation',
+    projectId,
+    targetOwnerId: moduleId,
+    targetKind: context.packet.targetKind === 'connection' ? 'adapter' : 'module',
+    parentRunId,
+    lifecycleState: 'draft',
+    inputRevisions: {
+      module: context.manifest.moduleVersion,
+      architecture: context.architecture.revision,
+    },
+    inputHashes: context.packet.inputHashes,
+    allowedPaths: context.packet.allowedPaths,
+    expectedPaths: context.packet.expectedPaths,
+    protectedPaths: context.packet.protectedPaths,
+    packetRefs: [],
+    artifactRefs: [],
+    transitionHistory: [],
+    createdAt: now,
+    updatedAt: now,
+  })
+
   ipcMain.handle(
     CAP_CHANNELS.exportImplementationPacket,
     (_e, input: { projectId: string; moduleId: string }) => {
       const projectId = requireString(input.projectId, 'projectId')
       const moduleId = requireString(input.moduleId, 'moduleId')
-      const manifest = caps.getApprovedModule(projectId, moduleId)
-      const architecture = caps.getApprovedArchitecture(projectId)
-      const project = workspace.getProject(projectId)
-      if (!manifest) throw new Error(`approved module not found: ${moduleId}`)
-      if (!architecture) throw new Error('approved architecture not found')
-      if (!project) throw new Error('project not found')
-      const interview = caps.getApprovedModuleInterview(projectId, moduleId)
-      const repository = discoverRepositoryImplementationContext({
-        repoRoot: project.repoPath,
-        allowedPaths: manifest.ownedPaths,
-        verificationCommands: project.verificationCommands,
-      })
-      const brief = buildModuleImplementationBrief({
-        manifest,
-        interview,
-        architecture,
-        repository,
-        ...approvedContractContext(caps, projectId, architecture),
-      })
-      const packet = buildImplementationPacket({
-        packetId: `pkt-implementation-${moduleId}-${Date.now()}`,
-        projectId,
-        targetKind: manifest.moduleType === 'connection' ? 'connection' : 'module',
-        targetId: moduleId,
-        manifest,
-        architectureVersion: architecture.revision,
-        architectureHash: architecture.contentHash,
-        inputHashes: {
-          specification: canonicalHash(manifest),
-          architecture: architecture.contentHash,
-          dependencies: canonicalHash(manifest.requiredOperations),
-        },
-        acceptanceCases: interview?.acceptanceCases?.length
-          ? interview.acceptanceCases
-          : [{
-              id: `accept-${moduleId}`,
-              description: manifest.responsibility,
-              expectedOutcome: 'All declared verification suites pass',
-            }],
-        unchangedBehavior: manifest.excludedConcerns.map((concern) => `Do not add responsibility for ${concern}`),
-      })
+      const context = implementationContextFor(projectId, moduleId)
       const now = new Date().toISOString()
       const runId = `cap-implementation-${crypto.randomUUID()}`
-      const providedOperations = manifest.providedOperations.map((operation) => operation.operationId).join(', ') || 'none'
-      const requiredOperations = manifest.requiredOperations.map((operation) => operation.operationId).join(', ') || 'none'
       const exported = exportCapabilityPacketFiles({
         caps,
         runs,
-        run: {
-          schemaVersion: '1.0', runId, kind: 'implementation', projectId,
-          targetOwnerId: moduleId, lifecycleState: 'draft',
-          inputRevisions: { module: manifest.moduleVersion, architecture: architecture.revision },
-          inputHashes: packet.inputHashes, allowedPaths: packet.allowedPaths,
-          expectedPaths: packet.expectedPaths, protectedPaths: packet.protectedPaths,
-          packetRefs: [], artifactRefs: [], transitionHistory: [], createdAt: now, updatedAt: now,
-        },
-        packet,
-        recommendedPrompt: `Implement production source code and tests for “${manifest.name}” (${moduleId}). Its approved responsibility is: ${manifest.responsibility}. Implement its provided operations (${providedOperations}) and consume its required operations (${requiredOperations}) only through the approved architecture boundaries. Follow the implementation plan, precedence rules, detailed interview evidence, reference architecture, and live repository context in the embedded implementation brief. Work only within allowedPaths, preserve unchanged behavior, run the required tests, and return only ${packet.requiredOutput}.`,
+        run: draftImplementationRun(projectId, moduleId, context, runId, now),
+        packet: context.packet,
+        recommendedPrompt: context.recommendedPrompt,
         supportingRecord: {
           fileName: 'module-implementation-brief.json',
-          value: brief,
+          value: context.brief,
         },
       })
-      return { ...exported, readiness: brief.readiness }
+      return { ...exported, readiness: context.brief.readiness }
+    },
+  )
+
+  ipcMain.handle(
+    CAP_CHANNELS.exportImplementationWave,
+    (_e, input: { projectId: string; waveIndex: number; moduleIds?: string[] }) => {
+      const projectId = requireString(input.projectId, 'projectId')
+      if (!Number.isInteger(input.waveIndex) || input.waveIndex < 1) throw new Error('invalid waveIndex')
+      const architecture = caps.getApprovedArchitecture(projectId)
+      if (!architecture) throw new Error('approved architecture not found')
+      const plan = planImplementationWaves({
+        projectId,
+        architecture,
+        modules: caps.listModules(projectId, architecture.moduleIds),
+      })
+      const wave = plan.waves.find((candidate) => candidate.index === input.waveIndex)
+      if (!wave) throw new Error(`implementation wave not found: ${input.waveIndex}`)
+      const requested = input.moduleIds?.length ? [...new Set(input.moduleIds)] : wave.targets.map((target) => target.moduleId)
+      const targets = requested.map((moduleId) => {
+        const target = wave.targets.find((candidate) => candidate.moduleId === moduleId)
+        if (!target) throw new Error(`${moduleId} is not in implementation wave ${input.waveIndex}`)
+        if (!target.batchEligible) throw new Error(`${moduleId} has no safe owned-path boundary`)
+        return target
+      })
+      if (targets.length === 0) throw new Error('select at least one implementation target')
+
+      const now = new Date().toISOString()
+      const groupId = `cap-wave-${crypto.randomUUID()}`
+      const contexts = targets.map((target) => ({
+        target,
+        runId: `cap-implementation-${crypto.randomUUID()}`,
+        context: implementationContextFor(projectId, target.moduleId),
+      }))
+      const handoff = buildImplementationWaveHandoffMarkdown({
+        groupId,
+        projectId,
+        waveIndex: input.waveIndex,
+        targets: contexts.map(({ target, runId, context }) => ({
+          runId,
+          moduleId: target.moduleId,
+          name: target.name,
+          packet: context.packet,
+          brief: context.brief,
+        })),
+      })
+      const handoffDir = path.join(caps.root(projectId), 'runs', 'waves', groupId)
+      fs.mkdirSync(handoffDir, { recursive: true })
+      const filePath = path.join(handoffDir, `implementation-wave-${input.waveIndex}.md`)
+      fs.writeFileSync(filePath, handoff.markdown)
+      const file = {
+        path: filePath,
+        bytes: Buffer.byteLength(handoff.markdown),
+        sha256: crypto.createHash('sha256').update(handoff.markdown).digest('hex'),
+      }
+      const packetRef = path.relative(caps.root(projectId), filePath).replace(/\\/g, '/')
+      for (const { target, runId, context } of contexts) {
+        runs.createRun(draftImplementationRun(projectId, target.moduleId, context, runId, now, groupId))
+        runs.updateRun(projectId, runId, {
+          packetRefs: [packetRef],
+          artifactRefs: [packetRef],
+          lifecycleState: 'exported',
+          transitionHistory: [{
+            at: now,
+            actor: 'desktop',
+            fromState: 'draft',
+            toState: 'exported',
+            evidenceIds: [packetRef],
+          }],
+        })
+      }
+      return {
+        groupId,
+        waveIndex: input.waveIndex,
+        recommendedPrompt: `Implement capability wave ${input.waveIndex} using the attached handoff. Return one scoped ZIP per target using the exact filenames in its result manifest.`,
+        files: [file],
+        uploadFiles: [file.path],
+        targets: contexts.map(({ target, runId, context }) => ({
+          moduleId: target.moduleId,
+          runId,
+          packetId: context.packet.packetId,
+          deliverable: handoff.resultManifest.results.find((result) => result.moduleId === target.moduleId)!.deliverable,
+          readiness: context.brief.readiness.status,
+        })),
+      }
     },
   )
 
@@ -627,7 +873,7 @@ export function registerCapabilityIpcHandlers(
       )
       const at = new Date().toISOString()
       runs.updateRun(input.projectId, input.runId, {
-        lifecycleState: 'overlay-inspected',
+        lifecycleState: 'inspected',
         inspectionRef,
         transitionHistory: [
           ...run.transitionHistory,
@@ -635,7 +881,7 @@ export function registerCapabilityIpcHandlers(
             at,
             actor: 'desktop',
             fromState: run.lifecycleState,
-            toState: 'overlay-inspected',
+            toState: 'inspected',
             evidenceIds: [inspectionRef],
           },
         ],
@@ -705,7 +951,7 @@ export function registerCapabilityIpcHandlers(
       )
       const at = new Date().toISOString()
       runs.updateRun(input.projectId, input.runId, {
-        lifecycleState: 'overlay-applied',
+        lifecycleState: 'applied',
         applicationRef,
         verificationRef: undefined,
         artifactRefs: [...new Set([...run.artifactRefs, applicationRef])],
@@ -715,7 +961,7 @@ export function registerCapabilityIpcHandlers(
             at,
             actor: 'desktop',
             fromState: run.lifecycleState,
-            toState: 'overlay-applied',
+            toState: 'applied',
             evidenceIds: [applicationRef],
           },
         ],
@@ -925,7 +1171,7 @@ export function registerCapabilityIpcHandlers(
         runs,
         run: {
           schemaVersion: '1.0', runId, kind: 'delta', projectId,
-          targetOwnerId: targetId, lifecycleState: 'draft',
+          targetOwnerId: targetId, targetKind: 'module', lifecycleState: 'draft',
           inputRevisions: { module: manifest.moduleVersion, architecture: architecture.revision, impact: impact.changeId },
           inputHashes: delta.inputHashes, allowedPaths: delta.allowedPaths,
           expectedPaths: delta.expectedPaths, protectedPaths: delta.protectedPaths,
@@ -1093,6 +1339,38 @@ export function registerCapabilityIpcHandlers(
           verification: result.record,
         }),
       )
+      if (result.record.outcome === 'passed') {
+        const implementationRun = runs.listRuns(projectId)
+          .filter((run) =>
+            run.targetOwnerId === moduleId
+            && (run.kind === 'implementation' || run.kind === 'delta')
+            && hasReachedWorkState(normalizeWorkLifecycleState(run.lifecycleState).state, 'applied'))
+          .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]
+        if (implementationRun) {
+          const verificationRef = path.posix.join(
+            'evidence',
+            'verifications',
+            `${result.record.verificationId}.json`,
+          )
+          const at = new Date().toISOString()
+          runs.updateRun(projectId, implementationRun.runId, {
+            lifecycleState: 'verified',
+            verificationRef,
+            artifactRefs: [...new Set([...implementationRun.artifactRefs, verificationRef])],
+            transitionHistory: [
+              ...implementationRun.transitionHistory,
+              {
+                at,
+                actor: 'desktop',
+                fromState: implementationRun.lifecycleState,
+                toState: 'verified',
+                evidenceIds: [verificationRef],
+              },
+            ],
+            updatedAt: at,
+          })
+        }
+      }
       return result
     },
   )

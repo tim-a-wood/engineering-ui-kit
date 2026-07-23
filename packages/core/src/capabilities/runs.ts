@@ -13,6 +13,11 @@ import type {
   JobRecord,
   VerificationRecord,
 } from './types.js'
+import {
+  assertWorkLifecycleTransition,
+  normalizeWorkLifecycleState,
+  type WorkLifecycleState,
+} from '../work.js'
 import { CapabilityWorkspace } from './persistence.js'
 
 function atomicWriteJson(filePath: string, value: unknown): void {
@@ -63,6 +68,13 @@ export class CapabilityRunStore {
     if (patch.runId && patch.runId !== existing.runId) {
       throw new Error('capability run runId cannot be changed')
     }
+    if (patch.lifecycleState && patch.lifecycleState !== existing.lifecycleState) {
+      const normalized = normalizeWorkLifecycleState(patch.lifecycleState)
+      if (normalized.condition === 'legacy-unknown') {
+        throw new Error(`unknown capability lifecycle state: ${patch.lifecycleState}`)
+      }
+      assertWorkLifecycleTransition(existing.lifecycleState, normalized.state)
+    }
     const updated: CapabilityRunScope = {
       ...existing,
       ...patch,
@@ -105,10 +117,11 @@ export class CapabilityRunStore {
     projectId: string,
     runId: string,
     transition: CapabilityRunTransition,
-    lifecycleState: string,
+    lifecycleState: WorkLifecycleState,
   ): CapabilityRunScope {
     const existing = this.getRun(projectId, runId)
     if (!existing) throw new Error(`capability run not found: ${runId}`)
+    assertWorkLifecycleTransition(existing.lifecycleState, lifecycleState)
     const updated: CapabilityRunScope = {
       ...existing,
       lifecycleState,

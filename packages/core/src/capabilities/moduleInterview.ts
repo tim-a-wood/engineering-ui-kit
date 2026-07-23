@@ -6,6 +6,7 @@
 import { diagnostic, sortDiagnostics, type CapDiagnostic } from './diagnostics.js'
 import { evaluateModuleGate, type GateResult } from './gates.js'
 import { buildInterviewPacket } from './packets.js'
+import { canonicalHash } from './hash.js'
 import type { CapabilityWorkspace } from './persistence.js'
 import { validateContractRecord } from './validation.js'
 import type {
@@ -204,8 +205,17 @@ export function buildModuleInterviewPacket(input: {
     },
     inputContext: {
       recordIds: [input.architecture.id, input.moduleId],
-      revisions: [input.architecture.revision],
-      hashes: [input.architecture.contentHash],
+      revisions: [input.architecture.revision, input.moduleVersion ?? '1.0.0'],
+      hashes: [
+        input.architecture.contentHash,
+        canonicalHash({
+          moduleId: input.moduleId,
+          moduleType: input.moduleType,
+          moduleVersion: input.moduleVersion ?? '1.0.0',
+          definition,
+          contextualFacts,
+        }),
+      ],
       facts: [
         `moduleType:${input.moduleType}`,
         `moduleVersion:${input.moduleVersion ?? '1.0.0'}`,

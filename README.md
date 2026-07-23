@@ -25,6 +25,9 @@ Front-end completeness is documented element-by-element in
 [`apps/gui/AUDIT-MANIFEST.md`](apps/gui/AUDIT-MANIFEST.md); end-to-end evidence
 (screenshots + machine-readable check results) lives in
 `apps/desktop/validation-evidence/` and `apps/gui/validation-evidence/`.
+The canonical human and LLM workflows, structural benchmark, local telemetry
+boundary, and migration audit are documented in
+[`docs/USABILITY-OVERHAUL.md`](docs/USABILITY-OVERHAUL.md).
 
 ## Installation
 

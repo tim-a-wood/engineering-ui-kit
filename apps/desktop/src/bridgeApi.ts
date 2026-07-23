@@ -10,24 +10,33 @@ import type {
   AppliedFiles,
   AttentionItem,
   CapabilityModuleRecord,
+  CapabilityRunScope,
   CapabilityBindingRecord,
   DeployableKind,
   ElementLoss,
   EvidenceCapture,
   FoundationPlan,
+  FrontendBrief,
   HandoffRun,
   InboundBinding,
+  ImplementationWavePlan,
   OverlayInspectionSummary,
   Project,
+  ProjectWorkOverview,
+  PreviewPreflightResult,
   RepoInventory,
+  RunCompletionRecord,
   RunModuleVerificationInput,
   RunModuleVerificationResult,
   ImpactRecord,
   ImpactClassification,
   DeltaQueueState,
   Settings,
+  ModuleProposalBatch,
+  TaskIntentProfile,
   SelectionEvidence,
   VerificationResult,
+  WorkflowMetrics,
   CapabilityIntegrationState,
   GenerationApplyRecord,
   GenerationPlan,
@@ -60,6 +69,7 @@ export type TaskPacketFields = {
   constraints: string
   acceptanceCriteria: string
   references: string
+  intentProfile?: TaskIntentProfile
 }
 
 export type PrepareContextResult = {
@@ -101,6 +111,37 @@ export type CapabilityPacketExportResult = {
   }
 }
 
+export type ModuleProposalBatchResult = ModuleProposalBatch & {
+  savedDraftModuleIds: string[]
+  preservedModuleIds: string[]
+}
+
+export type ModuleBatchApprovalResult = {
+  ok: boolean
+  results: {
+    moduleId: string
+    status: 'approved' | 'already-approved' | 'blocked' | 'missing'
+    ok: boolean
+    gate?: unknown
+    approved?: import('@engineering-ui-kit/core').ModuleManifest
+  }[]
+}
+
+export type ImplementationWaveExportResult = {
+  groupId: string
+  waveIndex: number
+  recommendedPrompt: string
+  files: { path: string; bytes: number; sha256: string }[]
+  uploadFiles: string[]
+  targets: {
+    moduleId: string
+    runId: string
+    packetId: string
+    deliverable: string
+    readiness: 'ready' | 'ready-with-gaps' | 'blocked'
+  }[]
+}
+
 /** Per-view display model for the evidence panel (screenshots as data URIs). */
 export type EvidenceViewDisplay = {
   viewId: string
@@ -128,11 +169,20 @@ export type EuikBridge = {
   listProjects(): Promise<Project[]>
   createProject(input: { name: string; repoPath: string; description?: string }): Promise<Project>
   updateProject(projectId: string, patch: Partial<Project>): Promise<Project>
+  getProjectWorkOverview(projectId: string): Promise<ProjectWorkOverview>
+  preflightProjectPreview(projectId: string): Promise<PreviewPreflightResult>
 
   listRuns(projectId?: string): Promise<HandoffRun[]>
   createRun(projectId: string): Promise<HandoffRun>
   getRun(runId: string): Promise<HandoffRun | undefined>
   updateRun(runId: string, patch: Partial<HandoffRun>): Promise<HandoffRun>
+  completeRun(input: {
+    runId: string
+    decision: 'approved' | 'needs-follow-up' | 'rejected'
+    userDecisionNote?: string
+  }): Promise<RunCompletionRecord>
+  getRunCompletion(runId: string): Promise<RunCompletionRecord | undefined>
+  getProjectWorkflowMetrics(projectId: string): Promise<WorkflowMetrics>
 
   pickDirectory(): Promise<string | undefined>
   pickZipFile(): Promise<string | undefined>
@@ -175,6 +225,11 @@ export type EuikBridge = {
     projectId: string
     moduleId: string
   }): Promise<CapabilityPacketExportResult>
+  capabilitiesExportImplementationWave(input: {
+    projectId: string
+    waveIndex: number
+    moduleIds?: string[]
+  }): Promise<ImplementationWaveExportResult>
   capabilitiesStartHandoffDrag(input: { projectId: string; runId: string }): Promise<{ files: number }>
   capabilitiesImportInterviewResponse(
     projectId: string,
@@ -192,9 +247,20 @@ export type EuikBridge = {
   capabilitiesApproveArchitecture(projectId: string, draft: unknown): Promise<{ ok: boolean; gate?: unknown; approved?: unknown }>
   capabilitiesSaveModuleDraft(projectId: string, draft: unknown, interviewResponse?: unknown): Promise<{ ok: true }>
   capabilitiesApproveModule(projectId: string, draft: unknown, interviewResponse?: unknown): Promise<{ ok: boolean; gate?: unknown; approved?: unknown }>
+  capabilitiesProposeModuleBatch(projectId: string): Promise<ModuleProposalBatchResult>
+  capabilitiesApproveModuleBatch(input: {
+    projectId: string
+    moduleIds: string[]
+    explicit: boolean
+  }): Promise<ModuleBatchApprovalResult>
+  capabilitiesPlanImplementationWaves(projectId: string): Promise<ImplementationWavePlan>
+  capabilitiesCompileFrontendBrief(input: {
+    projectId: string
+    targetModuleIds?: string[]
+  }): Promise<FrontendBrief>
   capabilitiesListModules(projectId: string): Promise<CapabilityModuleRecord[]>
   capabilitiesListBindings(projectId: string): Promise<CapabilityBindingRecord[]>
-  capabilitiesListRuns(projectId: string): Promise<unknown[]>
+  capabilitiesListRuns(projectId: string): Promise<CapabilityRunScope[]>
   capabilitiesCreateRun(run: unknown): Promise<unknown>
   capabilitiesInspectOverlay(input: { projectId: string; runId: string; zipPath: string }): Promise<OverlayInspectionSummary>
   capabilitiesApplyOverlay(input: {
@@ -349,10 +415,15 @@ export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
   listProjects: 'projects:list',
   createProject: 'projects:create',
   updateProject: 'projects:update',
+  getProjectWorkOverview: 'work:get-project-overview',
+  preflightProjectPreview: 'preview:preflight',
   listRuns: 'runs:list',
   createRun: 'runs:create',
   getRun: 'runs:get',
   updateRun: 'runs:update',
+  completeRun: 'runs:complete',
+  getRunCompletion: 'runs:get-completion',
+  getProjectWorkflowMetrics: 'telemetry:project-metrics',
   pickDirectory: 'dialog:pick-directory',
   pickZipFile: 'dialog:pick-zip',
   addReferenceFile: 'workflow:add-reference-file',
@@ -384,6 +455,7 @@ export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
   capabilitiesBuildInterviewPacket: 'capabilities:build-interview-packet',
   capabilitiesExportInterviewPacket: 'capabilities:export-interview-packet',
   capabilitiesExportImplementationPacket: 'capabilities:export-implementation-packet',
+  capabilitiesExportImplementationWave: 'capabilities:export-implementation-wave',
   capabilitiesStartHandoffDrag: 'capabilities:start-handoff-drag',
   capabilitiesImportInterviewResponse: 'capabilities:import-interview-response',
   capabilitiesGetArchitecture: 'capabilities:get-architecture',
@@ -391,6 +463,10 @@ export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
   capabilitiesApproveArchitecture: 'capabilities:approve-architecture',
   capabilitiesSaveModuleDraft: 'capabilities:save-module-draft',
   capabilitiesApproveModule: 'capabilities:approve-module',
+  capabilitiesProposeModuleBatch: 'capabilities:propose-module-batch',
+  capabilitiesApproveModuleBatch: 'capabilities:approve-module-batch',
+  capabilitiesPlanImplementationWaves: 'capabilities:plan-implementation-waves',
+  capabilitiesCompileFrontendBrief: 'capabilities:compile-frontend-brief',
   capabilitiesListModules: 'capabilities:list-modules',
   capabilitiesListBindings: 'capabilities:list-bindings',
   capabilitiesListRuns: 'capabilities:list-runs',

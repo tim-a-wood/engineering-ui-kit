@@ -11,24 +11,33 @@ import type {
   AppliedFiles,
   AttentionItem,
   CapabilityModuleRecord,
+  CapabilityRunScope,
   CapabilityBindingRecord,
   DeployableKind,
   ElementLoss,
   EvidenceCapture,
   FoundationPlan,
+  FrontendBrief,
   HandoffRun,
   InboundBinding,
+  ImplementationWavePlan,
   OverlayInspectionSummary,
   Project,
+  ProjectWorkOverview,
+  PreviewPreflightResult,
   RepoInventory,
+  RunCompletionRecord,
   RunModuleVerificationInput,
   RunModuleVerificationResult,
   ImpactRecord,
   ImpactClassification,
   DeltaQueueState,
   Settings,
+  ModuleProposalBatch,
+  TaskIntentProfile,
   SelectionEvidence,
   VerificationResult,
+  WorkflowMetrics,
   CapabilityIntegrationState,
   GenerationApplyRecord,
   GenerationPlan,
@@ -62,7 +71,9 @@ export type TaskPacketFields = {
   constraints: string
   acceptanceCriteria: string
   references: string
+  intentProfile?: TaskIntentProfile
 }
+export type TaskPacketTextKey = Exclude<keyof TaskPacketFields, 'intentProfile'>
 
 export type PrepareContextResult = {
   inventory: RepoInventory
@@ -100,6 +111,37 @@ export type CapabilityPacketExportResult = {
   }
 }
 
+export type ModuleProposalBatchResult = ModuleProposalBatch & {
+  savedDraftModuleIds: string[]
+  preservedModuleIds: string[]
+}
+
+export type ModuleBatchApprovalResult = {
+  ok: boolean
+  results: {
+    moduleId: string
+    status: 'approved' | 'already-approved' | 'blocked' | 'missing'
+    ok: boolean
+    gate?: unknown
+    approved?: import('@engineering-ui-kit/core').ModuleManifest
+  }[]
+}
+
+export type ImplementationWaveExportResult = {
+  groupId: string
+  waveIndex: number
+  recommendedPrompt: string
+  files: { path: string; bytes: number; sha256: string }[]
+  uploadFiles: string[]
+  targets: {
+    moduleId: string
+    runId: string
+    packetId: string
+    deliverable: string
+    readiness: 'ready' | 'ready-with-gaps' | 'blocked'
+  }[]
+}
+
 export type EvidenceViewDisplay = {
   viewId: string
   label: string
@@ -124,10 +166,19 @@ export type EuikBridge = {
   listProjects(): Promise<Project[]>
   createProject(input: { name: string; repoPath: string; description?: string }): Promise<Project>
   updateProject(projectId: string, patch: Partial<Project>): Promise<Project>
+  getProjectWorkOverview(projectId: string): Promise<ProjectWorkOverview>
+  preflightProjectPreview(projectId: string): Promise<PreviewPreflightResult>
   listRuns(projectId?: string): Promise<HandoffRun[]>
   createRun(projectId: string): Promise<HandoffRun>
   getRun(runId: string): Promise<HandoffRun | undefined>
   updateRun(runId: string, patch: Partial<HandoffRun>): Promise<HandoffRun>
+  completeRun(input: {
+    runId: string
+    decision: 'approved' | 'needs-follow-up' | 'rejected'
+    userDecisionNote?: string
+  }): Promise<RunCompletionRecord>
+  getRunCompletion(runId: string): Promise<RunCompletionRecord | undefined>
+  getProjectWorkflowMetrics(projectId: string): Promise<WorkflowMetrics>
   pickDirectory(): Promise<string | undefined>
   pickZipFile(): Promise<string | undefined>
   addReferenceFile(runId: string, sourcePath?: string): Promise<{ path: string; name: string } | undefined>
@@ -162,6 +213,11 @@ export type EuikBridge = {
     projectId: string
     moduleId: string
   }): Promise<CapabilityPacketExportResult>
+  capabilitiesExportImplementationWave(input: {
+    projectId: string
+    waveIndex: number
+    moduleIds?: string[]
+  }): Promise<ImplementationWaveExportResult>
   capabilitiesStartHandoffDrag(input: { projectId: string; runId: string }): Promise<{ files: number }>
   capabilitiesImportInterviewResponse(
     projectId: string,
@@ -179,9 +235,20 @@ export type EuikBridge = {
   capabilitiesApproveArchitecture(projectId: string, draft: unknown): Promise<{ ok: boolean; gate?: unknown; approved?: unknown }>
   capabilitiesSaveModuleDraft(projectId: string, draft: unknown, interviewResponse?: unknown): Promise<{ ok: true }>
   capabilitiesApproveModule(projectId: string, draft: unknown, interviewResponse?: unknown): Promise<{ ok: boolean; gate?: unknown; approved?: unknown }>
+  capabilitiesProposeModuleBatch(projectId: string): Promise<ModuleProposalBatchResult>
+  capabilitiesApproveModuleBatch(input: {
+    projectId: string
+    moduleIds: string[]
+    explicit: boolean
+  }): Promise<ModuleBatchApprovalResult>
+  capabilitiesPlanImplementationWaves(projectId: string): Promise<ImplementationWavePlan>
+  capabilitiesCompileFrontendBrief(input: {
+    projectId: string
+    targetModuleIds?: string[]
+  }): Promise<FrontendBrief>
   capabilitiesListModules(projectId: string): Promise<CapabilityModuleRecord[]>
   capabilitiesListBindings(projectId: string): Promise<CapabilityBindingRecord[]>
-  capabilitiesListRuns(projectId: string): Promise<unknown[]>
+  capabilitiesListRuns(projectId: string): Promise<CapabilityRunScope[]>
   capabilitiesCreateRun(run: unknown): Promise<unknown>
   capabilitiesInspectOverlay(input: { projectId: string; runId: string; zipPath: string }): Promise<OverlayInspectionSummary>
   capabilitiesApplyOverlay(input: {

@@ -34,6 +34,8 @@ import type {
   CONNECTION_VERIFICATION_STATUSES,
   MATERIALITY_LEVELS,
 } from './parity.js'
+import type { PersistedWorkLifecycleState } from '../workTypes.js'
+import type { WorkTargetKind } from '../workTypes.js'
 
 export type ModuleType = (typeof MODULE_TYPES)[number]
 export type RuntimeAllocation = (typeof RUNTIME_ALLOCATIONS)[number]
@@ -521,8 +523,8 @@ export type AzureDevOpsProvenance = {
 export type CapabilityRunTransition = {
   at: string
   actor: string
-  fromState: string
-  toState: string
+  fromState: PersistedWorkLifecycleState
+  toState: PersistedWorkLifecycleState
   sourceRevision?: string
   resultRevision?: string
   evidenceIds?: string[]
@@ -535,7 +537,13 @@ export type CapabilityRunScope = {
   kind: CapabilityRunKind
   projectId: string
   targetOwnerId: string
-  lifecycleState: string
+  /** Explicit target classification; legacy records are classified on read. */
+  targetKind?: WorkTargetKind
+  lifecycleState: PersistedWorkLifecycleState
+  /** Optional cross-workflow lineage added by the unified project work model. */
+  parentRunId?: string
+  supersedesRunId?: string
+  changeReason?: string
   inputRevisions: Record<string, string>
   inputHashes: Record<string, string>
   allowedPaths: string[]

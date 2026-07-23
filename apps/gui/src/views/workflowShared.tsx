@@ -15,7 +15,7 @@ import type { EuikBridge, RunEvidence } from '../bridge'
 import { Dialog, StatusLine, type Status } from '../components'
 import { Markdown } from '../markdown'
 import { Icon } from '../icons'
-import type { TaskPacketFields } from '../bridge'
+import type { TaskPacketFields, TaskPacketTextKey } from '../bridge'
 import type { ViewId } from '../appState'
 import type { GuideTopicId } from '../guides'
 import { useEffect } from 'react'
@@ -97,7 +97,7 @@ export const EXCLUDED_CATEGORIES = [
 ]
 
 export const PACKET_SECTIONS: {
-  key: keyof TaskPacketFields
+  key: TaskPacketTextKey
   title: string
   description: string
   icon: ReactElement

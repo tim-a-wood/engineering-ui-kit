@@ -4,6 +4,7 @@
  * rather than author. `Settings.preferredTemplate` selects the default
  * (PRD §28.8 — this is the consumer of that setting).
  */
+import type { TaskIntentProfile } from '@engineering-ui-kit/core'
 
 export type TaskTemplate = {
   id: string
@@ -23,6 +24,73 @@ export type TaskTemplate = {
    * this — the port here must match the port the template tells Copilot to use.
    */
   launchDefaults?: { url: string; command: string }
+}
+
+const UNSPECIFIED_INTENT: TaskIntentProfile = {
+  delivery: 'unspecified',
+  backend: 'unspecified',
+  network: 'unspecified',
+  persistence: 'unspecified',
+  filesystem: 'unspecified',
+}
+
+const TASK_INTENT_PROFILES: Partial<Record<string, TaskIntentProfile>> = {
+  'standards-refresh': {
+    delivery: 'preserve-existing',
+    backend: 'preserve',
+    network: 'preserve',
+    persistence: 'preserve',
+    filesystem: 'preserve',
+  },
+  'new-ui-from-requirements': {
+    delivery: 'frontend-only',
+    backend: 'forbidden',
+    network: 'forbidden',
+    persistence: 'forbidden',
+    filesystem: 'forbidden',
+  },
+  'new-ui-existing-api': {
+    delivery: 'existing-api-ui',
+    backend: 'existing',
+    network: 'required',
+    persistence: 'existing',
+    filesystem: 'forbidden',
+  },
+  'requirements-from-brief': {
+    delivery: 'document-only',
+    backend: 'unspecified',
+    network: 'unspecified',
+    persistence: 'unspecified',
+    filesystem: 'unspecified',
+  },
+  'monolithic-web-app': {
+    delivery: 'full-app',
+    backend: 'required',
+    network: 'required',
+    persistence: 'required',
+    filesystem: 'required',
+  },
+  'add-screen': {
+    delivery: 'preserve-existing',
+    backend: 'preserve',
+    network: 'preserve',
+    persistence: 'preserve',
+    filesystem: 'preserve',
+  },
+  'iterate-on-feedback': {
+    delivery: 'iteration',
+    backend: 'preserve',
+    network: 'preserve',
+    persistence: 'preserve',
+    filesystem: 'preserve',
+  },
+  'a11y-remediation': {
+    delivery: 'preserve-existing',
+    backend: 'preserve',
+    network: 'preserve',
+    persistence: 'preserve',
+    filesystem: 'preserve',
+  },
 }
 
 /** The port the monolithic-web-app method standardizes on (template ⇄ launch default). */
@@ -315,6 +383,7 @@ export function applyTemplate(template: TaskTemplate, projectName: string): {
   constraints: string
   acceptanceCriteria: string
   references: string
+  intentProfile: TaskIntentProfile
 } {
   const fill = (text: string) => text.replaceAll('{project}', projectName)
   return {
@@ -324,6 +393,7 @@ export function applyTemplate(template: TaskTemplate, projectName: string): {
     constraints: fill(template.constraints),
     acceptanceCriteria: fill(template.acceptanceCriteria),
     references: fill(template.references),
+    intentProfile: TASK_INTENT_PROFILES[template.id] ?? UNSPECIFIED_INTENT,
   }
 }
 

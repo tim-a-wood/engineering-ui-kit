@@ -16,12 +16,19 @@ import type {
   CapabilityIntegrationState,
   CapabilityBindingRecord,
   CapabilityModuleRecord,
+  CapabilityRunScope,
   DeployableKind,
   ExposureLevel,
   FoundationPlan,
   ModuleManifest,
 } from '@engineering-ui-kit/core'
-import { evaluateConnectEntryPoints, type DeployableConnectStatus } from '@engineering-ui-kit/core/browser'
+import {
+  capabilityRunEvidenceState,
+  evaluateConnectEntryPoints,
+  hasReachedWorkState,
+  type DeployableConnectStatus,
+  type WorkLifecycleState,
+} from '@engineering-ui-kit/core/browser'
 import type { GuideTopicId } from '../../guides'
 
 export type StageId = 'define' | 'architect' | 'build' | 'verify'
@@ -89,6 +96,8 @@ export type JourneyInput = {
    */
   foundation?: { approved?: FoundationPlan }
   modules: CapabilityModuleRecord[]
+  /** Persisted implementation/delta runs. Approved specifications alone never complete Build. */
+  capabilityRuns?: CapabilityRunScope[]
   /**
    * Legacy CAP-CONTRACT-013 `FrontendBinding` records. Retained for callers that have
    * not yet migrated to `inboundBindings`; no longer consulted for Build completeness
@@ -172,6 +181,18 @@ function approvedManifests(modules: CapabilityModuleRecord[]): ModuleManifest[] 
   return modules.map((m) => m.approved).filter((m): m is ModuleManifest => Boolean(m))
 }
 
+function latestModuleRunState(
+  runs: CapabilityRunScope[],
+  moduleId: string,
+): WorkLifecycleState | undefined {
+  const run = runs
+    .filter((candidate) =>
+      candidate.targetOwnerId === moduleId
+      && (candidate.kind === 'implementation' || candidate.kind === 'delta'))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]
+  return run ? capabilityRunEvidenceState(run).state : undefined
+}
+
 function nextStageOf(id: StageId): StageId | undefined {
   const idx = STAGE_ORDER.indexOf(id)
   return idx >= 0 ? STAGE_ORDER[idx + 1] : undefined
@@ -197,12 +218,24 @@ export function deriveJourney(input: JourneyInput): Journey {
   const allocatedModuleIds = archApproved ? approvedArch?.moduleIds ?? [] : []
   const approved = approvedManifests(input.modules)
   const approvedById = new Map(approved.map((m) => [m.moduleId, m]))
+  const capabilityRuns = input.capabilityRuns ?? []
 
-  // ---- Build: modules → entry points → shared application setup ----
+  // ---- Build: applied implementations → entry points → shared application setup ----
   const buildTotal = allocatedModuleIds.length
-  const buildDone = allocatedModuleIds.filter((id) => approvedById.has(id)).length
+  const approvedCount = allocatedModuleIds.filter((id) => approvedById.has(id)).length
+  const moduleImplementationStates = new Map(allocatedModuleIds.map((moduleId) => {
+    const runState = latestModuleRunState(capabilityRuns, moduleId)
+    const freshnessReady = input.modules.find((record) => record.moduleId === moduleId)
+      ?.freshness?.primaryState === 'ready'
+    return [moduleId, freshnessReady ? 'verified' : runState] as const
+  }))
+  const buildDone = allocatedModuleIds.filter((id) => {
+    const state = moduleImplementationStates.get(id)
+    return state ? hasReachedWorkState(state, 'applied') : false
+  }).length
   const buildHasModules = buildTotal > 0
-  const modulesApproved = buildHasModules && buildDone === buildTotal
+  const modulesApproved = buildHasModules && approvedCount === buildTotal
+  const modulesApplied = buildHasModules && buildDone === buildTotal
 
   const approvedOperationKeys = new Set(approved.flatMap((manifest) => manifest.providedOperations
     .map((operation) => `${operation.operationId}@${operation.contractVersion}`)))
@@ -246,7 +279,7 @@ export function deriveJourney(input: JourneyInput): Journey {
       && item.latestCommandRun.planHash === item.currentPlan.planHash,
     ))
   )
-  const buildComplete = modulesApproved && entryPointsConfigured && currentGenerationApplied && currentCommandsPassed
+  const buildComplete = modulesApproved && modulesApplied && entryPointsConfigured && currentGenerationApplied && currentCommandsPassed
 
   // ---- Verify ----
   const requiredBindings = inboundBindings.filter((binding) => binding.approved)
@@ -256,13 +289,15 @@ export function deriveJourney(input: JourneyInput): Journey {
       .filter((record) => record.verificationStatus === 'pass' && !record.usedTestAdapter)
       .map((record) => record.bindingId),
   )
-  const verifyReady = hasProductionIntegration
+  const verifiedModules = allocatedModuleIds.filter((moduleId) => {
+    const state = moduleImplementationStates.get(moduleId)
+    return state ? hasReachedWorkState(state, 'verified') : false
+  }).length
+  const verifiedBindings = hasProductionIntegration
     ? requiredBindings.filter((binding) => passingBindingIds.has(binding.bindingId)).length
-    : approved.filter((m) => {
-        const rec = input.modules.find((r) => r.moduleId === m.moduleId)
-        return rec?.freshness?.primaryState === 'ready'
-      }).length
-  const verifyTotal = hasProductionIntegration ? requiredBindings.length : approved.length
+    : 0
+  const verifyReady = verifiedModules + verifiedBindings
+  const verifyTotal = buildTotal + (hasProductionIntegration ? requiredBindings.length : 0)
   const verifyUnlocked = buildComplete
   const verifyComplete = verifyUnlocked
     && (verifyTotal > 0 ? verifyReady === verifyTotal : hasProductionIntegration && currentGenerationApplied)
@@ -319,7 +354,9 @@ export function deriveJourney(input: JourneyInput): Journey {
       : !buildHasModules
         ? 'The architecture allocates no modules.'
         : !modulesApproved
-          ? `${buildDone} of ${buildTotal} approved.`
+          ? `${approvedCount} of ${buildTotal} module specifications approved.`
+          : !modulesApplied
+            ? `${buildDone} of ${buildTotal} module implementations applied (${approvedCount} specifications approved).`
           : requiresEntryPoints && !hasApprovedOperation
             ? 'Approve at least one capability operation before configuring entry points.'
             : !entryPointsConfigured
@@ -328,8 +365,8 @@ export function deriveJourney(input: JourneyInput): Journey {
                 : `${entryPointDone} of ${entryPointTotal} application entry points configured.`
           : buildComplete
             ? hasProductionIntegration
-              ? `All ${buildTotal} modules approved, entry points configured, and shared setup tested.`
-              : `All ${buildTotal} modules approved.`
+              ? `All ${buildTotal} module implementations applied, entry points configured, and shared setup tested.`
+              : `All ${buildTotal} module implementations applied.`
             : integrationDeployables.length === 0
               ? 'Approve the deployable foundation before generating infrastructure.'
               : currentGenerationApplied

@@ -21,6 +21,7 @@ export function HubView(props: {
   onStartRun: (projectId: string) => void
   onOpenStep: (view: ViewId) => void
   onOpenCapabilities: (projectId?: string) => void
+  onOpenProject: (projectId: string) => void
 }) {
   const [newProjectOpen, setNewProjectOpen] = useState(false)
   const [continueThumbnail, setContinueThumbnail] = useState<string | null>(null)
@@ -60,8 +61,8 @@ export function HubView(props: {
   return (
     <>
       <PageHeader
-        title="Build & Test"
-        subtitle="Plan capabilities, build a change, and verify the result in one project workspace."
+        title="Projects"
+        subtitle="Open one product workspace for capabilities, frontend, integration, evidence, and history."
         actions={
           <>
             {activeProject ? (
@@ -80,8 +81,8 @@ export function HubView(props: {
         <button type="button" className="hub-continue" aria-label={`Continue ${activeProject.name} in ${currentStep.short}`} onClick={() => props.onOpenStep(continueView)}>
           <div className="hub-continue-head">
             <div className="hub-continue-copy">
-              <span className="hub-continue-kicker">Active handoff</span>
-              <h2>Continue {activeProject.name}</h2>
+              <span className="hub-continue-kicker">Resume active task</span>
+              <h2>{activeProject.name}</h2>
               <p>Pick up where you left off in {currentStep.short}.</p>
             </div>
             <span className="hub-row-arrow" aria-hidden="true">{Icon.arrowRight(16)}</span>
@@ -105,7 +106,7 @@ export function HubView(props: {
                 <div><dt>Last activity</dt><dd>{lastUpdatedLabel(activeProject.updatedAt).replace('Last updated ', '')}</dd></div>
                 <div><dt>Location</dt><dd title={activeProject.repoPath}>{activeProject.repoPath}</dd></div>
               </dl>
-              <span className="hub-continue-action">Continue to {currentStep.short} {Icon.arrowRight(14)}</span>
+              <span className="hub-continue-action">Resume {currentStep.short} {Icon.arrowRight(14)}</span>
             </div>
           </div>
         </button>
@@ -137,7 +138,7 @@ export function HubView(props: {
             {recent.map((project) => (
               <li key={project.id}>
                 <div className="project-row-shell">
-                  <button type="button" className="project-row" aria-label={`Build and test ${project.name}`} onClick={() => props.onStartRun(project.id)}>
+                  <button type="button" className="project-row" aria-label={`Open project ${project.name}`} onClick={() => props.onOpenProject(project.id)}>
                     <span className="project-row-icon" aria-hidden="true">{Icon.folder(18)}</span>
                     <div className="project-row-copy">
                       <strong>{project.name}</strong>
@@ -147,7 +148,7 @@ export function HubView(props: {
                         {lastUpdatedLabel(project.updatedAt)}
                       </p>
                     </div>
-                    <span className="project-row-primary-label">Build &amp; Test</span>
+                    <span className="project-row-primary-label">Open project</span>
                     <span className="hub-row-arrow" aria-hidden="true">{Icon.chevronRight(16)}</span>
                   </button>
                   <button
@@ -172,7 +173,7 @@ export function HubView(props: {
           onCreated={async (project) => {
             setNewProjectOpen(false)
             await props.refreshProjects()
-            props.onStartRun(project.id)
+            props.onOpenProject(project.id)
           }}
         />
       )}

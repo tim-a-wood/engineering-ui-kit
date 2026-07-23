@@ -216,7 +216,7 @@ export function BuildTaskPanel(props: BuildTaskPanelProps) {
 function GoalSection(props: {
   fields: TaskPacketFields
   setFields: BuildTaskPanelProps['setFields']
-  editing: keyof TaskPacketFields | null
+  editing: BuildTaskPanelProps['editing']
   setEditing: BuildTaskPanelProps['setEditing']
   draft: string
   setDraft: (v: string) => void

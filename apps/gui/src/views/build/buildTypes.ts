@@ -2,8 +2,8 @@
  * Shared prop types for the consolidated Build view and its panels.
  */
 
-import type { AppliedFiles, OverlayInspectionSummary, Project, HandoffRun } from '@engineering-ui-kit/core'
-import type { BuildPacketResult, EuikBridge, PrepareContextResult, TaskPacketFields } from '../../bridge'
+import type { AppliedFiles, OverlayInspectionSummary, Project, HandoffRun, TaskPacketDiagnostic } from '@engineering-ui-kit/core'
+import type { BuildPacketResult, EuikBridge, PrepareContextResult, TaskPacketFields, TaskPacketTextKey } from '../../bridge'
 import type { BuildWorkspaceState, RecipePrefill, ViewId } from '../../appState'
 import type { GuideTopicId } from '../../guides'
 import type { Status } from '../../components'
@@ -35,8 +35,8 @@ export type BuildTaskPanelProps = {
   preferredTemplate?: string
   fields: TaskPacketFields
   setFields: (updater: TaskPacketFields | ((prev: TaskPacketFields) => TaskPacketFields)) => void
-  editing: keyof TaskPacketFields | null
-  setEditing: (key: keyof TaskPacketFields | null) => void
+  editing: TaskPacketTextKey | null
+  setEditing: (key: TaskPacketTextKey | null) => void
   draft: string
   setDraft: (value: string) => void
   showValidation: boolean
@@ -80,6 +80,7 @@ export type BuildWorkspaceProps = {
   contextBusy: boolean
   packetBusy: boolean
   packetStale: boolean
+  packetDiagnostics: TaskPacketDiagnostic[]
   contextStale: boolean
   status: Status
   setStatus: (s: Status) => void

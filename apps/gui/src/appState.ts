@@ -16,6 +16,7 @@ export type ViewId =
   | 'recipes'
   | 'components'
   | 'projects'
+  | 'project-overview'
   | 'settings'
   | 'build'
   | 'prepare-context'

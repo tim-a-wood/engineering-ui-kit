@@ -21,6 +21,7 @@ import type {
   Project,
   SelectionEvidence,
   CapabilityIntegrationState,
+  CapabilityRunScope,
 } from '@engineering-ui-kit/core'
 import type { CapabilityDeployableSummary, EuikBridge, InboundBindingReadRecord, TaskPacketFields } from '../../bridge'
 import { EmptyState, PageHeader } from '../../components'
@@ -129,6 +130,7 @@ export function CapabilitiesView({
   const [architecture, setArchitecture] = useState<{ draft?: unknown; approved?: unknown }>({})
   const [attentionItems, setAttentionItems] = useState<AttentionItem[]>([])
   const [moduleRecords, setModuleRecords] = useState<CapabilityModuleRecord[]>([])
+  const [capabilityRuns, setCapabilityRuns] = useState<CapabilityRunScope[]>([])
   const [bindingRecords, setBindingRecords] = useState<CapabilityBindingRecord[]>([])
   const [deployables, setDeployables] = useState<CapabilityDeployableSummary[]>([])
   const [inboundBindingRecords, setInboundBindingRecords] = useState<InboundBindingReadRecord[]>([])
@@ -162,13 +164,14 @@ export function CapabilitiesView({
       architecture,
       foundation,
       modules: moduleRecords,
+      capabilityRuns,
       bindings: bindingRecords,
       deployables,
       inboundBindings: inboundBindingProjections,
       connectDisposition: selectedProject?.capabilitiesConnectDisposition,
       integration: integrationState,
     }),
-    [application, architecture, foundation, moduleRecords, bindingRecords, deployables, inboundBindingProjections, selectedProject?.capabilitiesConnectDisposition, integrationState],
+    [application, architecture, foundation, moduleRecords, capabilityRuns, bindingRecords, deployables, inboundBindingProjections, selectedProject?.capabilitiesConnectDisposition, integrationState],
   )
   const journey = useMemo(() => deriveJourney(journeyInput), [journeyInput])
   const effectiveAttentionItems = useMemo(() => {
@@ -186,18 +189,19 @@ export function CapabilitiesView({
 
   const fetchWorkspace = useCallback(
     async (id: string) => {
-      const [app, arch, attention, modules, bindings, deployableList, inboundBindings, foundationResult, integration] = await Promise.all([
+      const [app, arch, attention, modules, runs, bindings, deployableList, inboundBindings, foundationResult, integration] = await Promise.all([
         bridge.capabilitiesGetApplication(id),
         bridge.capabilitiesGetArchitecture(id),
         bridge.capabilitiesListNeedsAttention(id),
         bridge.capabilitiesListModules(id),
+        bridge.capabilitiesListRuns(id),
         bridge.capabilitiesListBindings(id),
         bridge.capabilitiesListDeployables(id),
         bridge.capabilitiesListInboundBindings(id),
         bridge.capabilitiesGetFoundation(id),
         bridge.capabilitiesGetIntegrationState(id),
       ])
-      return { application: app, architecture: arch, attention, modules, bindings, deployableList, inboundBindings, foundation: foundationResult, integration }
+      return { application: app, architecture: arch, attention, modules, runs, bindings, deployableList, inboundBindings, foundation: foundationResult, integration }
     },
     [bridge],
   )
@@ -207,6 +211,7 @@ export function CapabilitiesView({
     setArchitecture({})
     setAttentionItems([])
     setModuleRecords([])
+    setCapabilityRuns([])
     setBindingRecords([])
     setDeployables([])
     setInboundBindingRecords([])
@@ -232,6 +237,7 @@ export function CapabilitiesView({
         setArchitecture(d.architecture)
         setAttentionItems(d.attention)
         setModuleRecords(d.modules)
+        setCapabilityRuns(d.runs)
         setBindingRecords(d.bindings)
         setDeployables(d.deployableList)
         setInboundBindingRecords(d.inboundBindings)
@@ -243,6 +249,7 @@ export function CapabilitiesView({
           architecture: d.architecture,
           foundation: d.foundation,
           modules: d.modules,
+          capabilityRuns: d.runs,
           bindings: d.bindings,
           deployables: d.deployableList,
           inboundBindings: projectInboundBindings(d.inboundBindings),
@@ -311,6 +318,7 @@ export function CapabilitiesView({
     setArchitecture(d.architecture)
     setAttentionItems(d.attention)
     setModuleRecords(d.modules)
+    setCapabilityRuns(d.runs)
     setBindingRecords(d.bindings)
     setDeployables(d.deployableList)
     setInboundBindingRecords(d.inboundBindings)

@@ -15,6 +15,8 @@ import type {
   CapabilityModuleRecord,
   CapDiagnostic,
   FoundationPlan,
+  FrontendBrief,
+  ImplementationWavePlan,
   InterviewPacket,
   ModuleManifest,
   OverlayInspectionSummary,
@@ -24,15 +26,23 @@ import {
   buildModuleInterviewPacket,
   inferModuleType,
   importModuleInterviewResponse,
+  normalizeWorkLifecycleState,
   type ModuleInterviewResponse,
 } from '@engineering-ui-kit/core/browser'
-import type { CapabilityPacketExportResult, EuikBridge, TaskPacketFields } from '../../bridge'
+import type {
+  CapabilityPacketExportResult,
+  EuikBridge,
+  ImplementationWaveExportResult,
+  ModuleProposalBatchResult,
+  TaskPacketFields,
+  TaskPacketTextKey,
+} from '../../bridge'
 import { Dialog, EmptyState } from '../../components'
 import { Icon } from '../../icons'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
 import { CapabilityHandoffCard } from './CapabilityHandoffCard'
 import { humanizeIdentifier, moduleTypeLabel, presentDiagnosticsForGuided } from './capabilityPresentation'
-import { buildUiModuleTaskFields, deploymentContextFor } from './moduleBuildTask'
+import { deploymentContextFor } from './moduleBuildTask'
 
 type Props = {
   bridge: EuikBridge
@@ -87,9 +97,16 @@ export function ModulesView({
   const guided = projection === 'guided'
   const [architecture, setArchitecture] = useState<ArchitectureSpecification | undefined>()
   const [internalSelected, setInternalSelected] = useState('')
+  const [proposalBatch, setProposalBatch] = useState<ModuleProposalBatchResult>()
+  const [selectedProposalIds, setSelectedProposalIds] = useState<string[]>([])
+  const [wavePlan, setWavePlan] = useState<ImplementationWavePlan>()
+  const [waveExport, setWaveExport] = useState<ImplementationWaveExportResult>()
+  const [batchBusy, setBatchBusy] = useState(false)
+  const [batchMessage, setBatchMessage] = useState('')
   const approvedIds = records.filter((r) => Boolean(r.approved)).map((r) => r.moduleId)
   const moduleIds = architecture?.moduleIds ?? []
   const selectedModuleId = externalSelectedModuleId ?? internalSelected
+  const unapprovedIds = moduleIds.filter((moduleId) => !approvedIds.includes(moduleId))
 
   useEffect(() => {
     let cancelled = false
@@ -110,6 +127,112 @@ export function ModulesView({
       cancelled = true
     }
   }, [bridge, projectId, externalSelectedModuleId])
+
+  useEffect(() => {
+    if (!projectId || !architectureApproved) {
+      setWavePlan(undefined)
+      return
+    }
+    let cancelled = false
+    void Promise.resolve()
+      .then(() => bridge.capabilitiesPlanImplementationWaves(projectId))
+      .then((result) => {
+        if (
+          !cancelled
+          && result
+          && Array.isArray(result.waves)
+          && Array.isArray(result.blockedCycles)
+          && Array.isArray(result.unapprovedModuleIds)
+          && Array.isArray(result.blockedByUnapproved)
+        ) setWavePlan(result)
+      })
+      .catch(() => {
+        if (!cancelled) setWavePlan(undefined)
+      })
+    return () => { cancelled = true }
+  }, [
+    bridge,
+    projectId,
+    architectureApproved,
+    records.map((record) => `${record.moduleId}:${record.approved ? 'approved' : record.draft ? 'draft' : 'empty'}`).join('|'),
+  ])
+
+  async function generateProposalBatch() {
+    if (batchBusy) return
+    setBatchBusy(true)
+    setBatchMessage('')
+    try {
+      const result = await bridge.capabilitiesProposeModuleBatch(projectId)
+      setProposalBatch(result)
+      setSelectedProposalIds(result.proposals
+        .map((proposal) => proposal.moduleId)
+        .filter((moduleId) => !approvedIds.includes(moduleId)))
+      await onChanged()
+      setBatchMessage(
+        result.savedDraftModuleIds.length
+          ? `Prepared ${result.savedDraftModuleIds.length} new module proposal(s). Review the highlighted exceptions, then approve the selected set.`
+          : 'Loaded the current module proposals without replacing existing work.',
+      )
+    } catch (error) {
+      setBatchMessage(error instanceof Error ? error.message : String(error))
+    } finally {
+      setBatchBusy(false)
+    }
+  }
+
+  async function approveProposalBatch() {
+    if (batchBusy || selectedProposalIds.length === 0) return
+    setBatchBusy(true)
+    setBatchMessage('')
+    try {
+      const result = await bridge.capabilitiesApproveModuleBatch({
+        projectId,
+        moduleIds: selectedProposalIds,
+        explicit: true,
+      })
+      const blocked = result.results.filter((entry) => !entry.ok)
+      setSelectedProposalIds(blocked.map((entry) => entry.moduleId))
+      await onChanged()
+      const nextPlan = await bridge.capabilitiesPlanImplementationWaves(projectId)
+      setWavePlan(nextPlan)
+      setBatchMessage(blocked.length
+        ? `${result.results.length - blocked.length} proposal(s) approved; ${blocked.length} need focused review.`
+        : `${result.results.length} module proposal(s) approved. The implementation waves are ready.`)
+    } catch (error) {
+      setBatchMessage(error instanceof Error ? error.message : String(error))
+    } finally {
+      setBatchBusy(false)
+    }
+  }
+
+  function toggleProposal(moduleId: string) {
+    setSelectedProposalIds((current) =>
+      current.includes(moduleId)
+        ? current.filter((candidate) => candidate !== moduleId)
+        : [...current, moduleId],
+    )
+  }
+
+  async function exportImplementationWave(waveIndex: number, moduleIds: string[]) {
+    if (batchBusy || !foundationGate.enabled) return
+    setBatchBusy(true)
+    setBatchMessage('')
+    try {
+      const result = await bridge.capabilitiesExportImplementationWave({
+        projectId,
+        waveIndex,
+        moduleIds,
+      })
+      setWaveExport(result)
+      setBatchMessage(
+        `Created one handoff for ${result.targets.length} target(s). Each target keeps its own result ZIP, inspection, and verification evidence.`,
+      )
+    } catch (error) {
+      setBatchMessage(error instanceof Error ? error.message : String(error))
+    } finally {
+      setBatchBusy(false)
+    }
+  }
 
   if (!architectureApproved) {
     return (
@@ -161,6 +284,167 @@ export function ModulesView({
             ))}
           </ul>
         </div>
+      )}
+
+      {moduleIds.length > 0 && (
+        <section className="cap-batch-planner" aria-label="Architecture-wide module review">
+          <div className="cap-batch-planner-head">
+            <div>
+              <p className="capabilities-eyebrow">Fast path</p>
+              <h3>Review modules as one architecture</h3>
+              <p>
+                Generate every allocated module together, review shared assumptions once, and
+                use focused interviews only where the architecture leaves an exception.
+              </p>
+            </div>
+            {!proposalBatch && unapprovedIds.length > 0 ? (
+              <button
+                type="button"
+                className="btn btn-primary btn-compact"
+                disabled={batchBusy}
+                onClick={() => void generateProposalBatch()}
+              >
+                {batchBusy ? 'Generating…' : `Generate all ${unapprovedIds.length} proposals`}
+              </button>
+            ) : null}
+          </div>
+
+          {proposalBatch ? (
+            <>
+              <details className="cap-batch-assumptions">
+                <summary>Shared assumptions ({proposalBatch.commonAssumptions.length})</summary>
+                <ul>
+                  {proposalBatch.commonAssumptions.map((assumption) => <li key={assumption}>{assumption}</li>)}
+                </ul>
+              </details>
+              <div className="cap-batch-proposal-grid">
+                {proposalBatch.proposals.map((proposal) => {
+                  const approved = approvedIds.includes(proposal.moduleId)
+                  const selected = selectedProposalIds.includes(proposal.moduleId)
+                  return (
+                    <article
+                      key={proposal.moduleId}
+                      className={`cap-batch-proposal${proposal.exceptionReasons.length ? ' has-exceptions' : ''}`}
+                    >
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={approved || selected}
+                          disabled={approved || batchBusy}
+                          onChange={() => toggleProposal(proposal.moduleId)}
+                        />
+                        <span>
+                          <strong>{proposal.manifest.name}</strong>
+                          <small>{moduleTypeLabel(proposal.manifest.moduleType)} · {approved ? 'approved' : 'proposal'}</small>
+                        </span>
+                      </label>
+                      <p>{proposal.manifest.responsibility}</p>
+                      {proposal.exceptionReasons.length ? (
+                        <ul aria-label={`Exceptions for ${proposal.manifest.name}`}>
+                          {proposal.exceptionReasons.map((reason) => <li key={reason}>{reason}</li>)}
+                        </ul>
+                      ) : <span className="cap-batch-clear">No architecture exceptions</span>}
+                      <button
+                        type="button"
+                        className="btn-link"
+                        onClick={() => (onSelectModule ? onSelectModule(proposal.moduleId) : setInternalSelected(proposal.moduleId))}
+                      >
+                        Review details
+                      </button>
+                    </article>
+                  )
+                })}
+              </div>
+              {selectedProposalIds.length > 0 ? (
+                <div className="cap-batch-approval">
+                  <p>
+                    This explicitly approves {selectedProposalIds.length} selected proposal(s);
+                    existing approved modules are never replaced.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-compact"
+                    disabled={batchBusy}
+                    onClick={() => void approveProposalBatch()}
+                  >
+                    {batchBusy ? 'Approving…' : `Approve selected proposals (${selectedProposalIds.length})`}
+                  </button>
+                </div>
+              ) : null}
+            </>
+          ) : unapprovedIds.length === 0 ? (
+            <p className="capabilities-note">All allocated modules are approved.</p>
+          ) : null}
+
+          {wavePlan && (wavePlan.waves.length > 0 || wavePlan.blockedCycles.length > 0) ? (
+            <div className="cap-wave-plan" aria-label="Implementation waves">
+              <div>
+                <h4>Implementation waves</h4>
+                <p>Independent modules share a wave; dependencies are completed first.</p>
+              </div>
+              {wavePlan.waves.map((wave) => (
+                <div className="cap-wave" key={wave.index}>
+                  <span>Wave {wave.index}</span>
+                  <div>
+                    {wave.targets.map((target) => (
+                      <button
+                        type="button"
+                        key={target.moduleId}
+                        onClick={() => (onSelectModule ? onSelectModule(target.moduleId) : setInternalSelected(target.moduleId))}
+                      >
+                        {target.name}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="cap-wave-export"
+                      disabled={batchBusy || !foundationGate.enabled}
+                      title={!foundationGate.enabled ? foundationGate.reason ?? 'Approve the foundation first.' : undefined}
+                      onClick={() => void exportImplementationWave(
+                        wave.index,
+                        wave.targets.filter((target) => target.batchEligible).map((target) => target.moduleId),
+                      )}
+                    >
+                      {Icon.sparkle(13)} Create one handoff
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {wavePlan.unapprovedModuleIds.length ? (
+                <p className="capabilities-note">
+                  {wavePlan.unapprovedModuleIds.length} unapproved module(s) are omitted from the plan.
+                </p>
+              ) : null}
+              {wavePlan.blockedByUnapproved.map((blocked) => (
+                <p className="capabilities-note" key={blocked.moduleId}>
+                  {humanizeIdentifier(blocked.moduleId)} waits for {blocked.dependencyIds.map(humanizeIdentifier).join(', ')}.
+                </p>
+              ))}
+              {wavePlan.blockedCycles.map((cycle) => (
+                <p className="cap-batch-error" key={cycle.join('>')}>
+                  Dependency cycle blocks implementation: {cycle.join(' → ')}
+                </p>
+              ))}
+            </div>
+          ) : null}
+
+          {waveExport && waveExport.targets[0] ? (
+            <CapabilityHandoffCard
+              bridge={bridge}
+              projectId={projectId}
+              projection={projection}
+              result={{
+                runId: waveExport.targets[0].runId,
+                packetId: waveExport.groupId,
+                recommendedPrompt: waveExport.recommendedPrompt,
+                files: waveExport.files,
+                uploadFiles: waveExport.uploadFiles,
+              }}
+            />
+          ) : null}
+
+          {batchMessage ? <p className="capabilities-note" role="status">{batchMessage}</p> : null}
+        </section>
       )}
 
       {/* key: remount (full reset of every module-scoped value) when project or module changes. */}
@@ -222,6 +506,8 @@ function ModuleWorkspace(props: {
   const [applied, setApplied] = useState(false)
   const [revisitingInterview, setRevisitingInterview] = useState(false)
   const [technicalOpen, setTechnicalOpen] = useState(false)
+  const [frontendBrief, setFrontendBrief] = useState<FrontendBrief>()
+  const [frontendFields, setFrontendFields] = useState<TaskPacketFields>()
   const mounted = useRef(false)
   useEffect(() => {
     mounted.current = true
@@ -356,7 +642,7 @@ function ModuleWorkspace(props: {
       if (!mounted.current) return
       setImplementationExport(exported)
       setImplementationRunId(exported.runId)
-      setPersistedLifecycleState('packet-exported')
+      setPersistedLifecycleState('exported')
       setInspection(undefined)
       setWarningsAccepted(false)
       setApplied(false)
@@ -380,15 +666,56 @@ function ModuleWorkspace(props: {
     const manifest = record?.approved
     if (busy || !manifest || !architecture || !props.onStartUiBuild || handoffBlocked) return
     setBusy(true)
-    setMessage('Preparing the UI build workspace with this module’s approved context…')
+    setMessage('Compiling product, capability, operation, and binding evidence into the frontend brief…')
     try {
       const deployment = deploymentContextFor(props.approvedFoundation, manifest.moduleId, manifest)
-      await props.onStartUiBuild(projectId, buildUiModuleTaskFields(manifest, architecture, deployment))
+      const compiled = await bridge.capabilitiesCompileFrontendBrief({
+        projectId,
+        targetModuleIds: [manifest.moduleId],
+      })
+      const fields: TaskPacketFields = {
+        ...compiled.fields,
+        references: [
+          compiled.fields.references,
+          ...(deployment
+            ? [
+                `Deployable: ${deployment.deployableId} (${deployment.kind}, ${deployment.runtimeLanguage} ${deployment.runtimeVersionRange})`,
+                `Composition root: ${deployment.compositionRootPath}`,
+                ...Object.entries(deployment.commands).map(([label, command]) => `Command (${label}): ${command}`),
+                ...deployment.generatedContractRefs.map((reference) => `Generated contract: ${reference}`),
+                ...deployment.generatedTypeTargets.map((reference) => `Generated type target: ${reference}`),
+              ]
+            : []),
+        ].filter(Boolean).join('\n'),
+      }
+      setFrontendBrief(compiled)
+      setFrontendFields(fields)
+      setMessage('')
     } catch (error) {
       if (mounted.current) setMessage(error instanceof Error ? error.message : String(error))
     } finally {
       if (mounted.current) setBusy(false)
     }
+  }
+
+  async function openCompiledFrontendBuild() {
+    if (busy || !frontendFields || !props.onStartUiBuild) return
+    setBusy(true)
+    try {
+      await props.onStartUiBuild(projectId, frontendFields)
+      if (mounted.current) {
+        setFrontendBrief(undefined)
+        setFrontendFields(undefined)
+      }
+    } catch (error) {
+      if (mounted.current) setMessage(error instanceof Error ? error.message : String(error))
+    } finally {
+      if (mounted.current) setBusy(false)
+    }
+  }
+
+  function updateFrontendField(key: TaskPacketTextKey, value: string) {
+    setFrontendFields((current) => current ? { ...current, [key]: value } : current)
   }
 
   async function selectAndInspectOverlay() {
@@ -421,7 +748,7 @@ function ModuleWorkspace(props: {
       })
       if (!mounted.current) return
       setApplied(true)
-      setPersistedLifecycleState('overlay-applied')
+      setPersistedLifecycleState('applied')
       setMessage(`Applied ${result.files.length} file(s); verification is now required.`)
       await props.onChanged()
     } catch (error) {
@@ -463,8 +790,11 @@ function ModuleWorkspace(props: {
   }
 
   type BuildStep = 'interview' | 'import' | 'approve' | 'handoff' | 'inspect' | 'accept' | 'apply' | 'verify'
-  const implementationStarted = Boolean(implementationExport) || ['packet-exported', 'overlay-inspected', 'overlay-applied'].includes(persistedLifecycleState)
-  const implementationApplied = applied || persistedLifecycleState === 'overlay-applied'
+  const normalizedImplementationState = normalizeWorkLifecycleState(persistedLifecycleState).state
+  const implementationStarted = Boolean(implementationExport)
+    || ['exported', 'returned', 'inspected', 'applied', 'verified', 'integrated', 'complete'].includes(normalizedImplementationState)
+  const implementationApplied = applied
+    || ['applied', 'verified', 'integrated', 'complete'].includes(normalizedImplementationState)
   const moduleReady = record?.freshness?.primaryState === 'ready'
   const buildStep: BuildStep = revisitingInterview
     ? draft ? 'approve' : interviewExport ? 'import' : 'interview'
@@ -526,7 +856,7 @@ function ModuleWorkspace(props: {
               <strong>Build the UI with the agent</strong>
               <p>Open Build &amp; Test with this module’s approved responsibilities, operations, paths, and architecture boundaries already prepared.</p>
               <button type="button" className="btn btn-primary btn-compact" onClick={() => void startUiAgentBuild()} disabled={busy || handoffBlocked}>
-                {Icon.sparkle(14)} Build UI with agent
+                {Icon.sparkle(14)} Compile frontend brief
               </button>
             </div>
           ) : null}
@@ -752,6 +1082,87 @@ function ModuleWorkspace(props: {
 
       {response && guided ? (
         <p className="capabilities-note">Draft {humanizeIdentifier(response.moduleId)} ({moduleTypeLabel(response.moduleType)}) — {response.answers.length} answers.</p>
+      ) : null}
+
+      {frontendBrief && frontendFields ? (
+        <Dialog
+          title="Review compiled frontend brief"
+          wide
+          onClose={() => {
+            setFrontendBrief(undefined)
+            setFrontendFields(undefined)
+          }}
+          actions={(
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setFrontendBrief(undefined)
+                  setFrontendFields(undefined)
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={busy || frontendBrief.gaps.some((gap) => gap.severity === 'blocking')}
+                onClick={() => void openCompiledFrontendBuild()}
+              >
+                Open Build with this brief
+              </button>
+            </>
+          )}
+        >
+          <div className="frontend-brief-summary">
+            <p className="lede">
+              Compiled from {frontendBrief.coverage.moduleIds.length} module(s),{' '}
+              {frontendBrief.coverage.operationIds.length} operation(s), and{' '}
+              {frontendBrief.coverage.bindingIds.length} approved UI binding(s). Edit any section before continuing.
+            </p>
+            <div className="frontend-brief-coverage" aria-label="Frontend brief coverage">
+              <span>{frontendBrief.coverage.routes.length} route(s)</span>
+              <span>{frontendBrief.coverage.useCaseIds.length} use case(s)</span>
+              <span>Architecture r{frontendBrief.source.architectureRevision}</span>
+            </div>
+            {frontendBrief.gaps.length ? (
+              <ul className="cap-issue-list">
+                {frontendBrief.gaps.map((gap) => (
+                  <li key={gap.code}>
+                    {gap.message} <span className={`badge badge-${gap.severity === 'blocking' ? 'danger' : 'warning'}`}>{gap.severity}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="cap-batch-clear">All available capability and binding evidence is included.</p>}
+          </div>
+          <div className="frontend-brief-editor">
+            {([
+              ['taskTitle', 'Task title'],
+              ['goal', 'Goal and requirements'],
+              ['scope', 'Scope'],
+              ['constraints', 'Constraints'],
+              ['acceptanceCriteria', 'Acceptance criteria'],
+              ['references', 'Source references'],
+            ] as [TaskPacketTextKey, string][]).map(([key, label]) => (
+              <label key={key}>
+                <span>{label}</span>
+                {key === 'taskTitle' ? (
+                  <input
+                    value={frontendFields[key]}
+                    onChange={(event) => updateFrontendField(key, event.target.value)}
+                  />
+                ) : (
+                  <textarea
+                    rows={key === 'goal' ? 16 : 7}
+                    value={frontendFields[key]}
+                    onChange={(event) => updateFrontendField(key, event.target.value)}
+                  />
+                )}
+              </label>
+            ))}
+          </div>
+        </Dialog>
       ) : null}
     </>
   )

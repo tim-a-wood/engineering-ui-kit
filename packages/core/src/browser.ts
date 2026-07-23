@@ -7,3 +7,7 @@
  * therefore fully erased from the renderer bundle.
  */
 export * from './capabilities/browser.js'
+export * from './work.js'
+export * from './packetLint.js'
+export * from './preview.js'
+export * from './completion.js'

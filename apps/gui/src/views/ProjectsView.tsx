@@ -19,6 +19,7 @@ export function ProjectsView(props: {
   projects: Project[]
   refreshProjects: () => Promise<void>
   onStartRun: (projectId: string) => void
+  onOpenProject: (projectId: string) => void
 }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived'>('all')
@@ -152,9 +153,9 @@ export function ProjectsView(props: {
                 type="button"
                 className="btn btn-secondary btn-compact"
                 disabled={project.status !== 'active'}
-                onClick={() => props.onStartRun(project.id)}
+                onClick={() => props.onOpenProject(project.id)}
               >
-                {openProjects.has(project.id) ? 'Continue' : 'Start handoff'}
+                Open project
               </button>
             </article>
           ))}
@@ -206,12 +207,16 @@ export function ProjectsView(props: {
                       type="button"
                       className="btn btn-secondary btn-compact"
                       disabled={project.status !== 'active'}
-                      onClick={() => props.onStartRun(project.id)}
+                      onClick={() => props.onOpenProject(project.id)}
                     >
-                      {openProjects.has(project.id) ? 'Continue' : 'Start handoff'}
+                      Open project
                     </button>
                     <RowMenu
                       items={[
+                        {
+                          label: openProjects.has(project.id) ? 'Resume active task' : 'Start change',
+                          onSelect: () => props.onStartRun(project.id),
+                        },
                         ...(project.launchUrl
                           ? [{
                               label: 'Open App',

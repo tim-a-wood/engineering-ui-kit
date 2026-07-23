@@ -17,6 +17,7 @@ import { GuideOverlay, type GuideTopicId } from './guides'
 import { Icon } from './icons'
 import { HubView } from './views/HubView'
 import { ProjectsView } from './views/ProjectsView'
+import { ProjectOverviewView } from './views/ProjectOverviewView'
 import { RecipesView, ComponentsView } from './views/catalog'
 import { SettingsView } from './views/SettingsView'
 import { BuildView } from './views/build/BuildView'
@@ -111,6 +112,7 @@ export default function App() {
   const [recipe, setRecipe] = useState<RecipePrefill | null>(null)
   const [buildWorkspace, setBuildWorkspace] = useState<BuildWorkspaceState>('handoff')
   const [capabilitiesProjectId, setCapabilitiesProjectId] = useState('')
+  const [projectOverviewId, setProjectOverviewId] = useState('')
   const [version, setVersion] = useState('')
   const [guideTopic, setGuideTopic] = useState<GuideTopicId | null>(null)
 
@@ -191,6 +193,20 @@ export default function App() {
     setView('capabilities')
   }, [activeRun?.projectId])
 
+  const startNewRun = useCallback(async (projectId: string) => {
+    const run = await bridge.createRun(projectId)
+    setActiveRun(run)
+    setPacket(null)
+    setRecipe(null)
+    setBuildWorkspace('handoff')
+    setView('build')
+  }, [bridge])
+
+  const openProjectOverview = useCallback((projectId: string) => {
+    setProjectOverviewId(projectId)
+    setView('project-overview')
+  }, [])
+
   const startUiModuleBuild = useCallback(async (projectId: string, fields: TaskPacketFields) => {
     const run = await bridge.createRun(projectId)
     const prepared = await bridge.updateRun(run.id, {
@@ -206,7 +222,11 @@ export default function App() {
   }, [bridge])
 
   const activeProject = activeRun ? projects.find((p) => p.id === activeRun.projectId) : undefined
-  const navActive: ViewId = isWorkflowView(view) ? 'copilot-handoff' : view
+  const navActive: ViewId = isWorkflowView(view)
+    ? 'copilot-handoff'
+    : view === 'project-overview'
+      ? 'projects'
+      : view
 
   const renderView = (): ReactNode => {
     if (!settings) return <p className="secondary-text">Loading workspace…</p>
@@ -226,6 +246,7 @@ export default function App() {
             onStartRun={startRun}
             onOpenStep={navigate}
             onOpenCapabilities={openCapabilities}
+            onOpenProject={openProjectOverview}
           />
         )
       case 'capabilities':
@@ -263,7 +284,35 @@ export default function App() {
       case 'verify-review':
         return stepProps ? <VerifyReviewView {...stepProps} /> : <MissingRun onBack={() => setView('copilot-handoff')} />
       case 'projects':
-        return <ProjectsView bridge={bridge} projects={projects} refreshProjects={refreshProjects} onStartRun={startRun} />
+        return (
+          <ProjectsView
+            bridge={bridge}
+            projects={projects}
+            refreshProjects={refreshProjects}
+            onStartRun={startRun}
+            onOpenProject={openProjectOverview}
+          />
+        )
+      case 'project-overview': {
+        const project = projects.find((candidate) => candidate.id === projectOverviewId)
+        return project ? (
+          <ProjectOverviewView
+            bridge={bridge}
+            project={project}
+            onBack={() => setView('projects')}
+            onResumeTask={startRun}
+            onStartChange={startNewRun}
+            onOpenCapabilities={openCapabilities}
+          />
+        ) : (
+          <div className="panel" role="alert">
+            <h2>Project not found</h2>
+            <button type="button" className="btn btn-primary" onClick={() => setView('projects')}>
+              Back to projects
+            </button>
+          </div>
+        )
+      }
       case 'recipes':
         return (
           <RecipesView

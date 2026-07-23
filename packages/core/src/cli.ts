@@ -10,6 +10,10 @@
  *   euik apply     <zipPath> --target <repoRoot> [--accept-warnings] [--out file]
  *   euik verify    <repoRoot> [--commands typecheck,build] [--out dir]
  *   euik manifest  <file...>       (enforces the three-file budget)
+ *   euik machine describe [--out file]
+ *   euik machine execute <request.json> --data <workspaceDir> [--out file]
+ *   euik migration audit --data <workspaceDir> [--out file]
+ *   euik benchmark workflow --modules N --waves N [--experience N] [--bindings N]
  */
 
 import fs from 'node:fs'
@@ -19,6 +23,13 @@ import { buildContext } from './contextBuilder.js'
 import { inspectOverlay, applyOverlay } from './overlay.js'
 import { runCommand } from './commandRunner.js'
 import { buildPacketManifest } from './budget.js'
+import {
+  describeMachineOperations,
+  executeMachineOperation,
+  type MachineOperationRequest,
+} from './machine.js'
+import { auditWorkspaceMigrations } from './migrationAudit.js'
+import { benchmarkWorkflow } from './workflowBenchmark.js'
 
 type Flags = Record<string, string | boolean>
 
@@ -139,8 +150,60 @@ async function main(): Promise<number> {
       writeOrPrint({ files: buildPacketManifest(positional) }, typeof flags['out'] === 'string' ? flags['out'] : undefined)
       return 0
     }
+    case 'machine': {
+      const subcommand = positional[0]
+      if (subcommand === 'describe') {
+        writeOrPrint(
+          describeMachineOperations(),
+          typeof flags['out'] === 'string' ? flags['out'] : undefined,
+        )
+        return 0
+      }
+      if (subcommand === 'execute') {
+        const requestPath = positional[1]
+        const dataDir = flags['data']
+        if (!requestPath || typeof dataDir !== 'string') {
+          throw new Error('usage: euik machine execute <request.json> --data <workspaceDir> [--out file]')
+        }
+        const request = JSON.parse(fs.readFileSync(requestPath, 'utf8')) as MachineOperationRequest
+        const response = await executeMachineOperation(request, { dataDir })
+        writeOrPrint(response, typeof flags['out'] === 'string' ? flags['out'] : undefined)
+        return response.status === 'succeeded' ? 0 : response.status === 'blocked' ? 2 : 1
+      }
+      throw new Error('usage: euik machine <describe|execute> ...')
+    }
+    case 'migration': {
+      if (positional[0] !== 'audit' || typeof flags['data'] !== 'string') {
+        throw new Error('usage: euik migration audit --data <workspaceDir> [--out file]')
+      }
+      writeOrPrint(
+        auditWorkspaceMigrations(flags['data']),
+        typeof flags['out'] === 'string' ? flags['out'] : undefined,
+      )
+      return 0
+    }
+    case 'benchmark': {
+      if (positional[0] !== 'workflow') {
+        throw new Error('usage: euik benchmark workflow --modules N --waves N [--experience N] [--bindings N] [--name text]')
+      }
+      const asCount = (key: string, fallback?: number) => {
+        const raw = flags[key]
+        if (raw === undefined && fallback !== undefined) return fallback
+        const value = Number(raw)
+        if (!Number.isInteger(value) || value < 0) throw new Error(`--${key} must be a non-negative integer`)
+        return value
+      }
+      writeOrPrint(benchmarkWorkflow({
+        name: typeof flags['name'] === 'string' ? flags['name'] : 'workflow',
+        moduleCount: asCount('modules'),
+        implementationWaveCount: asCount('waves'),
+        experienceModuleCount: asCount('experience', 0),
+        bindingCount: asCount('bindings', 0),
+      }), typeof flags['out'] === 'string' ? flags['out'] : undefined)
+      return 0
+    }
     default:
-      console.error('usage: euik <inventory|flatfile|inspect|apply|verify|manifest> ...')
+      console.error('usage: euik <inventory|flatfile|inspect|apply|verify|manifest|machine|migration|benchmark> ...')
       return 64
   }
 }

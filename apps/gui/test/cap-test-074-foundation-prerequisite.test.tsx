@@ -52,7 +52,7 @@ describe('CAP-TEST-074 foundation prerequisite gates the Build handoff', () => {
     )
     expect(html).toContain('Foundation must be approved first.')
     expect(html).toContain('No approved foundation plan exists for this project.')
-    expect(html).toMatch(/disabled[^>]*>[\s\S]*?Build UI with agent/)
+    expect(html).toMatch(/disabled[^>]*>[\s\S]*?Compile frontend brief/)
     expect(html).toMatch(/disabled[^>]*>[\s\S]*?Create implementation handoff/)
   })
 
@@ -75,7 +75,7 @@ describe('CAP-TEST-074 foundation prerequisite gates the Build handoff', () => {
       />,
     )
     expect(html).not.toContain('Foundation must be approved first.')
-    expect(html).not.toMatch(/disabled[^>]*>[\s\S]*?Build UI with agent/)
+    expect(html).not.toMatch(/disabled[^>]*>[\s\S]*?Compile frontend brief/)
     expect(html).not.toMatch(/disabled[^>]*>[\s\S]*?Create implementation handoff/)
   })
 

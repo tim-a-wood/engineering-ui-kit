@@ -5,6 +5,7 @@
  * implementation source of truth per ARCH-FILE / PRD §22. JSON written to disk
  * must round-trip through these shapes.
  */
+import type { TaskIntentProfile } from './packetLint.js'
 
 /** PRD §28.1 — `project.json` */
 /** One capturable view of a target app, resolved against the project's launch URL. */
@@ -21,6 +22,8 @@ export type Project = {
   description?: string
   repoPath: string
   status: 'active' | 'archived'
+  /** Which parts of the unified product workflow are required for completion. */
+  developmentScope?: 'capabilities' | 'frontend' | 'full'
   launchUrl?: string
   launchCommand?: string
   /** Legacy hint from the former Connect stage; entry-point completeness is derived from canonical bindings. */
@@ -70,6 +73,7 @@ export type HandoffRun = {
     constraints: string
     acceptanceCriteria: string
     references: string
+    intentProfile?: TaskIntentProfile
   }
   /** When the packet was last exported — feedback saved after this drives the iteration prefill. */
   taskPacketBuiltAt?: string

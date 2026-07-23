@@ -593,20 +593,58 @@ describe('module isolation', () => {
       moduleDefinitions: [{ moduleId: 'mod.ui', name: 'Flight Planner UI', moduleType: 'experience', responsibility: manifest.responsibility }],
     }
     const onStartUiBuild = vi.fn(async () => {})
-    const bridge = makeBridge({ capabilitiesGetArchitecture: (async () => ({ approved: architecture })) as never })
+    const compiledFields = {
+      taskTitle: 'Build frontend from approved capabilities: Flight Planner UI',
+      goal: '# Frontend brief — Flight Planner UI\n\n## Operation map\nplan.calculate',
+      scope: 'Selected modules:\n- Flight Planner UI\n\nApproved paths:\n- src/features/planner/',
+      constraints: 'Preserve route-optimization outside the frontend.',
+      acceptanceCriteria: 'The approved journey works.',
+      references: 'Architecture: arch.ui revision 3',
+      intentProfile: {
+        delivery: 'existing-api-ui' as const,
+        backend: 'existing' as const,
+        network: 'existing' as const,
+        persistence: 'preserve' as const,
+        filesystem: 'preserve' as const,
+      },
+    }
+    const bridge = makeBridge({
+      capabilitiesGetArchitecture: (async () => ({ approved: architecture })) as never,
+      capabilitiesCompileFrontendBrief: (async () => ({
+        schemaVersion: '1.0',
+        projectId: 'p1',
+        generatedAt: 't',
+        source: {
+          architectureRevision: '3',
+          architectureHash: 'arch-hash',
+          moduleVersions: { 'mod.ui': '1.0.0' },
+          bindingVersions: {},
+        },
+        coverage: {
+          moduleIds: ['mod.ui'],
+          operationIds: ['plan.calculate', 'ui.show-plan'],
+          bindingIds: [],
+          routes: [],
+          useCaseIds: [],
+        },
+        fields: compiledFields,
+        gaps: [{ code: 'FRONTEND-BRIEF-BINDING', severity: 'warning', message: 'No approved UI binding.', relatedIds: [] }],
+      })) as never,
+    })
     render(<ModulesView bridge={bridge} projectId="p1" architectureApproved projection="guided" records={[{ moduleId: 'mod.ui', approved: manifest }]} hideModuleList progressive externalSelectedModuleId="mod.ui" onStartUiBuild={onStartUiBuild} />)
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Build UI with agent' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Compile frontend brief' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Review compiled frontend brief' })
+    expect(within(dialog).getByText(/2 operation\(s\)/)).toBeTruthy()
+    fireEvent.change(within(dialog).getByLabelText('Task title'), { target: { value: 'Build polished flight planner' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Open Build with this brief' }))
     await waitFor(() => expect(onStartUiBuild).toHaveBeenCalledTimes(1))
     const [projectId, fields] = onStartUiBuild.mock.calls[0]
     expect(projectId).toBe('p1')
-    expect(fields.taskTitle).toBe('Build UI from approved capability spec: Flight Planner UI')
-    expect(fields.goal).toContain('# Approved UI requirement spec — Flight Planner UI')
-    expect(fields.goal).toContain('## Capability interactions')
+    expect(fields.taskTitle).toBe('Build polished flight planner')
+    expect(fields.goal).toContain('# Frontend brief — Flight Planner UI')
     expect(fields.goal).toContain('plan.calculate')
-    expect(fields.goal).toContain('## Required experience states')
-    expect(fields.goal.length).toBeGreaterThan(2500)
-    expect(fields.scope).toContain('plan.calculate')
+    expect(fields.scope).toContain('src/features/planner/')
     expect(fields.constraints).toContain('route-optimization')
     expect(fields.references).toContain('arch.ui revision 3')
   })

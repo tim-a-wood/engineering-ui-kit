@@ -188,6 +188,19 @@ export function BuildWorkspace(props: BuildWorkspaceProps) {
               </div>
             </div>
           </div>
+          {(props.packetDiagnostics ?? []).length > 0 && (
+            <div className="validation-summary" role="alert">
+              <h4>Handoff review</h4>
+              <ul>
+                {(props.packetDiagnostics ?? []).map((diagnostic, index) => (
+                  <li key={`${diagnostic.code}-${diagnostic.section}-${index}`}>
+                    <strong>{diagnostic.section}:</strong> {diagnostic.message}
+                    {diagnostic.evidence ? <code style={{ marginLeft: 6 }}>{diagnostic.evidence}</code> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="build-primary-card-actions">
             <button
               type="button"
