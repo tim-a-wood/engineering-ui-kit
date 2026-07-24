@@ -16,3 +16,8 @@ ahead of architecture design.
 Both HTML files are self-contained and can be opened directly in a browser.
 The mockup is intentionally a product-design artifact, not an implementation
 of the analysis engine.
+
+## Mobile links
+
+- [Visual briefing](https://use-case-led-capabilities.tim-a-wood.chatgpt.site/briefing)
+- [Interactive mockup](https://use-case-led-capabilities.tim-a-wood.chatgpt.site/mockup)

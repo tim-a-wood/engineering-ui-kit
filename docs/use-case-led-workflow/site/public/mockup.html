@@ -1,0 +1,1694 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Engineering UI Kit — Use-case-led workflow mockup</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #07111f;
+      --panel: #0f172a;
+      --raised: #111827;
+      --inset: #172033;
+      --overlay: #0f172a;
+      --text: #f8fafc;
+      --secondary: #cbd5e1;
+      --muted: #94a3b8;
+      --disabled: rgba(203, 213, 225, .38);
+      --border: rgba(148, 163, 184, .18);
+      --border-strong: rgba(203, 213, 225, .34);
+      --accent: #2f5bff;
+      --accent-hover: #5478ff;
+      --accent-tint: rgba(47, 91, 255, .14);
+      --accent-text: #8fa5ff;
+      --success: #34d399;
+      --success-tint: rgba(52, 211, 153, .12);
+      --warning: #fbbf24;
+      --warning-tint: rgba(251, 191, 36, .12);
+      --danger: #f87171;
+      --info: #60a5fa;
+      --shadow: 0 18px 50px rgba(0, 0, 0, .38);
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--text);
+      background:
+        radial-gradient(1050px 520px at 20% -16%, rgba(47, 91, 255, .10), transparent 62%),
+        var(--canvas);
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { color: inherit; }
+    button, select { cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+    ::selection { background: var(--accent); color: #fff; }
+    .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .app {
+      display: grid;
+      grid-template-rows: 52px 1fr;
+      height: 100vh;
+    }
+    .titlebar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+      padding: 0 16px 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 23, 42, .96);
+      box-shadow: inset 0 1px rgba(255, 255, 255, .025);
+      z-index: 20;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 196px;
+      font-weight: 650;
+      letter-spacing: -.01em;
+    }
+    .brand-mark {
+      position: relative;
+      width: 20px;
+      height: 20px;
+    }
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      border: 2px solid var(--accent-text);
+      border-radius: 3px;
+    }
+    .brand-mark::before { inset: 1px 5px 5px 1px; }
+    .brand-mark::after { inset: 5px 1px 1px 5px; border-color: var(--secondary); }
+    .crumbs {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      padding-left: 14px;
+      border-left: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .crumbs strong {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--secondary);
+      font-weight: 550;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .title-spacer { flex: 1; }
+    .prototype-jump {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .prototype-jump select {
+      height: 30px;
+      padding: 0 30px 0 9px;
+      border: 1px solid var(--border-strong);
+      border-radius: 5px;
+      color: var(--secondary);
+      background: var(--inset);
+    }
+    .icon-button {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 17px;
+    }
+    .icon-button:hover { color: var(--text); background: var(--inset); }
+    .shell {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      min-height: 0;
+    }
+    .rail {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      border-right: 1px solid var(--border);
+      background: rgba(8, 17, 31, .78);
+    }
+    .rail-section {
+      padding: 18px 10px 8px;
+      color: var(--muted);
+      font-size: 10.5px;
+      font-weight: 650;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+    .rail-nav { display: grid; gap: 3px; padding: 0 8px; }
+    .rail-item {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      align-items: center;
+      gap: 9px;
+      width: 100%;
+      min-height: 36px;
+      padding: 0 10px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+    }
+    .rail-item:hover { color: var(--secondary); background: rgba(23, 32, 51, .62); }
+    .rail-item.active {
+      color: var(--text);
+      border-color: rgba(84, 120, 255, .22);
+      background: var(--accent-tint);
+      box-shadow: inset 2px 0 var(--accent-hover);
+    }
+    .rail-icon {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      color: currentColor;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .rail-item small { color: var(--muted); }
+    .rail-footer {
+      margin-top: auto;
+      padding: 12px 10px;
+      border-top: 1px solid var(--border);
+    }
+    .user {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      align-items: center;
+      gap: 9px;
+      padding: 6px;
+      color: var(--secondary);
+      font-size: 12px;
+    }
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border-strong);
+      border-radius: 50%;
+      background: var(--inset);
+      font-weight: 700;
+    }
+    .workspace {
+      min-width: 0;
+      min-height: 0;
+      overflow: auto;
+      scrollbar-color: var(--border-strong) transparent;
+    }
+    .workspace-head {
+      position: sticky;
+      top: 0;
+      display: grid;
+      z-index: 10;
+      border-bottom: 1px solid var(--border);
+      background: rgba(7, 17, 31, .95);
+      backdrop-filter: blur(12px);
+    }
+    .workspace-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 0 24px;
+    }
+    .project-select {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .project-select strong { color: var(--secondary); font-size: 13px; }
+    .project-state {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .dot.success { background: var(--success); }
+    .dot.warning { background: var(--warning); }
+    .toolbar-spacer { flex: 1; }
+    .segmented {
+      display: inline-flex;
+      gap: 2px;
+      padding: 2px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: rgba(23, 32, 51, .72);
+    }
+    .segment {
+      min-width: 70px;
+      height: 28px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 4px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 12px;
+    }
+    .segment.active {
+      color: var(--text);
+      background: var(--raised);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .32), inset 0 0 0 1px var(--border);
+    }
+    .journey {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      min-height: 62px;
+      padding: 0 24px;
+      border-top: 1px solid rgba(148, 163, 184, .09);
+    }
+    .journey-step {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      padding: 10px 14px;
+      border: 0;
+      border-right: 1px solid var(--border);
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+    }
+    .journey-step:first-child { border-left: 1px solid var(--border); }
+    .journey-step:not(.locked):hover { color: var(--secondary); background: rgba(23, 32, 51, .45); }
+    .journey-step.active {
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(47, 91, 255, .10), transparent);
+      box-shadow: inset 0 -2px var(--accent-hover);
+    }
+    .journey-step.locked { cursor: default; opacity: .55; }
+    .step-marker {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 24px;
+      height: 24px;
+      border: 1px solid var(--border-strong);
+      border-radius: 50%;
+      font-family: var(--mono);
+      font-size: 10px;
+    }
+    .journey-step.complete .step-marker {
+      color: var(--canvas);
+      border-color: var(--success);
+      background: var(--success);
+      font-family: var(--sans);
+      font-weight: 800;
+    }
+    .journey-step.active .step-marker {
+      color: #fff;
+      border-color: var(--accent-hover);
+      background: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-tint);
+    }
+    .step-copy { min-width: 0; }
+    .step-copy b, .step-copy small {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .step-copy b { color: inherit; font-size: 12.5px; font-weight: 600; }
+    .step-copy small { margin-top: 1px; color: var(--muted); font-size: 10.5px; }
+    .page {
+      width: min(1320px, 100%);
+      margin: 0 auto;
+      padding: 24px 28px 60px;
+    }
+    .page-heading {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .page-heading > div:first-child { min-width: 0; }
+    .eyebrow {
+      margin: 0 0 5px;
+      color: var(--accent-text);
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      margin-bottom: 6px;
+      font-size: 25px;
+      line-height: 1.2;
+      letter-spacing: -.025em;
+    }
+    h2 {
+      margin-bottom: 6px;
+      font-size: 17px;
+      line-height: 1.3;
+      letter-spacing: -.012em;
+    }
+    h3 {
+      margin-bottom: 4px;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .lede { max-width: 760px; margin: 0; color: var(--muted); }
+    .heading-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+    .technical-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--muted);
+      background: transparent;
+      white-space: nowrap;
+    }
+    .switch {
+      position: relative;
+      width: 28px;
+      height: 16px;
+      border-radius: 10px;
+      background: var(--inset);
+      box-shadow: inset 0 0 0 1px var(--border-strong);
+    }
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: 150ms ease;
+    }
+    body.tech-on .switch { background: var(--accent); }
+    body.tech-on .switch::after { left: 15px; background: #fff; }
+    .technical { display: none !important; }
+    body.tech-on .technical { display: initial !important; }
+    body.tech-on tr.technical { display: table-row !important; }
+    body.tech-on .technical.block { display: block !important; }
+    body.tech-on .technical.flex { display: flex !important; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 0 13px;
+      border: 1px solid var(--border-strong);
+      border-radius: 5px;
+      background: var(--raised);
+      font-weight: 600;
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: rgba(203, 213, 225, .52); background: #162034; }
+    .btn-primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .btn-primary:hover { border-color: var(--accent-hover); background: var(--accent-hover); }
+    .btn-quiet { border-color: transparent; background: transparent; color: var(--muted); }
+    .btn-quiet:hover { color: var(--text); background: var(--inset); }
+    .btn-small { min-height: 28px; padding: 0 9px; font-size: 11.5px; }
+    .command {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 24px;
+      padding: 17px 18px;
+      border: 1px solid rgba(84, 120, 255, .32);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(47, 91, 255, .12), rgba(47, 91, 255, .025) 62%),
+        var(--panel);
+      box-shadow: inset 3px 0 var(--accent-hover);
+    }
+    .command.ready {
+      border-color: rgba(52, 211, 153, .28);
+      background: linear-gradient(90deg, rgba(52, 211, 153, .09), transparent 62%), var(--panel);
+      box-shadow: inset 3px 0 var(--success);
+    }
+    .command h2 { margin: 0 0 4px; font-size: 16px; }
+    .command p { margin: 0; color: var(--muted); }
+    .command-actions { display: flex; gap: 8px; }
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, .82);
+      box-shadow: inset 0 1px rgba(255, 255, 255, .018);
+    }
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-head p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    .panel-head > div:first-child { min-width: 0; }
+    .panel-head-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .panel-body { padding: 16px; }
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 11.5px;
+      white-space: nowrap;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 7px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      background: rgba(23, 32, 51, .5);
+      font-size: 10.5px;
+      font-weight: 600;
+    }
+    .tag.accent { color: var(--accent-text); border-color: rgba(84, 120, 255, .3); background: var(--accent-tint); }
+    .tag.success { color: var(--success); border-color: rgba(52, 211, 153, .27); background: var(--success-tint); }
+    .tag.warning { color: var(--warning); border-color: rgba(251, 191, 36, .27); background: var(--warning-tint); }
+    .divider-label {
+      margin: 26px 0 10px;
+      color: var(--muted);
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    /* Describe */
+    .describe-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(280px, .8fr);
+      gap: 18px;
+      align-items: start;
+    }
+    .prompt-area {
+      width: 100%;
+      min-height: 170px;
+      resize: vertical;
+      padding: 17px;
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      color: var(--text);
+      background: var(--inset);
+      line-height: 1.55;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);
+    }
+    .prompt-area:focus { border-color: var(--accent-hover); outline: 0; box-shadow: 0 0 0 3px var(--accent-tint); }
+    .prompt-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .prompt-tools .count { margin-left: auto; color: var(--muted); font-family: var(--mono); font-size: 10.5px; }
+    .source-row {
+      display: grid;
+      grid-template-columns: 30px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 51px;
+      border-bottom: 1px solid var(--border);
+    }
+    .source-row:last-child { border-bottom: 0; }
+    .source-check {
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border: 1px solid var(--accent-hover);
+      border-radius: 4px;
+      color: #fff;
+      background: var(--accent);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .source-check.off { border-color: var(--border-strong); color: transparent; background: transparent; }
+    .source-copy b, .source-copy small { display: block; }
+    .source-copy b { color: var(--secondary); font-size: 12.5px; }
+    .source-copy small { margin-top: 2px; color: var(--muted); font-size: 10.5px; }
+    .privacy-note {
+      display: flex;
+      gap: 9px;
+      margin-top: 14px;
+      padding-top: 13px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .privacy-note b { color: var(--secondary); }
+    .example-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--border);
+    }
+    .example {
+      min-height: 90px;
+      padding: 13px;
+      border: 0;
+      border-right: 1px solid var(--border);
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+    }
+    .example:last-child { border-right: 0; }
+    .example:hover { color: var(--secondary); background: rgba(23, 32, 51, .45); }
+    .example b { display: block; margin-bottom: 4px; color: var(--secondary); font-size: 12px; }
+
+    /* Review */
+    .review-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      align-items: start;
+    }
+    .promise {
+      padding: 17px 0 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .promise:first-child { padding-top: 0; }
+    .promise p { max-width: 840px; margin: 0; color: var(--secondary); font-size: 15px; line-height: 1.6; }
+    .section-head {
+      display: flex;
+      align-items: end;
+      gap: 12px;
+      margin: 20px 0 9px;
+    }
+    .section-head h2 { margin: 0; }
+    .section-head p { margin: 0; color: var(--muted); font-size: 11.5px; }
+    .section-head .head-action { margin-left: auto; }
+    .people-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      overflow: hidden;
+      background: rgba(15, 23, 42, .55);
+    }
+    .person {
+      min-width: 0;
+      padding: 13px;
+      border-right: 1px solid var(--border);
+    }
+    .person:last-child { border-right: 0; }
+    .person-head { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+    .person-head b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
+    .person p { margin: 0; color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+    .state-icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 17px;
+      height: 17px;
+      border: 1px solid rgba(52, 211, 153, .36);
+      border-radius: 50%;
+      color: var(--success);
+      background: var(--success-tint);
+      font-size: 9px;
+      font-weight: 800;
+    }
+    .story-list { border-top: 1px solid var(--border); }
+    .story {
+      border-bottom: 1px solid var(--border);
+      background: transparent;
+    }
+    .story > button {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      min-height: 66px;
+      padding: 10px 4px;
+      border: 0;
+      color: inherit;
+      background: transparent;
+      text-align: left;
+    }
+    .story > button:hover { background: rgba(23, 32, 51, .32); }
+    .story-number {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10.5px;
+      text-align: center;
+    }
+    .story-copy { min-width: 0; }
+    .story-copy b { display: block; margin-bottom: 3px; font-size: 12.5px; }
+    .story-copy span {
+      display: block;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 11.5px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .chevron { width: 22px; color: var(--muted); text-align: center; transition: 150ms ease; }
+    .story.open .chevron { transform: rotate(90deg); }
+    .story-detail {
+      display: none;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      padding: 0 42px 16px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+    .story.open .story-detail { display: grid; }
+    .story-detail b { display: block; margin-bottom: 5px; color: var(--secondary); font-size: 11px; }
+    .story-detail ul { margin: 0; padding-left: 16px; }
+    .story-detail li + li { margin-top: 3px; }
+    .side-stack { display: grid; gap: 14px; }
+    .readiness {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 13px;
+      align-items: center;
+    }
+    .readiness-ring {
+      display: grid;
+      place-items: center;
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: conic-gradient(var(--success) 0 324deg, var(--inset) 324deg);
+      position: relative;
+    }
+    .readiness-ring::after {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: 50%;
+      background: var(--panel);
+    }
+    .readiness-ring strong { z-index: 1; font-family: var(--mono); font-size: 15px; }
+    .readiness-copy b { display: block; font-size: 12px; }
+    .readiness-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 10.5px; }
+    .coverage-bars { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+    .coverage-line {
+      display: grid;
+      grid-template-columns: 70px 1fr 26px;
+      gap: 8px;
+      align-items: center;
+      min-height: 24px;
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+    .bar { height: 4px; border-radius: 2px; background: var(--inset); overflow: hidden; }
+    .bar > span { display: block; height: 100%; border-radius: inherit; background: var(--success); }
+    .question {
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .question:first-child { padding-top: 0; }
+    .question:last-child { border-bottom: 0; padding-bottom: 0; }
+    .question small { display: block; margin-bottom: 5px; color: var(--warning); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+    .question b { display: block; margin-bottom: 5px; font-size: 12.5px; line-height: 1.45; }
+    .question p { margin: 0 0 10px; color: var(--muted); font-size: 10.5px; }
+    .choice-list { display: grid; gap: 6px; }
+    .choice {
+      display: grid;
+      grid-template-columns: 15px 1fr;
+      gap: 8px;
+      align-items: start;
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--secondary);
+      background: transparent;
+      text-align: left;
+      font-size: 11px;
+    }
+    .choice:hover { border-color: var(--border-strong); background: var(--inset); }
+    .choice.selected { border-color: rgba(84, 120, 255, .6); background: var(--accent-tint); }
+    .radio {
+      width: 13px;
+      height: 13px;
+      margin-top: 1px;
+      border: 1px solid var(--border-strong);
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 3px var(--panel);
+    }
+    .choice.selected .radio { border-color: var(--accent-hover); background: var(--accent-hover); }
+    .choice em { display: block; margin-top: 2px; color: var(--muted); font-style: normal; font-size: 10px; }
+
+    /* Solution map */
+    .solution-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 308px;
+      gap: 16px;
+      align-items: start;
+    }
+    .option-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .option-tab {
+      position: relative;
+      min-height: 52px;
+      padding: 0 15px;
+      border: 0;
+      border-right: 1px solid var(--border);
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+      font-size: 11.5px;
+    }
+    .option-tab b { display: block; margin-bottom: 1px; color: var(--secondary); font-size: 12px; }
+    .option-tab.active { color: var(--secondary); background: rgba(47, 91, 255, .07); }
+    .option-tab.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--accent-hover); }
+    .option-tab .recommended { color: var(--accent-text); font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .option-summary {
+      display: grid;
+      grid-template-columns: 1fr repeat(3, auto);
+      gap: 18px;
+      align-items: center;
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .option-summary strong { color: var(--secondary); }
+    .metric-mini { text-align: right; }
+    .metric-mini b { display: block; color: var(--text); font-family: var(--mono); font-size: 13px; }
+    .map {
+      position: relative;
+      padding: 12px 15px 16px;
+      overflow: auto;
+    }
+    .lane {
+      display: grid;
+      grid-template-columns: 128px minmax(620px, 1fr);
+      min-height: 72px;
+      border-bottom: 1px solid var(--border);
+    }
+    .lane:last-child { border-bottom: 0; }
+    .lane-label {
+      padding: 15px 14px 12px 0;
+      color: var(--muted);
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    .lane-label span { display: block; margin-top: 4px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+    .lane-modules {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      padding: 9px 0 9px 14px;
+      border-left: 1px solid var(--border);
+    }
+    .module {
+      position: relative;
+      display: grid;
+      align-content: center;
+      min-width: 145px;
+      max-width: 190px;
+      min-height: 50px;
+      padding: 7px 9px;
+      border: 1px solid var(--border-strong);
+      border-radius: 5px;
+      color: var(--secondary);
+      background: var(--raised);
+      text-align: left;
+      transition: 120ms ease;
+    }
+    .module:hover { transform: translateY(-1px); border-color: rgba(143, 165, 255, .55); }
+    .module.selected { border-color: var(--accent-hover); box-shadow: 0 0 0 2px var(--accent-tint); }
+    .module.highlight { border-color: var(--success); background: linear-gradient(90deg, rgba(52, 211, 153, .09), transparent), var(--raised); }
+    .module.dimmed { opacity: .28; }
+    .module b { overflow: hidden; font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+    .module small { overflow: hidden; margin-top: 2px; color: var(--muted); font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
+    .module .module-id { color: var(--accent-text); font-family: var(--mono); }
+    .adapter-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 7px;
+      width: 100%;
+    }
+    .adapter-grid .module { min-width: 0; max-width: none; min-height: 45px; }
+    .trace-filter { display: grid; gap: 5px; }
+    .trace-row {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      gap: 8px;
+      align-items: start;
+      width: 100%;
+      padding: 8px 0;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+    }
+    .trace-row:last-child { border-bottom: 0; }
+    .trace-row:hover, .trace-row.active { color: var(--secondary); }
+    .trace-row.active { background: linear-gradient(90deg, var(--accent-tint), transparent); }
+    .trace-number { font-family: var(--mono); color: var(--accent-text); font-size: 9.5px; padding-top: 2px; }
+    .trace-row b { display: block; color: currentColor; font-size: 11.5px; }
+    .trace-row small { display: block; margin-top: 2px; color: var(--muted); font-size: 9.5px; line-height: 1.35; }
+    .trace-count { padding-top: 2px; font-family: var(--mono); font-size: 9.5px; }
+    .why-list { margin: 0; padding: 0; list-style: none; }
+    .why-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+    .why-list li:last-child { border-bottom: 0; }
+    .why-list b { display: block; margin-bottom: 2px; color: var(--secondary); font-size: 11px; }
+    .gate-list { display: grid; gap: 8px; }
+    .gate-item {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+    .gate-item .state-icon { width: 16px; height: 16px; }
+
+    /* Approval */
+    .approval-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 350px;
+      gap: 18px;
+      align-items: start;
+    }
+    .approval-hero {
+      display: grid;
+      grid-template-columns: 62px 1fr;
+      gap: 15px;
+      align-items: center;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .approval-check {
+      display: grid;
+      place-items: center;
+      width: 56px;
+      height: 56px;
+      border: 1px solid rgba(52, 211, 153, .35);
+      border-radius: 50%;
+      color: var(--success);
+      background: var(--success-tint);
+      font-size: 24px;
+      font-weight: 750;
+    }
+    .approval-hero p { margin: 3px 0 0; color: var(--muted); }
+    .figure-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      margin-top: 18px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .figure {
+      padding: 13px;
+      border-right: 1px solid var(--border);
+    }
+    .figure:last-child { border-right: 0; }
+    .figure span { display: block; color: var(--muted); font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+    .figure strong { display: block; margin-top: 4px; font-family: var(--mono); font-size: 18px; }
+    .handoff-list { margin-top: 19px; }
+    .handoff-row {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 49px;
+      border-bottom: 1px solid var(--border);
+    }
+    .handoff-row:last-child { border-bottom: 0; }
+    .handoff-icon {
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border: 1px solid var(--border-strong);
+      border-radius: 4px;
+      color: var(--accent-text);
+      font-family: var(--mono);
+      font-size: 9px;
+    }
+    .handoff-copy b, .handoff-copy small { display: block; }
+    .handoff-copy b { font-size: 11.5px; }
+    .handoff-copy small { color: var(--muted); font-size: 10px; }
+    .change-row {
+      display: flex;
+      gap: 9px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+    .change-row:last-child { border-bottom: 0; }
+    .change-row b { color: var(--secondary); }
+
+    /* Drawer & toast */
+    .scrim {
+      position: fixed;
+      inset: 52px 0 0 0;
+      z-index: 60;
+      display: none;
+      background: rgba(2, 6, 23, .66);
+    }
+    .scrim.open { display: block; }
+    .drawer {
+      position: fixed;
+      top: 52px;
+      right: 0;
+      bottom: 0;
+      z-index: 70;
+      width: min(420px, calc(100vw - 30px));
+      transform: translateX(100%);
+      border-left: 1px solid var(--border-strong);
+      background: var(--overlay);
+      box-shadow: var(--shadow);
+      transition: 180ms cubic-bezier(.2, 0, 0, 1);
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .drawer-head .icon-button { margin-left: auto; }
+    .drawer-body { height: calc(100% - 72px); padding: 18px; overflow: auto; }
+    .field { display: grid; gap: 6px; margin-bottom: 14px; }
+    .field label { color: var(--muted); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .field input, .field textarea, .field select {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: 5px;
+      color: var(--text);
+      background: var(--inset);
+    }
+    .field textarea { min-height: 88px; resize: vertical; }
+    .impact {
+      margin: 16px 0;
+      padding: 12px;
+      border: 1px solid rgba(96, 165, 250, .27);
+      border-radius: 6px;
+      background: rgba(96, 165, 250, .08);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .impact b { display: block; margin-bottom: 4px; color: var(--secondary); }
+    .drawer-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 100;
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 9px;
+      align-items: center;
+      min-width: 280px;
+      max-width: 380px;
+      padding: 12px 13px;
+      transform: translateY(20px);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      opacity: 0;
+      pointer-events: none;
+      color: var(--secondary);
+      background: var(--raised);
+      box-shadow: var(--shadow);
+      transition: 160ms ease;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast .state-icon { width: 17px; height: 17px; }
+
+    @media (max-width: 1100px) {
+      .shell { grid-template-columns: 72px minmax(0, 1fr); }
+      .brand { min-width: auto; }
+      .rail-section, .rail-item span:not(.rail-icon), .rail-item small, .rail-footer .user > div:last-child { display: none; }
+      .rail-nav { padding-top: 12px; }
+      .rail-item { display: grid; grid-template-columns: 1fr; justify-items: center; padding: 0; }
+      .rail-footer .user { grid-template-columns: 1fr; justify-items: center; }
+      .review-layout, .solution-layout { grid-template-columns: minmax(0, 1fr); }
+      .side-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .people-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .person:nth-child(2) { border-right: 0; }
+      .person:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+      .adapter-grid { grid-template-columns: repeat(3, minmax(130px, 1fr)); }
+    }
+    @media (max-width: 780px) {
+      body { overflow: auto; }
+      .app { min-height: 100vh; height: auto; }
+      .titlebar { position: sticky; top: 0; }
+      .crumbs, .prototype-jump label { display: none; }
+      .shell { grid-template-columns: 1fr; }
+      .rail { display: none; }
+      .workspace { overflow: visible; }
+      .workspace-head { top: 52px; }
+      .workspace-toolbar { padding: 0 14px; }
+      .project-state { display: none; }
+      .journey { grid-template-columns: repeat(5, 1fr); padding: 0; }
+      .journey-step { justify-content: center; padding: 8px 3px; border-right: 0; }
+      .journey-step:first-child { border-left: 0; }
+      .step-copy small { display: none; }
+      .step-copy b { font-size: 10px; text-align: center; }
+      .step-marker { display: none; }
+      .page { padding: 18px 14px 44px; }
+      .page-heading, .command { display: grid; grid-template-columns: 1fr; }
+      .heading-actions, .command-actions { margin-left: 0; }
+      .describe-grid, .approval-grid { grid-template-columns: 1fr; }
+      .example-row { grid-template-columns: 1fr; }
+      .example { border-right: 0; border-bottom: 1px solid var(--border); }
+      .example:last-child { border-bottom: 0; }
+      .people-strip { grid-template-columns: 1fr; }
+      .person { border-right: 0; border-bottom: 1px solid var(--border); }
+      .person:last-child { border-bottom: 0; }
+      .story > button { grid-template-columns: 24px 1fr auto; }
+      .story > button .tag { display: none; }
+      .story-detail { grid-template-columns: 1fr; padding-left: 34px; }
+      .side-stack { grid-template-columns: 1fr; }
+      .option-tabs { overflow-x: auto; }
+      .option-tab { min-width: 156px; }
+      .option-summary { grid-template-columns: 1fr repeat(3, auto); }
+      .figure-strip { grid-template-columns: repeat(2, 1fr); }
+      .figure:nth-child(2) { border-right: 0; }
+      .figure:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="titlebar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>Engineering UI Kit</span></div>
+      <div class="crumbs"><span>Capabilities</span><span>/</span><strong id="crumb-title">Shape the product</strong></div>
+      <div class="title-spacer"></div>
+      <div class="prototype-jump">
+        <label for="prototype-view">Prototype view</label>
+        <select id="prototype-view" aria-label="Choose prototype view">
+          <option value="describe">1 · Describe</option>
+          <option value="review" selected>2 · Check analysis</option>
+          <option value="solution">3 · Solution map</option>
+          <option value="approval">4 · Build handoff</option>
+        </select>
+      </div>
+      <button class="icon-button" type="button" aria-label="Help">?</button>
+    </header>
+
+    <div class="shell">
+      <aside class="rail" aria-label="Main navigation">
+        <div class="rail-section">Workspace</div>
+        <nav class="rail-nav">
+          <button class="rail-item" type="button"><span class="rail-icon">⌂</span><span>Projects</span></button>
+          <button class="rail-item" type="button"><span class="rail-icon">▶</span><span>Build &amp; Test</span><small>3</small></button>
+          <button class="rail-item active" type="button"><span class="rail-icon">◇</span><span>Capabilities</span></button>
+        </nav>
+        <div class="rail-section">Library</div>
+        <nav class="rail-nav">
+          <button class="rail-item" type="button"><span class="rail-icon">▦</span><span>Components</span></button>
+          <button class="rail-item" type="button"><span class="rail-icon">≡</span><span>Recipes</span></button>
+          <button class="rail-item" type="button"><span class="rail-icon">Aa</span><span>Tokens</span></button>
+        </nav>
+        <div class="rail-footer">
+          <div class="user"><span class="avatar">TW</span><div><strong>Local workspace</strong><br><span style="color:var(--muted)">Private by default</span></div></div>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <div class="workspace-head">
+          <div class="workspace-toolbar">
+            <div class="project-select"><span>Project</span><strong>DO-178C Audit Hub</strong><span>⌄</span></div>
+            <div class="project-state"><span class="dot success"></span><span>Saved locally</span></div>
+            <div class="toolbar-spacer"></div>
+            <div class="segmented" aria-label="Projection mode">
+              <button class="segment active" type="button" data-mode="guided">Guided</button>
+              <button class="segment" type="button" data-mode="design">Design</button>
+            </div>
+            <button class="icon-button" type="button" aria-label="More actions">•••</button>
+          </div>
+          <nav class="journey" aria-label="Capability journey">
+            <button class="journey-step active" type="button" data-stage="plan">
+              <span class="step-marker">01</span><span class="step-copy"><b>Plan</b><small>Shape the product</small></span>
+            </button>
+            <button class="journey-step locked" type="button" data-stage="design">
+              <span class="step-marker">02</span><span class="step-copy"><b>Design</b><small>Shape the solution</small></span>
+            </button>
+            <button class="journey-step locked" type="button">
+              <span class="step-marker">03</span><span class="step-copy"><b>Build</b><small>Implement modules</small></span>
+            </button>
+            <button class="journey-step locked" type="button">
+              <span class="step-marker">04</span><span class="step-copy"><b>Connect</b><small>Wire entry points</small></span>
+            </button>
+            <button class="journey-step locked" type="button">
+              <span class="step-marker">05</span><span class="step-copy"><b>Verify</b><small>Prove it works</small></span>
+            </button>
+          </nav>
+        </div>
+        <div class="page" id="page" tabindex="-1"></div>
+      </main>
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-label="Restructure module" aria-hidden="true">
+    <div class="drawer-head">
+      <div><p class="eyebrow">Restructure proposal</p><h2 id="drawer-title">Evidence Graph</h2><p class="mono technical" id="drawer-id">mod.evidence-graph</p></div>
+      <button class="icon-button" type="button" id="drawer-close" aria-label="Close">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="field"><label for="module-name">Name</label><input id="module-name" value="Evidence Graph"></div>
+      <div class="field"><label for="module-kind">Responsibility</label><textarea id="module-kind">Own normalized evidence identities, lifecycle relationships, trace chains, and gap detection rules.</textarea></div>
+      <div class="field technical"><label for="module-type">Module type</label><select id="module-type"><option>domain</option><option>workflow</option><option>experience</option><option>connection</option><option>platform</option></select></div>
+      <div class="impact"><b>Safe local change</b>Renaming keeps 4 stories, 6 operations, and all dependency directions intact. The decision will be replayed if the proposal is regenerated.</div>
+      <div class="divider-label">Other actions</div>
+      <button class="btn btn-quiet" type="button" style="width:100%;justify-content:flex-start">Split by rule set…</button>
+      <button class="btn btn-quiet" type="button" style="width:100%;justify-content:flex-start">Merge with Workspace Snapshots…</button>
+      <button class="btn btn-quiet" type="button" style="width:100%;justify-content:flex-start">Move operation…</button>
+      <div class="drawer-actions"><button class="btn" type="button" id="drawer-cancel">Cancel</button><button class="btn btn-primary" type="button" id="drawer-apply">Apply change</button></div>
+    </div>
+  </aside>
+  <div class="toast" id="toast" role="status"><span class="state-icon">✓</span><span id="toast-text">Change saved as a design decision.</span></div>
+
+  <script>
+    const page = document.querySelector('#page');
+    const viewSelect = document.querySelector('#prototype-view');
+    const crumbTitle = document.querySelector('#crumb-title');
+    const drawer = document.querySelector('#drawer');
+    const scrim = document.querySelector('#scrim');
+    const toast = document.querySelector('#toast');
+    const appState = {
+      view: location.hash.replace('#', '') || 'review',
+      tech: false,
+      mode: 'guided',
+      questionAnswered: false,
+      option: 'cohesive',
+      activeTrace: '',
+      selectedModule: '',
+      renamedModule: 'Evidence Graph'
+    };
+
+    const data = {
+      stories: [
+        ['UC-01', 'Assess certification readiness', 'A certification engineer opens a program and sees objective, lifecycle, trace, review, and finding readiness in one place.', 'critical'],
+        ['UC-02', 'Explore lifecycle evidence', 'A user moves through planning, requirements, design, code, verification, quality, configuration, and certification evidence.', 'critical'],
+        ['UC-03', 'Investigate a broken trace', 'A verification lead follows an end-to-end chain, sees the first broken link, and opens its evidence dossier.', 'critical'],
+        ['UC-04', 'Disposition a finding independently', 'A reviewer records evidence, ownership, and disposition without modifying authoritative engineering artifacts.', 'important'],
+        ['UC-05', 'Refresh without losing valid evidence', 'The software lead publishes a candidate only when every source is claimed and valid; failure preserves the last snapshot.', 'critical'],
+        ['UC-06', 'Create a reproducible audit package', 'The engineer selects scope and produces the same package bytes for the same approved snapshot and options.', 'critical']
+      ],
+      traces: {
+        'UC-01': ['audit-experience', 'assurance-workflow', 'evidence-graph', 'evidence-store'],
+        'UC-02': ['lifecycle-explorer', 'evidence-graph', 'workspace-snapshots', 'evidence-store'],
+        'UC-03': ['lifecycle-explorer', 'evidence-graph', 'workspace-snapshots', 'matlab-adapter', 'c-source-adapter', 'coverage-adapter'],
+        'UC-04': ['audit-experience', 'assurance-workflow', 'evidence-graph', 'review-adapter', 'evidence-store'],
+        'UC-05': ['ingestion-publication', 'workspace-snapshots', 'filesystem-adapter', 'git-adapter', 'matlab-adapter', 'spreadsheet-adapter', 'c-source-adapter', 'coverage-adapter', 'review-adapter', 'objective-adapter', 'evidence-store'],
+        'UC-06': ['audit-experience', 'package-assembly', 'workspace-snapshots', 'evidence-store']
+      }
+    };
+
+    function technicalToggle() {
+      return `<button class="technical-toggle" type="button" id="tech-toggle" aria-pressed="${appState.tech}"><span class="switch" aria-hidden="true"></span><span>${appState.tech ? 'Hide' : 'Show'} design details</span></button>`;
+    }
+
+    function heading(eyebrow, title, lede) {
+      return `<div class="page-heading"><div><p class="eyebrow">${eyebrow}</p><h1>${title}</h1><p class="lede">${lede}</p></div><div class="heading-actions">${technicalToggle()}</div></div>`;
+    }
+
+    function describeView() {
+      return `
+        ${heading('Plan · Describe', 'What should people be able to accomplish?', 'Start with the outcome. The tool will use the context you allow to draft the workflows, boundaries, important behavior, and proof.')}
+        <div class="command">
+          <div><h2>One description is enough to begin</h2><p>You will review a product story—not fill in an architecture questionnaire.</p></div>
+          <div class="command-actions"><button class="btn btn-primary" type="button" id="draft-story">Draft product story <span>→</span></button></div>
+        </div>
+        <div class="describe-grid">
+          <section class="panel">
+            <div class="panel-head"><div><h2>Describe the outcome</h2><p>Use your own words. Examples and constraints are optional.</p></div><span class="tag accent">Required</span></div>
+            <div class="panel-body">
+              <label class="sr-only" for="intent-prompt">Product outcome</label>
+              <textarea class="prompt-area" id="intent-prompt">Certification engineers need to explore requirements, design, source, tests, reviews, coverage, and traceability from Simulink and project files; find gaps; manage findings; and create reproducible audit packages without changing authoritative evidence.</textarea>
+              <div class="prompt-tools">
+                <button class="btn btn-small" type="button">＋ Add example</button>
+                <button class="btn btn-small" type="button">⊘ Must never happen</button>
+                <span class="count">278 characters</span>
+              </div>
+            </div>
+            <div class="example-row">
+              <button class="example" type="button"><b>What happens first?</b>“An engineer opens a program and wants to know whether it is audit-ready.”</button>
+              <button class="example" type="button"><b>What can go wrong?</b>“A failed refresh must never replace the last valid evidence snapshot.”</button>
+              <button class="example" type="button"><b>How do we know?</b>“The same scope and snapshot must produce the same package.”</button>
+            </div>
+          </section>
+          <aside class="panel">
+            <div class="panel-head"><div><h2>Context to use</h2><p>Selected sources are read-only.</p></div><button class="btn btn-small btn-quiet" type="button">Manage</button></div>
+            <div class="panel-body" style="padding-top:4px;padding-bottom:12px">
+              <div class="source-row"><span class="source-check">✓</span><span class="source-copy"><b>Project description</b><small>1 source · saved locally</small></span><span class="tag success">Ready</span></div>
+              <div class="source-row"><span class="source-check">✓</span><span class="source-copy"><b>Repository overview</b><small>README, routes, schemas, runtimes</small></span><span class="tag success">Ready</span></div>
+              <div class="source-row"><span class="source-check">✓</span><span class="source-copy"><b>Approved capability records</b><small>Current Plan and Design revisions</small></span><span class="tag success">Ready</span></div>
+              <div class="source-row"><span class="source-check off">✓</span><span class="source-copy"><b>Additional documents</b><small>None selected</small></span><button class="btn btn-small" type="button">Add</button></div>
+              <div class="privacy-note"><span>⌾</span><span><b>Private by default.</b> Source content stays inside this project. Only structured evidence and source hashes are saved.</span></div>
+              <div class="technical block" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);color:var(--muted);font:10px/1.6 var(--mono)">provider: analysis.local-agent<br>context budget: 82,000 tokens<br>source fingerprint: e3a7…b910</div>
+            </div>
+          </aside>
+        </div>`;
+    }
+
+    function storyRows() {
+      return data.stories.map((story, index) => `
+        <article class="story${index === 2 ? ' open' : ''}" data-story="${story[0]}">
+          <button type="button" aria-expanded="${index === 2}">
+            <span class="story-number">${String(index + 1).padStart(2, '0')}</span>
+            <span class="story-copy"><b>${story[1]}</b><span>${story[2]}</span></span>
+            <span class="tag ${story[3] === 'critical' ? 'accent' : ''}">${story[3]}</span>
+            <span class="chevron">›</span>
+          </button>
+          <div class="story-detail">
+            <div><b>Normal moment</b><ul><li>Open a trace or evidence scope.</li><li>Follow normalized relationships.</li><li>See source provenance and status.</li></ul></div>
+            <div><b>Failure &amp; recovery</b><ul><li>Identify the first missing or invalid link.</li><li>Keep the last published evidence available.</li><li>Offer a clear next investigation.</li></ul></div>
+            <div><b>Proof</b><ul><li>The visible chain matches the snapshot.</li><li>No authoritative artifact is modified.</li><li>Every hop names its source revision.</li></ul></div>
+            <div class="technical block" style="grid-column:1/-1;padding:9px;border:1px solid var(--border);border-radius:4px;background:var(--inset);font:10px/1.6 var(--mono)">id: ${story[0]} · state: inferred · confidence: 0.94 · evidence: SRC-01, SRC-03 · quality drivers: QD-AUDIT-01, QD-AVAIL-01</div>
+          </div>
+        </article>`).join('');
+    }
+
+    function reviewView() {
+      const ready = appState.questionAnswered;
+      return `
+        ${heading('Plan · Check', 'Here’s what I understood', 'Review the meaning, not a generated specification. Correct anything that feels wrong; the full technical record remains available when you need it.')}
+        <div class="command ${ready ? 'ready' : ''}">
+          <div><h2>${ready ? 'Ready to shape a solution' : 'One answer will improve the solution'}</h2><p>${ready ? 'Six stories, eight external boundaries, and the important recovery behavior are understood.' : 'Your answer changes the review workflow and authorization boundary.'}</p></div>
+          <div class="command-actions"><button class="btn btn-quiet" type="button">Edit summary</button><button class="btn btn-primary" type="button" id="approve-product">${ready ? 'Approve and shape solution' : 'Review the question'} <span>→</span></button></div>
+        </div>
+        <div class="review-layout">
+          <div>
+            <section class="promise">
+              <div class="section-head" style="margin-top:0"><div><p class="eyebrow">Product promise</p><h2>Make certification evidence explorable, trustworthy, and reproducible</h2></div><button class="btn btn-small btn-quiet head-action" type="button">Correct</button></div>
+              <p>Certification teams can assess readiness, follow evidence across every lifecycle phase, investigate gaps, disposition findings, and create deterministic audit packages—without changing authoritative engineering artifacts.</p>
+              <div class="technical block" style="margin-top:10px;color:var(--muted);font:10px/1.55 var(--mono)">analysis UC-ANALYSIS-001 @ r3 · proposed · 7 evidence refs · application projection pending</div>
+            </section>
+
+            <div class="section-head"><div><p class="eyebrow">People &amp; outcomes</p><h2>Who this is for</h2></div><p>4 understood from project context</p><button class="btn btn-small btn-quiet head-action" type="button">Adjust</button></div>
+            <div class="people-strip">
+              <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Certification engineer</b></div><p>Assess objective and lifecycle evidence readiness.</p></div>
+              <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Verification lead</b></div><p>Investigate trace, result, and coverage gaps.</p></div>
+              <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Quality reviewer</b></div><p>Review and independently disposition findings.</p></div>
+              <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Software lead</b></div><p>Refresh evidence without losing the last valid state.</p></div>
+            </div>
+
+            <div class="section-head"><div><p class="eyebrow">Key stories</p><h2>What people need to accomplish</h2></div><p>Open a story to check failure and proof</p><button class="btn btn-small btn-quiet head-action" type="button">＋ Add</button></div>
+            <div class="story-list">${storyRows()}</div>
+          </div>
+
+          <aside class="side-stack">
+            <section class="panel">
+              <div class="panel-head"><div><h2>Analysis readiness</h2><p>Completeness of important behavior</p></div><span class="status-line"><span class="dot ${ready ? 'success' : 'warning'}"></span>${ready ? 'Ready' : 'Needs input'}</span></div>
+              <div class="panel-body">
+                <div class="readiness"><div class="readiness-ring"><strong>${ready ? '96' : '90'}%</strong></div><div class="readiness-copy"><b>${ready ? 'Ready to shape a solution' : 'Strong first draft'}</b><span>${ready ? '3 assumptions will remain visible.' : '1 decision changes the design.'}</span></div></div>
+                <div class="coverage-bars">
+                  <div class="coverage-line"><span>People</span><span class="bar"><span style="width:100%"></span></span><span>4/4</span></div>
+                  <div class="coverage-line"><span>Stories</span><span class="bar"><span style="width:100%"></span></span><span>6/6</span></div>
+                  <div class="coverage-line"><span>Boundaries</span><span class="bar"><span style="width:100%"></span></span><span>8/8</span></div>
+                  <div class="coverage-line"><span>Recovery</span><span class="bar"><span style="width:83%"></span></span><span>5/6</span></div>
+                  <div class="coverage-line"><span>Proof</span><span class="bar"><span style="width:100%"></span></span><span>6/6</span></div>
+                </div>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-head"><div><h2>${ready ? 'Decisions captured' : 'Needs your input'}</h2><p>${ready ? 'Only architecture-changing answers' : 'One answer · about 20 seconds'}</p></div><span class="tag ${ready ? 'success' : 'warning'}">${ready ? 'Resolved' : '1 important'}</span></div>
+              <div class="panel-body">
+                <div class="question">
+                  <small>${ready ? 'Answered' : 'Independence rule'}</small>
+                  <b>Can a reviewer approve their own finding?</b>
+                  <p>This changes authorization and whether review needs a separate workflow boundary.</p>
+                  <div class="choice-list">
+                    <button class="choice ${ready ? 'selected' : ''}" type="button" data-choice="separate"><span class="radio"></span><span>No—require a different reviewer <em>Recommended from the assurance context</em></span></button>
+                    <button class="choice" type="button" data-choice="same"><span class="radio"></span><span>Yes, with an audit record</span></button>
+                    <button class="choice" type="button" data-choice="policy"><span class="radio"></span><span>Make it project policy</span></button>
+                  </div>
+                </div>
+                <button class="btn btn-quiet btn-small" type="button" style="margin-top:11px;padding-left:0">View 3 carried assumptions</button>
+              </div>
+            </section>
+            <section class="panel technical">
+              <div class="panel-head"><div><h2>Analysis record</h2><p>Technical projection</p></div></div>
+              <div class="panel-body mono" style="font-size:9.5px;color:var(--muted);line-height:1.7">CAP-CONTRACT-030<br>gate: CAP-GATE-030<br>sources: 7 · contradictions: 0<br>unresolved blocking: ${ready ? '0' : '1'}<br>compiled application: pending</div>
+            </section>
+          </aside>
+        </div>`;
+    }
+
+    const modules = {
+      experiences: [
+        ['audit-experience', 'Audit Experience', 'Daily audit and finding work'],
+        ['lifecycle-explorer', 'Lifecycle Explorer', 'Evidence and trace investigation']
+      ],
+      workflows: [
+        ['ingestion-publication', 'Ingestion & Publication', 'Validate and publish snapshots'],
+        ['assurance-workflow', 'Assurance Workflow', 'Independent review and findings'],
+        ['package-assembly', 'Package Assembly', 'Deterministic audit exports']
+      ],
+      domains: [
+        ['evidence-graph', 'Evidence Graph', 'Evidence identity and trace rules'],
+        ['workspace-snapshots', 'Workspace Snapshots', 'Last-valid and baseline state']
+      ],
+      platform: [
+        ['evidence-store', 'Evidence Store', 'Immutable snapshots and overlays'],
+        ['job-store', 'Job & Package Store', 'Progress and deterministic artifacts']
+      ],
+      adapters: [
+        ['filesystem-adapter', 'Filesystem', 'Project files'],
+        ['git-adapter', 'Git', 'Revision provenance'],
+        ['matlab-adapter', 'MATLAB / Simulink', 'SLX, SLREQX, SLMX, SLDATX'],
+        ['spreadsheet-adapter', 'Spreadsheet', 'XLSX and CSV'],
+        ['c-source-adapter', 'C / H Source', 'Functions and provenance'],
+        ['coverage-adapter', 'Coverage', 'LCOV, XML, JSON'],
+        ['review-adapter', 'Review Evidence', 'Reviews and checklists'],
+        ['objective-adapter', 'Objective Profile', 'Program-owned objectives']
+      ]
+    };
+
+    function moduleButton(item) {
+      const traced = appState.activeTrace ? data.traces[appState.activeTrace] || [] : [];
+      const inTrace = traced.includes(item[0]);
+      const stateClass = appState.activeTrace ? (inTrace ? ' highlight' : ' dimmed') : '';
+      const selected = appState.selectedModule === item[0] ? ' selected' : '';
+      const shownName = item[0] === 'evidence-graph' ? appState.renamedModule : item[1];
+      return `<button class="module${stateClass}${selected}" type="button" data-module="${item[0]}" data-name="${shownName}"><b>${shownName}</b><small>${item[2]}</small><small class="module-id technical">${item[0]}</small></button>`;
+    }
+
+    function solutionView() {
+      const detailName = appState.selectedModule
+        ? Object.values(modules).flat().find(m => m[0] === appState.selectedModule)?.[1] || 'Selected module'
+        : 'Select a module';
+      return `
+        ${heading('Design · Proposal', 'A solution shaped around the approved stories', 'Start with the recommended cohesive architecture. Highlight any story to see its complete path, or select a module to understand and restructure it.')}
+        <div class="command ready">
+          <div><h2>Recommended: cohesive application with an isolated MATLAB boundary</h2><p>All 6 stories are covered. The design keeps operations simple while containing the proprietary extraction lifecycle.</p></div>
+          <div class="command-actions"><button class="btn" type="button" id="restructure-selected">Restructure</button><button class="btn btn-primary" type="button" id="approve-solution">Approve and plan build <span>→</span></button></div>
+        </div>
+        <div class="solution-layout">
+          <section class="panel">
+            <div class="option-tabs" role="tablist" aria-label="Architecture options">
+              <button class="option-tab ${appState.option === 'cohesive' ? 'active' : ''}" type="button" data-option="cohesive"><span class="recommended">Recommended</span><b>Cohesive application</b>2 deployables · lowest operations</button>
+              <button class="option-tab ${appState.option === 'isolated' ? 'active' : ''}" type="button" data-option="isolated"><b>Separated ingestion</b>3 deployables · stronger isolation</button>
+              <button class="option-tab ${appState.option === 'distributed' ? 'active' : ''}" type="button" data-option="distributed"><b>Distributed services</b>6 deployables · not justified</button>
+            </div>
+            <div class="option-summary">
+              <span><strong>${appState.option === 'cohesive' ? 'Why this fits:' : appState.option === 'isolated' ? 'Tradeoff:' : 'Why it is not recommended:'}</strong> ${appState.option === 'cohesive' ? 'local evidence access, single-team ownership, and no independent scale driver.' : appState.option === 'isolated' ? 'contains all ingestion failures, but adds another service lifecycle.' : 'no approved story requires independent network scale; complexity rises without coverage gain.'}</span>
+              <span class="metric-mini"><b>${appState.option === 'cohesive' ? '2' : appState.option === 'isolated' ? '3' : '6'}</b>deployables</span>
+              <span class="metric-mini"><b>17</b>solution parts</span>
+              <span class="metric-mini"><b>100%</b>coverage</span>
+            </div>
+            <div class="map" aria-label="Proposed solution map">
+              <div class="lane"><div class="lane-label">Experiences<span>How people work</span></div><div class="lane-modules">${modules.experiences.map(moduleButton).join('')}</div></div>
+              <div class="lane"><div class="lane-label">Coordinators<span>End-to-end work</span></div><div class="lane-modules">${modules.workflows.map(moduleButton).join('')}</div></div>
+              <div class="lane"><div class="lane-label">Core knowledge<span>Rules and truth</span></div><div class="lane-modules">${modules.domains.map(moduleButton).join('')}</div></div>
+              <div class="lane"><div class="lane-label">Connections<span>External actors</span></div><div class="lane-modules"><div class="adapter-grid">${modules.adapters.map(moduleButton).join('')}</div></div></div>
+              <div class="lane"><div class="lane-label">Foundation<span>Shared runtime</span></div><div class="lane-modules">${modules.platform.map(moduleButton).join('')}</div></div>
+            </div>
+          </section>
+          <aside class="side-stack">
+            <section class="panel">
+              <div class="panel-head"><div><h2>Story coverage</h2><p>Highlight an end-to-end path</p></div>${appState.activeTrace ? '<button class="btn btn-small btn-quiet" id="clear-trace" type="button">Clear</button>' : '<span class="tag success">6 / 6</span>'}</div>
+              <div class="panel-body" style="padding-top:4px">
+                <div class="trace-filter">${data.stories.map(story => `<button class="trace-row ${appState.activeTrace === story[0] ? 'active' : ''}" type="button" data-trace="${story[0]}"><span class="trace-number">${story[0].slice(3)}</span><span><b>${story[1]}</b><small>${(data.traces[story[0]] || []).length} solution parts in this path</small></span><span class="trace-count">100%</span></button>`).join('')}</div>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-head"><div><h2>${appState.selectedModule ? detailName : 'Why these boundaries?'}</h2><p>${appState.selectedModule ? 'Selected solution part' : 'Derivation summary'}</p></div>${appState.selectedModule ? '<button class="btn btn-small" id="edit-module" type="button">Edit</button>' : ''}</div>
+              <div class="panel-body">
+                ${appState.selectedModule ? `
+                  <ul class="why-list"><li><b>Supports 4 approved stories</b>Readiness, trace investigation, review, and refresh.</li><li><b>Separate because of distinct rules</b>Evidence identity and trace consistency change together.</li><li><b>Owns 6 operations</b>Query, traverse, diagnose, and materialize evidence relationships.</li><li><b>Does not own</b>Source extraction, user presentation, or snapshot publication.</li></ul>
+                  <div class="technical block mono" style="margin-top:10px;color:var(--muted);font-size:9.5px;line-height:1.6">type: domain<br>incoming dependencies: 3<br>outgoing ports: 1<br>decision lock: none</div>` : `
+                  <ul class="why-list"><li><b>Experiences follow distinct tasks</b>Daily assurance work is separate from deep lifecycle investigation.</li><li><b>Coordinators own recovery</b>Refresh, review, and package flows cross multiple boundaries.</li><li><b>Core knowledge stays cohesive</b>Trace and snapshot rules remain independent of source technology.</li><li><b>Connections remain actor-specific</b>MATLAB, Git, files, spreadsheets, source, and reviews have different lifecycles and failures.</li></ul>`}
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-head"><div><h2>Design checks</h2><p>Live after every change</p></div><span class="status-line"><span class="dot success"></span>Ready</span></div>
+              <div class="panel-body">
+                <div class="gate-list">
+                  <div class="gate-item"><span class="state-icon">✓</span><span>All critical stories have a complete path.</span></div>
+                  <div class="gate-item"><span class="state-icon">✓</span><span>Every external actor has a concrete connection.</span></div>
+                  <div class="gate-item"><span class="state-icon">✓</span><span>Every module has a reason to exist.</span></div>
+                  <div class="gate-item"><span class="state-icon">✓</span><span>No circular dependencies.</span></div>
+                </div>
+                <div class="technical block mono" style="margin-top:12px;padding-top:11px;border-top:1px solid var(--border);color:var(--muted);font-size:9.5px">CAP-GATE-002 + UC coverage extensions · passed</div>
+              </div>
+            </section>
+          </aside>
+        </div>`;
+    }
+
+    function approvalView() {
+      return `
+        ${heading('Design · Approved', 'The solution is ready for Build', 'Product intent, architecture rationale, and your design decisions are now approved and traceable. Existing Build, Connect, and Verify workflows can continue unchanged.')}
+        <div class="command ready">
+          <div><h2>Next best action: generate module proposals</h2><p>The dependency-safe batch will reuse all approved stories, rules, boundaries, and architecture decisions.</p></div>
+          <div class="command-actions"><button class="btn" type="button">View approved design</button><button class="btn btn-primary" type="button" id="continue-build">Continue to Build <span>→</span></button></div>
+        </div>
+        <div class="approval-grid">
+          <section class="panel">
+            <div class="panel-body">
+              <div class="approval-hero"><div class="approval-check">✓</div><div><p class="eyebrow">Two explicit approvals captured</p><h2>Product story and solution map approved</h2><p>No technical questionnaire or manual specification entry was required.</p></div></div>
+              <div class="figure-strip">
+                <div class="figure"><span>People</span><strong>4</strong></div>
+                <div class="figure"><span>Stories</span><strong>6</strong></div>
+                <div class="figure"><span>Solution parts</span><strong>17</strong></div>
+                <div class="figure"><span>Coverage</span><strong>100%</strong></div>
+              </div>
+              <div class="handoff-list">
+                <p class="eyebrow">What Build receives</p>
+                <div class="handoff-row"><span class="handoff-icon">UC</span><span class="handoff-copy"><b>Approved product story</b><small>Normal, alternative, failure, recovery, rules, proof, and provenance</small></span><span class="tag success">Current</span></div>
+                <div class="handoff-row"><span class="handoff-icon">AR</span><span class="handoff-copy"><b>Approved architecture</b><small>Responsibilities, dependencies, operations, connections, and workflow traces</small></span><span class="tag success">Current</span></div>
+                <div class="handoff-row"><span class="handoff-icon">DX</span><span class="handoff-copy"><b>Design decisions</b><small>Human restructuring is durable and will survive regeneration</small></span><span class="tag">1 decision</span></div>
+                <div class="handoff-row"><span class="handoff-icon">FP</span><span class="handoff-copy"><b>Foundation proposal</b><small>Modular monolith plus isolated MATLAB extraction process</small></span><span class="tag accent">Ready next</span></div>
+              </div>
+            </div>
+          </section>
+          <aside class="side-stack">
+            <section class="panel">
+              <div class="panel-head"><div><h2>Effort in this prototype</h2><p>Medium-sized sample</p></div></div>
+              <div class="panel-body">
+                <ul class="why-list"><li><b>1 outcome description</b>The only required free-form input.</li><li><b>1 material question</b>Authorization changed the workflow boundary.</li><li><b>2 approvals</b>Product meaning, then solution design.</li><li><b>1 optional restructure</b>Preserved as a durable decision.</li><li><b>0 structured fields</b>No IDs, schemas, modules, or adapters entered manually.</li></ul>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-head"><div><h2>Approval evidence</h2><p>Visible in Design mode</p></div><span class="status-line"><span class="dot success"></span>Saved</span></div>
+              <div class="panel-body">
+                <div class="change-row"><span class="state-icon">✓</span><span><b>Use-case analysis</b><br><span class="mono">r3 · 9ae1…d771</span></span></div>
+                <div class="change-row"><span class="state-icon">✓</span><span><b>Application projection</b><br><span class="mono">r8 · 4c0b…180a</span></span></div>
+                <div class="change-row"><span class="state-icon">✓</span><span><b>Architecture</b><br><span class="mono">r5 · 387f…991c</span></span></div>
+                <div class="change-row"><span class="state-icon">✓</span><span><b>Gate evaluation</b><br><span>All blockers resolved</span></span></div>
+              </div>
+            </section>
+          </aside>
+        </div>`;
+    }
+
+    function render() {
+      document.body.classList.toggle('tech-on', appState.tech);
+      viewSelect.value = appState.view;
+      const solution = appState.view === 'solution' || appState.view === 'approval';
+      crumbTitle.textContent = solution ? 'Shape the solution' : 'Shape the product';
+      document.querySelectorAll('.journey-step').forEach((step, index) => {
+        step.classList.toggle('active', solution ? index === 1 : index === 0);
+        step.classList.toggle('complete', solution && index === 0);
+        if (index === 1) step.classList.toggle('locked', !solution);
+      });
+      if (appState.view === 'describe') page.innerHTML = describeView();
+      else if (appState.view === 'solution') page.innerHTML = solutionView();
+      else if (appState.view === 'approval') page.innerHTML = approvalView();
+      else page.innerHTML = reviewView();
+      bindPage();
+    }
+
+    function go(view) {
+      appState.view = view;
+      history.replaceState(null, '', `#${view}`);
+      render();
+      page.focus({preventScroll:true});
+      document.querySelector('.workspace').scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function showToast(message) {
+      document.querySelector('#toast-text').textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    function openDrawer(moduleId = 'evidence-graph', name = appState.renamedModule) {
+      appState.selectedModule = moduleId;
+      document.querySelector('#drawer-title').textContent = name;
+      document.querySelector('#drawer-id').textContent = `mod.${moduleId}`;
+      document.querySelector('#module-name').value = name;
+      drawer.classList.add('open');
+      scrim.classList.add('open');
+      drawer.setAttribute('aria-hidden', 'false');
+      setTimeout(() => document.querySelector('#module-name').focus(), 50);
+    }
+
+    function closeDrawer() {
+      drawer.classList.remove('open');
+      scrim.classList.remove('open');
+      drawer.setAttribute('aria-hidden', 'true');
+    }
+
+    function bindPage() {
+      document.querySelector('#tech-toggle')?.addEventListener('click', () => {
+        appState.tech = !appState.tech;
+        if (appState.tech) {
+          appState.mode = 'design';
+          document.querySelectorAll('.segment').forEach(x => x.classList.toggle('active', x.dataset.mode === 'design'));
+        }
+        render();
+      });
+      document.querySelector('#draft-story')?.addEventListener('click', event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        button.textContent = 'Understanding workflows…';
+        setTimeout(() => go('review'), 700);
+      });
+      document.querySelectorAll('.story > button').forEach(button => button.addEventListener('click', () => {
+        const story = button.closest('.story');
+        story.classList.toggle('open');
+        button.setAttribute('aria-expanded', story.classList.contains('open'));
+      }));
+      document.querySelectorAll('.choice').forEach(choice => choice.addEventListener('click', () => {
+        appState.questionAnswered = true;
+        showToast('Decision captured. Analysis readiness updated.');
+        render();
+      }));
+      document.querySelector('#approve-product')?.addEventListener('click', () => {
+        if (!appState.questionAnswered) {
+          document.querySelector('.question')?.scrollIntoView({behavior:'smooth', block:'center'});
+          showToast('Choose the independence rule before approval.');
+        } else {
+          showToast('Product story approved. Solution proposal generated.');
+          setTimeout(() => go('solution'), 420);
+        }
+      });
+      document.querySelectorAll('[data-option]').forEach(tab => tab.addEventListener('click', () => {
+        appState.option = tab.dataset.option;
+        render();
+      }));
+      document.querySelectorAll('[data-trace]').forEach(row => row.addEventListener('click', () => {
+        appState.activeTrace = row.dataset.trace;
+        render();
+      }));
+      document.querySelector('#clear-trace')?.addEventListener('click', () => {
+        appState.activeTrace = '';
+        render();
+      });
+      document.querySelectorAll('[data-module]').forEach(module => module.addEventListener('click', () => {
+        appState.selectedModule = module.dataset.module;
+        render();
+      }));
+      document.querySelector('#edit-module')?.addEventListener('click', () => {
+        const item = Object.values(modules).flat().find(m => m[0] === appState.selectedModule);
+        openDrawer(appState.selectedModule, item?.[1] || 'Selected module');
+      });
+      document.querySelector('#restructure-selected')?.addEventListener('click', () => openDrawer(appState.selectedModule || 'evidence-graph', appState.renamedModule));
+      document.querySelector('#approve-solution')?.addEventListener('click', () => {
+        showToast('Architecture approved. Build handoff is ready.');
+        setTimeout(() => go('approval'), 420);
+      });
+      document.querySelector('#continue-build')?.addEventListener('click', () => showToast('Prototype boundary: this continues into the existing Build workflow.'));
+    }
+
+    viewSelect.addEventListener('change', () => go(viewSelect.value));
+    document.querySelectorAll('.segment').forEach(segment => segment.addEventListener('click', () => {
+      appState.mode = segment.dataset.mode;
+      appState.tech = appState.mode === 'design';
+      document.querySelectorAll('.segment').forEach(x => x.classList.toggle('active', x === segment));
+      render();
+    }));
+    document.querySelector('[data-stage="plan"]').addEventListener('click', () => go('review'));
+    document.querySelector('[data-stage="design"]').addEventListener('click', () => {
+      if (!document.querySelector('[data-stage="design"]').classList.contains('locked')) go('solution');
+    });
+    document.querySelector('#drawer-close').addEventListener('click', closeDrawer);
+    document.querySelector('#drawer-cancel').addEventListener('click', closeDrawer);
+    scrim.addEventListener('click', closeDrawer);
+    document.querySelector('#drawer-apply').addEventListener('click', () => {
+      appState.renamedModule = document.querySelector('#module-name').value.trim() || 'Evidence Graph';
+      closeDrawer();
+      render();
+      showToast('Change saved as a durable design decision.');
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeDrawer();
+    });
+    window.addEventListener('hashchange', () => {
+      const next = location.hash.replace('#', '');
+      if (['describe', 'review', 'solution', 'approval'].includes(next)) {
+        appState.view = next;
+        render();
+      }
+    });
+    render();
+  </script>
+</body>
+</html>
