@@ -57,8 +57,25 @@ test("uses direct task labels in the briefing and mockup", async () => {
   assert.match(mockup, /role="dialog"/);
   assert.match(mockup, /function openNodeDetailModal\(/);
   assert.match(mockup, /classList\.contains\('diagram-node'\)/);
+  assert.match(mockup, /5 · Verify evidence/);
+  assert.match(mockup, /function verificationView\(/);
+  assert.match(mockup, /data-scenario="\$\{item\.id\}"/);
+  assert.match(mockup, /Screenshot evidence/);
+  assert.match(mockup, /Structured evidence/);
+  assert.match(mockup, /id="detail-diagram-modal"/);
+  assert.match(mockup, /View diagrams/);
+  assert.match(mockup, /function activityDetailDiagram\(/);
+  assert.match(mockup, /function stateDetailDiagram\(/);
+  assert.match(mockup, /function sequenceDetailDiagram\(/);
+  assert.match(mockup, /function useCaseDetailDiagram\(/);
+  assert.match(briefing, /AUTOMATED SCENARIOS/);
+  assert.match(briefing, /Scenario evidence/);
   assert.match(proposal, /^# Plan from use cases/m);
   assert.match(proposal, /## 10\. DO-178C Audit Hub example/);
+  assert.match(proposal, /### 7\.3 Verify checks/);
+  assert.match(proposal, /### 13\.2 Generated use-case scenario tests/);
+  assert.match(proposal, /capture a screenshot when the result is visible/);
+  assert.match(proposal, /### 4\.6 Diagrams in detail views/);
   assert.match(layout, /const title = "Plan from use cases"/);
 
   const obsoletePhrases = [

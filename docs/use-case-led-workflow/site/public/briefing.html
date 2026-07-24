@@ -574,7 +574,7 @@
         </div>
         <div class="decision">
           <article class="decision-cell"><span class="num">01</span><h3>Add one record</h3><p>Add a versioned use-case analysis. Convert it to the current application specification for all later steps.</p></article>
-          <article class="decision-cell"><span class="num">02</span><h3>Keep five stages</h3><p>Plan defines the work. Design defines the system. Build, Connect, and Verify keep their current names and purpose.</p></article>
+          <article class="decision-cell"><span class="num">02</span><h3>Keep five stages</h3><p>Plan defines the work. Design defines the system. Build and Connect keep their purpose. Verify runs every approved scenario and keeps step evidence.</p></article>
           <article class="decision-cell"><span class="num">03</span><h3>Use the same data</h3><p>Guided mode hides record IDs. Design mode shows sources, confidence, checks, traces, and raw records. Both modes change the same data.</p></article>
         </div>
         <div class="journey" aria-label="Integrated workflow">
@@ -582,7 +582,7 @@
           <div class="journey-item active"><span class="journey-number">02</span><h3>Design</h3><p>Review the system. Change modules. Approve the architecture.</p><strong>NEW DESIGN DRAFT</strong></div>
           <div class="journey-item"><span class="journey-number">03</span><h3>Build</h3><p>Create modules in a safe dependency order.</p><strong>CURRENT WORKFLOW</strong></div>
           <div class="journey-item"><span class="journey-number">04</span><h3>Connect</h3><p>Connect entry points. Test each real connection.</p><strong>CURRENT WORKFLOW</strong></div>
-          <div class="journey-item"><span class="journey-number">05</span><h3>Verify</h3><p>Link each use case to test evidence.</p><strong>USES APPROVED USE CASES</strong></div>
+          <div class="journey-item active"><span class="journey-number">05</span><h3>Verify</h3><p>Run every approved scenario. Keep screenshots and structured step evidence.</p><strong>AUTOMATED SCENARIOS</strong></div>
         </div>
       </div>
     </section>
@@ -608,6 +608,8 @@
             <div class="work-row"><span class="work-symbol">S</span><span><b>Record each source</b><span>Mark data as sourced, inferred, confirmed, changed, or in conflict.</span></span></div>
             <div class="work-row"><span class="work-symbol">D</span><span><b>Draft the system design</b><span>Define modules, operations, ports, adapters, dependencies, and deployable units.</span></span></div>
             <div class="work-row"><span class="work-symbol">C</span><span><b>Run design checks</b><span>Find missing paths, unused modules, dependency cycles, missing owners, and old data.</span></span></div>
+            <div class="work-row"><span class="work-symbol">T</span><span><b>Run every scenario</b><span>Create automated end-to-end tests for main, alternate, failure, and recovery paths.</span></span></div>
+            <div class="work-row"><span class="work-symbol">E</span><span><b>Keep step evidence</b><span>Capture screenshots for visible results and structured evidence for background checks.</span></span></div>
           </div>
         </div>
         <div class="pipeline" aria-label="Data flow">
@@ -617,7 +619,7 @@
           <div class="pipeline-node"><b>Application specification</b><span>Current approved data contract</span></div>
           <div class="pipeline-node accent"><b>System design draft</b><span>Modules and reasons</span></div>
           <div class="pipeline-node"><b>Architecture specification</b><span>Current approved data contract</span></div>
-          <div class="pipeline-node"><b>Build and test</b><span>Build, connect, and verify</span></div>
+          <div class="pipeline-node"><b>Scenario evidence</b><span>Automated runs, step results, screenshots, and structured checks</span></div>
         </div>
       </div>
     </section>
@@ -639,7 +641,7 @@
           <div class="rule"><b>Keep related rules together</b><p>Split a module only for a clear difference in rules, change rate, ownership, runtime, scale, or trust.</p></div>
           <div class="rule"><b>Trace every use case</b><p>Select a use case to show each user interface, workflow, core module, adapter, and store in its path.</p></div>
           <div class="rule"><b>Name each adapter</b><p>Use separate adapters for MATLAB, files, Git, spreadsheets, C source, coverage, and review data.</p></div>
-          <div class="rule"><b>Keep user changes</b><p>Save each approved module change. Apply it again when the tool creates a new draft.</p></div>
+          <div class="rule"><b>Open detail diagrams</b><p>Show the applicable use-case, activity, state, or sequence diagram from the approved records.</p></div>
         </div>
       </div>
     </section>
@@ -657,7 +659,7 @@
           <div class="phase"><span class="phase-num">03</span><h3>Add analysis adapters</h3><p>Support the current Copilot handoff, an in-app agent, a fixed test provider, and approved source data.</p><span class="phase-outcome">Choice of automation</span></div>
           <div class="phase"><span class="phase-num">04</span><h3>Add the design editor</h3><p>Show reasons, options, coverage, module changes, saved decisions, and architecture approval.</p><span class="phase-outcome">Reviewable design</span></div>
           <div class="phase"><span class="phase-num">05</span><h3>Add the machine API</h3><p>Provide the same operations to automation. Require IDs for retries and explicit approval.</p><span class="phase-outcome">Direct API access</span></div>
-          <div class="phase"><span class="phase-num">06</span><h3>Use the data in later stages</h3><p>Send approved use cases to module plans, interface briefs, connection setup, verification plans, and change reports.</p><span class="phase-outcome">No repeated input</span></div>
+          <div class="phase"><span class="phase-num">06</span><h3>Use the data in later stages</h3><p>Send approved use cases to module plans and connections. Generate every scenario test, capture applicable screenshots, and link detail diagrams.</p><span class="phase-outcome">Traceable test evidence</span></div>
           <div class="phase"><span class="phase-num">07</span><h3>Release and remove old screens</h3><p>Enable the workflow per project. Check each migration. Remove the old Guided screens only after the new flow passes user tests.</p><span class="phase-outcome">Controlled release</span></div>
         </div>
       </div>
@@ -672,8 +674,8 @@
         <div class="metrics">
           <div class="metric"><strong>0</strong><b>Required form fields</b><p>Before the tool creates the first draft.</p></div>
           <div class="metric"><strong>≤5</strong><b>User questions</b><p>Before a user can review a medium use-case plan.</p></div>
-          <div class="metric"><strong>100%</strong><b>Main use-case coverage</b><p>In the draft and approved architecture.</p></div>
-          <div class="metric"><strong>0</strong><b>Repeated input</b><p>Between Plan, Design, and later work.</p></div>
+          <div class="metric"><strong>100%</strong><b>Scenario automation</b><p>Every approved main, alternate, failure, and recovery scenario has a current result.</p></div>
+          <div class="metric"><strong>100%</strong><b>Applicable step evidence</b><p>Visible steps have screenshots. Nonvisual steps have structured evidence or a reason.</p></div>
         </div>
         <div class="guardrails">
           <div class="guardrail"><span class="check">✓</span><span><b>Require explicit approval</b><span>The tool can create a draft. Only the user can approve its hash.</span></span></div>
@@ -682,12 +684,14 @@
           <div class="guardrail"><span class="check">✓</span><span><b>Require a reason for each module</b><span>Keep one application unless a requirement makes a split necessary.</span></span></div>
           <div class="guardrail"><span class="check">✓</span><span><b>Keep approved user changes</b><span>Apply compatible changes to each new draft. Show all conflicts.</span></span></div>
           <div class="guardrail"><span class="check">✓</span><span><b>Keep current approvals during migration</b><span>A current approval stays valid until the user approves a new revision.</span></span></div>
+          <div class="guardrail"><span class="check">✓</span><span><b>Keep evidence immutable</b><span>Each rerun creates a new result. It does not replace an earlier screenshot or structured record.</span></span></div>
+          <div class="guardrail"><span class="check">✓</span><span><b>Generate detail diagrams</b><span>Use the approved records so diagrams do not become a separate source of truth.</span></span></div>
         </div>
       </div>
     </section>
 
     <section class="wrap cta">
-      <div><h2>Try the proposed workflow.</h2><p>The mockup shows the first description, draft review, required decision, technical record, use-case path, and module editor.</p></div>
+      <div><h2>Try the proposed workflow.</h2><p>The mockup shows planning, system design, contextual diagrams, and the final scenario-evidence review.</p></div>
       <div class="cta-actions"><a class="button" href="./PROPOSAL.md">Full plan</a><a class="button primary" href="./mockup.html">Open prototype →</a></div>
     </section>
   </main>

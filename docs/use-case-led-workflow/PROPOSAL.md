@@ -88,7 +88,7 @@ The user can rename, merge, split, or move a module. The tool shows the effect
 before it applies the change. The tool saves the approved change as a design
 decision.
 
-### 1.3 Build, Connect, and Verify keep their current purpose
+### 1.3 Build and Connect keep their current purpose; Verify becomes scenario-led
 
 Build uses the approved use cases and architecture. It creates module plans in
 dependency order.
@@ -96,8 +96,19 @@ dependency order.
 Connect uses the approved ports and adapters. It connects real entry points and
 external systems.
 
-Verify links each approved use case to test evidence. It also checks failure and
-recovery behavior.
+Verify converts each approved use-case scenario into an automated end-to-end
+test. A scenario is the main path, an approved other path, a failure path, or a
+recovery path. The test follows the approved steps through real entry points
+and connected adapters.
+
+Each test step records its expected result and its actual result. It also
+records screenshot evidence when the step has a visible result. A background,
+API, file, or data-only step records structured evidence and states why a
+screenshot does not apply.
+
+Verify is complete only when every approved scenario has a current automated
+result. The result points to the use case, scenario, application revision,
+architecture revision, build, environment, test data, and evidence files.
 
 The user does not enter the same project facts again in later stages.
 
@@ -177,7 +188,9 @@ Each use case can expand to show:
 - recovery;
 - rules;
 - acceptance checks;
-- sources.
+- sources;
+- test scenarios;
+- available detail diagrams.
 
 Guided mode hides record IDs and hashes. Design mode shows them. Both modes
 read and change the same records.
@@ -324,6 +337,32 @@ Save the approved change as a `DesignDecision`. When the tool creates a new
 design draft, apply each compatible decision again. Show a conflict when a
 decision is no longer compatible.
 
+### 4.6 Diagrams in detail views
+
+Keep the architecture canvas as the main system view. Add smaller contextual
+diagrams inside use-case, module, adapter, stateful-record, and verification
+detail views.
+
+Show the diagram that best explains the selected record:
+
+| Detail view | Diagram types |
+| --- | --- |
+| Use case or test scenario | use-case and activity diagrams |
+| Workflow or user-interface module | activity and sequence diagrams |
+| Stateful record, finding, job, snapshot, or approval | state diagram |
+| Port, adapter, or external system | sequence diagram |
+| Verification result | activity, sequence, and use-case diagrams |
+
+A detail view can offer more than one diagram when each diagram answers a
+different question. Do not show every diagram type by default.
+
+Generate the diagrams from the same approved records used by Build, Connect,
+and Verify. Do not maintain a separate hand-edited model. Selecting an actor,
+step, state, module, port, or evidence item in a diagram opens its detail view.
+
+Each diagram also provides a text list or table with the same information.
+Keyboard and screen-reader users can follow the same relationships.
+
 ## 5. Data model
 
 The `UseCaseAnalysis` is a versioned record. It does not replace an approved
@@ -378,6 +417,7 @@ type UseCase = {
   otherPaths: UseCasePath[];
   failures: UseCaseFailure[];
   recovery: UseCaseStep[];
+  scenarios: UseCaseScenario[];
   rules: string[];
   inputs: string[];
   outputs: string[];
@@ -388,6 +428,74 @@ type UseCase = {
 ```
 
 Use stable IDs. A small wording change must not create a new ID.
+
+Each approved path becomes an explicit scenario:
+
+```ts
+type UseCaseScenario = {
+  id: string;
+  useCaseId: string;
+  name: string;
+  kind: "main" | "alternate" | "failure" | "recovery";
+  preconditions: string[];
+  steps: ScenarioStep[];
+  expectedResult: string;
+  automation?: ScenarioAutomation;
+};
+
+type ScenarioStep = {
+  id: string;
+  actorId: string;
+  action: string;
+  expectedResult: string;
+  evidence: "screenshot" | "structured" | "none";
+  noScreenshotReason?: string;
+};
+
+type ScenarioAutomation = {
+  id: string;
+  runner: string;
+  testRef: string;
+  fixtureRefs: string[];
+  resourceLocks: string[];
+};
+
+type ScenarioRun = {
+  id: string;
+  scenarioId: string;
+  applicationRevision: number;
+  architectureRevision: number;
+  buildId: string;
+  environmentId: string;
+  testDataRevision: string;
+  sourceRevision: string;
+  status: "passed" | "failed" | "skipped" | "cancelled";
+  startedAt: string;
+  completedAt: string;
+  steps: ScenarioStepResult[];
+};
+
+type ScenarioStepResult = {
+  stepId: string;
+  status: "passed" | "failed" | "skipped";
+  actualResult: string;
+  startedAt: string;
+  completedAt: string;
+  evidenceRefs: EvidenceRef[];
+};
+
+type EvidenceRef = {
+  id: string;
+  kind: "screenshot" | "structured";
+  contentHash: string;
+  originalFile: string;
+  previewFile?: string;
+  metadata: Record<string, string>;
+};
+```
+
+The tool creates stable scenario and step IDs. Test code and evidence refer to
+these IDs. Rewording a label does not break the link.
 
 ## 6. Conversion to current records
 
@@ -454,6 +562,29 @@ Block design approval when:
 - a required design decision has a conflict.
 
 Show the exact item that caused each error. Provide a direct link to it.
+
+### 7.3 Verify checks
+
+Block verification when:
+
+- an approved scenario has no automated end-to-end test;
+- a scenario test has not run against the current approved build;
+- a scenario test failed;
+- an applicable visible step has no screenshot;
+- a nonvisual step has neither structured evidence nor a reason;
+- evidence does not identify its scenario and step;
+- a required failure or recovery scenario was skipped;
+- the test data, environment, or source revision is unknown.
+
+Show warnings, but do not block verification, when:
+
+- an optional browser or viewport was not run;
+- a screenshot differs only in an approved dynamic region;
+- extra exploratory evidence has no approved scenario link.
+
+The Verify summary uses counts. It shows use cases, scenarios, steps,
+screenshots, structured evidence items, failures, and skipped items. It does not
+use one unexplained percentage.
 
 ## 8. Application structure
 
@@ -613,6 +744,28 @@ Recommended modules:
 This design supports local source access and one-team ownership. No current use
 case requires independent network services.
 
+### 10.5 Sample verification evidence
+
+The default sample includes automated end-to-end evidence for every approved
+scenario. At minimum, include:
+
+- readiness with complete evidence;
+- readiness with a missing objective record;
+- lifecycle browsing by phase;
+- first-gap trace navigation;
+- independent finding approval;
+- rejection when the reviewer is not independent;
+- a successful evidence refresh;
+- a failed source refresh that keeps the last valid snapshot;
+- a MATLAB timeout and recovery;
+- a repeatable package export;
+- a second export that proves byte-for-byte repeatability.
+
+Each scenario contains realistic steps, results, timings, test data, and
+evidence links. Visible steps include sample screenshots. Background import,
+hash, file, and API checks use structured evidence and explain why a screenshot
+does not apply.
+
 ## 11. Migration
 
 Use an opt-in project flag for the first release.
@@ -687,7 +840,12 @@ This phase does not change the interface.
 - Add use cases to module plans.
 - Add user tasks to interface briefs.
 - Add ports and adapters to Connect.
-- Add acceptance checks to Verify.
+- Generate one automated end-to-end test for every approved scenario.
+- Capture screenshot evidence for each applicable visible step.
+- Record structured evidence for nonvisual steps.
+- Add scenario, step, build, environment, and evidence links to Verify.
+- Add contextual use-case, activity, state, and sequence diagrams to detail
+  views.
 - Add source links to change reports.
 
 ### Phase 7: Release
@@ -723,7 +881,9 @@ Add tests for:
 - loss of MATLAB;
 - failed import and last-valid recovery.
 
-Use end-to-end tests for:
+### 13.1 Product tests
+
+Use end-to-end product tests for:
 
 1. a new project with one description;
 2. an existing project with current approvals;
@@ -736,6 +896,61 @@ Use end-to-end tests for:
 9. the default sample project;
 10. an LLM client that uses the machine API.
 
+### 13.2 Generated use-case scenario tests
+
+For each approved use case, generate and run an automated end-to-end test for:
+
+1. the main scenario;
+2. each approved alternate scenario;
+3. each approved failure scenario;
+4. each approved recovery scenario.
+
+Do not infer scenario coverage from code coverage. Trace every test to one
+scenario ID. Trace every test action and check to one step ID.
+
+For each step:
+
+- record the action;
+- record the expected result;
+- record the actual result;
+- record the start time, end time, and outcome;
+- capture a screenshot when the result is visible;
+- record structured output for API, file, worker, hash, or data checks;
+- record a reason when a screenshot does not apply.
+
+Store screenshots at their original resolution. Also create a small preview for
+the evidence list. Record the viewport, browser, operating system, theme,
+locale, build, environment, and test-data revision when they can affect the
+image.
+
+Allow masks only for approved dynamic regions, such as clocks or generated run
+IDs. Record every mask. Never replace the original screenshot with the masked
+comparison image.
+
+Keep the evidence immutable. A rerun creates a new result. It does not overwrite
+the earlier result.
+
+The test runner can run scenarios in parallel only when their fixtures and
+external systems are isolated. A scenario that uses shared MATLAB, file-system,
+license, or baseline state declares the resource that prevents unsafe parallel
+execution.
+
+### 13.3 Evidence review
+
+The Verify detail view shows:
+
+- the approved use case and scenario;
+- the automated test and run;
+- each step and outcome;
+- screenshot or structured evidence for each step;
+- reasons for steps without screenshots;
+- the build, environment, test data, and source revisions;
+- failure output and the first failed step;
+- links to applicable activity, state, sequence, or use-case diagrams.
+
+A reviewer can compare runs, open the original evidence, and follow the link
+back to the approved scenario.
+
 ## 14. Success measures
 
 Test medium projects with product experts, architects, interface engineers,
@@ -746,6 +961,9 @@ Targets:
 - no required form field before the first draft;
 - no more than five user questions before review;
 - all main use cases have an architecture path;
+- all approved scenarios have an automated end-to-end result;
+- all applicable visible steps have screenshot evidence;
+- all nonvisual steps have structured evidence or a recorded reason;
 - no repeated project input between stages;
 - a user can identify each required decision in less than 30 seconds;
 - a user can state why a selected module exists;
@@ -769,6 +987,9 @@ Compare the results with the Phase 0 measurements.
 | Migration invalidates an approval | Keep the old approval until a user approves a new revision. |
 | Human and LLM workflows differ | Use the same application operations and checks. |
 | Technical terms make screens hard to read | Hide IDs and hashes in Guided mode. Use the approved label table. |
+| A passing summary hides an untested scenario | Count approved scenarios and automated results separately. |
+| Screenshot evidence is missing or misleading | Require step links, preserve originals, and record approved masks. |
+| Diagrams contradict the approved records | Generate detail diagrams from the approved use-case and architecture records. |
 
 ## 16. Completion criteria
 
@@ -785,5 +1006,10 @@ The work is complete when:
 - existing projects migrate without losing approvals;
 - the sample Audit Hub opens when no project is configured;
 - Evidence Explorer has one view for each lifecycle phase;
+- every approved use-case scenario has a current automated end-to-end result;
+- every applicable visible test step has screenshot evidence;
+- every nonvisual test step has structured evidence or a recorded reason;
+- use-case, activity, state, and sequence diagrams are available in applicable
+  detail views;
 - human users and LLM clients can complete the same workflow;
 - the workflow meets the success targets.

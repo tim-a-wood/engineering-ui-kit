@@ -1214,6 +1214,131 @@
     .link-chip.active { border-color: var(--success); background: var(--success-tint); }
     .empty-links { color: var(--muted); font-size: 10px; }
 
+    /* Verify */
+    .verify-summary {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+    .verify-metric {
+      min-width: 0;
+      padding: 12px 13px;
+      border-right: 1px solid var(--border);
+    }
+    .verify-metric:last-child { border-right: 0; }
+    .verify-metric b { display: block; font: 16px var(--mono); }
+    .verify-metric span { display: block; margin-top: 2px; color: var(--muted); font-size: 9.5px; }
+    .verify-layout {
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .scenario-list { display: grid; }
+    .scenario-row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+      min-height: 54px;
+      padding: 8px 11px;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+    }
+    .scenario-row:last-child { border-bottom: 0; }
+    .scenario-row:hover { color: var(--secondary); background: rgba(23, 32, 51, .45); }
+    .scenario-row.active {
+      color: var(--secondary);
+      background: linear-gradient(90deg, var(--accent-tint), transparent);
+      box-shadow: inset 2px 0 var(--accent-hover);
+    }
+    .scenario-id { color: var(--accent-text); font: 9px var(--mono); }
+    .scenario-row b { display: block; color: currentColor; font-size: 10.5px; }
+    .scenario-row small { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .scenario-kind { font-size: 8px; text-transform: capitalize; }
+    .run-meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .run-meta-item {
+      min-width: 0;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--inset);
+    }
+    .run-meta-item b { display: block; color: var(--muted); font-size: 8.5px; letter-spacing: .06em; text-transform: uppercase; }
+    .run-meta-item span { display: block; overflow: hidden; margin-top: 3px; color: var(--secondary); font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
+    .evidence-steps { display: grid; border-top: 1px solid var(--border); }
+    .evidence-step {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) 176px;
+      gap: 10px;
+      align-items: center;
+      min-height: 78px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .evidence-step:last-child { border-bottom: 0; }
+    .step-number {
+      display: grid;
+      place-items: center;
+      width: 23px;
+      height: 23px;
+      border: 1px solid rgba(52, 211, 153, .3);
+      border-radius: 50%;
+      color: var(--success);
+      background: var(--success-tint);
+      font: 9px var(--mono);
+    }
+    .step-copy b { display: block; font-size: 10.5px; }
+    .step-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 9.5px; line-height: 1.4; }
+    .evidence-button, .structured-evidence {
+      min-height: 54px;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--secondary);
+      background: var(--inset);
+      text-align: left;
+    }
+    .evidence-button:hover { border-color: var(--accent-hover); }
+    .evidence-preview {
+      float: left;
+      display: grid;
+      place-items: center;
+      width: 54px;
+      height: 40px;
+      margin-right: 8px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--accent-text);
+      background:
+        linear-gradient(rgba(84, 120, 255, .14), rgba(84, 120, 255, .04)),
+        repeating-linear-gradient(0deg, transparent, transparent 7px, rgba(148, 163, 184, .12) 8px);
+      font: 8px var(--mono);
+    }
+    .evidence-button b, .structured-evidence b { display: block; font-size: 9px; }
+    .evidence-button small, .structured-evidence small { display: block; margin-top: 3px; color: var(--muted); font-size: 8px; line-height: 1.3; }
+    .verify-gates {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px 14px;
+      margin-top: 15px;
+      padding-top: 13px;
+      border-top: 1px solid var(--border);
+    }
+
     /* Approval */
     .approval-grid {
       display: grid;
@@ -1430,6 +1555,145 @@
       gap: 8px;
       padding: 14px 16px 16px;
     }
+    .detail-diagram-scrim {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      visibility: hidden;
+      opacity: 0;
+      background: rgba(2, 6, 23, .68);
+      backdrop-filter: blur(3px);
+      transition: 150ms ease;
+    }
+    .detail-diagram-scrim.open { visibility: visible; opacity: 1; }
+    .detail-diagram-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      z-index: 91;
+      visibility: hidden;
+      width: min(760px, calc(100vw - 28px));
+      max-height: min(700px, calc(100vh - 36px));
+      overflow: auto;
+      transform: translate(-50%, -48%) scale(.98);
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      opacity: 0;
+      background: var(--overlay);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, .56);
+      transition: 150ms ease;
+    }
+    .detail-diagram-modal.open {
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    .detail-diagram-head {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-diagram-head h2 { margin: 2px 0 2px; font-size: 17px; }
+    .detail-diagram-head p { margin: 0; color: var(--muted); font-size: 10px; }
+    .detail-diagram-head .icon-button { flex: 0 0 auto; margin-left: auto; }
+    .detail-diagram-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-diagram-tabs .view-button { flex: 0 0 auto; }
+    .detail-diagram-body { padding: 16px; }
+    .detail-diagram-canvas {
+      min-height: 260px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background:
+        linear-gradient(rgba(143, 165, 255, .026) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(143, 165, 255, .026) 1px, transparent 1px),
+        rgba(7, 13, 23, .8);
+      background-size: 18px 18px;
+    }
+    .diagram-caption { margin: 0 0 13px; color: var(--muted); font-size: 10px; }
+    .activity-flow, .state-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 130px;
+      overflow-x: auto;
+    }
+    .activity-node, .state-node, .sequence-party, .usecase-node, .diagram-actor {
+      flex: 0 0 auto;
+      max-width: 150px;
+      padding: 10px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 5px;
+      color: var(--secondary);
+      background: var(--raised);
+      font-size: 9.5px;
+      text-align: center;
+    }
+    .activity-node.start, .activity-node.end {
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      border-radius: 50%;
+      place-content: center;
+    }
+    .activity-node.start { display: grid; border-color: rgba(52, 211, 153, .5); color: var(--success); }
+    .activity-node.end { display: grid; border-color: rgba(143, 165, 255, .5); color: var(--accent-text); }
+    .diagram-arrow { flex: 0 0 auto; color: var(--accent-text); font: 15px var(--mono); }
+    .state-node.active { border-color: var(--accent-hover); background: var(--accent-tint); }
+    .sequence-parties {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+    .sequence-party { max-width: none; }
+    .sequence-events { display: grid; gap: 7px; }
+    .sequence-event {
+      display: grid;
+      grid-template-columns: 25px 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 9px;
+      border-left: 2px solid rgba(84, 120, 255, .5);
+      color: var(--muted);
+      background: rgba(23, 32, 51, .54);
+      font-size: 9.5px;
+    }
+    .sequence-event span { color: var(--accent-text); font-family: var(--mono); }
+    .usecase-diagram {
+      display: grid;
+      grid-template-columns: 150px minmax(180px, 1fr) 170px;
+      gap: 28px;
+      align-items: center;
+      min-height: 170px;
+    }
+    .usecase-center { display: grid; gap: 8px; }
+    .usecase-node { max-width: none; border-radius: 999px; }
+    .usecase-node.active { border-color: var(--accent-hover); background: var(--accent-tint); }
+    .diagram-text-view {
+      margin-top: 14px;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--muted);
+      background: var(--inset);
+      font-size: 9.5px;
+    }
+    .diagram-text-view b { display: block; margin-bottom: 5px; color: var(--secondary); }
+    .detail-diagram-foot {
+      padding: 10px 16px 14px;
+      color: var(--muted);
+      font-size: 9px;
+    }
     .toast {
       position: fixed;
       right: 22px;
@@ -1462,7 +1726,7 @@
       .rail-nav { padding-top: 12px; }
       .rail-item { display: grid; grid-template-columns: 1fr; justify-items: center; padding: 0; }
       .rail-footer .user { grid-template-columns: 1fr; justify-items: center; }
-      .review-layout, .solution-layout { grid-template-columns: minmax(0, 1fr); }
+      .review-layout, .solution-layout, .verify-layout { grid-template-columns: minmax(0, 1fr); }
       .side-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .people-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .person:nth-child(2) { border-right: 0; }
@@ -1524,6 +1788,23 @@
       }
       .node-detail-modal.open { transform: translate(-50%, 0); }
       .node-modal-facts { grid-template-columns: 1fr; }
+      .verify-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .verify-metric:nth-child(3) { border-right: 0; }
+      .verify-metric:nth-child(-n+3) { border-bottom: 1px solid var(--border); }
+      .run-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .evidence-step { grid-template-columns: 28px minmax(0, 1fr); }
+      .evidence-button, .structured-evidence { grid-column: 2; width: 100%; }
+      .verify-gates { grid-template-columns: 1fr; }
+      .detail-diagram-modal {
+        top: auto;
+        bottom: 12px;
+        max-height: calc(100vh - 76px);
+        transform: translate(-50%, 14px);
+      }
+      .detail-diagram-modal.open { transform: translate(-50%, 0); }
+      .activity-flow, .state-flow { justify-content: flex-start; }
+      .usecase-diagram { grid-template-columns: 1fr; gap: 10px; }
+      .sequence-parties { grid-template-columns: 1fr; gap: 7px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
@@ -1543,6 +1824,7 @@
           <option value="review" selected>2 · Review draft</option>
           <option value="solution">3 · System design</option>
           <option value="approval">4 · Send to Build</option>
+          <option value="verification">5 · Verify evidence</option>
         </select>
       </div>
       <button class="icon-button" type="button" aria-label="Help">?</button>
@@ -1586,13 +1868,13 @@
             <button class="journey-step locked" type="button" data-stage="design">
               <span class="step-marker">02</span><span class="step-copy"><b>Design</b><small>Define the system</small></span>
             </button>
-            <button class="journey-step locked" type="button">
+            <button class="journey-step locked" type="button" data-stage="build">
               <span class="step-marker">03</span><span class="step-copy"><b>Build</b><small>Implement modules</small></span>
             </button>
-            <button class="journey-step locked" type="button">
+            <button class="journey-step locked" type="button" data-stage="connect">
               <span class="step-marker">04</span><span class="step-copy"><b>Connect</b><small>Connect entry points</small></span>
             </button>
-            <button class="journey-step locked" type="button">
+            <button class="journey-step locked" type="button" data-stage="verify">
               <span class="step-marker">05</span><span class="step-copy"><b>Verify</b><small>Check the result</small></span>
             </button>
           </nav>
@@ -1645,9 +1927,20 @@
       </div>
     </div>
     <div class="node-modal-actions">
+      <button class="btn" id="node-modal-diagrams" type="button">View diagrams</button>
       <button class="btn" id="node-modal-dismiss" type="button">Close</button>
       <button class="btn btn-primary" id="node-modal-edit" type="button">Edit component</button>
     </div>
+  </section>
+  <div class="detail-diagram-scrim" id="detail-diagram-scrim"></div>
+  <section class="detail-diagram-modal" id="detail-diagram-modal" role="dialog" aria-modal="true" aria-labelledby="detail-diagram-title" aria-hidden="true">
+    <div class="detail-diagram-head">
+      <div><p class="eyebrow">Detail diagrams</p><h2 id="detail-diagram-title"></h2><p id="detail-diagram-subtitle"></p></div>
+      <button class="icon-button" id="detail-diagram-close" type="button" aria-label="Close diagrams">×</button>
+    </div>
+    <div class="detail-diagram-tabs" id="detail-diagram-tabs" role="tablist" aria-label="Available diagrams"></div>
+    <div class="detail-diagram-body" id="detail-diagram-body"></div>
+    <div class="detail-diagram-foot">Generated from the approved use-case and system-design records. The text view contains the same relationships.</div>
   </section>
   <div class="toast" id="toast" role="status"><span class="state-icon">✓</span><span id="toast-text">Design decision saved.</span></div>
 
@@ -1660,8 +1953,13 @@
     const nodeModalScrim = document.querySelector('#node-modal-scrim');
     const nodeDetailModal = document.querySelector('#node-detail-modal');
     const nodeModalClose = document.querySelector('#node-modal-close');
+    const detailDiagramScrim = document.querySelector('#detail-diagram-scrim');
+    const detailDiagramModal = document.querySelector('#detail-diagram-modal');
+    const detailDiagramClose = document.querySelector('#detail-diagram-close');
     const toast = document.querySelector('#toast');
     let nodeModalModuleId = '';
+    let detailDiagramTrigger = null;
+    let diagramContext = null;
     const appState = {
       view: location.hash.replace('#', '') || 'review',
       tech: false,
@@ -1672,6 +1970,8 @@
       relationshipMode: 'focus',
       activeTrace: '',
       selectedModule: 'evidence-graph',
+      selectedScenario: 'UC-05-S02',
+      detailDiagramType: 'activity',
       moduleNames: {},
       drawerAction: 'edit'
     };
@@ -1692,7 +1992,74 @@
         'UC-04': ['audit-experience', 'assurance-workflow', 'evidence-graph', 'review-adapter', 'evidence-store'],
         'UC-05': ['ingestion-publication', 'workspace-snapshots', 'filesystem-adapter', 'git-adapter', 'matlab-adapter', 'spreadsheet-adapter', 'c-source-adapter', 'coverage-adapter', 'review-adapter', 'objective-adapter', 'evidence-store'],
         'UC-06': ['audit-experience', 'package-assembly', 'workspace-snapshots', 'evidence-store']
-      }
+      },
+      scenarios: [
+        {id:'UC-01-S01', useCase:'UC-01', name:'Show complete readiness', kind:'main', duration:'18 s', steps:[
+          ['Open the sample program', 'The readiness workspace opens for baseline BL-7.', 'screenshot', '01-program-open.png'],
+          ['Load the approved evidence snapshot', 'Snapshot EV-2026.07.18 and its source hash load.', 'structured', 'Snapshot query result · screenshot not applicable'],
+          ['Review the readiness summary', 'All applicable objectives show their evidence and review state.', 'screenshot', '03-readiness-summary.png']
+        ]},
+        {id:'UC-01-S02', useCase:'UC-01', name:'Show a missing objective record', kind:'alternate', duration:'16 s', steps:[
+          ['Open the sample program with one known gap', 'The workspace shows one blocking readiness gap.', 'screenshot', '01-known-gap.png'],
+          ['Check objective A-3', 'The objective query returns no approved review record.', 'structured', 'Objective query result · screenshot not applicable'],
+          ['Open the next action', 'The UI identifies the missing review and its owner.', 'screenshot', '03-next-action.png']
+        ]},
+        {id:'UC-02-S01', useCase:'UC-02', name:'Browse evidence by lifecycle phase', kind:'main', duration:'21 s', steps:[
+          ['Open Evidence Explorer', 'Planning is the selected lifecycle phase.', 'screenshot', '01-evidence-explorer.png'],
+          ['Select Design', 'Design evidence, traces, findings, and source files load.', 'screenshot', '02-design-phase.png'],
+          ['Check the source revision', 'The design model revision matches baseline BL-7.', 'structured', 'Revision comparison · screenshot not applicable']
+        ]},
+        {id:'UC-02-S02', useCase:'UC-02', name:'Filter a phase by open findings', kind:'alternate', duration:'14 s', steps:[
+          ['Open the Verification phase', 'Verification evidence is visible.', 'screenshot', '01-verification-phase.png'],
+          ['Filter by Open finding', 'Only evidence with an open finding remains.', 'screenshot', '02-open-filter.png'],
+          ['Check the result count', 'The query returns 3 evidence items and 1 finding.', 'structured', 'Filter result JSON · screenshot not applicable']
+        ]},
+        {id:'UC-03-S01', useCase:'UC-03', name:'Navigate to the first broken trace', kind:'main', duration:'24 s', steps:[
+          ['Open requirement HLR-27', 'The complete trace chain opens.', 'screenshot', '01-trace-chain.png'],
+          ['Follow the trace', 'The first missing low-level requirement link is selected.', 'screenshot', '02-first-gap.png'],
+          ['Check the gap identity', 'The evidence graph returns gap GAP-014 at the expected edge.', 'structured', 'Trace query result · screenshot not applicable']
+        ]},
+        {id:'UC-03-S02', useCase:'UC-03', name:'Keep context when source evidence is unavailable', kind:'failure', duration:'19 s', steps:[
+          ['Open a trace with an unavailable model source', 'The chain remains visible and marks the source unavailable.', 'screenshot', '01-source-unavailable.png'],
+          ['Request the source evidence', 'The adapter returns SOURCE_UNAVAILABLE for model ctrl.slx.', 'structured', 'Adapter error record · screenshot not applicable'],
+          ['Open recovery guidance', 'The UI shows the last known revision and a retry action.', 'screenshot', '03-recovery-guidance.png']
+        ]},
+        {id:'UC-04-S01', useCase:'UC-04', name:'Approve a finding independently', kind:'main', duration:'22 s', steps:[
+          ['Open finding FND-008', 'The finding, owner, and evidence links are visible.', 'screenshot', '01-finding-open.png'],
+          ['Record an independent approval', 'The decision is saved with reviewer and time.', 'screenshot', '02-approval-recorded.png'],
+          ['Check the audit event', 'The audit log links the decision to FND-008 and BL-7.', 'structured', 'Audit event record · screenshot not applicable']
+        ]},
+        {id:'UC-04-S02', useCase:'UC-04', name:'Reject a non-independent reviewer', kind:'failure', duration:'15 s', steps:[
+          ['Open a finding owned by the current reviewer', 'The decision controls are visible but blocked.', 'screenshot', '01-independence-block.png'],
+          ['Attempt approval', 'The command returns REVIEWER_NOT_INDEPENDENT.', 'structured', 'Command result · screenshot not applicable'],
+          ['Review the required action', 'The UI asks for a different reviewer and keeps the finding unchanged.', 'screenshot', '03-different-reviewer.png']
+        ]},
+        {id:'UC-05-S01', useCase:'UC-05', name:'Publish a complete evidence refresh', kind:'main', duration:'46 s', steps:[
+          ['Start a refresh', 'The job shows all 8 source adapters.', 'screenshot', '01-refresh-start.png'],
+          ['Validate the candidate snapshot', 'All required sources and hashes pass.', 'structured', 'Candidate validation record · screenshot not applicable'],
+          ['Publish the snapshot', 'The workspace shows snapshot EV-2026.07.24 as current.', 'screenshot', '03-snapshot-published.png']
+        ]},
+        {id:'UC-05-S02', useCase:'UC-05', name:'Keep the last valid snapshot after a failed source', kind:'failure', duration:'38 s', steps:[
+          ['Start a refresh with a corrupt trace file', 'The job starts from current snapshot EV-2026.07.18.', 'screenshot', '01-failed-refresh-start.png'],
+          ['Validate the candidate snapshot', 'Trace import fails and publication is rejected.', 'structured', 'Validation failure · screenshot not applicable'],
+          ['Return to the workspace', 'EV-2026.07.18 remains current and the failed source is named.', 'screenshot', '03-last-valid-kept.png']
+        ]},
+        {id:'UC-05-S03', useCase:'UC-05', name:'Recover from a MATLAB timeout', kind:'recovery', duration:'62 s', steps:[
+          ['Start the MATLAB source reader', 'The source job shows MATLAB startup.', 'screenshot', '01-matlab-start.png'],
+          ['Reach the startup deadline', 'The adapter records MATLAB_TIMEOUT and releases the job lease.', 'structured', 'Timeout and lease events · screenshot not applicable'],
+          ['Retry with MATLAB available', 'The retry succeeds without changing the earlier snapshot.', 'screenshot', '03-matlab-retry.png']
+        ]},
+        {id:'UC-06-S01', useCase:'UC-06', name:'Create an approved audit package', kind:'main', duration:'31 s', steps:[
+          ['Select baseline BL-7 and certification scope', 'The package scope shows 128 evidence items.', 'screenshot', '01-package-scope.png'],
+          ['Build the package', 'The package manifest and checksum are created.', 'structured', 'Manifest and SHA-256 · screenshot not applicable'],
+          ['Open the completed package', 'The package shows its snapshot, options, and checksum.', 'screenshot', '03-package-complete.png']
+        ]},
+        {id:'UC-06-S02', useCase:'UC-06', name:'Prove byte-for-byte repeatability', kind:'alternate', duration:'34 s', steps:[
+          ['Repeat the approved package request', 'The same baseline and options are selected.', 'screenshot', '01-repeat-request.png'],
+          ['Compare package bytes', 'The second package hash matches the first package hash.', 'structured', 'Byte comparison and SHA-256 · screenshot not applicable'],
+          ['Open the comparison result', 'The UI reports an exact match and links both runs.', 'screenshot', '03-exact-match.png']
+        ]}
+      ]
     };
 
     function technicalToggle() {
@@ -2561,12 +2928,85 @@
         </div>`;
     }
 
+    function currentScenario() {
+      return data.scenarios.find(scenario => scenario.id === appState.selectedScenario) || data.scenarios[0];
+    }
+
+    function scenarioEvidenceStep(step, index, scenarioId) {
+      const [action, result, evidenceType, evidenceDetail] = step;
+      const evidence = evidenceType === 'screenshot'
+        ? `<button class="evidence-button" type="button" data-evidence-step="${scenarioId}-${index + 1}"><span class="evidence-preview">PNG</span><b>Screenshot evidence</b><small>${evidenceDetail}</small></button>`
+        : `<div class="structured-evidence"><b>Structured evidence</b><small>${evidenceDetail}</small></div>`;
+      return `
+        <div class="evidence-step">
+          <span class="step-number">${index + 1}</span>
+          <div class="step-copy"><b>${action}</b><span>${result}</span></div>
+          ${evidence}
+        </div>`;
+    }
+
+    function verificationView() {
+      const scenario = currentScenario();
+      const story = data.stories.find(item => item[0] === scenario.useCase);
+      const allSteps = data.scenarios.flatMap(item => item.steps);
+      const screenshotCount = allSteps.filter(step => step[2] === 'screenshot').length;
+      const structuredCount = allSteps.length - screenshotCount;
+      return `
+        ${heading('Verify · Current run', 'Review automated scenario evidence', 'Every approved main, alternate, failure, and recovery scenario has an automated end-to-end result. Visible steps have screenshots. Background checks have structured evidence and a reason.')}
+        <div class="command ready">
+          <div><h2>All approved scenarios passed for build 2026.07.24-rc3</h2><p>The run used sample baseline BL-7, Chrome 142, Windows 11, and the current source snapshot. No scenario or required step was skipped.</p></div>
+          <div class="command-actions"><button class="btn" type="button" id="export-evidence">Export evidence index</button><button class="btn btn-primary" type="button" id="run-scenarios">Run all scenarios <span>→</span></button></div>
+        </div>
+        <div class="verify-summary" aria-label="Verification counts">
+          <div class="verify-metric"><b>6 / 6</b><span>use cases</span></div>
+          <div class="verify-metric"><b>${data.scenarios.length} / ${data.scenarios.length}</b><span>automated scenarios</span></div>
+          <div class="verify-metric"><b>${allSteps.length} / ${allSteps.length}</b><span>passed steps</span></div>
+          <div class="verify-metric"><b>${screenshotCount}</b><span>screenshots</span></div>
+          <div class="verify-metric"><b>${structuredCount}</b><span>structured records</span></div>
+          <div class="verify-metric"><b>0</b><span>failed or skipped</span></div>
+        </div>
+        <div class="verify-layout">
+          <section class="panel">
+            <div class="panel-head"><div><h2>Use-case scenarios</h2><p>Main, alternate, failure, and recovery paths</p></div><span class="tag success">${data.scenarios.length} / ${data.scenarios.length}</span></div>
+            <div class="scenario-list">${data.scenarios.map(item => `
+              <button class="scenario-row ${item.id === scenario.id ? 'active' : ''}" type="button" data-scenario="${item.id}" aria-pressed="${item.id === scenario.id}">
+                <span class="scenario-id">${item.id.replace('UC-', '')}</span>
+                <span><b>${item.name}</b><small>${item.steps.length} steps · ${item.duration}</small></span>
+                <span class="tag success scenario-kind">${item.kind}</span>
+              </button>`).join('')}</div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">${scenario.useCase} · ${scenario.kind} scenario</p><h2>${scenario.name}</h2><p>${story?.[1] || scenario.useCase}</p></div>
+              <div style="display:flex;gap:7px;align-items:center"><span class="tag success">Passed</span><button class="btn btn-small" id="scenario-diagrams" type="button">View diagrams</button></div>
+            </div>
+            <div class="panel-body">
+              <div class="run-meta">
+                <div class="run-meta-item"><b>Run</b><span class="mono">RUN-20260724-1842</span></div>
+                <div class="run-meta-item"><b>Build</b><span class="mono">2026.07.24-rc3</span></div>
+                <div class="run-meta-item"><b>Environment</b><span>Chrome 142 · Windows 11</span></div>
+                <div class="run-meta-item"><b>Test data</b><span>Sample BL-7 · revision 12</span></div>
+              </div>
+              <div class="section-head" style="margin:0 0 4px"><div><p class="eyebrow">Step evidence</p><h2>Expected and actual results</h2></div><p style="margin:0">Screenshots are original-resolution PNG files. Nonvisual checks keep the exact structured result.</p></div>
+              <div class="evidence-steps">${scenario.steps.map((step, index) => scenarioEvidenceStep(step, index, scenario.id)).join('')}</div>
+              <div class="verify-gates">
+                <div class="gate-item"><span class="state-icon">✓</span><span>Automated test traces to <span class="mono">${scenario.id}</span>.</span></div>
+                <div class="gate-item"><span class="state-icon">✓</span><span>Every step has the required evidence type.</span></div>
+                <div class="gate-item"><span class="state-icon">✓</span><span>Build, environment, test data, and source revisions are known.</span></div>
+                <div class="gate-item"><span class="state-icon">✓</span><span>The result and evidence are immutable.</span></div>
+              </div>
+              <div class="technical block mono" style="margin-top:12px;padding-top:11px;border-top:1px solid var(--border);color:var(--muted);font-size:9.5px">scenario: ${scenario.id} · run: RUN-20260724-1842 · evidence index: sha256:81af…19e2</div>
+            </div>
+          </section>
+        </div>`;
+    }
+
     function approvalView() {
       return `
         ${heading('Design · Approved', 'The system design is ready for Build', 'The approved records include the use cases, system design, design reasons, and your changes. Build, Connect, and Verify can use these records.')}
         <div class="command ready">
           <div><h2>Next action: create the module plans</h2><p>The tool will create modules in dependency order. It will use all approved use cases, rules, external systems, and design decisions.</p></div>
-          <div class="command-actions"><button class="btn" type="button">View approved design</button><button class="btn btn-primary" type="button" id="continue-build">Continue to Build <span>→</span></button></div>
+          <div class="command-actions"><button class="btn" type="button" id="preview-verify">Preview final Verify</button><button class="btn btn-primary" type="button" id="continue-build">Continue to Build <span>→</span></button></div>
         </div>
         <div class="approval-grid">
           <section class="panel">
@@ -2584,6 +3024,7 @@
                 <div class="handoff-row"><span class="handoff-icon">AR</span><span class="handoff-copy"><b>Approved architecture</b><small>Module purpose, dependencies, operations, adapters, and use-case paths</small></span><span class="tag success">Current</span></div>
                 <div class="handoff-row"><span class="handoff-icon">DX</span><span class="handoff-copy"><b>Design decisions</b><small>The tool will apply approved user changes to each new design draft.</small></span><span class="tag">1 decision</span></div>
                 <div class="handoff-row"><span class="handoff-icon">FP</span><span class="handoff-copy"><b>Deployment design</b><small>One application and a separate MATLAB process</small></span><span class="tag accent">Ready next</span></div>
+                <div class="handoff-row"><span class="handoff-icon">VT</span><span class="handoff-copy"><b>Verification scenarios</b><small>13 automated end-to-end scenarios with step evidence requirements</small></span><span class="tag accent">Ready later</span></div>
               </div>
             </div>
           </section>
@@ -2610,16 +3051,18 @@
     function render() {
       document.body.classList.toggle('tech-on', appState.tech);
       viewSelect.value = appState.view;
-      const solution = appState.view === 'solution' || appState.view === 'approval';
-      crumbTitle.textContent = solution ? 'Define the system' : 'Define the work';
+      const stageByView = {describe:0, review:0, solution:1, approval:1, verification:4};
+      const currentStage = stageByView[appState.view] ?? 0;
+      crumbTitle.textContent = currentStage === 4 ? 'Verify the result' : currentStage === 1 ? 'Define the system' : 'Define the work';
       document.querySelectorAll('.journey-step').forEach((step, index) => {
-        step.classList.toggle('active', solution ? index === 1 : index === 0);
-        step.classList.toggle('complete', solution && index === 0);
-        if (index === 1) step.classList.toggle('locked', !solution);
+        step.classList.toggle('active', index === currentStage);
+        step.classList.toggle('complete', index < currentStage);
+        step.classList.toggle('locked', index > currentStage && index !== 4);
       });
       if (appState.view === 'describe') page.innerHTML = describeView();
       else if (appState.view === 'solution') page.innerHTML = solutionView();
       else if (appState.view === 'approval') page.innerHTML = approvalView();
+      else if (appState.view === 'verification') page.innerHTML = verificationView();
       else page.innerHTML = reviewView();
       bindPage();
       requestAnimationFrame(() => drawArchitectureConnections());
@@ -2724,6 +3167,162 @@
       }
     }
 
+    function detailDiagramContext() {
+      if (diagramContext?.kind === 'scenario') {
+        const scenario = data.scenarios.find(item => item.id === diagramContext.id) || data.scenarios[0];
+        const story = data.stories.find(item => item[0] === scenario.useCase);
+        return {
+          kind: 'scenario',
+          id: scenario.id,
+          title: scenario.name,
+          subtitle: `${scenario.useCase} · ${scenario.kind} scenario · generated from approved steps`,
+          group: 'Verification result',
+          operations: scenario.steps.map(step => step[0]),
+          dependencies: (data.traces[scenario.useCase] || []).map(moduleName),
+          stories: [scenario.useCase],
+          storyNames: [story?.[1] || scenario.useCase],
+          scenario
+        };
+      }
+      const moduleId = diagramContext?.id || nodeModalModuleId || appState.selectedModule;
+      const detail = moduleDetails[moduleId];
+      return {
+        kind: 'module',
+        id: moduleId,
+        title: moduleName(moduleId),
+        subtitle: `${detail.group} · ${detail.deployable} · generated from the approved system design`,
+        group: detail.group,
+        operations: detail.operations,
+        dependencies: detail.dependsOn.map(moduleName),
+        stories: detail.stories,
+        storyNames: detail.stories.map(storyId => data.stories.find(item => item[0] === storyId)?.[1] || storyId),
+        detail
+      };
+    }
+
+    function availableDetailDiagramTypes(context) {
+      if (context.kind === 'scenario') {
+        return ['activity', 'sequence', 'usecase', ...(context.scenario.kind === 'failure' || context.scenario.kind === 'recovery' ? ['state'] : [])];
+      }
+      if (context.group === 'Workflow') return ['activity', 'sequence', 'state', 'usecase'];
+      if (context.group === 'User interface') return ['activity', 'usecase'];
+      if (context.group === 'Core data and rules' || context.group === 'Shared service') return ['state', 'sequence'];
+      return ['sequence', 'usecase'];
+    }
+
+    function diagramActor(storyId) {
+      return {
+        'UC-01':'Certification engineer',
+        'UC-02':'Certification engineer',
+        'UC-03':'Verification lead',
+        'UC-04':'Independent reviewer',
+        'UC-05':'Software lead',
+        'UC-06':'Certification engineer'
+      }[storyId] || 'User';
+    }
+
+    function activityDetailDiagram(context) {
+      const operations = context.operations.slice(0, 4);
+      return `
+        <p class="diagram-caption">Shows the ordered work and the point at which the selected result is complete.</p>
+        <div class="activity-flow" aria-label="Activity diagram for ${context.title}">
+          <span class="activity-node start">Start</span>
+          ${operations.map(operation => `<span class="diagram-arrow">→</span><span class="activity-node">${operation}</span>`).join('')}
+          <span class="diagram-arrow">→</span><span class="activity-node end">End</span>
+        </div>
+        <div class="diagram-text-view"><b>Text view</b>${['Start', ...operations, 'End'].join(' → ')}</div>`;
+    }
+
+    function stateDetailDiagram(context) {
+      let states = ['Ready', 'Running', 'Completed', 'Failed'];
+      if (context.id === 'workspace-snapshots') states = ['Candidate', 'Published', 'Last valid', 'Baselined'];
+      else if (context.id === 'assurance-workflow') states = ['Open', 'In review', 'Accepted', 'Closed'];
+      else if (context.id === 'ingestion-publication') states = ['Idle', 'Reading', 'Validating', 'Published'];
+      else if (context.kind === 'scenario') states = context.scenario.kind === 'recovery'
+        ? ['Prepared', 'Timed out', 'Retrying', 'Recovered']
+        : ['Prepared', 'Running', 'Failed', 'Evidence saved'];
+      return `
+        <p class="diagram-caption">Shows the controlled states and the allowed forward transitions.</p>
+        <div class="state-flow" aria-label="State diagram for ${context.title}">
+          ${states.map((state, index) => `${index ? '<span class="diagram-arrow">→</span>' : ''}<span class="state-node ${index === states.length - 1 ? 'active' : ''}">${state}</span>`).join('')}
+        </div>
+        <div class="diagram-text-view"><b>Text view</b>${states.join(' → ')}</div>`;
+    }
+
+    function sequenceDetailDiagram(context) {
+      const actor = diagramActor(context.stories[0]);
+      const dependency = context.dependencies[0] || 'Evidence Store';
+      const operations = context.operations.slice(0, 4);
+      return `
+        <p class="diagram-caption">Shows who sends each request and which component answers it.</p>
+        <div class="sequence-parties" aria-label="Sequence participants">
+          <span class="sequence-party">${actor}</span>
+          <span class="sequence-party">${context.title}</span>
+          <span class="sequence-party">${dependency}</span>
+        </div>
+        <div class="sequence-events">${operations.map((operation, index) => `
+          <div class="sequence-event"><span>${index + 1}</span><b>${index % 2 ? `${context.title} → ${dependency}` : `${actor} → ${context.title}`}: ${operation}</b></div>`).join('')}
+        </div>
+        <div class="diagram-text-view"><b>Text view</b>${operations.map((operation, index) => `${index + 1}. ${index % 2 ? context.title : actor} sends “${operation}”`).join(' · ')}</div>`;
+    }
+
+    function useCaseDetailDiagram(context) {
+      const storyIds = context.stories.length ? context.stories.slice(0, 3) : ['UC-01'];
+      const actors = [...new Set(storyIds.map(diagramActor))];
+      const paths = [...new Set(storyIds.flatMap(storyId => (data.traces[storyId] || []).slice(0, 2).map(moduleName)))];
+      return `
+        <p class="diagram-caption">Shows the actors, approved use cases, and system components in scope.</p>
+        <div class="usecase-diagram" aria-label="Use-case diagram for ${context.title}">
+          <div class="diagram-actor">${actors.join(' · ')}</div>
+          <div class="usecase-center">${storyIds.map(storyId => {
+            const story = data.stories.find(item => item[0] === storyId);
+            return `<span class="usecase-node ${context.kind === 'scenario' && storyId === context.scenario.useCase ? 'active' : ''}">${storyId} · ${story?.[1] || storyId}</span>`;
+          }).join('')}</div>
+          <div class="diagram-actor">${paths.join(' · ') || context.title}</div>
+        </div>
+        <div class="diagram-text-view"><b>Text view</b>${storyIds.map(storyId => `${diagramActor(storyId)} uses ${storyId}: ${data.stories.find(item => item[0] === storyId)?.[1] || storyId}`).join(' · ')}</div>`;
+    }
+
+    function renderDetailDiagram() {
+      const context = detailDiagramContext();
+      const types = availableDetailDiagramTypes(context);
+      if (!types.includes(appState.detailDiagramType)) appState.detailDiagramType = types[0];
+      document.querySelector('#detail-diagram-title').textContent = `${context.title} diagrams`;
+      document.querySelector('#detail-diagram-subtitle').textContent = context.subtitle;
+      document.querySelector('#detail-diagram-tabs').innerHTML = types.map(type => `
+        <button class="view-button ${appState.detailDiagramType === type ? 'active' : ''}" type="button" data-detail-diagram="${type}" role="tab" aria-selected="${appState.detailDiagramType === type}">${type[0].toUpperCase() + type.slice(1)}</button>`).join('');
+      const renderers = {
+        activity: activityDetailDiagram,
+        state: stateDetailDiagram,
+        sequence: sequenceDetailDiagram,
+        usecase: useCaseDetailDiagram
+      };
+      document.querySelector('#detail-diagram-body').innerHTML = `<div class="detail-diagram-canvas">${renderers[appState.detailDiagramType](context)}</div>`;
+      document.querySelectorAll('[data-detail-diagram]').forEach(button => button.addEventListener('click', () => {
+        appState.detailDiagramType = button.dataset.detailDiagram;
+        renderDetailDiagram();
+      }));
+    }
+
+    function openDetailDiagram(context, trigger) {
+      diagramContext = context;
+      detailDiagramTrigger = trigger || document.activeElement;
+      const preview = detailDiagramContext();
+      appState.detailDiagramType = availableDetailDiagramTypes(preview)[0];
+      renderDetailDiagram();
+      detailDiagramScrim.classList.add('open');
+      detailDiagramModal.classList.add('open');
+      detailDiagramModal.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => detailDiagramClose.focus({preventScroll:true}));
+    }
+
+    function closeDetailDiagram() {
+      detailDiagramScrim.classList.remove('open');
+      detailDiagramModal.classList.remove('open');
+      detailDiagramModal.setAttribute('aria-hidden', 'true');
+      detailDiagramTrigger?.focus({preventScroll:true});
+    }
+
     function bindPage() {
       document.querySelector('#tech-toggle')?.addEventListener('click', () => {
         appState.tech = !appState.tech;
@@ -2800,6 +3399,19 @@
         setTimeout(() => go('approval'), 420);
       });
       document.querySelector('#continue-build')?.addEventListener('click', () => showToast('This mockup ends here. The current Build workflow starts next.'));
+      document.querySelector('#preview-verify')?.addEventListener('click', () => go('verification'));
+      document.querySelectorAll('[data-scenario]').forEach(button => button.addEventListener('click', () => {
+        appState.selectedScenario = button.dataset.scenario;
+        renderPreservingScroll();
+      }));
+      document.querySelector('#scenario-diagrams')?.addEventListener('click', event => {
+        openDetailDiagram({kind:'scenario', id:appState.selectedScenario}, event.currentTarget);
+      });
+      document.querySelectorAll('[data-evidence-step]').forEach(button => button.addEventListener('click', () => {
+        showToast(`Opened original screenshot for ${button.dataset.evidenceStep}.`);
+      }));
+      document.querySelector('#export-evidence')?.addEventListener('click', () => showToast('Evidence index exported with scenario, step, build, and source links.'));
+      document.querySelector('#run-scenarios')?.addEventListener('click', () => showToast('13 automated scenarios queued with isolated fixtures.'));
     }
 
     viewSelect.addEventListener('change', () => go(viewSelect.value));
@@ -2813,17 +3425,23 @@
     document.querySelector('[data-stage="design"]').addEventListener('click', () => {
       if (!document.querySelector('[data-stage="design"]').classList.contains('locked')) go('solution');
     });
+    document.querySelector('[data-stage="verify"]').addEventListener('click', () => go('verification'));
     document.querySelector('#drawer-close').addEventListener('click', closeDrawer);
     document.querySelector('#drawer-cancel').addEventListener('click', closeDrawer);
     scrim.addEventListener('click', closeDrawer);
     nodeModalClose.addEventListener('click', () => closeNodeDetailModal());
     document.querySelector('#node-modal-dismiss').addEventListener('click', () => closeNodeDetailModal());
     nodeModalScrim.addEventListener('click', () => closeNodeDetailModal());
+    document.querySelector('#node-modal-diagrams').addEventListener('click', event => {
+      openDetailDiagram({kind:'module', id:nodeModalModuleId}, event.currentTarget);
+    });
     document.querySelector('#node-modal-edit').addEventListener('click', () => {
       const moduleId = nodeModalModuleId;
       closeNodeDetailModal({restoreFocus:false});
       openDrawer(moduleId, moduleName(moduleId));
     });
+    detailDiagramClose.addEventListener('click', closeDetailDiagram);
+    detailDiagramScrim.addEventListener('click', closeDetailDiagram);
     function setDrawerPreview(action, title, description) {
       appState.drawerAction = action;
       document.querySelector('.impact').innerHTML = `<b>${title}</b>${description}`;
@@ -2893,7 +3511,9 @@
       showToast('Design decision saved. The tool will apply it to each new draft.');
     });
     document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && nodeDetailModal.classList.contains('open')) {
+      if (event.key === 'Escape' && detailDiagramModal.classList.contains('open')) {
+        closeDetailDiagram();
+      } else if (event.key === 'Escape' && nodeDetailModal.classList.contains('open')) {
         closeNodeDetailModal();
       } else if (event.key === 'Escape') {
         closeDrawer();
@@ -2901,7 +3521,7 @@
     });
     window.addEventListener('hashchange', () => {
       const next = location.hash.replace('#', '');
-      if (['describe', 'review', 'solution', 'approval'].includes(next)) {
+      if (['describe', 'review', 'solution', 'approval', 'verification'].includes(next)) {
         appState.view = next;
         render();
       }
