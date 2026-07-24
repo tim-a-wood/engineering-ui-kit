@@ -1572,8 +1572,8 @@
       left: 50%;
       z-index: 91;
       visibility: hidden;
-      width: min(760px, calc(100vw - 28px));
-      max-height: min(700px, calc(100vh - 36px));
+      width: min(980px, calc(100vw - 28px));
+      max-height: min(820px, calc(100vh - 36px));
       overflow: auto;
       transform: translate(-50%, -48%) scale(.98);
       border: 1px solid var(--border-strong);
@@ -1598,6 +1598,21 @@
     .detail-diagram-head h2 { margin: 2px 0 2px; font-size: 17px; }
     .detail-diagram-head p { margin: 0; color: var(--muted); font-size: 10px; }
     .detail-diagram-head .icon-button { flex: 0 0 auto; margin-left: auto; }
+    .uml-standard {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 7px;
+      color: var(--accent-text);
+      font: 9px var(--mono);
+    }
+    .uml-standard::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      content: "";
+    }
     .detail-diagram-tabs {
       display: flex;
       gap: 6px;
@@ -1608,8 +1623,8 @@
     .detail-diagram-tabs .view-button { flex: 0 0 auto; }
     .detail-diagram-body { padding: 16px; }
     .detail-diagram-canvas {
-      min-height: 260px;
-      padding: 18px;
+      min-height: 360px;
+      padding: 20px;
       border: 1px solid var(--border);
       border-radius: 7px;
       background:
@@ -1618,67 +1633,337 @@
         rgba(7, 13, 23, .8);
       background-size: 18px 18px;
     }
-    .diagram-caption { margin: 0 0 13px; color: var(--muted); font-size: 10px; }
-    .activity-flow, .state-flow {
+    .diagram-caption {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 130px;
-      overflow-x: auto;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 10px;
     }
-    .activity-node, .state-node, .sequence-party, .usecase-node, .diagram-actor {
-      flex: 0 0 auto;
-      max-width: 150px;
-      padding: 10px 12px;
+    .diagram-caption b { color: var(--secondary); font-weight: 500; }
+    .uml-element {
+      min-width: 0;
       border: 1px solid var(--border-strong);
-      border-radius: 5px;
       color: var(--secondary);
       background: var(--raised);
+      font: inherit;
+      cursor: pointer;
+      transition: 120ms ease;
+    }
+    .uml-element:hover, .uml-element:focus-visible {
+      border-color: var(--accent-hover);
+      background: var(--accent-tint);
+      outline: 2px solid rgba(84, 120, 255, .28);
+      outline-offset: 2px;
+    }
+    .uml-element small { display: block; margin-bottom: 3px; color: var(--muted); font: 8px var(--mono); }
+    .uml-component-layout {
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) 120px minmax(210px, 1.25fr) 120px minmax(150px, 1fr);
+      gap: 12px;
+      align-items: center;
+      min-width: 760px;
+      min-height: 230px;
+    }
+    .uml-component {
+      position: relative;
+      min-height: 82px;
+      padding: 14px 14px 12px;
+      border-radius: 3px;
+      text-align: left;
+    }
+    .uml-component::after {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 17px;
+      height: 11px;
+      border: 1px solid currentColor;
+      box-shadow: -4px 3px 0 -2px var(--raised), -6px 3px 0 -1px currentColor, -4px 8px 0 -2px var(--raised), -6px 8px 0 -1px currentColor;
+      opacity: .55;
+      content: "";
+    }
+    .uml-component.primary { border-color: var(--accent-hover); background: var(--accent-tint); }
+    .uml-component b { display: block; max-width: calc(100% - 30px); font-size: 11px; line-height: 1.35; }
+    .uml-interface-stack { display: grid; gap: 12px; justify-items: stretch; }
+    .uml-interface {
+      position: relative;
+      padding: 8px 8px;
+      border-style: dashed;
+      border-radius: 999px;
+      color: var(--muted);
+      background: var(--inset);
+      font: 8px var(--mono);
+      text-align: center;
+    }
+    .uml-interface::before {
+      position: absolute;
+      top: 50%;
+      left: -9px;
+      width: 8px;
+      height: 8px;
+      transform: translateY(-50%);
+      border: 1px solid var(--accent-text);
+      border-radius: 50%;
+      background: var(--overlay);
+      content: "";
+    }
+    .uml-interface.required::before {
+      width: 7px;
+      height: 12px;
+      border-width: 0 0 1px 1px;
+      border-radius: 50% 0 0 50%;
+      background: transparent;
+    }
+    .uml-package {
+      position: relative;
+      padding: 28px 16px 18px;
+      border: 1px solid var(--border-strong);
+      background: rgba(15, 23, 42, .3);
+    }
+    .uml-package::before {
+      position: absolute;
+      top: -17px;
+      left: -1px;
+      padding: 4px 9px;
+      border: 1px solid var(--border-strong);
+      border-bottom: 0;
+      background: var(--overlay);
+      color: var(--muted);
+      font: 8px var(--mono);
+      content: "audit-hub";
+    }
+    .uml-relation {
+      width: 100%;
+      padding: 8px 6px;
+      border-width: 0 0 1px;
+      border-style: dashed;
+      border-radius: 0;
+      color: var(--muted);
+      background: transparent;
+      font: 8px var(--mono);
+      text-align: center;
+    }
+    .uml-relation::after { margin-left: 5px; color: var(--accent-text); content: "▷"; }
+    .uml-activity, .uml-state-machine {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      min-width: 810px;
+      min-height: 210px;
+      overflow-x: auto;
+    }
+    .uml-action, .uml-state, .uml-participant, .uml-usecase, .uml-actor {
+      flex: 0 0 auto;
+      max-width: 165px;
+      padding: 10px 12px;
       font-size: 9.5px;
       text-align: center;
     }
-    .activity-node.start, .activity-node.end {
-      width: 48px;
-      height: 48px;
+    .uml-action, .uml-state { border-radius: 10px; }
+    .uml-pseudostate {
+      flex: 0 0 auto;
+      width: 24px;
+      height: 24px;
       padding: 0;
+      border: 0;
       border-radius: 50%;
-      place-content: center;
+      color: transparent;
+      background: var(--secondary);
+      overflow: hidden;
     }
-    .activity-node.start { display: grid; border-color: rgba(52, 211, 153, .5); color: var(--success); }
-    .activity-node.end { display: grid; border-color: rgba(143, 165, 255, .5); color: var(--accent-text); }
-    .diagram-arrow { flex: 0 0 auto; color: var(--accent-text); font: 15px var(--mono); }
-    .state-node.active { border-color: var(--accent-hover); background: var(--accent-tint); }
-    .sequence-parties {
+    .uml-pseudostate.final {
+      border: 2px solid var(--secondary);
+      background: radial-gradient(circle, var(--secondary) 0 5px, transparent 6px);
+    }
+    .uml-decision {
+      flex: 0 0 auto;
+      width: 58px;
+      height: 58px;
+      padding: 0;
+      transform: rotate(45deg);
+      border-radius: 2px;
+      background: var(--raised);
+    }
+    .uml-decision span { display: block; transform: rotate(-45deg); font-size: 8px; }
+    .uml-transition {
+      position: relative;
+      flex: 0 0 78px;
+      padding: 4px 2px 8px;
+      border: 0;
+      border-bottom: 1px solid var(--accent-text);
+      color: var(--muted);
+      background: transparent;
+      font: 8px var(--mono);
+    }
+    .uml-transition::after {
+      position: absolute;
+      right: -1px;
+      bottom: -4px;
+      color: var(--accent-text);
+      content: "▶";
+    }
+    .uml-branch {
+      display: grid;
+      gap: 18px;
+      min-width: 210px;
+    }
+    .uml-branch-row { display: flex; align-items: center; gap: 8px; }
+    .uml-sequence {
+      position: relative;
+      min-width: 760px;
+      padding-bottom: 16px;
+    }
+    .uml-sequence-parties {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 18px;
-      margin-bottom: 14px;
+      gap: 54px;
+      margin-bottom: 8px;
     }
-    .sequence-party { max-width: none; }
-    .sequence-events { display: grid; gap: 7px; }
-    .sequence-event {
+    .uml-participant {
+      position: relative;
+      max-width: none;
+      border-radius: 2px;
+    }
+    .uml-lifelines {
+      position: absolute;
+      top: 49px;
+      right: 0;
+      bottom: 10px;
+      left: 0;
       display: grid;
-      grid-template-columns: 25px 1fr;
-      gap: 8px;
-      align-items: center;
-      padding: 7px 9px;
-      border-left: 2px solid rgba(84, 120, 255, .5);
+      grid-template-columns: repeat(3, 1fr);
+      pointer-events: none;
+    }
+    .uml-lifelines span { justify-self: center; height: 100%; border-left: 1px dashed var(--border-strong); }
+    .uml-messages { position: relative; display: grid; gap: 10px; padding: 18px 11% 8px; }
+    .uml-message {
+      position: relative;
+      width: 47%;
+      padding: 5px 8px 7px;
+      border: 0;
+      border-bottom: 1px solid var(--accent-text);
+      color: var(--secondary);
+      background: rgba(7, 13, 23, .82);
+      font: 8.5px var(--mono);
+      text-align: left;
+    }
+    .uml-message::after { position: absolute; right: -1px; bottom: -4px; color: var(--accent-text); content: "▶"; }
+    .uml-message.to-third { margin-left: 42%; }
+    .uml-message.reply { margin-left: 42%; border-bottom-style: dashed; text-align: right; }
+    .uml-message.reply::after { right: auto; left: -1px; content: "◀"; }
+    .uml-alt {
+      position: relative;
+      margin-top: 2px;
+      padding: 22px 10px 10px;
+      border: 1px solid var(--border-strong);
+    }
+    .uml-alt::before {
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 3px 16px 3px 7px;
+      border-right: 1px solid var(--border-strong);
+      border-bottom: 1px solid var(--border-strong);
       color: var(--muted);
-      background: rgba(23, 32, 51, .54);
-      font-size: 9.5px;
+      font: 8px var(--mono);
+      content: "alt";
     }
-    .sequence-event span { color: var(--accent-text); font-family: var(--mono); }
-    .usecase-diagram {
+    .uml-usecase-diagram {
       display: grid;
-      grid-template-columns: 150px minmax(180px, 1fr) 170px;
-      gap: 28px;
+      grid-template-columns: 150px minmax(380px, 1fr);
+      gap: 30px;
       align-items: center;
-      min-height: 170px;
+      min-width: 690px;
+      min-height: 230px;
     }
-    .usecase-center { display: grid; gap: 8px; }
-    .usecase-node { max-width: none; border-radius: 999px; }
-    .usecase-node.active { border-color: var(--accent-hover); background: var(--accent-tint); }
+    .uml-actor {
+      position: relative;
+      max-width: none;
+      border: 0;
+      background: transparent;
+    }
+    .uml-actor::after {
+      position: absolute;
+      top: 50%;
+      left: 100%;
+      width: 31px;
+      border-top: 1px solid var(--secondary);
+      content: "";
+    }
+    .uml-stick {
+      position: relative;
+      display: block;
+      width: 34px;
+      height: 54px;
+      margin: 0 auto 7px;
+    }
+    .uml-stick::before {
+      position: absolute;
+      top: 0;
+      left: 11px;
+      width: 12px;
+      height: 12px;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      content: "";
+    }
+    .uml-stick::after {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      width: 1px;
+      height: 35px;
+      background: currentColor;
+      box-shadow: -9px 11px 0 -0.25px currentColor, 9px 11px 0 -0.25px currentColor;
+      content: "";
+    }
+    .uml-system-boundary {
+      position: relative;
+      display: grid;
+      gap: 12px;
+      min-height: 210px;
+      padding: 32px 36px 24px;
+      border: 1px solid var(--border-strong);
+    }
+    .uml-system-boundary::before {
+      position: absolute;
+      top: 9px;
+      left: 12px;
+      color: var(--muted);
+      font: 8px var(--mono);
+      content: "DO-178C Audit Hub";
+    }
+    .uml-usecase { max-width: none; border-radius: 50%; }
+    .uml-usecase.primary { border-color: var(--accent-hover); background: var(--accent-tint); }
+    .uml-usecase-relations { display: grid; gap: 8px; padding-top: 2px; }
+    .uml-usecase-relation {
+      position: relative;
+      width: 72%;
+      margin: 0 auto;
+      padding: 5px 8px 7px;
+      border: 0;
+      border-bottom: 1px dashed var(--accent-text);
+      color: var(--muted);
+      background: transparent;
+      font: 8px var(--mono);
+    }
+    .uml-usecase-relation::after { position: absolute; right: -1px; bottom: -4px; color: var(--accent-text); content: "▷"; }
+    .uml-associations {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .uml-association {
+      padding: 6px 8px;
+      border-style: dashed;
+      color: var(--muted);
+      background: var(--inset);
+      font: 8px var(--mono);
+    }
     .diagram-text-view {
       margin-top: 14px;
       padding: 11px 12px;
@@ -1690,9 +1975,104 @@
     }
     .diagram-text-view b { display: block; margin-bottom: 5px; color: var(--secondary); }
     .detail-diagram-foot {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
       padding: 10px 16px 14px;
       color: var(--muted);
       font-size: 9px;
+    }
+    .detail-diagram-foot b { color: var(--secondary); font-weight: 500; }
+    .uml-element-scrim {
+      position: fixed;
+      inset: 0;
+      z-index: 94;
+      visibility: hidden;
+      opacity: 0;
+      background: rgba(2, 6, 23, .74);
+      backdrop-filter: blur(4px);
+      transition: 150ms ease;
+    }
+    .uml-element-scrim.open { visibility: visible; opacity: 1; }
+    .uml-element-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      z-index: 95;
+      visibility: hidden;
+      width: min(700px, calc(100vw - 28px));
+      max-height: min(760px, calc(100vh - 36px));
+      overflow: auto;
+      transform: translate(-50%, -48%) scale(.98);
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      opacity: 0;
+      background: var(--overlay);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, .62);
+      transition: 150ms ease;
+    }
+    .uml-element-modal.open { visibility: visible; transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    .uml-element-body { display: grid; gap: 14px; padding: 16px; }
+    .uml-element-summary { display: grid; gap: 12px; }
+    .uml-element-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .uml-element-fact {
+      min-width: 0;
+      padding: 10px 11px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--inset);
+    }
+    .uml-element-fact b { display: block; margin-bottom: 4px; color: var(--muted); font-size: 8.5px; letter-spacing: .06em; text-transform: uppercase; }
+    .uml-element-fact span, .uml-element-copy { color: var(--secondary); font-size: 10.5px; line-height: 1.5; }
+    .uml-collab-panel {
+      display: grid;
+      gap: 10px;
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--inset);
+    }
+    .uml-collab-panel[hidden] { display: none; }
+    .agent-turn { display: grid; gap: 4px; padding-left: 10px; border-left: 2px solid var(--border-strong); }
+    .agent-turn.user { border-left-color: var(--accent-hover); }
+    .agent-turn b { color: var(--muted); font-size: 8.5px; letter-spacing: .05em; text-transform: uppercase; }
+    .agent-turn p { margin: 0; color: var(--secondary); font-size: 10.5px; line-height: 1.5; }
+    .proposal-field { display: grid; gap: 6px; }
+    .proposal-field label { color: var(--muted); font-size: 9px; }
+    .proposal-field textarea {
+      width: 100%;
+      min-height: 92px;
+      resize: vertical;
+      border: 1px solid var(--border-strong);
+      border-radius: 5px;
+      color: var(--text);
+      background: var(--inset);
+      font: 10.5px/1.45 var(--sans);
+    }
+    .impact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .impact-item {
+      min-width: 0;
+      padding: 9px 10px;
+      border-left: 2px solid var(--accent-hover);
+      color: var(--secondary);
+      background: rgba(23, 32, 51, .54);
+      font-size: 9.5px;
+      line-height: 1.45;
+    }
+    .impact-item b { display: block; margin-bottom: 3px; color: var(--muted); font-size: 8px; letter-spacing: .05em; text-transform: uppercase; }
+    .change-plan {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--secondary);
+      font-size: 9.5px;
+      line-height: 1.6;
+    }
+    .uml-element-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 0 16px 16px;
     }
     .toast {
       position: fixed;
@@ -1802,9 +2182,19 @@
         transform: translate(-50%, 14px);
       }
       .detail-diagram-modal.open { transform: translate(-50%, 0); }
-      .activity-flow, .state-flow { justify-content: flex-start; }
-      .usecase-diagram { grid-template-columns: 1fr; gap: 10px; }
-      .sequence-parties { grid-template-columns: 1fr; gap: 7px; }
+      .detail-diagram-body { padding: 12px; }
+      .detail-diagram-canvas { min-height: 330px; padding: 14px; overflow-x: auto; }
+      .diagram-caption { display: grid; }
+      .detail-diagram-foot { display: grid; }
+      .uml-element-modal {
+        top: auto;
+        bottom: 12px;
+        max-height: calc(100vh - 76px);
+        transform: translate(-50%, 14px);
+      }
+      .uml-element-modal.open { transform: translate(-50%, 0); }
+      .uml-element-facts, .impact-grid { grid-template-columns: 1fr; }
+      .uml-element-actions .btn { flex: 1 1 150px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
@@ -1927,7 +2317,7 @@
       </div>
     </div>
     <div class="node-modal-actions">
-      <button class="btn" id="node-modal-diagrams" type="button">View diagrams</button>
+      <button class="btn" id="node-modal-diagrams" type="button">Open UML diagrams</button>
       <button class="btn" id="node-modal-dismiss" type="button">Close</button>
       <button class="btn btn-primary" id="node-modal-edit" type="button">Edit component</button>
     </div>
@@ -1935,12 +2325,30 @@
   <div class="detail-diagram-scrim" id="detail-diagram-scrim"></div>
   <section class="detail-diagram-modal" id="detail-diagram-modal" role="dialog" aria-modal="true" aria-labelledby="detail-diagram-title" aria-hidden="true">
     <div class="detail-diagram-head">
-      <div><p class="eyebrow">Detail diagrams</p><h2 id="detail-diagram-title"></h2><p id="detail-diagram-subtitle"></p></div>
+      <div><p class="eyebrow">Design · UML detail</p><h2 id="detail-diagram-title"></h2><p id="detail-diagram-subtitle"></p><span class="uml-standard">UML 2.5.1 notation subset</span></div>
       <button class="icon-button" id="detail-diagram-close" type="button" aria-label="Close diagrams">×</button>
     </div>
     <div class="detail-diagram-tabs" id="detail-diagram-tabs" role="tablist" aria-label="Available diagrams"></div>
     <div class="detail-diagram-body" id="detail-diagram-body"></div>
-    <div class="detail-diagram-foot">Generated from the approved use-case and system-design records. The text view contains the same relationships.</div>
+    <div class="detail-diagram-foot"><span><b>Select any UML element</b> to inspect it, discuss it, or propose a change.</span><span>Generated from approved Design records.</span></div>
+  </section>
+  <div class="uml-element-scrim" id="uml-element-scrim"></div>
+  <section class="uml-element-modal" id="uml-element-modal" role="dialog" aria-modal="true" aria-labelledby="uml-element-title" aria-hidden="true">
+    <div class="detail-diagram-head">
+      <div><p class="eyebrow" id="uml-element-type"></p><h2 id="uml-element-title"></h2><p class="mono" id="uml-element-id"></p></div>
+      <button class="icon-button" id="uml-element-close" type="button" aria-label="Close UML element details">×</button>
+    </div>
+    <div class="uml-element-body">
+      <div class="uml-element-summary" id="uml-element-summary"></div>
+      <div class="uml-collab-panel" id="uml-agent-panel" hidden></div>
+      <div class="uml-collab-panel" id="uml-proposal-panel" hidden></div>
+      <div class="uml-collab-panel" id="uml-impact-panel" hidden></div>
+    </div>
+    <div class="uml-element-actions" id="uml-element-actions">
+      <button class="btn" id="uml-discuss" type="button">Discuss with agent</button>
+      <button class="btn btn-primary" id="uml-propose" type="button">Propose change</button>
+      <button class="btn" id="uml-element-dismiss" type="button">Close</button>
+    </div>
   </section>
   <div class="toast" id="toast" role="status"><span class="state-icon">✓</span><span id="toast-text">Design decision saved.</span></div>
 
@@ -1956,10 +2364,16 @@
     const detailDiagramScrim = document.querySelector('#detail-diagram-scrim');
     const detailDiagramModal = document.querySelector('#detail-diagram-modal');
     const detailDiagramClose = document.querySelector('#detail-diagram-close');
+    const umlElementScrim = document.querySelector('#uml-element-scrim');
+    const umlElementModal = document.querySelector('#uml-element-modal');
+    const umlElementClose = document.querySelector('#uml-element-close');
     const toast = document.querySelector('#toast');
     let nodeModalModuleId = '';
     let detailDiagramTrigger = null;
     let diagramContext = null;
+    let activeUmlElements = {};
+    let selectedUmlElement = null;
+    let umlElementTrigger = null;
     const appState = {
       view: location.hash.replace('#', '') || 'review',
       tech: false,
@@ -1971,7 +2385,7 @@
       activeTrace: '',
       selectedModule: 'evidence-graph',
       selectedScenario: 'UC-05-S02',
-      detailDiagramType: 'activity',
+      detailDiagramType: 'component',
       moduleNames: {},
       drawerAction: 'edit'
     };
@@ -2978,7 +3392,7 @@
           <section class="panel">
             <div class="panel-head">
               <div><p class="eyebrow">${scenario.useCase} · ${scenario.kind} scenario</p><h2>${scenario.name}</h2><p>${story?.[1] || scenario.useCase}</p></div>
-              <div style="display:flex;gap:7px;align-items:center"><span class="tag success">Passed</span><button class="btn btn-small" id="scenario-diagrams" type="button">View diagrams</button></div>
+              <span class="tag success">Passed</span>
             </div>
             <div class="panel-body">
               <div class="run-meta">
@@ -3167,30 +3581,23 @@
       }
     }
 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
     function detailDiagramContext() {
-      if (diagramContext?.kind === 'scenario') {
-        const scenario = data.scenarios.find(item => item.id === diagramContext.id) || data.scenarios[0];
-        const story = data.stories.find(item => item[0] === scenario.useCase);
-        return {
-          kind: 'scenario',
-          id: scenario.id,
-          title: scenario.name,
-          subtitle: `${scenario.useCase} · ${scenario.kind} scenario · generated from approved steps`,
-          group: 'Verification result',
-          operations: scenario.steps.map(step => step[0]),
-          dependencies: (data.traces[scenario.useCase] || []).map(moduleName),
-          stories: [scenario.useCase],
-          storyNames: [story?.[1] || scenario.useCase],
-          scenario
-        };
-      }
       const moduleId = diagramContext?.id || nodeModalModuleId || appState.selectedModule;
-      const detail = moduleDetails[moduleId];
+      const detail = moduleDetails[moduleId] || moduleDetails['evidence-graph'];
       return {
         kind: 'module',
         id: moduleId,
         title: moduleName(moduleId),
-        subtitle: `${detail.group} · ${detail.deployable} · generated from the approved system design`,
+        subtitle: `${detail.group} · ${detail.deployable} · Design step only`,
         group: detail.group,
         operations: detail.operations,
         dependencies: detail.dependsOn.map(moduleName),
@@ -3200,14 +3607,18 @@
       };
     }
 
-    function availableDetailDiagramTypes(context) {
-      if (context.kind === 'scenario') {
-        return ['activity', 'sequence', 'usecase', ...(context.scenario.kind === 'failure' || context.scenario.kind === 'recovery' ? ['state'] : [])];
-      }
-      if (context.group === 'Workflow') return ['activity', 'sequence', 'state', 'usecase'];
-      if (context.group === 'User interface') return ['activity', 'usecase'];
-      if (context.group === 'Core data and rules' || context.group === 'Shared service') return ['state', 'sequence'];
-      return ['sequence', 'usecase'];
+    function availableDetailDiagramTypes() {
+      return ['component', 'activity', 'state', 'sequence', 'usecase'];
+    }
+
+    function detailDiagramLabel(type) {
+      return {
+        component: 'Component',
+        activity: 'Activity',
+        state: 'State machine',
+        sequence: 'Sequence',
+        usecase: 'Use case'
+      }[type] || type;
     }
 
     function diagramActor(storyId) {
@@ -3221,77 +3632,211 @@
       }[storyId] || 'User';
     }
 
-    function activityDetailDiagram(context) {
-      const operations = context.operations.slice(0, 4);
+    function registerUmlElement(config) {
+      const element = {
+        id: config.id,
+        label: config.label,
+        type: config.type,
+        description: config.description,
+        relationships: config.relationships || [],
+        traceIds: config.traceIds || [],
+        source: config.source || `design.${detailDiagramContext().id}`,
+        diagram: detailDiagramLabel(appState.detailDiagramType),
+        contextId: detailDiagramContext().id
+      };
+      activeUmlElements[element.id] = element;
+      return element;
+    }
+
+    function umlElement(config, className, content = '') {
+      const element = registerUmlElement(config);
+      return `<button class="uml-element ${className}" type="button" data-uml-element="${escapeHtml(element.id)}" aria-label="${escapeHtml(`${element.type}: ${element.label}. Open details`)}">${content || escapeHtml(element.label)}</button>`;
+    }
+
+    function componentDetailDiagram(context) {
+      const upstreamId = context.detail.usedBy[0] || context.stories[0] || context.id;
+      const downstreamId = context.detail.dependsOn[0] || (context.id === 'evidence-store' ? 'workspace-snapshots' : 'evidence-store');
+      const upstreamLabel = moduleDetails[upstreamId] ? moduleName(upstreamId) : (data.stories.find(item => item[0] === upstreamId)?.[1] || 'Audit user');
+      const downstreamLabel = moduleName(downstreamId);
+      const providedPort = context.detail.ports[0] || `${context.title.replaceAll(' ', '')}Port`;
+      const requiredPort = context.detail.ports[1] || 'EvidenceStorePort';
       return `
-        <p class="diagram-caption">Shows the ordered work and the point at which the selected result is complete.</p>
-        <div class="activity-flow" aria-label="Activity diagram for ${context.title}">
-          <span class="activity-node start">Start</span>
-          ${operations.map(operation => `<span class="diagram-arrow">→</span><span class="activity-node">${operation}</span>`).join('')}
-          <span class="diagram-arrow">→</span><span class="activity-node end">End</span>
+        <div class="diagram-caption"><span><b>Component diagram.</b> Components, interfaces, and dependencies in the selected design boundary.</span><span>Dashed arrows are dependencies.</span></div>
+        <div class="uml-component-layout" aria-label="UML component diagram for ${escapeHtml(context.title)}">
+          ${umlElement({
+            id:`component-upstream-${context.id}`, type:'Component', label:upstreamLabel,
+            description:`The first approved consumer of ${context.title}.`,
+            relationships:[`uses ${context.title}`], traceIds:context.stories
+          }, 'uml-component', `<small>«component»</small><b>${escapeHtml(upstreamLabel)}</b>`)}
+          <div class="uml-interface-stack">
+            ${umlElement({
+              id:`interface-provided-${context.id}`, type:'Provided interface', label:providedPort,
+              description:`The interface that ${context.title} provides to its approved consumers.`,
+              relationships:[`${upstreamLabel} requires it`, `${context.title} provides it`], traceIds:context.stories
+            }, 'uml-interface', escapeHtml(providedPort))}
+            ${umlElement({
+              id:`dependency-in-${context.id}`, type:'Dependency', label:`${upstreamLabel} → ${context.title}`,
+              description:'A UML dependency from the consuming component to the selected component.',
+              relationships:[upstreamLabel, context.title], traceIds:context.stories
+            }, 'uml-relation', '«use»')}
+          </div>
+          <div class="uml-package">
+            ${umlElement({
+              id:`component-selected-${context.id}`, type:'Component', label:context.title,
+              description:context.detail.purpose,
+              relationships:[...context.detail.dependsOn.map(moduleName), ...context.detail.usedBy.map(moduleName)], traceIds:context.stories
+            }, 'uml-component primary', `<small>«component»</small><b>${escapeHtml(context.title)}</b>`)}
+          </div>
+          <div class="uml-interface-stack">
+            ${umlElement({
+              id:`interface-required-${context.id}`, type:'Required interface', label:requiredPort,
+              description:`The interface that ${context.title} requires from ${downstreamLabel}.`,
+              relationships:[`${context.title} requires it`, `${downstreamLabel} provides it`], traceIds:context.stories
+            }, 'uml-interface required', escapeHtml(requiredPort))}
+            ${umlElement({
+              id:`dependency-out-${context.id}`, type:'Dependency', label:`${context.title} → ${downstreamLabel}`,
+              description:'A UML dependency from the selected component to a supporting component.',
+              relationships:[context.title, downstreamLabel], traceIds:context.stories
+            }, 'uml-relation', '«use»')}
+          </div>
+          ${umlElement({
+            id:`component-downstream-${context.id}`, type:'Component', label:downstreamLabel,
+            description:`A supporting component used by ${context.title}.`,
+            relationships:[`used by ${context.title}`], traceIds:context.stories
+          }, 'uml-component', `<small>«component»</small><b>${escapeHtml(downstreamLabel)}</b>`)}
         </div>
-        <div class="diagram-text-view"><b>Text view</b>${['Start', ...operations, 'End'].join(' → ')}</div>`;
+        <div class="diagram-text-view"><b>Accessible relationship list</b>${escapeHtml(`${upstreamLabel} depends on ${context.title}. ${context.title} requires ${requiredPort} from ${downstreamLabel}.`)}</div>`;
+    }
+
+    function activityDetailDiagram(context) {
+      const operations = context.operations.slice(0, 3);
+      const first = operations[0] || 'Open task';
+      const second = operations[1] || 'Validate input';
+      const third = operations[2] || 'Save result';
+      return `
+        <div class="diagram-caption"><span><b>Activity diagram.</b> Control nodes, actions, guarded flows, and the final node.</span><span>Guards use square brackets.</span></div>
+        <div class="uml-activity" aria-label="UML activity diagram for ${escapeHtml(context.title)}">
+          ${umlElement({id:`activity-initial-${context.id}`,type:'Initial node',label:'Start',description:'The activity starts here.',relationships:[first],traceIds:context.stories}, 'uml-pseudostate')}
+          ${umlElement({id:`activity-flow-1-${context.id}`,type:'Control flow',label:`Start → ${first}`,description:'Control passes to the first action.',relationships:['Start',first],traceIds:context.stories}, 'uml-transition', '→')}
+          ${umlElement({id:`activity-action-1-${context.id}`,type:'Action',label:first,description:`Perform “${first}” in ${context.title}.`,relationships:[second],traceIds:context.stories}, 'uml-action', escapeHtml(first))}
+          ${umlElement({id:`activity-flow-2-${context.id}`,type:'Control flow',label:`${first} → ${second}`,description:'The first action completes before validation.',relationships:[first,second],traceIds:context.stories}, 'uml-transition', '→')}
+          ${umlElement({id:`activity-action-2-${context.id}`,type:'Action',label:second,description:`Perform “${second}” and produce a validation result.`,relationships:['valid','invalid'],traceIds:context.stories}, 'uml-action', escapeHtml(second))}
+          ${umlElement({id:`activity-decision-${context.id}`,type:'Decision node',label:'Valid?',description:'One incoming flow is split by mutually exclusive guards.',relationships:['[valid]','[invalid]'],traceIds:context.stories}, 'uml-decision', '<span>valid?</span>')}
+          <div class="uml-branch">
+            <div class="uml-branch-row">
+              ${umlElement({id:`activity-guard-valid-${context.id}`,type:'Guarded control flow',label:'[valid]',description:'Continue only when the result is valid.',relationships:[third],traceIds:context.stories}, 'uml-transition', '[valid]')}
+              ${umlElement({id:`activity-action-3-${context.id}`,type:'Action',label:third,description:`Perform “${third}”.`,relationships:['End'],traceIds:context.stories}, 'uml-action', escapeHtml(third))}
+            </div>
+            <div class="uml-branch-row">
+              ${umlElement({id:`activity-guard-invalid-${context.id}`,type:'Guarded control flow',label:'[invalid]',description:'Stop publication and preserve the last valid result.',relationships:['Keep last valid result'],traceIds:context.stories}, 'uml-transition', '[invalid]')}
+              ${umlElement({id:`activity-action-recover-${context.id}`,type:'Action',label:'Keep last valid result',description:'Record the failure without replacing approved evidence.',relationships:['End'],traceIds:context.stories}, 'uml-action', 'Keep last valid result')}
+            </div>
+          </div>
+          ${umlElement({id:`activity-merge-${context.id}`,type:'Merge node',label:'Merge',description:'The valid and invalid alternatives return to one control flow.',relationships:[third,'Keep last valid result','End'],traceIds:context.stories}, 'uml-decision', '<span>merge</span>')}
+          ${umlElement({id:`activity-flow-final-${context.id}`,type:'Control flow',label:'Merge → End',description:'Control reaches the activity final node after either alternative.',relationships:['Merge','End'],traceIds:context.stories}, 'uml-transition', '→')}
+          ${umlElement({id:`activity-final-${context.id}`,type:'Activity final node',label:'End',description:'All activity execution ends here.',relationships:[third],traceIds:context.stories}, 'uml-pseudostate final')}
+        </div>
+        <div class="diagram-text-view"><b>Accessible flow list</b>Start → ${escapeHtml(first)} → ${escapeHtml(second)} → [valid] ${escapeHtml(third)} → End. [invalid] Keep last valid result → End.</div>`;
     }
 
     function stateDetailDiagram(context) {
-      let states = ['Ready', 'Running', 'Completed', 'Failed'];
-      if (context.id === 'workspace-snapshots') states = ['Candidate', 'Published', 'Last valid', 'Baselined'];
-      else if (context.id === 'assurance-workflow') states = ['Open', 'In review', 'Accepted', 'Closed'];
-      else if (context.id === 'ingestion-publication') states = ['Idle', 'Reading', 'Validating', 'Published'];
-      else if (context.kind === 'scenario') states = context.scenario.kind === 'recovery'
-        ? ['Prepared', 'Timed out', 'Retrying', 'Recovered']
-        : ['Prepared', 'Running', 'Failed', 'Evidence saved'];
+      let states = ['Ready', 'Running', 'Completed'];
+      if (context.id === 'workspace-snapshots') states = ['Candidate', 'Published', 'Baselined'];
+      else if (context.id === 'assurance-workflow') states = ['Open', 'In review', 'Closed'];
+      else if (context.id === 'ingestion-publication') states = ['Idle', 'Validating', 'Published'];
+      const [ready, running, complete] = states;
       return `
-        <p class="diagram-caption">Shows the controlled states and the allowed forward transitions.</p>
-        <div class="state-flow" aria-label="State diagram for ${context.title}">
-          ${states.map((state, index) => `${index ? '<span class="diagram-arrow">→</span>' : ''}<span class="state-node ${index === states.length - 1 ? 'active' : ''}">${state}</span>`).join('')}
+        <div class="diagram-caption"><span><b>State machine diagram.</b> States and transitions use trigger [guard] / effect labels.</span><span>Final state is a bullseye.</span></div>
+        <div class="uml-state-machine" aria-label="UML state machine diagram for ${escapeHtml(context.title)}">
+          ${umlElement({id:`state-initial-${context.id}`,type:'Initial pseudostate',label:'Initial',description:'The region starts here.',relationships:[ready],traceIds:context.stories}, 'uml-pseudostate')}
+          ${umlElement({id:`transition-create-${context.id}`,type:'Transition',label:`create / enter ${ready}`,description:'The create trigger enters the first state.',relationships:['Initial',ready],traceIds:context.stories}, 'uml-transition', `create / enter`)}
+          ${umlElement({id:`state-ready-${context.id}`,type:'State',label:ready,description:`${context.title} waits in ${ready}.`,relationships:[running],traceIds:context.stories}, 'uml-state', escapeHtml(ready))}
+          ${umlElement({id:`transition-run-${context.id}`,type:'Transition',label:`run [inputs valid] / start`,description:'The run trigger starts work only when inputs are valid.',relationships:[ready,running],traceIds:context.stories}, 'uml-transition', `run [valid] / start`)}
+          ${umlElement({id:`state-running-${context.id}`,type:'State',label:running,description:`${context.title} is actively processing.`,relationships:[complete,'Failed'],traceIds:context.stories}, 'uml-state', escapeHtml(running))}
+          <div class="uml-branch">
+            <div class="uml-branch-row">
+              ${umlElement({id:`transition-complete-${context.id}`,type:'Transition',label:`complete / save evidence`,description:'Successful work saves evidence and enters the completed state.',relationships:[running,complete],traceIds:context.stories}, 'uml-transition', 'complete / save')}
+              ${umlElement({id:`state-complete-${context.id}`,type:'State',label:complete,description:`The controlled result is ${complete}.`,relationships:['Final'],traceIds:context.stories}, 'uml-state', escapeHtml(complete))}
+            </div>
+            <div class="uml-branch-row">
+              ${umlElement({id:`transition-fail-${context.id}`,type:'Transition',label:'fail / preserve baseline',description:'A failure preserves the last valid baseline.',relationships:[running,'Failed'],traceIds:context.stories}, 'uml-transition', 'fail / preserve')}
+              ${umlElement({id:`state-failed-${context.id}`,type:'State',label:'Failed',description:'Failure evidence is saved for review and recovery.',relationships:[ready],traceIds:context.stories}, 'uml-state', 'Failed')}
+            </div>
+          </div>
+          ${umlElement({id:`state-final-${context.id}`,type:'Final state',label:'Final',description:'The state machine region terminates here.',relationships:[complete],traceIds:context.stories}, 'uml-pseudostate final')}
         </div>
-        <div class="diagram-text-view"><b>Text view</b>${states.join(' → ')}</div>`;
+        <div class="diagram-text-view"><b>Accessible transition list</b>Initial → ${escapeHtml(ready)}. run [inputs valid] / start → ${escapeHtml(running)}. complete / save evidence → ${escapeHtml(complete)} → Final. fail / preserve baseline → Failed.</div>`;
     }
 
     function sequenceDetailDiagram(context) {
       const actor = diagramActor(context.stories[0]);
       const dependency = context.dependencies[0] || 'Evidence Store';
-      const operations = context.operations.slice(0, 4);
+      const operations = context.operations.slice(0, 3);
+      const first = operations[0] || 'Open';
+      const second = operations[1] || 'Read';
+      const third = operations[2] || 'Return result';
       return `
-        <p class="diagram-caption">Shows who sends each request and which component answers it.</p>
-        <div class="sequence-parties" aria-label="Sequence participants">
-          <span class="sequence-party">${actor}</span>
-          <span class="sequence-party">${context.title}</span>
-          <span class="sequence-party">${dependency}</span>
+        <div class="diagram-caption"><span><b>Sequence diagram.</b> Time runs from top to bottom. Solid lines are calls; dashed lines are replies.</span><span>The alt frame shows success and failure.</span></div>
+        <div class="uml-sequence" aria-label="UML sequence diagram for ${escapeHtml(context.title)}">
+          <div class="uml-sequence-parties">
+            ${umlElement({id:`participant-actor-${context.id}`,type:'Lifeline',label:actor,description:'The actor that starts this interaction.',relationships:[context.title],traceIds:context.stories}, 'uml-participant', `<small>actor</small>${escapeHtml(actor)}`)}
+            ${umlElement({id:`participant-selected-${context.id}`,type:'Lifeline',label:context.title,description:context.detail.purpose,relationships:[actor,dependency],traceIds:context.stories}, 'uml-participant', `<small>«component»</small>${escapeHtml(context.title)}`)}
+            ${umlElement({id:`participant-dependency-${context.id}`,type:'Lifeline',label:dependency,description:`A collaborator used by ${context.title}.`,relationships:[context.title],traceIds:context.stories}, 'uml-participant', `<small>«component»</small>${escapeHtml(dependency)}`)}
+          </div>
+          <div class="uml-lifelines" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div class="uml-messages">
+            ${umlElement({id:`message-1-${context.id}`,type:'Synchronous message',label:`1: ${first}`,description:`${actor} calls ${context.title}.`,relationships:[actor,context.title],traceIds:context.stories}, 'uml-message', `1: ${escapeHtml(first)}()`)}
+            ${umlElement({id:`message-2-${context.id}`,type:'Synchronous message',label:`2: ${second}`,description:`${context.title} calls ${dependency}.`,relationships:[context.title,dependency],traceIds:context.stories}, 'uml-message to-third', `2: ${escapeHtml(second)}()`)}
+            <div class="uml-alt">
+              ${umlElement({id:`message-3-${context.id}`,type:'Reply message',label:`3: ${third}`,description:`${dependency} returns a valid result.`,relationships:[dependency,context.title,'[valid]'],traceIds:context.stories}, 'uml-message reply', `[valid] 3: ${escapeHtml(third)}`)}
+              ${umlElement({id:`message-4-${context.id}`,type:'Reply message',label:'4: failure details',description:'The collaborator returns controlled failure details.',relationships:[dependency,context.title,'[failure]'],traceIds:context.stories}, 'uml-message reply', '[failure] 4: failure details')}
+            </div>
+            ${umlElement({id:`message-5-${context.id}`,type:'Reply message',label:'5: show result',description:`${context.title} returns the final outcome to ${actor}.`,relationships:[context.title,actor],traceIds:context.stories}, 'uml-message reply', '5: show result')}
+          </div>
         </div>
-        <div class="sequence-events">${operations.map((operation, index) => `
-          <div class="sequence-event"><span>${index + 1}</span><b>${index % 2 ? `${context.title} → ${dependency}` : `${actor} → ${context.title}`}: ${operation}</b></div>`).join('')}
-        </div>
-        <div class="diagram-text-view"><b>Text view</b>${operations.map((operation, index) => `${index + 1}. ${index % 2 ? context.title : actor} sends “${operation}”`).join(' · ')}</div>`;
+        <div class="diagram-text-view"><b>Accessible message list</b>1. ${escapeHtml(actor)} → ${escapeHtml(context.title)}: ${escapeHtml(first)}(). 2. ${escapeHtml(context.title)} → ${escapeHtml(dependency)}: ${escapeHtml(second)}(). alt [valid] ${escapeHtml(third)}; [failure] failure details. 5. Reply to ${escapeHtml(actor)}.</div>`;
     }
 
     function useCaseDetailDiagram(context) {
       const storyIds = context.stories.length ? context.stories.slice(0, 3) : ['UC-01'];
-      const actors = [...new Set(storyIds.map(diagramActor))];
-      const paths = [...new Set(storyIds.flatMap(storyId => (data.traces[storyId] || []).slice(0, 2).map(moduleName)))];
+      const actor = diagramActor(storyIds[0]);
+      const storyElements = storyIds.map((storyId, index) => {
+        const story = data.stories.find(item => item[0] === storyId);
+        return umlElement({
+          id:`usecase-${storyId}-${context.id}`, type:'Use case', label:`${storyId} · ${story?.[1] || storyId}`,
+          description:story?.[2] || `Approved use case ${storyId}.`,
+          relationships:[actor, context.title], traceIds:[storyId], source:`plan.${storyId}`
+        }, `uml-usecase${index === 0 ? ' primary' : ''}`, `${escapeHtml(storyId)} · ${escapeHtml(story?.[1] || storyId)}`);
+      }).join('');
       return `
-        <p class="diagram-caption">Shows the actors, approved use cases, and system components in scope.</p>
-        <div class="usecase-diagram" aria-label="Use-case diagram for ${context.title}">
-          <div class="diagram-actor">${actors.join(' · ')}</div>
-          <div class="usecase-center">${storyIds.map(storyId => {
-            const story = data.stories.find(item => item[0] === storyId);
-            return `<span class="usecase-node ${context.kind === 'scenario' && storyId === context.scenario.useCase ? 'active' : ''}">${storyId} · ${story?.[1] || storyId}</span>`;
-          }).join('')}</div>
-          <div class="diagram-actor">${paths.join(' · ') || context.title}</div>
+        <div class="diagram-caption"><span><b>Use case diagram.</b> Actors stay outside the system boundary. Use cases are ellipses inside it.</span><span>Dashed relations show «include» or «extend».</span></div>
+        <div class="uml-usecase-diagram" aria-label="UML use case diagram for ${escapeHtml(context.title)}">
+          ${umlElement({id:`actor-${context.id}`,type:'Actor',label:actor,description:'A role that uses the audit hub.',relationships:context.storyNames,traceIds:storyIds}, 'uml-actor', `<span class="uml-stick" aria-hidden="true"></span>${escapeHtml(actor)}`)}
+          <div class="uml-system-boundary">
+            ${storyElements}
+            <div class="uml-usecase-relations">
+              ${storyIds.length > 1 ? umlElement({id:`include-${context.id}`,type:'Include relationship',label:`${storyIds[0]} includes ${storyIds[1]}`,description:'The base use case always includes the named behavior.',relationships:[storyIds[0],storyIds[1]],traceIds:storyIds}, 'uml-usecase-relation', `«include» ${escapeHtml(storyIds[0])} ⇢ ${escapeHtml(storyIds[1])}`) : ''}
+              ${storyIds.length > 2 ? umlElement({id:`extend-${context.id}`,type:'Extend relationship',label:`${storyIds[2]} extends ${storyIds[0]}`,description:'Optional behavior extends the base use case at a defined extension point.',relationships:[storyIds[2],storyIds[0]],traceIds:storyIds}, 'uml-usecase-relation', `«extend» ${escapeHtml(storyIds[2])} ⇢ ${escapeHtml(storyIds[0])}`) : ''}
+            </div>
+          </div>
         </div>
-        <div class="diagram-text-view"><b>Text view</b>${storyIds.map(storyId => `${diagramActor(storyId)} uses ${storyId}: ${data.stories.find(item => item[0] === storyId)?.[1] || storyId}`).join(' · ')}</div>`;
+        <div class="uml-associations">
+          ${umlElement({id:`association-${context.id}`,type:'Association',label:`${actor} participates in selected use cases`,description:'A solid association connects the actor to the use cases.',relationships:[actor,...context.storyNames],traceIds:storyIds}, 'uml-association', `${escapeHtml(actor)} — use cases`)}
+        </div>
+        <div class="diagram-text-view"><b>Accessible relationship list</b>${escapeHtml(`${actor} participates in ${storyIds.join(', ')}. These use cases use ${context.title}.`)}</div>`;
     }
 
     function renderDetailDiagram() {
       const context = detailDiagramContext();
-      const types = availableDetailDiagramTypes(context);
+      const types = availableDetailDiagramTypes();
       if (!types.includes(appState.detailDiagramType)) appState.detailDiagramType = types[0];
-      document.querySelector('#detail-diagram-title').textContent = `${context.title} diagrams`;
+      activeUmlElements = {};
+      document.querySelector('#detail-diagram-title').textContent = `${context.title} · design diagrams`;
       document.querySelector('#detail-diagram-subtitle').textContent = context.subtitle;
       document.querySelector('#detail-diagram-tabs').innerHTML = types.map(type => `
-        <button class="view-button ${appState.detailDiagramType === type ? 'active' : ''}" type="button" data-detail-diagram="${type}" role="tab" aria-selected="${appState.detailDiagramType === type}">${type[0].toUpperCase() + type.slice(1)}</button>`).join('');
+        <button class="view-button ${appState.detailDiagramType === type ? 'active' : ''}" type="button" data-detail-diagram="${type}" role="tab" aria-selected="${appState.detailDiagramType === type}">${detailDiagramLabel(type)}</button>`).join('');
       const renderers = {
+        component: componentDetailDiagram,
         activity: activityDetailDiagram,
         state: stateDetailDiagram,
         sequence: sequenceDetailDiagram,
@@ -3302,13 +3847,19 @@
         appState.detailDiagramType = button.dataset.detailDiagram;
         renderDetailDiagram();
       }));
+      document.querySelectorAll('[data-uml-element]').forEach(button => button.addEventListener('click', () => {
+        openUmlElementDetail(button.dataset.umlElement, button);
+      }));
     }
 
     function openDetailDiagram(context, trigger) {
-      diagramContext = context;
+      if (appState.view !== 'solution') {
+        showToast('UML diagrams are available in the Design step.');
+        return;
+      }
+      diagramContext = {kind:'module', id:context.id || appState.selectedModule};
       detailDiagramTrigger = trigger || document.activeElement;
-      const preview = detailDiagramContext();
-      appState.detailDiagramType = availableDetailDiagramTypes(preview)[0];
+      appState.detailDiagramType = 'component';
       renderDetailDiagram();
       detailDiagramScrim.classList.add('open');
       detailDiagramModal.classList.add('open');
@@ -3317,10 +3868,123 @@
     }
 
     function closeDetailDiagram() {
+      if (umlElementModal.classList.contains('open')) closeUmlElementDetail({restoreFocus:false});
       detailDiagramScrim.classList.remove('open');
       detailDiagramModal.classList.remove('open');
       detailDiagramModal.setAttribute('aria-hidden', 'true');
       detailDiagramTrigger?.focus({preventScroll:true});
+    }
+
+    function openUmlElementDetail(elementId, trigger) {
+      const element = activeUmlElements[elementId];
+      if (!element) return;
+      selectedUmlElement = element;
+      umlElementTrigger = trigger || document.activeElement;
+      document.querySelector('#uml-element-type').textContent = `${element.diagram} diagram · ${element.type}`;
+      document.querySelector('#uml-element-title').textContent = element.label;
+      document.querySelector('#uml-element-id').textContent = element.id;
+      document.querySelector('#uml-element-summary').innerHTML = `
+        <p class="uml-element-copy">${escapeHtml(element.description)}</p>
+        <div class="uml-element-facts">
+          <div class="uml-element-fact"><b>Source record</b><span class="mono">${escapeHtml(element.source)}</span></div>
+          <div class="uml-element-fact"><b>Trace links</b><span>${escapeHtml(element.traceIds.join(' · ') || 'No direct use-case trace')}</span></div>
+          <div class="uml-element-fact"><b>Relationships</b><span>${escapeHtml(element.relationships.join(' · ') || 'None')}</span></div>
+          <div class="uml-element-fact"><b>Design context</b><span>${escapeHtml(moduleName(element.contextId))}</span></div>
+        </div>`;
+      ['#uml-agent-panel', '#uml-proposal-panel', '#uml-impact-panel'].forEach(selector => {
+        const panel = document.querySelector(selector);
+        panel.hidden = true;
+        panel.innerHTML = '';
+      });
+      document.querySelector('#uml-element-actions').hidden = false;
+      umlElementScrim.classList.add('open');
+      umlElementModal.classList.add('open');
+      umlElementModal.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => umlElementClose.focus({preventScroll:true}));
+    }
+
+    function closeUmlElementDetail({restoreFocus = true} = {}) {
+      umlElementScrim.classList.remove('open');
+      umlElementModal.classList.remove('open');
+      umlElementModal.setAttribute('aria-hidden', 'true');
+      if (restoreFocus) umlElementTrigger?.focus({preventScroll:true});
+    }
+
+    function discussSelectedUmlElement() {
+      if (!selectedUmlElement) return;
+      const panel = document.querySelector('#uml-agent-panel');
+      panel.hidden = false;
+      panel.innerHTML = `
+        <div class="agent-turn user"><b>You</b><p>Explain ${escapeHtml(selectedUmlElement.label)} in this ${escapeHtml(selectedUmlElement.diagram.toLowerCase())} diagram. What can I change without breaking its relationships?</p></div>
+        <div class="agent-turn"><b>Design agent</b><p>${escapeHtml(selectedUmlElement.label)} is a ${escapeHtml(selectedUmlElement.type.toLowerCase())} traced to ${escapeHtml(selectedUmlElement.traceIds.join(', ') || 'the selected design record')}. A change can affect ${escapeHtml(selectedUmlElement.relationships.join(', ') || 'its owning module')}. Describe the result you want; I will analyze the full impact before I change any approved record.</p></div>
+        <div class="proposal-field"><label for="uml-follow-up">Continue the discussion</label><textarea id="uml-follow-up" placeholder="Ask a design question…"></textarea></div>
+        <div><button class="btn btn-small" id="uml-send-follow-up" type="button">Send message</button></div>`;
+      document.querySelector('#uml-send-follow-up').addEventListener('click', () => {
+        const value = document.querySelector('#uml-follow-up').value.trim();
+        if (!value) return;
+        panel.insertAdjacentHTML('beforeend', `<div class="agent-turn user"><b>You</b><p>${escapeHtml(value)}</p></div><div class="agent-turn"><b>Design agent</b><p>I will treat that as a design question. Use “Propose change” when you want a controlled impact analysis and an executable change plan.</p></div>`);
+        document.querySelector('#uml-follow-up').value = '';
+      });
+    }
+
+    function proposeUmlChange() {
+      if (!selectedUmlElement) return;
+      const panel = document.querySelector('#uml-proposal-panel');
+      panel.hidden = false;
+      panel.innerHTML = `
+        <div><p class="eyebrow">Proposed design change</p><p class="uml-element-copy">The agent will analyze the proposal before it changes the canonical design.</p></div>
+        <div class="proposal-field"><label for="uml-change-request">Describe the result you want</label><textarea id="uml-change-request">Change ${escapeHtml(selectedUmlElement.label)} so that </textarea></div>
+        <div><button class="btn btn-primary" id="uml-analyze-impact" type="button">Analyze impact</button></div>`;
+      requestAnimationFrame(() => {
+        const textarea = document.querySelector('#uml-change-request');
+        textarea.focus();
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      });
+      document.querySelector('#uml-analyze-impact').addEventListener('click', analyzeUmlImpact);
+    }
+
+    function analyzeUmlImpact() {
+      if (!selectedUmlElement) return;
+      const proposal = document.querySelector('#uml-change-request')?.value.trim();
+      if (!proposal || proposal.endsWith('so that')) {
+        showToast('Describe the intended result before impact analysis.');
+        return;
+      }
+      const detail = moduleDetails[selectedUmlElement.contextId];
+      const storyIds = [...new Set([...(selectedUmlElement.traceIds || []), ...(detail?.stories || [])])];
+      const affectedModules = [...new Set([selectedUmlElement.contextId, ...(detail?.dependsOn || []), ...(detail?.usedBy || [])])].slice(0, 5);
+      const affectedScenarios = data.scenarios.filter(item => storyIds.includes(item.useCase));
+      const ports = (detail?.ports || []).slice(0, 4);
+      const panel = document.querySelector('#uml-impact-panel');
+      panel.hidden = false;
+      panel.innerHTML = `
+        <div><p class="eyebrow">Impact analysis</p><p class="uml-element-copy"><b>${escapeHtml(selectedUmlElement.label)}</b>: ${escapeHtml(proposal)}</p></div>
+        <div class="impact-grid">
+          <div class="impact-item"><b>Use cases</b>${escapeHtml(storyIds.join(' · ') || 'No direct use case; owner review required')}</div>
+          <div class="impact-item"><b>Modules</b>${escapeHtml(affectedModules.map(moduleName).join(' · '))}</div>
+          <div class="impact-item"><b>Ports and interfaces</b>${escapeHtml(ports.join(' · ') || 'No port change detected')}</div>
+          <div class="impact-item"><b>UML diagrams</b>Component · Activity · State machine · Sequence · Use case</div>
+          <div class="impact-item"><b>Automated scenarios</b>${escapeHtml(affectedScenarios.map(item => item.id).join(' · ') || 'Add or revise a scenario')}</div>
+          <div class="impact-item"><b>Approval and baseline</b>Invalidate the current Design approval; preserve the last approved revision.</div>
+        </div>
+        <div><p class="eyebrow">Required agent changes</p><ol class="change-plan">
+          <li>Update the canonical record for ${escapeHtml(selectedUmlElement.label)} and its design reason.</li>
+          <li>Update affected modules, operations, ports, adapters, and trace links.</li>
+          <li>Regenerate all five UML projections and validate their supported UML 2.5.1 notation.</li>
+          <li>Update ${affectedScenarios.length || 'the affected'} end-to-end scenario tests and screenshot expectations.</li>
+          <li>Run Design checks, automated scenarios, and evidence checks before requesting approval.</li>
+        </ol></div>
+        <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px"><button class="btn" id="uml-revise-proposal" type="button">Revise proposal</button><button class="btn btn-primary" id="uml-approve-plan" type="button">Approve and assign to agent</button></div>`;
+      document.querySelector('#uml-revise-proposal').addEventListener('click', () => {
+        panel.hidden = true;
+        document.querySelector('#uml-change-request')?.focus();
+      });
+      document.querySelector('#uml-approve-plan').addEventListener('click', event => {
+        event.currentTarget.disabled = true;
+        event.currentTarget.textContent = 'Change plan queued';
+        panel.insertAdjacentHTML('afterbegin', '<div class="gate-item"><span class="state-icon">✓</span><span>Approved change plan queued for the design agent. No approved baseline was overwritten.</span></div>');
+        showToast('Change plan queued. The agent will update the design and rerun affected checks.');
+      });
     }
 
     function bindPage() {
@@ -3404,9 +4068,6 @@
         appState.selectedScenario = button.dataset.scenario;
         renderPreservingScroll();
       }));
-      document.querySelector('#scenario-diagrams')?.addEventListener('click', event => {
-        openDetailDiagram({kind:'scenario', id:appState.selectedScenario}, event.currentTarget);
-      });
       document.querySelectorAll('[data-evidence-step]').forEach(button => button.addEventListener('click', () => {
         showToast(`Opened original screenshot for ${button.dataset.evidenceStep}.`);
       }));
@@ -3442,6 +4103,11 @@
     });
     detailDiagramClose.addEventListener('click', closeDetailDiagram);
     detailDiagramScrim.addEventListener('click', closeDetailDiagram);
+    umlElementClose.addEventListener('click', () => closeUmlElementDetail());
+    document.querySelector('#uml-element-dismiss').addEventListener('click', () => closeUmlElementDetail());
+    umlElementScrim.addEventListener('click', () => closeUmlElementDetail());
+    document.querySelector('#uml-discuss').addEventListener('click', discussSelectedUmlElement);
+    document.querySelector('#uml-propose').addEventListener('click', proposeUmlChange);
     function setDrawerPreview(action, title, description) {
       appState.drawerAction = action;
       document.querySelector('.impact').innerHTML = `<b>${title}</b>${description}`;
@@ -3511,7 +4177,9 @@
       showToast('Design decision saved. The tool will apply it to each new draft.');
     });
     document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && detailDiagramModal.classList.contains('open')) {
+      if (event.key === 'Escape' && umlElementModal.classList.contains('open')) {
+        closeUmlElementDetail();
+      } else if (event.key === 'Escape' && detailDiagramModal.classList.contains('open')) {
         closeDetailDiagram();
       } else if (event.key === 'Escape' && nodeDetailModal.classList.contains('open')) {
         closeNodeDetailModal();

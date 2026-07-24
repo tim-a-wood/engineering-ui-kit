@@ -189,8 +189,7 @@ Each use case can expand to show:
 - rules;
 - acceptance checks;
 - sources;
-- test scenarios;
-- available detail diagrams.
+- test scenarios.
 
 Guided mode hides record IDs and hashes. Design mode shows them. Both modes
 read and change the same records.
@@ -337,31 +336,93 @@ Save the approved change as a `DesignDecision`. When the tool creates a new
 design draft, apply each compatible decision again. Show a conflict when a
 decision is no longer compatible.
 
-### 4.6 Diagrams in detail views
+### 4.6 UML diagrams in Design
 
-Keep the architecture canvas as the main system view. Add smaller contextual
-diagrams inside use-case, module, adapter, stateful-record, and verification
-detail views.
+Keep all design diagrams in the Design step. Do not put design diagrams in
+Verify. Verify shows test results and links back to the approved Design record.
 
-Show the diagram that best explains the selected record:
+Keep the architecture canvas as the main system view. A user selects a module,
+port, adapter, stateful record, or use case and opens its UML detail. The detail
+offers these diagrams:
 
-| Detail view | Diagram types |
+| Diagram | What it shows |
 | --- | --- |
-| Use case or test scenario | use-case and activity diagrams |
-| Workflow or user-interface module | activity and sequence diagrams |
-| Stateful record, finding, job, snapshot, or approval | state diagram |
-| Port, adapter, or external system | sequence diagram |
-| Verification result | activity, sequence, and use-case diagrams |
+| Component | components, provided interfaces, required interfaces, and dependencies |
+| Activity | actions, control flows, decisions, guards, and final nodes |
+| State machine | states, pseudostates, transitions, triggers, guards, and effects |
+| Sequence | lifelines, calls, replies, and combined fragments |
+| Use case | actors, use cases, system boundaries, associations, includes, and extensions |
 
-A detail view can offer more than one diagram when each diagram answers a
-different question. Do not show every diagram type by default.
+Generate each diagram from the approved use-case and system-design records.
+Do not keep a second hand-edited model. A diagram is a view of the approved
+record, not a separate source of truth.
 
-Generate the diagrams from the same approved records used by Build, Connect,
-and Verify. Do not maintain a separate hand-edited model. Selecting an actor,
-step, state, module, port, or evidence item in a diagram opens its detail view.
+Make each meaningful visual element selectable. This includes actors, use
+cases, components, interfaces, actions, states, pseudostates, lifelines,
+messages, guards, and relationships. Selection opens a small modal with:
 
-Each diagram also provides a text list or table with the same information.
-Keyboard and screen-reader users can follow the same relationships.
+- the element type and stable ID;
+- its definition and source record;
+- trace links;
+- connected elements;
+- **Discuss with agent**;
+- **Propose change**.
+
+Also provide a text list or table with the same information. Keyboard and
+screen-reader users must be able to follow the same relationships.
+
+### 4.7 UML 2.5.1 notation rules
+
+Support a defined UML 2.5.1 notation subset. Do not claim support for UML
+constructs that the tool does not render or validate.
+
+Use the [OMG Unified Modeling Language 2.5.1 specification](https://www.omg.org/spec/UML/2.5.1/PDF)
+as the normative source.
+
+Apply these rules:
+
+- show a component with the `«component»` keyword or component icon;
+- show provided and required interfaces with the correct interface notation;
+- show dependencies as dashed directed relationships;
+- show an activity initial node as a filled circle;
+- show an activity final node and a state final state as a bullseye;
+- show decisions and merges as diamonds;
+- write activity guards in square brackets;
+- write state transitions as `trigger [guard] / effect` when these parts exist;
+- order sequence messages from top to bottom;
+- use a solid line for a call and a dashed line for a reply;
+- label combined fragments such as `alt` and show their guards;
+- keep actors outside the use-case system boundary;
+- show use cases as ellipses inside the system boundary;
+- label include and extend relationships with `«include»` and `«extend»`;
+- keep labels clear of nodes and relationship lines;
+- keep relationship crossings to the minimum practical number.
+
+Validate the supported notation before Design approval. Store the diagram type,
+element type, relationship type, source record, and stable element ID. This
+data lets the renderer check semantics without reading pixels.
+
+### 4.8 Discuss and change a visual element
+
+The Design modal supports this controlled workflow:
+
+1. The user selects a visual element.
+2. The modal shows its record, traces, and relationships.
+3. The user discusses the element with the agent.
+4. The user describes a proposed result.
+5. The tool runs an impact analysis before it changes data.
+6. The tool shows the affected use cases, requirements, modules, operations,
+   ports, adapters, diagrams, automated scenarios, screenshot expectations,
+   approvals, and baselines.
+7. The user revises the proposal or approves the change plan.
+8. The agent updates the canonical records, code, tests, and diagrams named in
+   the approved plan.
+9. The tool runs Design checks and affected end-to-end tests.
+10. The tool asks for Design approval again.
+
+Do not apply a diagram-only edit. Every approved change must update the
+canonical record first. Preserve the last approved revision until the new
+revision passes its checks and the user approves it.
 
 ## 5. Data model
 
@@ -403,6 +464,66 @@ type AnalysisItem<T> = {
 
 Use confidence only to set review order. Confidence is not approval and is not
 evidence.
+
+Design diagrams use projection records:
+
+```ts
+type DiagramProjection = {
+  id: string;
+  type: "component" | "activity" | "stateMachine" | "sequence" | "useCase";
+  umlVersion: "2.5.1";
+  sourceRevision: number;
+  elementIds: string[];
+  relationshipIds: string[];
+  validation: DiagramValidationResult[];
+};
+
+type DiagramElement = {
+  id: string;
+  umlType: string;
+  label: string;
+  sourceRecordId: string;
+  traceIds: string[];
+};
+
+type DiagramRelationship = {
+  id: string;
+  umlType: string;
+  sourceElementId: string;
+  targetElementId: string;
+  label?: string;
+  guard?: string;
+};
+```
+
+The diagram renderer reads these projections. A proposed change does not write
+to a projection. It creates a controlled request:
+
+```ts
+type VisualChangeProposal = {
+  id: string;
+  diagramElementId: string;
+  requestedResult: string;
+  baseDesignRevision: number;
+  impact: ChangeImpact;
+  state: "draft" | "analyzed" | "approved" | "applied" | "rejected";
+};
+
+type ChangeImpact = {
+  useCaseIds: string[];
+  requirementIds: string[];
+  moduleIds: string[];
+  operationIds: string[];
+  portIds: string[];
+  adapterIds: string[];
+  diagramIds: string[];
+  scenarioIds: string[];
+  screenshotExpectationIds: string[];
+  approvalIds: string[];
+  baselineIds: string[];
+  requiredChanges: RequiredAgentChange[];
+};
+```
 
 A use case contains:
 
@@ -827,6 +948,11 @@ This phase does not change the interface.
 - Show reasons for modules.
 - Add design options.
 - Add module changes and decision replay.
+- Add UML 2.5.1 component, activity, state machine, sequence, and use-case
+  detail diagrams.
+- Make each UML element selectable.
+- Add agent discussion, change proposals, impact analysis, and approved change
+  plans to the visual-element modal.
 - Add architecture approval.
 
 ### Phase 5: Add the machine API
@@ -844,8 +970,7 @@ This phase does not change the interface.
 - Capture screenshot evidence for each applicable visible step.
 - Record structured evidence for nonvisual steps.
 - Add scenario, step, build, environment, and evidence links to Verify.
-- Add contextual use-case, activity, state, and sequence diagrams to detail
-  views.
+- Add links from Verify records back to their approved Design records.
 - Add source links to change reports.
 
 ### Phase 7: Release
@@ -872,6 +997,12 @@ Add tests for:
 - missing adapters;
 - use-case path coverage;
 - decision replay;
+- supported UML 2.5.1 notation semantics;
+- selectable UML elements and keyboard access;
+- visual-element detail modals;
+- change impact completeness;
+- required agent change plans;
+- diagram layout crossings, label overlap, and node collisions;
 - migration;
 - idempotent machine calls;
 - keyboard use;
@@ -894,7 +1025,11 @@ Use end-to-end product tests for:
 7. a failed MATLAB import;
 8. a repeatable audit-package export;
 9. the default sample project;
-10. an LLM client that uses the machine API.
+10. an LLM client that uses the machine API;
+11. a UML element discussion;
+12. a proposed visual change with impact analysis;
+13. an approved change plan that updates records, diagrams, and affected tests;
+14. a check that Verify contains no design diagram.
 
 ### 13.2 Generated use-case scenario tests
 
@@ -946,10 +1081,11 @@ The Verify detail view shows:
 - reasons for steps without screenshots;
 - the build, environment, test data, and source revisions;
 - failure output and the first failed step;
-- links to applicable activity, state, sequence, or use-case diagrams.
+- a link back to the approved Design record.
 
 A reviewer can compare runs, open the original evidence, and follow the link
-back to the approved scenario.
+back to the approved scenario and system design. Verify does not contain design
+diagrams.
 
 ## 14. Success measures
 
@@ -989,7 +1125,8 @@ Compare the results with the Phase 0 measurements.
 | Technical terms make screens hard to read | Hide IDs and hashes in Guided mode. Use the approved label table. |
 | A passing summary hides an untested scenario | Count approved scenarios and automated results separately. |
 | Screenshot evidence is missing or misleading | Require step links, preserve originals, and record approved masks. |
-| Diagrams contradict the approved records | Generate detail diagrams from the approved use-case and architecture records. |
+| Diagrams contradict the approved records | Generate UML detail diagrams from the approved use-case and architecture records. Apply changes to canonical records first. |
+| A visual edit has an unknown effect | Run impact analysis before the agent changes a record. Show affected use cases, modules, interfaces, tests, approvals, and baselines. |
 
 ## 16. Completion criteria
 
@@ -1009,7 +1146,12 @@ The work is complete when:
 - every approved use-case scenario has a current automated end-to-end result;
 - every applicable visible test step has screenshot evidence;
 - every nonvisual test step has structured evidence or a recorded reason;
-- use-case, activity, state, and sequence diagrams are available in applicable
-  detail views;
+- UML 2.5.1 component, activity, state machine, sequence, and use-case diagrams
+  are available only in Design detail views;
+- every meaningful UML element opens a detail modal;
+- the modal supports agent discussion and a proposed change;
+- each proposed visual change produces an impact analysis and a required agent
+  change plan before records change;
+- the supported UML notation passes semantic and layout checks;
 - human users and LLM clients can complete the same workflow;
 - the workflow meets the success targets.

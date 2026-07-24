@@ -641,7 +641,7 @@
           <div class="rule"><b>Keep related rules together</b><p>Split a module only for a clear difference in rules, change rate, ownership, runtime, scale, or trust.</p></div>
           <div class="rule"><b>Trace every use case</b><p>Select a use case to show each user interface, workflow, core module, adapter, and store in its path.</p></div>
           <div class="rule"><b>Name each adapter</b><p>Use separate adapters for MATLAB, files, Git, spreadsheets, C source, coverage, and review data.</p></div>
-          <div class="rule"><b>Open detail diagrams</b><p>Show the applicable use-case, activity, state, or sequence diagram from the approved records.</p></div>
+          <div class="rule"><b>Inspect UML in Design</b><p>Open UML 2.5.1 component, activity, state machine, sequence, and use-case diagrams. Select any element for detail.</p></div>
         </div>
       </div>
     </section>
@@ -657,9 +657,9 @@
           <div class="phase"><span class="phase-num">01</span><h3>Add the record and converter</h3><p>Add versioned analysis, source links, checks, stable IDs, migration, and repeatable conversion.</p><span class="phase-outcome">No screen change</span></div>
           <div class="phase"><span class="phase-num">02</span><h3>Add Guided Plan</h3><p>Add Describe, Review, and Approve. Show source selection, progress, open questions, and design details.</p><span class="phase-outcome">Usable first release</span></div>
           <div class="phase"><span class="phase-num">03</span><h3>Add analysis adapters</h3><p>Support the current Copilot handoff, an in-app agent, a fixed test provider, and approved source data.</p><span class="phase-outcome">Choice of automation</span></div>
-          <div class="phase"><span class="phase-num">04</span><h3>Add the design editor</h3><p>Show reasons, options, coverage, module changes, saved decisions, and architecture approval.</p><span class="phase-outcome">Reviewable design</span></div>
+          <div class="phase"><span class="phase-num">04</span><h3>Add the design editor</h3><p>Show reasons, options, coverage, UML detail, agent discussion, impact analysis, saved decisions, and architecture approval.</p><span class="phase-outcome">Reviewable design</span></div>
           <div class="phase"><span class="phase-num">05</span><h3>Add the machine API</h3><p>Provide the same operations to automation. Require IDs for retries and explicit approval.</p><span class="phase-outcome">Direct API access</span></div>
-          <div class="phase"><span class="phase-num">06</span><h3>Use the data in later stages</h3><p>Send approved use cases to module plans and connections. Generate every scenario test, capture applicable screenshots, and link detail diagrams.</p><span class="phase-outcome">Traceable test evidence</span></div>
+          <div class="phase"><span class="phase-num">06</span><h3>Use the data in later stages</h3><p>Send approved use cases to module plans and connections. Generate every scenario test, capture applicable screenshots, and link Verify back to Design.</p><span class="phase-outcome">Traceable test evidence</span></div>
           <div class="phase"><span class="phase-num">07</span><h3>Release and remove old screens</h3><p>Enable the workflow per project. Check each migration. Remove the old Guided screens only after the new flow passes user tests.</p><span class="phase-outcome">Controlled release</span></div>
         </div>
       </div>
@@ -685,13 +685,13 @@
           <div class="guardrail"><span class="check">✓</span><span><b>Keep approved user changes</b><span>Apply compatible changes to each new draft. Show all conflicts.</span></span></div>
           <div class="guardrail"><span class="check">✓</span><span><b>Keep current approvals during migration</b><span>A current approval stays valid until the user approves a new revision.</span></span></div>
           <div class="guardrail"><span class="check">✓</span><span><b>Keep evidence immutable</b><span>Each rerun creates a new result. It does not replace an earlier screenshot or structured record.</span></span></div>
-          <div class="guardrail"><span class="check">✓</span><span><b>Generate detail diagrams</b><span>Use the approved records so diagrams do not become a separate source of truth.</span></span></div>
+          <div class="guardrail"><span class="check">✓</span><span><b>Keep UML in Design</b><span>Generate UML detail from approved records. Analyze impact before the agent applies a proposed visual change.</span></span></div>
         </div>
       </div>
     </section>
 
     <section class="wrap cta">
-      <div><h2>Try the proposed workflow.</h2><p>The mockup shows planning, system design, contextual diagrams, and the final scenario-evidence review.</p></div>
+      <div><h2>Try the proposed workflow.</h2><p>The mockup shows planning, interactive UML design details, controlled change impact, and the final scenario-evidence review.</p></div>
       <div class="cta-actions"><a class="button" href="./PROPOSAL.md">Full plan</a><a class="button primary" href="./mockup.html">Open prototype →</a></div>
     </section>
   </main>

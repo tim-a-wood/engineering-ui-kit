@@ -63,19 +63,35 @@ test("uses direct task labels in the briefing and mockup", async () => {
   assert.match(mockup, /Screenshot evidence/);
   assert.match(mockup, /Structured evidence/);
   assert.match(mockup, /id="detail-diagram-modal"/);
-  assert.match(mockup, /View diagrams/);
+  assert.match(mockup, /Open UML diagrams/);
+  assert.match(mockup, /UML 2\.5\.1 notation subset/);
+  assert.match(mockup, /Design step only/);
+  assert.match(mockup, /function componentDetailDiagram\(/);
   assert.match(mockup, /function activityDetailDiagram\(/);
   assert.match(mockup, /function stateDetailDiagram\(/);
   assert.match(mockup, /function sequenceDetailDiagram\(/);
   assert.match(mockup, /function useCaseDetailDiagram\(/);
+  assert.match(mockup, /data-uml-element=/);
+  assert.match(mockup, /id="uml-element-modal"/);
+  assert.match(mockup, /Discuss with agent/);
+  assert.match(mockup, /Propose change/);
+  assert.match(mockup, /Analyze impact/);
+  assert.match(mockup, /Approve and assign to agent/);
+  assert.match(mockup, /Required agent changes/);
+  assert.doesNotMatch(mockup, /id="scenario-diagrams"/);
   assert.match(briefing, /AUTOMATED SCENARIOS/);
   assert.match(briefing, /Scenario evidence/);
+  assert.match(briefing, /Inspect UML in Design/);
+  assert.match(briefing, /impact analysis/i);
   assert.match(proposal, /^# Plan from use cases/m);
   assert.match(proposal, /## 10\. DO-178C Audit Hub example/);
   assert.match(proposal, /### 7\.3 Verify checks/);
   assert.match(proposal, /### 13\.2 Generated use-case scenario tests/);
   assert.match(proposal, /capture a screenshot when the result is visible/);
-  assert.match(proposal, /### 4\.6 Diagrams in detail views/);
+  assert.match(proposal, /### 4\.6 UML diagrams in Design/);
+  assert.match(proposal, /### 4\.7 UML 2\.5\.1 notation rules/);
+  assert.match(proposal, /### 4\.8 Discuss and change a visual element/);
+  assert.match(proposal, /Verify does not contain design\s+diagrams/);
   assert.match(layout, /const title = "Plan from use cases"/);
 
   const obsoletePhrases = [
