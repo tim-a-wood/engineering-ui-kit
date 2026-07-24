@@ -78,6 +78,8 @@ test("uses direct task labels in the briefing and mockup", async () => {
   assert.match(mockup, /Analyze impact/);
   assert.match(mockup, /Approve and assign to agent/);
   assert.match(mockup, /Required agent changes/);
+  assert.match(mockup, /<b>Requirements<\/b>/);
+  assert.match(mockup, /closeNodeDetailModal\(\{restoreFocus:false\}\)/);
   assert.doesNotMatch(mockup, /id="scenario-diagrams"/);
   assert.match(briefing, /AUTOMATED SCENARIOS/);
   assert.match(briefing, /Scenario evidence/);

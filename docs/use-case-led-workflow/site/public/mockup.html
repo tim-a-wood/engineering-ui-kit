@@ -3880,6 +3880,7 @@
       if (!element) return;
       selectedUmlElement = element;
       umlElementTrigger = trigger || document.activeElement;
+      detailDiagramModal.setAttribute('aria-hidden', 'true');
       document.querySelector('#uml-element-type').textContent = `${element.diagram} diagram · ${element.type}`;
       document.querySelector('#uml-element-title').textContent = element.label;
       document.querySelector('#uml-element-id').textContent = element.id;
@@ -3907,6 +3908,7 @@
       umlElementScrim.classList.remove('open');
       umlElementModal.classList.remove('open');
       umlElementModal.setAttribute('aria-hidden', 'true');
+      if (detailDiagramModal.classList.contains('open')) detailDiagramModal.setAttribute('aria-hidden', 'false');
       if (restoreFocus) umlElementTrigger?.focus({preventScroll:true});
     }
 
@@ -3961,6 +3963,7 @@
         <div><p class="eyebrow">Impact analysis</p><p class="uml-element-copy"><b>${escapeHtml(selectedUmlElement.label)}</b>: ${escapeHtml(proposal)}</p></div>
         <div class="impact-grid">
           <div class="impact-item"><b>Use cases</b>${escapeHtml(storyIds.join(' · ') || 'No direct use case; owner review required')}</div>
+          <div class="impact-item"><b>Requirements</b>HLR-AUD-101 · HLR-TRACE-204 · SLR-SNAP-033</div>
           <div class="impact-item"><b>Modules</b>${escapeHtml(affectedModules.map(moduleName).join(' · '))}</div>
           <div class="impact-item"><b>Ports and interfaces</b>${escapeHtml(ports.join(' · ') || 'No port change detected')}</div>
           <div class="impact-item"><b>UML diagrams</b>Component · Activity · State machine · Sequence · Use case</div>
@@ -4094,6 +4097,7 @@
     document.querySelector('#node-modal-dismiss').addEventListener('click', () => closeNodeDetailModal());
     nodeModalScrim.addEventListener('click', () => closeNodeDetailModal());
     document.querySelector('#node-modal-diagrams').addEventListener('click', event => {
+      closeNodeDetailModal({restoreFocus:false});
       openDetailDiagram({kind:'module', id:nodeModalModuleId}, event.currentTarget);
     });
     document.querySelector('#node-modal-edit').addEventListener('click', () => {
