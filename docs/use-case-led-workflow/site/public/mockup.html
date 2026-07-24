@@ -924,6 +924,240 @@
       font-size: 10.5px;
     }
     .gate-item .state-icon { width: 16px; height: 16px; }
+    .architecture-explorer {
+      border-top: 1px solid var(--border);
+      background:
+        linear-gradient(rgba(143, 165, 255, .025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(143, 165, 255, .025) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .explorer-head {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(11, 19, 32, .82);
+    }
+    .explorer-head h2 { margin: 0; font-size: 12.5px; }
+    .explorer-head p { margin: 2px 0 0; color: var(--muted); font-size: 10.5px; }
+    .explorer-actions { display: flex; gap: 7px; margin-left: auto; }
+    .view-button {
+      min-height: 29px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      background: var(--inset);
+      font-size: 10.5px;
+      font-weight: 650;
+    }
+    .view-button:hover { border-color: var(--border-strong); color: var(--secondary); }
+    .view-button.active { border-color: rgba(84, 120, 255, .6); color: var(--text); background: var(--accent-tint); }
+    .diagram-scroll { padding: 15px; overflow-x: auto; }
+    .logical-diagram { min-width: 860px; }
+    .diagram-flow {
+      display: grid;
+      grid-template-columns: 1fr 26px 1.35fr 26px 1fr 34px 1.85fr;
+      gap: 5px;
+      align-items: stretch;
+    }
+    .diagram-tier {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: rgba(11, 19, 32, .9);
+    }
+    .diagram-tier.port-boundary {
+      border-style: dashed;
+      border-color: rgba(96, 165, 250, .4);
+    }
+    .diagram-tier-head {
+      min-height: 37px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .diagram-tier-head span {
+      display: block;
+      margin-top: 3px;
+      font-weight: 450;
+      letter-spacing: 0;
+      line-height: 1.25;
+      text-transform: none;
+    }
+    .diagram-nodes { display: grid; gap: 6px; }
+    .diagram-nodes.adapters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .diagram-node {
+      position: relative;
+      display: grid;
+      gap: 2px;
+      width: 100%;
+      min-height: 42px;
+      padding: 7px 8px;
+      border: 1px solid var(--border-strong);
+      border-radius: 5px;
+      color: var(--secondary);
+      background: var(--raised);
+      text-align: left;
+      transition: 120ms ease;
+    }
+    .diagram-node:hover { transform: translateY(-1px); border-color: rgba(143, 165, 255, .62); }
+    .diagram-node.selected { border-color: var(--accent-hover); box-shadow: 0 0 0 2px var(--accent-tint); }
+    .diagram-node.highlight { border-color: var(--success); background: linear-gradient(90deg, rgba(52, 211, 153, .1), transparent), var(--raised); }
+    .diagram-node.dimmed { opacity: .28; }
+    .diagram-node b { overflow: hidden; font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
+    .diagram-node small { overflow: hidden; color: var(--muted); font-size: 8.8px; text-overflow: ellipsis; white-space: nowrap; }
+    .diagram-arrow {
+      display: grid;
+      place-items: center;
+      color: var(--accent-text);
+      font-family: var(--mono);
+      font-size: 17px;
+    }
+    .port-marker {
+      display: grid;
+      place-items: center;
+      gap: 6px;
+      color: var(--accent-text);
+      font: 8px/1 var(--mono);
+      letter-spacing: .08em;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+    .port-marker::before, .port-marker::after {
+      content: "";
+      width: 1px;
+      height: 34px;
+      background: rgba(96, 165, 250, .5);
+    }
+    .service-rail {
+      display: grid;
+      grid-template-columns: 138px 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-top: 10px;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: rgba(11, 19, 32, .88);
+    }
+    .service-rail-label {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .service-rail-label span { display: block; margin-top: 3px; font-weight: 450; letter-spacing: 0; text-transform: none; }
+    .service-nodes { display: grid; grid-template-columns: repeat(2, minmax(0, 190px)); gap: 7px; }
+    .diagram-legend {
+      display: flex;
+      gap: 13px;
+      align-items: center;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+    .legend-swatch {
+      display: inline-block;
+      width: 12px;
+      height: 8px;
+      margin-right: 5px;
+      border: 1px solid var(--border-strong);
+      border-radius: 2px;
+      vertical-align: -1px;
+    }
+    .legend-swatch.selected { border-color: var(--accent-hover); box-shadow: 0 0 0 1px var(--accent-tint); }
+    .legend-swatch.path { border-color: var(--success); background: var(--success-tint); }
+    .deployment-diagram { min-width: 760px; }
+    .deployment-summary {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+    .deployment-summary b { color: var(--secondary); }
+    .deployment-grid {
+      display: grid;
+      grid-template-columns: repeat(var(--deploy-columns, 2), minmax(210px, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+    .deployable {
+      min-height: 190px;
+      padding: 10px;
+      border: 1px dashed rgba(143, 165, 255, .42);
+      border-radius: 7px;
+      background: rgba(11, 19, 32, .9);
+    }
+    .deployable.worker { border-color: rgba(96, 165, 250, .6); background: rgba(47, 91, 255, .055); }
+    .deployable.service { border-color: rgba(52, 211, 153, .42); }
+    .deployable-head {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      min-height: 39px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .deployable-head b { display: block; font-size: 11px; }
+    .deployable-head span { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .deployable-head .tag { margin-left: auto; }
+    .deployable-nodes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .deployable-nodes .diagram-node { min-height: 38px; }
+    .module-catalog-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 15px 0;
+      border-top: 1px solid var(--border);
+    }
+    .module-catalog-head h3 { margin: 0; font-size: 11.5px; }
+    .module-catalog-head p { margin: 0; color: var(--muted); font-size: 10px; }
+    .inspector-intro {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .inspector-section {
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+    }
+    .inspector-section:first-of-type { border-top: 0; padding-top: 0; }
+    .inspector-section > b {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--secondary);
+      font-size: 10px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .inspector-section p { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.45; }
+    .inspector-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+    .inspector-list li { color: var(--muted); font-size: 10.5px; }
+    .inspector-list li::before { content: "—"; margin-right: 6px; color: var(--accent-text); }
+    .link-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+    .link-chip {
+      min-height: 25px;
+      padding: 0 7px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--secondary);
+      background: var(--inset);
+      font-size: 9.5px;
+    }
+    .link-chip:hover { border-color: var(--accent-hover); background: var(--accent-tint); }
+    .link-chip.active { border-color: var(--success); background: var(--success-tint); }
+    .empty-links { color: var(--muted); font-size: 10px; }
 
     /* Approval */
     .approval-grid {
@@ -1095,6 +1329,7 @@
       .person:nth-child(2) { border-right: 0; }
       .person:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
       .adapter-grid { grid-template-columns: repeat(3, minmax(130px, 1fr)); }
+      .diagram-scroll { padding: 12px; }
     }
     @media (max-width: 780px) {
       body { overflow: auto; }
@@ -1114,8 +1349,11 @@
       .step-copy b { font-size: 10px; text-align: center; }
       .step-marker { display: none; }
       .page { padding: 18px 14px 44px; }
-      .page-heading, .command { display: grid; grid-template-columns: 1fr; }
+      .page-heading, .command { display: grid; grid-template-columns: minmax(0, 1fr); }
+      .command > * { min-width: 0; }
       .heading-actions, .command-actions { margin-left: 0; }
+      .command-actions { flex-wrap: wrap; }
+      .command-actions .btn { flex: 1 1 160px; min-width: 0; padding: 7px 10px; white-space: normal; text-align: center; }
       .describe-grid, .approval-grid { grid-template-columns: 1fr; }
       .example-row { grid-template-columns: 1fr; }
       .example { border-right: 0; border-bottom: 1px solid var(--border); }
@@ -1130,6 +1368,12 @@
       .option-tabs { overflow-x: auto; }
       .option-tab { min-width: 156px; }
       .option-summary { grid-template-columns: 1fr repeat(3, auto); }
+      .explorer-head { align-items: flex-start; flex-direction: column; }
+      .explorer-actions { width: 100%; margin-left: 0; }
+      .view-button { flex: 1; }
+      .diagram-scroll { padding: 10px; }
+      .module-catalog-head { align-items: flex-start; flex-direction: column; }
+      .diagram-legend { align-items: flex-start; flex-direction: column; gap: 5px; }
       .figure-strip { grid-template-columns: repeat(2, 1fr); }
       .figure:nth-child(2) { border-right: 0; }
       .figure:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
@@ -1223,9 +1467,9 @@
       <div class="field technical"><label for="module-type">Module type</label><select id="module-type"><option>domain</option><option>workflow</option><option>experience</option><option>connection</option><option>platform</option></select></div>
       <div class="impact"><b>This name change is safe.</b>It does not change the 4 use cases, 6 operations, or dependencies. The tool will apply the change to each new design draft.</div>
       <div class="divider-label">Other actions</div>
-      <button class="btn btn-quiet" type="button" style="width:100%;justify-content:flex-start">Split the module by rules…</button>
-      <button class="btn btn-quiet" type="button" style="width:100%;justify-content:flex-start">Merge with Workspace Snapshots…</button>
-      <button class="btn btn-quiet" type="button" style="width:100%;justify-content:flex-start">Move operation…</button>
+      <button class="btn btn-quiet" id="drawer-split" type="button" style="width:100%;justify-content:flex-start">Preview a split by rules…</button>
+      <button class="btn btn-quiet" id="drawer-merge" type="button" style="width:100%;justify-content:flex-start">Preview a merge…</button>
+      <button class="btn btn-quiet" id="drawer-move" type="button" style="width:100%;justify-content:flex-start">Preview an operation move…</button>
       <div class="drawer-actions"><button class="btn" type="button" id="drawer-cancel">Cancel</button><button class="btn btn-primary" type="button" id="drawer-apply">Apply change</button></div>
     </div>
   </aside>
@@ -1244,9 +1488,11 @@
       mode: 'guided',
       questionAnswered: false,
       option: 'cohesive',
+      diagramMode: 'logical',
       activeTrace: '',
-      selectedModule: '',
-      renamedModule: 'Evidence Graph'
+      selectedModule: 'evidence-graph',
+      moduleNames: {},
+      drawerAction: 'edit'
     };
 
     const data = {
@@ -1429,24 +1675,356 @@
       ]
     };
 
-    function moduleButton(item) {
+    const moduleDetails = {
+      'audit-experience': {
+        group: 'User interface',
+        deployable: 'Desktop application',
+        purpose: 'Show readiness, findings, approvals, and package status in one workspace.',
+        reason: 'Audit work has different navigation and density from detailed lifecycle investigation.',
+        operations: ['View readiness', 'Open finding', 'Record finding decision', 'Request audit package'],
+        ports: ['AssuranceQueryPort', 'FindingCommandPort', 'PackageCommandPort'],
+        dependsOn: ['assurance-workflow', 'package-assembly'],
+        usedBy: [],
+        stories: ['UC-01', 'UC-04', 'UC-06']
+      },
+      'lifecycle-explorer': {
+        group: 'User interface',
+        deployable: 'Desktop application',
+        purpose: 'Show evidence and trace links for each lifecycle phase.',
+        reason: 'Detailed trace investigation needs a phase view, chain view, source details, and gap navigation.',
+        operations: ['Browse lifecycle phase', 'Follow trace', 'Open source evidence', 'Locate first gap'],
+        ports: ['EvidenceQueryPort', 'TraceQueryPort', 'SnapshotQueryPort'],
+        dependsOn: ['evidence-graph', 'workspace-snapshots'],
+        usedBy: [],
+        stories: ['UC-02', 'UC-03']
+      },
+      'ingestion-publication': {
+        group: 'Workflow',
+        deployable: 'Desktop application',
+        purpose: 'Read every selected source, validate the result, and publish a complete snapshot.',
+        reason: 'Import, validation, retry, and last-valid recovery form one transaction across source types.',
+        operations: ['Start refresh', 'Claim source', 'Validate candidate', 'Publish snapshot', 'Keep last valid snapshot'],
+        ports: ['EvidenceSourcePort', 'RevisionSourcePort', 'JobStorePort', 'SnapshotStorePort'],
+        dependsOn: ['workspace-snapshots', 'job-store', 'filesystem-adapter', 'git-adapter', 'matlab-adapter', 'spreadsheet-adapter', 'c-source-adapter', 'coverage-adapter', 'review-adapter', 'objective-adapter'],
+        usedBy: ['audit-experience'],
+        stories: ['UC-05']
+      },
+      'assurance-workflow': {
+        group: 'Workflow',
+        deployable: 'Desktop application',
+        purpose: 'Control finding ownership, independent review, and the final decision.',
+        reason: 'Reviewer independence and permissions must stay separate from evidence query rules.',
+        operations: ['Create finding', 'Assign owner', 'Submit review', 'Check independence', 'Record decision'],
+        ports: ['EvidenceQueryPort', 'ReviewEvidenceSourcePort', 'FindingStorePort'],
+        dependsOn: ['evidence-graph', 'review-adapter', 'evidence-store'],
+        usedBy: ['audit-experience'],
+        stories: ['UC-01', 'UC-04']
+      },
+      'package-assembly': {
+        group: 'Workflow',
+        deployable: 'Desktop application',
+        purpose: 'Create the same audit package for the same approved snapshot and options.',
+        reason: 'Package ordering, manifests, checksums, and output files must be controlled as one operation.',
+        operations: ['Select scope', 'Build manifest', 'Order package entries', 'Create checksum', 'Write package'],
+        ports: ['SnapshotQueryPort', 'EvidenceStorePort', 'PackageStorePort'],
+        dependsOn: ['workspace-snapshots', 'evidence-store', 'job-store'],
+        usedBy: ['audit-experience'],
+        stories: ['UC-06']
+      },
+      'evidence-graph': {
+        group: 'Core data and rules',
+        deployable: 'Desktop application',
+        purpose: 'Store evidence identities and lifecycle links. Find missing or invalid trace links.',
+        reason: 'Evidence identity and trace rules change together and do not depend on a source technology.',
+        operations: ['Resolve identity', 'Add relationship', 'Follow trace', 'Find first gap', 'Report coverage', 'Compare revisions'],
+        ports: ['EvidenceStorePort'],
+        dependsOn: ['evidence-store'],
+        usedBy: ['lifecycle-explorer', 'assurance-workflow', 'ingestion-publication'],
+        stories: ['UC-01', 'UC-02', 'UC-03', 'UC-04']
+      },
+      'workspace-snapshots': {
+        group: 'Core data and rules',
+        deployable: 'Desktop application',
+        purpose: 'Control candidate, published, baseline, and last-valid evidence states.',
+        reason: 'Snapshot publication and baseline rules must not depend on import technology.',
+        operations: ['Create candidate', 'Validate source claims', 'Publish snapshot', 'Set baseline', 'Restore last valid'],
+        ports: ['EvidenceStorePort', 'SnapshotStorePort'],
+        dependsOn: ['evidence-store'],
+        usedBy: ['lifecycle-explorer', 'ingestion-publication', 'package-assembly'],
+        stories: ['UC-02', 'UC-03', 'UC-05', 'UC-06']
+      },
+      'evidence-store': {
+        group: 'Shared service',
+        deployable: 'Desktop application',
+        purpose: 'Store read-only evidence snapshots and review data.',
+        reason: 'All core modules need one transaction and retention policy for evidence records.',
+        operations: ['Read snapshot', 'Write candidate', 'Read relationship', 'Store review overlay'],
+        ports: ['SQLiteEvidenceStoreAdapter'],
+        dependsOn: [],
+        usedBy: ['evidence-graph', 'workspace-snapshots', 'assurance-workflow', 'package-assembly'],
+        stories: ['UC-01', 'UC-02', 'UC-04', 'UC-06']
+      },
+      'job-store': {
+        group: 'Shared service',
+        deployable: 'Desktop application',
+        purpose: 'Store job progress, package files, cancellation, and failure details.',
+        reason: 'Long imports and package exports need status that survives a screen change or restart.',
+        operations: ['Create job', 'Update progress', 'Cancel job', 'Store package', 'Read failure'],
+        ports: ['LocalJobStoreAdapter', 'LocalPackageStoreAdapter'],
+        dependsOn: [],
+        usedBy: ['ingestion-publication', 'package-assembly'],
+        stories: ['UC-05', 'UC-06']
+      },
+      'filesystem-adapter': {
+        group: 'External-system adapter',
+        deployable: 'Desktop application',
+        purpose: 'Find approved project files inside the configured project roots.',
+        reason: 'File discovery, path containment, file locks, and missing-file errors are specific to the file system.',
+        operations: ['List files', 'Read file', 'Read metadata', 'Watch configured roots'],
+        ports: ['ProjectFileSourcePort'],
+        dependsOn: [],
+        usedBy: ['ingestion-publication'],
+        stories: ['UC-05']
+      },
+      'git-adapter': {
+        group: 'External-system adapter',
+        deployable: 'Desktop application',
+        purpose: 'Read commit, tag, branch, and working-tree status.',
+        reason: 'Git has revision and dirty-state rules that do not apply to ordinary files.',
+        operations: ['Read HEAD', 'Read tags', 'Read branch', 'Read dirty state'],
+        ports: ['RevisionSourcePort'],
+        dependsOn: [],
+        usedBy: ['ingestion-publication'],
+        stories: ['UC-05']
+      },
+      'matlab-adapter': {
+        group: 'External-system adapter',
+        deployable: 'MATLAB worker process',
+        purpose: 'Read Simulink requirements, traces, designs, dictionaries, and test results.',
+        reason: 'MATLAB startup, licenses, proprietary readers, timeouts, and crashes need a separate process.',
+        operations: ['Start MATLAB', 'Read SLREQX', 'Read SLMX', 'Read SLX and SLDD', 'Read SLDATX', 'Stop MATLAB'],
+        ports: ['RequirementsSourcePort', 'TraceSourcePort', 'DesignSourcePort', 'TestEvidenceSourcePort'],
+        dependsOn: [],
+        usedBy: ['ingestion-publication'],
+        stories: ['UC-03', 'UC-05']
+      },
+      'spreadsheet-adapter': {
+        group: 'External-system adapter',
+        deployable: 'Desktop application',
+        purpose: 'Read test and review data from XLSX and CSV files.',
+        reason: 'Worksheets, cell types, formulas, and named ranges need format-specific validation.',
+        operations: ['List sheets', 'Read table', 'Resolve named range', 'Report invalid cell'],
+        ports: ['TestEvidenceSourcePort', 'ReviewEvidenceSourcePort'],
+        dependsOn: [],
+        usedBy: ['ingestion-publication'],
+        stories: ['UC-05']
+      },
+      'c-source-adapter': {
+        group: 'External-system adapter',
+        deployable: 'Desktop application',
+        purpose: 'Read C and header symbols, locations, and requirement links.',
+        reason: 'Preprocessing, symbols, declarations, and source locations need a C-aware reader.',
+        operations: ['Parse source', 'List symbols', 'Read source links', 'Report parse error'],
+        ports: ['SourceCodePort'],
+        dependsOn: [],
+        usedBy: ['ingestion-publication'],
+        stories: ['UC-03', 'UC-05']
+      },
+      'coverage-adapter': {
+        group: 'External-system adapter',
+        deployable: 'Desktop application',
+        purpose: 'Read statement, branch, and MC/DC coverage from supported reports.',
+        reason: 'Coverage formats and coverage-level rules are separate from test-result rules.',
+        operations: ['Read LCOV', 'Read XML', 'Read JSON', 'Normalize coverage level'],
+        ports: ['CoverageSourcePort'],
+        dependsOn: [],
+        usedBy: ['ingestion-publication'],
+        stories: ['UC-03', 'UC-05']
+      },
+      'review-adapter': {
+        group: 'External-system adapter',
+        deployable: 'Desktop application',
+        purpose: 'Read checklists, comments, approvals, reviewer identity, and findings.',
+        reason: 'Review status and independence use people and approval data that other sources do not contain.',
+        operations: ['Read checklist', 'Read approval', 'Read reviewer', 'Read finding'],
+        ports: ['ReviewEvidenceSourcePort'],
+        dependsOn: [],
+        usedBy: ['ingestion-publication', 'assurance-workflow'],
+        stories: ['UC-04', 'UC-05']
+      },
+      'objective-adapter': {
+        group: 'External-system adapter',
+        deployable: 'Desktop application',
+        purpose: 'Read the project-owned DO-178C objective profile and tailoring.',
+        reason: 'Objective applicability is project policy. It must not be hard-coded in the evidence graph.',
+        operations: ['Read objective profile', 'Read software level', 'Read tailoring', 'Validate objective ID'],
+        ports: ['ObjectiveProfilePort'],
+        dependsOn: [],
+        usedBy: ['ingestion-publication'],
+        stories: ['UC-05']
+      }
+    };
+
+    const allModules = Object.values(modules).flat();
+
+    function moduleItem(moduleId) {
+      return allModules.find(item => item[0] === moduleId);
+    }
+
+    function moduleName(moduleId) {
+      if (appState.moduleNames[moduleId]) return appState.moduleNames[moduleId];
+      return moduleItem(moduleId)?.[1] || moduleId;
+    }
+
+    function moduleState(moduleId) {
       const traced = appState.activeTrace ? data.traces[appState.activeTrace] || [] : [];
-      const inTrace = traced.includes(item[0]);
+      const inTrace = traced.includes(moduleId);
       const stateClass = appState.activeTrace ? (inTrace ? ' highlight' : ' dimmed') : '';
-      const selected = appState.selectedModule === item[0] ? ' selected' : '';
-      const shownName = item[0] === 'evidence-graph' ? appState.renamedModule : item[1];
-      return `<button class="module${stateClass}${selected}" type="button" data-module="${item[0]}" data-name="${shownName}"><b>${shownName}</b><small>${item[2]}</small><small class="module-id technical">${item[0]}</small></button>`;
+      const selected = appState.selectedModule === moduleId ? ' selected' : '';
+      return `${stateClass}${selected}`;
+    }
+
+    function moduleButton(item) {
+      const shownName = moduleName(item[0]);
+      return `<button class="module${moduleState(item[0])}" type="button" data-module="${item[0]}" data-name="${shownName}" aria-pressed="${appState.selectedModule === item[0]}"><b>${shownName}</b><small>${item[2]}</small><small class="module-id technical">${item[0]}</small></button>`;
+    }
+
+    function diagramNode(moduleId) {
+      const item = moduleItem(moduleId);
+      if (!item) return '';
+      return `<button class="diagram-node${moduleState(moduleId)}" type="button" data-module="${moduleId}" aria-pressed="${appState.selectedModule === moduleId}"><b>${moduleName(moduleId)}</b><small>${item[2]}</small></button>`;
+    }
+
+    function logicalArchitectureDiagram() {
+      return `
+        <div class="logical-diagram">
+          <div class="diagram-flow">
+            <div class="diagram-tier">
+              <div class="diagram-tier-head">User interfaces<span>Start a user task</span></div>
+              <div class="diagram-nodes">${modules.experiences.map(item => diagramNode(item[0])).join('')}</div>
+            </div>
+            <div class="diagram-arrow" aria-hidden="true">→</div>
+            <div class="diagram-tier">
+              <div class="diagram-tier-head">Workflows<span>Control complete tasks and recovery</span></div>
+              <div class="diagram-nodes">${modules.workflows.map(item => diagramNode(item[0])).join('')}</div>
+            </div>
+            <div class="diagram-arrow" aria-hidden="true">→</div>
+            <div class="diagram-tier">
+              <div class="diagram-tier-head">Core data and rules<span>Do not depend on source technology</span></div>
+              <div class="diagram-nodes">${modules.domains.map(item => diagramNode(item[0])).join('')}</div>
+            </div>
+            <div class="port-marker" aria-label="Port boundary">PORTS</div>
+            <div class="diagram-tier port-boundary">
+              <div class="diagram-tier-head">Source adapters<span>Connect each source type through a port</span></div>
+              <div class="diagram-nodes adapters">${modules.adapters.map(item => diagramNode(item[0])).join('')}</div>
+            </div>
+          </div>
+          <div class="service-rail">
+            <div class="service-rail-label">Shared services<span>Used through storage and job ports</span></div>
+            <div class="service-nodes">${modules.platform.map(item => diagramNode(item[0])).join('')}</div>
+          </div>
+          <div class="diagram-legend" aria-label="Diagram legend">
+            <span><i class="legend-swatch selected"></i>Selected module</span>
+            <span><i class="legend-swatch path"></i>Selected use-case path</span>
+            <span>Click any module to inspect its purpose, operations, ports, and dependencies.</span>
+          </div>
+        </div>`;
+    }
+
+    function deployable(title, subtitle, moduleIds, kind = '') {
+      return `
+        <section class="deployable ${kind}">
+          <div class="deployable-head"><div><b>${title}</b><span>${subtitle}</span></div><span class="tag">${moduleIds.length} modules</span></div>
+          <div class="deployable-nodes">${moduleIds.map(diagramNode).join('')}</div>
+        </section>`;
+    }
+
+    function deploymentArchitectureDiagram() {
+      const adaptersWithoutMatlab = modules.adapters.map(item => item[0]).filter(id => id !== 'matlab-adapter');
+      let units;
+      let summary;
+      if (appState.option === 'isolated') {
+        summary = 'The import workflow and source adapters run outside the desktop application.';
+        units = [
+          deployable('Desktop application', 'User interface, review, export, rules, and storage', ['audit-experience', 'lifecycle-explorer', 'assurance-workflow', 'package-assembly', 'evidence-graph', 'workspace-snapshots', 'evidence-store', 'job-store']),
+          deployable('Import service', 'Source refresh and validation', ['ingestion-publication', ...adaptersWithoutMatlab], 'service'),
+          deployable('MATLAB worker process', 'Proprietary file readers and license boundary', ['matlab-adapter'], 'worker')
+        ];
+      } else if (appState.option === 'distributed') {
+        summary = 'Six deployable units separate user tasks, evidence rules, import, export, and MATLAB.';
+        units = [
+          deployable('Audit service', 'Readiness and finding work', ['audit-experience', 'assurance-workflow'], 'service'),
+          deployable('Explorer service', 'Lifecycle evidence investigation', ['lifecycle-explorer'], 'service'),
+          deployable('Evidence service', 'Evidence and snapshot rules', ['evidence-graph', 'workspace-snapshots', 'evidence-store', 'job-store'], 'service'),
+          deployable('Import service', 'Source refresh and adapters', ['ingestion-publication', ...adaptersWithoutMatlab], 'service'),
+          deployable('Package service', 'Repeatable audit export', ['package-assembly'], 'service'),
+          deployable('MATLAB worker process', 'Proprietary file readers and license boundary', ['matlab-adapter'], 'worker')
+        ];
+      } else {
+        summary = 'The desktop application contains all modules except the MATLAB adapter.';
+        units = [
+          deployable('Desktop application', 'One release and one local evidence store', allModules.map(item => item[0]).filter(id => id !== 'matlab-adapter')),
+          deployable('MATLAB worker process', 'Proprietary file readers and license boundary', ['matlab-adapter'], 'worker')
+        ];
+      }
+      return `
+        <div class="deployment-diagram">
+          <div class="deployment-summary"><b>Deployment view:</b><span>${summary}</span></div>
+          <div class="deployment-grid" style="--deploy-columns:${appState.option === 'distributed' ? 3 : appState.option === 'isolated' ? 3 : 2}">${units.join('')}</div>
+          <div class="diagram-legend"><span><i class="legend-swatch selected"></i>Selected module</span><span><i class="legend-swatch path"></i>Selected use-case path</span><span>Dashed boxes are deployable boundaries.</span></div>
+        </div>`;
+    }
+
+    function architectureExplorer() {
+      return `
+        <section class="architecture-explorer" aria-label="Interactive architecture diagram">
+          <div class="explorer-head">
+            <div><h2>Architecture diagram</h2><p>Explore the logical layers or see where each module runs.</p></div>
+            <div class="explorer-actions" role="group" aria-label="Architecture diagram view">
+              <button class="view-button ${appState.diagramMode === 'logical' ? 'active' : ''}" type="button" data-diagram-mode="logical" aria-pressed="${appState.diagramMode === 'logical'}">Logical architecture</button>
+              <button class="view-button ${appState.diagramMode === 'deployment' ? 'active' : ''}" type="button" data-diagram-mode="deployment" aria-pressed="${appState.diagramMode === 'deployment'}">Deployment</button>
+            </div>
+          </div>
+          <div class="diagram-scroll">${appState.diagramMode === 'deployment' ? deploymentArchitectureDiagram() : logicalArchitectureDiagram()}</div>
+        </section>`;
+    }
+
+    function moduleLinks(moduleIds, emptyText = 'None') {
+      if (!moduleIds.length) return `<span class="empty-links">${emptyText}</span>`;
+      return `<div class="link-chips">${moduleIds.map(id => `<button class="link-chip" type="button" data-module="${id}">${moduleName(id)}</button>`).join('')}</div>`;
+    }
+
+    function storyLinks(storyIds) {
+      if (!storyIds.length) return '<span class="empty-links">No direct use case</span>';
+      return `<div class="link-chips">${storyIds.map(id => {
+        const story = data.stories.find(item => item[0] === id);
+        return `<button class="link-chip ${appState.activeTrace === id ? 'active' : ''}" type="button" data-trace="${id}">${id} · ${story?.[1] || id}</button>`;
+      }).join('')}</div>`;
+    }
+
+    function moduleInspector() {
+      const moduleId = appState.selectedModule || 'evidence-graph';
+      const detail = moduleDetails[moduleId];
+      if (!detail) return '<p>Select a module in the diagram or module list.</p>';
+      return `
+        <div class="inspector-intro"><span class="tag accent">${detail.group}</span><span class="tag">${detail.deployable}</span></div>
+        <div class="inspector-section"><b>Purpose</b><p>${detail.purpose}</p></div>
+        <div class="inspector-section"><b>Why it is separate</b><p>${detail.reason}</p></div>
+        <div class="inspector-section"><b>Operations</b><ul class="inspector-list">${detail.operations.map(operation => `<li>${operation}</li>`).join('')}</ul></div>
+        <div class="inspector-section"><b>Ports and adapters</b><ul class="inspector-list">${detail.ports.map(port => `<li class="mono">${port}</li>`).join('')}</ul></div>
+        <div class="inspector-section"><b>Depends on</b>${moduleLinks(detail.dependsOn)}</div>
+        <div class="inspector-section"><b>Used by</b>${moduleLinks(detail.usedBy, 'No module depends on this user interface.')}</div>
+        <div class="inspector-section"><b>Use cases</b>${storyLinks(detail.stories)}</div>
+        <div class="technical block mono" style="margin-top:10px;color:var(--muted);font-size:9.5px;line-height:1.6">module: ${moduleId}<br>group: ${detail.group.toLowerCase()}<br>deployable: ${detail.deployable.toLowerCase()}<br>decision lock: none</div>`;
     }
 
     function solutionView() {
-      const detailName = appState.selectedModule
-        ? Object.values(modules).flat().find(m => m[0] === appState.selectedModule)?.[1] || 'Selected module'
-        : 'Select a module';
+      const detailName = moduleName(appState.selectedModule || 'evidence-graph');
       return `
-        ${heading('Design · Draft', 'Review the system design', 'Start with the recommended design. Select a use case to see its complete path. Select a module to see its purpose or change it.')}
+        ${heading('Design · Draft', 'Review and explore the system design', 'Use the architecture diagram to inspect every module, port, adapter, dependency, deployable unit, and use-case path. Select any item to see its full design record.')}
         <div class="command ready">
           <div><h2>Recommendation: one application and a separate MATLAB process</h2><p>The design covers all 6 use cases. It keeps deployment simple. The MATLAB process contains proprietary file extraction and its failures.</p></div>
-          <div class="command-actions"><button class="btn" type="button" id="restructure-selected">Change a module</button><button class="btn btn-primary" type="button" id="approve-solution">Approve design and plan Build <span>→</span></button></div>
+          <div class="command-actions"><button class="btn" type="button" id="restructure-selected">Change selected module</button><button class="btn btn-primary" type="button" id="approve-solution">Approve design and plan Build <span>→</span></button></div>
         </div>
         <div class="solution-layout">
           <section class="panel">
@@ -1461,6 +2039,8 @@
               <span class="metric-mini"><b>17</b>modules</span>
               <span class="metric-mini"><b>100%</b>coverage</span>
             </div>
+            ${architectureExplorer()}
+            <div class="module-catalog-head"><div><h3>Module list</h3><p>The diagram and this list select the same design records.</p></div></div>
             <div class="map" aria-label="Proposed system design">
               <div class="lane"><div class="lane-label">User interfaces<span>Screens for separate tasks</span></div><div class="lane-modules">${modules.experiences.map(moduleButton).join('')}</div></div>
               <div class="lane"><div class="lane-label">Workflows<span>Tasks that use several modules</span></div><div class="lane-modules">${modules.workflows.map(moduleButton).join('')}</div></div>
@@ -1477,13 +2057,8 @@
               </div>
             </section>
             <section class="panel">
-              <div class="panel-head"><div><h2>${appState.selectedModule ? detailName : 'Why does each module exist?'}</h2><p>${appState.selectedModule ? 'Selected module' : 'Design summary'}</p></div>${appState.selectedModule ? '<button class="btn btn-small" id="edit-module" type="button">Edit</button>' : ''}</div>
-              <div class="panel-body">
-                ${appState.selectedModule ? `
-                  <ul class="why-list"><li><b>Supports 4 approved use cases</b>Readiness, trace review, finding review, and refresh.</li><li><b>Has separate rules</b>Evidence identity and trace rules change together.</li><li><b>Provides 6 operations</b>Query, follow, diagnose, and create evidence links.</li><li><b>Does not control</b>Source import, user interfaces, or snapshot publication.</li></ul>
-                  <div class="technical block mono" style="margin-top:10px;color:var(--muted);font-size:9.5px;line-height:1.6">type: domain<br>incoming dependencies: 3<br>outgoing ports: 1<br>decision lock: none</div>` : `
-                  <ul class="why-list"><li><b>User interfaces support separate tasks</b>Readiness work is separate from detailed lifecycle review.</li><li><b>Workflows control recovery</b>Refresh, finding review, and package export use several modules.</li><li><b>Core rules do not depend on source type</b>Trace and snapshot rules do not depend on MATLAB, Git, or file formats.</li><li><b>Each source type has an adapter</b>MATLAB, Git, files, spreadsheets, source code, and reviews have different failures.</li></ul>`}
-              </div>
+              <div class="panel-head"><div><h2>${detailName}</h2><p>Selected module · click linked modules to follow dependencies</p></div><button class="btn btn-small" id="edit-module" type="button">Edit</button></div>
+              <div class="panel-body">${moduleInspector()}</div>
             </section>
             <section class="panel">
               <div class="panel-head"><div><h2>Design checks</h2><p>The tool runs these checks after each change</p></div><span class="status-line"><span class="dot success"></span>Ready</span></div>
@@ -1572,6 +2147,15 @@
       document.querySelector('.workspace').scrollTo({top:0, behavior:'smooth'});
     }
 
+    function renderPreservingScroll() {
+      const workspace = document.querySelector('.workspace');
+      const workspaceTop = workspace?.scrollTop || 0;
+      const windowTop = window.scrollY;
+      render();
+      if (workspace) workspace.scrollTop = workspaceTop;
+      if (windowTop) window.scrollTo({top: windowTop});
+    }
+
     function showToast(message) {
       document.querySelector('#toast-text').textContent = message;
       toast.classList.add('show');
@@ -1579,11 +2163,24 @@
       showToast.timer = setTimeout(() => toast.classList.remove('show'), 2400);
     }
 
-    function openDrawer(moduleId = 'evidence-graph', name = appState.renamedModule) {
+    function openDrawer(moduleId = 'evidence-graph', name = moduleName(moduleId)) {
       appState.selectedModule = moduleId;
+      appState.drawerAction = 'edit';
+      const detail = moduleDetails[moduleId];
+      const groupType = {
+        'User interface': 'experience',
+        'Workflow': 'workflow',
+        'Core data and rules': 'domain',
+        'External-system adapter': 'connection',
+        'Shared service': 'platform'
+      };
       document.querySelector('#drawer-title').textContent = name;
       document.querySelector('#drawer-id').textContent = `mod.${moduleId}`;
       document.querySelector('#module-name').value = name;
+      document.querySelector('#module-kind').value = detail?.purpose || '';
+      document.querySelector('#module-type').value = groupType[detail?.group] || 'domain';
+      document.querySelector('.impact').innerHTML = `<b>This edit is local to ${name}.</b>The preview will show affected use cases, operations, ports, and dependencies before approval.`;
+      document.querySelector('#drawer-apply').textContent = 'Apply change';
       drawer.classList.add('open');
       scrim.classList.add('open');
       drawer.setAttribute('aria-hidden', 'false');
@@ -1632,25 +2229,28 @@
       });
       document.querySelectorAll('[data-option]').forEach(tab => tab.addEventListener('click', () => {
         appState.option = tab.dataset.option;
-        render();
+        renderPreservingScroll();
+      }));
+      document.querySelectorAll('[data-diagram-mode]').forEach(button => button.addEventListener('click', () => {
+        appState.diagramMode = button.dataset.diagramMode;
+        renderPreservingScroll();
       }));
       document.querySelectorAll('[data-trace]').forEach(row => row.addEventListener('click', () => {
         appState.activeTrace = row.dataset.trace;
-        render();
+        renderPreservingScroll();
       }));
       document.querySelector('#clear-trace')?.addEventListener('click', () => {
         appState.activeTrace = '';
-        render();
+        renderPreservingScroll();
       });
       document.querySelectorAll('[data-module]').forEach(module => module.addEventListener('click', () => {
         appState.selectedModule = module.dataset.module;
-        render();
+        renderPreservingScroll();
       }));
       document.querySelector('#edit-module')?.addEventListener('click', () => {
-        const item = Object.values(modules).flat().find(m => m[0] === appState.selectedModule);
-        openDrawer(appState.selectedModule, item?.[1] || 'Selected module');
+        openDrawer(appState.selectedModule, moduleName(appState.selectedModule));
       });
-      document.querySelector('#restructure-selected')?.addEventListener('click', () => openDrawer(appState.selectedModule || 'evidence-graph', appState.renamedModule));
+      document.querySelector('#restructure-selected')?.addEventListener('click', () => openDrawer(appState.selectedModule || 'evidence-graph', moduleName(appState.selectedModule || 'evidence-graph')));
       document.querySelector('#approve-solution')?.addEventListener('click', () => {
         showToast('Architecture approved. Build can now use the design.');
         setTimeout(() => go('approval'), 420);
@@ -1672,8 +2272,70 @@
     document.querySelector('#drawer-close').addEventListener('click', closeDrawer);
     document.querySelector('#drawer-cancel').addEventListener('click', closeDrawer);
     scrim.addEventListener('click', closeDrawer);
+    function setDrawerPreview(action, title, description) {
+      appState.drawerAction = action;
+      document.querySelector('.impact').innerHTML = `<b>${title}</b>${description}`;
+      document.querySelector('#drawer-apply').textContent = 'Save preview decision';
+    }
+    document.querySelector('#drawer-split').addEventListener('click', () => {
+      const detail = moduleDetails[appState.selectedModule];
+      setDrawerPreview(
+        'split',
+        'Split preview: 2 modules',
+        `${moduleName(appState.selectedModule)} would split into an identity module and a rule module. ${detail?.stories.length || 0} use-case paths and ${detail?.usedBy.length || 0} dependent modules would be checked again.`
+      );
+    });
+    document.querySelector('#drawer-merge').addEventListener('click', () => {
+      setDrawerPreview(
+        'merge',
+        'Merge preview: 1 larger module',
+        `${moduleName(appState.selectedModule)} and Workspace Snapshots would share one owner and release cycle. The preview adds 5 operations and removes 1 dependency boundary.`
+      );
+    });
+    document.querySelector('#drawer-move').addEventListener('click', () => {
+      const operation = moduleDetails[appState.selectedModule]?.operations[0] || 'Selected operation';
+      setDrawerPreview(
+        'move',
+        `Move preview: ${operation}`,
+        'Choose the destination module in a later step. The tool will check use-case paths, ports, and dependency direction before it applies the move.'
+      );
+    });
     document.querySelector('#drawer-apply').addEventListener('click', () => {
-      appState.renamedModule = document.querySelector('#module-name').value.trim() || 'Evidence Graph';
+      const moduleId = appState.selectedModule;
+      const detail = moduleDetails[moduleId];
+      if (appState.drawerAction !== 'edit') {
+        const actionName = appState.drawerAction === 'split' ? 'Split' : appState.drawerAction === 'merge' ? 'Merge' : 'Operation move';
+        closeDrawer();
+        showToast(`${actionName} preview saved as a design decision.`);
+        return;
+      }
+      const newName = document.querySelector('#module-name').value.trim() || moduleName(moduleId);
+      const newPurpose = document.querySelector('#module-kind').value.trim() || detail.purpose;
+      const newType = document.querySelector('#module-type').value;
+      const targetByType = {
+        experience: 'experiences',
+        workflow: 'workflows',
+        domain: 'domains',
+        connection: 'adapters',
+        platform: 'platform'
+      };
+      const groupByType = {
+        experience: 'User interface',
+        workflow: 'Workflow',
+        domain: 'Core data and rules',
+        connection: 'External-system adapter',
+        platform: 'Shared service'
+      };
+      const currentGroup = Object.keys(modules).find(group => modules[group].some(item => item[0] === moduleId));
+      const targetGroup = targetByType[newType];
+      if (currentGroup && targetGroup && currentGroup !== targetGroup) {
+        const index = modules[currentGroup].findIndex(item => item[0] === moduleId);
+        const [item] = modules[currentGroup].splice(index, 1);
+        modules[targetGroup].push(item);
+      }
+      appState.moduleNames[moduleId] = newName;
+      detail.purpose = newPurpose;
+      detail.group = groupByType[newType] || detail.group;
       closeDrawer();
       render();
       showToast('Design decision saved. The tool will apply it to each new draft.');
