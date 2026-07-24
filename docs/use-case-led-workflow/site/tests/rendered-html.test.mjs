@@ -53,6 +53,10 @@ test("uses direct task labels in the briefing and mockup", async () => {
   assert.match(mockup, /function drawArchitectureConnections\(/);
   assert.match(mockup, /canvas\.dataset\.nodeCollisionCount/);
   assert.match(mockup, /function moduleInspector\(\)/);
+  assert.match(mockup, /id="node-detail-modal"/);
+  assert.match(mockup, /role="dialog"/);
+  assert.match(mockup, /function openNodeDetailModal\(/);
+  assert.match(mockup, /classList\.contains\('diagram-node'\)/);
   assert.match(proposal, /^# Plan from use cases/m);
   assert.match(proposal, /## 10\. DO-178C Audit Hub example/);
   assert.match(layout, /const title = "Plan from use cases"/);

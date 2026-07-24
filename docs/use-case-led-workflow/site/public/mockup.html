@@ -1346,6 +1346,90 @@
     }
     .impact b { display: block; margin-bottom: 4px; color: var(--secondary); }
     .drawer-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+    .node-modal-scrim {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      visibility: hidden;
+      opacity: 0;
+      background: rgba(2, 6, 23, .58);
+      backdrop-filter: blur(2px);
+      transition: 150ms ease;
+    }
+    .node-modal-scrim.open { visibility: visible; opacity: 1; }
+    .node-detail-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      z-index: 81;
+      visibility: hidden;
+      width: min(410px, calc(100vw - 28px));
+      max-height: min(590px, calc(100vh - 36px));
+      overflow: auto;
+      transform: translate(-50%, -48%) scale(.98);
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      opacity: 0;
+      background: var(--overlay);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .5);
+      transition: 150ms ease;
+    }
+    .node-detail-modal.open {
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    .node-modal-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 16px 13px;
+      border-bottom: 1px solid var(--border);
+    }
+    .node-modal-heading { min-width: 0; }
+    .node-modal-heading h2 {
+      margin: 8px 0 2px;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+    .node-modal-heading .technical { margin: 0; color: var(--muted); font-size: 9.5px; }
+    .node-modal-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .node-modal-head .icon-button { flex: 0 0 auto; margin-left: auto; }
+    .node-modal-body { display: grid; gap: 12px; padding: 14px 16px 5px; }
+    .node-modal-purpose { margin: 0; color: var(--secondary); font-size: 11.5px; line-height: 1.55; }
+    .node-modal-facts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .node-modal-fact {
+      min-width: 0;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--inset);
+    }
+    .node-modal-fact b, .node-modal-section b {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .node-modal-fact span, .node-modal-section p {
+      color: var(--secondary);
+      font-size: 10.5px;
+      line-height: 1.45;
+    }
+    .node-modal-section p { margin: 0; }
+    .node-modal-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .node-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 14px 16px 16px;
+    }
     .toast {
       position: fixed;
       right: 22px;
@@ -1432,6 +1516,14 @@
       .figure-strip { grid-template-columns: repeat(2, 1fr); }
       .figure:nth-child(2) { border-right: 0; }
       .figure:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+      .node-detail-modal {
+        top: auto;
+        bottom: 12px;
+        max-height: calc(100vh - 76px);
+        transform: translate(-50%, 14px);
+      }
+      .node-detail-modal.open { transform: translate(-50%, 0); }
+      .node-modal-facts { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
@@ -1528,6 +1620,35 @@
       <div class="drawer-actions"><button class="btn" type="button" id="drawer-cancel">Cancel</button><button class="btn btn-primary" type="button" id="drawer-apply">Apply change</button></div>
     </div>
   </aside>
+  <div class="node-modal-scrim" id="node-modal-scrim"></div>
+  <section class="node-detail-modal" id="node-detail-modal" role="dialog" aria-modal="true" aria-labelledby="node-modal-title" aria-hidden="true">
+    <div class="node-modal-head">
+      <div class="node-modal-heading">
+        <div class="node-modal-tags">
+          <span class="tag accent" id="node-modal-group"></span>
+          <span class="tag" id="node-modal-deployable"></span>
+        </div>
+        <h2 id="node-modal-title"></h2>
+        <p class="mono technical" id="node-modal-id"></p>
+      </div>
+      <button class="icon-button" id="node-modal-close" type="button" aria-label="Close component details">×</button>
+    </div>
+    <div class="node-modal-body">
+      <p class="node-modal-purpose" id="node-modal-purpose"></p>
+      <div class="node-modal-facts">
+        <div class="node-modal-fact"><b>Main operations</b><span id="node-modal-operations"></span></div>
+        <div class="node-modal-fact"><b>Direct dependencies</b><span id="node-modal-dependencies"></span></div>
+      </div>
+      <div class="node-modal-section">
+        <b>Ports</b>
+        <div class="node-modal-chips" id="node-modal-ports"></div>
+      </div>
+    </div>
+    <div class="node-modal-actions">
+      <button class="btn" id="node-modal-dismiss" type="button">Close</button>
+      <button class="btn btn-primary" id="node-modal-edit" type="button">Edit component</button>
+    </div>
+  </section>
   <div class="toast" id="toast" role="status"><span class="state-icon">✓</span><span id="toast-text">Design decision saved.</span></div>
 
   <script>
@@ -1536,7 +1657,11 @@
     const crumbTitle = document.querySelector('#crumb-title');
     const drawer = document.querySelector('#drawer');
     const scrim = document.querySelector('#scrim');
+    const nodeModalScrim = document.querySelector('#node-modal-scrim');
+    const nodeDetailModal = document.querySelector('#node-detail-modal');
+    const nodeModalClose = document.querySelector('#node-modal-close');
     const toast = document.querySelector('#toast');
+    let nodeModalModuleId = '';
     const appState = {
       view: location.hash.replace('#', '') || 'review',
       tech: false,
@@ -2554,6 +2679,51 @@
       drawer.setAttribute('aria-hidden', 'true');
     }
 
+    function setNodeModalChips(items) {
+      const container = document.querySelector('#node-modal-ports');
+      container.replaceChildren(...items.map(item => {
+        const chip = document.createElement('span');
+        chip.className = 'tag';
+        chip.textContent = item;
+        return chip;
+      }));
+    }
+
+    function compactNodeList(items, limit = 3) {
+      const visibleItems = items.slice(0, limit);
+      const remaining = items.length - visibleItems.length;
+      return `${visibleItems.join(' · ')}${remaining ? ` · +${remaining} more` : ''}`;
+    }
+
+    function openNodeDetailModal(moduleId) {
+      const detail = moduleDetails[moduleId];
+      if (!detail) return;
+      nodeModalModuleId = moduleId;
+      document.querySelector('#node-modal-group').textContent = detail.group;
+      document.querySelector('#node-modal-deployable').textContent = detail.deployable;
+      document.querySelector('#node-modal-title').textContent = moduleName(moduleId);
+      document.querySelector('#node-modal-id').textContent = `mod.${moduleId}`;
+      document.querySelector('#node-modal-purpose').textContent = detail.purpose;
+      document.querySelector('#node-modal-operations').textContent = compactNodeList(detail.operations);
+      document.querySelector('#node-modal-dependencies').textContent = detail.dependsOn.length
+        ? compactNodeList(detail.dependsOn.map(moduleName))
+        : 'None';
+      setNodeModalChips(detail.ports.slice(0, 4));
+      nodeModalScrim.classList.add('open');
+      nodeDetailModal.classList.add('open');
+      nodeDetailModal.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => nodeModalClose.focus({preventScroll:true}));
+    }
+
+    function closeNodeDetailModal({restoreFocus = true} = {}) {
+      nodeModalScrim.classList.remove('open');
+      nodeDetailModal.classList.remove('open');
+      nodeDetailModal.setAttribute('aria-hidden', 'true');
+      if (restoreFocus && nodeModalModuleId) {
+        document.querySelector(`.diagram-node[data-module="${nodeModalModuleId}"]`)?.focus({preventScroll:true});
+      }
+    }
+
     function bindPage() {
       document.querySelector('#tech-toggle')?.addEventListener('click', () => {
         appState.tech = !appState.tech;
@@ -2609,8 +2779,11 @@
         renderPreservingScroll();
       });
       document.querySelectorAll('[data-module]').forEach(module => module.addEventListener('click', () => {
-        appState.selectedModule = module.dataset.module;
+        const moduleId = module.dataset.module;
+        const showDetails = module.classList.contains('diagram-node');
+        appState.selectedModule = moduleId;
         renderPreservingScroll();
+        if (showDetails) requestAnimationFrame(() => openNodeDetailModal(moduleId));
       }));
       document.querySelectorAll('.canvas-node').forEach(module => {
         module.addEventListener('mouseenter', () => drawArchitectureConnections(module.dataset.module));
@@ -2643,6 +2816,14 @@
     document.querySelector('#drawer-close').addEventListener('click', closeDrawer);
     document.querySelector('#drawer-cancel').addEventListener('click', closeDrawer);
     scrim.addEventListener('click', closeDrawer);
+    nodeModalClose.addEventListener('click', () => closeNodeDetailModal());
+    document.querySelector('#node-modal-dismiss').addEventListener('click', () => closeNodeDetailModal());
+    nodeModalScrim.addEventListener('click', () => closeNodeDetailModal());
+    document.querySelector('#node-modal-edit').addEventListener('click', () => {
+      const moduleId = nodeModalModuleId;
+      closeNodeDetailModal({restoreFocus:false});
+      openDrawer(moduleId, moduleName(moduleId));
+    });
     function setDrawerPreview(action, title, description) {
       appState.drawerAction = action;
       document.querySelector('.impact').innerHTML = `<b>${title}</b>${description}`;
@@ -2712,7 +2893,11 @@
       showToast('Design decision saved. The tool will apply it to each new draft.');
     });
     document.addEventListener('keydown', event => {
-      if (event.key === 'Escape') closeDrawer();
+      if (event.key === 'Escape' && nodeDetailModal.classList.contains('open')) {
+        closeNodeDetailModal();
+      } else if (event.key === 'Escape') {
+        closeDrawer();
+      }
     });
     window.addEventListener('hashchange', () => {
       const next = location.hash.replace('#', '');
