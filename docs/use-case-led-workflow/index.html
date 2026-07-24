@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Use-case-led Capabilities — visual proposal</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #07111f;
+      --panel: #0f172a;
+      --raised: #111827;
+      --inset: #172033;
+      --text: #f8fafc;
+      --secondary: #cbd5e1;
+      --muted: #94a3b8;
+      --border: rgba(148, 163, 184, .18);
+      --strong: rgba(203, 213, 225, .34);
+      --accent: #2f5bff;
+      --accent-2: #8fa5ff;
+      --accent-tint: rgba(47, 91, 255, .14);
+      --success: #34d399;
+      --success-tint: rgba(52, 211, 153, .10);
+      --warning: #fbbf24;
+      --shadow: 0 22px 70px rgba(0, 0, 0, .36);
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--canvas); }
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(1100px 650px at 15% -10%, rgba(47, 91, 255, .13), transparent 62%),
+        radial-gradient(900px 520px at 95% 0%, rgba(143, 165, 255, .05), transparent 60%),
+        var(--canvas);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    button { font: inherit; }
+    :focus-visible { outline: 2px solid #5478ff; outline-offset: 3px; }
+    .mono { font-family: var(--mono); }
+    .wrap { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--border);
+      background: rgba(7, 17, 31, .88);
+      backdrop-filter: blur(15px);
+    }
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      min-height: 56px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .mark {
+      position: relative;
+      width: 20px;
+      height: 20px;
+    }
+    .mark::before, .mark::after {
+      content: "";
+      position: absolute;
+      border: 2px solid var(--accent-2);
+      border-radius: 3px;
+    }
+    .mark::before { inset: 1px 5px 5px 1px; }
+    .mark::after { inset: 5px 1px 1px 5px; border-color: var(--secondary); }
+    .nav {
+      display: flex;
+      gap: 18px;
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .nav a { text-decoration: none; }
+    .nav a:hover { color: var(--text); }
+    .top-actions { display: flex; gap: 8px; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 0 13px;
+      border: 1px solid var(--strong);
+      border-radius: 5px;
+      color: var(--text);
+      background: var(--raised);
+      font-size: 12px;
+      font-weight: 650;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .button:hover { border-color: rgba(203, 213, 225, .54); background: #162034; }
+    .button.primary { border-color: var(--accent); background: var(--accent); }
+    .button.primary:hover { background: #5478ff; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.22fr) minmax(390px, .78fr);
+      gap: 54px;
+      align-items: center;
+      min-height: 650px;
+      padding: 92px 0 70px;
+    }
+    .eyebrow {
+      margin: 0 0 14px;
+      color: var(--accent-2);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      max-width: 760px;
+      margin-bottom: 20px;
+      font-size: clamp(42px, 5.6vw, 72px);
+      line-height: .99;
+      letter-spacing: -.052em;
+    }
+    h1 span { color: var(--accent-2); }
+    .hero-copy > p:not(.eyebrow) {
+      max-width: 680px;
+      margin-bottom: 26px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.6;
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .decision-note {
+      display: flex;
+      gap: 10px;
+      margin-top: 26px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .decision-note .dot { margin-top: 6px; }
+    .signal-panel {
+      border: 1px solid rgba(84, 120, 255, .32);
+      border-radius: 10px;
+      background:
+        linear-gradient(145deg, rgba(47, 91, 255, .11), transparent 45%),
+        rgba(15, 23, 42, .9);
+      box-shadow: var(--shadow), inset 0 1px rgba(255, 255, 255, .03);
+    }
+    .signal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 48px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .traffic { display: flex; gap: 5px; }
+    .traffic i { width: 7px; height: 7px; border-radius: 50%; background: var(--strong); }
+    .signal-body { padding: 18px; }
+    .signal-prompt {
+      padding: 15px;
+      border: 1px solid var(--strong);
+      border-radius: 6px;
+      color: var(--secondary);
+      background: var(--inset);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .analysis-steps { margin-top: 17px; }
+    .analysis-step {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 44px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+    .analysis-step:last-child { border-bottom: 0; }
+    .check {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      border: 1px solid rgba(52, 211, 153, .3);
+      border-radius: 50%;
+      color: var(--success);
+      background: var(--success-tint);
+      font-size: 9px;
+      font-weight: 800;
+    }
+    .analysis-step b { color: var(--secondary); font-weight: 600; }
+    .analysis-step code { color: var(--accent-2); font: 9px var(--mono); }
+    .signal-result {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid rgba(52, 211, 153, .26);
+      border-radius: 6px;
+      background: var(--success-tint);
+    }
+    .signal-result b, .signal-result small { display: block; }
+    .signal-result b { font-size: 12px; }
+    .signal-result small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .signal-result strong { color: var(--success); font: 16px var(--mono); }
+    .section {
+      padding: 86px 0;
+      border-top: 1px solid var(--border);
+    }
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, .78fr) minmax(0, 1.22fr);
+      gap: 50px;
+      margin-bottom: 44px;
+    }
+    h2 {
+      margin-bottom: 12px;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.04;
+      letter-spacing: -.038em;
+    }
+    .section-head > p {
+      margin: 26px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+    .decision {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .decision-cell { min-height: 184px; padding: 22px; border-right: 1px solid var(--border); }
+    .decision-cell:last-child { border-right: 0; }
+    .decision-cell .num { color: var(--accent-2); font: 11px var(--mono); }
+    .decision-cell h3 { margin: 22px 0 8px; font-size: 17px; }
+    .decision-cell p { margin: 0; color: var(--muted); font-size: 13px; }
+    .journey {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      margin-top: 28px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .journey-item {
+      position: relative;
+      min-height: 160px;
+      padding: 20px;
+      border-right: 1px solid var(--border);
+      background: rgba(15, 23, 42, .46);
+    }
+    .journey-item:last-child { border-right: 0; }
+    .journey-item.active {
+      background: linear-gradient(180deg, var(--accent-tint), transparent), rgba(15, 23, 42, .8);
+      box-shadow: inset 0 3px var(--accent);
+    }
+    .journey-number { color: var(--muted); font: 10px var(--mono); }
+    .journey-item h3 { margin: 27px 0 5px; font-size: 15px; }
+    .journey-item p { color: var(--muted); font-size: 11.5px; }
+    .journey-item strong { display: block; margin-top: 14px; color: var(--secondary); font-size: 10px; }
+    .work-split {
+      display: grid;
+      grid-template-columns: 1fr 84px 1fr;
+      align-items: stretch;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      overflow: hidden;
+      background: rgba(15, 23, 42, .52);
+    }
+    .work-column { padding: 26px; }
+    .work-column h3 { margin-bottom: 7px; font-size: 20px; }
+    .work-column > p { margin-bottom: 24px; color: var(--muted); font-size: 13px; }
+    .work-row {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 10px;
+      min-height: 55px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .work-row:last-child { border-bottom: 0; }
+    .work-row b, .work-row span { display: block; }
+    .work-row b { font-size: 12px; }
+    .work-row span { margin-top: 2px; color: var(--muted); font-size: 10.5px; }
+    .work-symbol {
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border: 1px solid var(--strong);
+      border-radius: 4px;
+      color: var(--accent-2);
+      font: 10px var(--mono);
+    }
+    .work-vs {
+      display: grid;
+      place-items: center;
+      border-right: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--inset);
+      font: 10px var(--mono);
+      writing-mode: vertical-rl;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      align-items: center;
+      gap: 0;
+      margin: 42px 0 0;
+    }
+    .pipeline-node {
+      position: relative;
+      min-height: 80px;
+      padding: 14px 10px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      text-align: center;
+    }
+    .pipeline-node:first-child { border-radius: 7px 0 0 7px; }
+    .pipeline-node:last-child { border-radius: 0 7px 7px 0; }
+    .pipeline-node + .pipeline-node { border-left: 0; }
+    .pipeline-node::after {
+      content: "→";
+      position: absolute;
+      right: -8px;
+      top: 30px;
+      z-index: 2;
+      color: var(--accent-2);
+      font-size: 13px;
+    }
+    .pipeline-node:last-child::after { display: none; }
+    .pipeline-node b { display: block; font-size: 11px; }
+    .pipeline-node span { display: block; margin-top: 6px; color: var(--muted); font-size: 9.5px; line-height: 1.35; }
+    .pipeline-node.accent { border-color: rgba(84, 120, 255, .38); background: var(--accent-tint); }
+    .map {
+      display: grid;
+      gap: 1px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      overflow: hidden;
+      background: var(--border);
+    }
+    .map-row {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      min-height: 86px;
+      background: var(--panel);
+    }
+    .map-label {
+      padding: 17px;
+      border-right: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .map-label span { display: block; margin-top: 5px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+    .map-items {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 13px;
+    }
+    .module {
+      min-width: 150px;
+      padding: 10px 11px;
+      border: 1px solid var(--strong);
+      border-radius: 5px;
+      background: var(--raised);
+    }
+    .module b, .module small { display: block; }
+    .module b { font-size: 11px; }
+    .module small { margin-top: 2px; color: var(--muted); font-size: 9.5px; }
+    .module.connection { min-width: 125px; }
+    .derivation-rules {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      margin-top: 20px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .rule { padding: 17px; border-right: 1px solid var(--border); }
+    .rule:last-child { border-right: 0; }
+    .rule b { display: block; margin-bottom: 5px; color: var(--secondary); font-size: 11.5px; }
+    .rule p { margin: 0; color: var(--muted); font-size: 10.5px; }
+    .phases { border-top: 1px solid var(--border); }
+    .phase {
+      display: grid;
+      grid-template-columns: 70px 220px 1fr 150px;
+      gap: 20px;
+      align-items: start;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .phase-num { color: var(--accent-2); font: 12px var(--mono); }
+    .phase h3 { margin: 0; font-size: 14px; }
+    .phase p { margin: 0; color: var(--muted); font-size: 12px; }
+    .phase-outcome { color: var(--secondary); font-size: 10.5px; text-align: right; }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .metric { min-height: 150px; padding: 20px; border-right: 1px solid var(--border); }
+    .metric:last-child { border-right: 0; }
+    .metric strong { display: block; color: var(--text); font: 34px var(--mono); letter-spacing: -.04em; }
+    .metric b { display: block; margin-top: 17px; font-size: 11.5px; }
+    .metric p { margin: 4px 0 0; color: var(--muted); font-size: 10.5px; }
+    .guardrails {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0 28px;
+      margin-top: 30px;
+      border-top: 1px solid var(--border);
+    }
+    .guardrail {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      min-height: 70px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .guardrail b { display: block; font-size: 11.5px; }
+    .guardrail span { display: block; margin-top: 3px; color: var(--muted); font-size: 10.5px; }
+    .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+    .cta {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 30px;
+      align-items: center;
+      margin: 70px 0 90px;
+      padding: 30px;
+      border: 1px solid rgba(84, 120, 255, .32);
+      border-radius: 9px;
+      background: linear-gradient(90deg, var(--accent-tint), transparent), var(--panel);
+      box-shadow: inset 3px 0 var(--accent);
+    }
+    .cta h2 { margin: 0 0 8px; font-size: 27px; }
+    .cta p { margin: 0; color: var(--muted); }
+    .cta-actions { display: flex; gap: 9px; }
+    footer {
+      padding: 24px 0 40px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .footer-inner { display: flex; justify-content: space-between; gap: 20px; }
+    @media (max-width: 980px) {
+      .nav { display: none; }
+      .hero { grid-template-columns: 1fr; }
+      .signal-panel { max-width: 620px; }
+      .section-head { grid-template-columns: 1fr; gap: 0; }
+      .section-head > p { margin-top: 0; }
+      .decision { grid-template-columns: 1fr; }
+      .decision-cell { min-height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+      .decision-cell:last-child { border-bottom: 0; }
+      .journey { grid-template-columns: 1fr 1fr; }
+      .journey-item { border-bottom: 1px solid var(--border); }
+      .journey-item:last-child { grid-column: 1 / -1; }
+      .work-split { grid-template-columns: 1fr; }
+      .work-vs { min-height: 42px; border: 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); writing-mode: horizontal-tb; }
+      .pipeline { grid-template-columns: 1fr; }
+      .pipeline-node { border: 1px solid var(--border) !important; border-radius: 0 !important; }
+      .pipeline-node::after { content: "↓"; top: auto; right: 50%; bottom: -12px; }
+      .derivation-rules, .metrics { grid-template-columns: repeat(2, 1fr); }
+      .rule:nth-child(2), .metric:nth-child(2) { border-right: 0; }
+      .rule:nth-child(-n+2), .metric:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+      .phase { grid-template-columns: 50px 170px 1fr; }
+      .phase-outcome { grid-column: 2 / -1; text-align: left; }
+    }
+    @media (max-width: 680px) {
+      .wrap { width: min(100% - 28px, 1180px); }
+      .top-actions .button:first-child { display: none; }
+      .hero { min-height: auto; padding-top: 70px; }
+      h1 { font-size: 43px; }
+      .section { padding: 64px 0; }
+      .journey, .derivation-rules, .metrics { grid-template-columns: 1fr; }
+      .journey-item:last-child { grid-column: auto; }
+      .journey-item, .rule, .metric { border-right: 0; border-bottom: 1px solid var(--border); }
+      .map-row { grid-template-columns: 1fr; }
+      .map-label { border-right: 0; border-bottom: 1px solid var(--border); }
+      .module { width: 100%; }
+      .phase { grid-template-columns: 42px 1fr; }
+      .phase p, .phase-outcome { grid-column: 2; }
+      .guardrails { grid-template-columns: 1fr; }
+      .cta { grid-template-columns: 1fr; }
+      .cta-actions { flex-wrap: wrap; }
+      .footer-inner { display: grid; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <div class="brand"><span class="mark" aria-hidden="true"></span><span>Engineering UI Kit · Product proposal</span></div>
+      <nav class="nav" aria-label="Proposal sections">
+        <a href="#decision">Decision</a>
+        <a href="#experience">Experience</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#delivery">Delivery</a>
+        <a href="#success">Success</a>
+      </nav>
+      <div class="top-actions">
+        <a class="button" href="./PROPOSAL.md">Read full plan</a>
+        <a class="button primary" href="./mockup.html">Open prototype →</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="wrap hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Use-case-led Capabilities</p>
+        <h1>Make users judge <span>meaning</span>, not manufacture structure.</h1>
+        <p>Begin with one outcome. The tool discovers the important stories, asks only architecture-changing questions, and proposes an explainable solution map that remains fully editable.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="./mockup.html">Explore the high-fidelity mockup →</a>
+          <a class="button" href="./PROPOSAL.md">Read the exhaustive proposal</a>
+        </div>
+        <div class="decision-note"><span class="dot"></span><span><strong style="color:var(--secondary)">Recommended direction:</strong> augment Plan with a richer analysis, then compile into the existing approved contracts.</span></div>
+      </div>
+      <aside class="signal-panel" aria-label="Illustrative analysis">
+        <div class="signal-head"><span>Shape the product</span><span class="traffic"><i></i><i></i><i></i></span></div>
+        <div class="signal-body">
+          <p class="eyebrow">One input</p>
+          <div class="signal-prompt">“Help certification engineers investigate lifecycle evidence, trace gaps, findings, and reproducible audit packages—without modifying authoritative sources.”</div>
+          <div class="analysis-steps">
+            <div class="analysis-step"><span class="check">✓</span><span><b>People &amp; outcomes</b><br>4 meaningful roles</span><code>AUTO</code></div>
+            <div class="analysis-step"><span class="check">✓</span><span><b>Critical stories</b><br>6 end-to-end moments</span><code>AUTO</code></div>
+            <div class="analysis-step"><span class="check">✓</span><span><b>External boundaries</b><br>8 actor-specific connections</span><code>AUTO</code></div>
+            <div class="analysis-step"><span class="check">✓</span><span><b>Material uncertainty</b><br>1 human decision</span><code>ASK</code></div>
+          </div>
+          <div class="signal-result"><span><b>Ready to shape a solution</b><small>Technical analysis stays available, not in the way.</small></span><strong>96%</strong></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section" id="decision">
+      <div class="wrap">
+        <div class="section-head">
+          <div><p class="eyebrow">The product decision</p><h2>Add intelligence upstream. Preserve truth downstream.</h2></div>
+          <p>The current repository already has the correct approval, hashing, architecture, build, connection, and verification spine. Replacing it would create migration risk without improving the human task. The proposal adds a richer authoring model and compiles it into today’s stable contracts.</p>
+        </div>
+        <div class="decision">
+          <article class="decision-cell"><span class="num">01</span><h3>Augment, then mature</h3><p>Add a versioned use-case analysis before the current application specification. Keep the latter as the stable projection consumed everywhere else.</p></article>
+          <article class="decision-cell"><span class="num">02</span><h3>No new lifecycle stage</h3><p>Plan becomes “Shape the product.” Design becomes “Shape the solution.” Build, Connect, and Verify continue on the same canonical journey.</p></article>
+          <article class="decision-cell"><span class="num">03</span><h3>One truth, two projections</h3><p>Guided hides schemas and IDs. Design reveals provenance, confidence, gates, traces, and raw records. Both views edit the same state.</p></article>
+        </div>
+        <div class="journey" aria-label="Integrated workflow">
+          <div class="journey-item active"><span class="journey-number">01</span><h3>Plan</h3><p>Describe → check exceptions → approve the product story.</p><strong>NEW GUIDED ANALYSIS</strong></div>
+          <div class="journey-item active"><span class="journey-number">02</span><h3>Design</h3><p>Review solution map → restructure → approve architecture.</p><strong>NEW EXPLAINABLE PROPOSAL</strong></div>
+          <div class="journey-item"><span class="journey-number">03</span><h3>Build</h3><p>Batch module proposals and dependency-safe waves.</p><strong>EXISTING WORKFLOW</strong></div>
+          <div class="journey-item"><span class="journey-number">04</span><h3>Connect</h3><p>Bind entry points and verify real connections.</p><strong>EXISTING WORKFLOW</strong></div>
+          <div class="journey-item"><span class="journey-number">05</span><h3>Verify</h3><p>Trace stories to evidence and prove completion.</p><strong>ENRICHED BY STORIES</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="experience">
+      <div class="wrap">
+        <div class="section-head">
+          <div><p class="eyebrow">Division of labor</p><h2>Humans make consequential judgments. The tool does the clerical analysis.</h2></div>
+          <p>The experience is exception-led. If context is coherent, the user sees a draft, a tiny decision inbox, and an approval summary. Technical detail stays one click away for architects, regulated review, and debugging.</p>
+        </div>
+        <div class="work-split">
+          <div class="work-column">
+            <p class="eyebrow">Human</p><h3>Meaning &amp; tradeoffs</h3><p>Small number of decisions that cannot be safely inferred.</p>
+            <div class="work-row"><span class="work-symbol">1</span><span><b>Describe the outcome</b><span>One natural-language prompt</span></span></div>
+            <div class="work-row"><span class="work-symbol">?</span><span><b>Resolve material uncertainty</b><span>Scope, safety, policy, ownership, or architecture-changing choices</span></span></div>
+            <div class="work-row"><span class="work-symbol">✓</span><span><b>Approve product meaning</b><span>People, stories, boundaries, constraints, and proof</span></span></div>
+            <div class="work-row"><span class="work-symbol">↔</span><span><b>Restructure the proposal</b><span>Merge, split, rename, retype, or reassign with impact preview</span></span></div>
+          </div>
+          <div class="work-vs">cooperates with</div>
+          <div class="work-column">
+            <p class="eyebrow">Tool</p><h3>Structure &amp; coverage</h3><p>Repeatable work derived from allowed context and approved decisions.</p>
+            <div class="work-row"><span class="work-symbol">A</span><span><b>Analyze use cases</b><span>Normal, alternative, failure, recovery, information, rules, and proof</span></span></div>
+            <div class="work-row"><span class="work-symbol">P</span><span><b>Track provenance</b><span>Sourced, inferred, confirmed, overridden, or contradicted</span></span></div>
+            <div class="work-row"><span class="work-symbol">M</span><span><b>Propose architecture</b><span>Modules, operations, ports, adapters, dependencies, and deployables</span></span></div>
+            <div class="work-row"><span class="work-symbol">G</span><span><b>Evaluate live</b><span>Coverage, orphans, cycles, unowned operations, and staleness</span></span></div>
+          </div>
+        </div>
+        <div class="pipeline" aria-label="Canonical data flow">
+          <div class="pipeline-node"><b>Allowed context</b><span>Project, repo, approved records, imports</span></div>
+          <div class="pipeline-node accent"><b>Use-case analysis</b><span>Rich upstream authoring model</span></div>
+          <div class="pipeline-node"><b>Product compiler</b><span>Pure, stable, deterministic</span></div>
+          <div class="pipeline-node"><b>Application spec</b><span>Existing approved contract</span></div>
+          <div class="pipeline-node accent"><b>Solution proposal</b><span>Explainable and editable</span></div>
+          <div class="pipeline-node"><b>Architecture spec</b><span>Existing approved contract</span></div>
+          <div class="pipeline-node"><b>Build onward</b><span>Foundation, modules, connect, verify</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="architecture">
+      <div class="wrap">
+        <div class="section-head">
+          <div><p class="eyebrow">Explainable architecture</p><h2>A solution map users can understand and safely reshape.</h2></div>
+          <p>The proposal starts with the least distributed architecture that satisfies the approved stories and quality drivers. Every boundary must have a reason; every story must have a path; every external actor must have a technology-neutral port and a concrete adapter decision.</p>
+        </div>
+        <div class="map">
+          <div class="map-row"><div class="map-label">Experiences<span>Distinct user tasks and channels</span></div><div class="map-items"><span class="module"><b>Audit Experience</b><small>Daily assurance work</small></span><span class="module"><b>Lifecycle Explorer</b><small>Evidence investigation</small></span></div></div>
+          <div class="map-row"><div class="map-label">Coordinators<span>End-to-end recovery and policy</span></div><div class="map-items"><span class="module"><b>Ingestion &amp; Publication</b><small>Last-valid refresh</small></span><span class="module"><b>Assurance Workflow</b><small>Independent review</small></span><span class="module"><b>Package Assembly</b><small>Deterministic export</small></span></div></div>
+          <div class="map-row"><div class="map-label">Core knowledge<span>Rules that remain consistent</span></div><div class="map-items"><span class="module"><b>Evidence Graph</b><small>Identity and trace rules</small></span><span class="module"><b>Workspace Snapshots</b><small>Publication and baseline state</small></span></div></div>
+          <div class="map-row"><div class="map-label">Connections<span>Actor and technology specific</span></div><div class="map-items"><span class="module connection"><b>MATLAB / Simulink</b><small>Proprietary process</small></span><span class="module connection"><b>Filesystem</b><small>Contained discovery</small></span><span class="module connection"><b>Git</b><small>Revision state</small></span><span class="module connection"><b>Spreadsheet</b><small>XLSX / CSV</small></span><span class="module connection"><b>C / H Source</b><small>Source structure</small></span><span class="module connection"><b>Coverage</b><small>LCOV / XML / JSON</small></span></div></div>
+          <div class="map-row"><div class="map-label">Foundation<span>Justified shared runtime</span></div><div class="map-items"><span class="module"><b>Evidence Store</b><small>Immutable snapshots</small></span><span class="module"><b>Job &amp; Package Store</b><small>Progress and artifacts</small></span></div></div>
+        </div>
+        <div class="derivation-rules">
+          <div class="rule"><b>Prefer cohesion</b><p>Split only for distinct rules, change, reuse, ownership, runtime, scale, or trust.</p></div>
+          <div class="rule"><b>Trace every boundary</b><p>Select a story to highlight every experience, coordinator, domain, connection, and store.</p></div>
+          <div class="rule"><b>Keep adapters concrete</b><p>MATLAB, files, Git, spreadsheets, source, and reviews retain distinct lifecycles.</p></div>
+          <div class="rule"><b>Preserve human edits</b><p>Restructuring becomes a durable decision, not a temporary mutation of model output.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="delivery">
+      <div class="wrap">
+        <div class="section-head">
+          <div><p class="eyebrow">Implementation sequence</p><h2>Ship value early without destabilizing the current workflow.</h2></div>
+          <p>The sequence begins with a pure contract and compiler, adds the Guided experience, then introduces provider adapters and architecture restructuring. Machine parity and downstream enrichment follow the same canonical operations.</p>
+        </div>
+        <div class="phases">
+          <div class="phase"><span class="phase-num">00</span><h3>Benchmark &amp; vocabulary</h3><p>Measure the current Plan/Design workflow and validate human labels before changing it.</p><span class="phase-outcome">Reproducible baseline</span></div>
+          <div class="phase"><span class="phase-num">01</span><h3>Contract &amp; compiler</h3><p>Add versioned analysis, provenance, gate, stable IDs, migration projection, and deterministic application compilation.</p><span class="phase-outcome">No UI risk</span></div>
+          <div class="phase"><span class="phase-num">02</span><h3>Guided Plan</h3><p>Deliver Describe, Check, Approve, source selection, progress, exception questions, and Design details.</p><span class="phase-outcome">Human value</span></div>
+          <div class="phase"><span class="phase-num">03</span><h3>Provider adapters</h3><p>Support existing Copilot handoff, in-app agent, deterministic test provider, and bounded context sources.</p><span class="phase-outcome">Automation choice</span></div>
+          <div class="phase"><span class="phase-num">04</span><h3>Solution map</h3><p>Add derivation rationale, options, live coverage, merge/split/reassign, decision records, and architecture approval.</p><span class="phase-outcome">Explainable Design</span></div>
+          <div class="phase"><span class="phase-num">05</span><h3>Machine parity</h3><p>Expose the same operations with idempotency, explicit approvals, diagnostics, and legal next actions.</p><span class="phase-outcome">No screen scraping</span></div>
+          <div class="phase"><span class="phase-num">06</span><h3>Downstream enrichment</h3><p>Feed detailed stories into module batches, frontend briefs, connection setup, verification plans, and change impact.</p><span class="phase-outcome">End-to-end leverage</span></div>
+          <div class="phase"><span class="phase-num">07</span><h3>Rollout &amp; retire</h3><p>Opt in per project, audit migrations, validate with people, and retire legacy Guided authoring only when proven.</p><span class="phase-outcome">Safe adoption</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="success">
+      <div class="wrap">
+        <div class="section-head">
+          <div><p class="eyebrow">Success criteria</p><h2>Faster only counts if understanding and traceability improve too.</h2></div>
+          <p>Targets are evaluated on representative medium projects with product experts, architects, frontend and integration engineers, returning users, and LLM clients. They are product goals—not claims about the current prototype.</p>
+        </div>
+        <div class="metrics">
+          <div class="metric"><strong>0</strong><b>Structured fields</b><p>Required before the first product proposal.</p></div>
+          <div class="metric"><strong>≤5</strong><b>Human questions</b><p>Before reviewing a medium product story.</p></div>
+          <div class="metric"><strong>100%</strong><b>Critical-story coverage</b><p>In the proposed and approved architecture.</p></div>
+          <div class="metric"><strong>0</strong><b>Context re-entry</b><p>Between Plan, Design, and downstream briefs.</p></div>
+        </div>
+        <div class="guardrails">
+          <div class="guardrail"><span class="check">✓</span><span><b>No silent approval</b><span>Automation proposes and compiles; approval remains explicit and hash-bound.</span></span></div>
+          <div class="guardrail"><span class="check">✓</span><span><b>No hidden alternate truth</b><span>Guided and Design are projections of the same canonical records.</span></span></div>
+          <div class="guardrail"><span class="check">✓</span><span><b>No chain-of-thought persistence</b><span>Store concise rationale and evidence references, never private reasoning traces.</span></span></div>
+          <div class="guardrail"><span class="check">✓</span><span><b>No architecture theater</b><span>Every split needs evidence; the least distributed sufficient option wins.</span></span></div>
+          <div class="guardrail"><span class="check">✓</span><span><b>No erased human decisions</b><span>Regeneration reapplies compatible changes and surfaces conflicts.</span></span></div>
+          <div class="guardrail"><span class="check">✓</span><span><b>No migration surprise</b><span>Existing approvals remain current until a new revision is explicitly approved.</span></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap cta">
+      <div><h2>See how the interaction feels.</h2><p>The mockup includes the minimal-input start, analysis review, material question, technical detail toggle, solution tracing, and restructuring drawer.</p></div>
+      <div class="cta-actions"><a class="button" href="./PROPOSAL.md">Full plan</a><a class="button primary" href="./mockup.html">Open prototype →</a></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner"><span>Engineering UI Kit · Use-case-led workflow proposal</span><span>Product-design artifact · not an implementation</span></div>
+  </footer>
+</body>
+</html>
