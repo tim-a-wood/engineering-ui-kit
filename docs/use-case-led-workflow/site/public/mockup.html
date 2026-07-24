@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>Engineering UI Kit — Use-case-led workflow mockup</title>
+  <title>Engineering UI Kit — use-case planning mockup</title>
   <style>
     :root {
       color-scheme: dark;
@@ -787,7 +787,7 @@
     .choice.selected .radio { border-color: var(--accent-hover); background: var(--accent-hover); }
     .choice em { display: block; margin-top: 2px; color: var(--muted); font-style: normal; font-size: 10px; }
 
-    /* Solution map */
+    /* System design */
     .solution-layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 308px;
@@ -1143,15 +1143,15 @@
   <div class="app">
     <header class="titlebar">
       <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>Engineering UI Kit</span></div>
-      <div class="crumbs"><span>Capabilities</span><span>/</span><strong id="crumb-title">Shape the product</strong></div>
+      <div class="crumbs"><span>Capabilities</span><span>/</span><strong id="crumb-title">Define the work</strong></div>
       <div class="title-spacer"></div>
       <div class="prototype-jump">
-        <label for="prototype-view">Prototype view</label>
+        <label for="prototype-view">View</label>
         <select id="prototype-view" aria-label="Choose prototype view">
           <option value="describe">1 · Describe</option>
-          <option value="review" selected>2 · Check analysis</option>
-          <option value="solution">3 · Solution map</option>
-          <option value="approval">4 · Build handoff</option>
+          <option value="review" selected>2 · Review draft</option>
+          <option value="solution">3 · System design</option>
+          <option value="approval">4 · Send to Build</option>
         </select>
       </div>
       <button class="icon-button" type="button" aria-label="Help">?</button>
@@ -1182,7 +1182,7 @@
             <div class="project-select"><span>Project</span><strong>DO-178C Audit Hub</strong><span>⌄</span></div>
             <div class="project-state"><span class="dot success"></span><span>Saved locally</span></div>
             <div class="toolbar-spacer"></div>
-            <div class="segmented" aria-label="Projection mode">
+            <div class="segmented" aria-label="View mode">
               <button class="segment active" type="button" data-mode="guided">Guided</button>
               <button class="segment" type="button" data-mode="design">Design</button>
             </div>
@@ -1190,19 +1190,19 @@
           </div>
           <nav class="journey" aria-label="Capability journey">
             <button class="journey-step active" type="button" data-stage="plan">
-              <span class="step-marker">01</span><span class="step-copy"><b>Plan</b><small>Shape the product</small></span>
+              <span class="step-marker">01</span><span class="step-copy"><b>Plan</b><small>Define the work</small></span>
             </button>
             <button class="journey-step locked" type="button" data-stage="design">
-              <span class="step-marker">02</span><span class="step-copy"><b>Design</b><small>Shape the solution</small></span>
+              <span class="step-marker">02</span><span class="step-copy"><b>Design</b><small>Define the system</small></span>
             </button>
             <button class="journey-step locked" type="button">
               <span class="step-marker">03</span><span class="step-copy"><b>Build</b><small>Implement modules</small></span>
             </button>
             <button class="journey-step locked" type="button">
-              <span class="step-marker">04</span><span class="step-copy"><b>Connect</b><small>Wire entry points</small></span>
+              <span class="step-marker">04</span><span class="step-copy"><b>Connect</b><small>Connect entry points</small></span>
             </button>
             <button class="journey-step locked" type="button">
-              <span class="step-marker">05</span><span class="step-copy"><b>Verify</b><small>Prove it works</small></span>
+              <span class="step-marker">05</span><span class="step-copy"><b>Verify</b><small>Check the result</small></span>
             </button>
           </nav>
         </div>
@@ -1212,24 +1212,24 @@
   </div>
 
   <div class="scrim" id="scrim"></div>
-  <aside class="drawer" id="drawer" aria-label="Restructure module" aria-hidden="true">
+  <aside class="drawer" id="drawer" aria-label="Change module" aria-hidden="true">
     <div class="drawer-head">
-      <div><p class="eyebrow">Restructure proposal</p><h2 id="drawer-title">Evidence Graph</h2><p class="mono technical" id="drawer-id">mod.evidence-graph</p></div>
+      <div><p class="eyebrow">Change the module</p><h2 id="drawer-title">Evidence Graph</h2><p class="mono technical" id="drawer-id">mod.evidence-graph</p></div>
       <button class="icon-button" type="button" id="drawer-close" aria-label="Close">×</button>
     </div>
     <div class="drawer-body">
       <div class="field"><label for="module-name">Name</label><input id="module-name" value="Evidence Graph"></div>
-      <div class="field"><label for="module-kind">Responsibility</label><textarea id="module-kind">Own normalized evidence identities, lifecycle relationships, trace chains, and gap detection rules.</textarea></div>
+      <div class="field"><label for="module-kind">Purpose</label><textarea id="module-kind">Store evidence identities and lifecycle links. Find missing trace links.</textarea></div>
       <div class="field technical"><label for="module-type">Module type</label><select id="module-type"><option>domain</option><option>workflow</option><option>experience</option><option>connection</option><option>platform</option></select></div>
-      <div class="impact"><b>Safe local change</b>Renaming keeps 4 stories, 6 operations, and all dependency directions intact. The decision will be replayed if the proposal is regenerated.</div>
+      <div class="impact"><b>This name change is safe.</b>It does not change the 4 use cases, 6 operations, or dependencies. The tool will apply the change to each new design draft.</div>
       <div class="divider-label">Other actions</div>
-      <button class="btn btn-quiet" type="button" style="width:100%;justify-content:flex-start">Split by rule set…</button>
+      <button class="btn btn-quiet" type="button" style="width:100%;justify-content:flex-start">Split the module by rules…</button>
       <button class="btn btn-quiet" type="button" style="width:100%;justify-content:flex-start">Merge with Workspace Snapshots…</button>
       <button class="btn btn-quiet" type="button" style="width:100%;justify-content:flex-start">Move operation…</button>
       <div class="drawer-actions"><button class="btn" type="button" id="drawer-cancel">Cancel</button><button class="btn btn-primary" type="button" id="drawer-apply">Apply change</button></div>
     </div>
   </aside>
-  <div class="toast" id="toast" role="status"><span class="state-icon">✓</span><span id="toast-text">Change saved as a design decision.</span></div>
+  <div class="toast" id="toast" role="status"><span class="state-icon">✓</span><span id="toast-text">Design decision saved.</span></div>
 
   <script>
     const page = document.querySelector('#page');
@@ -1251,12 +1251,12 @@
 
     const data = {
       stories: [
-        ['UC-01', 'Assess certification readiness', 'A certification engineer opens a program and sees objective, lifecycle, trace, review, and finding readiness in one place.', 'critical'],
+        ['UC-01', 'Check certification readiness', 'A certification engineer opens a program. The engineer sees the status of objectives, lifecycle data, traces, reviews, and findings.', 'critical'],
         ['UC-02', 'Explore lifecycle evidence', 'A user moves through planning, requirements, design, code, verification, quality, configuration, and certification evidence.', 'critical'],
-        ['UC-03', 'Investigate a broken trace', 'A verification lead follows an end-to-end chain, sees the first broken link, and opens its evidence dossier.', 'critical'],
-        ['UC-04', 'Disposition a finding independently', 'A reviewer records evidence, ownership, and disposition without modifying authoritative engineering artifacts.', 'important'],
-        ['UC-05', 'Refresh without losing valid evidence', 'The software lead publishes a candidate only when every source is claimed and valid; failure preserves the last snapshot.', 'critical'],
-        ['UC-06', 'Create a reproducible audit package', 'The engineer selects scope and produces the same package bytes for the same approved snapshot and options.', 'critical']
+        ['UC-03', 'Find a broken trace', 'A verification lead follows a complete trace. The lead sees the first broken link and opens its evidence.', 'critical'],
+        ['UC-04', 'Review a finding independently', 'A reviewer records evidence, an owner, and a decision. The review does not change the engineering source files.', 'important'],
+        ['UC-05', 'Refresh the evidence safely', 'The software lead publishes a candidate only when every source is present and valid. A failed refresh keeps the last valid snapshot.', 'critical'],
+        ['UC-06', 'Create a repeatable audit package', 'The engineer selects a scope. The same approved snapshot and options produce the same package bytes.', 'critical']
       ],
       traces: {
         'UC-01': ['audit-experience', 'assurance-workflow', 'evidence-graph', 'evidence-store'],
@@ -1278,38 +1278,38 @@
 
     function describeView() {
       return `
-        ${heading('Plan · Describe', 'What should people be able to accomplish?', 'Start with the outcome. The tool will use the context you allow to draft the workflows, boundaries, important behavior, and proof.')}
+        ${heading('Plan · Describe', 'What work must users do?', 'Describe the required work. The tool will use only the sources that you select. It will draft the use cases, system limits, failure behavior, and acceptance checks.')}
         <div class="command">
-          <div><h2>One description is enough to begin</h2><p>You will review a product story—not fill in an architecture questionnaire.</p></div>
-          <div class="command-actions"><button class="btn btn-primary" type="button" id="draft-story">Draft product story <span>→</span></button></div>
+          <div><h2>Start with one description</h2><p>You do not have to complete an architecture form.</p></div>
+          <div class="command-actions"><button class="btn btn-primary" type="button" id="draft-story">Create use-case draft <span>→</span></button></div>
         </div>
         <div class="describe-grid">
           <section class="panel">
-            <div class="panel-head"><div><h2>Describe the outcome</h2><p>Use your own words. Examples and constraints are optional.</p></div><span class="tag accent">Required</span></div>
+            <div class="panel-head"><div><h2>Describe the required work</h2><p>Use your own words. You can add examples and limits.</p></div><span class="tag accent">Required</span></div>
             <div class="panel-body">
-              <label class="sr-only" for="intent-prompt">Product outcome</label>
-              <textarea class="prompt-area" id="intent-prompt">Certification engineers need to explore requirements, design, source, tests, reviews, coverage, and traceability from Simulink and project files; find gaps; manage findings; and create reproducible audit packages without changing authoritative evidence.</textarea>
+              <label class="sr-only" for="intent-prompt">Required user work</label>
+              <textarea class="prompt-area" id="intent-prompt">Certification engineers must review requirements, design data, source code, tests, reviews, coverage, and traces from Simulink and project files. They must find gaps, record findings, and create repeatable audit packages. The app must not change source evidence.</textarea>
               <div class="prompt-tools">
                 <button class="btn btn-small" type="button">＋ Add example</button>
-                <button class="btn btn-small" type="button">⊘ Must never happen</button>
+                <button class="btn btn-small" type="button">⊘ Add a prohibited result</button>
                 <span class="count">278 characters</span>
               </div>
             </div>
             <div class="example-row">
               <button class="example" type="button"><b>What happens first?</b>“An engineer opens a program and wants to know whether it is audit-ready.”</button>
               <button class="example" type="button"><b>What can go wrong?</b>“A failed refresh must never replace the last valid evidence snapshot.”</button>
-              <button class="example" type="button"><b>How do we know?</b>“The same scope and snapshot must produce the same package.”</button>
+              <button class="example" type="button"><b>What result is correct?</b>“The same scope and snapshot must produce the same package.”</button>
             </div>
           </section>
           <aside class="panel">
-            <div class="panel-head"><div><h2>Context to use</h2><p>Selected sources are read-only.</p></div><button class="btn btn-small btn-quiet" type="button">Manage</button></div>
+            <div class="panel-head"><div><h2>Sources to use</h2><p>The tool will not change these sources.</p></div><button class="btn btn-small btn-quiet" type="button">Manage</button></div>
             <div class="panel-body" style="padding-top:4px;padding-bottom:12px">
               <div class="source-row"><span class="source-check">✓</span><span class="source-copy"><b>Project description</b><small>1 source · saved locally</small></span><span class="tag success">Ready</span></div>
-              <div class="source-row"><span class="source-check">✓</span><span class="source-copy"><b>Repository overview</b><small>README, routes, schemas, runtimes</small></span><span class="tag success">Ready</span></div>
+              <div class="source-row"><span class="source-check">✓</span><span class="source-copy"><b>Repository summary</b><small>README, routes, schemas, runtimes</small></span><span class="tag success">Ready</span></div>
               <div class="source-row"><span class="source-check">✓</span><span class="source-copy"><b>Approved capability records</b><small>Current Plan and Design revisions</small></span><span class="tag success">Ready</span></div>
               <div class="source-row"><span class="source-check off">✓</span><span class="source-copy"><b>Additional documents</b><small>None selected</small></span><button class="btn btn-small" type="button">Add</button></div>
-              <div class="privacy-note"><span>⌾</span><span><b>Private by default.</b> Source content stays inside this project. Only structured evidence and source hashes are saved.</span></div>
-              <div class="technical block" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);color:var(--muted);font:10px/1.6 var(--mono)">provider: analysis.local-agent<br>context budget: 82,000 tokens<br>source fingerprint: e3a7…b910</div>
+              <div class="privacy-note"><span>⌾</span><span><b>Private by default.</b> Source content stays in this project. The tool saves only the analysis records and source hashes.</span></div>
+              <div class="technical block" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);color:var(--muted);font:10px/1.6 var(--mono)">analysis provider: local agent<br>source limit: 82,000 tokens<br>source hash: e3a7…b910</div>
             </div>
           </aside>
         </div>`;
@@ -1325,10 +1325,10 @@
             <span class="chevron">›</span>
           </button>
           <div class="story-detail">
-            <div><b>Normal moment</b><ul><li>Open a trace or evidence scope.</li><li>Follow normalized relationships.</li><li>See source provenance and status.</li></ul></div>
-            <div><b>Failure &amp; recovery</b><ul><li>Identify the first missing or invalid link.</li><li>Keep the last published evidence available.</li><li>Offer a clear next investigation.</li></ul></div>
-            <div><b>Proof</b><ul><li>The visible chain matches the snapshot.</li><li>No authoritative artifact is modified.</li><li>Every hop names its source revision.</li></ul></div>
-            <div class="technical block" style="grid-column:1/-1;padding:9px;border:1px solid var(--border);border-radius:4px;background:var(--inset);font:10px/1.6 var(--mono)">id: ${story[0]} · state: inferred · confidence: 0.94 · evidence: SRC-01, SRC-03 · quality drivers: QD-AUDIT-01, QD-AVAIL-01</div>
+            <div><b>Main flow</b><ul><li>Open a trace or evidence scope.</li><li>Follow the evidence links.</li><li>See the source and status.</li></ul></div>
+            <div><b>Failure and recovery</b><ul><li>Identify the first missing or invalid link.</li><li>Keep the last published evidence available.</li><li>Show the next investigation step.</li></ul></div>
+            <div><b>Acceptance checks</b><ul><li>The visible chain matches the snapshot.</li><li>The app does not change a source file.</li><li>Every link shows its source revision.</li></ul></div>
+            <div class="technical block" style="grid-column:1/-1;padding:9px;border:1px solid var(--border);border-radius:4px;background:var(--inset);font:10px/1.6 var(--mono)">id: ${story[0]} · status: inferred · confidence: 0.94 · sources: SRC-01, SRC-03 · quality requirements: QD-AUDIT-01, QD-AVAIL-01</div>
           </div>
         </article>`).join('');
     }
@@ -1336,63 +1336,63 @@
     function reviewView() {
       const ready = appState.questionAnswered;
       return `
-        ${heading('Plan · Check', 'Here’s what I understood', 'Review the meaning, not a generated specification. Correct anything that feels wrong; the full technical record remains available when you need it.')}
+        ${heading('Plan · Review', 'Review the use-case draft', 'Check the users, tasks, limits, and acceptance checks. Correct each error. You can open the technical record when you need it.')}
         <div class="command ${ready ? 'ready' : ''}">
-          <div><h2>${ready ? 'Ready to shape a solution' : 'One answer will improve the solution'}</h2><p>${ready ? 'Six stories, eight external boundaries, and the important recovery behavior are understood.' : 'Your answer changes the review workflow and authorization boundary.'}</p></div>
-          <div class="command-actions"><button class="btn btn-quiet" type="button">Edit summary</button><button class="btn btn-primary" type="button" id="approve-product">${ready ? 'Approve and shape solution' : 'Review the question'} <span>→</span></button></div>
+          <div><h2>${ready ? 'Ready to create the system design' : 'Answer one question before approval'}</h2><p>${ready ? 'The draft contains 6 use cases, 8 external systems, and the required recovery behavior.' : 'Your answer sets the reviewer permission rule.'}</p></div>
+          <div class="command-actions"><button class="btn btn-quiet" type="button">Edit summary</button><button class="btn btn-primary" type="button" id="approve-product">${ready ? 'Approve and create design' : 'Answer the question'} <span>→</span></button></div>
         </div>
         <div class="review-layout">
           <div>
             <section class="promise">
-              <div class="section-head" style="margin-top:0"><div><p class="eyebrow">Product promise</p><h2>Make certification evidence explorable, trustworthy, and reproducible</h2></div><button class="btn btn-small btn-quiet head-action" type="button">Correct</button></div>
-              <p>Certification teams can assess readiness, follow evidence across every lifecycle phase, investigate gaps, disposition findings, and create deterministic audit packages—without changing authoritative engineering artifacts.</p>
-              <div class="technical block" style="margin-top:10px;color:var(--muted);font:10px/1.55 var(--mono)">analysis UC-ANALYSIS-001 @ r3 · proposed · 7 evidence refs · application projection pending</div>
+              <div class="section-head" style="margin-top:0"><div><p class="eyebrow">Purpose</p><h2>Review certification evidence and create repeatable audit packages</h2></div><button class="btn btn-small btn-quiet head-action" type="button">Correct</button></div>
+              <p>Certification teams can check readiness and follow evidence through each lifecycle phase. They can find gaps, review findings, and create repeatable audit packages. The app does not change the engineering source files.</p>
+              <div class="technical block" style="margin-top:10px;color:var(--muted);font:10px/1.55 var(--mono)">analysis: UC-ANALYSIS-001 · revision: 3 · status: draft · sources: 7 · application specification: pending</div>
             </section>
 
-            <div class="section-head"><div><p class="eyebrow">People &amp; outcomes</p><h2>Who this is for</h2></div><p>4 understood from project context</p><button class="btn btn-small btn-quiet head-action" type="button">Adjust</button></div>
+            <div class="section-head"><div><p class="eyebrow">Users and tasks</p><h2>Who will use the app</h2></div><p>4 roles found in the project sources</p><button class="btn btn-small btn-quiet head-action" type="button">Change</button></div>
             <div class="people-strip">
               <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Certification engineer</b></div><p>Assess objective and lifecycle evidence readiness.</p></div>
               <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Verification lead</b></div><p>Investigate trace, result, and coverage gaps.</p></div>
-              <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Quality reviewer</b></div><p>Review and independently disposition findings.</p></div>
+              <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Quality reviewer</b></div><p>Review findings and record an independent decision.</p></div>
               <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Software lead</b></div><p>Refresh evidence without losing the last valid state.</p></div>
             </div>
 
-            <div class="section-head"><div><p class="eyebrow">Key stories</p><h2>What people need to accomplish</h2></div><p>Open a story to check failure and proof</p><button class="btn btn-small btn-quiet head-action" type="button">＋ Add</button></div>
+            <div class="section-head"><div><p class="eyebrow">Main use cases</p><h2>What users must do</h2></div><p>Open a use case to check failures and acceptance checks</p><button class="btn btn-small btn-quiet head-action" type="button">＋ Add</button></div>
             <div class="story-list">${storyRows()}</div>
           </div>
 
           <aside class="side-stack">
             <section class="panel">
-              <div class="panel-head"><div><h2>Analysis readiness</h2><p>Completeness of important behavior</p></div><span class="status-line"><span class="dot ${ready ? 'success' : 'warning'}"></span>${ready ? 'Ready' : 'Needs input'}</span></div>
+              <div class="panel-head"><div><h2>Draft status</h2><p>Coverage of required behavior</p></div><span class="status-line"><span class="dot ${ready ? 'success' : 'warning'}"></span>${ready ? 'Ready' : 'Answer required'}</span></div>
               <div class="panel-body">
-                <div class="readiness"><div class="readiness-ring"><strong>${ready ? '96' : '90'}%</strong></div><div class="readiness-copy"><b>${ready ? 'Ready to shape a solution' : 'Strong first draft'}</b><span>${ready ? '3 assumptions will remain visible.' : '1 decision changes the design.'}</span></div></div>
+                <div class="readiness"><div class="readiness-ring"><strong>${ready ? '96' : '90'}%</strong></div><div class="readiness-copy"><b>${ready ? 'Ready to create the design' : 'Draft is almost complete'}</b><span>${ready ? 'The tool will show 3 assumptions.' : 'One decision affects the design.'}</span></div></div>
                 <div class="coverage-bars">
                   <div class="coverage-line"><span>People</span><span class="bar"><span style="width:100%"></span></span><span>4/4</span></div>
-                  <div class="coverage-line"><span>Stories</span><span class="bar"><span style="width:100%"></span></span><span>6/6</span></div>
-                  <div class="coverage-line"><span>Boundaries</span><span class="bar"><span style="width:100%"></span></span><span>8/8</span></div>
+                  <div class="coverage-line"><span>Use cases</span><span class="bar"><span style="width:100%"></span></span><span>6/6</span></div>
+                  <div class="coverage-line"><span>External systems</span><span class="bar"><span style="width:100%"></span></span><span>8/8</span></div>
                   <div class="coverage-line"><span>Recovery</span><span class="bar"><span style="width:83%"></span></span><span>5/6</span></div>
-                  <div class="coverage-line"><span>Proof</span><span class="bar"><span style="width:100%"></span></span><span>6/6</span></div>
+                  <div class="coverage-line"><span>Acceptance checks</span><span class="bar"><span style="width:100%"></span></span><span>6/6</span></div>
                 </div>
               </div>
             </section>
             <section class="panel">
-              <div class="panel-head"><div><h2>${ready ? 'Decisions captured' : 'Needs your input'}</h2><p>${ready ? 'Only architecture-changing answers' : 'One answer · about 20 seconds'}</p></div><span class="tag ${ready ? 'success' : 'warning'}">${ready ? 'Resolved' : '1 important'}</span></div>
+              <div class="panel-head"><div><h2>${ready ? 'Decision saved' : 'Decision required'}</h2><p>${ready ? 'This answer affects the design' : 'One answer · about 20 seconds'}</p></div><span class="tag ${ready ? 'success' : 'warning'}">${ready ? 'Resolved' : '1 required'}</span></div>
               <div class="panel-body">
                 <div class="question">
                   <small>${ready ? 'Answered' : 'Independence rule'}</small>
                   <b>Can a reviewer approve their own finding?</b>
-                  <p>This changes authorization and whether review needs a separate workflow boundary.</p>
+                  <p>This answer sets the permission rule. It also determines whether finding review needs a separate workflow module.</p>
                   <div class="choice-list">
-                    <button class="choice ${ready ? 'selected' : ''}" type="button" data-choice="separate"><span class="radio"></span><span>No—require a different reviewer <em>Recommended from the assurance context</em></span></button>
+                    <button class="choice ${ready ? 'selected' : ''}" type="button" data-choice="separate"><span class="radio"></span><span>No. Require a different reviewer. <em>Recommended by the project rules</em></span></button>
                     <button class="choice" type="button" data-choice="same"><span class="radio"></span><span>Yes, with an audit record</span></button>
                     <button class="choice" type="button" data-choice="policy"><span class="radio"></span><span>Make it project policy</span></button>
                   </div>
                 </div>
-                <button class="btn btn-quiet btn-small" type="button" style="margin-top:11px;padding-left:0">View 3 carried assumptions</button>
+                <button class="btn btn-quiet btn-small" type="button" style="margin-top:11px;padding-left:0">View 3 assumptions</button>
               </div>
             </section>
             <section class="panel technical">
-              <div class="panel-head"><div><h2>Analysis record</h2><p>Technical projection</p></div></div>
+              <div class="panel-head"><div><h2>Analysis record</h2><p>Technical data</p></div></div>
               <div class="panel-body mono" style="font-size:9.5px;color:var(--muted);line-height:1.7">CAP-CONTRACT-030<br>gate: CAP-GATE-030<br>sources: 7 · contradictions: 0<br>unresolved blocking: ${ready ? '0' : '1'}<br>compiled application: pending</div>
             </section>
           </aside>
@@ -1401,31 +1401,31 @@
 
     const modules = {
       experiences: [
-        ['audit-experience', 'Audit Experience', 'Daily audit and finding work'],
-        ['lifecycle-explorer', 'Lifecycle Explorer', 'Evidence and trace investigation']
+        ['audit-experience', 'Audit Workspace', 'Readiness and finding work'],
+        ['lifecycle-explorer', 'Lifecycle Explorer', 'Evidence and trace review']
       ],
       workflows: [
-        ['ingestion-publication', 'Ingestion & Publication', 'Validate and publish snapshots'],
-        ['assurance-workflow', 'Assurance Workflow', 'Independent review and findings'],
-        ['package-assembly', 'Package Assembly', 'Deterministic audit exports']
+        ['ingestion-publication', 'Import and Publish', 'Validate and publish snapshots'],
+        ['assurance-workflow', 'Finding Review', 'Independent finding decisions'],
+        ['package-assembly', 'Package Export', 'Repeatable audit exports']
       ],
       domains: [
         ['evidence-graph', 'Evidence Graph', 'Evidence identity and trace rules'],
         ['workspace-snapshots', 'Workspace Snapshots', 'Last-valid and baseline state']
       ],
       platform: [
-        ['evidence-store', 'Evidence Store', 'Immutable snapshots and overlays'],
-        ['job-store', 'Job & Package Store', 'Progress and deterministic artifacts']
+        ['evidence-store', 'Evidence Store', 'Read-only snapshots and review data'],
+        ['job-store', 'Job and Package Store', 'Progress and output files']
       ],
       adapters: [
         ['filesystem-adapter', 'Filesystem', 'Project files'],
-        ['git-adapter', 'Git', 'Revision provenance'],
+        ['git-adapter', 'Git', 'Revision data'],
         ['matlab-adapter', 'MATLAB / Simulink', 'SLX, SLREQX, SLMX, SLDATX'],
         ['spreadsheet-adapter', 'Spreadsheet', 'XLSX and CSV'],
-        ['c-source-adapter', 'C / H Source', 'Functions and provenance'],
+        ['c-source-adapter', 'C / H Source', 'Functions and source data'],
         ['coverage-adapter', 'Coverage', 'LCOV, XML, JSON'],
         ['review-adapter', 'Review Evidence', 'Reviews and checklists'],
-        ['objective-adapter', 'Objective Profile', 'Program-owned objectives']
+        ['objective-adapter', 'Objective Profile', 'Project objectives']
       ]
     };
 
@@ -1443,54 +1443,54 @@
         ? Object.values(modules).flat().find(m => m[0] === appState.selectedModule)?.[1] || 'Selected module'
         : 'Select a module';
       return `
-        ${heading('Design · Proposal', 'A solution shaped around the approved stories', 'Start with the recommended cohesive architecture. Highlight any story to see its complete path, or select a module to understand and restructure it.')}
+        ${heading('Design · Draft', 'Review the system design', 'Start with the recommended design. Select a use case to see its complete path. Select a module to see its purpose or change it.')}
         <div class="command ready">
-          <div><h2>Recommended: cohesive application with an isolated MATLAB boundary</h2><p>All 6 stories are covered. The design keeps operations simple while containing the proprietary extraction lifecycle.</p></div>
-          <div class="command-actions"><button class="btn" type="button" id="restructure-selected">Restructure</button><button class="btn btn-primary" type="button" id="approve-solution">Approve and plan build <span>→</span></button></div>
+          <div><h2>Recommendation: one application and a separate MATLAB process</h2><p>The design covers all 6 use cases. It keeps deployment simple. The MATLAB process contains proprietary file extraction and its failures.</p></div>
+          <div class="command-actions"><button class="btn" type="button" id="restructure-selected">Change a module</button><button class="btn btn-primary" type="button" id="approve-solution">Approve design and plan Build <span>→</span></button></div>
         </div>
         <div class="solution-layout">
           <section class="panel">
             <div class="option-tabs" role="tablist" aria-label="Architecture options">
-              <button class="option-tab ${appState.option === 'cohesive' ? 'active' : ''}" type="button" data-option="cohesive"><span class="recommended">Recommended</span><b>Cohesive application</b>2 deployables · lowest operations</button>
-              <button class="option-tab ${appState.option === 'isolated' ? 'active' : ''}" type="button" data-option="isolated"><b>Separated ingestion</b>3 deployables · stronger isolation</button>
-              <button class="option-tab ${appState.option === 'distributed' ? 'active' : ''}" type="button" data-option="distributed"><b>Distributed services</b>6 deployables · not justified</button>
+              <button class="option-tab ${appState.option === 'cohesive' ? 'active' : ''}" type="button" data-option="cohesive"><span class="recommended">Recommended</span><b>One application</b>2 deployable units · least operational work</button>
+              <button class="option-tab ${appState.option === 'isolated' ? 'active' : ''}" type="button" data-option="isolated"><b>Separate import service</b>3 deployable units · more fault isolation</button>
+              <button class="option-tab ${appState.option === 'distributed' ? 'active' : ''}" type="button" data-option="distributed"><b>Multiple services</b>6 deployable units · no current requirement</button>
             </div>
             <div class="option-summary">
-              <span><strong>${appState.option === 'cohesive' ? 'Why this fits:' : appState.option === 'isolated' ? 'Tradeoff:' : 'Why it is not recommended:'}</strong> ${appState.option === 'cohesive' ? 'local evidence access, single-team ownership, and no independent scale driver.' : appState.option === 'isolated' ? 'contains all ingestion failures, but adds another service lifecycle.' : 'no approved story requires independent network scale; complexity rises without coverage gain.'}</span>
-              <span class="metric-mini"><b>${appState.option === 'cohesive' ? '2' : appState.option === 'isolated' ? '3' : '6'}</b>deployables</span>
-              <span class="metric-mini"><b>17</b>solution parts</span>
+              <span><strong>${appState.option === 'cohesive' ? 'Why this design fits:' : appState.option === 'isolated' ? 'Cost of this option:' : 'Why this option is not recommended:'}</strong> ${appState.option === 'cohesive' ? 'The app uses local evidence. One team owns it. No use case requires separate scaling.' : appState.option === 'isolated' ? 'This option contains all import failures. It also adds another service to build and operate.' : 'No approved use case requires separate network services. This option adds cost but does not improve coverage.'}</span>
+              <span class="metric-mini"><b>${appState.option === 'cohesive' ? '2' : appState.option === 'isolated' ? '3' : '6'}</b>deployable units</span>
+              <span class="metric-mini"><b>17</b>modules</span>
               <span class="metric-mini"><b>100%</b>coverage</span>
             </div>
-            <div class="map" aria-label="Proposed solution map">
-              <div class="lane"><div class="lane-label">Experiences<span>How people work</span></div><div class="lane-modules">${modules.experiences.map(moduleButton).join('')}</div></div>
-              <div class="lane"><div class="lane-label">Coordinators<span>End-to-end work</span></div><div class="lane-modules">${modules.workflows.map(moduleButton).join('')}</div></div>
-              <div class="lane"><div class="lane-label">Core knowledge<span>Rules and truth</span></div><div class="lane-modules">${modules.domains.map(moduleButton).join('')}</div></div>
-              <div class="lane"><div class="lane-label">Connections<span>External actors</span></div><div class="lane-modules"><div class="adapter-grid">${modules.adapters.map(moduleButton).join('')}</div></div></div>
-              <div class="lane"><div class="lane-label">Foundation<span>Shared runtime</span></div><div class="lane-modules">${modules.platform.map(moduleButton).join('')}</div></div>
+            <div class="map" aria-label="Proposed system design">
+              <div class="lane"><div class="lane-label">User interfaces<span>Screens for separate tasks</span></div><div class="lane-modules">${modules.experiences.map(moduleButton).join('')}</div></div>
+              <div class="lane"><div class="lane-label">Workflows<span>Tasks that use several modules</span></div><div class="lane-modules">${modules.workflows.map(moduleButton).join('')}</div></div>
+              <div class="lane"><div class="lane-label">Core data and rules<span>Rules independent of source type</span></div><div class="lane-modules">${modules.domains.map(moduleButton).join('')}</div></div>
+              <div class="lane"><div class="lane-label">External systems<span>One adapter for each source type</span></div><div class="lane-modules"><div class="adapter-grid">${modules.adapters.map(moduleButton).join('')}</div></div></div>
+              <div class="lane"><div class="lane-label">Shared services<span>Storage and job status</span></div><div class="lane-modules">${modules.platform.map(moduleButton).join('')}</div></div>
             </div>
           </section>
           <aside class="side-stack">
             <section class="panel">
-              <div class="panel-head"><div><h2>Story coverage</h2><p>Highlight an end-to-end path</p></div>${appState.activeTrace ? '<button class="btn btn-small btn-quiet" id="clear-trace" type="button">Clear</button>' : '<span class="tag success">6 / 6</span>'}</div>
+              <div class="panel-head"><div><h2>Use-case coverage</h2><p>Select a use case to show its complete path</p></div>${appState.activeTrace ? '<button class="btn btn-small btn-quiet" id="clear-trace" type="button">Clear</button>' : '<span class="tag success">6 / 6</span>'}</div>
               <div class="panel-body" style="padding-top:4px">
-                <div class="trace-filter">${data.stories.map(story => `<button class="trace-row ${appState.activeTrace === story[0] ? 'active' : ''}" type="button" data-trace="${story[0]}"><span class="trace-number">${story[0].slice(3)}</span><span><b>${story[1]}</b><small>${(data.traces[story[0]] || []).length} solution parts in this path</small></span><span class="trace-count">100%</span></button>`).join('')}</div>
+                <div class="trace-filter">${data.stories.map(story => `<button class="trace-row ${appState.activeTrace === story[0] ? 'active' : ''}" type="button" data-trace="${story[0]}"><span class="trace-number">${story[0].slice(3)}</span><span><b>${story[1]}</b><small>${(data.traces[story[0]] || []).length} modules in this path</small></span><span class="trace-count">100%</span></button>`).join('')}</div>
               </div>
             </section>
             <section class="panel">
-              <div class="panel-head"><div><h2>${appState.selectedModule ? detailName : 'Why these boundaries?'}</h2><p>${appState.selectedModule ? 'Selected solution part' : 'Derivation summary'}</p></div>${appState.selectedModule ? '<button class="btn btn-small" id="edit-module" type="button">Edit</button>' : ''}</div>
+              <div class="panel-head"><div><h2>${appState.selectedModule ? detailName : 'Why does each module exist?'}</h2><p>${appState.selectedModule ? 'Selected module' : 'Design summary'}</p></div>${appState.selectedModule ? '<button class="btn btn-small" id="edit-module" type="button">Edit</button>' : ''}</div>
               <div class="panel-body">
                 ${appState.selectedModule ? `
-                  <ul class="why-list"><li><b>Supports 4 approved stories</b>Readiness, trace investigation, review, and refresh.</li><li><b>Separate because of distinct rules</b>Evidence identity and trace consistency change together.</li><li><b>Owns 6 operations</b>Query, traverse, diagnose, and materialize evidence relationships.</li><li><b>Does not own</b>Source extraction, user presentation, or snapshot publication.</li></ul>
+                  <ul class="why-list"><li><b>Supports 4 approved use cases</b>Readiness, trace review, finding review, and refresh.</li><li><b>Has separate rules</b>Evidence identity and trace rules change together.</li><li><b>Provides 6 operations</b>Query, follow, diagnose, and create evidence links.</li><li><b>Does not control</b>Source import, user interfaces, or snapshot publication.</li></ul>
                   <div class="technical block mono" style="margin-top:10px;color:var(--muted);font-size:9.5px;line-height:1.6">type: domain<br>incoming dependencies: 3<br>outgoing ports: 1<br>decision lock: none</div>` : `
-                  <ul class="why-list"><li><b>Experiences follow distinct tasks</b>Daily assurance work is separate from deep lifecycle investigation.</li><li><b>Coordinators own recovery</b>Refresh, review, and package flows cross multiple boundaries.</li><li><b>Core knowledge stays cohesive</b>Trace and snapshot rules remain independent of source technology.</li><li><b>Connections remain actor-specific</b>MATLAB, Git, files, spreadsheets, source, and reviews have different lifecycles and failures.</li></ul>`}
+                  <ul class="why-list"><li><b>User interfaces support separate tasks</b>Readiness work is separate from detailed lifecycle review.</li><li><b>Workflows control recovery</b>Refresh, finding review, and package export use several modules.</li><li><b>Core rules do not depend on source type</b>Trace and snapshot rules do not depend on MATLAB, Git, or file formats.</li><li><b>Each source type has an adapter</b>MATLAB, Git, files, spreadsheets, source code, and reviews have different failures.</li></ul>`}
               </div>
             </section>
             <section class="panel">
-              <div class="panel-head"><div><h2>Design checks</h2><p>Live after every change</p></div><span class="status-line"><span class="dot success"></span>Ready</span></div>
+              <div class="panel-head"><div><h2>Design checks</h2><p>The tool runs these checks after each change</p></div><span class="status-line"><span class="dot success"></span>Ready</span></div>
               <div class="panel-body">
                 <div class="gate-list">
-                  <div class="gate-item"><span class="state-icon">✓</span><span>All critical stories have a complete path.</span></div>
-                  <div class="gate-item"><span class="state-icon">✓</span><span>Every external actor has a concrete connection.</span></div>
+                  <div class="gate-item"><span class="state-icon">✓</span><span>All main use cases have a complete path.</span></div>
+                  <div class="gate-item"><span class="state-icon">✓</span><span>Every external system has a named adapter.</span></div>
                   <div class="gate-item"><span class="state-icon">✓</span><span>Every module has a reason to exist.</span></div>
                   <div class="gate-item"><span class="state-icon">✓</span><span>No circular dependencies.</span></div>
                 </div>
@@ -1503,27 +1503,27 @@
 
     function approvalView() {
       return `
-        ${heading('Design · Approved', 'The solution is ready for Build', 'Product intent, architecture rationale, and your design decisions are now approved and traceable. Existing Build, Connect, and Verify workflows can continue unchanged.')}
+        ${heading('Design · Approved', 'The system design is ready for Build', 'The approved records include the use cases, system design, design reasons, and your changes. Build, Connect, and Verify can use these records.')}
         <div class="command ready">
-          <div><h2>Next best action: generate module proposals</h2><p>The dependency-safe batch will reuse all approved stories, rules, boundaries, and architecture decisions.</p></div>
+          <div><h2>Next action: create the module plans</h2><p>The tool will create modules in dependency order. It will use all approved use cases, rules, external systems, and design decisions.</p></div>
           <div class="command-actions"><button class="btn" type="button">View approved design</button><button class="btn btn-primary" type="button" id="continue-build">Continue to Build <span>→</span></button></div>
         </div>
         <div class="approval-grid">
           <section class="panel">
             <div class="panel-body">
-              <div class="approval-hero"><div class="approval-check">✓</div><div><p class="eyebrow">Two explicit approvals captured</p><h2>Product story and solution map approved</h2><p>No technical questionnaire or manual specification entry was required.</p></div></div>
+              <div class="approval-hero"><div class="approval-check">✓</div><div><p class="eyebrow">Two approvals saved</p><h2>Use cases and system design approved</h2><p>The user did not have to complete a technical form or enter a specification.</p></div></div>
               <div class="figure-strip">
                 <div class="figure"><span>People</span><strong>4</strong></div>
-                <div class="figure"><span>Stories</span><strong>6</strong></div>
-                <div class="figure"><span>Solution parts</span><strong>17</strong></div>
+                <div class="figure"><span>Use cases</span><strong>6</strong></div>
+                <div class="figure"><span>Modules</span><strong>17</strong></div>
                 <div class="figure"><span>Coverage</span><strong>100%</strong></div>
               </div>
               <div class="handoff-list">
                 <p class="eyebrow">What Build receives</p>
-                <div class="handoff-row"><span class="handoff-icon">UC</span><span class="handoff-copy"><b>Approved product story</b><small>Normal, alternative, failure, recovery, rules, proof, and provenance</small></span><span class="tag success">Current</span></div>
-                <div class="handoff-row"><span class="handoff-icon">AR</span><span class="handoff-copy"><b>Approved architecture</b><small>Responsibilities, dependencies, operations, connections, and workflow traces</small></span><span class="tag success">Current</span></div>
-                <div class="handoff-row"><span class="handoff-icon">DX</span><span class="handoff-copy"><b>Design decisions</b><small>Human restructuring is durable and will survive regeneration</small></span><span class="tag">1 decision</span></div>
-                <div class="handoff-row"><span class="handoff-icon">FP</span><span class="handoff-copy"><b>Foundation proposal</b><small>Modular monolith plus isolated MATLAB extraction process</small></span><span class="tag accent">Ready next</span></div>
+                <div class="handoff-row"><span class="handoff-icon">UC</span><span class="handoff-copy"><b>Approved use cases</b><small>Main flow, other paths, failures, recovery, rules, acceptance checks, and sources</small></span><span class="tag success">Current</span></div>
+                <div class="handoff-row"><span class="handoff-icon">AR</span><span class="handoff-copy"><b>Approved architecture</b><small>Module purpose, dependencies, operations, adapters, and use-case paths</small></span><span class="tag success">Current</span></div>
+                <div class="handoff-row"><span class="handoff-icon">DX</span><span class="handoff-copy"><b>Design decisions</b><small>The tool will apply approved user changes to each new design draft.</small></span><span class="tag">1 decision</span></div>
+                <div class="handoff-row"><span class="handoff-icon">FP</span><span class="handoff-copy"><b>Deployment design</b><small>One application and a separate MATLAB process</small></span><span class="tag accent">Ready next</span></div>
               </div>
             </div>
           </section>
@@ -1531,16 +1531,16 @@
             <section class="panel">
               <div class="panel-head"><div><h2>Effort in this prototype</h2><p>Medium-sized sample</p></div></div>
               <div class="panel-body">
-                <ul class="why-list"><li><b>1 outcome description</b>The only required free-form input.</li><li><b>1 material question</b>Authorization changed the workflow boundary.</li><li><b>2 approvals</b>Product meaning, then solution design.</li><li><b>1 optional restructure</b>Preserved as a durable decision.</li><li><b>0 structured fields</b>No IDs, schemas, modules, or adapters entered manually.</li></ul>
+                <ul class="why-list"><li><b>1 work description</b>This is the only required free-text input.</li><li><b>1 required question</b>The answer sets the reviewer permission rule.</li><li><b>2 approvals</b>First approve the use cases. Then approve the system design.</li><li><b>1 optional module change</b>The tool saves the change as a design decision.</li><li><b>0 form fields</b>The user did not enter IDs, schemas, modules, or adapters.</li></ul>
               </div>
             </section>
             <section class="panel">
               <div class="panel-head"><div><h2>Approval evidence</h2><p>Visible in Design mode</p></div><span class="status-line"><span class="dot success"></span>Saved</span></div>
               <div class="panel-body">
                 <div class="change-row"><span class="state-icon">✓</span><span><b>Use-case analysis</b><br><span class="mono">r3 · 9ae1…d771</span></span></div>
-                <div class="change-row"><span class="state-icon">✓</span><span><b>Application projection</b><br><span class="mono">r8 · 4c0b…180a</span></span></div>
+                <div class="change-row"><span class="state-icon">✓</span><span><b>Application specification</b><br><span class="mono">r8 · 4c0b…180a</span></span></div>
                 <div class="change-row"><span class="state-icon">✓</span><span><b>Architecture</b><br><span class="mono">r5 · 387f…991c</span></span></div>
-                <div class="change-row"><span class="state-icon">✓</span><span><b>Gate evaluation</b><br><span>All blockers resolved</span></span></div>
+                <div class="change-row"><span class="state-icon">✓</span><span><b>Required checks</b><br><span>All blocking problems resolved</span></span></div>
               </div>
             </section>
           </aside>
@@ -1551,7 +1551,7 @@
       document.body.classList.toggle('tech-on', appState.tech);
       viewSelect.value = appState.view;
       const solution = appState.view === 'solution' || appState.view === 'approval';
-      crumbTitle.textContent = solution ? 'Shape the solution' : 'Shape the product';
+      crumbTitle.textContent = solution ? 'Define the system' : 'Define the work';
       document.querySelectorAll('.journey-step').forEach((step, index) => {
         step.classList.toggle('active', solution ? index === 1 : index === 0);
         step.classList.toggle('complete', solution && index === 0);
@@ -1608,7 +1608,7 @@
       document.querySelector('#draft-story')?.addEventListener('click', event => {
         const button = event.currentTarget;
         button.disabled = true;
-        button.textContent = 'Understanding workflows…';
+        button.textContent = 'Creating use-case draft…';
         setTimeout(() => go('review'), 700);
       });
       document.querySelectorAll('.story > button').forEach(button => button.addEventListener('click', () => {
@@ -1618,7 +1618,7 @@
       }));
       document.querySelectorAll('.choice').forEach(choice => choice.addEventListener('click', () => {
         appState.questionAnswered = true;
-        showToast('Decision captured. Analysis readiness updated.');
+        showToast('Decision saved. Draft status updated.');
         render();
       }));
       document.querySelector('#approve-product')?.addEventListener('click', () => {
@@ -1626,7 +1626,7 @@
           document.querySelector('.question')?.scrollIntoView({behavior:'smooth', block:'center'});
           showToast('Choose the independence rule before approval.');
         } else {
-          showToast('Product story approved. Solution proposal generated.');
+          showToast('Use cases approved. System design created.');
           setTimeout(() => go('solution'), 420);
         }
       });
@@ -1652,10 +1652,10 @@
       });
       document.querySelector('#restructure-selected')?.addEventListener('click', () => openDrawer(appState.selectedModule || 'evidence-graph', appState.renamedModule));
       document.querySelector('#approve-solution')?.addEventListener('click', () => {
-        showToast('Architecture approved. Build handoff is ready.');
+        showToast('Architecture approved. Build can now use the design.');
         setTimeout(() => go('approval'), 420);
       });
-      document.querySelector('#continue-build')?.addEventListener('click', () => showToast('Prototype boundary: this continues into the existing Build workflow.'));
+      document.querySelector('#continue-build')?.addEventListener('click', () => showToast('This mockup ends here. The current Build workflow starts next.'));
     }
 
     viewSelect.addEventListener('change', () => go(viewSelect.value));
@@ -1676,7 +1676,7 @@
       appState.renamedModule = document.querySelector('#module-name').value.trim() || 'Evidence Graph';
       closeDrawer();
       render();
-      showToast('Change saved as a durable design decision.');
+      showToast('Design decision saved. The tool will apply it to each new draft.');
     });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeDrawer();

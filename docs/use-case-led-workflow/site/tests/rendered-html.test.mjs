@@ -1,91 +1,77 @@
 import assert from "node:assert/strict";
-import { access, readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const developmentPreviewMeta =
-  /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
-const templateRoot = new URL("../", import.meta.url);
-const previewRoot = new URL("../app/_sites-preview/", import.meta.url);
+const siteRoot = new URL("../", import.meta.url);
+const sourceRoot = new URL("../../", import.meta.url);
 
-async function render() {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
-
-  return worker.fetch(
-    new Request("http://localhost/", {
-      headers: { accept: "text/html" },
-    }),
-    {
-      ASSETS: {
-        fetch: async () => new Response("Not found", { status: 404 }),
-      },
-    },
-    {
-      waitUntil() {},
-      passThroughOnException() {},
-    },
-  );
+async function readText(url) {
+  return readFile(url, "utf8");
 }
 
-test("server-renders the starter loading skeleton", async () => {
-  const response = await render();
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+test("publishes the current source artifacts", async () => {
+  const pairs = [
+    ["index.html", "public/briefing.html"],
+    ["mockup.html", "public/mockup.html"],
+    ["PROPOSAL.md", "public/PROPOSAL.md"],
+  ];
 
-  const html = await response.text();
-  assert.match(html, developmentPreviewMeta);
-  assert.match(html, /<title>Your site is taking shape<\/title>/i);
-  assert.match(html, /Building your site/);
-  assert.match(html, /Your site is taking shape/);
-  assert.match(
-    html,
-    /Your first version will appear here automatically when it’s ready\./,
-  );
-  assert.doesNotMatch(html, /Codex/);
-  assert.match(html, /react-loading-skeleton/);
-  assert.match(html, /role="status"/);
+  for (const [sourceName, publicName] of pairs) {
+    const [source, published] = await Promise.all([
+      readFile(new URL(sourceName, sourceRoot)),
+      readFile(new URL(publicName, siteRoot)),
+    ]);
+    assert.deepEqual(published, source, `${publicName} is not current`);
+  }
 });
 
-test("keeps the loading skeleton scoped and disposable", async () => {
-  const [preview, css, page, layout, packageJson, files] = await Promise.all([
-    readFile(new URL("SkeletonPreview.tsx", previewRoot), "utf8"),
-    readFile(new URL("preview.css", previewRoot), "utf8"),
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../package.json", import.meta.url), "utf8"),
-    readdir(previewRoot),
+test("uses direct task labels in the briefing and mockup", async () => {
+  const [briefing, mockup, proposal, layout] = await Promise.all([
+    readText(new URL("public/briefing.html", siteRoot)),
+    readText(new URL("public/mockup.html", siteRoot)),
+    readText(new URL("public/PROPOSAL.md", siteRoot)),
+    readText(new URL("app/layout.tsx", siteRoot)),
   ]);
 
-  assert.deepEqual(files.sort(), ["SkeletonPreview.tsx", "preview.css"]);
-  assert.match(preview, /from "react-loading-skeleton"/);
-  assert.match(preview, /baseColor="#eceae7"/);
-  assert.match(preview, /highlightColor="#f9f8f6"/);
-  assert.match(preview, /duration=\{2\.8\}/);
-  assert.match(preview, /sites-skeleton-search-placeholder/);
-  assert.match(packageJson, /"react-loading-skeleton": "3\.5\.0"/);
+  assert.match(briefing, /Describe the work\./);
+  assert.match(briefing, /Review the system design\./);
+  assert.match(mockup, /Create use-case draft/);
+  assert.match(mockup, /Define the system/);
+  assert.match(mockup, /Review the use-case draft/);
+  assert.match(proposal, /^# Plan from use cases/m);
+  assert.match(proposal, /## 10\. DO-178C Audit Hub example/);
+  assert.match(layout, /const title = "Plan from use cases"/);
 
-  const shellIndex = preview.indexOf('className="sites-skeleton-shell"');
-  const statusIndex = preview.indexOf('className="sites-skeleton-status"');
-  assert.ok(shellIndex >= 0 && statusIndex > shellIndex);
-  assert.match(css, /position:\s*fixed/);
-  assert.match(css, /inset:\s*0/);
-  assert.match(css, /opacity:\s*0\.52/);
-  assert.match(css, /prefers-reduced-motion:\s*reduce/);
-  assert.doesNotMatch(css, /#020617|canvas|pets|progress/i);
-  assert.doesNotMatch(
-    preview,
-    /loading-spinner|status-mark|status-progress|canvas|cookie|random/i,
+  const obsoletePhrases = [
+    "manufacture structure",
+    "Shape the product",
+    "Shape the solution",
+    "Product promise",
+    "Material uncertainty",
+    "Solution map",
+  ];
+
+  for (const phrase of obsoletePhrases) {
+    assert.doesNotMatch(briefing, new RegExp(phrase, "i"));
+    assert.doesNotMatch(mockup, new RegExp(phrase, "i"));
+  }
+});
+
+test("keeps mobile links relative and openable", async () => {
+  const briefing = await readText(new URL("public/briefing.html", siteRoot));
+
+  assert.match(briefing, /href="\.\/mockup\.html"/);
+  assert.match(briefing, /href="\.\/PROPOSAL\.md"/);
+  assert.match(
+    briefing,
+    /<meta name="viewport" content="width=device-width, initial-scale=1">/,
   );
+});
 
-  assert.match(page, /export const metadata:\s*Metadata/);
-  assert.match(page, /"codex-preview": "development"/);
-  assert.match(page, /<SkeletonPreview \/>/);
-  assert.match(layout, /title:\s*"Starter Project"/);
-  assert.doesNotMatch(layout, /codex-preview|_sites-preview|themeColor|\bViewport\b/);
-  assert.doesNotMatch(css, /(^|\s)(html|body)\s*\{/m);
+test("publishes the social preview at its declared size", async () => {
+  const image = await readFile(new URL("public/og.png", siteRoot));
 
-  await assert.rejects(
-    access(new URL("public/_sites-preview", templateRoot)),
-  );
+  assert.equal(image.toString("ascii", 1, 4), "PNG");
+  assert.equal(image.readUInt32BE(16), 1729);
+  assert.equal(image.readUInt32BE(20), 910);
 });

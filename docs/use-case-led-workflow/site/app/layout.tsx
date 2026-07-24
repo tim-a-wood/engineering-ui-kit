@@ -21,9 +21,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto")
     ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const title = "Use-case-led Capabilities";
+  const title = "Plan from use cases";
   const description =
-    "Visual proposal and interactive mockup for a guided use-case-led Engineering UI Kit workflow.";
+    "Describe the required work. Review the use cases and system design.";
   const imageUrl = `${origin}/og.png`;
 
   return {
@@ -37,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: imageUrl, width: 1730, height: 909, alt: title }],
+      images: [{ url: imageUrl, width: 1729, height: 910, alt: title }],
     },
     twitter: {
       card: "summary_large_image",

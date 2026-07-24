@@ -1,8 +1,7 @@
-# vinext-starter
+# Use-case planning proposal site
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+This site publishes the visual summary, interactive mockup, and full proposal.
+It uses [vinext](https://github.com/cloudflare/vinext).
 
 ## Prerequisites
 
@@ -18,14 +17,12 @@ npm run build
 
 This starter does not use `wrangler.jsonc`.
 
-## Included Shape
+## Project files
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+- Edit site code in `app/`.
+- Edit the source artifacts in the parent `use-case-led-workflow` folder.
+- Run `npm run sync:artifacts` to copy the artifacts to `public/`.
+- `.openai/hosting.json` identifies the Sites project.
 
 ## Workspace Auth Headers
 
@@ -85,12 +82,11 @@ or enforce explicit server-side membership or allowlist checks.
 Use SIWC for account pages, user-specific dashboards, saved records, and write
 actions tied to the current ChatGPT user. Leave public content anonymous.
 
-## Useful Commands
+## Commands
 
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+- `npm run dev`: start the local site.
+- `npm run sync:artifacts`: copy the current artifacts to `public/`.
+- `npm run build`: build the production site.
 
 ## Learn More
 

@@ -1,21 +1,18 @@
-# Use-case-led workflow proposal
+# Plan from use cases
 
-This folder contains a product proposal for making Engineering UI Kit
-Capabilities substantially easier to use by placing a guided use-case analysis
-ahead of architecture design.
+This folder explains a proposed workflow for Engineering UI Kit Capabilities.
+The workflow creates use cases before it creates the system design.
 
 ## Artifacts
 
-- [`PROPOSAL.md`](./PROPOSAL.md) — exhaustive product, interaction, contract,
-  architecture, rollout, testing, and measurement plan.
-- [`mockup.html`](./mockup.html) — high-fidelity interactive prototype of the
-  proposed Guided workflow.
-- [`index.html`](./index.html) — concise visual briefing for quickly digesting
-  the proposal.
+- [`PROPOSAL.md`](./PROPOSAL.md) — the full design, data, delivery, and test
+  plan.
+- [`mockup.html`](./mockup.html) — an interactive mockup of the proposed
+  workflow.
+- [`index.html`](./index.html) — a short visual summary.
 
 Both HTML files are self-contained and can be opened directly in a browser.
-The mockup is intentionally a product-design artifact, not an implementation
-of the analysis engine.
+The mockup shows the design. It is not working product code.
 
 ## Mobile links
 
