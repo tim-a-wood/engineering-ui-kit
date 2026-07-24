@@ -71,6 +71,14 @@ test("uses direct task labels in the briefing and mockup", async () => {
   assert.match(mockup, /function stateDetailDiagram\(/);
   assert.match(mockup, /function sequenceDetailDiagram\(/);
   assert.match(mockup, /function useCaseDetailDiagram\(/);
+  assert.match(mockup, /function drawUmlStage\(/);
+  assert.match(mockup, /class="uml-stage-canvas"/);
+  assert.match(mockup, /class="uml-fragment"/);
+  assert.match(mockup, /uml-activation-node/);
+  assert.match(mockup, /uml-partition/);
+  assert.match(mockup, /refreshEvidence\(\)/);
+  assert.match(mockup, /trigger \[guard\] \/ effect/);
+  assert.match(mockup, /orthogonal routing/);
   assert.match(mockup, /data-uml-element=/);
   assert.match(mockup, /id="uml-element-modal"/);
   assert.match(mockup, /Discuss with agent/);
