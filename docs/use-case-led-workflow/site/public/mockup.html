@@ -2207,10 +2207,13 @@
     }
     .uml-participant-node small { margin: 0 0 2px; font: 8px var(--mono); }
     .uml-activation-node {
+      overflow: hidden;
       padding: 0;
       border-color: rgba(148, 163, 184, .6);
       border-radius: 0;
+      color: transparent;
       background: #1b2740;
+      font-size: 0;
     }
     .uml-fragment {
       position: absolute;
@@ -2218,18 +2221,6 @@
       border: 1px solid rgba(148, 163, 184, .45);
       background: rgba(11, 19, 34, .28);
       pointer-events: none;
-    }
-    .uml-fragment::before {
-      position: absolute;
-      top: 0;
-      left: 0;
-      padding: 4px 18px 4px 7px;
-      border-right: 1px solid rgba(148, 163, 184, .45);
-      border-bottom: 1px solid rgba(148, 163, 184, .45);
-      color: var(--secondary);
-      background: #0b1322;
-      font: 9px var(--mono);
-      content: attr(data-fragment);
     }
     .uml-fragment-divider {
       position: absolute;
@@ -2287,12 +2278,20 @@
       top: 18px;
       left: 21px;
       width: 1.5px;
-      height: 43px;
-      transform: rotate(0);
+      height: 29px;
       background: currentColor;
-      box-shadow: -13px 15px 0 -0.2px currentColor, 13px 15px 0 -0.2px currentColor;
       content: "";
     }
+    .uml-stick-figure i {
+      position: absolute;
+      display: block;
+      height: 1.5px;
+      background: currentColor;
+    }
+    .uml-stick-figure .arms { top: 29px; left: 7px; width: 29px; }
+    .uml-stick-figure .leg { top: 52px; left: 19px; width: 25px; transform-origin: left center; }
+    .uml-stick-figure .leg-left { transform: rotate(120deg); }
+    .uml-stick-figure .leg-right { transform: rotate(60deg); }
     .diagram-quality-note {
       display: flex;
       justify-content: space-between;
@@ -4010,8 +4009,8 @@
       const downstreamId = context.detail.dependsOn[0] || (context.id === 'evidence-store' ? 'workspace-snapshots' : 'evidence-store');
       const upstreamLabel = moduleDetails[upstreamId] ? moduleName(upstreamId) : (data.stories.find(item => item[0] === upstreamId)?.[1] || 'Audit user');
       const downstreamLabel = moduleName(downstreamId);
-      const providedPort = context.detail.ports[0] || `${context.title.replaceAll(' ', '')}Port`;
-      const requiredPort = context.detail.ports[1] || 'EvidenceStorePort';
+      const providedPort = `${context.title.replaceAll(' ', '')}Port`;
+      const requiredPort = context.detail.ports[0] || 'EvidenceStorePort';
       const content = `
           <div class="uml-boundary" style="left:286px;top:54px;width:348px;height:252px">
             <span class="uml-boundary-label">audit-hub::${escapeHtml(context.group.toLowerCase().replaceAll(' ', '-'))}</span>
@@ -4146,8 +4145,8 @@
       const content = `
         <div class="uml-boundary" style="left:222px;top:36px;width:486px;height:376px"></div>
         ${positionedUmlElement({id:`system-${context.id}`,type:'System boundary',label:'DO-178C Audit Hub',description:'The system boundary contains behavior delivered by the audit hub.',relationships:useCases.map(item => item[0]),traceIds:storyIds}, 'uml-system-node', 232, 42, 156, 24, 'DO-178C Audit Hub')}
-        ${positionedUmlElement({id:`actor-primary-${context.id}`,type:'Actor',label:actor,description:'The engineering role that prepares and checks audit evidence.',relationships:useCases.slice(0,3).map(item => item[1]),traceIds:storyIds}, 'uml-actor-node', 24, 132, 158, 126, `<span class="uml-stick-figure" aria-hidden="true"></span><b>${escapeHtml(actor)}</b>`)}
-        ${positionedUmlElement({id:`actor-reviewer-${context.id}`,type:'Actor',label:'Independent reviewer',description:'A role that reviews evidence without preparing it.',relationships:useCases.slice(1).map(item => item[1]),traceIds:storyIds}, 'uml-actor-node', 744, 132, 158, 126, '<span class="uml-stick-figure" aria-hidden="true"></span><b>Independent reviewer</b>')}
+        ${positionedUmlElement({id:`actor-primary-${context.id}`,type:'Actor',label:actor,description:'The engineering role that prepares and checks audit evidence.',relationships:useCases.slice(0,3).map(item => item[1]),traceIds:storyIds}, 'uml-actor-node', 24, 132, 158, 126, `<span class="uml-stick-figure" aria-hidden="true"><i class="arms"></i><i class="leg leg-left"></i><i class="leg leg-right"></i></span><b>${escapeHtml(actor)}</b>`)}
+        ${positionedUmlElement({id:`actor-reviewer-${context.id}`,type:'Actor',label:'Independent reviewer',description:'A role that reviews evidence without preparing it.',relationships:useCases.slice(1).map(item => item[1]),traceIds:storyIds}, 'uml-actor-node', 744, 132, 158, 126, '<span class="uml-stick-figure" aria-hidden="true"><i class="arms"></i><i class="leg leg-left"></i><i class="leg leg-right"></i></span><b>Independent reviewer</b>')}
         ${useCaseNodes}
         ${positionedUmlElement({id:`include-${context.id}`,type:'Include relationship',label:'Refresh evidence safely includes Explore lifecycle evidence',description:'Refresh evidence always includes evidence discovery and trace resolution.',relationships:[useCases[2][0],useCases[1][0]],traceIds:storyIds}, 'uml-link-label', 430, 152, 88, 24, '«include»')}
         ${positionedUmlElement({id:`extend-${context.id}`,type:'Extend relationship',label:'Review finding independently extends Explore lifecycle evidence',description:'Independent review is optional behavior added at the review extension point.',relationships:[useCases[3][0],useCases[1][0]],traceIds:storyIds}, 'uml-link-label', 600, 154, 82, 24, '«extend»')}`;
