@@ -955,43 +955,95 @@
     .view-button:hover { border-color: var(--border-strong); color: var(--secondary); }
     .view-button.active { border-color: rgba(84, 120, 255, .6); color: var(--text); background: var(--accent-tint); }
     .diagram-scroll { padding: 15px; overflow-x: auto; }
-    .logical-diagram { min-width: 860px; }
-    .diagram-flow {
-      display: grid;
-      grid-template-columns: 1fr 26px 1.35fr 26px 1fr 34px 1.85fr;
-      gap: 5px;
-      align-items: stretch;
+    .logical-diagram { width: 1240px; }
+    .relationship-summary {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      min-height: 34px;
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: 10px;
     }
-    .diagram-tier {
-      min-width: 0;
-      padding: 10px;
+    .relationship-summary b { color: var(--secondary); }
+    .relationship-summary .tag { margin-left: auto; }
+    .relationship-canvas {
+      position: relative;
+      width: 1240px;
+      height: 760px;
+      overflow: hidden;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      background: rgba(11, 19, 32, .9);
+      border-radius: 7px;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(47, 91, 255, .05), transparent 35%),
+        linear-gradient(rgba(143, 165, 255, .028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(143, 165, 255, .028) 1px, transparent 1px),
+        rgba(7, 13, 23, .94);
+      background-size: auto, 20px 20px, 20px 20px, auto;
     }
-    .diagram-tier.port-boundary {
-      border-style: dashed;
-      border-color: rgba(96, 165, 250, .4);
+    .relationship-lines {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 1240px;
+      height: 760px;
+      pointer-events: none;
     }
-    .diagram-tier-head {
-      min-height: 37px;
-      margin-bottom: 8px;
+    .canvas-zone {
+      position: absolute;
+      z-index: 0;
+      border: 1px solid rgba(143, 165, 255, .14);
+      border-radius: 8px;
+      background: rgba(11, 19, 32, .52);
+      pointer-events: none;
+    }
+    .canvas-zone b {
+      position: absolute;
+      top: 12px;
+      left: 14px;
       color: var(--muted);
       font-size: 9px;
       font-weight: 750;
-      letter-spacing: .08em;
+      letter-spacing: .1em;
       text-transform: uppercase;
     }
-    .diagram-tier-head span {
-      display: block;
-      margin-top: 3px;
-      font-weight: 450;
-      letter-spacing: 0;
-      line-height: 1.25;
-      text-transform: none;
+    .canvas-zone small {
+      position: absolute;
+      top: 29px;
+      left: 14px;
+      max-width: 210px;
+      color: rgba(146, 161, 185, .72);
+      font-size: 8.5px;
     }
-    .diagram-nodes { display: grid; gap: 6px; }
-    .diagram-nodes.adapters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .canvas-zone.interfaces { left: 18px; top: 28px; width: 206px; height: 372px; }
+    .canvas-zone.workflows { left: 250px; top: 28px; width: 240px; height: 432px; }
+    .canvas-zone.core { left: 515px; top: 28px; width: 250px; height: 388px; }
+    .canvas-zone.services { left: 515px; top: 440px; width: 250px; height: 288px; }
+    .canvas-zone.adapters {
+      left: 795px;
+      top: 28px;
+      width: 410px;
+      height: 700px;
+      border-style: dashed;
+      border-color: rgba(96, 165, 250, .32);
+    }
+    .canvas-port-boundary {
+      position: absolute;
+      top: 28px;
+      left: 779px;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      width: 1px;
+      height: 700px;
+      border-left: 1px dashed rgba(96, 165, 250, .55);
+      color: var(--accent-text);
+      font: 8px/1 var(--mono);
+      letter-spacing: .12em;
+      writing-mode: vertical-rl;
+      pointer-events: none;
+    }
+    .canvas-port-boundary span { padding: 8px 0; background: var(--inset); }
     .diagram-node {
       position: relative;
       display: grid;
@@ -1012,49 +1064,19 @@
     .diagram-node.dimmed { opacity: .28; }
     .diagram-node b { overflow: hidden; font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
     .diagram-node small { overflow: hidden; color: var(--muted); font-size: 8.8px; text-overflow: ellipsis; white-space: nowrap; }
-    .diagram-arrow {
-      display: grid;
-      place-items: center;
-      color: var(--accent-text);
-      font-family: var(--mono);
-      font-size: 17px;
+    .canvas-node {
+      position: absolute;
+      left: var(--node-x);
+      top: var(--node-y);
+      z-index: 3;
+      width: 180px;
+      min-height: 56px;
+      box-shadow: 0 7px 20px rgba(0, 0, 0, .24);
     }
-    .port-marker {
-      display: grid;
-      place-items: center;
-      gap: 6px;
-      color: var(--accent-text);
-      font: 8px/1 var(--mono);
-      letter-spacing: .08em;
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
+    .canvas-node:hover, .canvas-node:focus-visible {
+      z-index: 4;
+      box-shadow: 0 0 0 2px rgba(143, 165, 255, .18), 0 9px 24px rgba(0, 0, 0, .38);
     }
-    .port-marker::before, .port-marker::after {
-      content: "";
-      width: 1px;
-      height: 34px;
-      background: rgba(96, 165, 250, .5);
-    }
-    .service-rail {
-      display: grid;
-      grid-template-columns: 138px 1fr;
-      gap: 12px;
-      align-items: center;
-      margin-top: 10px;
-      padding: 9px 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: rgba(11, 19, 32, .88);
-    }
-    .service-rail-label {
-      color: var(--muted);
-      font-size: 9px;
-      font-weight: 750;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-    .service-rail-label span { display: block; margin-top: 3px; font-weight: 450; letter-spacing: 0; text-transform: none; }
-    .service-nodes { display: grid; grid-template-columns: repeat(2, minmax(0, 190px)); gap: 7px; }
     .diagram-legend {
       display: flex;
       gap: 13px;
@@ -1074,6 +1096,15 @@
     }
     .legend-swatch.selected { border-color: var(--accent-hover); box-shadow: 0 0 0 1px var(--accent-tint); }
     .legend-swatch.path { border-color: var(--success); background: var(--success-tint); }
+    .legend-line {
+      display: inline-block;
+      width: 18px;
+      height: 0;
+      margin-right: 5px;
+      border-top: 2px solid rgba(143, 165, 255, .7);
+      vertical-align: 3px;
+    }
+    .legend-line::after { content: "›"; position: relative; top: -9px; left: 13px; color: rgba(143, 165, 255, .9); }
     .deployment-diagram { min-width: 760px; }
     .deployment-summary {
       display: flex;
@@ -1866,6 +1897,28 @@
     };
 
     const allModules = Object.values(modules).flat();
+    const moduleRelationshipEdges = Object.entries(moduleDetails).flatMap(([moduleId, detail]) =>
+      detail.dependsOn.map(dependencyId => [moduleId, dependencyId])
+    );
+    const canvasNodePositions = {
+      'audit-experience': [38, 105],
+      'lifecycle-explorer': [38, 225],
+      'ingestion-publication': [280, 80],
+      'assurance-workflow': [280, 205],
+      'package-assembly': [280, 330],
+      'evidence-graph': [550, 105],
+      'workspace-snapshots': [550, 260],
+      'evidence-store': [550, 490],
+      'job-store': [550, 610],
+      'filesystem-adapter': [825, 80],
+      'git-adapter': [1020, 80],
+      'matlab-adapter': [825, 225],
+      'spreadsheet-adapter': [1020, 225],
+      'c-source-adapter': [825, 370],
+      'coverage-adapter': [1020, 370],
+      'review-adapter': [825, 515],
+      'objective-adapter': [1020, 515]
+    };
 
     function moduleItem(moduleId) {
       return allModules.find(item => item[0] === moduleId);
@@ -1895,38 +1948,35 @@
       return `<button class="diagram-node${moduleState(moduleId)}" type="button" data-module="${moduleId}" aria-pressed="${appState.selectedModule === moduleId}"><b>${moduleName(moduleId)}</b><small>${item[2]}</small></button>`;
     }
 
+    function canvasNode(moduleId) {
+      const item = moduleItem(moduleId);
+      const position = canvasNodePositions[moduleId];
+      if (!item || !position) return '';
+      return `<button class="diagram-node canvas-node${moduleState(moduleId)}" style="--node-x:${position[0]}px;--node-y:${position[1]}px" type="button" data-module="${moduleId}" aria-pressed="${appState.selectedModule === moduleId}"><b>${moduleName(moduleId)}</b><small>${item[2]}</small></button>`;
+    }
+
     function logicalArchitectureDiagram() {
       return `
         <div class="logical-diagram">
-          <div class="diagram-flow">
-            <div class="diagram-tier">
-              <div class="diagram-tier-head">User interfaces<span>Start a user task</span></div>
-              <div class="diagram-nodes">${modules.experiences.map(item => diagramNode(item[0])).join('')}</div>
-            </div>
-            <div class="diagram-arrow" aria-hidden="true">→</div>
-            <div class="diagram-tier">
-              <div class="diagram-tier-head">Workflows<span>Control complete tasks and recovery</span></div>
-              <div class="diagram-nodes">${modules.workflows.map(item => diagramNode(item[0])).join('')}</div>
-            </div>
-            <div class="diagram-arrow" aria-hidden="true">→</div>
-            <div class="diagram-tier">
-              <div class="diagram-tier-head">Core data and rules<span>Do not depend on source technology</span></div>
-              <div class="diagram-nodes">${modules.domains.map(item => diagramNode(item[0])).join('')}</div>
-            </div>
-            <div class="port-marker" aria-label="Port boundary">PORTS</div>
-            <div class="diagram-tier port-boundary">
-              <div class="diagram-tier-head">Source adapters<span>Connect each source type through a port</span></div>
-              <div class="diagram-nodes adapters">${modules.adapters.map(item => diagramNode(item[0])).join('')}</div>
-            </div>
+          <div class="relationship-summary">
+            <span><b>Single relationship canvas.</b> Arrows point from a module to the component that it uses.</span>
+            <span class="tag">${allModules.length} components · ${moduleRelationshipEdges.length} links</span>
           </div>
-          <div class="service-rail">
-            <div class="service-rail-label">Shared services<span>Used through storage and job ports</span></div>
-            <div class="service-nodes">${modules.platform.map(item => diagramNode(item[0])).join('')}</div>
+          <div class="relationship-canvas" id="relationship-canvas">
+            <canvas class="relationship-lines" id="relationship-lines" width="1240" height="760" aria-hidden="true"></canvas>
+            <div class="canvas-zone interfaces"><b>User interfaces</b><small>Start a user task</small></div>
+            <div class="canvas-zone workflows"><b>Workflows</b><small>Control complete tasks and recovery</small></div>
+            <div class="canvas-zone core"><b>Core data and rules</b><small>Do not depend on source technology</small></div>
+            <div class="canvas-zone services"><b>Shared services</b><small>Storage, jobs, and output files</small></div>
+            <div class="canvas-port-boundary" aria-label="Port boundary"><span>PORTS</span></div>
+            <div class="canvas-zone adapters"><b>Source adapters</b><small>One adapter for each source type</small></div>
+            ${allModules.map(item => canvasNode(item[0])).join('')}
           </div>
           <div class="diagram-legend" aria-label="Diagram legend">
+            <span><i class="legend-line"></i>Uses or depends on</span>
             <span><i class="legend-swatch selected"></i>Selected module</span>
             <span><i class="legend-swatch path"></i>Selected use-case path</span>
-            <span>Click any module to inspect its purpose, operations, ports, and dependencies.</span>
+            <span>Point to or select a component to emphasize its direct links.</span>
           </div>
         </div>`;
     }
@@ -1979,14 +2029,130 @@
       return `
         <section class="architecture-explorer" aria-label="Interactive architecture diagram">
           <div class="explorer-head">
-            <div><h2>Architecture diagram</h2><p>Explore the logical layers or see where each module runs.</p></div>
+            <div><h2>Architecture diagram</h2><p>Follow component relationships on one canvas or see where each component runs.</p></div>
             <div class="explorer-actions" role="group" aria-label="Architecture diagram view">
-              <button class="view-button ${appState.diagramMode === 'logical' ? 'active' : ''}" type="button" data-diagram-mode="logical" aria-pressed="${appState.diagramMode === 'logical'}">Logical architecture</button>
+              <button class="view-button ${appState.diagramMode === 'logical' ? 'active' : ''}" type="button" data-diagram-mode="logical" aria-pressed="${appState.diagramMode === 'logical'}">Relationship canvas</button>
               <button class="view-button ${appState.diagramMode === 'deployment' ? 'active' : ''}" type="button" data-diagram-mode="deployment" aria-pressed="${appState.diagramMode === 'deployment'}">Deployment</button>
             </div>
           </div>
           <div class="diagram-scroll">${appState.diagramMode === 'deployment' ? deploymentArchitectureDiagram() : logicalArchitectureDiagram()}</div>
         </section>`;
+    }
+
+    function drawArchitectureConnections(focusModule = '') {
+      const surface = document.querySelector('#relationship-canvas');
+      const canvas = document.querySelector('#relationship-lines');
+      if (!surface || !canvas) return;
+      const context = canvas.getContext('2d');
+      if (!context) return;
+
+      const width = surface.clientWidth;
+      const height = surface.clientHeight;
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
+      if (canvas.width !== Math.round(width * scale) || canvas.height !== Math.round(height * scale)) {
+        canvas.width = Math.round(width * scale);
+        canvas.height = Math.round(height * scale);
+      }
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      context.setTransform(scale, 0, 0, scale, 0, 0);
+      context.clearRect(0, 0, width, height);
+
+      const nodeBoxes = new Map(
+        [...surface.querySelectorAll('.canvas-node')].map(node => [
+          node.dataset.module,
+          {
+            left: node.offsetLeft,
+            top: node.offsetTop,
+            right: node.offsetLeft + node.offsetWidth,
+            bottom: node.offsetTop + node.offsetHeight,
+            centerX: node.offsetLeft + node.offsetWidth / 2,
+            centerY: node.offsetTop + node.offsetHeight / 2
+          }
+        ])
+      );
+      const traceModules = new Set(appState.activeTrace ? data.traces[appState.activeTrace] || [] : []);
+      const emphasizedModule = focusModule || appState.selectedModule;
+
+      function anchors(fromBox, toBox) {
+        const dx = toBox.centerX - fromBox.centerX;
+        const dy = toBox.centerY - fromBox.centerY;
+        if (Math.abs(dx) >= Math.abs(dy)) {
+          return {
+            start: {x: dx >= 0 ? fromBox.right : fromBox.left, y: fromBox.centerY},
+            end: {x: dx >= 0 ? toBox.left : toBox.right, y: toBox.centerY},
+            horizontal: true,
+            direction: Math.sign(dx) || 1
+          };
+        }
+        return {
+          start: {x: fromBox.centerX, y: dy >= 0 ? fromBox.bottom : fromBox.top},
+          end: {x: toBox.centerX, y: dy >= 0 ? toBox.top : toBox.bottom},
+          horizontal: false,
+          direction: Math.sign(dy) || 1
+        };
+      }
+
+      const edges = moduleRelationshipEdges.map(([fromId, toId]) => {
+        const traceEdge = traceModules.has(fromId) && traceModules.has(toId);
+        const focusEdge = emphasizedModule === fromId || emphasizedModule === toId;
+        return {fromId, toId, traceEdge, focusEdge, emphasis: traceEdge ? 2 : focusEdge ? 1 : 0};
+      }).sort((left, right) => left.emphasis - right.emphasis);
+
+      let highlightedEdgeCount = 0;
+      edges.forEach(edge => {
+        const fromBox = nodeBoxes.get(edge.fromId);
+        const toBox = nodeBoxes.get(edge.toId);
+        if (!fromBox || !toBox) return;
+
+        const route = anchors(fromBox, toBox);
+        const distance = route.horizontal
+          ? Math.abs(route.end.x - route.start.x)
+          : Math.abs(route.end.y - route.start.y);
+        const bend = Math.max(38, Math.min(145, distance * .45));
+        let controlOne;
+        let controlTwo;
+        if (route.horizontal) {
+          controlOne = {x: route.start.x + route.direction * bend, y: route.start.y};
+          controlTwo = {x: route.end.x - route.direction * bend, y: route.end.y};
+        } else {
+          controlOne = {x: route.start.x, y: route.start.y + route.direction * bend};
+          controlTwo = {x: route.end.x, y: route.end.y - route.direction * bend};
+        }
+
+        const mutedByTrace = traceModules.size && !edge.traceEdge;
+        const mutedByFocus = !traceModules.size && emphasizedModule && !edge.focusEdge;
+        context.strokeStyle = edge.traceEdge
+          ? 'rgba(52, 211, 153, .96)'
+          : edge.focusEdge
+            ? 'rgba(84, 120, 255, .94)'
+            : mutedByTrace || mutedByFocus
+              ? 'rgba(117, 141, 181, .11)'
+              : 'rgba(117, 141, 181, .38)';
+        context.fillStyle = context.strokeStyle;
+        context.lineWidth = edge.traceEdge ? 2.8 : edge.focusEdge ? 2.2 : 1.1;
+        if (edge.traceEdge || edge.focusEdge) highlightedEdgeCount += 1;
+
+        context.beginPath();
+        context.moveTo(route.start.x, route.start.y);
+        context.bezierCurveTo(controlOne.x, controlOne.y, controlTwo.x, controlTwo.y, route.end.x, route.end.y);
+        context.stroke();
+
+        const arrowAngle = Math.atan2(route.end.y - controlTwo.y, route.end.x - controlTwo.x);
+        context.save();
+        context.translate(route.end.x, route.end.y);
+        context.rotate(arrowAngle);
+        context.beginPath();
+        context.moveTo(0, 0);
+        context.lineTo(-8, -4);
+        context.lineTo(-8, 4);
+        context.closePath();
+        context.fill();
+        context.restore();
+      });
+
+      canvas.dataset.edgeCount = String(edges.length);
+      canvas.dataset.highlightedEdgeCount = String(highlightedEdgeCount);
     }
 
     function moduleLinks(moduleIds, emptyText = 'None') {
@@ -2137,6 +2303,7 @@
       else if (appState.view === 'approval') page.innerHTML = approvalView();
       else page.innerHTML = reviewView();
       bindPage();
+      requestAnimationFrame(() => drawArchitectureConnections());
     }
 
     function go(view) {
@@ -2247,6 +2414,12 @@
         appState.selectedModule = module.dataset.module;
         renderPreservingScroll();
       }));
+      document.querySelectorAll('.canvas-node').forEach(module => {
+        module.addEventListener('mouseenter', () => drawArchitectureConnections(module.dataset.module));
+        module.addEventListener('mouseleave', () => drawArchitectureConnections());
+        module.addEventListener('focus', () => drawArchitectureConnections(module.dataset.module));
+        module.addEventListener('blur', () => drawArchitectureConnections());
+      });
       document.querySelector('#edit-module')?.addEventListener('click', () => {
         openDrawer(appState.selectedModule, moduleName(appState.selectedModule));
       });
@@ -2350,6 +2523,7 @@
         render();
       }
     });
+    window.addEventListener('resize', () => drawArchitectureConnections());
     render();
   </script>
 </body>
