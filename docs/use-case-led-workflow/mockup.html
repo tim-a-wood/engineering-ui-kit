@@ -966,7 +966,31 @@
       font-size: 10px;
     }
     .relationship-summary b { color: var(--secondary); }
-    .relationship-summary .tag { margin-left: auto; }
+    .relationship-copy { max-width: 640px; }
+    .relationship-view-controls {
+      display: flex;
+      margin-left: auto;
+      padding: 2px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--inset);
+    }
+    .relationship-toggle {
+      min-height: 25px;
+      padding: 0 9px;
+      border: 0;
+      border-radius: 3px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+    .relationship-toggle:hover { color: var(--secondary); }
+    .relationship-toggle.active {
+      color: var(--text);
+      background: var(--accent-tint);
+      box-shadow: inset 0 0 0 1px rgba(84, 120, 255, .38);
+    }
     .relationship-canvas {
       position: relative;
       width: 1240px;
@@ -1520,6 +1544,7 @@
       questionAnswered: false,
       option: 'cohesive',
       diagramMode: 'logical',
+      relationshipMode: 'focus',
       activeTrace: '',
       selectedModule: 'evidence-graph',
       moduleNames: {},
@@ -1903,15 +1928,15 @@
     const canvasNodePositions = {
       'audit-experience': [38, 105],
       'lifecycle-explorer': [38, 225],
-      'ingestion-publication': [280, 80],
-      'assurance-workflow': [280, 205],
-      'package-assembly': [280, 330],
+      'ingestion-publication': [280, 95],
+      'assurance-workflow': [280, 215],
+      'package-assembly': [280, 335],
       'evidence-graph': [550, 105],
       'workspace-snapshots': [550, 260],
       'evidence-store': [550, 490],
       'job-store': [550, 610],
-      'filesystem-adapter': [825, 80],
-      'git-adapter': [1020, 80],
+      'filesystem-adapter': [825, 95],
+      'git-adapter': [1020, 95],
       'matlab-adapter': [825, 225],
       'spreadsheet-adapter': [1020, 225],
       'c-source-adapter': [825, 370],
@@ -1959,7 +1984,11 @@
       return `
         <div class="logical-diagram">
           <div class="relationship-summary">
-            <span><b>Single relationship canvas.</b> Arrows point from a module to the component that it uses.</span>
+            <span class="relationship-copy"><b>${appState.relationshipMode === 'focus' ? 'Focused relationships.' : 'All relationships.'}</b> ${appState.relationshipMode === 'focus' ? 'The canvas shows only links for the selected component or use case.' : 'The canvas shows every link. Select a component to emphasize its direct links.'}</span>
+            <div class="relationship-view-controls" role="group" aria-label="Relationship visibility">
+              <button class="relationship-toggle ${appState.relationshipMode === 'focus' ? 'active' : ''}" type="button" data-relationship-mode="focus" aria-pressed="${appState.relationshipMode === 'focus'}">Focus</button>
+              <button class="relationship-toggle ${appState.relationshipMode === 'all' ? 'active' : ''}" type="button" data-relationship-mode="all" aria-pressed="${appState.relationshipMode === 'all'}">All links</button>
+            </div>
             <span class="tag">${allModules.length} components · ${moduleRelationshipEdges.length} links</span>
           </div>
           <div class="relationship-canvas" id="relationship-canvas">
@@ -1973,10 +2002,10 @@
             ${allModules.map(item => canvasNode(item[0])).join('')}
           </div>
           <div class="diagram-legend" aria-label="Diagram legend">
-            <span><i class="legend-line"></i>Uses or depends on</span>
+            <span><i class="legend-line"></i>Uses or depends on · shared rails bundle related links</span>
             <span><i class="legend-swatch selected"></i>Selected module</span>
             <span><i class="legend-swatch path"></i>Selected use-case path</span>
-            <span>Point to or select a component to emphasize its direct links.</span>
+            <span>Select “All links” only when you need the complete map.</span>
           </div>
         </div>`;
     }
@@ -2073,74 +2102,69 @@
       );
       const traceModules = new Set(appState.activeTrace ? data.traces[appState.activeTrace] || [] : []);
       const emphasizedModule = focusModule || appState.selectedModule;
-
-      function anchors(fromBox, toBox) {
-        const dx = toBox.centerX - fromBox.centerX;
-        const dy = toBox.centerY - fromBox.centerY;
-        if (Math.abs(dx) >= Math.abs(dy)) {
-          return {
-            start: {x: dx >= 0 ? fromBox.right : fromBox.left, y: fromBox.centerY},
-            end: {x: dx >= 0 ? toBox.left : toBox.right, y: toBox.centerY},
-            horizontal: true,
-            direction: Math.sign(dx) || 1
-          };
-        }
-        return {
-          start: {x: fromBox.centerX, y: dy >= 0 ? fromBox.bottom : fromBox.top},
-          end: {x: toBox.centerX, y: dy >= 0 ? toBox.top : toBox.bottom},
-          horizontal: false,
-          direction: Math.sign(dy) || 1
-        };
-      }
-
       const edges = moduleRelationshipEdges.map(([fromId, toId]) => {
         const traceEdge = traceModules.has(fromId) && traceModules.has(toId);
         const focusEdge = emphasizedModule === fromId || emphasizedModule === toId;
-        return {fromId, toId, traceEdge, focusEdge, emphasis: traceEdge ? 2 : focusEdge ? 1 : 0};
-      }).sort((left, right) => left.emphasis - right.emphasis);
+        const visible = appState.relationshipMode === 'all'
+          || (traceModules.size ? traceEdge : focusEdge);
+        return {fromId, toId, traceEdge, focusEdge, visible, emphasis: traceEdge ? 2 : focusEdge ? 1 : 0};
+      });
+      const visibleEdges = edges.filter(edge => edge.visible);
+      const adapterIds = new Set(modules.adapters.map(item => item[0]));
+      const adapterEdges = visibleEdges.filter(edge => adapterIds.has(edge.toId));
+      const regularEdges = visibleEdges
+        .filter(edge => !adapterIds.has(edge.toId))
+        .sort((left, right) => left.emphasis - right.emphasis);
+      const drawnRoutes = [];
 
-      let highlightedEdgeCount = 0;
-      edges.forEach(edge => {
-        const fromBox = nodeBoxes.get(edge.fromId);
-        const toBox = nodeBoxes.get(edge.toId);
-        if (!fromBox || !toBox) return;
+      function edgeStyle(edge) {
+        if (edge.traceEdge) return {color: 'rgba(52, 211, 153, .96)', width: 2.6, rank: 2};
+        if (edge.focusEdge) return {color: 'rgba(84, 120, 255, .94)', width: 2.1, rank: 1};
+        return {color: 'rgba(117, 141, 181, .22)', width: 1, rank: 0};
+      }
 
-        const route = anchors(fromBox, toBox);
-        const distance = route.horizontal
-          ? Math.abs(route.end.x - route.start.x)
-          : Math.abs(route.end.y - route.start.y);
-        const bend = Math.max(38, Math.min(145, distance * .45));
-        let controlOne;
-        let controlTwo;
-        if (route.horizontal) {
-          controlOne = {x: route.start.x + route.direction * bend, y: route.start.y};
-          controlTwo = {x: route.end.x - route.direction * bend, y: route.end.y};
-        } else {
-          controlOne = {x: route.start.x, y: route.start.y + route.direction * bend};
-          controlTwo = {x: route.end.x, y: route.end.y - route.direction * bend};
-        }
+      function strongestStyle(routeEdges) {
+        return routeEdges.reduce((strongest, edge) => {
+          const next = edgeStyle(edge);
+          return next.rank > strongest.rank ? next : strongest;
+        }, {color: 'rgba(117, 141, 181, .22)', width: 1, rank: 0});
+      }
 
-        const mutedByTrace = traceModules.size && !edge.traceEdge;
-        const mutedByFocus = !traceModules.size && emphasizedModule && !edge.focusEdge;
-        context.strokeStyle = edge.traceEdge
-          ? 'rgba(52, 211, 153, .96)'
-          : edge.focusEdge
-            ? 'rgba(84, 120, 255, .94)'
-            : mutedByTrace || mutedByFocus
-              ? 'rgba(117, 141, 181, .11)'
-              : 'rgba(117, 141, 181, .38)';
-        context.fillStyle = context.strokeStyle;
-        context.lineWidth = edge.traceEdge ? 2.8 : edge.focusEdge ? 2.2 : 1.1;
-        if (edge.traceEdge || edge.focusEdge) highlightedEdgeCount += 1;
+      function point(box, side) {
+        if (side === 'left') return {x: box.left, y: box.centerY};
+        if (side === 'right') return {x: box.right, y: box.centerY};
+        if (side === 'top') return {x: box.centerX, y: box.top};
+        return {x: box.centerX, y: box.bottom};
+      }
 
+      function drawPolyline(points, style, arrow = true, excludedModuleIds = []) {
+        const cleanPoints = points.filter((current, index) =>
+          index === 0 || current.x !== points[index - 1].x || current.y !== points[index - 1].y
+        );
+        if (cleanPoints.length < 2) return;
+        context.strokeStyle = style.color;
+        context.fillStyle = style.color;
+        context.lineWidth = style.width;
+        context.lineCap = 'round';
+        context.lineJoin = 'round';
         context.beginPath();
-        context.moveTo(route.start.x, route.start.y);
-        context.bezierCurveTo(controlOne.x, controlOne.y, controlTwo.x, controlTwo.y, route.end.x, route.end.y);
+        context.moveTo(cleanPoints[0].x, cleanPoints[0].y);
+        cleanPoints.slice(1).forEach(routePoint => context.lineTo(routePoint.x, routePoint.y));
         context.stroke();
+        drawnRoutes.push({points: cleanPoints, excludedModuleIds});
 
-        const arrowAngle = Math.atan2(route.end.y - controlTwo.y, route.end.x - controlTwo.x);
+        if (!arrow) return;
+        const end = cleanPoints.at(-1);
+        let previous = cleanPoints.at(-2);
+        for (let index = cleanPoints.length - 2; index >= 0; index -= 1) {
+          if (cleanPoints[index].x !== end.x || cleanPoints[index].y !== end.y) {
+            previous = cleanPoints[index];
+            break;
+          }
+        }
+        const arrowAngle = Math.atan2(end.y - previous.y, end.x - previous.x);
         context.save();
-        context.translate(route.end.x, route.end.y);
+        context.translate(end.x, end.y);
         context.rotate(arrowAngle);
         context.beginPath();
         context.moveTo(0, 0);
@@ -2149,10 +2173,180 @@
         context.closePath();
         context.fill();
         context.restore();
+      }
+
+      function routeFor(edge) {
+        const fromBox = nodeBoxes.get(edge.fromId);
+        const toBox = nodeBoxes.get(edge.toId);
+        if (!fromBox || !toBox) return [];
+        const key = `${edge.fromId}>${edge.toId}`;
+        const leftLane = 237;
+        const middleLane = 505;
+        const coreRightLane = 745;
+        const lowerLane = 475;
+
+        if (key === 'audit-experience>assurance-workflow' || key === 'audit-experience>package-assembly') {
+          return [point(fromBox, 'right'), {x: leftLane, y: fromBox.centerY}, {x: leftLane, y: toBox.centerY}, point(toBox, 'left')];
+        }
+        if (key === 'lifecycle-explorer>evidence-graph' || key === 'lifecycle-explorer>workspace-snapshots') {
+          return [
+            point(fromBox, 'right'),
+            {x: leftLane, y: fromBox.centerY},
+            {x: leftLane, y: lowerLane},
+            {x: middleLane, y: lowerLane},
+            {x: middleLane, y: toBox.centerY},
+            point(toBox, 'left')
+          ];
+        }
+        if (
+          key === 'ingestion-publication>workspace-snapshots'
+          || key === 'ingestion-publication>job-store'
+          || key === 'assurance-workflow>evidence-graph'
+          || key === 'assurance-workflow>evidence-store'
+          || key === 'package-assembly>workspace-snapshots'
+          || key === 'package-assembly>evidence-store'
+          || key === 'package-assembly>job-store'
+        ) {
+          return [
+            point(fromBox, 'right'),
+            {x: middleLane, y: fromBox.centerY},
+            {x: middleLane, y: toBox.centerY},
+            point(toBox, 'left')
+          ];
+        }
+        if (key === 'evidence-graph>evidence-store') {
+          return [
+            point(fromBox, 'right'),
+            {x: coreRightLane, y: fromBox.centerY},
+            {x: coreRightLane, y: toBox.centerY},
+            point(toBox, 'right')
+          ];
+        }
+        if (key === 'workspace-snapshots>evidence-store') {
+          return [point(fromBox, 'bottom'), point(toBox, 'top')];
+        }
+        const midpointX = Math.round((fromBox.right + toBox.left) / 2);
+        return [point(fromBox, 'right'), {x: midpointX, y: fromBox.centerY}, {x: midpointX, y: toBox.centerY}, point(toBox, 'left')];
+      }
+
+      regularEdges.forEach(edge => {
+        const route = routeFor(edge);
+        if (route.length) drawPolyline(route, edgeStyle(edge), true, [edge.fromId, edge.toId]);
+      });
+
+      if (adapterEdges.length) {
+        const leftRailX = 780;
+        const rightRailX = width - 18;
+        const topRailY = 76;
+        const importBox = nodeBoxes.get('ingestion-publication');
+        const assuranceBox = nodeBoxes.get('assurance-workflow');
+        const importEdges = adapterEdges.filter(edge => edge.fromId === 'ingestion-publication');
+        const assuranceReviewEdges = adapterEdges.filter(edge => edge.fromId === 'assurance-workflow' && edge.toId === 'review-adapter');
+        const edgesByTarget = new Map();
+
+        adapterEdges.forEach(edge => {
+          if (!edgesByTarget.has(edge.toId)) edgesByTarget.set(edge.toId, []);
+          edgesByTarget.get(edge.toId).push(edge);
+        });
+
+        if (importEdges.length && importBox) {
+          const importStyle = strongestStyle(importEdges);
+          const importTargets = importEdges.map(edge => nodeBoxes.get(edge.toId)).filter(Boolean);
+          const leftTargets = importTargets.filter(box => box.centerX < 1000);
+          const rightTargets = importTargets.filter(box => box.centerX >= 1000);
+          const farRailX = rightTargets.length ? rightRailX : leftRailX;
+          drawPolyline(
+            [point(importBox, 'top'), {x: importBox.centerX, y: topRailY}, {x: farRailX, y: topRailY}],
+            importStyle,
+            false,
+            ['ingestion-publication']
+          );
+          if (leftTargets.length) {
+            drawPolyline(
+              [{x: leftRailX, y: topRailY}, {x: leftRailX, y: Math.max(...leftTargets.map(box => box.centerY))}],
+              importStyle,
+              false
+            );
+          }
+          if (rightTargets.length) {
+            drawPolyline(
+              [{x: rightRailX, y: topRailY}, {x: rightRailX, y: Math.max(...rightTargets.map(box => box.centerY))}],
+              importStyle,
+              false
+            );
+          }
+        }
+
+        if (assuranceReviewEdges.length && assuranceBox) {
+          const reviewBox = nodeBoxes.get('review-adapter');
+          const assuranceStyle = strongestStyle(assuranceReviewEdges);
+          if (reviewBox) {
+            drawPolyline(
+              [
+                point(assuranceBox, 'right'),
+                {x: 505, y: assuranceBox.centerY},
+                {x: 505, y: 430},
+                {x: leftRailX, y: 430},
+                {x: leftRailX, y: reviewBox.centerY}
+              ],
+              assuranceStyle,
+              false,
+              ['assurance-workflow']
+            );
+          }
+        }
+
+        [...edgesByTarget.entries()].forEach(([targetId, targetEdges]) => {
+          const targetBox = nodeBoxes.get(targetId);
+          if (!targetBox) return;
+          const targetStyle = strongestStyle(targetEdges);
+          const rightColumn = targetBox.centerX >= 1000;
+          const railX = rightColumn ? rightRailX : leftRailX;
+          const targetPoint = point(targetBox, rightColumn ? 'right' : 'left');
+          drawPolyline(
+            [{x: railX, y: targetBox.centerY}, targetPoint],
+            targetStyle,
+            true,
+            [targetId]
+          );
+        });
+      }
+
+      function segmentHitsBox(start, end, box) {
+        const padding = 4;
+        const left = box.left - padding;
+        const right = box.right + padding;
+        const top = box.top - padding;
+        const bottom = box.bottom + padding;
+        if (start.x === end.x) {
+          return start.x >= left && start.x <= right
+            && Math.max(Math.min(start.y, end.y), top) <= Math.min(Math.max(start.y, end.y), bottom);
+        }
+        if (start.y === end.y) {
+          return start.y >= top && start.y <= bottom
+            && Math.max(Math.min(start.x, end.x), left) <= Math.min(Math.max(start.x, end.x), right);
+        }
+        return false;
+      }
+
+      let nodeCollisionCount = 0;
+      drawnRoutes.forEach(route => {
+        route.points.slice(1).forEach((end, index) => {
+          const start = route.points[index];
+          nodeBoxes.forEach((box, moduleId) => {
+            if (!route.excludedModuleIds.includes(moduleId) && segmentHitsBox(start, end, box)) {
+              nodeCollisionCount += 1;
+            }
+          });
+        });
       });
 
       canvas.dataset.edgeCount = String(edges.length);
-      canvas.dataset.highlightedEdgeCount = String(highlightedEdgeCount);
+      canvas.dataset.visibleEdgeCount = String(visibleEdges.length);
+      canvas.dataset.highlightedEdgeCount = String(visibleEdges.filter(edge => edge.traceEdge || edge.focusEdge).length);
+      canvas.dataset.nodeCollisionCount = String(nodeCollisionCount);
+      canvas.dataset.renderedRouteCount = String(drawnRoutes.length);
+      canvas.dataset.relationshipMode = appState.relationshipMode;
     }
 
     function moduleLinks(moduleIds, emptyText = 'None') {
@@ -2400,6 +2594,10 @@
       }));
       document.querySelectorAll('[data-diagram-mode]').forEach(button => button.addEventListener('click', () => {
         appState.diagramMode = button.dataset.diagramMode;
+        renderPreservingScroll();
+      }));
+      document.querySelectorAll('[data-relationship-mode]').forEach(button => button.addEventListener('click', () => {
+        appState.relationshipMode = button.dataset.relationshipMode;
         renderPreservingScroll();
       }));
       document.querySelectorAll('[data-trace]').forEach(row => row.addEventListener('click', () => {

@@ -42,12 +42,16 @@ test("uses direct task labels in the briefing and mockup", async () => {
   assert.match(mockup, /Relationship canvas/);
   assert.match(mockup, /class="relationship-canvas"/);
   assert.match(mockup, /<canvas class="relationship-lines"/);
+  assert.match(mockup, /Focused relationships/);
+  assert.match(mockup, /data-relationship-mode="focus"/);
+  assert.match(mockup, /data-relationship-mode="all"/);
   assert.match(mockup, /Deployment/);
   assert.match(mockup, /Ports and adapters/);
   assert.match(mockup, /data-diagram-mode="logical"/);
   assert.match(mockup, /data-module="\$\{moduleId\}"/);
   assert.match(mockup, /const moduleRelationshipEdges/);
   assert.match(mockup, /function drawArchitectureConnections\(/);
+  assert.match(mockup, /canvas\.dataset\.nodeCollisionCount/);
   assert.match(mockup, /function moduleInspector\(\)/);
   assert.match(proposal, /^# Plan from use cases/m);
   assert.match(proposal, /## 10\. DO-178C Audit Hub example/);
