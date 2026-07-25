@@ -157,6 +157,9 @@ reason.
 | 2026-07-25 | Baseline full core suite | `npm run build` (root) then `ELECTRON_DISABLE_SANDBOX=1 xvfb-run -a npx vitest run` in `packages/core` | pass after environment setup (see below) |
 
 | 2026-07-25 | Wave 1 core modules (EUC-01..06) | `npx vitest run test/capabilities/design/` in `packages/core` | 8 files, 142 tests passed; `tsc --noEmit` clean |
+| 2026-07-25 | Final full validation | root `npm run build`; typecheck for core/desktop/gui; root `npm test` under `ELECTRON_DISABLE_SANDBOX=1 EUIK_TEST_MODE=1 xvfb-run`; `npx vitest run apps/desktop/test`; `node apps/desktop/e2e/design-workflow.mjs`; `npm test` in `examples/do178-audit-hub` | all green: core 809/809 (112 files), gui 273/273 (34 files), runtime 96/96, desktop 78 passed + 1 environment skip (no MATLAB engine), Electron design e2e 11/11, DO-178C example 28/28; builds and typechecks clean |
+| 2026-07-25 | Browser evidence run | `node scripts/design-workflow-evidence.mjs` | 17/17 screenshots with §24.5 metadata; axe: 0 violations on 4 workspace states; usability log 8 entries, 3 resolved in-scope |
+| 2026-07-25 | Product scenarios | `npx vitest run test/capabilities/design/product-scenarios.test.ts` | 32/32 (S01–S30 + provider-loss + stale-response) with per-scenario structured evidence |
 
 Environment prerequisites established for this container: root `npm install`
 and `npm run build`; Electron binary via `node node_modules/electron/install.js`
