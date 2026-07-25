@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S04",
+  "stepIds": [
+    "module-queue.open"
+  ],
+  "expected": "The module queue lists all 17 §22.2 catalog modules, every one notStarted before any module design begins.",
+  "actual": "module queue: total=17, notStarted=17",
+  "revisions": {
+    "application": "n/a",
+    "design": "r1",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "dbcf795471ad5edaa7a5743c2c48bc02066063ba9dc67d6ecfaa1cc045926c97",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "5d2c89426ef84fcc4bf68ac0a4593182d8ced8d9a90e6c7c12f9e6b9d63096ea"
+}

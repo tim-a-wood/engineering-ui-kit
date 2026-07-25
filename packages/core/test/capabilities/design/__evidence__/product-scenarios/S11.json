@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S11",
+  "stepIds": [
+    "implementation-packet.create"
+  ],
+  "expected": "createModuleImplementationPacket succeeds for the approved, contract-satisfied Evidence Store module.",
+  "actual": "implementation packet sample-do178c-audit-hub.impl-packet.mod-evidence-store-scn-idem-39-initial created for mod.evidence-store",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "6b2da451db26207e418654435eaf35a8056d083391b2fe844d2277df20a722bd"
+}

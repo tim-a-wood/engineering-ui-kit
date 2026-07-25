@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S26",
+  "stepIds": [
+    "connection.verify"
+  ],
+  "expected": "verifyConnection returns the observed connection fields from its configured executor, and an honest not-configured diagnostic when no executor is configured (operations-level half; the GUI half is covered by the GUI evidence suite).",
+  "actual": "verifyConnection returned observed path /workspace/adapters/mod.core; unconfigured executor failed honestly",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "f50c3ece66a169af19f5b3daf0bb252c92977ad0972517e480d802814ee03e8c"
+}

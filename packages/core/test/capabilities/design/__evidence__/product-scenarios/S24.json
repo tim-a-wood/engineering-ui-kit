@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S24",
+  "stepIds": [
+    "workspace.restart"
+  ],
+  "expected": "A fresh DesignWorkspace instance over the same data directory (\"application restart\") restores the module-design draft, its session, and the last selected module byte-identically.",
+  "actual": "draft, session, and last-selected-module state all restored byte-identically after restart",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "892973937a0285298e41690feb9dee2e494435e8db006d97946cb47f4b7858e3"
+}

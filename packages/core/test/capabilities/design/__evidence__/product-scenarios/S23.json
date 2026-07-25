@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S23",
+  "stepIds": [
+    "multi-module-handoff.build"
+  ],
+  "expected": "buildMultiModulePacket rejects a combined handoff whose selected modules have overlapping owned paths.",
+  "actual": "combined handoff rejected: CAP-DES-PKT-MULTI-OWNED-PATH-OVERLAP",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "2a4f068d95e0c31605e93b94faf7c7e83ed9cf071fcc707744612043f08573d5"
+}

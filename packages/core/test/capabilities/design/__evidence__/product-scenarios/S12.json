@@ -1,0 +1,20 @@
+{
+  "scenarioId": "S12",
+  "stepIds": [
+    "delta.import",
+    "delta.inspect"
+  ],
+  "expected": "A delta that writes outside the module owned paths is rejected (path-outside-allowed) and preserved as evidence.",
+  "actual": "delta rejected: path-outside-allowed; preserved in the workspace as evidence",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "9cc6478730ca4cd3538b8a04977e94e3e0f00c78caac1a9baeedd3b73063f9ac"
+}

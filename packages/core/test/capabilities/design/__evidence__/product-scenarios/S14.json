@@ -1,0 +1,22 @@
+{
+  "scenarioId": "S14",
+  "stepIds": [
+    "delta.import",
+    "delta.inspect",
+    "delta.approve",
+    "delta.apply"
+  ],
+  "expected": "An induced mid-apply failure rolls back every change for that plan; the repository is byte-identical to its pre-apply state.",
+  "actual": "induced apply failure rolled back; repository byte-identical to its pre-apply state",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "24ea6f98460b1b9652e64a17cc2ac15224a9de5a2ed61b2c43bb2cc850c77d5b"
+}

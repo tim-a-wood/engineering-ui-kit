@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S01",
+  "stepIds": [
+    "use-case-analysis.create"
+  ],
+  "expected": "A first use-case draft is created from one plain-English sentence, with the described work as its main use case and no open material questions.",
+  "actual": "draft proj-s01.use-case-analysis.an-audit-lead-refreshes-evidence-from-every-configured-source@r1 created with 1 use case and 0 open material questions",
+  "revisions": {
+    "application": "n/a",
+    "design": "r1",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "ebbd37af0a679683160d0ab0eda838c68c0c0870b7a200243c64730376e6c231"
+}

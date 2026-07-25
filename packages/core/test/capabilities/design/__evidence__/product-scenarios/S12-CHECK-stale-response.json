@@ -1,0 +1,20 @@
+{
+  "scenarioId": "S12-CHECK-stale-response",
+  "stepIds": [
+    "delta.import",
+    "delta.inspect"
+  ],
+  "expected": "A delta whose base revision was superseded by a later approval is rejected (stale-base) and preserved as evidence.",
+  "actual": "delta rejected: stale-base; preserved in the workspace as evidence",
+  "revisions": {
+    "application": "n/a",
+    "design": "r6",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "d0e276c95c49ada2151c63859645f31ddecd1f79e13da0fa14d845f2b4c48625"
+}
