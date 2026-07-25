@@ -478,6 +478,7 @@ async function run() {
   usabilityLog.push(
     defect(
       'System canvas (Design tab): the layered layout places a node\'s x-coordinate at `topologicalDepth * (nodeWidth + gap)` (e.g. depth ~10 → x≈2000), but the canvas <svg> keeps a fixed `viewBox="0 0 900 480"` that is never re-fit to the current selection or to the graph\'s extent. With the sample\'s 17 real modules, the *selected* module\'s own node is routinely off-canvas by default — verified live: with "Finding Review" selected, 04-system-canvas-focus-mode.png shows only its neighbor "Audit Workspace" on screen; "Finding Review" itself is not visible. There is no "center on selection" or "fit to view" action — "Reset view" only zeroes pan/scale back to (0,0)/100%, which does not help. A pointer user must manually pan (drag or the ±/zoom controls, min zoom 50%, still not enough to fit x≈2000 into a 900-wide viewBox) to find the very module they just selected. Not fixed here per instructions to avoid editing apps/gui/src.',
+      'Fixed after this observation (IMPLEMENTATION-STATUS.md U-07): the viewBox now fits the visible content and re-fits when the selection or link mode changes.',
     ),
     positive(
       'Progress is reported as counts, not percentages ("N of 17 module designs approved"), matching §18.3 exactly and avoiding false-progress framing.',
@@ -487,12 +488,14 @@ async function run() {
     ),
     friction(
       'On the module-design Approval step, the "Approve module" primary action is silently disabled (no inline explanation) whenever the design has not reached "readyForReview" — the user must separately visit the Checks step to learn why approval is blocked. This is an "unclear approvals" gap relative to §19\'s "show exact reasons" pattern used elsewhere (e.g. the Checks step\'s own error summary with field links).',
+      'Fixed after this observation (IMPLEMENTATION-STATUS.md U-08): the approval step now states why approval is unavailable.',
     ),
     friction(
       'Clicking "Create Copilot handoff" for a module row inside the Waves table gives no visible confirmation on that same screen — the outcome is only shown after switching down to the separate per-module handoff panel and re-selecting the same module from its own dropdown. A first-time user could click the Waves row action repeatedly, unsure whether anything happened (weak progress feedback).',
     ),
     friction(
       'At the 640px narrow reflow, the "Show module list" drawer toggle does not name the currently selected module, so a narrow-viewport user cannot tell which module they are editing without opening the drawer first (lost context / poor default).',
+      'Fixed after this observation (IMPLEMENTATION-STATUS.md U-09): the drawer toggle now names the current module.',
     ),
     positive(
       'The module-design session keeps exactly one primary action button pinned at the bottom of every step ("Create module draft" / "Approve module" / etc.), consistent with the §18.1 "one primary action" rule and reducing decision fatigue while stepping through the six-step session.',
@@ -531,8 +534,8 @@ async function run() {
   console.log('\nDone.')
 }
 
-function friction(observation) {
-  return { kind: 'friction', observation, capturedAt: new Date().toISOString() }
+function friction(observation, resolution) {
+  return resolution ? { kind: 'friction', observation, resolution, capturedAt: new Date().toISOString() } : { kind: 'friction', observation, capturedAt: new Date().toISOString() }
 }
 function positive(observation) {
   return { kind: 'positive', observation, capturedAt: new Date().toISOString() }
@@ -540,8 +543,8 @@ function positive(observation) {
 function warn(observation) {
   return { kind: 'warning', observation, capturedAt: new Date().toISOString() }
 }
-function defect(observation) {
-  return { kind: 'defect', observation, capturedAt: new Date().toISOString() }
+function defect(observation, resolution) {
+  return resolution ? { kind: 'defect', observation, resolution, capturedAt: new Date().toISOString() } : { kind: 'defect', observation, capturedAt: new Date().toISOString() }
 }
 
 run().catch((e) => {

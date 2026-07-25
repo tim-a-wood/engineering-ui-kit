@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-25T03:49:15.673Z",
-  "build": "6764b22",
+  "generatedAt": "2026-07-25T03:53:44.536Z",
+  "build": "dfa6312",
   "reports": [
     {
       "label": "design-workspace-default",
       "url": "http://localhost:4329/",
-      "timestamp": "2026-07-25T03:49:06.831Z",
+      "timestamp": "2026-07-25T03:53:35.757Z",
       "violationCount": 0,
       "criticalOrSeriousCount": 0,
       "violations": [],
@@ -482,6 +482,331 @@
                 ".tip-link"
               ],
               "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "7.5pt (10px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"-16\" y=\"-16\" class=\"design-canvas-deployable-label\">Desktop application process</text>",
+              "target": [
+                ".design-canvas-deployable-label"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"18\" class=\"design-canvas-node-title\">Audit Workspace</text>",
+              "target": [
+                "g[aria-label=\"Audit Workspace, approved\"] > .design-canvas-node-title[y=\"18\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"34\" class=\"design-canvas-node-meta\" aria-hidden=\"true\">▲3 ▽4</text>",
+              "target": [
+                "g[aria-label=\"Audit Workspace, approved\"] > .design-canvas-node-meta[y=\"34\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"48\" class=\"design-canvas-node-state\" aria-hidden=\"true\">approved</text>",
+              "target": [
+                "g[aria-label=\"Audit Workspace, approved\"] > .design-canvas-node-state[y=\"48\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"18\" class=\"design-canvas-node-title\">Evidence Graph</text>",
+              "target": [
+                "g[aria-label=\"Evidence Graph, needsInput\"] > .design-canvas-node-title[y=\"18\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"34\" class=\"design-canvas-node-meta\" aria-hidden=\"true\">▲6 ▽1</text>",
+              "target": [
+                "g[aria-label=\"Evidence Graph, needsInput\"] > .design-canvas-node-meta[y=\"34\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"48\" class=\"design-canvas-node-state\" aria-hidden=\"true\">needsInput</text>",
+              "target": [
+                "g[aria-label=\"Evidence Graph, needsInput\"] > .design-canvas-node-state[y=\"48\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"18\" class=\"design-canvas-node-title\">Evidence Store</text>",
+              "target": [
+                "g[aria-label=\"Evidence Store, approved\"] > .design-canvas-node-title[y=\"18\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"34\" class=\"design-canvas-node-meta\" aria-hidden=\"true\">▲1 ▽0</text>",
+              "target": [
+                "g[aria-label=\"Evidence Store, approved\"] > .design-canvas-node-meta[y=\"34\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"48\" class=\"design-canvas-node-state\" aria-hidden=\"true\">approved</text>",
+              "target": [
+                "g[aria-label=\"Evidence Store, approved\"] > .design-canvas-node-state[y=\"48\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"18\" class=\"design-canvas-node-title\">Finding Review</text>",
+              "target": [
+                "g[aria-label=\"Finding Review, approved\"] > .design-canvas-node-title[y=\"18\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"34\" class=\"design-canvas-node-meta\" aria-hidden=\"true\">▲3 ▽2</text>",
+              "target": [
+                "g[aria-label=\"Finding Review, approved\"] > .design-canvas-node-meta[y=\"34\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"48\" class=\"design-canvas-node-state\" aria-hidden=\"true\">approved</text>",
+              "target": [
+                "g[aria-label=\"Finding Review, approved\"] > .design-canvas-node-state[y=\"48\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
             },
             {
               "any": [
@@ -669,7 +994,7 @@
     {
       "label": "module-session",
       "url": "http://localhost:4329/",
-      "timestamp": "2026-07-25T03:49:07.180Z",
+      "timestamp": "2026-07-25T03:53:36.144Z",
       "violationCount": 0,
       "criticalOrSeriousCount": 0,
       "violations": [],
@@ -1152,6 +1477,331 @@
                 {
                   "id": "color-contrast",
                   "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "7.5pt (10px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"-16\" y=\"-16\" class=\"design-canvas-deployable-label\">Desktop application process</text>",
+              "target": [
+                ".design-canvas-deployable-label"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"18\" class=\"design-canvas-node-title\">Audit Workspace</text>",
+              "target": [
+                "g[aria-label=\"Audit Workspace, approved\"] > .design-canvas-node-title[y=\"18\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"34\" class=\"design-canvas-node-meta\" aria-hidden=\"true\">▲3 ▽4</text>",
+              "target": [
+                "g[aria-label=\"Audit Workspace, approved\"] > .design-canvas-node-meta[y=\"34\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"48\" class=\"design-canvas-node-state\" aria-hidden=\"true\">approved</text>",
+              "target": [
+                "g[aria-label=\"Audit Workspace, approved\"] > .design-canvas-node-state[y=\"48\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"18\" class=\"design-canvas-node-title\">Evidence Graph</text>",
+              "target": [
+                "g[aria-label=\"Evidence Graph, needsInput\"] > .design-canvas-node-title[y=\"18\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"34\" class=\"design-canvas-node-meta\" aria-hidden=\"true\">▲6 ▽1</text>",
+              "target": [
+                "g[aria-label=\"Evidence Graph, needsInput\"] > .design-canvas-node-meta[y=\"34\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"48\" class=\"design-canvas-node-state\" aria-hidden=\"true\">needsInput</text>",
+              "target": [
+                "g[aria-label=\"Evidence Graph, needsInput\"] > .design-canvas-node-state[y=\"48\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"18\" class=\"design-canvas-node-title\">Evidence Store</text>",
+              "target": [
+                "g[aria-label=\"Evidence Store, approved\"] > .design-canvas-node-title[y=\"18\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"34\" class=\"design-canvas-node-meta\" aria-hidden=\"true\">▲1 ▽0</text>",
+              "target": [
+                "g[aria-label=\"Evidence Store, approved\"] > .design-canvas-node-meta[y=\"34\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"48\" class=\"design-canvas-node-state\" aria-hidden=\"true\">approved</text>",
+              "target": [
+                "g[aria-label=\"Evidence Store, approved\"] > .design-canvas-node-state[y=\"48\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"18\" class=\"design-canvas-node-title\">Finding Review</text>",
+              "target": [
+                "g[aria-label=\"Finding Review, approved\"] > .design-canvas-node-title[y=\"18\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"34\" class=\"design-canvas-node-meta\" aria-hidden=\"true\">▲3 ▽2</text>",
+              "target": [
+                "g[aria-label=\"Finding Review, approved\"] > .design-canvas-node-meta[y=\"34\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
+                    "contrastRatio": 0,
+                    "fontSize": "8.3pt (11px)",
+                    "fontWeight": "normal",
+                    "messageKey": "bgOverlap",
+                    "expectedContrastRatio": "4.5:1"
+                  },
+                  "relatedNodes": [],
+                  "impact": "serious",
+                  "message": "Element's background color could not be determined because it is overlapped by another element"
+                }
+              ],
+              "all": [],
+              "none": [],
+              "impact": "serious",
+              "html": "<text x=\"8\" y=\"48\" class=\"design-canvas-node-state\" aria-hidden=\"true\">approved</text>",
+              "target": [
+                "g[aria-label=\"Finding Review, approved\"] > .design-canvas-node-state[y=\"48\"][x=\"8\"]"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "any": [
+                {
+                  "id": "color-contrast",
+                  "data": {
                     "messageKey": "nonBmp"
                   },
                   "relatedNodes": [],
@@ -1333,7 +1983,7 @@
     {
       "label": "build-tab",
       "url": "http://localhost:4329/",
-      "timestamp": "2026-07-25T03:49:10.208Z",
+      "timestamp": "2026-07-25T03:53:39.176Z",
       "violationCount": 0,
       "criticalOrSeriousCount": 0,
       "violations": [],
@@ -4214,7 +4864,7 @@
     {
       "label": "evidence-tab",
       "url": "http://localhost:4329/",
-      "timestamp": "2026-07-25T03:49:12.478Z",
+      "timestamp": "2026-07-25T03:53:41.385Z",
       "violationCount": 0,
       "criticalOrSeriousCount": 0,
       "violations": [],

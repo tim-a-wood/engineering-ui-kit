@@ -10,10 +10,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:05.772Z"
+    "capturedAt": "2026-07-25T03:53:34.658Z"
   },
   {
     "id": "02",
@@ -26,10 +26,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:06.128Z"
+    "capturedAt": "2026-07-25T03:53:35.020Z"
   },
   {
     "id": "03",
@@ -42,10 +42,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:06.343Z"
+    "capturedAt": "2026-07-25T03:53:35.242Z"
   },
   {
     "id": "04",
@@ -58,10 +58,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:07.293Z"
+    "capturedAt": "2026-07-25T03:53:36.250Z"
   },
   {
     "id": "05",
@@ -74,10 +74,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:07.616Z"
+    "capturedAt": "2026-07-25T03:53:36.567Z"
   },
   {
     "id": "06",
@@ -90,10 +90,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:08.173Z"
+    "capturedAt": "2026-07-25T03:53:37.114Z"
   },
   {
     "id": "07",
@@ -106,10 +106,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:08.668Z"
+    "capturedAt": "2026-07-25T03:53:37.608Z"
   },
   {
     "id": "08",
@@ -122,10 +122,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:09.055Z"
+    "capturedAt": "2026-07-25T03:53:37.998Z"
   },
   {
     "id": "09",
@@ -138,10 +138,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:09.323Z"
+    "capturedAt": "2026-07-25T03:53:38.277Z"
   },
   {
     "id": "10",
@@ -154,10 +154,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:09.893Z"
+    "capturedAt": "2026-07-25T03:53:38.859Z"
   },
   {
     "id": "11",
@@ -170,10 +170,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:10.713Z"
+    "capturedAt": "2026-07-25T03:53:39.668Z"
   },
   {
     "id": "12",
@@ -186,10 +186,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:11.372Z"
+    "capturedAt": "2026-07-25T03:53:40.278Z"
   },
   {
     "id": "13",
@@ -202,10 +202,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:11.690Z"
+    "capturedAt": "2026-07-25T03:53:40.612Z"
   },
   {
     "id": "14",
@@ -218,10 +218,10 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:11.821Z"
+    "capturedAt": "2026-07-25T03:53:40.760Z"
   },
   {
     "id": "15",
@@ -234,26 +234,26 @@
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:12.233Z"
+    "capturedAt": "2026-07-25T03:53:41.114Z"
   },
   {
     "id": "16",
     "action": "Open the Design workspace at a 640x900 narrow viewport.",
     "expectedResult": "The module queue becomes a drawer/selector, the current module content remains first, and approval actions remain reachable without precision pointing (§18.2).",
-    "actualObservation": ".design-workspace.narrow present: true. Drawer toggle label: \"Show module list\".",
+    "actualObservation": ".design-workspace.narrow present: true. Drawer toggle label: \"Show module list — current: Evidence Graph\".",
     "screenshot": "16-narrow-viewport-640x900-reflow.png",
     "viewport": {
       "width": 640,
       "height": 900
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:14.028Z"
+    "capturedAt": "2026-07-25T03:53:42.878Z"
   },
   {
     "id": "17",
@@ -266,9 +266,9 @@
       "height": 450
     },
     "theme": "default",
-    "build": "6764b22",
+    "build": "dfa6312",
     "environment": "chromium-headless linux",
     "testDataRevision": "sample-do178c-audit-hub",
-    "capturedAt": "2026-07-25T03:49:15.576Z"
+    "capturedAt": "2026-07-25T03:53:44.438Z"
   }
 ]
