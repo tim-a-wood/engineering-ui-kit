@@ -56,6 +56,12 @@ import {
   type RepositoryRootOption,
 } from './designMachineApi.js'
 
+// Second-review P1 fix (was DEV-05): `buildDefaultExecutors` now also wires
+// real `configureBinding`/`verifyConnection`/`runScenario` executors
+// (`capabilities/design/connectExecutors.ts`) whenever a `{ workspace,
+// dataDir }` pair is supplied — see `designMachineApi.ts`'s module doc. This
+// CLI adapter supplies it below the same way `createDesignMachineApi` does.
+
 export type DesignCliOptions = {
   dataDir: string
   stdout: (s: string) => void
@@ -156,7 +162,8 @@ export async function runDesignCli(argv: string[], opts: DesignCliOptions): Prom
 
   const projectId = extractProjectId(stampedArgs)
   const repositoryRoot = resolveRepositoryRoot(opts.repositoryRoot, projectId)
-  const executors = opts.executors ?? (repositoryRoot ? buildDefaultExecutors(repositoryRoot) : buildRepositoryNotConfiguredExecutors())
+  const executors =
+    opts.executors ?? (repositoryRoot ? buildDefaultExecutors(repositoryRoot, { workspace, dataDir }) : buildRepositoryNotConfiguredExecutors())
   const deps: CreateDesignOperationsDeps = {
     workspace,
     executors,

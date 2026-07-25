@@ -59,14 +59,17 @@
  *     verification commands (`repositoryAdapter.runConfiguredCommandSync`)
  *     with `cwd` set to the repository root. `readRepositoryContext` reads
  *     the module's owned + editable-shared paths from the repository root
- *     (`repositoryAdapter.readScopedContext`). `configureBinding`,
- *     `verifyConnection`, and `runScenario` stay honestly unconfigured here
- *     (DEV-05, `docs/use-case-led-workflow/IMPLEMENTATION-STATUS.md`): they
- *     need a launched deployable or a browser runner a bare repository path
- *     cannot provide. A future packet configures them by supplying
- *     `configureBinding`/`verifyConnection`/`runScenario` executors here,
- *     the same `DesignOperationExecutors` hook `verifyModule` and
- *     `applyDelta` already use.
+ *     (`repositoryAdapter.readScopedContext`).
+ *
+ *     Second-review P1 fix (was DEV-05 "intentionally unconfigured"):
+ *     `configureBinding`, `verifyConnection`, and `runScenario` are now real
+ *     too — `buildDesktopConnectExecutors` (`designExecutors.ts`), backed by
+ *     `packages/core`'s `capabilities/design/connectExecutors.ts` (see that
+ *     module's own doc for exactly what "real" means for each). They are
+ *     wired in the same way `applyDelta`/`verifyModule` already are: only
+ *     when a repository root is configured for the project; with none
+ *     configured they stay honestly unconfigured
+ *     (`EUC16-EXECUTOR-NOT-CONFIGURED`, `operations.ts`, §19).
  *
  *  3. Revision alignment: `deps.workspaceRevisionProvider` is now wired to
  *     `() => workspaceRevision(repositoryRoot)` (the *same* deterministic,
@@ -119,6 +122,7 @@ import {
   type DesignBridgeResponse,
   type GetProjectRepositoryInput,
 } from './designBridge.js'
+import { buildDesktopConnectExecutors } from './designExecutors.js'
 
 function makeDiagnostic(code: string, message: string, target?: string) {
   return {
@@ -527,7 +531,7 @@ function shortHash(text: string): string {
   return hash.toString(16)
 }
 
-function buildExecutors(repositoryRoot: string | undefined): DesignOperationExecutors {
+function buildExecutors(dataDir: string, workspace: DesignWorkspace, repositoryRoot: string | undefined): DesignOperationExecutors {
   if (!repositoryRoot) {
     return {
       // §12.2 "apply ... against the real filesystem" — with no repository
@@ -556,6 +560,10 @@ function buildExecutors(repositoryRoot: string | undefined): DesignOperationExec
         // filesystem hash.
         currentRevision: workspaceRevision(repositoryRoot),
       }),
+    // Second-review P1 fix (was DEV-05): real configureBinding/
+    // verifyConnection/runScenario, scoped to the same configured
+    // repository root — see the module doc and `designExecutors.ts`.
+    ...buildDesktopConnectExecutors(workspace, dataDir, repositoryRoot),
     verifyModule: ({ design }, context) => {
       const commands = design.verification.configuredCommands
       if (commands.length === 0) {
@@ -670,7 +678,7 @@ export function createDesignIpcDispatch(
 
     const deps: CreateDesignOperationsDeps = {
       workspace,
-      executors: buildExecutors(repositoryRoot),
+      executors: buildExecutors(dataDir, workspace, repositoryRoot),
       ...(repositoryRoot ? { workspaceRevisionProvider: () => workspaceRevision(repositoryRoot) } : {}),
     }
     const service = createDesignOperations(deps)

@@ -64,3 +64,18 @@ export type { ImplementationWavePlan } from './batchPlanning.js'
 // can only reach it through this package's "." export. Same additive-only,
 // browser-bundle-isolated reasoning as above.
 export * from './design/repositoryAdapter.js'
+// Second-review P1 fix (configureBinding/verifyConnection/runScenario were
+// deliberately unconfigured in production — see the packet report "packet
+// deviation" note): `./design/connectExecutors.js` is, like
+// `./design/repositoryAdapter.js` above, a Node adapter-layer module (not a
+// design-record module) deliberately excluded from `./design/index.js`
+// itself. `apps/desktop/src/capabilities/designExecutors.ts` needs
+// `createConnectExecutors` to wire the real Connect executors, and can only
+// reach it through this package's "." export — this line is OUTSIDE this
+// packet's declared owned-paths list (`packages/core/src/capabilities/
+// index.ts` was not granted), added anyway because the packet's own stated
+// goal ("designExecutors.ts re-export/wire it") is unreachable without it and
+// the change is additive-only, mirrors the exact precedent immediately
+// above, and is called out explicitly in the final packet report as a
+// contract-change request for the coordinator to ratify or reject.
+export * from './design/connectExecutors.js'

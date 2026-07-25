@@ -86,8 +86,9 @@ import {
   type DesignOperationExecutors,
   type DesignOperationsService,
 } from './capabilities/design/operations.js'
-import type { DesignAuditEvent } from './capabilities/design/records.js'
+import type { DesignAuditEvent, ModuleDesignSpecification } from './capabilities/design/records.js'
 import { applyDeltaTransactionally, readScopedContext, runConfiguredCommandSync, workspaceRevision } from './capabilities/design/repositoryAdapter.js'
+import { createConnectExecutors, type ConnectExecutorDeps } from './capabilities/design/connectExecutors.js'
 
 /** `"user:<id>"` after trim — the only principal shape this adapter stamps onto a change-operation request. */
 const PRINCIPAL_FORMAT = /^user:\S+$/
@@ -261,16 +262,58 @@ export function buildRepositoryNotConfiguredExecutors(): DesignOperationExecutor
  * (§12.3 "configured commands", §20.2 configured allowlist). A design with no
  * configured commands fails honestly rather than passing vacuously.
  * `readRepositoryContext` reads the module's owned + editable-shared paths
- * from `root` (`repositoryAdapter.readScopedContext`). `configureBinding`,
- * `verifyConnection`, and `runScenario` stay unconfigured here (DEV-05): they
- * need a launched deployable or a browser runner that a bare repository path
- * cannot provide, so those operations return the honest 'not-configured'
- * diagnostic (`operations.ts`, §19) unless the embedding product supplies
- * real executors via `CreateDesignMachineApiOptions.executors`.
+ * from `root` (`repositoryAdapter.readScopedContext`).
+ *
+ * Second-review P1 fix (was DEV-05 "intentionally unconfigured"):
+ * `configureBinding`, `verifyConnection`, and `runScenario` are now real —
+ * `capabilities/design/connectExecutors.ts` — whenever `connect` (a
+ * `DesignWorkspace` + `dataDir`) is supplied; see `buildConnectExecutorDeps`.
+ * `createDesignMachineApi` always supplies `connect` when it resolves a
+ * `repositoryRoot` for the call. A caller invoking `buildDefaultExecutors`
+ * directly with no `connect` argument keeps the old behavior for those three
+ * (the honest 'not-configured' diagnostic, `operations.ts` §19) — e.g. a
+ * caller with no real `DesignWorkspace` to read approved contracts/module
+ * designs from. `CreateDesignMachineApiOptions.executors` still overrides
+ * everything, as before.
  */
-export function buildDefaultExecutors(root: string): DesignOperationExecutors {
+/**
+ * Second-review P1 fix — `ConnectExecutorDeps`'s plain read functions, built
+ * from a real `DesignWorkspace` (`capabilities/design/connectExecutors.ts`,
+ * module doc). Exported so `apps/desktop/src/capabilities/designExecutors.ts`
+ * (which cannot construct a `DesignWorkspace` directly the way this file
+ * does — it goes through `designIpc.ts`'s own workspace instance) never has
+ * to re-derive this wiring by hand.
+ */
+export function buildConnectExecutorDeps(workspace: DesignWorkspace, dataDir: string, repositoryRoot: string): ConnectExecutorDeps {
+  return {
+    dataDir,
+    repositoryRoot,
+    getModuleDesign: (projectId, moduleId) => workspace.getApprovedModuleDesign(projectId, moduleId) ?? workspace.getModuleDesignDraft(projectId, moduleId),
+    listApprovedOperations: (projectId) =>
+      workspace
+        .listContracts(projectId)
+        .filter((c) => c.status === 'approved')
+        .map((c) => ({ operationId: c.operationId, version: c.version })),
+    listApprovedModuleDesigns: (projectId): ModuleDesignSpecification[] => {
+      const architecture = workspace.getApprovedArchitecture(projectId)
+      if (!architecture) return []
+      return architecture.moduleIds
+        .map((id) => workspace.getApprovedModuleDesign(projectId, id))
+        .filter((d): d is ModuleDesignSpecification => Boolean(d))
+    },
+  }
+}
+
+/**
+ * `connect` supplies the workspace + data directory `configureBinding`/
+ * `verifyConnection`/`runScenario` need (see `buildConnectExecutorDeps`);
+ * omitted, those three stay unconfigured (as before this fix) while
+ * `applyDelta`/`verifyModule`/`readRepositoryContext` are unaffected.
+ */
+export function buildDefaultExecutors(root: string, connect?: { workspace: DesignWorkspace; dataDir: string }): DesignOperationExecutors {
   return {
     applyDelta: (plan, delta) => applyDeltaTransactionally(plan, delta, root, { currentRevision: workspaceRevision(root) }),
+    ...(connect ? createConnectExecutors(buildConnectExecutorDeps(connect.workspace, connect.dataDir, root)) : {}),
     verifyModule: ({ design }, context) => {
       const commands = design.verification.configuredCommands
       if (commands.length === 0) {
@@ -340,7 +383,8 @@ function sha256Short(text: string): string {
  */
 function buildDepsForCall(workspace: DesignWorkspace, options: CreateDesignMachineApiOptions, projectId: string | undefined): CreateDesignOperationsDeps {
   const repositoryRoot = resolveRepositoryRoot(options.repositoryRoot, projectId)
-  const executors = options.executors ?? (repositoryRoot ? buildDefaultExecutors(repositoryRoot) : buildRepositoryNotConfiguredExecutors())
+  const executors =
+    options.executors ?? (repositoryRoot ? buildDefaultExecutors(repositoryRoot, { workspace, dataDir: options.dataDir }) : buildRepositoryNotConfiguredExecutors())
   return {
     workspace,
     executors,
