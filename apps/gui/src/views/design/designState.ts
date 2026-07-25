@@ -1188,7 +1188,12 @@ export class DesignStore {
   rollbackReturnedDelta(moduleId: string): void {
     const flow = this.deltaFlowFor(moduleId)
     if (!flow.filesBeforeApply) return
-    this.patchDeltaFlow(moduleId, { files: flow.filesBeforeApply, filesBeforeApply: undefined, applyResult: undefined, rolledBack: true })
+    // Keep `applyResult` set after rollback: `BuildHandoffView` gates its
+    // status/result region (including the "Rolled back." confirmation) on
+    // `applyResult` being present, so clearing it here would silently drop
+    // the rollback confirmation from the DOM and its aria-live region
+    // (§18.4 status announcements must remain visible, not just fire once).
+    this.patchDeltaFlow(moduleId, { files: flow.filesBeforeApply, filesBeforeApply: undefined, rolledBack: true })
     this.announce(`Rolled back the simulated apply for ${moduleId}.`)
     this.commit()
   }
