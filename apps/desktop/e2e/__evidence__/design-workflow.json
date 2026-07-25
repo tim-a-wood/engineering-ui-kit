@@ -1,0 +1,98 @@
+{
+  "test": "design-workflow",
+  "channel": "design:operation",
+  "outcome": "pass",
+  "steps": [
+    {
+      "name": "build prerequisites (packages/core, apps/desktop)",
+      "ok": true,
+      "detail": {
+        "built": []
+      }
+    },
+    {
+      "name": "launch Electron app (fresh EUIK_DATA_DIR)",
+      "ok": true,
+      "detail": {
+        "launched": true
+      }
+    },
+    {
+      "name": "createUseCaseDraft (actor user:e2e, idempotencyKey)",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "revision": "r1",
+        "auditEventId": "53bc933d-2df3-4754-bb67-16d1ea27112b",
+        "validNextActionCount": 1
+      }
+    },
+    {
+      "name": "getWorkflowStatus reflects the created draft",
+      "ok": true,
+      "detail": {
+        "draftRevision": "r1"
+      }
+    },
+    {
+      "name": "getValidNextActions lists approveUseCaseAnalysis",
+      "ok": true,
+      "detail": {
+        "validNextActions": [
+          "approveUseCaseAnalysis"
+        ]
+      }
+    },
+    {
+      "name": "approveUseCaseAnalysis rejects an agent actor (no agent-approval shortcut)",
+      "ok": true,
+      "detail": {
+        "diagnosticCodes": [
+          "EUC16-AGENT-APPROVAL-FORBIDDEN"
+        ]
+      }
+    },
+    {
+      "name": "close app #1",
+      "ok": true
+    },
+    {
+      "name": "relaunch Electron app (same EUIK_DATA_DIR)",
+      "ok": true,
+      "detail": {
+        "launched": true
+      }
+    },
+    {
+      "name": "getWorkflowStatus after restart still resolves the draft (same revision)",
+      "ok": true,
+      "detail": {
+        "draftRevision": "r1"
+      }
+    },
+    {
+      "name": "createUseCaseDraft replay (same idempotencyKey, after restart) returns the first committed result",
+      "ok": true,
+      "detail": {
+        "revision": "r1",
+        "auditEventId": "53bc933d-2df3-4754-bb67-16d1ea27112b",
+        "idempotentReplay": true
+      }
+    },
+    {
+      "name": "close app #2",
+      "ok": true
+    }
+  ],
+  "environment": {
+    "platform": "linux",
+    "node": "v22.22.2",
+    "electron": "/home/user/engineering-ui-kit/node_modules/electron/dist/electron",
+    "xvfbWrapped": true,
+    "electronDisableSandbox": "1",
+    "euikDataDir": "/tmp/euik-design-e2e-s0nfA7",
+    "builtWorkspaces": []
+  },
+  "startedAt": "2026-07-25T03:10:24.572Z",
+  "endedAt": "2026-07-25T03:10:25.862Z"
+}
