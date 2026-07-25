@@ -45,14 +45,14 @@ working behavior. A row is `verified` only when automated evidence passes.
 | EUC-04 | Module-design core | partial (`moduleInterview.ts`) | verified | `packages/core/src/capabilities/design/moduleDesign.ts`, `moduleDesignSession.ts`, `moduleDesignCompilers.ts` | `euc04-*.test.ts` (75 tests) |
 | EUC-05 | Contract registry | partial (`registry.ts`) | verified | `packages/core/src/capabilities/design/contractRegistry.ts` | `euc05-contract-registry.test.ts` (14 tests) |
 | EUC-06 | Design baseline | missing | verified | `packages/core/src/capabilities/design/designBaseline.ts` | `euc06-design-baseline.test.ts` (11 tests) |
-| EUC-07 | Impact engine | partial (`impact.ts`) | missing | `packages/core/src/capabilities/design/impactEngine.ts` | — |
-| EUC-08 | Diagram semantics | missing | missing | `packages/core/src/capabilities/design/diagramSemantics.ts` | — |
-| EUC-09 | Diagram layout adapter | missing | missing | `packages/core/src/capabilities/design/diagramLayout.ts` | — |
-| EUC-10 | Context and packet compiler | partial (`packets.ts`) | missing | `packages/core/src/capabilities/design/contextPacket.ts` | — |
-| EUC-11 | Delta inspector and apply planner | partial (overlay inspect/apply) | missing | `packages/core/src/capabilities/design/deltaInspector.ts` | — |
-| EUC-12 | Verification planner | partial (`verification.ts`) | missing | `packages/core/src/capabilities/design/verificationPlanner.ts` | — |
-| EUC-13 | Persistence and migration adapter | partial (`persistence.ts`, `migration.ts`) | missing | `packages/core/src/capabilities/design/designWorkspace.ts`, `designMigration.ts` | — |
-| EUC-14 | Provider adapters | partial (file-drop packets only) | missing | `packages/core/src/capabilities/design/providers.ts` | — |
+| EUC-07 | Impact engine | partial (`impact.ts`) | verified | `packages/core/src/capabilities/design/impactEngine.ts` | `euc07-impact-engine.test.ts` (10 tests) |
+| EUC-08 | Diagram semantics | missing | verified | `packages/core/src/capabilities/design/diagramSemantics.ts` | `euc08-diagram-semantics.test.ts` (21 tests) |
+| EUC-09 | Diagram layout adapter | missing | verified | `packages/core/src/capabilities/design/diagramLayout.ts` | `euc09-diagram-layout.test.ts` (27 tests) |
+| EUC-10 | Context and packet compiler | partial (`packets.ts`) | verified | `packages/core/src/capabilities/design/contextPacket.ts` | `euc10-context-packet.test.ts` (20 tests) |
+| EUC-11 | Delta inspector and apply planner | partial (overlay inspect/apply) | verified | `packages/core/src/capabilities/design/deltaInspector.ts` | `euc11-delta-inspector.test.ts` (30 tests) |
+| EUC-12 | Verification planner | partial (`verification.ts`) | verified | `packages/core/src/capabilities/design/verificationPlanner.ts` | `euc12-verification-planner.test.ts` (19 tests) |
+| EUC-13 | Persistence and migration adapter | partial (`persistence.ts`, `migration.ts`) | verified | `packages/core/src/capabilities/design/designWorkspace.ts`, `designMigration.ts` | `euc13-*.test.ts` (26 tests) |
+| EUC-14 | Provider adapters | partial (file-drop packets only) | verified | `packages/core/src/capabilities/design/providers.ts` | `euc14-providers.test.ts` (20 tests) |
 | EUC-15 | Repository and process adapters | partial (overlay apply, command runner) | missing | `packages/core/src/capabilities/design/repositoryAdapter.ts` | — |
 | EUC-16 | Desktop and machine API adapters | partial (legacy IPC only) | missing | `packages/core/src/capabilities/design/operations.ts`, `apps/desktop/src/capabilities/designIpc.ts`, `packages/core/src/designCli.ts` | — |
 | EUC-17 | React workspaces | partial (legacy views) | missing | `apps/gui/src/views/design/*` | — |
