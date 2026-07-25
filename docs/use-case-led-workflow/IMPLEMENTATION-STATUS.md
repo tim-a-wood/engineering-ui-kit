@@ -172,3 +172,8 @@ recommendations in the final report.
 
 | # | Area | Observation | Disposition |
 | --- | --- | --- | --- |
+| U-01 | Module queue | The sample ships every module with an approved history, so the `Blocked` filter shows an empty state on first open; a first-time user cannot see what a blocked module looks like without constructing one. | Accepted for the sample (blocked rows appear as soon as a dependency is reopened); the queue's blocked filter shows an explanatory empty state. |
+| U-02 | Checks step | Error-summary links jump to the step that owns the diagnostic, not the exact field, so precise correction still needs a short visual scan inside the step. | Recorded as a recommendation; step-level focus keeps §18.4 error-linking useful without deep per-field forms. |
+| U-03 | Copilot handoff | The foundation build shipped the handoff button as a confirmation stub, which would have been a silent dead end for users. | Fixed in GUI part 2: the button now creates a real packet through the same builders the machine API uses. |
+| U-04 | Session resume | Resume returns to the exact step, but nothing summarizes what changed upstream since the user left. | Recorded as a recommendation (changed-upstream indicator exists in the queue row; a session-level banner would repeat it at the point of work). |
+| U-05 | Long ids | Deep generated diagram-relationship ids exceeded OS filename limits when used as discussion-entry filenames — an invisible, hard-to-diagnose failure for a user proposing a change from a diagram. | Fixed: long ids are hashed in filenames; full ids stay in the record body. |
