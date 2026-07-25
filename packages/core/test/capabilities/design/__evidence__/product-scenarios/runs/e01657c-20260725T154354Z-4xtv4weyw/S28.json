@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S28",
+  "stepIds": [
+    "evidence-policy.plan"
+  ],
+  "expected": "buildEvidenceExpectationPlan assigns screenshot evidence to every visible step (unless a not-applicable reason applies), and the sample's real recorded runs carry screenshotMetadata wherever they carry a screenshotRef.",
+  "actual": "24 visible steps expect screenshot evidence; recorded runs carry screenshotMetadata wherever a screenshotRef is present",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "45e7b7fa0adddee98efd422a445ee12fe856d78e8feedf8d2e5739b3cc562e4e"
+}

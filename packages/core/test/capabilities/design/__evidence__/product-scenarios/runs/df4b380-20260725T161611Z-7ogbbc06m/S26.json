@@ -1,0 +1,20 @@
+{
+  "scenarioId": "S26",
+  "stepIds": [
+    "connection.verify"
+  ],
+  "expected": "verifyConnection returns the observed connection fields from its configured executor, and an honest not-configured diagnostic when no executor is configured (operations-level half; the GUI half is covered by the GUI evidence suite).",
+  "actual": "verifyConnection returned observed path /workspace/adapters/mod.core; unconfigured executor failed honestly",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "executorHonestyNote": "The Connect entry point exercised by this scenario is an injected test executor (a fake `verifyConnection` executor supplied directly by the test), not a deployed production entry point. This suite covers the operations-level record layer only; driving Connect through the real, deployed product is a GUI/desktop-level concern out of scope for this evidence record.",
+  "contentHash": "a4b7003995b4098a295200b8e030e34c0628cb0a96bcde59d65865f2a7875829"
+}

@@ -1,0 +1,20 @@
+{
+  "scenarioId": "S17",
+  "stepIds": [
+    "impact.analyze",
+    "impact.apply-to-records"
+  ],
+  "expected": "An operation-behavior change to EvidenceStorePort marks its provider and consumers stale; an unrelated leaf module (the Git adapter) is left untouched.",
+  "actual": "stale: mod.audit-workspace, mod.evidence-graph, mod.evidence-store, mod.finding-review, mod.import-and-publish, mod.lifecycle-explorer, mod.package-export, mod.workspace-snapshots; mod.adapter.git (unrelated) untouched",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "18a5ea25eb7a87856a30a453b18266f965bf664b456e3c2e72aa0bb2b4d3d9fe"
+}

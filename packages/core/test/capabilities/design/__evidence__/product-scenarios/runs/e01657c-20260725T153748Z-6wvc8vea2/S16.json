@@ -1,0 +1,20 @@
+{
+  "scenarioId": "S16",
+  "stepIds": [
+    "impact.analyze",
+    "module-design.reopen"
+  ],
+  "expected": "After a contract-behavior change to an operation Lifecycle Explorer consumes (FollowTrace), Lifecycle Explorer is reopened for review while its approved revision is preserved.",
+  "actual": "mod.lifecycle-explorer reopened as a draft; its approved revision is preserved untouched",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "35f33270f33725f02ccd8f55dbb912ed8c1595097dc3248527219104e17a8281"
+}

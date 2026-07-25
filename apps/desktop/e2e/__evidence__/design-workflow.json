@@ -1,7 +1,7 @@
 {
   "test": "design-workflow",
   "channel": "design:operation",
-  "outcome": "pass",
+  "outcome": "fail",
   "steps": [
     {
       "name": "build prerequisites (packages/core, apps/desktop)",
@@ -23,7 +23,7 @@
       "detail": {
         "ok": true,
         "revision": "r1",
-        "auditEventId": "c25eef3f-4d49-498d-b044-bf5b6fc046f5",
+        "auditEventId": "ca922cb7-742f-4772-9587-a4f82a8f51cf",
         "validNextActionCount": 1
       }
     },
@@ -45,43 +45,8 @@
     },
     {
       "name": "approveUseCaseAnalysis rejects an agent actor (no agent-approval shortcut)",
-      "ok": true,
-      "detail": {
-        "diagnosticCodes": [
-          "EUC16-AGENT-APPROVAL-FORBIDDEN"
-        ]
-      }
-    },
-    {
-      "name": "close app #1",
-      "ok": true
-    },
-    {
-      "name": "relaunch Electron app (same EUIK_DATA_DIR)",
-      "ok": true,
-      "detail": {
-        "launched": true
-      }
-    },
-    {
-      "name": "getWorkflowStatus after restart still resolves the draft (same revision)",
-      "ok": true,
-      "detail": {
-        "draftRevision": "r1"
-      }
-    },
-    {
-      "name": "createUseCaseDraft replay (same idempotencyKey, after restart) returns the first committed result",
-      "ok": true,
-      "detail": {
-        "revision": "r1",
-        "auditEventId": "c25eef3f-4d49-498d-b044-bf5b6fc046f5",
-        "idempotentReplay": true
-      }
-    },
-    {
-      "name": "close app #2",
-      "ok": true
+      "ok": false,
+      "error": "assertion failed: expected EUC16-AGENT-APPROVAL-FORBIDDEN among [\"EUC16-AUTHORITY-NOT-CONFIGURED\"]"
     }
   ],
   "environment": {
@@ -90,9 +55,9 @@
     "electron": "/home/user/engineering-ui-kit/node_modules/electron/dist/electron",
     "xvfbWrapped": true,
     "electronDisableSandbox": "1",
-    "euikDataDir": "/tmp/euik-design-e2e-NOWAgS",
+    "euikDataDir": "/tmp/euik-design-e2e-YD2ze2",
     "builtWorkspaces": []
   },
-  "startedAt": "2026-07-25T15:04:00.508Z",
-  "endedAt": "2026-07-25T15:04:01.879Z"
+  "startedAt": "2026-07-25T16:20:58.273Z",
+  "endedAt": "2026-07-25T16:20:59.054Z"
 }

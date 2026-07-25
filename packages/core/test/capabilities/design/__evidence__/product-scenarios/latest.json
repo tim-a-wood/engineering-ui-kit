@@ -1,7 +1,8 @@
 {
-  "runId": "bc6fd551ea5b",
-  "buildRev": "05b9604",
+  "runId": "ab859d0-20260725T162014Z-fy9t9hkve",
+  "buildRev": "ab859d0",
   "suite": "product-scenarios",
-  "evidenceDir": "runs/bc6fd551ea5b",
-  "updatedAt": "2026-07-25T15:03:19.219Z"
+  "evidenceDir": "runs/ab859d0-20260725T162014Z-fy9t9hkve",
+  "startedAt": "2026-07-25T16:20:14.692Z",
+  "updatedAt": "2026-07-25T16:20:15.392Z"
 }

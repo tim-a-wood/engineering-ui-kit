@@ -1,0 +1,20 @@
+{
+  "scenarioId": "S19",
+  "stepIds": [
+    "diagram.project",
+    "diagram.propose-change"
+  ],
+  "expected": "A real dependency relationship is selected from the projected Evidence Graph component diagram and a change is proposed against it.",
+  "actual": "proposed change recorded on relationship sample-do178c-audit-hub.architecture.module-design.mod-evidence-graph.relationship.dependency-mod-evidence-graph-mod-evidence-store",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "a2f0d00e526299a661267a8b49bcfa123bbfed8a9b44c8d03dde463010d76903"
+}

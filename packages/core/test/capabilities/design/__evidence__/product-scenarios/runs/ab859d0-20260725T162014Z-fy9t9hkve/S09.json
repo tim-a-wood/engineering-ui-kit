@@ -1,0 +1,23 @@
+{
+  "scenarioId": "S09",
+  "stepIds": [
+    "module-design.update",
+    "module-design.analyze",
+    "module-design.approve"
+  ],
+  "expected": "The Evidence Store module design is approved while the other 16 sample modules remain not started; progress counts reflect exactly 1 approved and 16 not started.",
+  "actual": "mod.evidence-store approved; queue shows approved=1, notStarted=16",
+  "revisions": {
+    "application": "n/a",
+    "design": "r4",
+    "modules": {
+      "mod.evidence-store": "r4"
+    }
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "496d5927b95bb8ecf046c204bf9f1f94973d880388cec21e27e9c2c38bb931d3"
+}

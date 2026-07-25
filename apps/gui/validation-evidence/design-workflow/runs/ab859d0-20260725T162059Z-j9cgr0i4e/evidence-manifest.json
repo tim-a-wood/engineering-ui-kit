@@ -1,0 +1,749 @@
+[
+  {
+    "id": "01",
+    "action": "Open the Design workspace from Primary navigation with no prior state.",
+    "expectedResult": "The workspace opens with the synthetic-data statement, the 17-module queue, and counts-not-percentages progress.",
+    "actualObservation": "Sample statement: \"This is synthetic sample data for the DO-178C Audit Hub. Every actor, evidence item, finding, and package below is invented for demonstration only; it is not real audit evidence.\". Queue: \"17 modules shown\". Status: \"System structure approved. 13 of 17 module designs approved, 4 remain.\".",
+    "screenshot": "01-design-workspace-default.png",
+    "screenshotHash": "27836280fc4b7b32ec78da3c4c8322b1479a4da6e463aa529a9583acb5b76c68",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:02.077Z",
+    "scenarioRefs": [
+      "S04"
+    ],
+    "scenarioRefsNote": "Opens the module queue showing all 17 sample modules with the synthetic-data statement and counts-based status — §24.2 S04, exact match."
+  },
+  {
+    "id": "02",
+    "action": "Click the \"Approved\" filter chip in the module queue.",
+    "expectedResult": "Only approved-state modules remain in the queue list, with a live-region count update.",
+    "actualObservation": "Queue result count after filtering: \"13 modules shown\".",
+    "screenshot": "02-module-queue-filtered-approved.png",
+    "screenshotHash": "7ae4d5af91672f9ec31fa1844aee5ae11376318454468003697cab25bbc8a0fb",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:02.449Z",
+    "scenarioRefs": [
+      "S09"
+    ],
+    "scenarioRefsNote": "Filtering to \"Approved\" shows the approved/remaining split (\"13 modules shown\" of 17) that is the visible state named by S09 (\"approve one module while 16 remain incomplete\"); the approve action itself is exercised at the operations level (core evidence), not by this screenshot."
+  },
+  {
+    "id": "03",
+    "action": "Select \"Finding Review\" from the filtered module queue.",
+    "expectedResult": "The center panel shows the six fixed module-design session steps and the current step content for the selected module.",
+    "actualObservation": "Session steps shown (6): 1. Review boundary (completed) | 2. Define behavior (completed) | 3. Define contracts (completed) | 4. Review diagrams (completed) | 5. Run checks (completed) | 6. Approve module (completed).",
+    "screenshot": "03-module-session-six-step.png",
+    "screenshotHash": "2cebfc0b8e382f904a4dbfbf1fff2c5b88e2f923f3fa4bed77f1b28ebb3ac275",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:02.684Z",
+    "scenarioRefs": [
+      "S05",
+      "S06"
+    ],
+    "scenarioRefsNote": "Shows the six fixed module-design session steps — the same session UI S05 (create module draft) and S06 (stop/resume at the contracts step) both exercise, though this particular capture is of an already-approved module's completed steps."
+  },
+  {
+    "id": "04",
+    "action": "With \"Finding Review\" selected, view the system canvas in its default focus mode.",
+    "expectedResult": "The canvas shows only the selected module and its direct neighborhood (§8.2 \"use focus mode by default\").",
+    "actualObservation": "\"Show all links\" toggle aria-pressed=\"false\" (false means focus mode is active).",
+    "screenshot": "04-system-canvas-focus-mode.png",
+    "screenshotHash": "fb887995a84b6b91ff365617c231417b2e33b49f6405f9d4bb85572bb1775528",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:03.688Z",
+    "scenarioRefs": [
+      "S03"
+    ],
+    "scenarioRefsNote": "Views the approved system structure on the canvas in its default focus mode — §24.2 S03 (\"create and approve the system structure\"), viewed post-approval."
+  },
+  {
+    "id": "05",
+    "action": "Click the \"Show all links\" canvas toggle.",
+    "expectedResult": "The canvas now shows every module and every dependency edge in the approved system structure.",
+    "actualObservation": "\"Show all links\" toggle aria-pressed=\"true\" after the click.",
+    "screenshot": "05-system-canvas-all-links.png",
+    "screenshotHash": "c3c8da420b249170c463de9f91ed711218de1ac696bd68422d5f63222c506b3a",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:03.967Z",
+    "scenarioRefs": [
+      "S03"
+    ],
+    "scenarioRefsNote": "Views the same approved system structure with all links shown — §24.2 S03."
+  },
+  {
+    "id": "06",
+    "action": "Double-click \"Audit Workspace, approved\", the module node actually visible on the default canvas view (the selected module \"Finding Review\" itself is off-canvas — see the defect note in usability-log.json).",
+    "expectedResult": "A modal opens showing the module state, responsibility, provided (consumer) and required (dependency) relationships.",
+    "actualObservation": "Dialog title: \"Audit Workspace\".",
+    "screenshot": "06-canvas-node-detail-modal.png",
+    "screenshotHash": "0003ff8210a18ada57b8884c078ae7bc19cc4a7b23343b4e4b06d07f26b942bf",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:04.563Z",
+    "scenarioRefs": [
+      "S03"
+    ],
+    "scenarioRefsNote": "Opens a module's state/responsibility/provided/required detail from the approved system structure — §24.2 S03."
+  },
+  {
+    "id": "07",
+    "action": "Open the \"Review diagrams\" step for \"Finding Review\".",
+    "expectedResult": "A rendered UML component diagram appears for the module, with one tab per applicable diagram kind.",
+    "actualObservation": "Diagram tabs available: Component, Activity, State machine, Sequence, Use case.",
+    "screenshot": "07-module-diagrams-component.png",
+    "screenshotHash": "e70a425bbeeacccd2021eabac640c203195956889256e15b3c38948b708d3e7e",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:05.060Z",
+    "scenarioRefs": [
+      "S19"
+    ],
+    "scenarioRefsNote": "Renders the UML component diagram that S19 (select a UML relationship and propose a change) is driven from."
+  },
+  {
+    "id": "08",
+    "action": "Click the first selectable node on the component diagram.",
+    "expectedResult": "A modal opens with the UML element type, stable element ID, label, source record, definition, connected elements, trace links, and discussion history.",
+    "actualObservation": "Selected diagram element: \"«component»: Audit Workspace\".",
+    "screenshot": "08-diagram-element-detail-modal.png",
+    "screenshotHash": "a908dd594f70ec881397b3f3c522d7c0001212e0440d1e581c1253e07979b188",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:05.461Z",
+    "scenarioRefs": [
+      "S19"
+    ],
+    "scenarioRefsNote": "Selects a diagram element and opens its detail modal — the GUI-visible half of S19; the \"propose a change\" step is not captured in this screenshot."
+  },
+  {
+    "id": "09",
+    "action": "Click \"Show relationship list\" to toggle the diagram's text alternative.",
+    "expectedResult": "The SVG diagram is replaced by an accessible text list of every relationship (§15.2, §18.4).",
+    "actualObservation": "9 relationship line(s) listed.",
+    "screenshot": "09-diagram-text-alternative-list.png",
+    "screenshotHash": "b935a2e6bd52d0b1ac5872d4104423fc7018c9224455e4e2066c23992614f239",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:05.727Z",
+    "scenarioRefs": [
+      "S19"
+    ],
+    "scenarioRefsNote": "Shows the same diagram's accessible text alternative (§15.2, §18.4), still within S19's diagram-selection surface."
+  },
+  {
+    "id": "10",
+    "action": "Open the Build tab.",
+    "expectedResult": "The gate-mode banner and a one-module handoff panel (default module selection) are both visible; there is no automatic dispatch-all action.",
+    "actualObservation": "Gate-mode banner: \"Gate mode: Complete Design baseline Build starts after the complete Design baseline is approved.\".",
+    "screenshot": "10-build-tab-gate-banner-handoff-panel.png",
+    "screenshotHash": "7f810f99d049980687a0683bc847825f7848c8c8536235fc3c3fe84a26b67f80",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:06.672Z",
+    "scenarioRefs": [
+      "S10"
+    ],
+    "scenarioRefsNote": "Shows the Build tab's gate-mode blocking banner and one-module handoff panel — the general handoff-blocking mechanism S10 exercises; this run's specific blocking condition is baseline completeness, not the unapproved-required-contract condition named by S10 (that specific condition is exercised in core evidence)."
+  },
+  {
+    "id": "11",
+    "action": "Click \"Create Copilot handoff\" for \"Finding Review\" (build gate: Open).",
+    "expectedResult": "A packet summary appears with the outcome and a context manifest listing every included record/contract with its inclusion reason.",
+    "actualObservation": "Handoff result: \"Created a implementation handoff packet.\". Context manifest entries: 10.",
+    "screenshot": "11-packet-summary-after-handoff.png",
+    "screenshotHash": "769aaec8f220339865b4c3390cc3439048002394718979403d5a05cf9cf9fc3c",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:07.783Z",
+    "scenarioRefs": [
+      "S11"
+    ],
+    "scenarioRefsNote": "Creates one module implementation packet and shows its context manifest — §24.2 S11, exact match."
+  },
+  {
+    "id": "12",
+    "action": "Use the in-app sample deterministic-test-provider delta, then click \"Inspect returned changes\".",
+    "expectedResult": "The full delta inspection is shown before any approve/apply action: file summary, record changes, contract changes, affected requirements/use cases, test results, warnings, and rollback point.",
+    "actualObservation": "Inspection outcome: \"Accepted.\".",
+    "screenshot": "12-delta-inspection-panel.png",
+    "screenshotHash": "f129dc80aa30deaecc4ccef23efb419e334aeabb0f6b0da7f41a2008159512f3",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:08.678Z",
+    "scenarioRefs": [
+      "S13"
+    ],
+    "scenarioRefsNote": "Inspects a returned delta before any approve/apply action — the \"inspect\" half of S13; the approve/apply half is exercised at the operations level (core evidence)."
+  },
+  {
+    "id": "13",
+    "action": "View the Build tab's implementation-wave plan.",
+    "expectedResult": "Waves list modules with direct dependencies, allowed paths, shared resources, batch eligibility, and blocking contracts/cycles — with no automatic dispatch-all action.",
+    "actualObservation": "7 wave(s) shown.",
+    "screenshot": "13-waves-view.png",
+    "screenshotHash": "05685998485b2e180aefffd1bd880a87cfc32b5818fdc1ce5c37211ccc737f12",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:09.026Z",
+    "scenarioRefs": [
+      "S21"
+    ],
+    "scenarioRefsNote": "Shows the implementation-wave plan with no automatic dispatch-all action — §24.2 S21, exact match."
+  },
+  {
+    "id": "14",
+    "action": "Open the Verify tab.",
+    "expectedResult": "Verify shows scenario-run counts and links to approved Design records, and contains no design diagrams (§14.4, §24.2 scenario 30).",
+    "actualObservation": "Counts: \"Use cases 4 Scenarios 16 Passed 14 Failed 2 Skipped 0 Cancelled 0 Steps 24 Screenshots 24 Structured evidence 0 Current results Current: 0 Old results Old: 16\". Design links: 17. SVG diagram elements present: 0.",
+    "screenshot": "14-verify-tab-counts-links.png",
+    "screenshotHash": "04a8e1b5e1e528f70175a3d855d8c36de36b17aaaf06bcd964bb9177bfe1995c",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:09.211Z",
+    "scenarioRefs": [
+      "S30"
+    ],
+    "scenarioRefsNote": "Confirms Verify shows counts and links to Design and no design diagrams — §24.2 S30, exact match."
+  },
+  {
+    "id": "15",
+    "action": "Open the Evidence tab.",
+    "expectedResult": "The Evidence Explorer lists the sample defects by lifecycle phase, each with a \"Follow trace\" action back to Design.",
+    "actualObservation": "Defect/valid-evidence labels shown: Broken trace, MATLAB and Simulink timeout, Invalid column mapping, Rejected — reviewer not independent, Old package after baseline change.",
+    "screenshot": "15-evidence-explorer-defects.png",
+    "screenshotHash": "3975211eb45c45f6ff07620330030492e154916178901ef16659faf6780d091d",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:09.535Z",
+    "scenarioRefs": [],
+    "scenarioRefsNote": "Shows the Evidence Explorer's §22.3 sample defects with a \"Follow trace\" action back to Design (§9.7 FollowTrace; see IMPLEMENTATION-STATUS.md DEV-06). No single §24.2 numbered scenario names this view, so no scenario ref is claimed."
+  },
+  {
+    "id": "16",
+    "action": "Open the Design workspace at a 640x900 narrow viewport.",
+    "expectedResult": "The module queue becomes a drawer/selector, the current module content remains first, and approval actions remain reachable without precision pointing (§18.2).",
+    "actualObservation": ".design-workspace.narrow present: true. Drawer toggle label: \"Show module list — current: Evidence Graph\".",
+    "screenshot": "16-narrow-viewport-640x900-reflow.png",
+    "screenshotHash": "833cb18f6d6056dd24bb90cfe2a5c80ab3c437cf30736589702b07718eff50f6",
+    "viewport": {
+      "width": 640,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:11.199Z",
+    "scenarioRefs": [
+      "S04"
+    ],
+    "scenarioRefsNote": "Accessibility/responsive variant (§24.4 narrow viewport) of the same module-queue surface S04 covers; §24.2 has no separately numbered narrow-viewport scenario."
+  },
+  {
+    "id": "17",
+    "action": "Open the Design workspace at a 720x450 viewport (emulating 200% zoom on a 1440x900 display).",
+    "expectedResult": "The workspace remains fully operable with no loss of function at 200% zoom (§18.4).",
+    "actualObservation": "Sample statement visible at this size: true.",
+    "screenshot": "17-zoomed-200-percent-720x450.png",
+    "screenshotHash": "3e3ec502633a5112b0b183f1b73945d133abcb6cdac2e566ffc193df80876e78",
+    "viewport": {
+      "width": 720,
+      "height": 450
+    },
+    "theme": "default",
+    "build": "ab859d0",
+    "environment": "linux/6.18.5 chromium-headless node-v22.22.2",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "revisions": {
+      "application": "r1",
+      "systemStructure": "r1",
+      "moduleDesigns": {
+        "mod.audit-workspace": "r1",
+        "mod.lifecycle-explorer": "r1",
+        "mod.import-and-publish": "r1",
+        "mod.finding-review": "r1",
+        "mod.package-export": "r1",
+        "mod.evidence-graph": "r1",
+        "mod.workspace-snapshots": "r1",
+        "mod.adapter.filesystem": "r1",
+        "mod.adapter.git": "r1",
+        "mod.adapter.matlab-simulink": "r1",
+        "mod.adapter.spreadsheet": "r1",
+        "mod.adapter.c-header": "r1",
+        "mod.adapter.coverage": "r1",
+        "mod.adapter.review-evidence": "r1",
+        "mod.adapter.objective-profile": "r1",
+        "mod.evidence-store": "r1",
+        "mod.job-package-store": "r1"
+      }
+    },
+    "capturedAt": "2026-07-25T16:21:12.746Z",
+    "scenarioRefs": [
+      "S04"
+    ],
+    "scenarioRefsNote": "Accessibility/responsive variant (§24.4 200 percent zoom) of the same workspace default view S04 covers; §24.2 has no separately numbered zoom scenario."
+  }
+]

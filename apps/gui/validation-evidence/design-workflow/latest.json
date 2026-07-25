@@ -1,7 +1,8 @@
 {
-  "runId": "10e9c917cf2b",
-  "buildRev": "05b9604",
+  "runId": "ab859d0-20260725T162059Z-j9cgr0i4e",
+  "buildRev": "ab859d0",
   "suite": "browser-design-workflow",
-  "evidenceDir": "runs/10e9c917cf2b",
-  "updatedAt": "2026-07-25T15:04:15.185Z"
+  "evidenceDir": "runs/ab859d0-20260725T162059Z-j9cgr0i4e",
+  "startedAt": "2026-07-25T16:20:59.665Z",
+  "updatedAt": "2026-07-25T16:21:12.843Z"
 }

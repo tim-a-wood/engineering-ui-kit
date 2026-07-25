@@ -1,0 +1,22 @@
+{
+  "scenarioId": "S13",
+  "stepIds": [
+    "delta.import",
+    "delta.inspect",
+    "delta.approve",
+    "delta.apply"
+  ],
+  "expected": "An in-scope delta is accepted, approved, and applied for real against a temp repository directory through the repositoryAdapter, leaving unrelated files untouched.",
+  "actual": "delta applied for real; index.ts written, unrelated.txt untouched",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "0baf3004ad5e3ae737756230bcbb66ca3e13c8938ab655d985c7129df3fa7dd9"
+}
