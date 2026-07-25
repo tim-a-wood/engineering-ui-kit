@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>Engineering UI Kit — use-case planning mockup</title>
+  <title>Engineering UI Kit - Use-case workflow</title>
   <style>
     :root {
       color-scheme: dark;
@@ -2537,20 +2537,20 @@
     }
   </style>
 </head>
-<body>
+<body data-copy-standard="ASD-STE100 Issue 9">
   <div class="app">
     <header class="titlebar">
       <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>Engineering UI Kit</span></div>
       <div class="crumbs"><span>Capabilities</span><span>/</span><strong id="crumb-title">Define the work</strong></div>
       <div class="title-spacer"></div>
       <div class="prototype-jump">
-        <label for="prototype-view">View</label>
-        <select id="prototype-view" aria-label="Choose prototype view">
-          <option value="describe">1 · Describe</option>
-          <option value="review" selected>2 · Review draft</option>
-          <option value="solution">3 · System design</option>
-          <option value="approval">4 · Design modules</option>
-          <option value="verification">5 · Verify evidence</option>
+        <label for="prototype-view">Stage</label>
+        <select id="prototype-view" aria-label="Select a workflow stage">
+          <option value="describe">1 · Describe tasks</option>
+          <option value="review" selected>2 · Check draft</option>
+          <option value="solution">3 · Check system design</option>
+          <option value="approval">4 · Design each module</option>
+          <option value="verification">5 · Check test evidence</option>
         </select>
       </div>
       <button class="icon-button" type="button" aria-label="Help">?</button>
@@ -2561,7 +2561,7 @@
         <div class="rail-section">Workspace</div>
         <nav class="rail-nav">
           <button class="rail-item" type="button"><span class="rail-icon">⌂</span><span>Projects</span></button>
-          <button class="rail-item" type="button"><span class="rail-icon">▶</span><span>Build &amp; Test</span><small>3</small></button>
+          <button class="rail-item" type="button"><span class="rail-icon">▶</span><span>Build and Test</span><small>3</small></button>
           <button class="rail-item active" type="button"><span class="rail-icon">◇</span><span>Capabilities</span></button>
         </nav>
         <div class="rail-section">Library</div>
@@ -2613,18 +2613,18 @@
   <div class="scrim" id="scrim"></div>
   <aside class="drawer" id="drawer" aria-label="Change module" aria-hidden="true">
     <div class="drawer-head">
-      <div><p class="eyebrow">Change the module</p><h2 id="drawer-title">Evidence Graph</h2><p class="mono technical" id="drawer-id">mod.evidence-graph</p></div>
+      <div><p class="eyebrow">Change module</p><h2 id="drawer-title">Evidence Graph</h2><p class="mono technical" id="drawer-id">mod.evidence-graph</p></div>
       <button class="icon-button" type="button" id="drawer-close" aria-label="Close">×</button>
     </div>
     <div class="drawer-body">
       <div class="field"><label for="module-name">Name</label><input id="module-name" value="Evidence Graph"></div>
       <div class="field"><label for="module-kind">Purpose</label><textarea id="module-kind">Store evidence identities and lifecycle links. Find missing trace links.</textarea></div>
       <div class="field technical"><label for="module-type">Module type</label><select id="module-type"><option>domain</option><option>workflow</option><option>experience</option><option>connection</option><option>platform</option></select></div>
-      <div class="impact"><b>This name change is safe.</b>It does not change the 4 use cases, 6 operations, or dependencies. The tool will apply the change to each new design draft.</div>
+      <div class="impact"><b>This name change is safe.</b>The change does not affect the four use cases, six operations, or dependencies. The tool applies the change to each new design draft.</div>
       <div class="divider-label">Other actions</div>
-      <button class="btn btn-quiet" id="drawer-split" type="button" style="width:100%;justify-content:flex-start">Preview a split by rules…</button>
-      <button class="btn btn-quiet" id="drawer-merge" type="button" style="width:100%;justify-content:flex-start">Preview a merge…</button>
-      <button class="btn btn-quiet" id="drawer-move" type="button" style="width:100%;justify-content:flex-start">Preview an operation move…</button>
+      <button class="btn btn-quiet" id="drawer-split" type="button" style="width:100%;justify-content:flex-start">Preview module split</button>
+      <button class="btn btn-quiet" id="drawer-merge" type="button" style="width:100%;justify-content:flex-start">Preview module merge</button>
+      <button class="btn btn-quiet" id="drawer-move" type="button" style="width:100%;justify-content:flex-start">Preview operation move</button>
       <div class="drawer-actions"><button class="btn" type="button" id="drawer-cancel">Cancel</button><button class="btn btn-primary" type="button" id="drawer-apply">Apply change</button></div>
     </div>
   </aside>
@@ -2661,12 +2661,12 @@
   <div class="detail-diagram-scrim" id="detail-diagram-scrim"></div>
   <section class="detail-diagram-modal" id="detail-diagram-modal" role="dialog" aria-modal="true" aria-labelledby="detail-diagram-title" aria-hidden="true">
     <div class="detail-diagram-head">
-      <div><p class="eyebrow">Design · UML detail</p><h2 id="detail-diagram-title"></h2><p id="detail-diagram-subtitle"></p><span class="uml-standard">UML 2.5.1 notation subset</span></div>
+      <div><p class="eyebrow">Design · UML details</p><h2 id="detail-diagram-title"></h2><p id="detail-diagram-subtitle"></p><span class="uml-standard">UML 2.5.1 notation subset</span></div>
       <button class="icon-button" id="detail-diagram-close" type="button" aria-label="Close diagrams">×</button>
     </div>
     <div class="detail-diagram-tabs" id="detail-diagram-tabs" role="tablist" aria-label="Available diagrams"></div>
     <div class="detail-diagram-body" id="detail-diagram-body"></div>
-    <div class="detail-diagram-foot"><span><b>Select any UML element</b> to inspect it, discuss it, or propose a change.</span><span>Generated from approved Design records.</span></div>
+    <div class="detail-diagram-foot"><span><b>Select a UML element.</b> Examine the element, discuss it, or propose a change.</span><span>The tool uses approved design records.</span></div>
   </section>
   <div class="uml-element-scrim" id="uml-element-scrim"></div>
   <section class="uml-element-modal" id="uml-element-modal" role="dialog" aria-modal="true" aria-labelledby="uml-element-title" aria-hidden="true">
@@ -2681,7 +2681,7 @@
       <div class="uml-collab-panel" id="uml-impact-panel" hidden></div>
     </div>
     <div class="uml-element-actions" id="uml-element-actions">
-      <button class="btn" id="uml-discuss" type="button">Discuss with agent</button>
+      <button class="btn" id="uml-discuss" type="button">Discuss with the agent</button>
       <button class="btn btn-primary" id="uml-propose" type="button">Propose change</button>
       <button class="btn" id="uml-element-dismiss" type="button">Close</button>
     </div>
@@ -2729,11 +2729,11 @@
     const data = {
       stories: [
         ['UC-01', 'Check certification readiness', 'A certification engineer opens a program. The engineer sees the status of objectives, lifecycle data, traces, reviews, and findings.', 'critical'],
-        ['UC-02', 'Explore lifecycle evidence', 'A user moves through planning, requirements, design, code, verification, quality, configuration, and certification evidence.', 'critical'],
-        ['UC-03', 'Find a broken trace', 'A verification lead follows a complete trace. The lead sees the first broken link and opens its evidence.', 'critical'],
-        ['UC-04', 'Review a finding independently', 'A reviewer records evidence, an owner, and a decision. The review does not change the engineering source files.', 'important'],
-        ['UC-05', 'Refresh the evidence safely', 'The software lead publishes a candidate only when every source is present and valid. A failed refresh keeps the last valid snapshot.', 'critical'],
-        ['UC-06', 'Create a repeatable audit package', 'The engineer selects a scope. The same approved snapshot and options produce the same package bytes.', 'critical']
+        ['UC-02', 'Examine lifecycle evidence', 'A user examines the evidence for planning, requirements, design, code, verification, quality, configuration, and certification.', 'critical'],
+        ['UC-03', 'Find a broken trace', 'A verification lead follows a complete trace. The lead finds the first broken link and opens its evidence.', 'critical'],
+        ['UC-04', 'Review a finding independently', 'A reviewer records the evidence, owner, and decision. This review does not change the engineering source files.', 'important'],
+        ['UC-05', 'Refresh the evidence safely', 'The software lead publishes a candidate only when each source is present and valid. A failed refresh keeps the last valid snapshot.', 'critical'],
+        ['UC-06', 'Create a repeatable audit package', 'The engineer selects a scope. The same approved snapshot and options always create the same package bytes.', 'critical']
       ],
       traces: {
         'UC-01': ['audit-experience', 'assurance-workflow', 'evidence-graph', 'evidence-store'],
@@ -2745,69 +2745,69 @@
       },
       scenarios: [
         {id:'UC-01-S01', useCase:'UC-01', name:'Show complete readiness', kind:'main', duration:'18 s', steps:[
-          ['Open the sample program', 'The readiness workspace opens for baseline BL-7.', 'screenshot', '01-program-open.png'],
-          ['Load the approved evidence snapshot', 'Snapshot EV-2026.07.18 and its source hash load.', 'structured', 'Snapshot query result · screenshot not applicable'],
-          ['Review the readiness summary', 'All applicable objectives show their evidence and review state.', 'screenshot', '03-readiness-summary.png']
+          ['Open the sample program', 'The application opens the readiness workspace for baseline BL-7.', 'screenshot', '01-program-open.png'],
+          ['Load the approved evidence snapshot', 'The application loads snapshot EV-2026.07.18 and its source hash.', 'structured', 'Snapshot query result · no screenshot required'],
+          ['Check the readiness summary', 'The application shows the evidence and review state for each applicable objective.', 'screenshot', '03-readiness-summary.png']
         ]},
         {id:'UC-01-S02', useCase:'UC-01', name:'Show a missing objective record', kind:'alternate', duration:'16 s', steps:[
           ['Open the sample program with one known gap', 'The workspace shows one blocking readiness gap.', 'screenshot', '01-known-gap.png'],
-          ['Check objective A-3', 'The objective query returns no approved review record.', 'structured', 'Objective query result · screenshot not applicable'],
-          ['Open the next action', 'The UI identifies the missing review and its owner.', 'screenshot', '03-next-action.png']
+          ['Check objective A-3', 'The objective query finds no approved review record.', 'structured', 'Objective query result · no screenshot required'],
+          ['Open the next action', 'The user interface identifies the missing review and its owner.', 'screenshot', '03-next-action.png']
         ]},
-        {id:'UC-02-S01', useCase:'UC-02', name:'Browse evidence by lifecycle phase', kind:'main', duration:'21 s', steps:[
-          ['Open Evidence Explorer', 'Planning is the selected lifecycle phase.', 'screenshot', '01-evidence-explorer.png'],
-          ['Select Design', 'Design evidence, traces, findings, and source files load.', 'screenshot', '02-design-phase.png'],
-          ['Check the source revision', 'The design model revision matches baseline BL-7.', 'structured', 'Revision comparison · screenshot not applicable']
+        {id:'UC-02-S01', useCase:'UC-02', name:'Examine evidence by lifecycle phase', kind:'main', duration:'21 s', steps:[
+          ['Open Evidence Explorer', 'The application selects Planning as the lifecycle phase.', 'screenshot', '01-evidence-explorer.png'],
+          ['Select Design', 'The application loads the design evidence, traces, findings, and source files.', 'screenshot', '02-design-phase.png'],
+          ['Check the source revision', 'The design model revision matches baseline BL-7.', 'structured', 'Revision comparison · no screenshot required']
         ]},
         {id:'UC-02-S02', useCase:'UC-02', name:'Filter a phase by open findings', kind:'alternate', duration:'14 s', steps:[
-          ['Open the Verification phase', 'Verification evidence is visible.', 'screenshot', '01-verification-phase.png'],
+          ['Open the Verification phase', 'The application shows the verification evidence.', 'screenshot', '01-verification-phase.png'],
           ['Filter by Open finding', 'Only evidence with an open finding remains.', 'screenshot', '02-open-filter.png'],
-          ['Check the result count', 'The query returns 3 evidence items and 1 finding.', 'structured', 'Filter result JSON · screenshot not applicable']
+          ['Check the result count', 'The query returns three evidence items and one finding.', 'structured', 'JSON filter result · no screenshot required']
         ]},
-        {id:'UC-03-S01', useCase:'UC-03', name:'Navigate to the first broken trace', kind:'main', duration:'24 s', steps:[
-          ['Open requirement HLR-27', 'The complete trace chain opens.', 'screenshot', '01-trace-chain.png'],
-          ['Follow the trace', 'The first missing low-level requirement link is selected.', 'screenshot', '02-first-gap.png'],
-          ['Check the gap identity', 'The evidence graph returns gap GAP-014 at the expected edge.', 'structured', 'Trace query result · screenshot not applicable']
+        {id:'UC-03-S01', useCase:'UC-03', name:'Find the first broken trace', kind:'main', duration:'24 s', steps:[
+          ['Open requirement HLR-27', 'The application opens the complete trace chain.', 'screenshot', '01-trace-chain.png'],
+          ['Follow the trace', 'The application selects the first missing low-level requirement link.', 'screenshot', '02-first-gap.png'],
+          ['Check the gap identifier', 'The evidence graph returns gap GAP-014 at the specified edge.', 'structured', 'Trace query result · no screenshot required']
         ]},
-        {id:'UC-03-S02', useCase:'UC-03', name:'Keep context when source evidence is unavailable', kind:'failure', duration:'19 s', steps:[
-          ['Open a trace with an unavailable model source', 'The chain remains visible and marks the source unavailable.', 'screenshot', '01-source-unavailable.png'],
-          ['Request the source evidence', 'The adapter returns SOURCE_UNAVAILABLE for model ctrl.slx.', 'structured', 'Adapter error record · screenshot not applicable'],
-          ['Open recovery guidance', 'The UI shows the last known revision and a retry action.', 'screenshot', '03-recovery-guidance.png']
+        {id:'UC-03-S02', useCase:'UC-03', name:'Keep the trace when a source is not available', kind:'failure', duration:'19 s', steps:[
+          ['Open a trace with an unavailable model source', 'The chain stays visible and identifies the unavailable source.', 'screenshot', '01-source-unavailable.png'],
+          ['Request the source evidence', 'The adapter returns SOURCE_UNAVAILABLE for model ctrl.slx.', 'structured', 'Adapter error record · no screenshot required'],
+          ['Open the recovery instructions', 'The user interface shows the last known revision and a retry action.', 'screenshot', '03-recovery-guidance.png']
         ]},
         {id:'UC-04-S01', useCase:'UC-04', name:'Approve a finding independently', kind:'main', duration:'22 s', steps:[
-          ['Open finding FND-008', 'The finding, owner, and evidence links are visible.', 'screenshot', '01-finding-open.png'],
-          ['Record an independent approval', 'The decision is saved with reviewer and time.', 'screenshot', '02-approval-recorded.png'],
-          ['Check the audit event', 'The audit log links the decision to FND-008 and BL-7.', 'structured', 'Audit event record · screenshot not applicable']
+          ['Open finding FND-008', 'The application shows the finding, owner, and evidence links.', 'screenshot', '01-finding-open.png'],
+          ['Record an independent approval', 'The application saves the decision with the reviewer and time.', 'screenshot', '02-approval-recorded.png'],
+          ['Check the audit event', 'The audit log links the decision to FND-008 and BL-7.', 'structured', 'Audit event record · no screenshot required']
         ]},
         {id:'UC-04-S02', useCase:'UC-04', name:'Reject a non-independent reviewer', kind:'failure', duration:'15 s', steps:[
-          ['Open a finding owned by the current reviewer', 'The decision controls are visible but blocked.', 'screenshot', '01-independence-block.png'],
-          ['Attempt approval', 'The command returns REVIEWER_NOT_INDEPENDENT.', 'structured', 'Command result · screenshot not applicable'],
-          ['Review the required action', 'The UI asks for a different reviewer and keeps the finding unchanged.', 'screenshot', '03-different-reviewer.png']
+          ['Open a finding that the current reviewer owns', 'The application shows and disables the decision controls.', 'screenshot', '01-independence-block.png'],
+          ['Try to approve the finding', 'The command returns REVIEWER_NOT_INDEPENDENT.', 'structured', 'Command result · no screenshot required'],
+          ['Check the required action', 'The user interface requires a different reviewer. The finding does not change.', 'screenshot', '03-different-reviewer.png']
         ]},
         {id:'UC-05-S01', useCase:'UC-05', name:'Publish a complete evidence refresh', kind:'main', duration:'46 s', steps:[
-          ['Start a refresh', 'The job shows all 8 source adapters.', 'screenshot', '01-refresh-start.png'],
-          ['Validate the candidate snapshot', 'All required sources and hashes pass.', 'structured', 'Candidate validation record · screenshot not applicable'],
+          ['Start a refresh', 'The job shows all eight source adapters.', 'screenshot', '01-refresh-start.png'],
+          ['Validate the candidate snapshot', 'Each required source and hash passes the checks.', 'structured', 'Candidate validation record · no screenshot required'],
           ['Publish the snapshot', 'The workspace shows snapshot EV-2026.07.24 as current.', 'screenshot', '03-snapshot-published.png']
         ]},
         {id:'UC-05-S02', useCase:'UC-05', name:'Keep the last valid snapshot after a failed source', kind:'failure', duration:'38 s', steps:[
           ['Start a refresh with a corrupt trace file', 'The job starts from current snapshot EV-2026.07.18.', 'screenshot', '01-failed-refresh-start.png'],
-          ['Validate the candidate snapshot', 'Trace import fails and publication is rejected.', 'structured', 'Validation failure · screenshot not applicable'],
-          ['Return to the workspace', 'EV-2026.07.18 remains current and the failed source is named.', 'screenshot', '03-last-valid-kept.png']
+          ['Validate the candidate snapshot', 'The trace import fails. The application rejects the publication.', 'structured', 'Validation failure · no screenshot required'],
+          ['Return to the workspace', 'EV-2026.07.18 stays current. The application identifies the failed source.', 'screenshot', '03-last-valid-kept.png']
         ]},
         {id:'UC-05-S03', useCase:'UC-05', name:'Recover from a MATLAB timeout', kind:'recovery', duration:'62 s', steps:[
-          ['Start the MATLAB source reader', 'The source job shows MATLAB startup.', 'screenshot', '01-matlab-start.png'],
-          ['Reach the startup deadline', 'The adapter records MATLAB_TIMEOUT and releases the job lease.', 'structured', 'Timeout and lease events · screenshot not applicable'],
+          ['Start the MATLAB source reader', 'The source job shows the MATLAB start process.', 'screenshot', '01-matlab-start.png'],
+          ['Reach the startup time limit', 'The adapter records MATLAB_TIMEOUT and releases the job lease.', 'structured', 'Timeout and lease events · no screenshot required'],
           ['Retry with MATLAB available', 'The retry succeeds without changing the earlier snapshot.', 'screenshot', '03-matlab-retry.png']
         ]},
         {id:'UC-06-S01', useCase:'UC-06', name:'Create an approved audit package', kind:'main', duration:'31 s', steps:[
-          ['Select baseline BL-7 and certification scope', 'The package scope shows 128 evidence items.', 'screenshot', '01-package-scope.png'],
-          ['Build the package', 'The package manifest and checksum are created.', 'structured', 'Manifest and SHA-256 · screenshot not applicable'],
+          ['Select the package scope', 'The scope uses baseline BL-7 and contains 128 evidence items.', 'screenshot', '01-package-scope.png'],
+          ['Build the package', 'The application creates the package manifest and checksum.', 'structured', 'Manifest and SHA-256 · no screenshot required'],
           ['Open the completed package', 'The package shows its snapshot, options, and checksum.', 'screenshot', '03-package-complete.png']
         ]},
         {id:'UC-06-S02', useCase:'UC-06', name:'Prove byte-for-byte repeatability', kind:'alternate', duration:'34 s', steps:[
-          ['Repeat the approved package request', 'The same baseline and options are selected.', 'screenshot', '01-repeat-request.png'],
-          ['Compare package bytes', 'The second package hash matches the first package hash.', 'structured', 'Byte comparison and SHA-256 · screenshot not applicable'],
-          ['Open the comparison result', 'The UI reports an exact match and links both runs.', 'screenshot', '03-exact-match.png']
+          ['Repeat the approved package request', 'The request uses the same baseline and options.', 'screenshot', '01-repeat-request.png'],
+          ['Compare package bytes', 'The second package hash matches the first package hash.', 'structured', 'Byte comparison and SHA-256 · no screenshot required'],
+          ['Open the comparison result', 'The user interface reports an exact match and links the two runs.', 'screenshot', '03-exact-match.png']
         ]}
       ]
     };
@@ -2822,37 +2822,37 @@
 
     function describeView() {
       return `
-        ${heading('Plan · Describe', 'What work must users do?', 'Describe the required work. The tool will use only the sources that you select. It will draft the use cases, system limits, failure behavior, and acceptance checks.')}
+        ${heading('Plan · Describe', 'Describe the user tasks', 'Describe the work that users must do. Select the source files. The tool creates use cases, system limits, failure data, and acceptance checks.')}
         <div class="command">
-          <div><h2>Start with one description</h2><p>You do not have to complete an architecture form.</p></div>
-          <div class="command-actions"><button class="btn btn-primary" type="button" id="draft-story">Create use-case draft <span>→</span></button></div>
+          <div><h2>Give one description</h2><p>You do not need an architecture form.</p></div>
+          <div class="command-actions"><button class="btn btn-primary" type="button" id="draft-story">Create draft <span>→</span></button></div>
         </div>
         <div class="describe-grid">
           <section class="panel">
-            <div class="panel-head"><div><h2>Describe the required work</h2><p>Use your own words. You can add examples and limits.</p></div><span class="tag accent">Required</span></div>
+            <div class="panel-head"><div><h2>Describe the user tasks</h2><p>Use your words. Add examples. Add limits if necessary.</p></div><span class="tag accent">Required</span></div>
             <div class="panel-body">
               <label class="sr-only" for="intent-prompt">Required user work</label>
-              <textarea class="prompt-area" id="intent-prompt">Certification engineers must review requirements, design data, source code, tests, reviews, coverage, and traces from Simulink and project files. They must find gaps, record findings, and create repeatable audit packages. The app must not change source evidence.</textarea>
+              <textarea class="prompt-area" id="intent-prompt">Certification engineers must check requirements, design data, source code, tests, reviews, coverage, and traces in Simulink and project files. They must find gaps. They must record findings. They must create repeatable audit packages. The application must not change source evidence.</textarea>
               <div class="prompt-tools">
                 <button class="btn btn-small" type="button">＋ Add example</button>
-                <button class="btn btn-small" type="button">⊘ Add a prohibited result</button>
-                <span class="count">278 characters</span>
+                <button class="btn btn-small" type="button">⊘ Add prohibited result</button>
+                <span class="count">283 characters</span>
               </div>
             </div>
             <div class="example-row">
-              <button class="example" type="button"><b>What happens first?</b>“An engineer opens a program and wants to know whether it is audit-ready.”</button>
-              <button class="example" type="button"><b>What can go wrong?</b>“A failed refresh must never replace the last valid evidence snapshot.”</button>
-              <button class="example" type="button"><b>What result is correct?</b>“The same scope and snapshot must produce the same package.”</button>
+              <button class="example" type="button"><b>Describe the first event</b>“An engineer opens a program and checks if it is ready for an audit.”</button>
+              <button class="example" type="button"><b>Describe a failure</b>“A failed refresh must not replace the last valid evidence snapshot.”</button>
+              <button class="example" type="button"><b>Describe the correct result</b>“The same scope and snapshot must create the same package.”</button>
             </div>
           </section>
           <aside class="panel">
-            <div class="panel-head"><div><h2>Sources to use</h2><p>The tool will not change these sources.</p></div><button class="btn btn-small btn-quiet" type="button">Manage</button></div>
+            <div class="panel-head"><div><h2>Selected sources</h2><p>The tool does not change these sources.</p></div><button class="btn btn-small btn-quiet" type="button">Manage</button></div>
             <div class="panel-body" style="padding-top:4px;padding-bottom:12px">
               <div class="source-row"><span class="source-check">✓</span><span class="source-copy"><b>Project description</b><small>1 source · saved locally</small></span><span class="tag success">Ready</span></div>
               <div class="source-row"><span class="source-check">✓</span><span class="source-copy"><b>Repository summary</b><small>README, routes, schemas, runtimes</small></span><span class="tag success">Ready</span></div>
               <div class="source-row"><span class="source-check">✓</span><span class="source-copy"><b>Approved capability records</b><small>Current Plan and Design revisions</small></span><span class="tag success">Ready</span></div>
               <div class="source-row"><span class="source-check off">✓</span><span class="source-copy"><b>Additional documents</b><small>None selected</small></span><button class="btn btn-small" type="button">Add</button></div>
-              <div class="privacy-note"><span>⌾</span><span><b>Private by default.</b> Source content stays in this project. The tool saves only the analysis records and source hashes.</span></div>
+              <div class="privacy-note"><span>⌾</span><span><b>Private by default.</b> The source content stays in this project. The tool saves only analysis records and source hashes.</span></div>
               <div class="technical block" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);color:var(--muted);font:10px/1.6 var(--mono)">analysis provider: local agent<br>source limit: 82,000 tokens<br>source hash: e3a7…b910</div>
             </div>
           </aside>
@@ -2869,9 +2869,9 @@
             <span class="chevron">›</span>
           </button>
           <div class="story-detail">
-            <div><b>Main flow</b><ul><li>Open a trace or evidence scope.</li><li>Follow the evidence links.</li><li>See the source and status.</li></ul></div>
+            <div><b>Main flow</b><ul><li>Open a trace or evidence scope.</li><li>Follow the evidence links.</li><li>Check the source and status.</li></ul></div>
             <div><b>Failure and recovery</b><ul><li>Identify the first missing or invalid link.</li><li>Keep the last published evidence available.</li><li>Show the next investigation step.</li></ul></div>
-            <div><b>Acceptance checks</b><ul><li>The visible chain matches the snapshot.</li><li>The app does not change a source file.</li><li>Every link shows its source revision.</li></ul></div>
+            <div><b>Acceptance checks</b><ul><li>The visible chain matches the snapshot.</li><li>The application does not change a source file.</li><li>Every link shows its source revision.</li></ul></div>
             <div class="technical block" style="grid-column:1/-1;padding:9px;border:1px solid var(--border);border-radius:4px;background:var(--inset);font:10px/1.6 var(--mono)">id: ${story[0]} · status: inferred · confidence: 0.94 · sources: SRC-01, SRC-03 · quality requirements: QD-AUDIT-01, QD-AVAIL-01</div>
           </div>
         </article>`).join('');
@@ -2880,36 +2880,36 @@
     function reviewView() {
       const ready = appState.questionAnswered;
       return `
-        ${heading('Plan · Review', 'Review the use-case draft', 'Check the users, tasks, limits, and acceptance checks. Correct each error. You can open the technical record when you need it.')}
+        ${heading('Plan · Check', 'Check the use-case draft', 'Check the users, tasks, limits, and acceptance checks. Correct each error. Open the technical record if necessary.')}
         <div class="command ${ready ? 'ready' : ''}">
-          <div><h2>${ready ? 'Ready to create the system design' : 'Answer one question before approval'}</h2><p>${ready ? 'The draft contains 6 use cases, 8 external systems, and the required recovery behavior.' : 'Your answer sets the reviewer permission rule.'}</p></div>
-          <div class="command-actions"><button class="btn btn-quiet" type="button">Edit summary</button><button class="btn btn-primary" type="button" id="approve-product">${ready ? 'Approve and create design' : 'Answer the question'} <span>→</span></button></div>
+          <div><h2>${ready ? 'The draft is ready for approval' : 'Answer one question to approve the draft'}</h2><p>${ready ? 'The draft contains six use cases, eight external systems, and the necessary recovery behavior.' : 'Your answer defines the reviewer permission.'}</p></div>
+          <div class="command-actions"><button class="btn btn-quiet" type="button">Change summary</button><button class="btn btn-primary" type="button" id="approve-product">${ready ? 'Approve draft' : 'Answer question'} <span>→</span></button></div>
         </div>
         <div class="review-layout">
           <div>
             <section class="promise">
-              <div class="section-head" style="margin-top:0"><div><p class="eyebrow">Purpose</p><h2>Review certification evidence and create repeatable audit packages</h2></div><button class="btn btn-small btn-quiet head-action" type="button">Correct</button></div>
-              <p>Certification teams can check readiness and follow evidence through each lifecycle phase. They can find gaps, review findings, and create repeatable audit packages. The app does not change the engineering source files.</p>
+              <div class="section-head" style="margin-top:0"><div><p class="eyebrow">Purpose</p><h2>Certification evidence and repeatable audit packages</h2></div><button class="btn btn-small btn-quiet head-action" type="button">Correct</button></div>
+              <p>Certification teams can check readiness and follow evidence through each lifecycle phase. They can find gaps. They can review findings. They can create repeatable audit packages. The application does not change engineering source files.</p>
               <div class="technical block" style="margin-top:10px;color:var(--muted);font:10px/1.55 var(--mono)">analysis: UC-ANALYSIS-001 · revision: 3 · status: draft · sources: 7 · application specification: pending</div>
             </section>
 
-            <div class="section-head"><div><p class="eyebrow">Users and tasks</p><h2>Who will use the app</h2></div><p>4 roles found in the project sources</p><button class="btn btn-small btn-quiet head-action" type="button">Change</button></div>
+            <div class="section-head"><div><p class="eyebrow">Users and tasks</p><h2>Application users</h2></div><p>The project sources identify four roles</p><button class="btn btn-small btn-quiet head-action" type="button">Change</button></div>
             <div class="people-strip">
               <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Certification engineer</b></div><p>Assess objective and lifecycle evidence readiness.</p></div>
               <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Verification lead</b></div><p>Investigate trace, result, and coverage gaps.</p></div>
-              <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Quality reviewer</b></div><p>Review findings and record an independent decision.</p></div>
+              <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Quality reviewer</b></div><p>Review findings. Record an independent decision.</p></div>
               <div class="person"><div class="person-head"><span class="state-icon">✓</span><b>Software lead</b></div><p>Refresh evidence without losing the last valid state.</p></div>
             </div>
 
-            <div class="section-head"><div><p class="eyebrow">Main use cases</p><h2>What users must do</h2></div><p>Open a use case to check failures and acceptance checks</p><button class="btn btn-small btn-quiet head-action" type="button">＋ Add</button></div>
+            <div class="section-head"><div><p class="eyebrow">Main use cases</p><h2>User tasks</h2></div><p>Open a use case. Check its failures and acceptance checks.</p><button class="btn btn-small btn-quiet head-action" type="button">＋ Add</button></div>
             <div class="story-list">${storyRows()}</div>
           </div>
 
           <aside class="side-stack">
             <section class="panel">
-              <div class="panel-head"><div><h2>Draft status</h2><p>Coverage of required behavior</p></div><span class="status-line"><span class="dot ${ready ? 'success' : 'warning'}"></span>${ready ? 'Ready' : 'Answer required'}</span></div>
+              <div class="panel-head"><div><h2>Draft status</h2><p>Required behavior coverage</p></div><span class="status-line"><span class="dot ${ready ? 'success' : 'warning'}"></span>${ready ? 'Ready' : 'Answer required'}</span></div>
               <div class="panel-body">
-                <div class="readiness"><div class="readiness-ring"><strong>${ready ? '96' : '90'}%</strong></div><div class="readiness-copy"><b>${ready ? 'Ready to create the design' : 'Draft is almost complete'}</b><span>${ready ? 'The tool will show 3 assumptions.' : 'One decision affects the design.'}</span></div></div>
+                <div class="readiness"><div class="readiness-ring"><strong>${ready ? '96' : '90'}%</strong></div><div class="readiness-copy"><b>${ready ? 'Ready for design' : 'Draft is not complete'}</b><span>${ready ? 'The tool shows three assumptions.' : 'One decision changes the design.'}</span></div></div>
                 <div class="coverage-bars">
                   <div class="coverage-line"><span>People</span><span class="bar"><span style="width:100%"></span></span><span>4/4</span></div>
                   <div class="coverage-line"><span>Use cases</span><span class="bar"><span style="width:100%"></span></span><span>6/6</span></div>
@@ -2920,14 +2920,14 @@
               </div>
             </section>
             <section class="panel">
-              <div class="panel-head"><div><h2>${ready ? 'Decision saved' : 'Decision required'}</h2><p>${ready ? 'This answer affects the design' : 'One answer · about 20 seconds'}</p></div><span class="tag ${ready ? 'success' : 'warning'}">${ready ? 'Resolved' : '1 required'}</span></div>
+              <div class="panel-head"><div><h2>${ready ? 'Decision saved' : 'Decision required'}</h2><p>${ready ? 'This answer changes the design' : 'One answer · approximately 20 seconds'}</p></div><span class="tag ${ready ? 'success' : 'warning'}">${ready ? 'Resolved' : '1 required'}</span></div>
               <div class="panel-body">
                 <div class="question">
                   <small>${ready ? 'Answered' : 'Independence rule'}</small>
-                  <b>Can a reviewer approve their own finding?</b>
-                  <p>This answer sets the permission rule. It also determines whether finding review needs a separate workflow module.</p>
+                  <b>Can a reviewer approve a finding that they own?</b>
+                  <p>This answer defines reviewer permission. It also controls the need for a separate Finding Review module.</p>
                   <div class="choice-list">
-                    <button class="choice ${ready ? 'selected' : ''}" type="button" data-choice="separate"><span class="radio"></span><span>No. Require a different reviewer. <em>Recommended by the project rules</em></span></button>
+                    <button class="choice ${ready ? 'selected' : ''}" type="button" data-choice="separate"><span class="radio"></span><span>No. Require a different reviewer. <em>The project rules recommend this answer.</em></span></button>
                     <button class="choice" type="button" data-choice="same"><span class="radio"></span><span>Yes, with an audit record</span></button>
                     <button class="choice" type="button" data-choice="policy"><span class="radio"></span><span>Make it project policy</span></button>
                   </div>
@@ -2990,7 +2990,7 @@
         deployable: 'Desktop application',
         purpose: 'Show evidence and trace links for each lifecycle phase.',
         reason: 'Detailed trace investigation needs a phase view, chain view, source details, and gap navigation.',
-        operations: ['Browse lifecycle phase', 'Follow trace', 'Open source evidence', 'Locate first gap'],
+        operations: ['Examine lifecycle phase', 'Follow trace', 'Open source evidence', 'Find first gap'],
         ports: ['EvidenceQueryPort', 'TraceQueryPort', 'SnapshotQueryPort'],
         dependsOn: ['evidence-graph', 'workspace-snapshots'],
         usedBy: [],
@@ -3022,7 +3022,7 @@
         group: 'Workflow',
         deployable: 'Desktop application',
         purpose: 'Create the same audit package for the same approved snapshot and options.',
-        reason: 'Package ordering, manifests, checksums, and output files must be controlled as one operation.',
+        reason: 'One operation must control the package order, manifest, checksum, and output files.',
         operations: ['Select scope', 'Build manifest', 'Order package entries', 'Create checksum', 'Write package'],
         ports: ['SnapshotQueryPort', 'EvidenceStorePort', 'PackageStorePort'],
         dependsOn: ['workspace-snapshots', 'evidence-store', 'job-store'],
@@ -3154,7 +3154,7 @@
         group: 'External-system adapter',
         deployable: 'Desktop application',
         purpose: 'Read the project-owned DO-178C objective profile and tailoring.',
-        reason: 'Objective applicability is project policy. It must not be hard-coded in the evidence graph.',
+        reason: 'Objective applicability is project policy. The evidence graph must not contain a fixed objective policy.',
         operations: ['Read objective profile', 'Read software level', 'Read tailoring', 'Validate objective ID'],
         ports: ['ObjectiveProfilePort'],
         dependsOn: [],
@@ -3226,7 +3226,7 @@
       return `
         <div class="logical-diagram">
           <div class="relationship-summary">
-            <span class="relationship-copy"><b>${appState.relationshipMode === 'focus' ? 'Focused relationships.' : 'All relationships.'}</b> ${appState.relationshipMode === 'focus' ? 'The canvas shows only links for the selected component or use case.' : 'The canvas shows every link. Select a component to emphasize its direct links.'}</span>
+            <span class="relationship-copy"><b>${appState.relationshipMode === 'focus' ? 'Selected relationships.' : 'All relationships.'}</b> ${appState.relationshipMode === 'focus' ? 'The canvas shows links for the selected component or use case.' : 'The canvas shows each link. Select a component to emphasize its direct links.'}</span>
             <div class="relationship-view-controls" role="group" aria-label="Relationship visibility">
               <button class="relationship-toggle ${appState.relationshipMode === 'focus' ? 'active' : ''}" type="button" data-relationship-mode="focus" aria-pressed="${appState.relationshipMode === 'focus'}">Focus</button>
               <button class="relationship-toggle ${appState.relationshipMode === 'all' ? 'active' : ''}" type="button" data-relationship-mode="all" aria-pressed="${appState.relationshipMode === 'all'}">All links</button>
@@ -3244,10 +3244,10 @@
             ${allModules.map(item => canvasNode(item[0])).join('')}
           </div>
           <div class="diagram-legend" aria-label="Diagram legend">
-            <span><i class="legend-line"></i>Uses or depends on · shared rails bundle related links</span>
+            <span><i class="legend-line"></i>Uses or depends on · shared rails group related links</span>
             <span><i class="legend-swatch selected"></i>Selected module</span>
             <span><i class="legend-swatch path"></i>Selected use-case path</span>
-            <span>Select “All links” only when you need the complete map.</span>
+            <span>If you need the complete map, select “All links.”</span>
           </div>
         </div>`;
     }
@@ -3265,27 +3265,27 @@
       let units;
       let summary;
       if (appState.option === 'isolated') {
-        summary = 'The import workflow and source adapters run outside the desktop application.';
+        summary = 'The import workflow and source adapters operate outside the desktop application.';
         units = [
           deployable('Desktop application', 'User interface, review, export, rules, and storage', ['audit-experience', 'lifecycle-explorer', 'assurance-workflow', 'package-assembly', 'evidence-graph', 'workspace-snapshots', 'evidence-store', 'job-store']),
           deployable('Import service', 'Source refresh and validation', ['ingestion-publication', ...adaptersWithoutMatlab], 'service'),
-          deployable('MATLAB worker process', 'Proprietary file readers and license boundary', ['matlab-adapter'], 'worker')
+          deployable('MATLAB worker process', 'Proprietary file readers and license limit', ['matlab-adapter'], 'worker')
         ];
       } else if (appState.option === 'distributed') {
-        summary = 'Six deployable units separate user tasks, evidence rules, import, export, and MATLAB.';
+        summary = 'Six deployable units separate user tasks, evidence rules, import, export, and MATLAB functions.';
         units = [
           deployable('Audit service', 'Readiness and finding work', ['audit-experience', 'assurance-workflow'], 'service'),
           deployable('Explorer service', 'Lifecycle evidence investigation', ['lifecycle-explorer'], 'service'),
           deployable('Evidence service', 'Evidence and snapshot rules', ['evidence-graph', 'workspace-snapshots', 'evidence-store', 'job-store'], 'service'),
           deployable('Import service', 'Source refresh and adapters', ['ingestion-publication', ...adaptersWithoutMatlab], 'service'),
           deployable('Package service', 'Repeatable audit export', ['package-assembly'], 'service'),
-          deployable('MATLAB worker process', 'Proprietary file readers and license boundary', ['matlab-adapter'], 'worker')
+          deployable('MATLAB worker process', 'Proprietary file readers and license limit', ['matlab-adapter'], 'worker')
         ];
       } else {
         summary = 'The desktop application contains all modules except the MATLAB adapter.';
         units = [
           deployable('Desktop application', 'One release and one local evidence store', allModules.map(item => item[0]).filter(id => id !== 'matlab-adapter')),
-          deployable('MATLAB worker process', 'Proprietary file readers and license boundary', ['matlab-adapter'], 'worker')
+          deployable('MATLAB worker process', 'Proprietary file readers and license limit', ['matlab-adapter'], 'worker')
         ];
       }
       return `
@@ -3300,7 +3300,7 @@
       return `
         <section class="architecture-explorer" aria-label="Interactive architecture diagram">
           <div class="explorer-head">
-            <div><h2>Architecture diagram</h2><p>Follow component relationships on one canvas or see where each component runs.</p></div>
+            <div><h2>Architecture diagram</h2><p>Follow the component relationships. Select Deployment to see where each component operates.</p></div>
             <div class="explorer-actions" role="group" aria-label="Architecture diagram view">
               <button class="view-button ${appState.diagramMode === 'logical' ? 'active' : ''}" type="button" data-diagram-mode="logical" aria-pressed="${appState.diagramMode === 'logical'}">Relationship canvas</button>
               <button class="view-button ${appState.diagramMode === 'deployment' ? 'active' : ''}" type="button" data-diagram-mode="deployment" aria-pressed="${appState.diagramMode === 'deployment'}">Deployment</button>
@@ -3607,37 +3607,37 @@
     function moduleInspector() {
       const moduleId = appState.selectedModule || 'evidence-graph';
       const detail = moduleDetails[moduleId];
-      if (!detail) return '<p>Select a module in the diagram or module list.</p>';
+      if (!detail) return '<p>Select a module in the diagram or the module list.</p>';
       return `
         <div class="inspector-intro"><span class="tag accent">${detail.group}</span><span class="tag">${detail.deployable}</span></div>
         <div class="inspector-section"><b>Purpose</b><p>${detail.purpose}</p></div>
-        <div class="inspector-section"><b>Why it is separate</b><p>${detail.reason}</p></div>
+        <div class="inspector-section"><b>Separation reason</b><p>${detail.reason}</p></div>
         <div class="inspector-section"><b>Operations</b><ul class="inspector-list">${detail.operations.map(operation => `<li>${operation}</li>`).join('')}</ul></div>
         <div class="inspector-section"><b>Ports and adapters</b><ul class="inspector-list">${detail.ports.map(port => `<li class="mono">${port}</li>`).join('')}</ul></div>
         <div class="inspector-section"><b>Depends on</b>${moduleLinks(detail.dependsOn)}</div>
         <div class="inspector-section"><b>Used by</b>${moduleLinks(detail.usedBy, 'No module depends on this user interface.')}</div>
         <div class="inspector-section"><b>Use cases</b>${storyLinks(detail.stories)}</div>
-        <div class="inspector-section"><b>Module design</b><p><span class="tag">Not started</span> Define and approve this module separately before its implementation handoff.</p><button class="btn btn-small" id="design-selected-module" type="button">Design this module</button></div>
+        <div class="inspector-section"><b>Module design</b><p><span class="tag">Not started</span> Define this module. Approve it before you create the implementation handoff.</p><button class="btn btn-small" id="design-selected-module" type="button">Design this module</button></div>
         <div class="technical block mono" style="margin-top:10px;color:var(--muted);font-size:9.5px;line-height:1.6">module: ${moduleId}<br>group: ${detail.group.toLowerCase()}<br>deployable: ${detail.deployable.toLowerCase()}<br>decision lock: none</div>`;
     }
 
     function solutionView() {
       const detailName = moduleName(appState.selectedModule || 'evidence-graph');
       return `
-        ${heading('Design · Draft', 'Review and explore the system design', 'Use the architecture diagram to inspect every module, port, adapter, dependency, deployable unit, and use-case path. Select any item to see its full design record.')}
+        ${heading('Design · Draft', 'Check the system design', 'Use the architecture diagram to examine each module, port, adapter, dependency, deployable unit, and use-case path. Select an item to see its design record.')}
         <div class="command ready">
-          <div><h2>Recommendation: one application and a separate MATLAB process</h2><p>The design covers all 6 use cases. It keeps deployment simple. The MATLAB process contains proprietary file extraction and its failures.</p></div>
-          <div class="command-actions"><button class="btn" type="button" id="restructure-selected">Change selected module</button><button class="btn btn-primary" type="button" id="approve-solution">Approve system structure <span>→</span></button></div>
+          <div><h2>Recommended design: one application and one MATLAB process</h2><p>The design supports all six use cases. This design uses simple deployment. The MATLAB process contains proprietary file readers and related failures.</p></div>
+          <div class="command-actions"><button class="btn" type="button" id="restructure-selected">Change module</button><button class="btn btn-primary" type="button" id="approve-solution">Approve structure <span>→</span></button></div>
         </div>
         <div class="solution-layout">
           <section class="panel">
             <div class="option-tabs" role="tablist" aria-label="Architecture options">
-              <button class="option-tab ${appState.option === 'cohesive' ? 'active' : ''}" type="button" data-option="cohesive"><span class="recommended">Recommended</span><b>One application</b>2 deployable units · least operational work</button>
-              <button class="option-tab ${appState.option === 'isolated' ? 'active' : ''}" type="button" data-option="isolated"><b>Separate import service</b>3 deployable units · more fault isolation</button>
-              <button class="option-tab ${appState.option === 'distributed' ? 'active' : ''}" type="button" data-option="distributed"><b>Multiple services</b>6 deployable units · no current requirement</button>
+              <button class="option-tab ${appState.option === 'cohesive' ? 'active' : ''}" type="button" data-option="cohesive"><span class="recommended">Recommended</span><b>One application</b>2 deployable units · lowest operating cost</button>
+              <button class="option-tab ${appState.option === 'isolated' ? 'active' : ''}" type="button" data-option="isolated"><b>Separate import service</b>3 deployable units · better fault isolation</button>
+              <button class="option-tab ${appState.option === 'distributed' ? 'active' : ''}" type="button" data-option="distributed"><b>Multiple services</b>6 deployable units · no approved requirement</button>
             </div>
             <div class="option-summary">
-              <span><strong>${appState.option === 'cohesive' ? 'Why this design fits:' : appState.option === 'isolated' ? 'Cost of this option:' : 'Why this option is not recommended:'}</strong> ${appState.option === 'cohesive' ? 'The app uses local evidence. One team owns it. No use case requires separate scaling.' : appState.option === 'isolated' ? 'This option contains all import failures. It also adds another service to build and operate.' : 'No approved use case requires separate network services. This option adds cost but does not improve coverage.'}</span>
+              <span><strong>${appState.option === 'cohesive' ? 'Reason for this design:' : appState.option === 'isolated' ? 'Cost of this option:' : 'Reason to reject this option:'}</strong> ${appState.option === 'cohesive' ? 'The application uses local evidence. One team owns the application. No use case requires separate scaling.' : appState.option === 'isolated' ? 'This option contains all import failures. It also adds a service. The team must build the service. The team must operate the service.' : 'No approved use case requires separate network services. This option adds cost but does not improve coverage.'}</span>
               <span class="metric-mini"><b>${appState.option === 'cohesive' ? '2' : appState.option === 'isolated' ? '3' : '6'}</b>deployable units</span>
               <span class="metric-mini"><b>17</b>modules</span>
               <span class="metric-mini"><b>100%</b>coverage</span>
@@ -3654,17 +3654,17 @@
           </section>
           <aside class="side-stack">
             <section class="panel">
-              <div class="panel-head"><div><h2>Use-case coverage</h2><p>Select a use case to show its complete path</p></div>${appState.activeTrace ? '<button class="btn btn-small btn-quiet" id="clear-trace" type="button">Clear</button>' : '<span class="tag success">6 / 6</span>'}</div>
+              <div class="panel-head"><div><h2>Use-case coverage</h2><p>Select a use case. The diagram shows its complete path.</p></div>${appState.activeTrace ? '<button class="btn btn-small btn-quiet" id="clear-trace" type="button">Clear</button>' : '<span class="tag success">6 / 6</span>'}</div>
               <div class="panel-body" style="padding-top:4px">
                 <div class="trace-filter">${data.stories.map(story => `<button class="trace-row ${appState.activeTrace === story[0] ? 'active' : ''}" type="button" data-trace="${story[0]}"><span class="trace-number">${story[0].slice(3)}</span><span><b>${story[1]}</b><small>${(data.traces[story[0]] || []).length} modules in this path</small></span><span class="trace-count">100%</span></button>`).join('')}</div>
               </div>
             </section>
             <section class="panel">
-              <div class="panel-head"><div><h2>${detailName}</h2><p>Selected module · click linked modules to follow dependencies</p></div><button class="btn btn-small" id="edit-module" type="button">Edit</button></div>
+              <div class="panel-head"><div><h2>${detailName}</h2><p>Selected module · Select a linked module to follow a dependency.</p></div><button class="btn btn-small" id="edit-module" type="button">Edit</button></div>
               <div class="panel-body">${moduleInspector()}</div>
             </section>
             <section class="panel">
-              <div class="panel-head"><div><h2>Design checks</h2><p>The tool runs these checks after each change</p></div><span class="status-line"><span class="dot success"></span>Ready</span></div>
+              <div class="panel-head"><div><h2>Design checks</h2><p>The tool runs these checks after each change.</p></div><span class="status-line"><span class="dot success"></span>Ready</span></div>
               <div class="panel-body">
                 <div class="gate-list">
                   <div class="gate-item"><span class="state-icon">✓</span><span>All main use cases have a complete path.</span></div>
@@ -3703,10 +3703,10 @@
       const screenshotCount = allSteps.filter(step => step[2] === 'screenshot').length;
       const structuredCount = allSteps.length - screenshotCount;
       return `
-        ${heading('Verify · Current run', 'Review automated scenario evidence', 'Every approved main, alternate, failure, and recovery scenario has an automated end-to-end result. Visible steps have screenshots. Background checks have structured evidence and a reason.')}
+        ${heading('Verify · Current test', 'Check automated test evidence', 'Each approved scenario has an automated end-to-end test result. Visual steps include screenshots. Background checks include structured evidence and a reason.')}
         <div class="command ready">
-          <div><h2>All approved scenarios passed for build 2026.07.24-rc3</h2><p>The run used sample baseline BL-7, Chrome 142, Windows 11, and the current source snapshot. No scenario or required step was skipped.</p></div>
-          <div class="command-actions"><button class="btn" type="button" id="export-evidence">Export evidence index</button><button class="btn btn-primary" type="button" id="run-scenarios">Run all scenarios <span>→</span></button></div>
+          <div><h2>Build 2026.07.24-rc3 passed all approved scenarios</h2><p>The test used sample baseline BL-7, Chrome 142, Windows 11, and the current source snapshot. The test did not skip a scenario or a required step.</p></div>
+          <div class="command-actions"><button class="btn" type="button" id="export-evidence">Export evidence index</button><button class="btn btn-primary" type="button" id="run-scenarios">Run all tests <span>→</span></button></div>
         </div>
         <div class="verify-summary" aria-label="Verification counts">
           <div class="verify-metric"><b>6 / 6</b><span>use cases</span></div>
@@ -3738,10 +3738,10 @@
                 <div class="run-meta-item"><b>Environment</b><span>Chrome 142 · Windows 11</span></div>
                 <div class="run-meta-item"><b>Test data</b><span>Sample BL-7 · revision 12</span></div>
               </div>
-              <div class="section-head" style="margin:0 0 4px"><div><p class="eyebrow">Step evidence</p><h2>Expected and actual results</h2></div><p style="margin:0">Screenshots are original-resolution PNG files. Nonvisual checks keep the exact structured result.</p></div>
+              <div class="section-head" style="margin:0 0 4px"><div><p class="eyebrow">Step evidence</p><h2>Expected and actual results</h2></div><p style="margin:0">Each screenshot is an original PNG file. Each nonvisual check contains the exact structured result.</p></div>
               <div class="evidence-steps">${scenario.steps.map((step, index) => scenarioEvidenceStep(step, index, scenario.id)).join('')}</div>
               <div class="verify-gates">
-                <div class="gate-item"><span class="state-icon">✓</span><span>Automated test traces to <span class="mono">${scenario.id}</span>.</span></div>
+                <div class="gate-item"><span class="state-icon">✓</span><span>The automated test traces to <span class="mono">${scenario.id}</span>.</span></div>
                 <div class="gate-item"><span class="state-icon">✓</span><span>Every step has the required evidence type.</span></div>
                 <div class="gate-item"><span class="state-icon">✓</span><span>Build, environment, test data, and source revisions are known.</span></div>
                 <div class="gate-item"><span class="state-icon">✓</span><span>The result and evidence are immutable.</span></div>
@@ -3755,26 +3755,26 @@
     function approvalView() {
       const selectedModuleName = moduleName(appState.selectedModule || 'evidence-store');
       return `
-        ${heading('Design · Module queue', 'Design one module at a time', 'The system structure is approved. Keep the full architecture visible while you define, review, approve, hand off, build, and verify each module separately.')}
+        ${heading('Design · Modules', 'Design one module at a time', 'You approved the system structure. The full architecture stays visible. Each module has a separate design, approval, handoff, build, and verification.')}
         <div class="command ready">
-          <div><h2>Selected module: ${selectedModuleName}</h2><p>Work on one module without losing the approved system context. The tool keeps this design session when you stop and return.</p></div>
-          <div class="command-actions"><button class="btn" type="button" id="preview-verify">Preview final Verify</button><button class="btn btn-primary" type="button" id="continue-build">Start ${selectedModuleName} design <span>→</span></button></div>
+          <div><h2>Selected module: ${selectedModuleName}</h2><p>Design only one module. The approved system context stays visible. The tool saves this design session.</p></div>
+          <div class="command-actions"><button class="btn" type="button" id="preview-verify">Preview test evidence</button><button class="btn btn-primary" type="button" id="continue-build">Design ${selectedModuleName} <span>→</span></button></div>
         </div>
         <div class="approval-grid">
           <section class="panel">
             <div class="panel-body">
-              <div class="approval-hero"><div class="approval-check">✓</div><div><p class="eyebrow">System structure approved</p><h2>Module designs stay under your control</h2><p>Approval of one module does not approve another module or claim that the complete design is ready.</p></div></div>
+              <div class="approval-hero"><div class="approval-check">✓</div><div><p class="eyebrow">You approved the system structure</p><h2>Module approvals are separate</h2><p>An approval applies to one module only. It does not approve another module or the complete design.</p></div></div>
               <div class="figure-strip">
                 <div class="figure"><span>System paths</span><strong>6 / 6</strong></div>
                 <div class="figure"><span>Modules</span><strong>17</strong></div>
                 <div class="figure"><span>Approved designs</span><strong>0 / 17</strong></div>
-                <div class="figure"><span>Ready for Build</span><strong>0</strong></div>
+                <div class="figure"><span>Ready to build</span><strong>0</strong></div>
               </div>
               <div class="handoff-list">
                 <p class="eyebrow">Recommended design order</p>
                 <div class="handoff-row"><span class="handoff-icon">01</span><span class="handoff-copy"><b>Stores</b><small>Evidence Store · Job and Package Store</small></span><span class="tag accent">Next</span></div>
-                <div class="handoff-row"><span class="handoff-icon">02</span><span class="handoff-copy"><b>Core data and rules</b><small>Evidence Graph · Workspace Snapshots</small></span><span class="tag">After contracts</span></div>
-                <div class="handoff-row"><span class="handoff-icon">03</span><span class="handoff-copy"><b>Source adapters</b><small>Eight actor-specific adapters can be designed independently.</small></span><span class="tag">8 modules</span></div>
+                <div class="handoff-row"><span class="handoff-icon">02</span><span class="handoff-copy"><b>Core data and rules</b><small>Evidence Graph · Workspace Snapshots</small></span><span class="tag">After contract approval</span></div>
+                <div class="handoff-row"><span class="handoff-icon">03</span><span class="handoff-copy"><b>Source adapters</b><small>You can design the eight source adapters independently.</small></span><span class="tag">8 modules</span></div>
                 <div class="handoff-row"><span class="handoff-icon">04</span><span class="handoff-copy"><b>Workflows</b><small>Import and Publish · Finding Review · Package Export</small></span><span class="tag">3 modules</span></div>
                 <div class="handoff-row"><span class="handoff-icon">05</span><span class="handoff-copy"><b>User interfaces</b><small>Lifecycle Explorer · Audit Workspace</small></span><span class="tag">2 modules</span></div>
               </div>
@@ -3784,7 +3784,7 @@
             <section class="panel">
               <div class="panel-head"><div><h2>One module session</h2><p>Six controlled steps</p></div></div>
               <div class="panel-body">
-                <ul class="why-list"><li><b>1 · Review boundary</b>Check responsibility, exclusions, dependencies, consumers, and owned paths.</li><li><b>2 · Define behavior</b>Check operations, rules, state, failures, recovery, and runtime behavior.</li><li><b>3 · Review contracts</b>Approve provided and required operation versions and schemas.</li><li><b>4 · Review diagrams</b>Inspect selectable UML views generated from the draft.</li><li><b>5 · Run checks</b>Fix blocking module, contract, path, and trace problems.</li><li><b>6 · Approve module</b>Freeze one revision and hash. Then create one Copilot handoff.</li></ul>
+                <ul class="why-list"><li><b>1 · Check the boundary</b>Check the responsibility, exclusions, dependencies, consumers, and owned paths.</li><li><b>2 · Define the behavior</b>Check the operations, rules, states, failures, recovery, and runtime behavior.</li><li><b>3 · Check the contracts</b>Approve the provided and required operation versions and schemas.</li><li><b>4 · Check the diagrams</b>Examine the selectable UML views that the tool creates from the draft.</li><li><b>5 · Run the checks</b>Correct the module, contract, path, and trace problems that block approval.</li><li><b>6 · Approve the module</b>Freeze one revision and hash. Then create one Copilot handoff.</li></ul>
               </div>
             </section>
             <section class="panel">
@@ -3861,7 +3861,7 @@
       document.querySelector('#module-name').value = name;
       document.querySelector('#module-kind').value = detail?.purpose || '';
       document.querySelector('#module-type').value = groupType[detail?.group] || 'domain';
-      document.querySelector('.impact').innerHTML = `<b>This edit is local to ${name}.</b>The preview will show affected use cases, operations, ports, and dependencies before approval.`;
+      document.querySelector('.impact').innerHTML = `<b>This edit applies only to ${name}.</b>The preview shows affected use cases, operations, ports, and dependencies before approval.`;
       document.querySelector('#drawer-apply').textContent = 'Apply change';
       drawer.classList.add('open');
       scrim.classList.add('open');
@@ -4030,7 +4030,7 @@
           }, 'uml-box-node uml-component-node primary', 356, 112, 208, 108, `<small>«component»</small><b>${escapeHtml(context.title)}</b>`)}
           ${positionedUmlElement({
             id:`component-downstream-${context.id}`, type:'Component', label:downstreamLabel,
-            description:`A supporting component used by ${context.title}.`,
+            description:`A component that ${context.title} uses.`,
             relationships:[`used by ${context.title}`], traceIds:context.stories
           }, 'uml-box-node uml-component-node', 696, 136, 190, 84, `<small>«component»</small><b>${escapeHtml(downstreamLabel)}</b>`)}
           ${positionedUmlElement({
@@ -4045,12 +4045,12 @@
           }, 'uml-interface-symbol required', 592, 114, 76, 62, `<span>${escapeHtml(requiredPort)}</span>`)}
           ${positionedUmlElement({
               id:`dependency-in-${context.id}`, type:'Dependency', label:`${upstreamLabel} → ${context.title}`,
-              description:'A UML dependency from the consuming component to the selected component.',
+              description:'A UML dependency from the consumer component to the selected component.',
               relationships:[upstreamLabel, context.title], traceIds:context.stories
           }, 'uml-link-label', 224, 262, 132, 26, '«use»')}
           ${positionedUmlElement({
               id:`dependency-out-${context.id}`, type:'Dependency', label:`${context.title} → ${downstreamLabel}`,
-              description:'A UML dependency from the selected component to a supporting component.',
+              description:'A UML dependency from the selected component to a support component.',
               relationships:[context.title, downstreamLabel], traceIds:context.stories
           }, 'uml-link-label', 566, 262, 132, 26, '«use»')}`;
       return `
@@ -4069,38 +4069,38 @@
         <div class="uml-partition" style="left:662px;width:258px"><span>Source adapter</span></div>
         ${positionedUmlElement({id:`activity-initial-${context.id}`,type:'Initial node',label:'Start',description:'The activity starts when the engineer requests fresh evidence.',relationships:[request],traceIds:context.stories}, 'uml-pseudo-node', 106, 48, 20, 20)}
         ${positionedUmlElement({id:`activity-request-${context.id}`,type:'Action',label:request,description:`The certification engineer asks ${context.title} to refresh its evidence.`,relationships:['Read source set'],traceIds:context.stories}, 'uml-action-node', 34, 98, 164, 54, escapeHtml(request))}
-        ${positionedUmlElement({id:`activity-read-${context.id}`,type:'Action',label:'Read source set',description:'The source adapter reads the configured source set without changing approved evidence.',relationships:[validate],traceIds:context.stories}, 'uml-action-node', 708, 98, 166, 54, 'Read source set')}
+        ${positionedUmlElement({id:`activity-read-${context.id}`,type:'Action',label:'Read source set',description:'The source adapter reads the configured source set. It does not change approved evidence.',relationships:[validate],traceIds:context.stories}, 'uml-action-node', 708, 98, 166, 54, 'Read source set')}
         ${positionedUmlElement({id:`activity-validate-${context.id}`,type:'Action',label:validate,description:`${context.title} validates the candidate data before publication.`,relationships:['Valid?'],traceIds:context.stories}, 'uml-action-node primary', 350, 190, 194, 58, escapeHtml(validate))}
         ${positionedUmlElement({id:`activity-decision-${context.id}`,type:'Decision node',label:'Valid?',description:'The validation result selects exactly one guarded flow.',relationships:['[valid]','[invalid]'],traceIds:context.stories}, 'uml-diamond-node', 425, 282, 44, 44, '<span>?</span>')}
         ${positionedUmlElement({id:`activity-guard-valid-${context.id}`,type:'Guarded control flow',label:'[valid]',description:'Publication continues only when all required checks pass.',relationships:[publish],traceIds:context.stories}, 'uml-link-label', 484, 300, 64, 22, '[valid]')}
         ${positionedUmlElement({id:`activity-guard-invalid-${context.id}`,type:'Guarded control flow',label:'[invalid]',description:'A failed candidate cannot replace the last valid snapshot.',relationships:['Keep last valid'],traceIds:context.stories}, 'uml-link-label', 284, 300, 72, 22, '[invalid]')}
         ${positionedUmlElement({id:`activity-publish-${context.id}`,type:'Action',label:publish,description:`${context.title} publishes the validated result.`,relationships:['Merge'],traceIds:context.stories}, 'uml-action-node', 488, 354, 168, 54, escapeHtml(publish))}
-        ${positionedUmlElement({id:`activity-preserve-${context.id}`,type:'Action',label:'Keep last valid',description:'The failure is recorded and the approved snapshot stays available.',relationships:['Merge'],traceIds:context.stories}, 'uml-action-node', 244, 354, 168, 54, 'Keep last valid')}
+        ${positionedUmlElement({id:`activity-preserve-${context.id}`,type:'Action',label:'Keep last valid',description:'The application records the failure. The approved snapshot stays available.',relationships:['Merge'],traceIds:context.stories}, 'uml-action-node', 244, 354, 168, 54, 'Keep last valid')}
         ${positionedUmlElement({id:`activity-merge-${context.id}`,type:'Merge node',label:'Merge',description:'The alternative flows return to a common completion path.',relationships:[publish,'Keep last valid','End'],traceIds:context.stories}, 'uml-diamond-node', 425, 438, 44, 44, '<span></span>')}
         ${positionedUmlElement({id:`activity-final-${context.id}`,type:'Activity final node',label:'End',description:'All execution for this activity ends here.',relationships:['Merge'],traceIds:context.stories}, 'uml-pseudo-node final', 435, 510, 24, 24)}`;
       return `
-        <div class="diagram-caption"><span><b>Activity diagram.</b> Partitions assign responsibility; guards label alternative control flows.</span><span>Arrowheads show control direction.</span></div>
-        ${umlStage('activity', 566, `UML activity diagram for ${context.title}`, content, `The certification engineer starts ${request}. The source adapter reads the source set. ${context.title} performs ${validate}. A valid candidate follows ${publish}; an invalid candidate keeps the last valid result. Both paths end the activity.`)}`;
+        <div class="diagram-caption"><span><b>Activity diagram.</b> Partitions assign responsibility. Guards identify alternative control flows.</span><span>Arrowheads show control direction.</span></div>
+        ${umlStage('activity', 566, `UML activity diagram for ${context.title}`, content, `The certification engineer starts ${request}. The source adapter reads the source set. ${context.title} performs ${validate}. A valid candidate follows ${publish}. An invalid candidate keeps the last valid result. Both paths end the activity.`)}`;
     }
 
     function stateDetailDiagram(context) {
       const content = `
         ${positionedUmlElement({id:`state-initial-${context.id}`,type:'Initial pseudostate',label:'Initial',description:'The snapshot lifecycle starts here.',relationships:['Candidate'],traceIds:context.stories}, 'uml-pseudo-node', 34, 184, 20, 20)}
         ${positionedUmlElement({id:`state-candidate-${context.id}`,type:'State',label:'Candidate',description:'New source data exists but is not approved for audit use.',relationships:['Validating'],traceIds:context.stories}, 'uml-state-node', 92, 142, 160, 106, '<b>Candidate</b><span>entry / stage data<br>do / collect source status</span>')}
-        ${positionedUmlElement({id:`state-validating-${context.id}`,type:'State',label:'Validating',description:`${context.title} is checking the candidate against publication rules.`,relationships:['Published','Failed'],traceIds:context.stories}, 'uml-state-node primary', 338, 142, 174, 106, '<b>Validating</b><span>entry / start checks<br>do / resolve trace links</span>')}
+        ${positionedUmlElement({id:`state-validating-${context.id}`,type:'State',label:'Validating',description:`${context.title} checks the candidate against publication rules.`,relationships:['Published','Failed'],traceIds:context.stories}, 'uml-state-node primary', 338, 142, 174, 106, '<b>Validating</b><span>entry / start checks<br>do / resolve trace links</span>')}
         ${positionedUmlElement({id:`state-published-${context.id}`,type:'State',label:'Published',description:'The valid snapshot is visible to audit workflows.',relationships:['Baselined'],traceIds:context.stories}, 'uml-state-node', 604, 54, 150, 104, '<b>Published</b><span>entry / expose snapshot<br>do / serve evidence</span>')}
-        ${positionedUmlElement({id:`state-baselined-${context.id}`,type:'State',label:'Baselined',description:'The published snapshot is locked to an audit baseline.',relationships:['Final'],traceIds:context.stories}, 'uml-state-node', 766, 54, 140, 104, '<b>Baselined</b><span>entry / lock revision<br>do / retain signature</span>')}
-        ${positionedUmlElement({id:`state-failed-${context.id}`,type:'State',label:'Failed',description:'Validation evidence is retained while the last valid snapshot remains active.',relationships:['Candidate'],traceIds:context.stories}, 'uml-state-node', 604, 286, 170, 106, '<b>Failed</b><span>entry / record findings<br>do / preserve lastValid</span>')}
+        ${positionedUmlElement({id:`state-baselined-${context.id}`,type:'State',label:'Baselined',description:'The application locks the published snapshot to an audit baseline.',relationships:['Final'],traceIds:context.stories}, 'uml-state-node', 766, 54, 140, 104, '<b>Baselined</b><span>entry / lock revision<br>do / retain signature</span>')}
+        ${positionedUmlElement({id:`state-failed-${context.id}`,type:'State',label:'Failed',description:'The application keeps the validation evidence. The last valid snapshot stays active.',relationships:['Candidate'],traceIds:context.stories}, 'uml-state-node', 604, 286, 170, 106, '<b>Failed</b><span>entry / record findings<br>do / preserve lastValid</span>')}
         ${positionedUmlElement({id:`state-final-${context.id}`,type:'Final state',label:'Final',description:'The snapshot lifecycle is complete for this baseline.',relationships:['Baselined'],traceIds:context.stories}, 'uml-pseudo-node final', 876, 196, 24, 24)}
-        ${positionedUmlElement({id:`transition-create-${context.id}`,type:'Transition',label:'create / stage',description:'Creating a candidate stages source data for validation.',relationships:['Initial','Candidate'],traceIds:context.stories}, 'uml-link-label', 42, 114, 110, 24, 'create / stage')}
+        ${positionedUmlElement({id:`transition-create-${context.id}`,type:'Transition',label:'create / stage',description:'The create operation stages source data for validation.',relationships:['Initial','Candidate'],traceIds:context.stories}, 'uml-link-label', 42, 114, 110, 24, 'create / stage')}
         ${positionedUmlElement({id:`transition-validate-${context.id}`,type:'Transition',label:'validate [sources complete] / start',description:'Validation starts only when every required source reports a complete read.',relationships:['Candidate','Validating'],traceIds:context.stories}, 'uml-link-label', 236, 106, 162, 34, 'validate [sources complete]<br>/ start')}
         ${positionedUmlElement({id:`transition-pass-${context.id}`,type:'Transition',label:'pass / publish',description:'A successful validation publishes the candidate snapshot.',relationships:['Validating','Published'],traceIds:context.stories}, 'uml-link-label', 488, 56, 106, 24, 'pass / publish')}
-        ${positionedUmlElement({id:`transition-baseline-${context.id}`,type:'Transition',label:'baseline / sign',description:'A publication is locked and signed as an audit baseline.',relationships:['Published','Baselined'],traceIds:context.stories}, 'uml-link-label', 702, 18, 112, 24, 'baseline / sign')}
-        ${positionedUmlElement({id:`transition-fail-${context.id}`,type:'Transition',label:'fail / preserve lastValid',description:'Validation failure records findings without replacing the last valid snapshot.',relationships:['Validating','Failed'],traceIds:context.stories}, 'uml-link-label', 492, 306, 108, 34, 'fail / preserve<br>lastValid')}
+        ${positionedUmlElement({id:`transition-baseline-${context.id}`,type:'Transition',label:'baseline / sign',description:'The application locks and signs a publication as an audit baseline.',relationships:['Published','Baselined'],traceIds:context.stories}, 'uml-link-label', 702, 18, 112, 24, 'baseline / sign')}
+        ${positionedUmlElement({id:`transition-fail-${context.id}`,type:'Transition',label:'fail / preserve lastValid',description:'The application records validation findings. It does not replace the last valid snapshot.',relationships:['Validating','Failed'],traceIds:context.stories}, 'uml-link-label', 492, 306, 108, 34, 'fail / preserve<br>lastValid')}
         ${positionedUmlElement({id:`transition-retry-${context.id}`,type:'Transition',label:'retry / clear failure',description:'A reviewer can clear the failure and stage a corrected candidate.',relationships:['Failed','Candidate'],traceIds:context.stories}, 'uml-link-label', 282, 390, 128, 24, 'retry / clear failure')}`;
       return `
-        <div class="diagram-caption"><span><b>State machine diagram.</b> State compartments show behavior; transitions use trigger [guard] / effect.</span><span>The bullseye is the final state.</span></div>
-        ${umlStage('state', 454, `UML state machine diagram for ${context.title}`, content, 'Initial enters Candidate. validate [sources complete] starts Validating. pass publishes the snapshot, which can be baselined and then ends. fail preserves lastValid and enters Failed. retry returns to Candidate.')}`;
+        <div class="diagram-caption"><span><b>State machine diagram.</b> State compartments show behavior. Transitions use trigger [guard] / effect.</span><span>The bullseye is the final state.</span></div>
+        ${umlStage('state', 454, `UML state machine diagram for ${context.title}`, content, 'Initial enters Candidate. validate [sources complete] starts Validating. pass publishes the snapshot. baseline locks the publication and ends the process. fail keeps lastValid and enters Failed. retry returns to Candidate.')}`;
     }
 
     function sequenceDetailDiagram(context) {
@@ -4108,7 +4108,7 @@
       const dependency = context.dependencies[0] || 'Evidence Store';
       const content = `
         ${positionedUmlElement({id:`participant-actor-${context.id}`,type:'Lifeline',label:actor,description:'The actor that starts the evidence refresh interaction.',relationships:['Audit workspace'],traceIds:context.stories}, 'uml-participant-node', 28, 20, 174, 54, `<small>«actor»</small><b>${escapeHtml(actor)}</b>`)}
-        ${positionedUmlElement({id:`participant-boundary-${context.id}`,type:'Lifeline',label:'Audit workspace',description:'The user-facing boundary that receives the request and presents the outcome.',relationships:[actor,context.title],traceIds:context.stories}, 'uml-participant-node', 248, 20, 174, 54, '<small>«boundary»</small><b>Audit workspace</b>')}
+        ${positionedUmlElement({id:`participant-boundary-${context.id}`,type:'Lifeline',label:'Audit workspace',description:'The user interface boundary receives the request and presents the result.',relationships:[actor,context.title],traceIds:context.stories}, 'uml-participant-node', 248, 20, 174, 54, '<small>«boundary»</small><b>Audit workspace</b>')}
         ${positionedUmlElement({id:`participant-control-${context.id}`,type:'Lifeline',label:context.title,description:context.detail.purpose,relationships:['Audit workspace',dependency],traceIds:context.stories}, 'uml-participant-node primary', 468, 20, 174, 54, `<small>«control»</small><b>${escapeHtml(context.title)}</b>`)}
         ${positionedUmlElement({id:`participant-entity-${context.id}`,type:'Lifeline',label:dependency,description:`The persistent evidence collaborator used by ${context.title}.`,relationships:[context.title],traceIds:context.stories}, 'uml-participant-node', 688, 20, 174, 54, `<small>«entity»</small><b>${escapeHtml(dependency)}</b>`)}
         ${positionedUmlElement({id:`activation-boundary-${context.id}`,type:'Execution specification',label:'Audit workspace execution',description:'The workspace is active while it coordinates the request and displays its outcome.',relationships:['Audit workspace'],traceIds:context.stories}, 'uml-activation-node', 328, 112, 14, 352)}
@@ -4123,11 +4123,11 @@
         ${positionedUmlElement({id:`message-current-${context.id}`,type:'Reply message',label:'4: currentSnapshot',description:`${dependency} returns the last valid snapshot.`,relationships:[dependency,context.title],traceIds:context.stories}, 'uml-link-label', 594, 218, 126, 24, '4: currentSnapshot')}
         ${positionedUmlElement({id:`fragment-alt-${context.id}`,type:'Combined fragment',label:'alt valid or invalid candidate',description:'The combined fragment models mutually exclusive valid and invalid publication paths.',relationships:['[valid]','[invalid]'],traceIds:context.stories}, 'uml-link-label', 448, 258, 54, 20, 'alt')}
         ${positionedUmlElement({id:`message-publish-${context.id}`,type:'Synchronous message',label:'[valid] 5: publish(candidate)',description:'A valid candidate replaces the current snapshot.',relationships:[context.title,dependency,'[valid]'],traceIds:context.stories}, 'uml-link-label', 582, 286, 180, 24, '[valid] 5: publish(candidate)')}
-        ${positionedUmlElement({id:`message-preserve-${context.id}`,type:'Synchronous message',label:'[invalid] 5a: preserveLastValid()',description:'An invalid candidate records its failure without replacing approved evidence.',relationships:[context.title,dependency,'[invalid]'],traceIds:context.stories}, 'uml-link-label', 566, 354, 206, 24, '[invalid] 5a: preserveLastValid()')}
+        ${positionedUmlElement({id:`message-preserve-${context.id}`,type:'Synchronous message',label:'[invalid] 5a: preserveLastValid()',description:'An invalid candidate records its failure. It does not replace approved evidence.',relationships:[context.title,dependency,'[invalid]'],traceIds:context.stories}, 'uml-link-label', 566, 354, 206, 24, '[invalid] 5a: preserveLastValid()')}
         ${positionedUmlElement({id:`message-result-${context.id}`,type:'Reply message',label:'6: refreshResult',description:`${context.title} returns the controlled refresh outcome to the workspace.`,relationships:[context.title,'Audit workspace'],traceIds:context.stories}, 'uml-link-label', 390, 432, 132, 24, '6: refreshResult')}`;
       return `
-        <div class="diagram-caption"><span><b>Sequence diagram.</b> Time runs down; narrow rectangles are execution specifications.</span><span>Solid lines are calls; dashed lines are replies.</span></div>
-        ${umlStage('sequence', 492, `UML sequence diagram for ${context.title}`, content, `${actor} calls refreshEvidence on the Audit workspace. The workspace calls refresh on ${context.title}. ${context.title} reads the current snapshot from ${dependency}. In the alt fragment, a valid candidate is published and an invalid candidate preserves the last valid snapshot. The result returns to the workspace.`)}`;
+        <div class="diagram-caption"><span><b>Sequence diagram.</b> Time moves down. Narrow rectangles are execution specifications.</span><span>Solid lines are calls. Dashed lines are replies.</span></div>
+        ${umlStage('sequence', 492, `UML sequence diagram for ${context.title}`, content, `${actor} calls refreshEvidence on the Audit workspace. The workspace calls refresh on ${context.title}. ${context.title} reads the current snapshot from ${dependency}. In the alt fragment, ${dependency} publishes a valid candidate. An invalid candidate keeps the last valid snapshot. The result returns to the workspace.`)}`;
     }
 
     function useCaseDetailDiagram(context) {
@@ -4135,7 +4135,7 @@
       const actor = diagramActor(storyIds[0]);
       const useCases = [
         [storyIds[0] || 'UC-01', context.storyNames[0] || 'Check certification readiness', 280, 80],
-        [storyIds[1] || 'UC-02', context.storyNames[1] || 'Explore lifecycle evidence', 502, 80],
+        [storyIds[1] || 'UC-02', context.storyNames[1] || 'Examine lifecycle evidence', 502, 80],
         [storyIds[2] || 'UC-03', context.storyNames[2] || 'Refresh evidence safely', 280, 190],
         [storyIds[3] || 'UC-04', context.storyNames[3] || 'Review finding independently', 502, 190],
         [storyIds[4] || 'UC-05', context.storyNames[4] || 'Export audit package', 390, 304]
@@ -4149,13 +4149,13 @@
         <div class="uml-boundary" style="left:222px;top:36px;width:486px;height:376px"></div>
         ${positionedUmlElement({id:`system-${context.id}`,type:'System boundary',label:'DO-178C Audit Hub',description:'The system boundary contains behavior delivered by the audit hub.',relationships:useCases.map(item => item[0]),traceIds:storyIds}, 'uml-system-node', 232, 42, 156, 24, 'DO-178C Audit Hub')}
         ${positionedUmlElement({id:`actor-primary-${context.id}`,type:'Actor',label:actor,description:'The engineering role that prepares and checks audit evidence.',relationships:useCases.slice(0,3).map(item => item[1]),traceIds:storyIds}, 'uml-actor-node', 24, 132, 158, 126, `<span class="uml-stick-figure" aria-hidden="true"><i class="arms"></i><i class="leg leg-left"></i><i class="leg leg-right"></i></span><b>${escapeHtml(actor)}</b>`)}
-        ${positionedUmlElement({id:`actor-reviewer-${context.id}`,type:'Actor',label:'Independent reviewer',description:'A role that reviews evidence without preparing it.',relationships:useCases.slice(1).map(item => item[1]),traceIds:storyIds}, 'uml-actor-node', 744, 132, 158, 126, '<span class="uml-stick-figure" aria-hidden="true"><i class="arms"></i><i class="leg leg-left"></i><i class="leg leg-right"></i></span><b>Independent reviewer</b>')}
+        ${positionedUmlElement({id:`actor-reviewer-${context.id}`,type:'Actor',label:'Independent reviewer',description:'This role reviews evidence that a different person prepared.',relationships:useCases.slice(1).map(item => item[1]),traceIds:storyIds}, 'uml-actor-node', 744, 132, 158, 126, '<span class="uml-stick-figure" aria-hidden="true"><i class="arms"></i><i class="leg leg-left"></i><i class="leg leg-right"></i></span><b>Independent reviewer</b>')}
         ${useCaseNodes}
-        ${positionedUmlElement({id:`include-${context.id}`,type:'Include relationship',label:'Refresh evidence safely includes Explore lifecycle evidence',description:'Refresh evidence always includes evidence discovery and trace resolution.',relationships:[useCases[2][0],useCases[1][0]],traceIds:storyIds}, 'uml-link-label', 430, 152, 88, 24, '«include»')}
-        ${positionedUmlElement({id:`extend-${context.id}`,type:'Extend relationship',label:'Review finding independently extends Explore lifecycle evidence',description:'Independent review is optional behavior added at the review extension point.',relationships:[useCases[3][0],useCases[1][0]],traceIds:storyIds}, 'uml-link-label', 600, 154, 82, 24, '«extend»')}`;
+        ${positionedUmlElement({id:`include-${context.id}`,type:'Include relationship',label:'Refresh evidence safely includes Examine lifecycle evidence',description:'Refresh evidence always includes evidence examination and trace resolution.',relationships:[useCases[2][0],useCases[1][0]],traceIds:storyIds}, 'uml-link-label', 430, 152, 88, 24, '«include»')}
+        ${positionedUmlElement({id:`extend-${context.id}`,type:'Extend relationship',label:'Review finding independently extends Examine lifecycle evidence',description:'Independent review is optional behavior at the review extension point.',relationships:[useCases[3][0],useCases[1][0]],traceIds:storyIds}, 'uml-link-label', 600, 154, 82, 24, '«extend»')}`;
       return `
         <div class="diagram-caption"><span><b>Use case diagram.</b> Actors remain outside the named system boundary.</span><span>Dashed open arrows show «include» and «extend».</span></div>
-        ${umlStage('usecase', 448, `UML use case diagram for ${context.title}`, content, `${actor} uses certification readiness, lifecycle evidence, and safe evidence refresh behaviors. The independent reviewer explores evidence and reviews findings. Refresh evidence includes evidence exploration; independent review extends evidence exploration.`)}`;
+        ${umlStage('usecase', 448, `UML use case diagram for ${context.title}`, content, `${actor} uses certification readiness, lifecycle evidence, and safe evidence refresh behaviors. The independent reviewer examines evidence and reviews findings. The Refresh Evidence use case includes evidence examination. Independent review extends evidence examination.`)}`;
     }
 
     function drawUmlStage(type = appState.detailDiagramType) {
@@ -4348,8 +4348,8 @@
       const panel = document.querySelector('#uml-agent-panel');
       panel.hidden = false;
       panel.innerHTML = `
-        <div class="agent-turn user"><b>You</b><p>Explain ${escapeHtml(selectedUmlElement.label)} in this ${escapeHtml(selectedUmlElement.diagram.toLowerCase())} diagram. What can I change without breaking its relationships?</p></div>
-        <div class="agent-turn"><b>Design agent</b><p>${escapeHtml(selectedUmlElement.label)} is a ${escapeHtml(selectedUmlElement.type.toLowerCase())} traced to ${escapeHtml(selectedUmlElement.traceIds.join(', ') || 'the selected design record')}. A change can affect ${escapeHtml(selectedUmlElement.relationships.join(', ') || 'its owning module')}. Describe the result you want; I will analyze the full impact before I change any approved record.</p></div>
+        <div class="agent-turn user"><b>You</b><p>Explain ${escapeHtml(selectedUmlElement.label)} in this ${escapeHtml(selectedUmlElement.diagram.toLowerCase())} diagram. Which changes keep its relationships valid?</p></div>
+        <div class="agent-turn"><b>Design agent</b><p>${escapeHtml(selectedUmlElement.label)} is a ${escapeHtml(selectedUmlElement.type.toLowerCase())} traced to ${escapeHtml(selectedUmlElement.traceIds.join(', ') || 'the selected design record')}. A change can affect ${escapeHtml(selectedUmlElement.relationships.join(', ') || 'its owning module')}. Describe the result that you want. I will analyze the full effect before I change an approved record.</p></div>
         <div class="proposal-field"><label for="uml-follow-up">Continue the discussion</label><textarea id="uml-follow-up" placeholder="Ask a design question…"></textarea></div>
         <div><button class="btn btn-small" id="uml-send-follow-up" type="button">Send message</button></div>`;
       document.querySelector('#uml-send-follow-up').addEventListener('click', () => {
@@ -4393,20 +4393,20 @@
       panel.innerHTML = `
         <div><p class="eyebrow">Impact analysis</p><p class="uml-element-copy"><b>${escapeHtml(selectedUmlElement.label)}</b>: ${escapeHtml(proposal)}</p></div>
         <div class="impact-grid">
-          <div class="impact-item"><b>Use cases</b>${escapeHtml(storyIds.join(' · ') || 'No direct use case; owner review required')}</div>
+          <div class="impact-item"><b>Use cases</b>${escapeHtml(storyIds.join(' · ') || 'No direct use case. Owner review is necessary.')}</div>
           <div class="impact-item"><b>Requirements</b>HLR-AUD-101 · HLR-TRACE-204 · SLR-SNAP-033</div>
           <div class="impact-item"><b>Modules</b>${escapeHtml(affectedModules.map(moduleName).join(' · '))}</div>
           <div class="impact-item"><b>Ports and interfaces</b>${escapeHtml(ports.join(' · ') || 'No port change detected')}</div>
           <div class="impact-item"><b>UML diagrams</b>Component · Activity · State machine · Sequence · Use case</div>
           <div class="impact-item"><b>Automated scenarios</b>${escapeHtml(affectedScenarios.map(item => item.id).join(' · ') || 'Add or revise a scenario')}</div>
-          <div class="impact-item"><b>Approval and baseline</b>Invalidate the current Design approval; preserve the last approved revision.</div>
+          <div class="impact-item"><b>Approval and baseline</b>Cancel the current design approval. Keep the last approved revision.</div>
         </div>
         <div><p class="eyebrow">Required agent changes</p><ol class="change-plan">
           <li>Update the canonical record for ${escapeHtml(selectedUmlElement.label)} and its design reason.</li>
           <li>Update affected modules, operations, ports, adapters, and trace links.</li>
           <li>Regenerate all five UML projections and validate their supported UML 2.5.1 notation.</li>
           <li>Update ${affectedScenarios.length || 'the affected'} end-to-end scenario tests and screenshot expectations.</li>
-          <li>Run Design checks, automated scenarios, and evidence checks before requesting approval.</li>
+          <li>Run design checks, automated scenarios, and evidence checks before you request approval.</li>
         </ol></div>
         <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px"><button class="btn" id="uml-revise-proposal" type="button">Revise proposal</button><button class="btn btn-primary" id="uml-approve-plan" type="button">Approve and assign to agent</button></div>`;
       document.querySelector('#uml-revise-proposal').addEventListener('click', () => {
@@ -4415,9 +4415,9 @@
       });
       document.querySelector('#uml-approve-plan').addEventListener('click', event => {
         event.currentTarget.disabled = true;
-        event.currentTarget.textContent = 'Change plan queued';
-        panel.insertAdjacentHTML('afterbegin', '<div class="gate-item"><span class="state-icon">✓</span><span>Approved change plan queued for the design agent. No approved baseline was overwritten.</span></div>');
-        showToast('Change plan queued. The agent will update the design and rerun affected checks.');
+        event.currentTarget.textContent = 'Agent received plan';
+        panel.insertAdjacentHTML('afterbegin', '<div class="gate-item"><span class="state-icon">✓</span><span>The design agent received the approved change plan. The agent did not replace an approved baseline.</span></div>');
+        showToast('The agent received the change plan. The agent updates the design and runs the affected checks again.');
       });
     }
 
@@ -4433,7 +4433,7 @@
       document.querySelector('#draft-story')?.addEventListener('click', event => {
         const button = event.currentTarget;
         button.disabled = true;
-        button.textContent = 'Creating use-case draft…';
+        button.textContent = 'Draft in progress…';
         setTimeout(() => go('review'), 700);
       });
       document.querySelectorAll('.story > button').forEach(button => button.addEventListener('click', () => {
@@ -4497,7 +4497,7 @@
         showToast('System structure approved. Module designs are ready to start.');
         setTimeout(() => go('approval'), 420);
       });
-      document.querySelector('#continue-build')?.addEventListener('click', () => showToast(`${moduleName(appState.selectedModule || 'evidence-store')} module-design session created. Progress is saved separately.`));
+      document.querySelector('#continue-build')?.addEventListener('click', () => showToast(`The tool created a design session for ${moduleName(appState.selectedModule || 'evidence-store')}. The tool saves its progress separately.`));
       document.querySelector('#preview-verify')?.addEventListener('click', () => go('verification'));
       document.querySelectorAll('[data-scenario]').forEach(button => button.addEventListener('click', () => {
         appState.selectedScenario = button.dataset.scenario;
@@ -4507,7 +4507,7 @@
         showToast(`Opened original screenshot for ${button.dataset.evidenceStep}.`);
       }));
       document.querySelector('#export-evidence')?.addEventListener('click', () => showToast('Evidence index exported with scenario, step, build, and source links.'));
-      document.querySelector('#run-scenarios')?.addEventListener('click', () => showToast('13 automated scenarios queued with isolated fixtures.'));
+      document.querySelector('#run-scenarios')?.addEventListener('click', () => showToast('The test service queued 13 automated scenarios with isolated fixtures.'));
     }
 
     viewSelect.addEventListener('change', () => go(viewSelect.value));
@@ -4554,14 +4554,14 @@
       setDrawerPreview(
         'split',
         'Split preview: 2 modules',
-        `${moduleName(appState.selectedModule)} would split into an identity module and a rule module. ${detail?.stories.length || 0} use-case paths and ${detail?.usedBy.length || 0} dependent modules would be checked again.`
+        `The split creates an identity module and a rule module from ${moduleName(appState.selectedModule)}. The tool checks ${detail?.stories.length || 0} use-case paths and ${detail?.usedBy.length || 0} dependent modules again.`
       );
     });
     document.querySelector('#drawer-merge').addEventListener('click', () => {
       setDrawerPreview(
         'merge',
         'Merge preview: 1 larger module',
-        `${moduleName(appState.selectedModule)} and Workspace Snapshots would share one owner and release cycle. The preview adds 5 operations and removes 1 dependency boundary.`
+        `The merge gives ${moduleName(appState.selectedModule)} and Workspace Snapshots one owner and one release cycle. The preview adds five operations and removes one dependency limit.`
       );
     });
     document.querySelector('#drawer-move').addEventListener('click', () => {
@@ -4569,7 +4569,7 @@
       setDrawerPreview(
         'move',
         `Move preview: ${operation}`,
-        'Choose the destination module in a later step. The tool will check use-case paths, ports, and dependency direction before it applies the move.'
+        'Select the destination module in the next step. The tool checks use-case paths, ports, and dependency direction before it moves the operation.'
       );
     });
     document.querySelector('#drawer-apply').addEventListener('click', () => {
@@ -4610,7 +4610,7 @@
       detail.group = groupByType[newType] || detail.group;
       closeDrawer();
       render();
-      showToast('Design decision saved. The tool will apply it to each new draft.');
+      showToast('The tool saved the design decision. The tool applies it to each new draft.');
     });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape' && umlElementModal.classList.contains('open')) {

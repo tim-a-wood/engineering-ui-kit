@@ -47,7 +47,7 @@ design or build the full application in one pass.
 
 The first screen asks one question:
 
-> What work must users do?
+> Describe the user tasks.
 
 The user can write a short description. Examples and limits are optional.
 
@@ -185,7 +185,7 @@ The Describe view contains:
 - buttons to add an example or prohibited result;
 - a list of selected sources;
 - a clear statement that the sources are read-only;
-- one action: **Create use-case draft**.
+- one action: **Create draft**.
 
 The tool can start when the user enters one description. It must not require a
 form before it creates the first draft.
