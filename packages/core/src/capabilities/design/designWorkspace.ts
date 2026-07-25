@@ -47,6 +47,18 @@ import type {
 // File helpers (pattern copied from ../persistence.ts atomicWriteJson)
 // ---------------------------------------------------------------------------
 
+/**
+ * File stem for a record id that may exceed OS filename limits (deep
+ * `childId` chains, e.g. diagram-relationship ids). Long ids keep a readable
+ * prefix plus a stable hash suffix; the full id stays inside the JSON body.
+ */
+function safeFileStem(id: string): string {
+  const sanitized = id.replace(/[^A-Za-z0-9._-]+/g, '_')
+  if (sanitized.length <= 120) return sanitized
+  const digest = crypto.createHash('sha256').update(id).digest('hex').slice(0, 16)
+  return `${sanitized.slice(0, 100)}.${digest}`
+}
+
 function atomicWriteJson(filePath: string, value: unknown): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true })
   const tmp = `${filePath}.${crypto.randomUUID()}.tmp`
@@ -645,7 +657,7 @@ export class DesignWorkspace {
 
   saveDiagramDiscussionEntry(projectId: string, entry: DiagramDiscussionEntry): void {
     this.ensureInitialized(projectId)
-    atomicWriteJson(path.join(this.root(projectId), 'diagram-discussions', `${entry.id}.json`), entry)
+    atomicWriteJson(path.join(this.root(projectId), 'diagram-discussions', `${safeFileStem(entry.id)}.json`), entry)
   }
 
   listDiagramDiscussionEntries(projectId: string, diagramId?: string): DiagramDiscussionEntry[] {

@@ -21,7 +21,7 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import { canonicalHash, sha256Hex } from '../hash.js'
 import { isRealPathWithinProjectRoot } from '../filesystem.js'
 import { stableSortBy, stableSortStrings } from './identity.js'
@@ -619,4 +619,48 @@ export async function runConfiguredCommand(input: RunConfiguredCommandInput): Pr
     child.on('error', () => finish(null))
     child.on('close', (code) => finish(code))
   })
+}
+
+/**
+ * Synchronous variant of `runConfiguredCommand` for the synchronous executor
+ * slots in `operations.ts` (`verifyModule` and peers). Same allowlist,
+ * isolation, and timeout semantics; cancellation is checked once before the
+ * spawn because a synchronous child cannot be interrupted mid-run.
+ */
+export function runConfiguredCommandSync(input: RunConfiguredCommandInput): RunConfiguredCommandResult {
+  if (!input.allowedCommands.includes(input.command)) {
+    throw new Error(`command is not in the configured allowlist: "${input.command}"`)
+  }
+  const guard = processIsolationGuard({
+    root: input.root ?? input.cwd,
+    cwd: input.cwd,
+    envAllowlist: input.envAllowlist,
+    extraEnv: input.extraEnv,
+  })
+  if (!guard.ok) {
+    throw new Error(guard.reason)
+  }
+  if (input.cancellation?.cancelled) {
+    return { exitCode: null, timedOut: false, cancelled: true, stdout: '', stderr: '', durationMs: 0 }
+  }
+
+  const maxOutputBytes = input.maxOutputBytes ?? 1_048_576
+  const startedAt = Date.now()
+  const outcome = spawnSync(input.command, input.args ?? [], {
+    cwd: guard.cwd,
+    env: guard.env,
+    timeout: input.timeoutMs,
+    killSignal: 'SIGKILL',
+    maxBuffer: maxOutputBytes,
+    encoding: 'utf8',
+  })
+  const timedOut = outcome.error !== undefined && (outcome.error as NodeJS.ErrnoException).code === 'ETIMEDOUT'
+  return {
+    exitCode: outcome.status,
+    timedOut,
+    cancelled: false,
+    stdout: outcome.stdout ?? '',
+    stderr: outcome.stderr ?? '',
+    durationMs: Date.now() - startedAt,
+  }
 }

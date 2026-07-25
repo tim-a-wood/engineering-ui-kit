@@ -25,7 +25,7 @@ import {
   type DesignOperationExecutors,
   type DesignOperationsService,
 } from './capabilities/design/operations.js'
-import { applyDeltaTransactionally } from './capabilities/design/repositoryAdapter.js'
+import { applyDeltaTransactionally, runConfiguredCommandSync } from './capabilities/design/repositoryAdapter.js'
 
 /**
  * One async method per `DesignOperationsService` operation, with the exact
@@ -49,23 +49,71 @@ export type CreateDesignMachineApiOptions = {
 
 /**
  * Real-filesystem executors (`capabilities/design/repositoryAdapter.ts`,
- * EUC-15). Only `applyDelta` is wired: `applyDeltaTransactionally` is
- * synchronous and matches the committed `DesignOperationExecutors['applyDelta']`
- * signature exactly. `verifyModule`/`configureBinding`/`verifyConnection`/
- * `runScenario` are intentionally left unconfigured here — the only
- * committed command-execution primitive, `repositoryAdapter.runConfiguredCommand`,
- * is `async`, but those four executor slots are typed to return their result
- * synchronously, so a real command-backed implementation cannot satisfy the
- * committed type without either blocking child-process I/O (unsafe) or a
- * core type change (see the final packet message "contract-change
- * requests"). Leaving them unconfigured is the documented, safe fallback:
- * those operations return an honest 'not-configured' diagnostic rather than
- * faking success (`operations.ts` §19).
+ * EUC-15). `applyDelta` applies transactionally against `root`.
+ * `verifyModule` runs the approved design's configured verification commands
+ * through `runConfiguredCommandSync` — the allowlist is exactly the command
+ * set frozen in the approved `ModuleDesignSpecification` (§12.3 "configured
+ * commands", §20.2 configured allowlist). A design with no configured
+ * commands fails honestly rather than passing vacuously. `configureBinding`,
+ * `verifyConnection`, and `runScenario` stay unconfigured here: they need a
+ * launched deployable or a browser runner that a bare data directory cannot
+ * provide, so those operations return the honest 'not-configured'
+ * diagnostic (`operations.ts`, §19) unless the embedding product supplies
+ * real executors.
  */
 export function buildDefaultExecutors(root: string): DesignOperationExecutors {
   return {
     applyDelta: (plan, delta) => applyDeltaTransactionally(plan, delta, root),
+    verifyModule: ({ design }, context) => {
+      const commands = design.verification.configuredCommands
+      if (commands.length === 0) {
+        return {
+          passed: false,
+          diagnostics: [
+            {
+              id: 'euc16.verify.no-commands',
+              code: 'EUC16-VERIFY-NO-COMMANDS',
+              severity: 'blocker' as const,
+              message: 'the approved module design defines no configured verification commands',
+            },
+          ],
+        }
+      }
+      const results = commands.map((line) => {
+        const [command = '', ...args] = line.split(' ').filter(Boolean)
+        const outcome = runConfiguredCommandSync({
+          command,
+          args,
+          cwd: root,
+          root,
+          timeoutMs: 120_000,
+          allowedCommands: [command],
+          cancellation: context.cancellationRequested ? { cancelled: true } : undefined,
+          envAllowlist: ['PATH'],
+        })
+        return { line, outcome }
+      })
+      const failed = results.filter(({ outcome }) => outcome.exitCode !== 0 || outcome.timedOut || outcome.cancelled)
+      return {
+        passed: failed.length === 0,
+        evidenceRefs: results.map(({ line, outcome }) => `command:${line}:exit=${outcome.exitCode ?? 'none'}${outcome.timedOut ? ':timeout' : ''}`),
+        diagnostics: failed.map(({ line, outcome }) => ({
+          id: `euc16.verify.${sha256Short(line)}`,
+          code: outcome.timedOut ? 'EUC16-VERIFY-TIMEOUT' : 'EUC16-VERIFY-FAILED',
+          severity: 'blocker' as const,
+          message: outcome.timedOut
+            ? `verification command timed out: ${line}`
+            : `verification command failed (exit ${outcome.exitCode ?? 'none'}): ${line}`,
+        })),
+      }
+    },
   }
+}
+
+function sha256Short(text: string): string {
+  let hash = 0
+  for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0
+  return hash.toString(16)
 }
 
 export function createDesignMachineApi(options: CreateDesignMachineApiOptions): DesignMachineApi {
