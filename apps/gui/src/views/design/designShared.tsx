@@ -8,7 +8,13 @@
  */
 
 import type { ReactNode } from 'react'
-import type { ModuleDesignProgress, ModuleDesignProgressEntry, ModuleQueueFilter } from '@engineering-ui-kit/core/design-browser'
+import type {
+  DesignWorkflowPolicy,
+  ModuleDesignProgress,
+  ModuleDesignProgressEntry,
+  ModuleQueueFilter,
+  ModuleVerificationResult,
+} from '@engineering-ui-kit/core/design-browser'
 import type { ModuleType } from '@engineering-ui-kit/core'
 import type { SaveState } from './designState'
 
@@ -133,4 +139,40 @@ export function SaveIndicator(props: { saveState: SaveState; savedAt?: string })
 /** §18.3 counts, never percentages: "3 of 17 module designs approved". */
 export function approvalCountText(progress: { approved: number; total: number }): string {
   return `${progress.approved} of ${progress.total} module designs approved`
+}
+
+// ---------------------------------------------------------------------------
+// Build / Verify / Evidence shared labels (§3.5, §6.2, §11, §14, §22)
+// ---------------------------------------------------------------------------
+
+/** §3.5 — the two Design-to-Build gate modes, exact spec wording. */
+export function gateModeLabel(mode: DesignWorkflowPolicy['mode']): string {
+  return mode === 'completeBaseline' ? 'Complete Design baseline' : 'Incremental modules'
+}
+
+export function gateModeDescription(mode: DesignWorkflowPolicy['mode']): string {
+  return mode === 'completeBaseline'
+    ? 'Build starts after the complete Design baseline is approved.'
+    : 'An approved, dependency-closed module can enter Build before unrelated module designs are complete.'
+}
+
+/** Module-verification outcome label — never "stale" (Appendix C uses "Old" for staleness elsewhere). */
+export function verificationOutcomeLabel(outcome: ModuleVerificationResult['outcome']): string {
+  switch (outcome) {
+    case 'passed':
+      return 'Valid'
+    case 'failed':
+      return 'Failed'
+    case 'timeout':
+      return 'Timed out'
+    case 'skipped':
+      return 'Skipped'
+    default:
+      return outcome
+  }
+}
+
+/** Scenario-run / verification-record current-vs-old label (Appendix C: "Old", not "Freshness invalid"). */
+export function currentStateLabel(state: 'current' | 'old'): string {
+  return state === 'current' ? 'Current' : 'Old'
 }

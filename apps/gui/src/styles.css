@@ -7523,3 +7523,335 @@ code.path-wrap {
     scroll-behavior: auto !important;
   }
 }
+
+/* ==========================================================================
+   Design workspace tabs — Design / Build / Verify / Evidence (EUC-17 part 2)
+   ========================================================================== */
+
+.design-workspace-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-1);
+  border-bottom: 1px solid var(--semantic-border-subtle);
+}
+
+.design-workspace-tab {
+  min-height: 44px;
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--semantic-radius-sm) var(--semantic-radius-sm) 0 0;
+  background: transparent;
+  color: var(--semantic-text-secondary);
+  cursor: pointer;
+}
+
+.design-workspace-tab.active {
+  border-color: var(--semantic-border-subtle);
+  background: var(--semantic-surface-panel);
+  color: var(--semantic-text-primary);
+  font-weight: var(--semantic-typography-weight-medium);
+}
+
+/* -- module diagrams (§9.8, §15) ------------------------------------------ */
+
+.design-diagrams {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-3);
+}
+
+.design-diagrams-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-1);
+  align-items: center;
+}
+
+.design-diagrams-tab {
+  min-height: 36px;
+  padding: var(--semantic-spacing-1) var(--semantic-spacing-2);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  background: var(--semantic-surface-panel-raised);
+  color: var(--semantic-text-secondary);
+  cursor: pointer;
+}
+
+.design-diagrams-tab.active {
+  border-color: var(--semantic-border-focus);
+  color: var(--semantic-text-primary);
+}
+
+.design-diagrams-toggle {
+  margin-left: auto;
+  min-height: 36px;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  background: var(--semantic-surface-panel-raised);
+  color: var(--semantic-text-secondary);
+  cursor: pointer;
+}
+
+.design-diagrams-toggle[aria-pressed='true'] {
+  border-color: var(--semantic-border-focus);
+  color: var(--semantic-text-primary);
+}
+
+.design-diagram-svg {
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+}
+
+.design-diagram-node rect {
+  fill: var(--semantic-surface-panel-raised);
+  stroke: var(--semantic-border-subtle);
+  stroke-width: 1.5;
+}
+
+.design-diagram-node:focus-visible rect,
+.design-diagram-node.selected rect {
+  stroke: var(--semantic-border-focus);
+  stroke-width: 2.5;
+}
+
+.design-diagram-node text {
+  fill: var(--semantic-text-primary);
+  font-size: 11px;
+}
+
+.design-diagram-node-title {
+  font-weight: var(--semantic-typography-weight-medium);
+}
+
+.design-diagram-node-type {
+  fill: var(--semantic-text-muted) !important;
+}
+
+.design-diagram-edge-line {
+  fill: none;
+  stroke: var(--semantic-text-muted);
+  stroke-width: 8;
+  stroke-opacity: 0;
+  cursor: pointer;
+}
+
+.design-diagram-edge-line:focus-visible,
+.design-diagram-edge-line.selected {
+  stroke: var(--semantic-border-focus);
+  stroke-opacity: 0.35;
+}
+
+.design-diagram-edge-label {
+  fill: var(--semantic-text-muted);
+  font-size: 10px;
+}
+
+.design-diagram-diagnostics {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.design-diagram-detail-fields dd {
+  word-break: break-word;
+}
+
+.design-diagram-detail-id {
+  font-family: var(--semantic-typography-font-mono, monospace);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-diagram-discussion {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-1);
+}
+
+.design-diagram-discussion-entry {
+  border-left: 2px solid var(--semantic-border-subtle);
+  padding-left: var(--semantic-spacing-2);
+}
+
+.design-diagram-discussion-kind {
+  display: block;
+  color: var(--semantic-text-muted);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-diagram-impact {
+  border: 1px solid var(--semantic-status-warning);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-status-warning-tint);
+  padding: var(--semantic-spacing-3);
+}
+
+.design-diagram-propose-form,
+.design-diagram-discuss-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-1);
+}
+
+.design-diagram-propose-form textarea,
+.design-diagram-discuss-form textarea {
+  min-height: 44px;
+  border-radius: var(--semantic-radius-sm);
+  border: 1px solid var(--semantic-border-subtle);
+  background: var(--semantic-surface-inset);
+  color: var(--semantic-text-primary);
+  padding: var(--semantic-spacing-1);
+}
+
+/* -- Build: gate mode, handoff, waves (§3.5, §6.2, §11, §12) -------------- */
+
+.design-gate-mode-banner,
+.design-incremental-preview {
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+}
+
+.design-handoff-module-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+}
+
+.design-handoff-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+}
+
+.design-context-manifest {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-context-limit-report {
+  border: 1px solid var(--semantic-status-warning);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-status-warning-tint);
+  padding: var(--semantic-spacing-2);
+}
+
+.design-multi-pass-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-1);
+}
+
+.design-delta-flow {
+  border-top: 1px solid var(--semantic-border-subtle);
+  padding-top: var(--semantic-spacing-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-2);
+}
+
+.design-delta-flow textarea {
+  min-height: 88px;
+  width: 100%;
+  border-radius: var(--semantic-radius-sm);
+  border: 1px solid var(--semantic-border-subtle);
+  background: var(--semantic-surface-inset);
+  color: var(--semantic-text-primary);
+  padding: var(--semantic-spacing-1);
+}
+
+.design-delta-error {
+  color: var(--semantic-status-danger);
+}
+
+.design-wave {
+  margin-bottom: var(--semantic-spacing-4);
+}
+
+.design-wave-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.design-wave-table th,
+.design-wave-table td {
+  border: 1px solid var(--semantic-border-subtle);
+  padding: var(--semantic-spacing-1) var(--semantic-spacing-2);
+  text-align: left;
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-wave-cycles {
+  color: var(--semantic-status-danger);
+}
+
+.design-waves-multi-select {
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+}
+
+/* -- Verify (§14.4) -------------------------------------------------------- */
+
+.design-verify-counts {
+  grid-template-columns: max-content max-content;
+}
+
+.design-verify-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-2);
+}
+
+.design-verify-first-failed {
+  border: 1px solid var(--semantic-status-danger);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-status-danger-tint);
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+}
+
+/* -- Evidence Explorer (§22 Lifecycle Explorer) ---------------------------- */
+
+.design-evidence-phase {
+  margin-bottom: var(--semantic-spacing-4);
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+}
+
+.design-evidence-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-2);
+}
+
+.design-evidence-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+}

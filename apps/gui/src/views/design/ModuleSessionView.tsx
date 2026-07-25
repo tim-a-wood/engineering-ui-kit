@@ -8,16 +8,21 @@
 import { useId, useState, type FormEvent } from 'react'
 import {
   MODULE_DESIGN_STEPS,
+  type DesignImpactRecord,
+  type DiagramDiscussionEntry,
   type ModuleDesignCheckEvaluation,
   type ModuleDesignProgressEntry,
   type ModuleDesignSession,
   type ModuleDesignSpecification,
   type ModuleDesignStep,
+  type SystemStructureSpecification,
+  type UseCaseAnalysis,
 } from '@engineering-ui-kit/core/design-browser'
 import type { OperationContract } from '@engineering-ui-kit/core'
 import { StateBadge, moduleTypeLabel } from './designShared'
-import type { SaveState } from './designState'
+import type { DesignStore, SaveState } from './designState'
 import { SaveIndicator } from './designShared'
+import { ModuleDiagrams } from './ModuleDiagrams'
 
 const STEP_LABEL: Record<ModuleDesignStep, string> = {
   boundary: 'Review boundary',
@@ -43,6 +48,13 @@ export type ModuleSessionViewProps = {
   onRunChecks: () => void
   onApprove: () => void
   onCreateHandoff: () => void
+  /** §9.8 diagrams step — omitted only by tests that do not exercise it. */
+  store?: DesignStore
+  architecture?: SystemStructureSpecification
+  allDesigns?: ModuleDesignSpecification[]
+  useCaseAnalysis?: UseCaseAnalysis
+  diagramDiscussions?: Record<string, DiagramDiscussionEntry[]>
+  diagramImpacts?: Record<string, DesignImpactRecord>
 }
 
 export function ModuleSessionView(props: ModuleSessionViewProps) {
@@ -110,7 +122,17 @@ export function ModuleSessionView(props: ModuleSessionViewProps) {
           <BehaviorStep design={design} onAnswerQuestion={props.onAnswerQuestion} />
         )}
         {currentStep === 'contracts' && <ContractsStep design={design} approvedContracts={props.approvedContracts} />}
-        {currentStep === 'diagrams' && <DiagramsStep design={design} />}
+        {currentStep === 'diagrams' && (
+          <DiagramsStep
+            design={design}
+            store={props.store}
+            architecture={props.architecture}
+            allDesigns={props.allDesigns}
+            useCaseAnalysis={props.useCaseAnalysis}
+            diagramDiscussions={props.diagramDiscussions}
+            diagramImpacts={props.diagramImpacts}
+          />
+        )}
         {currentStep === 'checks' && <ChecksStep checks={props.checks} onRunChecks={props.onRunChecks} onGoToStep={props.onGoToStep} />}
         {currentStep === 'approval' && (
           <ApprovalStep design={design} approvedDesign={props.approvedDesign} onApprove={props.onApprove} onCreateHandoff={props.onCreateHandoff} />
@@ -251,20 +273,35 @@ function ContractsStep(props: { design: ModuleDesignSpecification; approvedContr
   )
 }
 
-function DiagramsStep(props: { design: ModuleDesignSpecification }) {
+function DiagramsStep(props: {
+  design: ModuleDesignSpecification
+  store?: DesignStore
+  architecture?: SystemStructureSpecification
+  allDesigns?: ModuleDesignSpecification[]
+  useCaseAnalysis?: UseCaseAnalysis
+  diagramDiscussions?: Record<string, DiagramDiscussionEntry[]>
+  diagramImpacts?: Record<string, DesignImpactRecord>
+}) {
+  if (!props.store || !props.architecture) {
+    return (
+      <div className="design-step-panel">
+        <h3>Review diagrams</h3>
+        <p className="secondary-text">No diagrams apply to this module yet.</p>
+      </div>
+    )
+  }
   return (
     <div className="design-step-panel">
       <h3>Review diagrams</h3>
-      {props.design.diagrams.length === 0 ? (
-        <p className="secondary-text">No diagrams apply to this module yet.</p>
-      ) : (
-        <ul>
-          {props.design.diagrams.map((diagram) => (
-            <li key={diagram.diagramId}>{diagram.kind} diagram</li>
-          ))}
-        </ul>
-      )}
-      <p className="secondary-text">Full diagram canvases open from the Diagrams workspace.</p>
+      <ModuleDiagrams
+        store={props.store}
+        design={props.design}
+        architecture={props.architecture}
+        allDesigns={props.allDesigns ?? []}
+        useCaseAnalysis={props.useCaseAnalysis}
+        diagramDiscussions={props.diagramDiscussions ?? {}}
+        diagramImpacts={props.diagramImpacts ?? {}}
+      />
     </div>
   )
 }

@@ -4,15 +4,28 @@
  * the current module's session, and system context (§18.2).
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { ModuleDesignStep } from '@engineering-ui-kit/core/design-browser'
 import { DesignStore, useDesignState } from './designState'
 import { ModuleQueue } from './ModuleQueue'
 import { ModuleSessionView } from './ModuleSessionView'
 import { SystemCanvas } from './SystemCanvas'
+import { WavesView } from './WavesView'
+import { BuildHandoffView } from './BuildHandoffView'
+import { DesignVerifyView } from './DesignVerifyView'
+import { EvidenceExplorer } from './EvidenceExplorer'
 import { SaveIndicator, approvalCountText } from './designShared'
 
 const NARROW_BREAKPOINT = 900
+
+type WorkspaceTab = 'design' | 'build' | 'verify' | 'evidence'
+
+const TABS: { id: WorkspaceTab; label: string }[] = [
+  { id: 'design', label: 'Design' },
+  { id: 'build', label: 'Build' },
+  { id: 'verify', label: 'Verify' },
+  { id: 'evidence', label: 'Evidence' },
+]
 
 function useIsNarrow(breakpoint = NARROW_BREAKPOINT): boolean {
   const [narrow, setNarrow] = useState<boolean>(() => {
@@ -41,6 +54,7 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
   const state = useDesignState(props.store)
   const narrow = useIsNarrow()
   const [queueOpen, setQueueOpen] = useState(!narrow)
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>('design')
 
   const selectedEntry = useMemo(
     () => state.progress.modules.find((entry) => entry.moduleId === state.selectedModuleId),
@@ -55,6 +69,22 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
   function selectModule(moduleId: string) {
     props.store.selectModule(moduleId)
     if (narrow) setQueueOpen(false)
+  }
+
+  function goToDesignRecord(moduleId: string) {
+    props.store.selectModule(moduleId)
+    setActiveTab('design')
+  }
+
+  function onTabKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const currentIndex = TABS.findIndex((tab) => tab.id === activeTab)
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+      event.preventDefault()
+      const delta = event.key === 'ArrowRight' ? 1 : -1
+      const next = TABS[(currentIndex + delta + TABS.length) % TABS.length]!
+      setActiveTab(next.id)
+      document.getElementById(`design-workspace-tab-${next.id}`)?.focus()
+    }
   }
 
   const blockingModuleNamesForStatus = state.systemStatus.blockingModuleIds.map(
@@ -81,60 +111,114 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
         <SaveIndicator saveState={state.saveState} savedAt={state.savedAt} />
       </header>
 
-      <SystemCanvas
-        architecture={state.architecture}
-        progress={state.progress}
-        selectedModuleId={state.selectedModuleId}
-        onSelectModule={(moduleId) => props.store.selectFromCanvas(moduleId)}
-        focusMode={state.focusMode}
-        onFocusModeChange={(value) => props.store.setFocusMode(value)}
-        listView={state.listView}
-        onListViewChange={(value) => props.store.setListView(value)}
-      />
+      <div role="tablist" aria-label="Design workspace sections" className="design-workspace-tabs" onKeyDown={onTabKeyDown}>
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            id={`design-workspace-tab-${tab.id}`}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            aria-current={activeTab === tab.id ? 'true' : undefined}
+            aria-controls={`design-workspace-panel-${tab.id}`}
+            tabIndex={activeTab === tab.id ? 0 : -1}
+            className={activeTab === tab.id ? 'design-workspace-tab active' : 'design-workspace-tab'}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-      {narrow && (
-        <button type="button" className="design-queue-drawer-toggle" aria-expanded={queueOpen} onClick={() => setQueueOpen((v) => !v)}>
-          {queueOpen ? 'Hide module list' : 'Show module list'}
-        </button>
+      {activeTab === 'design' && (
+        <div id="design-workspace-panel-design" role="tabpanel" aria-labelledby="design-workspace-tab-design">
+          <SystemCanvas
+            architecture={state.architecture}
+            progress={state.progress}
+            selectedModuleId={state.selectedModuleId}
+            onSelectModule={(moduleId) => props.store.selectFromCanvas(moduleId)}
+            focusMode={state.focusMode}
+            onFocusModeChange={(value) => props.store.setFocusMode(value)}
+            listView={state.listView}
+            onListViewChange={(value) => props.store.setListView(value)}
+          />
+
+          {narrow && (
+            <button type="button" className="design-queue-drawer-toggle" aria-expanded={queueOpen} onClick={() => setQueueOpen((v) => !v)}>
+              {queueOpen ? 'Hide module list' : 'Show module list'}
+            </button>
+          )}
+
+          <div className="design-workspace-body">
+            {(!narrow || queueOpen) && (
+              <ModuleQueue
+                progress={state.progress}
+                filter={state.queueFilter}
+                onFilterChange={(filter) => props.store.setQueueFilter(filter)}
+                selectedModuleId={state.selectedModuleId}
+                onSelectModule={selectModule}
+                compact={narrow}
+              />
+            )}
+
+            <div className="design-workspace-main">
+              {selectedEntry ? (
+                <ModuleSessionView
+                  entry={selectedEntry}
+                  design={design}
+                  approvedDesign={approvedDesign}
+                  session={session}
+                  checks={checks}
+                  approvedContracts={state.approvedContracts}
+                  primaryActionLabel={primaryActionLabel}
+                  saveState={state.saveState}
+                  onPrimaryAction={() => props.store.primaryAction(selectedEntry.moduleId)}
+                  onGoToStep={(step: ModuleDesignStep) => props.store.goToStep(selectedEntry.moduleId, step)}
+                  onAnswerQuestion={(itemId, text) => props.store.answerRequiredQuestion(selectedEntry.moduleId, itemId, text)}
+                  onRunChecks={() => props.store.runChecks(selectedEntry.moduleId)}
+                  onApprove={() => props.store.approveModule(selectedEntry.moduleId)}
+                  onCreateHandoff={() => props.store.createCopilotHandoff(selectedEntry.moduleId)}
+                  store={props.store}
+                  architecture={state.architecture}
+                  allDesigns={state.moduleDesigns}
+                  useCaseAnalysis={state.useCaseAnalysis}
+                  diagramDiscussions={state.diagramDiscussions}
+                  diagramImpacts={state.diagramImpacts}
+                />
+              ) : (
+                <p className="secondary-text">Select a module from the list to begin.</p>
+              )}
+            </div>
+
+            <DesignContextPanel store={props.store} selectedModuleId={state.selectedModuleId} />
+          </div>
+        </div>
       )}
 
-      <div className="design-workspace-body">
-        {(!narrow || queueOpen) && (
-          <ModuleQueue
+      {activeTab === 'build' && (
+        <div id="design-workspace-panel-build" role="tabpanel" aria-labelledby="design-workspace-tab-build">
+          <WavesView
+            wavePlan={state.wavePlan}
             progress={state.progress}
-            filter={state.queueFilter}
-            onFilterChange={(filter) => props.store.setQueueFilter(filter)}
-            selectedModuleId={state.selectedModuleId}
-            onSelectModule={selectModule}
-            compact={narrow}
+            onCreateHandoff={(moduleId) => props.store.createModuleHandoff(moduleId)}
+            onCreateMultiModuleHandoff={(moduleIds) => props.store.createMultiModuleHandoff(moduleIds)}
+            multiModuleHandoff={state.multiModuleHandoff}
           />
-        )}
-
-        <div className="design-workspace-main">
-          {selectedEntry ? (
-            <ModuleSessionView
-              entry={selectedEntry}
-              design={design}
-              approvedDesign={approvedDesign}
-              session={session}
-              checks={checks}
-              approvedContracts={state.approvedContracts}
-              primaryActionLabel={primaryActionLabel}
-              saveState={state.saveState}
-              onPrimaryAction={() => props.store.primaryAction(selectedEntry.moduleId)}
-              onGoToStep={(step: ModuleDesignStep) => props.store.goToStep(selectedEntry.moduleId, step)}
-              onAnswerQuestion={(itemId, text) => props.store.answerRequiredQuestion(selectedEntry.moduleId, itemId, text)}
-              onRunChecks={() => props.store.runChecks(selectedEntry.moduleId)}
-              onApprove={() => props.store.approveModule(selectedEntry.moduleId)}
-              onCreateHandoff={() => props.store.createCopilotHandoff(selectedEntry.moduleId)}
-            />
-          ) : (
-            <p className="secondary-text">Select a module from the list to begin.</p>
-          )}
+          <BuildHandoffView store={props.store} />
         </div>
+      )}
 
-        <DesignContextPanel store={props.store} selectedModuleId={state.selectedModuleId} />
-      </div>
+      {activeTab === 'verify' && (
+        <div id="design-workspace-panel-verify" role="tabpanel" aria-labelledby="design-workspace-tab-verify">
+          <DesignVerifyView store={props.store} onSelectDesignLink={goToDesignRecord} />
+        </div>
+      )}
+
+      {activeTab === 'evidence' && (
+        <div id="design-workspace-panel-evidence" role="tabpanel" aria-labelledby="design-workspace-tab-evidence">
+          <EvidenceExplorer store={props.store} onFollowTrace={goToDesignRecord} />
+        </div>
+      )}
     </div>
   )
 }
