@@ -146,6 +146,7 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
           {narrow && (
             <button type="button" className="design-queue-drawer-toggle" aria-expanded={queueOpen} onClick={() => setQueueOpen((v) => !v)}>
               {queueOpen ? 'Hide module list' : 'Show module list'}
+              {selectedEntry ? ` — current: ${selectedEntry.name}` : ''}
             </button>
           )}
 

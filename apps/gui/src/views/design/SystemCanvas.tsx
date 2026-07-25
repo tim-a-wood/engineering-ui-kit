@@ -11,7 +11,7 @@
  * canvas-only approximation.
  */
 
-import { useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from 'react'
 import {
   layoutDiagram,
   type DiagramLayout,
@@ -134,6 +134,26 @@ export function SystemCanvas(props: SystemCanvasProps) {
     projection.relationships.filter((rel) => visibleNodeIds.has(rel.fromId) && visibleNodeIds.has(rel.toId)).map((rel) => rel.id),
   )
   const visibleEdges = layout.edges.filter((edge) => visibleEdgeSet.has(edge.relationshipId))
+
+  // Fit the viewBox to the visible content so the selected neighborhood (focus
+  // mode) or the full structure (all-links mode) is always on screen; pan and
+  // zoom remain user adjustments on top and never change the model (§8.2).
+  const viewBox = useMemo(() => {
+    if (visibleNodes.length === 0) return { x: 0, y: 0, width: 900, height: 480 }
+    const pad = 48
+    const minX = Math.min(...visibleNodes.map((n) => n.x)) - pad
+    const minY = Math.min(...visibleNodes.map((n) => n.y)) - pad
+    const maxX = Math.max(...visibleNodes.map((n) => n.x + n.width)) + pad
+    const maxY = Math.max(...visibleNodes.map((n) => n.y + n.height)) + pad
+    return { x: minX, y: minY, width: Math.max(maxX - minX, 480), height: Math.max(maxY - minY, 320) }
+  }, [visibleNodes])
+
+  // A new selection or mode change re-fits the view; leftover pan from the
+  // previous neighborhood would otherwise push the new content off screen.
+  const visibleKey = useMemo(() => [...visibleNodeIds].sort().join('|'), [visibleNodeIds])
+  useEffect(() => {
+    setPan({ x: 0, y: 0 })
+  }, [visibleKey])
 
   // Reading order for keyboard navigation and the accessible list view (§8.2, §18.4).
   const readingOrder = useMemo(
@@ -280,7 +300,7 @@ export function SystemCanvas(props: SystemCanvasProps) {
           <svg
             width="100%"
             height="480"
-            viewBox="0 0 900 480"
+            viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}

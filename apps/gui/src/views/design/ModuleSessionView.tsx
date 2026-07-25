@@ -363,9 +363,20 @@ function ApprovalStep(props: {
           Approved by {design.approval.approvedBy} on {design.approval.approvedAt}.
         </p>
       ) : (
-        <button type="button" className="btn btn-primary" onClick={props.onApprove} disabled={design.status !== 'readyForReview'}>
-          Approve module
-        </button>
+        <>
+          <button type="button" className="btn btn-primary" onClick={props.onApprove} disabled={design.status !== 'readyForReview'}>
+            Approve module
+          </button>
+          {design.status !== 'readyForReview' && (
+            <p className="design-approval-blocked secondary-text">
+              {design.status === 'needsInput'
+                ? 'Approval is not available yet: required questions or fields are open. Complete the earlier steps first.'
+                : design.status === 'stale'
+                  ? 'Approval is not available: an approved upstream record changed. Run checks to refresh this design.'
+                  : 'Approval is not available yet: run the design checks until this module is ready for review.'}
+            </p>
+          )}
+        </>
       )}
       {changed && (
         <p className="design-last-approved secondary-text">
