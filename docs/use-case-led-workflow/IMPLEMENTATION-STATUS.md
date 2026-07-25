@@ -39,12 +39,12 @@ working behavior. A row is `verified` only when automated evidence passes.
 
 | ID | Module | Baseline | Status | Owned implementation | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| EUC-01 | Use-case analysis core | partial (`ApplicationSpecification` + product gate only) | missing | `packages/core/src/capabilities/design/useCaseAnalysis.ts` | — |
-| EUC-02 | Application compiler | missing | missing | `packages/core/src/capabilities/design/applicationCompiler.ts` | — |
-| EUC-03 | System-design core | partial (`architectureInterview.ts`) | missing | `packages/core/src/capabilities/design/systemDesign.ts` | — |
-| EUC-04 | Module-design core | partial (`moduleInterview.ts`) | missing | `packages/core/src/capabilities/design/moduleDesign.ts`, `moduleDesignSession.ts`, `moduleDesignCompilers.ts` | — |
-| EUC-05 | Contract registry | partial (`registry.ts`) | missing | `packages/core/src/capabilities/design/contractRegistry.ts` | — |
-| EUC-06 | Design baseline | missing | missing | `packages/core/src/capabilities/design/designBaseline.ts` | — |
+| EUC-01 | Use-case analysis core | partial (`ApplicationSpecification` + product gate only) | verified | `packages/core/src/capabilities/design/useCaseAnalysis.ts` | `euc01-use-case-analysis.test.ts` (11 tests) |
+| EUC-02 | Application compiler | missing | verified | `packages/core/src/capabilities/design/applicationCompiler.ts` | `euc02-application-compiler.test.ts` (11 tests) |
+| EUC-03 | System-design core | partial (`architectureInterview.ts`) | verified | `packages/core/src/capabilities/design/systemDesign.ts` | `euc03-system-design.test.ts` (20 tests) |
+| EUC-04 | Module-design core | partial (`moduleInterview.ts`) | verified | `packages/core/src/capabilities/design/moduleDesign.ts`, `moduleDesignSession.ts`, `moduleDesignCompilers.ts` | `euc04-*.test.ts` (75 tests) |
+| EUC-05 | Contract registry | partial (`registry.ts`) | verified | `packages/core/src/capabilities/design/contractRegistry.ts` | `euc05-contract-registry.test.ts` (14 tests) |
+| EUC-06 | Design baseline | missing | verified | `packages/core/src/capabilities/design/designBaseline.ts` | `euc06-design-baseline.test.ts` (11 tests) |
 | EUC-07 | Impact engine | partial (`impact.ts`) | missing | `packages/core/src/capabilities/design/impactEngine.ts` | — |
 | EUC-08 | Diagram semantics | missing | missing | `packages/core/src/capabilities/design/diagramSemantics.ts` | — |
 | EUC-09 | Diagram layout adapter | missing | missing | `packages/core/src/capabilities/design/diagramLayout.ts` | — |
@@ -150,6 +150,8 @@ here with its reason and approval context.
 | Date | Scope | Command | Result |
 | --- | --- | --- | --- |
 | 2026-07-25 | Baseline full core suite | `npm run build` (root) then `ELECTRON_DISABLE_SANDBOX=1 xvfb-run -a npx vitest run` in `packages/core` | pass after environment setup (see below) |
+
+| 2026-07-25 | Wave 1 core modules (EUC-01..06) | `npx vitest run test/capabilities/design/` in `packages/core` | 8 files, 142 tests passed; `tsc --noEmit` clean |
 
 Environment prerequisites established for this container: root `npm install`
 and `npm run build`; Electron binary via `node node_modules/electron/install.js`
