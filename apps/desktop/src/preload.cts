@@ -107,6 +107,8 @@ const CHANNELS = {
   capabilitiesListConnectionVerifications: 'capabilities:list-connection-verifications',
   capabilitiesSaveCompositionConfiguration: 'capabilities:save-composition-configuration',
   capabilitiesRunIntegrationCommands: 'capabilities:run-integration-commands',
+  // EUC-16 — single operation-envelope channel for the design workflow (see capabilities/designBridge.ts).
+  designOperation: 'design:operation',
 } as const
 
 // Compile-time bridge parity guard: the preload channel surface must match the

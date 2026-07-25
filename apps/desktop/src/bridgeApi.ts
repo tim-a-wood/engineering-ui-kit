@@ -6,6 +6,9 @@
  * operation whose arguments and results are serializable contracts.
  */
 
+// EUC-16 — design-workflow bridge contract (value import: DESIGN_CHANNEL is used below).
+import { DESIGN_CHANNEL, type DesignBridgeRequest, type DesignBridgeResponse } from './capabilities/designBridge.js'
+
 import type {
   AppliedFiles,
   AttentionItem,
@@ -406,6 +409,9 @@ export type EuikBridge = {
     planHash: string
     explicit: boolean
   }): Promise<import('@engineering-ui-kit/core').IntegrationCommandRun>
+
+  /** EUC-16 — single operation-envelope channel for the design workflow (see `capabilities/designBridge.ts`). */
+  designOperation(request: DesignBridgeRequest): Promise<DesignBridgeResponse>
 }
 
 export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
@@ -510,4 +516,5 @@ export const BRIDGE_CHANNELS: Record<keyof EuikBridge, string> = {
   capabilitiesListConnectionVerifications: 'capabilities:list-connection-verifications',
   capabilitiesSaveCompositionConfiguration: 'capabilities:save-composition-configuration',
   capabilitiesRunIntegrationCommands: 'capabilities:run-integration-commands',
+  designOperation: DESIGN_CHANNEL,
 }

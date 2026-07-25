@@ -57,6 +57,7 @@ import {
   buildTaskPacketMarkdown,
 } from './standardsTemplate.js'
 import { registerCapabilityIpcHandlers } from './capabilities/ipc.js'
+import { registerDesignIpcHandlers } from './capabilities/designIpc.js'
 import {
   buildPreviewSelectionEvidenceFunction,
 } from './previewPicker.js'
@@ -1268,6 +1269,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       await stopManagedApp(projectId, project?.launchUrl)
     },
   })
+  registerDesignIpcHandlers(() => workspaceRoot)
 
   return workspace
 }
