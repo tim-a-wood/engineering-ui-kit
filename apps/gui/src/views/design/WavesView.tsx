@@ -8,18 +8,26 @@
 
 import { useState } from 'react'
 import type { BuildMultiModulePacketResult, ImplementationWavePlan, ModuleDesignProgress } from '@engineering-ui-kit/core/design-browser'
+import type { DesignWorkspaceMode, MultiModuleConfirmations } from './designState'
 
 export type WavesViewProps = {
   wavePlan: ImplementationWavePlan
   progress: ModuleDesignProgress
   onCreateHandoff: (moduleId: string) => void
-  onCreateMultiModuleHandoff: (moduleIds: string[]) => void
+  onCreateMultiModuleHandoff: (moduleIds: string[], confirmations: MultiModuleConfirmations) => void
   multiModuleHandoff?: { moduleIds: string[]; result: BuildMultiModulePacketResult }
+  /** `project` mode has no bridge operation yet for a combined multi-module handoff (review finding #1, #2) — the selection UI still renders so the confirmations stay visible, but creation is disabled with an explanation. */
+  mode?: DesignWorkspaceMode
 }
 
 export function WavesView(props: WavesViewProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  // §3.3 / review finding #2 — real, per-user confirmations; never hardcoded true.
+  const [userConfirmedIndependence, setUserConfirmedIndependence] = useState(false)
+  const [receivingAgentSupportsCombinedTask, setReceivingAgentSupportsCombinedTask] = useState(false)
+  const [fixtureIsolationConfirmedByModuleId, setFixtureIsolationConfirmedByModuleId] = useState<Record<string, boolean>>({})
   const nameByModuleId = new Map(props.progress.modules.map((entry) => [entry.moduleId, entry.name]))
+  const isProjectMode = props.mode === 'project'
 
   function toggle(moduleId: string) {
     setSelected((prev) => {
@@ -28,6 +36,19 @@ export function WavesView(props: WavesViewProps) {
       else next.add(moduleId)
       return next
     })
+  }
+
+  function toggleFixtureIsolation(moduleId: string) {
+    setFixtureIsolationConfirmedByModuleId((prev) => ({ ...prev, [moduleId]: !prev[moduleId] }))
+  }
+
+  function createMultiModuleHandoff() {
+    const confirmations: MultiModuleConfirmations = {
+      userConfirmedIndependence,
+      receivingAgentSupportsCombinedTask,
+      fixtureIsolationConfirmedByModuleId,
+    }
+    props.onCreateMultiModuleHandoff([...selected], confirmations)
   }
 
   return (
@@ -89,7 +110,44 @@ export function WavesView(props: WavesViewProps) {
       <div className="design-waves-multi-select">
         <h3>Multi-module handoff</h3>
         <p className="secondary-text">Select two or more independent modules above, then create one combined handoff (§3.3).</p>
-        <button type="button" className="btn btn-primary" disabled={selected.size < 2} onClick={() => props.onCreateMultiModuleHandoff([...selected])}>
+
+        {/* §3.3 / review finding #2 — real user confirmations; an unchecked box is passed through as `false` and the core diagnostics (not a client-side guess) explain why no packet was created. */}
+        <label className="design-waves-confirm">
+          <input type="checkbox" checked={userConfirmedIndependence} onChange={(event) => setUserConfirmedIndependence(event.target.checked)} />
+          I confirm these modules are independent
+        </label>
+        <label className="design-waves-confirm">
+          <input type="checkbox" checked={receivingAgentSupportsCombinedTask} onChange={(event) => setReceivingAgentSupportsCombinedTask(event.target.checked)} />
+          The receiving agent supports this combined task
+        </label>
+
+        {selected.size > 0 && (
+          <fieldset className="design-waves-fixture-confirm">
+            <legend>Fixture isolation</legend>
+            {[...selected].map((moduleId) => {
+              const name = nameByModuleId.get(moduleId) ?? moduleId
+              return (
+                <label key={moduleId}>
+                  <input
+                    type="checkbox"
+                    checked={fixtureIsolationConfirmedByModuleId[moduleId] ?? false}
+                    onChange={() => toggleFixtureIsolation(moduleId)}
+                    aria-label={`Fixtures and external resources are isolated: ${name}`}
+                  />
+                  Fixtures and external resources are isolated ({name})
+                </label>
+              )
+            })}
+          </fieldset>
+        )}
+
+        {isProjectMode && (
+          <p className="secondary-text" role="note">
+            Multi-module handoff is not available in project mode yet; use the single-module Copilot handoff instead.
+          </p>
+        )}
+
+        <button type="button" className="btn btn-primary" disabled={selected.size < 2} onClick={createMultiModuleHandoff}>
           Create multi-module handoff ({selected.size} selected)
         </button>
         {props.multiModuleHandoff && (

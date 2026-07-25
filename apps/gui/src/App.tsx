@@ -22,7 +22,8 @@ import { RecipesView, ComponentsView } from './views/catalog'
 import { SettingsView } from './views/SettingsView'
 import { BuildView } from './views/build/BuildView'
 import { VerifyReviewView } from './views/workflow'
-import { getDesignStore } from './views/design/designState'
+import { DesignStore, getDesignStore } from './views/design/designState'
+import { detectDesignBridgeCaller } from './views/design/designBridgeClient'
 
 const CapabilitiesView = lazy(async () => {
   const module = await import('./views/capabilities/CapabilitiesView')
@@ -102,7 +103,10 @@ class ViewErrorBoundary extends Component<{ viewKey: string; children: ReactNode
 
 export default function App() {
   const bridge = useMemo(() => getBridge(), [])
-  const designStore = useMemo(() => getDesignStore(), [])
+  // §17, §22.1 — the Design workspace's 'project' mode is available only
+  // when the desktop bridge exposes `designOperation` (see
+  // `designBridgeClient.ts`); this is stable for the app's lifetime.
+  const designBridgeCaller = useMemo(() => detectDesignBridgeCaller(), [])
   const [view, setView] = useState<ViewId>(initialApplicationView)
   // LAY-SHELL-001: the nav rail collapses to a 64px icon rail, persisted.
   const [navCollapsed, setNavCollapsed] = useState(() => {
@@ -231,6 +235,25 @@ export default function App() {
   }, [bridge])
 
   const activeProject = activeRun ? projects.find((p) => p.id === activeRun.projectId) : undefined
+
+  /**
+   * §22.1 "sample ONLY when no project is configured" — 'project' mode
+   * requires BOTH the desktop bridge and a configured/selected project (the
+   * one the user is currently working in, via an open Build & Test run;
+   * `design` is reachable without ever opening one, in which case there is
+   * still no configured project and the workspace falls back to the sample
+   * — see `DesignWorkspaceView`'s mode banner / `data-mode` attribute).
+   * Rebuilt only when the bridge or the selected project id actually
+   * changes, so switching projects gets a fresh store instead of stale
+   * cross-project state.
+   */
+  const designStore = useMemo(() => {
+    if (designBridgeCaller && activeProject) {
+      return new DesignStore({ bridge: { projectId: activeProject.id, call: designBridgeCaller } })
+    }
+    return getDesignStore()
+  }, [designBridgeCaller, activeProject?.id])
+
   const navActive: ViewId = isWorkflowView(view)
     ? 'copilot-handoff'
     : view === 'project-overview'

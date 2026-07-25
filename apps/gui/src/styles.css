@@ -7855,3 +7855,60 @@ code.path-wrap {
   align-items: center;
   gap: var(--semantic-spacing-2);
 }
+
+/* -- Design workspace modes (§17, §22.1 — review finding #1) -------------- */
+
+.design-sample-mode-banner {
+  margin: 0;
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-4);
+  border-radius: var(--semantic-radius-md);
+  border: 1px solid var(--semantic-status-warning);
+  background: var(--semantic-status-warning-tint);
+  color: var(--semantic-text-primary);
+  font-size: var(--semantic-typography-size-sm);
+  font-weight: 600;
+}
+
+.design-project-loading {
+  margin: 0;
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-4);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-status-info-tint);
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-project-error {
+  margin: 0;
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-4);
+  border-radius: var(--semantic-radius-md);
+  border: 1px solid var(--semantic-status-danger);
+  background: var(--semantic-status-danger-tint);
+  color: var(--semantic-text-primary);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+/* -- Multi-module handoff confirmations (§3.3 — review finding #2) -------- */
+
+.design-waves-confirm {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-waves-fixture-confirm {
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-1);
+}
+
+.design-waves-fixture-confirm label {
+  display: flex;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  font-size: var(--semantic-typography-size-sm);
+}

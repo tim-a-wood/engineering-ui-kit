@@ -53,23 +53,29 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
         <p className="secondary-text">{gateModeDescription(state.policy.mode)}</p>
       </div>
 
-      <div className="design-incremental-preview" aria-label="Incremental modules preview (not applied)">
-        <h3>Incremental modules preview</h3>
-        <p className="secondary-text">
-          A saved preview of {gateModeLabel(state.incrementalPreview.policy.mode)} mode. This never changes the approved baseline or the active gate mode.
+      {state.mode === 'sample' ? (
+        <div className="design-incremental-preview" aria-label="Incremental modules preview (not applied)">
+          <h3>Incremental modules preview</h3>
+          <p className="secondary-text">
+            A saved preview of {gateModeLabel(state.incrementalPreview.policy.mode)} mode. This never changes the approved baseline or the active gate mode.
+          </p>
+          <p>
+            First module ({state.incrementalPreview.gateForFirstModule.moduleId}):{' '}
+            {state.incrementalPreview.gateForFirstModule.result.ok ? 'would pass the Build gate.' : 'would be blocked:'}
+          </p>
+          {!state.incrementalPreview.gateForFirstModule.result.ok && (
+            <ul className="design-error-summary" aria-label="Incremental preview blocked reasons">
+              {state.incrementalPreview.gateForFirstModule.result.diagnostics.map((diagnostic, index) => (
+                <li key={`${diagnostic.code}.${index}`}>{diagnostic.message}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <p className="secondary-text" role="note">
+          The incremental-modules preview is not available in project mode yet.
         </p>
-        <p>
-          First module ({state.incrementalPreview.gateForFirstModule.moduleId}):{' '}
-          {state.incrementalPreview.gateForFirstModule.result.ok ? 'would pass the Build gate.' : 'would be blocked:'}
-        </p>
-        {!state.incrementalPreview.gateForFirstModule.result.ok && (
-          <ul className="design-error-summary" aria-label="Incremental preview blocked reasons">
-            {state.incrementalPreview.gateForFirstModule.result.diagnostics.map((diagnostic, index) => (
-              <li key={`${diagnostic.code}.${index}`}>{diagnostic.message}</li>
-            ))}
-          </ul>
-        )}
-      </div>
+      )}
 
       <div className="design-handoff-module-picker">
         <label htmlFor="design-handoff-module-select">Module</label>
@@ -85,15 +91,23 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
       {design && gate && (
         <div className="design-handoff-panel" aria-label={`Handoff panel for ${design.module.name}`}>
           <h3>{design.module.name}</h3>
-          <p>
-            Build gate: <strong>{gate.ok ? 'Open' : 'Blocked'}</strong>
-          </p>
-          {!gate.ok && (
-            <ul className="design-error-summary" aria-label="Build gate blocked reasons">
-              {gate.diagnostics.map((diagnostic, index) => (
-                <li key={`${diagnostic.code}.${index}`}>{diagnostic.message}</li>
-              ))}
-            </ul>
+          {state.mode === 'sample' ? (
+            <>
+              <p>
+                Build gate: <strong>{gate.ok ? 'Open' : 'Blocked'}</strong>
+              </p>
+              {!gate.ok && (
+                <ul className="design-error-summary" aria-label="Build gate blocked reasons">
+                  {gate.diagnostics.map((diagnostic, index) => (
+                    <li key={`${diagnostic.code}.${index}`}>{diagnostic.message}</li>
+                  ))}
+                </ul>
+              )}
+            </>
+          ) : (
+            <p className="secondary-text" role="note">
+              The build gate is evaluated by the service when you create the handoff.
+            </p>
           )}
 
           <button type="button" className="btn btn-primary" onClick={() => store.createModuleHandoff(moduleId)}>
@@ -166,15 +180,17 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
                 Import pasted delta
               </button>
             </form>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                void store.importSampleReturnedDelta(moduleId)
-              }}
-            >
-              Use sample deterministic-test-provider delta (sample only, not real Copilot output)
-            </button>
+            {state.mode === 'sample' && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  void store.importSampleReturnedDelta(moduleId)
+                }}
+              >
+                Use sample deterministic-test-provider delta (sample only, not real Copilot output)
+              </button>
+            )}
             {deltaFlow?.importError && (
               <p role="alert" className="design-delta-error">
                 {deltaFlow.importError}
@@ -276,10 +292,10 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
               <div className="design-delta-apply-result" role="status" aria-live="polite">
                 <p>
                   {deltaFlow.applyResult.applied
-                    ? `Applied (simulated in browser mode): ${deltaFlow.applyResult.appliedFiles.join(', ')}.`
+                    ? `Applied (${state.mode === 'sample' ? 'simulated in browser mode' : 'by the service'}): ${deltaFlow.applyResult.appliedFiles.join(', ')}.`
                     : `Apply failed and rolled back automatically: ${deltaFlow.applyResult.failure ?? ''}.`}
                 </p>
-                {deltaFlow.applyResult.applied && !deltaFlow.rolledBack && (
+                {state.mode === 'sample' && deltaFlow.applyResult.applied && !deltaFlow.rolledBack && (
                   <button type="button" className="btn btn-secondary" onClick={() => store.rollbackReturnedDelta(moduleId)}>
                     Roll back (demonstration)
                   </button>

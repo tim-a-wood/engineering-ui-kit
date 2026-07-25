@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { ModuleDesignStep } from '@engineering-ui-kit/core/design-browser'
-import { DesignStore, useDesignState } from './designState'
+import { DesignStore, useDesignState, type MultiModuleConfirmations } from './designState'
 import { ModuleQueue } from './ModuleQueue'
 import { ModuleSessionView } from './ModuleSessionView'
 import { SystemCanvas } from './SystemCanvas'
@@ -92,10 +92,31 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
   )
 
   return (
-    <div className={narrow ? 'design-workspace narrow' : 'design-workspace'}>
-      <p className="design-sample-statement" role="note">
-        {state.syntheticDataStatement}
-      </p>
+    <div className={narrow ? 'design-workspace narrow' : 'design-workspace'} data-mode={state.mode}>
+      {state.mode === 'sample' ? (
+        <>
+          <p className="design-sample-statement" role="note">
+            {state.syntheticDataStatement}
+          </p>
+          {/* §22.1 — sample mode ONLY when no project is configured; this banner must always be visible alongside the synthetic-data statement above, never merged into it, so a test (or a user) can tell the two apart. */}
+          <p className="design-sample-mode-banner" role="note">
+            Sample workspace — changes stay in this browser and do not affect any project
+          </p>
+        </>
+      ) : (
+        <>
+          {state.bridgeStatus === 'loading' && (
+            <p className="design-project-loading" role="status">
+              Loading project design workspace…
+            </p>
+          )}
+          {state.bridgeError && (
+            <p className="design-project-error" role="alert">
+              {state.bridgeError}
+            </p>
+          )}
+        </>
+      )}
 
       <div className="sr-only" role="status" aria-live="polite">
         {state.announcement}
@@ -202,8 +223,9 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
             wavePlan={state.wavePlan}
             progress={state.progress}
             onCreateHandoff={(moduleId) => props.store.createModuleHandoff(moduleId)}
-            onCreateMultiModuleHandoff={(moduleIds) => props.store.createMultiModuleHandoff(moduleIds)}
+            onCreateMultiModuleHandoff={(moduleIds: string[], confirmations: MultiModuleConfirmations) => props.store.createMultiModuleHandoff(moduleIds, confirmations)}
             multiModuleHandoff={state.multiModuleHandoff}
+            mode={state.mode}
           />
           <BuildHandoffView store={props.store} />
         </div>
@@ -211,13 +233,25 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
 
       {activeTab === 'verify' && (
         <div id="design-workspace-panel-verify" role="tabpanel" aria-labelledby="design-workspace-tab-verify">
-          <DesignVerifyView store={props.store} onSelectDesignLink={goToDesignRecord} />
+          {state.mode === 'project' ? (
+            <p className="secondary-text" role="note">
+              Verify details are not yet available for a live project in this GUI version.
+            </p>
+          ) : (
+            <DesignVerifyView store={props.store} onSelectDesignLink={goToDesignRecord} />
+          )}
         </div>
       )}
 
       {activeTab === 'evidence' && (
         <div id="design-workspace-panel-evidence" role="tabpanel" aria-labelledby="design-workspace-tab-evidence">
-          <EvidenceExplorer store={props.store} onFollowTrace={goToDesignRecord} />
+          {state.mode === 'project' ? (
+            <p className="secondary-text" role="note">
+              Evidence details are not yet available for a live project in this GUI version.
+            </p>
+          ) : (
+            <EvidenceExplorer store={props.store} onFollowTrace={goToDesignRecord} />
+          )}
         </div>
       )}
     </div>

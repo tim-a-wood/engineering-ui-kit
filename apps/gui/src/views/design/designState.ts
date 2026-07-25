@@ -92,8 +92,26 @@ import {
   type DeltaApplyResult,
   type ReturnedDelta,
   type DiagramKind,
+  type ValidNextAction,
+  type DesignDiagnostic,
+  type DesignAuditEvent,
+  type DesignOperationResult,
 } from '@engineering-ui-kit/core/design-browser'
 import type { OperationContract, CapDiagnostic } from '@engineering-ui-kit/core'
+import { DesignBridgeClient, detectDesignBridgeCaller, LOCAL_USER_ACTOR, type DesignBridgeCaller, type BridgeChangeInput } from './designBridgeClient'
+
+/**
+ * Local mirror of `getWorkflowStatus`'s return shape
+ * (`packages/core/src/capabilities/design/operations.ts`) — renderer-safe
+ * duplication, the same pattern `bridge.ts` uses for `bridgeApi.ts`.
+ */
+type WorkflowStatusResult = {
+  projectId: string
+  useCaseAnalysis: { draft?: UseCaseAnalysis; approved?: UseCaseAnalysis }
+  systemStructure: { draft?: SystemStructureSpecification; approved?: SystemStructureSpecification }
+  baseline: { draft?: DesignBaseline; approved?: DesignBaseline }
+  policy: DesignWorkflowPolicy
+}
 
 // ---------------------------------------------------------------------------
 // Diagram discussion / propose-change target (§9.8)
@@ -124,6 +142,21 @@ export type ModuleHandoffResult = {
   createdAt: string
 }
 
+/**
+ * §3.3 real, per-user checkbox state for a multi-module handoff (review
+ * finding #2) — never hardcoded. `WavesView` renders one "I confirm these
+ * modules are independent" checkbox (`userConfirmedIndependence`) and one
+ * per-module "Fixtures and external resources are isolated" checkbox
+ * (`fixtureIsolationConfirmedByModuleId`), plus a third confirmation for
+ * `receivingAgentSupportsCombinedTask` (§3.3's fifth bullet has no
+ * spec-mandated label, unlike the first two).
+ */
+export type MultiModuleConfirmations = {
+  userConfirmedIndependence: boolean
+  receivingAgentSupportsCombinedTask: boolean
+  fixtureIsolationConfirmedByModuleId: Record<string, boolean>
+}
+
 export type DeltaFlowState = {
   packet?: ModuleImplementationPacket
   delta?: ReturnedDelta
@@ -143,7 +176,30 @@ function emptyDeltaFlow(): DeltaFlowState {
 
 export type SaveState = 'idle' | 'saving' | 'saved'
 
+/**
+ * §22.1 "sample ONLY when no project is configured" — the workspace has two
+ * explicit modes: `'sample'` is the in-browser demo store (this file's
+ * original behavior, unchanged); `'project'` means every read and change
+ * operation is routed through the desktop bridge's `design:operation`
+ * envelope to the real `DesignOperationsService`, and this store becomes a
+ * thin cache of its results. See `DesignWorkspaceView`'s `data-mode`
+ * attribute and sample banner, which make the active mode visible to users
+ * and tests.
+ */
+export type DesignWorkspaceMode = 'sample' | 'project'
+
+/** Status of the one in-flight or last-completed bridge round trip, for the mode banner / loading states in `project` mode. */
+export type BridgeStatus = 'idle' | 'loading' | 'ready' | 'error'
+
 export type DesignState = {
+  mode: DesignWorkspaceMode
+  /** `project` mode only — the last bridge transport/service-level error, rendered verbatim; cleared on the next successful call. */
+  bridgeError?: string
+  bridgeStatus: BridgeStatus
+  /** `project` mode only — drives button enablement (§17.3 "return valid next actions"); never computed locally. */
+  validNextActions: ValidNextAction[]
+  /** `project` mode only — diagnostics from the most recent change operation, rendered verbatim (§17.3 "return structured diagnostics"). */
+  lastOperationDiagnostics: DesignDiagnostic[]
   projectId: string
   syntheticDataStatement: string
   architecture: SystemStructureSpecification
@@ -345,11 +401,204 @@ function loadDefaultSnapshot(): {
   }
 }
 
+/**
+ * A valid, empty `SystemStructureSpecification` — the placeholder used only
+ * before the first `project`-mode `getWorkflowStatus` response arrives, or
+ * when a real project has no approved (and no draft) system structure yet.
+ * Every consuming view (`SystemCanvas`, `ModuleQueue`, ...) already renders
+ * an empty state correctly for zero modules; this never fabricates content.
+ */
+function emptySystemStructure(projectId: string): SystemStructureSpecification {
+  return {
+    schemaVersion: '1.0',
+    projectId,
+    id: `${projectId}.architecture.pending`,
+    revision: '',
+    status: 'draft',
+    applicationSpecId: '',
+    applicationSpecRevision: '',
+    applicationSpecHash: '',
+    capabilityProjections: [],
+    moduleIds: [],
+    moduleDefinitions: [],
+    dependencyEdges: [],
+    operationAllocations: [],
+    adapterAllocations: [],
+    workflowTraces: [],
+    proposals: [],
+    unresolvedQuestions: [],
+    gateResult: { gateId: 'CAP-DES-SYS', passed: false, diagnostics: [] },
+    deployables: [],
+    modulePaths: [],
+    contentHash: '',
+  }
+}
+
+function emptyUseCaseAnalysis(projectId: string, now: string): UseCaseAnalysis {
+  return {
+    schemaVersion: '1.0',
+    projectId,
+    id: `${projectId}.use-case-analysis.pending`,
+    revision: '',
+    status: 'draft',
+    workDescription: '',
+    examples: [],
+    prohibitedResults: [],
+    actors: [],
+    useCases: [],
+    rules: [],
+    qualityNeeds: [],
+    sources: [],
+    questions: [],
+    gates: [],
+    contentHash: '',
+  }
+}
+
+function emptyDesignBaseline(projectId: string, architecture: SystemStructureSpecification): DesignBaseline {
+  return {
+    schemaVersion: '1.0',
+    projectId,
+    id: `${projectId}.design-baseline.pending`,
+    revision: '',
+    status: 'draft',
+    architecture: { id: architecture.id, revision: architecture.revision, contentHash: architecture.contentHash },
+    modules: [],
+    operationContracts: [],
+    requiredModuleIds: [],
+    missingModuleIds: [],
+    gates: [],
+    contentHash: '',
+  }
+}
+
+function emptyPolicy(projectId: string, actor: string, now: string): DesignWorkflowPolicy {
+  return { projectId, mode: 'completeBaseline', changedAt: now, changedBy: actor }
+}
+
+/**
+ * §22.1's `SampleDefects` / `IncrementalPreview` / `PackageExportOldResult`
+ * types are documented in `packages/core/src/capabilities/design/
+ * sampleAuditHub.ts` as "sample-specific supporting types (not canonical
+ * records)" — there is no bridge operation that could honestly populate
+ * them for a real project, and this store never fabricates defect or
+ * verification content for one. These placeholders exist only so
+ * `DesignState`'s shared type (used by the still-sample-only Verify/Evidence
+ * tabs) type-checks in `project` mode; `DesignWorkspaceView` shows an
+ * explicit "not available in project mode yet" note instead of the
+ * Verify/Evidence panels when `mode === 'project'` — see review finding #1,
+ * remaining risks.
+ */
+function emptyModuleVerificationResult(now: string): ModuleVerificationResult {
+  return { moduleId: '', caseId: '', outcome: 'skipped', summary: 'Not available in project mode yet.', evidenceRefs: [], recordedAt: now }
+}
+
+function emptyDesignAuditEvent(projectId: string, actor: string, now: string): DesignAuditEvent {
+  return { eventId: `${projectId}.audit.none`, projectId, actor, operation: 'none', at: now, outcome: 'ok', diagnosticCodes: [], evidenceRefs: [] }
+}
+
+function emptyScenarioRun(projectId: string, now: string): ScenarioRun {
+  return {
+    schemaVersion: '1.0',
+    runId: `${projectId}.run.none`,
+    projectId,
+    scenarioId: 'none',
+    useCaseId: 'none',
+    identity: {
+      useCaseAnalysisRevision: '',
+      applicationRevision: '',
+      systemStructureRevision: '',
+      moduleDesignRevisions: {},
+      implementationRevisions: {},
+      connectionRevision: '',
+      build: '',
+      sourceRevision: '',
+      environment: '',
+      testDataRevision: '',
+      runner: '',
+    },
+    steps: [],
+    outcome: 'skipped',
+    startedAt: now,
+    completedAt: now,
+    evidenceHashes: [],
+    contentHash: '',
+  }
+}
+
+/** The synchronous placeholder state used the instant a `project`-mode store is constructed, before its first bridge round trip resolves — see `DesignStore.ready`. */
+function emptyProjectState(projectId: string, actor: string = LOCAL_USER_ACTOR): DesignState {
+  const now = new Date().toISOString()
+  const architecture = emptySystemStructure(projectId)
+  const policy = emptyPolicy(projectId, actor, now)
+  return {
+    mode: 'project',
+    bridgeStatus: 'loading',
+    bridgeError: undefined,
+    validNextActions: [],
+    lastOperationDiagnostics: [],
+    projectId,
+    syntheticDataStatement: '',
+    architecture,
+    approvedModuleDesigns: {},
+    moduleDesigns: [],
+    sessions: {},
+    approvedContracts: [],
+    progress: { projectId, architectureRevision: '', total: 0, notStarted: 0, draft: 0, needsInput: 0, readyForReview: 0, approved: 0, stale: 0, blocked: 0, modules: [] },
+    systemStatus: { approved: false, approvedModuleDesignCount: 0, remainingModuleDesignCount: 0, blockingModuleIds: [] },
+    selectedModuleId: undefined,
+    canvasSelectedModuleId: undefined,
+    queueFilter: 'all',
+    focusMode: true,
+    listView: false,
+    saveState: 'idle',
+    savedAt: undefined,
+    announcement: 'Loading project design workspace…',
+    useCaseAnalysis: emptyUseCaseAnalysis(projectId, now),
+    contractRegistry: { contracts: [] },
+    designBaseline: emptyDesignBaseline(projectId, architecture),
+    policy,
+    incrementalPreview: { policy, gateForFirstModule: { moduleId: '', result: { ok: true, diagnostics: [] } } },
+    wavePlan: { projectId, architectureRevision: '', waves: [], autoDispatch: false },
+    copilotHandoffTargets: [],
+    scenarioTestPlan: { projectId, analysisId: '', analysisRevision: '', entries: [], diagnostics: [] },
+    scenarioRuns: [],
+    verificationResults: {},
+    defects: {
+      evidenceGraphBrokenTrace: emptyModuleVerificationResult(now),
+      matlabAdapterTimeout: emptyModuleVerificationResult(now),
+      spreadsheetInvalidMapping: emptyModuleVerificationResult(now),
+      findingReviewRejectedDecision: emptyDesignAuditEvent(projectId, actor, now),
+      packageExportOldResult: { run: emptyScenarioRun(projectId, now), currentState: 'current' },
+    },
+    diagramDiscussions: {},
+    diagramImpacts: {},
+    moduleHandoffs: {},
+    deltaFlows: {},
+  }
+}
+
+/** `project`-mode connection: which real project to talk to, over which bridge caller. */
+export type DesignStoreBridgeOptions = {
+  projectId: string
+  /** Defaults to `LOCAL_USER_ACTOR` — see `designBridgeClient.ts` for why. */
+  actor?: string
+  call: DesignBridgeCaller
+}
+
 export type DesignStoreOptions = {
   /** Deterministic clock for tests; defaults to `new Date().toISOString()`. */
   now?: () => string
   /** Overrides the default sample snapshot (tests only). */
   snapshot?: ReturnType<typeof loadDefaultSnapshot>
+  /**
+   * `project` mode (§17, §22.1): when provided, the store never loads the
+   * sample and never calls a core pure function to decide a canonical
+   * outcome — every read and change goes through `bridge.call` and the
+   * store becomes a thin cache of the results. Omit for `sample` mode
+   * (default; unchanged in-browser demo behavior).
+   */
+  bridge?: DesignStoreBridgeOptions
 }
 
 /**
@@ -364,9 +613,43 @@ export class DesignStore {
   private listeners = new Set<() => void>()
   private saveTimer: ReturnType<typeof setTimeout> | undefined
   private readonly now: () => string
+  /** `project` mode only; unset in `sample` mode. */
+  private readonly bridgeClient?: DesignBridgeClient
+  /**
+   * `project` mode only — resolves once the first `getWorkflowStatus` /
+   * `listModuleDesigns` / `getImplementationWaves` / `getValidNextActions`
+   * round trip has been applied to state. Tests await this instead of
+   * polling; `sample` mode resolves it immediately (nothing to load).
+   */
+  readonly ready: Promise<void>
+  /**
+   * `project` mode only. Every method with a synchronous, pre-existing
+   * return type (kept unchanged so `sample`-mode callers and tests are
+   * unaffected — see review finding #1 acceptance notes) dispatches its
+   * bridge round trip in the background and records it here; production
+   * code observes the result through `subscribe`/`getState()` as usual,
+   * and tests can `await store.waitForPendingOperation()` for a
+   * deterministic point after the round trip has been applied to state.
+   */
+  private pendingOperation: Promise<unknown> = Promise.resolve()
+
+  async waitForPendingOperation(): Promise<void> {
+    await this.pendingOperation
+  }
 
   constructor(options: DesignStoreOptions = {}) {
     this.now = options.now ?? (() => new Date().toISOString())
+
+    if (options.bridge) {
+      const { projectId, call } = options.bridge
+      const actor = options.bridge.actor ?? LOCAL_USER_ACTOR
+      this.bridgeClient = new DesignBridgeClient(call, projectId, actor)
+      this.state = emptyProjectState(projectId, actor)
+      this.ready = this.refreshProjectState()
+      return
+    }
+
+    this.ready = Promise.resolve()
     const snapshot = options.snapshot ?? loadDefaultSnapshot()
     const persisted = readPersisted(snapshot.projectId)
 
@@ -399,6 +682,11 @@ export class DesignStore {
         : selectDefaultModule(progress, persisted?.canvasSelectedModuleId)
 
     this.state = {
+      mode: 'sample',
+      bridgeStatus: 'idle',
+      bridgeError: undefined,
+      validNextActions: [],
+      lastOperationDiagnostics: [],
       projectId: snapshot.projectId,
       syntheticDataStatement: snapshot.syntheticDataStatement,
       architecture,
@@ -477,6 +765,131 @@ export class DesignStore {
     this.patch({ announcement: text })
   }
 
+  // ---------------------------------------------------------------------
+  // `project` mode — bridge plumbing (§17, §22.1, review finding #1)
+  //
+  // Every method below either issues exactly one `DesignBridgeClient` call
+  // (a real `design:operation` round trip) or is a pure, non-authoritative
+  // presentation projection over data the bridge already returned
+  // (`materializeSession`, `systemStructureStatus`, `selectDefaultModule`).
+  // None of them decide an approval, a check outcome, or a gate result —
+  // those always come back from the service's own `DesignOperationResult`.
+  // ---------------------------------------------------------------------
+
+  isProjectMode(): boolean {
+    return this.state.mode === 'project'
+  }
+
+  private requireBridge(): DesignBridgeClient {
+    if (!this.bridgeClient) throw new Error('DesignStore is not in project mode')
+    return this.bridgeClient
+  }
+
+  /** One `getModuleDesign` read — fetches and caches the current full record for one module. */
+  private async loadModuleDesign(moduleId: string): Promise<ModuleDesignSpecification | undefined> {
+    const client = this.requireBridge()
+    const design = await client.read<ModuleDesignSpecification | undefined>('getModuleDesign', [client.projectId, moduleId])
+    if (design) this.applyDesignRecord(design)
+    this.emit()
+    return design
+  }
+
+  /** Caches a design record returned by the bridge and derives its session step locally (no bridge op exists for session-step navigation — see file header). */
+  private applyDesignRecord(design: ModuleDesignSpecification): void {
+    this.touchDesign(design)
+    if (design.status === 'approved') {
+      this.patch({ approvedModuleDesigns: { ...this.state.approvedModuleDesigns, [design.module.moduleId]: design } })
+    }
+    const priorSession = this.state.sessions[design.module.moduleId]
+    const session =
+      priorSession && priorSession.moduleId === design.module.moduleId
+        ? { ...priorSession, completedSteps: inferredCompletedSteps(design), currentStep: priorSession.currentStep }
+        : materializeSession(this.state.projectId, this.state.architecture.revision, design, this.now())
+    this.touchSession(session)
+  }
+
+  /**
+   * The one full-workspace refresh: `getWorkflowStatus`, `listModuleDesigns`,
+   * `getImplementationWaves`, `getValidNextActions` (§17.1). Called once at
+   * construction and again after every mutating call, so the workspace
+   * always reflects the service's own current state — never a locally
+   * computed approximation.
+   */
+  private async refreshProjectState(): Promise<void> {
+    const client = this.requireBridge()
+    this.patch({ bridgeStatus: 'loading' })
+    this.emit()
+    try {
+      const [workflowStatus, progress, wavePlan, validNextActions] = await Promise.all([
+        client.read<WorkflowStatusResult>('getWorkflowStatus', [client.projectId]),
+        client.read<ModuleDesignProgress>('listModuleDesigns', [client.projectId, 'all']),
+        client.read<ImplementationWavePlan>('getImplementationWaves', [client.projectId]),
+        client.read<ValidNextAction[]>('getValidNextActions', [client.projectId]),
+      ])
+      const architecture = workflowStatus.systemStructure?.approved ?? workflowStatus.systemStructure?.draft ?? emptySystemStructure(client.projectId)
+      const useCaseAnalysis = workflowStatus.useCaseAnalysis?.approved ?? workflowStatus.useCaseAnalysis?.draft ?? emptyUseCaseAnalysis(client.projectId, this.now())
+      const designBaseline = workflowStatus.baseline?.approved ?? workflowStatus.baseline?.draft ?? emptyDesignBaseline(client.projectId, architecture)
+      const policy = workflowStatus.policy ?? emptyPolicy(client.projectId, client.actor, this.now())
+      const systemStatus = systemStructureStatus(
+        architecture,
+        progress.modules.map((entry) => ({ moduleId: entry.moduleId, approved: entry.state === 'approved' })),
+      )
+      const selectedModuleId =
+        this.state.selectedModuleId && progress.modules.some((entry) => entry.moduleId === this.state.selectedModuleId)
+          ? this.state.selectedModuleId
+          : selectDefaultModule(progress, this.state.canvasSelectedModuleId)
+
+      this.patch({
+        architecture,
+        useCaseAnalysis,
+        designBaseline,
+        policy,
+        progress,
+        systemStatus,
+        wavePlan,
+        validNextActions,
+        selectedModuleId,
+        bridgeStatus: 'ready',
+        bridgeError: undefined,
+      })
+      if (selectedModuleId) await this.loadModuleDesign(selectedModuleId)
+    } catch (error) {
+      this.patch({ bridgeStatus: 'error', bridgeError: error instanceof Error ? error.message : String(error) })
+    }
+    this.emit()
+  }
+
+  /** Runs one bridge change operation, applies its result (diagnostics, revision, `validNextActions`), and refreshes the workspace. Never decides locally whether the operation "should" succeed. */
+  private async runChangeOperation<T>(
+    operation: string,
+    input: BridgeChangeInput,
+    onValue?: (value: T) => void,
+  ): Promise<DesignOperationResult<T>> {
+    const client = this.requireBridge()
+    this.patch({ saveState: 'saving' })
+    this.emit()
+    try {
+      const result = await client.change<DesignOperationResult<T>>(operation, input)
+      this.patch({
+        lastOperationDiagnostics: result.diagnostics,
+        validNextActions: result.validNextActions,
+        saveState: 'saved',
+        savedAt: this.now(),
+        announcement: result.ok
+          ? `${operation} succeeded.`
+          : `${operation} was rejected: ${result.diagnostics[0]?.message ?? 'see diagnostics'}.`,
+      })
+      if (result.ok && result.value !== undefined && onValue) onValue(result.value)
+      await this.refreshProjectState()
+      return result
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.patch({ saveState: 'idle', bridgeError: message, announcement: `${operation} failed: ${message}` })
+      this.emit()
+      throw error
+    }
+  }
+
   private schedulePersist(): void {
     this.patch({ saveState: 'saving' })
     if (this.saveTimer) clearTimeout(this.saveTimer)
@@ -500,9 +913,15 @@ export class DesignStore {
     }, AUTOSAVE_DELAY_MS)
   }
 
+  /**
+   * `sample` mode: emit + schedule the local-storage autosave (§18.1).
+   * `project` mode: emit only — there is no browser-local draft to persist;
+   * every change already went through a bridge round trip that the service
+   * itself persisted (§17.3 "write an audit event").
+   */
   private commit(): void {
     this.emit()
-    this.schedulePersist()
+    if (this.state.mode === 'sample') this.schedulePersist()
   }
 
   private checkContext(moduleId: string): ModuleDesignCheckContext {
@@ -521,12 +940,14 @@ export class DesignStore {
     if (this.state.selectedModuleId === moduleId) return
     this.patch({ selectedModuleId: moduleId })
     this.commit()
+    if (this.isProjectMode() && !this.getDesign(moduleId)) void this.loadModuleDesign(moduleId)
   }
 
   /** §9.2 default-selection rule 1: a canvas selection opens that module. */
   selectFromCanvas(moduleId: string): void {
     this.patch({ canvasSelectedModuleId: moduleId, selectedModuleId: moduleId })
     this.commit()
+    if (this.isProjectMode() && !this.getDesign(moduleId)) void this.loadModuleDesign(moduleId)
   }
 
   setQueueFilter(filter: ModuleQueueFilter): void {
@@ -576,11 +997,15 @@ export class DesignStore {
   }
 
   /** §9.4 — creates a module draft from the approved system structure. */
-  ensureDraft(moduleId: string): ModuleDesignSpecification {
+  ensureDraft(moduleId: string): ModuleDesignSpecification | undefined {
     const existing = this.getDesign(moduleId)
     if (existing) {
       this.ensureSession(moduleId, existing)
       return existing
+    }
+    if (this.isProjectMode()) {
+      this.pendingOperation = this.ensureDraftProject(moduleId).catch(() => undefined)
+      return undefined
     }
     const draft = createModuleDesignDraft({
       projectId: this.state.projectId,
@@ -593,6 +1018,18 @@ export class DesignStore {
     this.announce(`Created a module draft for ${draft.module.name}.`)
     this.commit()
     return draft
+  }
+
+  /** `project` mode: `getModuleDesign` (in case a draft already exists server-side) then, only if none exists, `startModuleDesign` (§17.2). */
+  private async ensureDraftProject(moduleId: string): Promise<void> {
+    const client = this.requireBridge()
+    const existing = await client.read<ModuleDesignSpecification | undefined>('getModuleDesign', [client.projectId, moduleId])
+    if (existing) {
+      this.applyDesignRecord(existing)
+      this.emit()
+      return
+    }
+    await this.runChangeOperation<ModuleDesignSpecification>('startModuleDesign', { projectId: client.projectId, moduleId }, (design) => this.applyDesignRecord(design))
   }
 
   /** §9.3 — open a completed or current step without losing later draft data. */
@@ -624,6 +1061,16 @@ export class DesignStore {
   answerRequiredQuestion(moduleId: string, itemId: string, answerText: string): void {
     const design = this.getDesign(moduleId)
     if (!design) return
+    if (this.isProjectMode()) {
+      const session = this.state.sessions[moduleId]
+      const client = this.requireBridge()
+      this.pendingOperation = this.runChangeOperation<ModuleDesignSpecification>(
+        'answerModuleDesignQuestion',
+        { projectId: client.projectId, moduleId, questionId: itemId, step: session?.currentStep ?? 'behavior', text: answerText, expectedBaseRevision: design.revision },
+        (updated) => this.applyDesignRecord(updated),
+      ).catch(() => undefined)
+      return
+    }
     const now = this.now()
     const unresolvedItems = design.unresolvedItems.map((item) => (item.id === itemId ? { ...item, resolvedAt: now } : item))
     const updated = { ...design, unresolvedItems }
@@ -642,6 +1089,15 @@ export class DesignStore {
   runChecks(moduleId: string): ModuleDesignCheckEvaluation | undefined {
     const design = this.getDesign(moduleId)
     if (!design) return undefined
+    if (this.isProjectMode()) {
+      const client = this.requireBridge()
+      this.pendingOperation = this.runChangeOperation<ModuleDesignSpecification>(
+        'analyzeModuleDesign',
+        { projectId: client.projectId, moduleId, expectedBaseRevision: design.revision },
+        (updated) => this.applyDesignRecord(updated),
+      ).catch(() => undefined)
+      return undefined
+    }
     const { design: checked, evaluation } = applyModuleDesignChecks(design, this.checkContext(moduleId))
     this.touchDesign(checked)
     const session = this.state.sessions[moduleId]
@@ -660,6 +1116,16 @@ export class DesignStore {
   approveModule(moduleId: string, approvedBy = 'you'): { ok: boolean; diagnostics: readonly { message: string }[] } {
     const design = this.getDesign(moduleId)
     if (!design) return { ok: false, diagnostics: [] }
+    if (this.isProjectMode()) {
+      void approvedBy // `project` mode: `approvedBy` is the bridge actor (§20.2 "no approval shortcut"), never a caller-supplied name.
+      const client = this.requireBridge()
+      this.pendingOperation = this.runChangeOperation<ModuleDesignSpecification>(
+        'approveModuleDesign',
+        { projectId: client.projectId, moduleId, authority: 'module-owner', expectedBaseRevision: design.revision },
+        (updated) => this.applyDesignRecord(updated),
+      ).catch(() => undefined)
+      return { ok: false, diagnostics: [{ message: 'Approval submitted to the service; see the module status once it responds.' }] }
+    }
     const result = approveModuleDesign(design, { approvedBy, authority: 'module-owner', approvedAt: this.now() }, this.checkContext(moduleId))
     if (result.ok) {
       this.touchDesign(result.design)
@@ -680,17 +1146,71 @@ export class DesignStore {
     this.createModuleHandoff(moduleId)
   }
 
+  /**
+   * `project` mode: the workspace's one action for this module, taken
+   * verbatim from the service's own `getValidNextActions` (§17.3) — never
+   * computed locally. Falls back to a step-navigation label (no service
+   * action targets this module — e.g. mid-edit on a `draft`) using the same
+   * pure `sessionPrimaryAction` projection `sample` mode uses, since the
+   * session step itself is not a canonical record (see file header).
+   */
+  private validNextActionFor(moduleId: string): ValidNextAction | undefined {
+    return this.state.validNextActions.find((action) => action.targetId === moduleId)
+  }
+
   /** The single primary-action label for the session (§9.3, §18.1), without side effects. */
   primaryActionLabel(moduleId: string): string {
     const design = this.getDesign(moduleId)
     const session = this.state.sessions[moduleId]
+    if (this.isProjectMode()) {
+      const action = this.validNextActionFor(moduleId)
+      if (action) return action.label
+      if (!design || !session) return 'Create module draft'
+      return sessionPrimaryAction(session, design, this.evaluateChecks(moduleId))
+    }
     if (!design || !session) return 'Create module draft'
     return sessionPrimaryAction(session, design, this.evaluateChecks(moduleId))
   }
 
-  /** Dispatches the single primary action per `sessionPrimaryAction` (§9.3, §18.1). */
+  /**
+   * Dispatches the single primary action. `project` mode: only dispatches a
+   * bridge change when the matching `getValidNextActions` entry says
+   * `enabled: true` — an explicit server-computed decision, never a local
+   * approval/gate re-check (§17.3 "return valid next actions").
+   */
   primaryAction(moduleId: string): void {
     const design = this.getDesign(moduleId)
+    if (this.isProjectMode()) {
+      const action = this.validNextActionFor(moduleId)
+      if (action) {
+        if (!action.enabled) {
+          this.announce(action.blockedReason ?? `${action.label} is not available yet.`)
+          return
+        }
+        switch (action.operation) {
+          case 'startModuleDesign':
+            this.ensureDraft(moduleId)
+            return
+          case 'approveModuleDesign':
+            this.approveModule(moduleId)
+            return
+          case 'createModuleImplementationPacket':
+            this.createModuleHandoff(moduleId)
+            return
+          default:
+            // answerModuleDesignQuestion / updateModuleDesignItem / reopenModuleDesign —
+            // no single bridge call corresponds to "the" action; direct the
+            // user to the step that handles it (the Behavior step's question
+            // form, or Run module checks) instead of guessing an edit.
+            this.announce(action.label)
+            return
+        }
+      }
+      if (!design) {
+        this.ensureDraft(moduleId)
+      }
+      return
+    }
     if (!design) {
       this.ensureDraft(moduleId)
       return
@@ -724,6 +1244,15 @@ export class DesignStore {
   proposeDiagramChange(moduleId: string, target: DiagramElementTarget, description: string): DesignImpactRecord | undefined {
     const design = this.getDesign(moduleId)
     if (!design || !description.trim()) return undefined
+    if (this.isProjectMode()) {
+      // `proposeVisualChange`/`analyzeVisualChange`/`approveChangePlan` are
+      // real §17.2 bridge operations, but this GUI foundation packet does
+      // not yet wire the diagram-discussion flow through them — see review
+      // finding #1, remaining risks. No local mutation happens instead of a
+      // silently-approximate one.
+      this.announce('Diagram discussion is not available in project mode yet.')
+      return undefined
+    }
     const now = this.now()
 
     const world: ImpactWorld = {
@@ -778,6 +1307,10 @@ export class DesignStore {
   approveDiagramChangePlan(moduleId: string, target: DiagramElementTarget): void {
     const design = this.getDesign(moduleId)
     if (!design) return
+    if (this.isProjectMode()) {
+      this.announce('Diagram discussion is not available in project mode yet.')
+      return
+    }
     const now = this.now()
     const history = this.state.diagramDiscussions[target.elementId] ?? []
     const lastImpactEntry = [...history].reverse().find((entry) => entry.kind === 'impactAnalysis')
@@ -811,6 +1344,10 @@ export class DesignStore {
   addDiagramDiscussion(moduleId: string, target: DiagramElementTarget, text: string): void {
     void moduleId
     if (!text.trim()) return
+    if (this.isProjectMode()) {
+      this.announce('Diagram discussion is not available in project mode yet.')
+      return
+    }
     const now = this.now()
     const entry: DiagramDiscussionEntry = {
       id: childId(target.diagramId, 'discussion', `${target.elementId}.${now}.discuss`),
@@ -869,8 +1406,18 @@ export class DesignStore {
     return buildContextManifest({ targetRecordId: design.id, targetRevision: design.revision, limit: limitBytes, candidates: this.designManifestCandidates(design) })
   }
 
-  /** §6.2 Build gate for one module — verbatim blocking reasons. */
+  /**
+   * §6.2 Build gate for one module — verbatim blocking reasons. `sample`
+   * mode only: `project` mode has no bridge preview for this (the service
+   * evaluates the gate itself, inside `createModuleImplementationPacket`,
+   * and returns its diagnostics verbatim from that one call — see
+   * `createModuleHandoff`); this never re-derives an approximate answer
+   * locally for a real project.
+   */
   buildGateFor(moduleId: string): BuildGateResult {
+    if (this.isProjectMode()) {
+      return { ok: false, diagnostics: [{ code: 'CAP-DES-BUILD-GATE-PENDING', message: 'The build gate is evaluated by the service when you create the handoff.' }] }
+    }
     const design = this.getDesign(moduleId)
     if (!design) {
       return { ok: false, diagnostics: [{ code: 'CAP-DES-BUILD-NO-DESIGN', message: 'No module design exists yet for this module.' }] }
@@ -914,6 +1461,26 @@ export class DesignStore {
   createModuleHandoff(moduleId: string, limitBytes = 200_000): ModuleHandoffResult {
     const design = this.getDesign(moduleId)
     const now = this.now()
+    if (this.isProjectMode()) {
+      const manifest = buildContextManifest({ targetRecordId: design?.id ?? moduleId, targetRevision: design?.revision ?? 'pending', limit: limitBytes, candidates: [] })
+      if (!design || design.status !== 'approved') {
+        const result: ModuleHandoffResult = {
+          ok: false,
+          kind: 'design',
+          diagnostics: [{ code: 'CAP-DES-BUILD-NOT-APPROVED', message: 'This module design is not approved yet; approve it before creating an implementation handoff.' }],
+          manifest,
+          createdAt: now,
+        }
+        this.patch({ moduleHandoffs: { ...this.state.moduleHandoffs, [moduleId]: result } })
+        this.commit()
+        return result
+      }
+      this.pendingOperation = this.createModuleImplementationPacketProject(moduleId, design.revision).catch(() => undefined)
+      const pending: ModuleHandoffResult = { ok: false, kind: 'implementation', diagnostics: [], manifest, createdAt: now }
+      this.patch({ moduleHandoffs: { ...this.state.moduleHandoffs, [moduleId]: pending } })
+      this.commit()
+      return pending
+    }
     if (!design) {
       const manifest = buildContextManifest({ targetRecordId: moduleId, targetRevision: 'none', limit: limitBytes, candidates: [] })
       const result: ModuleHandoffResult = {
@@ -990,11 +1557,45 @@ export class DesignStore {
     return result
   }
 
+  /** `project` mode: one `createModuleImplementationPacket` call (§17.2), used by both the initial handoff and §11.7 continuations. */
+  private async createModuleImplementationPacketProject(
+    moduleId: string,
+    expectedBaseRevision: string,
+    extra?: { passKind?: ModuleImplementationPacket['passKind']; previousPacketId?: string },
+  ): Promise<void> {
+    const client = this.requireBridge()
+    const result = await this.runChangeOperation<ModuleImplementationPacket>(
+      'createModuleImplementationPacket',
+      { projectId: client.projectId, moduleId, expectedBaseRevision, ...extra },
+      (packet) => {
+        const manifest = packet.contextManifest
+        const limitReport = contextLimitReport(manifest)
+        const handoff: ModuleHandoffResult = { ok: true, kind: 'implementation', packet, diagnostics: [], manifest, limitReport, createdAt: this.now() }
+        this.patch({
+          moduleHandoffs: { ...this.state.moduleHandoffs, [moduleId]: handoff },
+          deltaFlows: { ...this.state.deltaFlows, [moduleId]: { ...this.deltaFlowFor(moduleId), packet } },
+        })
+      },
+    )
+    if (!result.ok) {
+      const design = this.getDesign(moduleId)
+      const manifest = buildContextManifest({ targetRecordId: design?.id ?? moduleId, targetRevision: design?.revision ?? 'pending', limit: 200_000, candidates: [] })
+      const handoff: ModuleHandoffResult = { ok: false, kind: 'implementation', diagnostics: result.diagnostics, manifest, createdAt: this.now() }
+      this.patch({ moduleHandoffs: { ...this.state.moduleHandoffs, [moduleId]: handoff } })
+      this.emit()
+    }
+  }
+
   /** §11.7 multi-pass continuation — creates a new implementation packet referencing the previous one. */
   continueModuleHandoff(moduleId: string, passKind: ModuleImplementationPacket['passKind'], limitBytes = 200_000): ModuleHandoffResult | undefined {
     const design = this.getDesign(moduleId)
     const priorHandoff = this.state.moduleHandoffs[moduleId]
     if (!design || !priorHandoff || priorHandoff.kind !== 'implementation' || !priorHandoff.packet) return undefined
+    if (this.isProjectMode()) {
+      const previousPacketId = (priorHandoff.packet as ModuleImplementationPacket).packetId
+      this.pendingOperation = this.createModuleImplementationPacketProject(moduleId, design.revision, { passKind, previousPacketId }).catch(() => undefined)
+      return undefined
+    }
     const previous = priorHandoff.packet as ModuleImplementationPacket
     const now = this.now()
     const manifest = buildContextManifest({ targetRecordId: design.id, targetRevision: design.revision, limit: limitBytes, candidates: this.designManifestCandidates(design) })
@@ -1024,8 +1625,29 @@ export class DesignStore {
     return result
   }
 
-  /** §3.3 — explicit multi-module handoff; any violation returns diagnostics and no packets. */
-  createMultiModuleHandoff(moduleIds: string[], limitBytes = 200_000): BuildMultiModulePacketResult {
+  /**
+   * §3.3 — explicit multi-module handoff; any violation returns diagnostics
+   * and no packets. `confirmations` must come from real, rendered checkbox
+   * state (`WavesView`'s "I confirm these modules are independent" and
+   * per-module "Fixtures and external resources are isolated" — review
+   * finding #2): an unchecked box means `false` reaches
+   * `buildMultiModulePacket` exactly as `false`, which its own runtime check
+   * rejects with a diagnostic — this method never substitutes `true` for a
+   * confirmation the user did not actually give.
+   */
+  createMultiModuleHandoff(moduleIds: string[], confirmations: MultiModuleConfirmations, limitBytes = 200_000): BuildMultiModulePacketResult {
+    if (this.isProjectMode()) {
+      // No bridge operation exists yet for a combined multi-module handoff
+      // (§17.2 lists no such operation) — this never falls back to a local
+      // packet build against a real project (§17, review finding #1).
+      const result: BuildMultiModulePacketResult = {
+        ok: false,
+        diagnostics: [{ code: 'CAP-DES-PKT-MULTI-UNAVAILABLE', message: 'Multi-module handoff is not available in project mode yet; use the single-module Copilot handoff instead.' }],
+      }
+      this.patch({ multiModuleHandoff: { moduleIds, result } })
+      this.commit()
+      return result
+    }
     const now = this.now()
     const designs = moduleIds.map((id) => this.getDesign(id)).filter((d): d is ModuleDesignSpecification => Boolean(d))
     const entries: MultiModulePacketEntry[] = designs.map((design) => ({
@@ -1049,18 +1671,25 @@ export class DesignStore {
         passKind: 'initial' as const,
         createdAt: now,
       },
+      // `buildMultiModulePacket` requires the literal `true`; only an
+      // actually-checked box produces it, so an unchecked box is passed
+      // through as the real `false` and rejected by the function's own
+      // runtime check (not by this store deciding the outcome).
+      fixtureIsolationConfirmed: (confirmations.fixtureIsolationConfirmedByModuleId[design.module.moduleId] === true) as unknown as true,
     }))
 
     const dependencyEdgeAmongSelected = this.state.architecture.dependencyEdges.some(
       (edge) => moduleIds.includes(edge.fromModuleId) && moduleIds.includes(edge.toModuleId),
     )
+    const allFixturesConfirmed = designs.length > 0 && designs.every((design) => confirmations.fixtureIsolationConfirmedByModuleId[design.module.moduleId] === true)
     const result = buildMultiModulePacket({
       projectId: this.state.projectId,
       modules: entries,
       dependencyPlanMarksIndependent: !dependencyEdgeAmongSelected,
-      fixturesIsolated: true,
+      fixturesIsolated: allFixturesConfirmed,
       explicitUserSelection: moduleIds.length > 0,
-      receivingAgentSupportsCombinedTask: true,
+      receivingAgentSupportsCombinedTask: confirmations.receivingAgentSupportsCombinedTask,
+      userConfirmedIndependence: confirmations.userConfirmedIndependence as unknown as true,
     })
     this.patch({ multiModuleHandoff: { moduleIds, result } })
     this.announce(
@@ -1089,23 +1718,41 @@ export class DesignStore {
     return this.deltaFlowFor(moduleId)
   }
 
-  /** Paste-JSON import of a returned delta. */
+  /** Paste-JSON import of a returned delta. JSON parsing is a local format check (not approval logic); the canonical import itself is one `importAgentDelta` bridge call in `project` mode. */
   importReturnedDeltaText(moduleId: string, rawJson: string): { ok: boolean; error?: string } {
+    let delta: ReturnedDelta
     try {
-      const delta = JSON.parse(rawJson) as ReturnedDelta
-      this.patchDeltaFlow(moduleId, { delta, deltaSource: 'pasted', importError: undefined, inspection: undefined, approved: false, applyResult: undefined, rolledBack: false })
-      this.announce('Imported a returned delta.')
-      this.commit()
-      return { ok: true }
+      delta = JSON.parse(rawJson) as ReturnedDelta
     } catch {
       this.patchDeltaFlow(moduleId, { importError: 'That is not valid JSON.' })
       this.commit()
       return { ok: false, error: 'That is not valid JSON.' }
     }
+    if (this.isProjectMode()) {
+      this.patchDeltaFlow(moduleId, { deltaSource: 'pasted', importError: undefined, inspection: undefined, approved: false, applyResult: undefined, rolledBack: false })
+      this.commit()
+      const client = this.requireBridge()
+      this.pendingOperation = this.runChangeOperation<ReturnedDelta>(
+        'importAgentDelta',
+        { projectId: client.projectId, delta },
+        (imported) => this.patchDeltaFlow(moduleId, { delta: imported }),
+      ).catch(() => undefined)
+      return { ok: true }
+    }
+    this.patchDeltaFlow(moduleId, { delta, deltaSource: 'pasted', importError: undefined, inspection: undefined, approved: false, applyResult: undefined, rolledBack: false })
+    this.announce('Imported a returned delta.')
+    this.commit()
+    return { ok: true }
   }
 
-  /** Sample-only demo button (`deterministicTestProvider`) — clearly labeled in the UI as a sample, never real Copilot output. */
+  /** Sample-only demo button (`deterministicTestProvider`) — clearly labeled in the UI as a sample, never real Copilot output; never available in `project` mode. */
   async importSampleReturnedDelta(moduleId: string): Promise<{ ok: boolean; error?: string }> {
+    if (this.isProjectMode()) {
+      const message = 'Sample delta import is only available in sample mode.'
+      this.patchDeltaFlow(moduleId, { importError: message })
+      this.commit()
+      return { ok: false, error: message }
+    }
     const handoff = this.state.moduleHandoffs[moduleId]
     const packet = this.deltaFlowFor(moduleId).packet ?? (handoff?.kind === 'implementation' ? (handoff.packet as ModuleImplementationPacket | undefined) : undefined)
     if (!packet) {
@@ -1139,6 +1786,15 @@ export class DesignStore {
     const flow = this.deltaFlowFor(moduleId)
     const design = this.getDesign(moduleId)
     if (!flow.delta) return undefined
+    if (this.isProjectMode()) {
+      const client = this.requireBridge()
+      this.pendingOperation = this.runChangeOperation<DeltaInspection>(
+        'inspectAgentDelta',
+        { projectId: client.projectId, deltaId: flow.delta.deltaId },
+        (inspection) => this.patchDeltaFlow(moduleId, { inspection, approved: false }),
+      ).catch(() => undefined)
+      return undefined
+    }
     const now = this.now()
     const inspection = coreInspectDelta(
       flow.delta,
@@ -1156,6 +1812,17 @@ export class DesignStore {
   approveReturnedDelta(moduleId: string, approvedBy = 'you'): { ok: boolean; diagnostics: CapDiagnostic[] } {
     const flow = this.deltaFlowFor(moduleId)
     if (!flow.inspection) return { ok: false, diagnostics: [{ code: 'CAP-DES-DELTA-NOT-INSPECTED', message: 'Inspect the delta before approving it.' }] }
+    if (this.isProjectMode()) {
+      void approvedBy // `project` mode: the bridge actor approves (§20.2), never a caller-supplied name.
+      const client = this.requireBridge()
+      const inspectionId = flow.inspection.inspectionId
+      this.pendingOperation = this.runChangeOperation<{ inspectionId: string; deltaId: string }>(
+        'approveAgentDelta',
+        { projectId: client.projectId, inspectionId },
+        () => this.patchDeltaFlow(moduleId, { approved: true }),
+      ).catch(() => undefined)
+      return { ok: false, diagnostics: [{ code: 'CAP-DES-DELTA-PENDING', message: 'Approval submitted to the service; see the delta flow status once it responds.' }] }
+    }
     const result = approveDeltaToApply(flow.inspection, { approvedBy, currentWorkspaceRevision: flow.inspection.workspaceRevisionAtInspection })
     if (result.ok) {
       this.patchDeltaFlow(moduleId, { approved: true })
@@ -1171,6 +1838,16 @@ export class DesignStore {
   applyReturnedDelta(moduleId: string): DeltaApplyResult | undefined {
     const flow = this.deltaFlowFor(moduleId)
     if (!flow.approved || !flow.inspection || !flow.delta) return undefined
+    if (this.isProjectMode()) {
+      const client = this.requireBridge()
+      const inspectionId = flow.inspection.inspectionId
+      this.pendingOperation = this.runChangeOperation<DeltaApplyResult>(
+        'applyAgentDelta',
+        { projectId: client.projectId, inspectionId },
+        (applyResult) => this.patchDeltaFlow(moduleId, { applyResult, rolledBack: false }),
+      ).catch(() => undefined)
+      return undefined
+    }
     const now = this.now()
     const plan = buildApplyPlan(flow.inspection, flow.delta, { planId: `plan.${moduleId}.${now}`, backupRef: `backup.${moduleId}.${now}` })
     const outcome = simulateApply(plan, flow.files, now)
@@ -1186,6 +1863,14 @@ export class DesignStore {
 
   /** Restores the pre-apply simulated file map (rollback demonstration). */
   rollbackReturnedDelta(moduleId: string): void {
+    if (this.isProjectMode()) {
+      // §12.2 "Transactional apply" — the service rolls back a failed
+      // `applyAgentDelta` itself; there is no separate bridge operation for
+      // an after-the-fact manual rollback of an already-applied delta, and
+      // this never simulates one locally against a real project.
+      this.announce('Manual rollback is not available in project mode; the service applies changes transactionally.')
+      return
+    }
     const flow = this.deltaFlowFor(moduleId)
     if (!flow.filesBeforeApply) return
     // Keep `applyResult` set after rollback: `BuildHandoffView` gates its

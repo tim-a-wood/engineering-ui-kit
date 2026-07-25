@@ -64,12 +64,40 @@ describe('One-module Copilot handoff (§11.2, §11.3, §6.2)', () => {
   })
 })
 
+const fullMultiModuleConfirmations = {
+  userConfirmedIndependence: true,
+  receivingAgentSupportsCombinedTask: true,
+  fixtureIsolationConfirmedByModuleId: { 'mod.adapter.filesystem': true, 'mod.adapter.git': true },
+}
+
 describe('Multi-module handoff (§3.3)', () => {
   it('is allowed for two independent, non-overlapping adapters', () => {
     const store = new DesignStore({ now: NOW, snapshot: baseSnapshot() })
-    const result = store.createMultiModuleHandoff(['mod.adapter.filesystem', 'mod.adapter.git'])
+    const result = store.createMultiModuleHandoff(['mod.adapter.filesystem', 'mod.adapter.git'], fullMultiModuleConfirmations)
     expect(result.ok).toBe(true)
     expect(result.packets?.length).toBe(2)
+  })
+
+  it('is rejected without a real independence confirmation, with no packet created (review finding #2)', () => {
+    const store = new DesignStore({ now: NOW, snapshot: baseSnapshot() })
+    const result = store.createMultiModuleHandoff(['mod.adapter.filesystem', 'mod.adapter.git'], {
+      ...fullMultiModuleConfirmations,
+      userConfirmedIndependence: false,
+    })
+    expect(result.ok).toBe(false)
+    expect(result.packets).toBeUndefined()
+    expect(result.diagnostics.some((d) => d.code === 'CAP-DES-PKT-MULTI-NO-USER-CONFIRMATION')).toBe(true)
+  })
+
+  it('is rejected when a module has no confirmed fixture isolation, with no packet created (review finding #2)', () => {
+    const store = new DesignStore({ now: NOW, snapshot: baseSnapshot() })
+    const result = store.createMultiModuleHandoff(['mod.adapter.filesystem', 'mod.adapter.git'], {
+      ...fullMultiModuleConfirmations,
+      fixtureIsolationConfirmedByModuleId: { 'mod.adapter.filesystem': true, 'mod.adapter.git': false },
+    })
+    expect(result.ok).toBe(false)
+    expect(result.packets).toBeUndefined()
+    expect(result.diagnostics.some((d) => d.code === 'CAP-DES-PKT-MULTI-NO-FIXTURE-CONFIRMATION')).toBe(true)
   })
 
   it('is rejected when the selected modules have an owned-path overlap', () => {
@@ -85,7 +113,7 @@ describe('Multi-module handoff (§3.3)', () => {
     const approvedModuleDesigns = { ...snapshot.approvedModuleDesigns, [overlappingGit.module.moduleId]: overlappingGit }
     const store = new DesignStore({ now: NOW, snapshot: { ...snapshot, moduleDesigns, approvedModuleDesigns } })
 
-    const result = store.createMultiModuleHandoff(['mod.adapter.filesystem', 'mod.adapter.git'])
+    const result = store.createMultiModuleHandoff(['mod.adapter.filesystem', 'mod.adapter.git'], fullMultiModuleConfirmations)
     expect(result.ok).toBe(false)
     expect(result.diagnostics.some((d) => d.message.includes('overlaps'))).toBe(true)
   })

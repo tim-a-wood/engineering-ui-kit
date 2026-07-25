@@ -235,6 +235,14 @@ describe('WavesView — implementation waves table (§11.8)', () => {
     const enabledButton = screen.getByRole('button', { name: 'Create multi-module handoff (2 selected)' })
     expect((enabledButton as HTMLButtonElement).disabled).toBe(false)
 
+    // §3.3 / review finding #2 — a combined handoff requires real, explicit
+    // user confirmations; the button is enabled purely by selection count,
+    // but creating a packet also requires these checked.
+    fireEvent.click(screen.getByRole('checkbox', { name: 'I confirm these modules are independent' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'The receiving agent supports this combined task' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Fixtures and external resources are isolated: File-system adapter' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Fixtures and external resources are isolated: Git adapter' }))
+
     fireEvent.click(enabledButton)
     const multiResult = document.querySelector('.design-waves-multi-result')
     expect(multiResult).toBeTruthy()
