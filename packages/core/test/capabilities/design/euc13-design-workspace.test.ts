@@ -7,7 +7,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { DesignConflictError, DesignWorkspace } from '../../../src/capabilities/design/designWorkspace.js'
+import { DesignConflictError, DesignPathError, DesignWorkspace } from '../../../src/capabilities/design/designWorkspace.js'
 import { createModuleDesignDraft } from '../../../src/capabilities/design/moduleDesign.js'
 import { createSession, completeStep } from '../../../src/capabilities/design/moduleDesignSession.js'
 import type {
@@ -404,5 +404,137 @@ describe('EUC-13 DesignWorkspace — legacy CapabilityWorkspace compatibility', 
     expect(fs.existsSync(design.root('proj-1'))).toBe(true)
     expect(legacy.root('proj-1')).not.toBe(design.root('proj-1'))
     expect(design.getArchitectureDraft('proj-1')?.id).toBe(architecture.id)
+  })
+})
+
+describe('EUC-13 DesignWorkspace — path containment (finding R4, §20.2 "reject symbolic-link or path-traversal escapes")', () => {
+  /** An isolated parent directory so "nothing was written outside dataDir" can be asserted by listing it. */
+  function isolatedDataDir(): { parent: string; dataDir: string } {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'euik-euc13-guard-'))
+    return { parent, dataDir: path.join(parent, 'data') }
+  }
+
+  it('rejects a path-traversal project id in ensureInitialized and writes nothing outside dataDir', () => {
+    const { parent, dataDir } = isolatedDataDir()
+    const ws = new DesignWorkspace(dataDir)
+    expect(() => ws.ensureInitialized('../../escaped-project')).toThrow(DesignPathError)
+    expect(fs.existsSync(dataDir)).toBe(false)
+    expect(fs.readdirSync(parent)).toEqual([])
+  })
+
+  it('rejects an embedded ".." project id segment and a bare ".." project id', () => {
+    const { dataDir } = isolatedDataDir()
+    const ws = new DesignWorkspace(dataDir)
+    expect(() => ws.ensureInitialized('..')).toThrow(DesignPathError)
+    expect(() => ws.ensureInitialized('proj/../../escaped')).toThrow(DesignPathError)
+    expect(() => ws.getApprovedArchitecture('../../escaped-project')).toThrow(DesignPathError)
+  })
+
+  it('rejects a path-traversal module id and writes nothing outside dataDir', () => {
+    const { parent, dataDir } = isolatedDataDir()
+    const ws = new DesignWorkspace(dataDir)
+    const architecture = architectureFixture()
+    const draft = moduleDesignDraftFixture(architecture)
+    expect(() => ws.saveModuleDesignDraft('proj-1', '../../escaped-module', draft)).toThrow(DesignPathError)
+    expect(() => ws.getModuleDesignDraft('proj-1', '../escaped-module')).toThrow(DesignPathError)
+    // The legitimate projectId initialization (a side effect of the guarded call) may exist;
+    // nothing with the traversal target's name exists anywhere under the isolated parent.
+    expect(fs.existsSync(path.join(parent, 'escaped-module'))).toBe(false)
+    expect(fs.readdirSync(parent)).toEqual(['data'])
+  })
+
+  it('rejects a path-traversal revision string on an approve* write and read', () => {
+    const { parent, dataDir } = isolatedDataDir()
+    const ws = new DesignWorkspace(dataDir)
+    const architecture = architectureFixture()
+    const draft = moduleDesignDraftFixture(architecture)
+    const approved: ModuleDesignSpecification = { ...draft, revision: '../../escaped-revision', status: 'approved' }
+    expect(() => ws.approveModuleDesign('proj-1', 'mod.domain', approved)).toThrow(DesignPathError)
+    expect(() => ws.getApprovedModuleDesign('proj-1', 'mod.domain', '../../escaped-revision')).toThrow(DesignPathError)
+    expect(fs.existsSync(path.join(parent, 'escaped-revision'))).toBe(false)
+  })
+
+  it('rejects a path-traversal packet id on save and get', () => {
+    const { parent, dataDir } = isolatedDataDir()
+    const ws = new DesignWorkspace(dataDir)
+    const packet = {
+      schemaVersion: '1.0' as const,
+      packetId: '../../escaped-packet',
+      projectId: 'proj-1',
+      moduleId: 'mod.domain',
+      moduleType: 'domain' as const,
+      architectureRevision: 'r1',
+      architectureHash: 'arch-hash',
+      systemSlice: { moduleSummaries: [], dependencyEdges: [] },
+      useCaseIds: [],
+      scenarioStepIds: [],
+      providerSummaries: [],
+      consumerSummaries: [],
+      projectRules: [],
+      typeSpecificQuestions: [],
+      contextManifest: contextManifestFixture(),
+      existingPatterns: [],
+      missingDecisions: [],
+      expectedResponseSchemaRef: 'ModuleDesignSpecification@1.0' as const,
+      stableIdsToPreserve: [],
+      responseValidationRules: [],
+      approvalProhibited: true as const,
+      idempotencyKey: 'idem-1',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      contentHash: 'packet-hash',
+    }
+    expect(() => ws.saveModuleDesignPacket('proj-1', packet)).toThrow(DesignPathError)
+    expect(() => ws.getModuleDesignPacket('proj-1', '../../escaped-packet')).toThrow(DesignPathError)
+    expect(fs.existsSync(path.join(parent, 'escaped-packet'))).toBe(false)
+  })
+
+  it('rejects a path-traversal idempotency key and operation name on saveOperationResult/findOperationResult', () => {
+    const { parent, dataDir } = isolatedDataDir()
+    const ws = new DesignWorkspace(dataDir)
+    ws.ensureInitialized('proj-1')
+    expect(() =>
+      ws.saveOperationResult('proj-1', 'createUseCaseDraft', '../../escaped-key', {
+        ok: true,
+        diagnostics: [],
+        auditEventId: 'evt-1',
+        validNextActions: [],
+      }),
+    ).toThrow(DesignPathError)
+    expect(() => ws.findOperationResult('proj-1', '../../escaped-op', 'idem-1')).toThrow(DesignPathError)
+    expect(fs.existsSync(path.join(parent, 'escaped-key'))).toBe(false)
+  })
+
+  it('rejects a path-traversal operationId/version on the contract registry', () => {
+    const { parent, dataDir } = isolatedDataDir()
+    const ws = new DesignWorkspace(dataDir)
+    ws.ensureInitialized('proj-1')
+    const contract = {
+      operationId: '../../escaped-op',
+      version: '1.0.0',
+      providerModuleId: 'mod.domain',
+      status: 'draft' as const,
+      contract: {
+        schemaVersion: '1.0' as const,
+        operationId: 'op.x',
+        version: '1.0.0',
+        behavior: 'command' as const,
+        inputSchemaRef: '',
+        outputSchemaRef: '',
+        preconditions: [],
+        postconditions: [],
+        domainRejections: [],
+        technicalErrors: [],
+        sideEffects: [],
+        idempotency: 'unknown' as const,
+        timeoutClass: 'medium' as const,
+        cancellable: false,
+        artifactTypes: [],
+        provenanceFields: [],
+      },
+      contentHash: 'contract-hash',
+    }
+    expect(() => ws.saveContract('proj-1', contract)).toThrow(DesignPathError)
+    expect(() => ws.getContract('proj-1', '../../escaped-op', '1.0.0')).toThrow(DesignPathError)
+    expect(fs.existsSync(path.join(parent, 'escaped-op'))).toBe(false)
   })
 })

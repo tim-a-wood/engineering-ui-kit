@@ -77,6 +77,25 @@ function tmpDir(prefix = 'euik-scn-'): string {
 
 const actor = 'user:alice'
 
+/**
+ * The service enforces §4 default-deny approval authority; every scenario
+ * workspace configures the roles its approvals use (S25 also uses user:bob).
+ */
+const SCENARIO_ROLES = {
+  'user:alice': [
+    'product-lead',
+    'software-architect',
+    'module-owner',
+    'interface-engineer',
+    'integration-engineer',
+    'verification-lead',
+  ],
+  'user:bob': ['module-owner', 'software-architect'],
+} as const
+function seedRoles(workspace: DesignWorkspace, projectId: string): void {
+  workspace.saveProjectRoles(projectId, SCENARIO_ROLES as unknown as Parameters<DesignWorkspace['saveProjectRoles']>[1])
+}
+
 let idem = 0
 function key(): string {
   idem += 1
@@ -172,6 +191,7 @@ describe('S01 — create a first use-case draft from one sentence', () => {
         const workspace = new DesignWorkspace(tmpDir())
         const ops = createDesignOperations({ workspace })
         const projectId = 'proj-s01'
+        seedRoles(workspace, projectId)
 
         const result = ops.createUseCaseDraft({
           projectId,
@@ -203,6 +223,7 @@ describe('S02, S03 — approve the use-case analysis and the system structure', 
   const workspace = new DesignWorkspace(tmpDir())
   const ops = createDesignOperations({ workspace })
   const projectId = 'proj-s02-s03'
+  seedRoles(workspace, projectId)
   let questionId = ''
 
   it(
@@ -318,6 +339,7 @@ describe('S05, S06, S09, S10, S11 — module design lifecycle on the sample modu
   })
   const ops = createDesignOperations({ workspace })
   const projectId = sample.projectId
+  seedRoles(workspace, projectId)
 
   it(
     'S05 create the Evidence Store module draft',
@@ -481,6 +503,7 @@ describe('S07, S08 — import an incomplete Copilot module-design response', () 
   const workspace = new DesignWorkspace(tmpDir())
   const ops = createDesignOperations({ workspace })
   const projectId = 'proj-s07-s08'
+  seedRoles(workspace, projectId)
 
   ops.createUseCaseDraft({ projectId, actor, idempotencyKey: key(), workDescription: 'Track review approvals end to end.' })
   ops.approveUseCaseAnalysis({ projectId, actor, idempotencyKey: key(), authority: 'product-lead' })
@@ -657,6 +680,7 @@ describe('S12, S13, S14 — inspect, approve, apply, and roll back a returned de
     },
   })
   const projectId = 'proj-s12-s14'
+  seedRoles(workspace, projectId)
   const moduleId = 'mod.core'
 
   ops.createUseCaseDraft({ projectId, actor, idempotencyKey: key(), workDescription: 'Track review approvals end to end.' })
@@ -677,7 +701,7 @@ describe('S12, S13, S14 — inspect, approve, apply, and roll back a returned de
   ops.analyzeModuleDesign({ projectId, actor, idempotencyKey: key(), moduleId })
   const approved = ops.approveModuleDesign({ projectId, actor, idempotencyKey: key(), moduleId, authority: 'module-owner' })
   ops.createDesignBaseline({ projectId, actor, idempotencyKey: key() })
-  ops.approveDesignBaseline({ projectId, actor, idempotencyKey: key(), authority: 'verification-lead' })
+  ops.approveDesignBaseline({ projectId, actor, idempotencyKey: key(), authority: 'software-architect' })
   const packet = ops.createModuleImplementationPacket({
     projectId,
     actor,
@@ -818,6 +842,7 @@ describe('S15 — verify the applied module', () => {
         const workspace = new DesignWorkspace(tmpDir())
         const baseOps = createDesignOperations({ workspace })
         const projectId = 'proj-s15'
+        seedRoles(workspace, projectId)
         const moduleId = 'mod.core'
 
         baseOps.createUseCaseDraft({ projectId, actor, idempotencyKey: key(), workDescription: 'Track review approvals end to end.' })
@@ -881,6 +906,7 @@ describe('S16-S23, S27, S30 — sample lifecycle at baseline', () => {
   loadFullSample(workspace, sample)
   const ops = createDesignOperations({ workspace })
   const projectId = sample.projectId
+  seedRoles(workspace, projectId)
   const allApprovedDesigns = Object.values(sample.approvedModuleDesigns)
 
   let s19DiagramId = ''
@@ -1428,6 +1454,7 @@ describe('S24 — restore a module-design draft after application restart', () =
         const dataDir = tmpDir()
         const ops1 = createDesignOperations({ workspace: new DesignWorkspace(dataDir) })
         const projectId = 'proj-restart'
+        seedRoles(new DesignWorkspace(dataDir), projectId)
 
         ops1.createUseCaseDraft({ projectId, actor, idempotencyKey: key(), workDescription: 'Track review approvals end to end.' })
         ops1.approveUseCaseAnalysis({ projectId, actor, idempotencyKey: key(), authority: 'product-lead' })
@@ -1474,6 +1501,7 @@ describe('S25 — resolve a concurrent edit through comparison', () => {
       () => {
         const workspace = new DesignWorkspace(tmpDir())
         const projectId = 'proj-concurrency'
+        seedRoles(workspace, projectId)
 
         const created = UseCase.createUseCaseDraft({ projectId, workDescription: 'Track review approvals end to end.' })
         workspace.saveUseCaseAnalysisDraft(projectId, created.analysis)
@@ -1531,6 +1559,7 @@ describe('S26 — verifyConnection record layer with observed-path fields', () =
       () => {
         const workspace = new DesignWorkspace(tmpDir())
         const projectId = 'proj-connect'
+        seedRoles(workspace, projectId)
         const setupOps = createDesignOperations({ workspace })
         setupOps.createUseCaseDraft({ projectId, actor, idempotencyKey: key(), workDescription: 'Track review approvals end to end.' })
         setupOps.approveUseCaseAnalysis({ projectId, actor, idempotencyKey: key(), authority: 'product-lead' })
@@ -1652,6 +1681,7 @@ describe('Required check — provider unavailable (§19 "Provider unavailable")'
   it('a noProvider response leaves the draft intact; a later retry with a real provider succeeds', async () => {
     const workspace = new DesignWorkspace(tmpDir())
     const projectId = 'proj-provider-loss'
+    seedRoles(workspace, projectId)
     const ops = createDesignOperations({ workspace })
 
     ops.createUseCaseDraft({ projectId, actor, idempotencyKey: key(), workDescription: 'Track review approvals end to end.' })
@@ -1709,6 +1739,7 @@ describe('Required check — stale response (§19 "Stale response")', () => {
   it('a delta against a superseded packet base is rejected and preserved as evidence', () => {
     const workspace = new DesignWorkspace(tmpDir())
     const projectId = 'proj-stale-response'
+    seedRoles(workspace, projectId)
     const ops = createDesignOperations({ workspace })
     const moduleId = 'mod.core'
 
@@ -1730,7 +1761,7 @@ describe('Required check — stale response (§19 "Stale response")', () => {
     ops.analyzeModuleDesign({ projectId, actor, idempotencyKey: key(), moduleId })
     const firstApproved = ops.approveModuleDesign({ projectId, actor, idempotencyKey: key(), moduleId, authority: 'module-owner' }).value!
     ops.createDesignBaseline({ projectId, actor, idempotencyKey: key() })
-    ops.approveDesignBaseline({ projectId, actor, idempotencyKey: key(), authority: 'verification-lead' })
+    ops.approveDesignBaseline({ projectId, actor, idempotencyKey: key(), authority: 'software-architect' })
     const packet = ops.createModuleImplementationPacket({ projectId, actor, idempotencyKey: key(), moduleId, implementationSteps: ['implement it'], testCommands: ['npm test'] }).value!
 
     // Supersede the packet's base: reopen, change, and re-approve the module design.

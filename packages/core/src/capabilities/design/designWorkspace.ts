@@ -26,11 +26,13 @@ import crypto from 'node:crypto'
 import { canonicalHash } from '../hash.js'
 import type { ArchitectureSpecification, ApplicationSpecification, JobRecord } from '../types.js'
 import type {
+  ApprovalAuthority,
   ContextManifest,
   DesignAuditEvent,
   DesignBaseline,
   DesignFeatureFlag,
   DesignImpactRecord,
+  DesignOperationResult,
   DesignWorkflowPolicy,
   DeltaInspection,
   DiagramDiscussionEntry,
@@ -42,6 +44,7 @@ import type {
   ScenarioRun,
   UseCaseAnalysis,
 } from './records.js'
+import type { RegisteredContract } from './contractRegistry.js'
 
 // ---------------------------------------------------------------------------
 // File helpers (pattern copied from ../persistence.ts atomicWriteJson)
@@ -78,6 +81,67 @@ function listJsonRevisions(dirPath: string): string[] {
     .filter((name) => name.endsWith('.json'))
     .map((name) => name.slice(0, -'.json'.length))
     .sort((a, b) => a.localeCompare(b))
+}
+
+// ---------------------------------------------------------------------------
+// Path containment (§20.2 "the product shall reject symbolic-link or
+// path-traversal escapes") — every identifier that becomes a filesystem path
+// segment (projectId, moduleId, record ids, packet/delta/scenario/session
+// ids, revision strings, contract operationId/version, actor ids used as a
+// role key) is validated by this single guard *before* it reaches
+// `path.join`. `safeFileStem` (below) still runs after this guard for ids
+// that are otherwise safe but too long for a filename.
+// ---------------------------------------------------------------------------
+
+const MAX_PATH_SEGMENT_LENGTH = 300
+
+/** Thrown by `assertSafeSegment` for any identifier that is not a single, safe path segment. */
+export class DesignPathError extends Error {
+  readonly code = 'design-path-invalid' as const
+  readonly kind: string
+  readonly value: string
+
+  constructor(kind: string, value: string, reason: string) {
+    super(`invalid ${kind} for a persisted path: ${reason} (received ${JSON.stringify(value)})`)
+    this.name = 'DesignPathError'
+    this.kind = kind
+    this.value = value
+  }
+}
+
+/**
+ * §20.2 / §20.3 — a single path segment: no separators, no traversal, no
+ * NUL, no leading dot, bounded length. Applied at the `DesignWorkspace`
+ * boundary to every caller-influenced identifier that is joined into a
+ * persisted file path, so a traversal attempt (`'../../escaped-project'`,
+ * an embedded `'..'` segment, a symlink-style escape) throws before any
+ * `fs` call runs and nothing is written outside `dataDir`.
+ */
+function assertSafeSegment(kind: string, value: string): void {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new DesignPathError(kind, String(value), 'must be a non-empty string')
+  }
+  if (value.length > MAX_PATH_SEGMENT_LENGTH) {
+    throw new DesignPathError(kind, value, `must be ${MAX_PATH_SEGMENT_LENGTH} characters or fewer`)
+  }
+  if (value.indexOf(String.fromCharCode(0)) !== -1) {
+    throw new DesignPathError(kind, value, 'must not contain a NUL byte')
+  }
+  if (value.includes('/') || value.includes('\\')) {
+    throw new DesignPathError(kind, value, 'must not contain a path separator')
+  }
+  if (value === '.' || value === '..') {
+    throw new DesignPathError(kind, value, 'must not be "." or ".."')
+  }
+  if (value.startsWith('.')) {
+    throw new DesignPathError(kind, value, 'must not start with "."')
+  }
+}
+
+/** `assertSafeSegment` followed by `<dirPath>/<id>.json` — the common id-file shape. */
+function idFilePath(dirPath: string, kind: string, id: string): string {
+  assertSafeSegment(kind, id)
+  return path.join(dirPath, `${id}.json`)
 }
 
 // ---------------------------------------------------------------------------
@@ -168,6 +232,7 @@ export class DesignWorkspace {
 
   /** `<dataDir>/projects/<projectId>/design` — additive sibling of `capabilities/`. */
   root(projectId: string): string {
+    assertSafeSegment('projectId', projectId)
     return path.join(this.dataDir, 'projects', projectId, 'design')
   }
 
@@ -227,7 +292,7 @@ export class DesignWorkspace {
 
   approveUseCaseAnalysis(projectId: string, approved: UseCaseAnalysis): UseCaseAnalysis {
     this.ensureInitialized(projectId)
-    const dest = path.join(this.root(projectId), 'use-case-analysis', 'approved', `${approved.revision}.json`)
+    const dest = idFilePath(path.join(this.root(projectId), 'use-case-analysis', 'approved'), 'revision', approved.revision)
     if (fs.existsSync(dest)) {
       throw new Error(`approved use-case analysis revision already exists: ${approved.revision}`)
     }
@@ -241,7 +306,7 @@ export class DesignWorkspace {
   getApprovedUseCaseAnalysis(projectId: string, revision?: string): UseCaseAnalysis | undefined {
     const rev = revision ?? this.getIndex(projectId).useCaseAnalysisApprovedRevision
     if (!rev) return undefined
-    return readJson(path.join(this.root(projectId), 'use-case-analysis', 'approved', `${rev}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'use-case-analysis', 'approved'), 'revision', rev))
   }
 
   listApprovedUseCaseAnalysisRevisions(projectId: string): string[] {
@@ -269,7 +334,7 @@ export class DesignWorkspace {
 
   approveApplication(projectId: string, approved: ApplicationSpecification): ApplicationSpecification {
     this.ensureInitialized(projectId)
-    const dest = path.join(this.root(projectId), 'application', 'approved', `${approved.revision}.json`)
+    const dest = idFilePath(path.join(this.root(projectId), 'application', 'approved'), 'revision', approved.revision)
     if (fs.existsSync(dest)) {
       throw new Error(`approved application revision already exists: ${approved.revision}`)
     }
@@ -283,7 +348,7 @@ export class DesignWorkspace {
   getApprovedApplication(projectId: string, revision?: string): ApplicationSpecification | undefined {
     const rev = revision ?? this.getIndex(projectId).applicationApprovedRevision
     if (!rev) return undefined
-    return readJson(path.join(this.root(projectId), 'application', 'approved', `${rev}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'application', 'approved'), 'revision', rev))
   }
 
   listApprovedApplicationRevisions(projectId: string): string[] {
@@ -312,7 +377,7 @@ export class DesignWorkspace {
 
   approveArchitecture(projectId: string, approved: ArchitectureSpecification): ArchitectureSpecification {
     this.ensureInitialized(projectId)
-    const dest = path.join(this.root(projectId), 'architecture', 'approved', `${approved.revision}.json`)
+    const dest = idFilePath(path.join(this.root(projectId), 'architecture', 'approved'), 'revision', approved.revision)
     if (fs.existsSync(dest)) {
       throw new Error(`approved architecture revision already exists: ${approved.revision}`)
     }
@@ -326,7 +391,7 @@ export class DesignWorkspace {
   getApprovedArchitecture(projectId: string, revision?: string): ArchitectureSpecification | undefined {
     const rev = revision ?? this.getIndex(projectId).architectureApprovedRevision
     if (!rev) return undefined
-    return readJson(path.join(this.root(projectId), 'architecture', 'approved', `${rev}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'architecture', 'approved'), 'revision', rev))
   }
 
   listApprovedArchitectureRevisions(projectId: string): string[] {
@@ -338,6 +403,7 @@ export class DesignWorkspace {
   // -------------------------------------------------------------------------
 
   private moduleDir(projectId: string, moduleId: string): string {
+    assertSafeSegment('moduleId', moduleId)
     return path.join(this.root(projectId), 'modules', moduleId)
   }
 
@@ -372,7 +438,7 @@ export class DesignWorkspace {
    */
   approveModuleDesign(projectId: string, moduleId: string, approved: ModuleDesignSpecification): ModuleDesignSpecification {
     this.ensureInitialized(projectId)
-    const dest = path.join(this.moduleDir(projectId, moduleId), 'approved', `${approved.revision}.json`)
+    const dest = idFilePath(path.join(this.moduleDir(projectId, moduleId), 'approved'), 'revision', approved.revision)
     if (fs.existsSync(dest)) {
       throw new Error(`approved module-design revision already exists: ${moduleId}@${approved.revision}`)
     }
@@ -391,7 +457,7 @@ export class DesignWorkspace {
   getApprovedModuleDesign(projectId: string, moduleId: string, revision?: string): ModuleDesignSpecification | undefined {
     const rev = revision ?? this.getIndex(projectId).modules[moduleId]?.approvedRevision
     if (!rev) return undefined
-    return readJson(path.join(this.moduleDir(projectId, moduleId), 'approved', `${rev}.json`))
+    return readJson(idFilePath(path.join(this.moduleDir(projectId, moduleId), 'approved'), 'revision', rev))
   }
 
   /** Full approved revision history for one module, oldest first (stable sort by revision id). */
@@ -438,7 +504,7 @@ export class DesignWorkspace {
 
   approveDesignBaseline(projectId: string, approved: DesignBaseline): DesignBaseline {
     this.ensureInitialized(projectId)
-    const dest = path.join(this.root(projectId), 'baseline', 'approved', `${approved.revision}.json`)
+    const dest = idFilePath(path.join(this.root(projectId), 'baseline', 'approved'), 'revision', approved.revision)
     if (fs.existsSync(dest)) {
       throw new Error(`approved design baseline revision already exists: ${approved.revision}`)
     }
@@ -452,7 +518,7 @@ export class DesignWorkspace {
   getApprovedDesignBaseline(projectId: string, revision?: string): DesignBaseline | undefined {
     const rev = revision ?? this.getIndex(projectId).baselineApprovedRevision
     if (!rev) return undefined
-    return readJson(path.join(this.root(projectId), 'baseline', 'approved', `${rev}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'baseline', 'approved'), 'revision', rev))
   }
 
   listApprovedDesignBaselineRevisions(projectId: string): string[] {
@@ -493,11 +559,11 @@ export class DesignWorkspace {
 
   saveContextManifest(projectId: string, manifest: ContextManifest): void {
     this.ensureInitialized(projectId)
-    atomicWriteJson(path.join(this.root(projectId), 'context-manifests', `${manifest.id}.json`), manifest)
+    atomicWriteJson(idFilePath(path.join(this.root(projectId), 'context-manifests'), 'contextManifestId', manifest.id), manifest)
   }
 
   getContextManifest(projectId: string, id: string): ContextManifest | undefined {
-    return readJson(path.join(this.root(projectId), 'context-manifests', `${id}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'context-manifests'), 'contextManifestId', id))
   }
 
   listContextManifests(projectId: string): ContextManifest[] {
@@ -512,7 +578,7 @@ export class DesignWorkspace {
 
   saveModuleDesignPacket(projectId: string, packet: ModuleDesignPacket): void {
     this.ensureInitialized(projectId)
-    const dest = path.join(this.root(projectId), 'packets', 'module-design', `${packet.packetId}.json`)
+    const dest = idFilePath(path.join(this.root(projectId), 'packets', 'module-design'), 'packetId', packet.packetId)
     if (fs.existsSync(dest)) {
       throw new Error(`module-design packet is immutable and already exists: ${packet.packetId}`)
     }
@@ -520,12 +586,12 @@ export class DesignWorkspace {
   }
 
   getModuleDesignPacket(projectId: string, packetId: string): ModuleDesignPacket | undefined {
-    return readJson(path.join(this.root(projectId), 'packets', 'module-design', `${packetId}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'packets', 'module-design'), 'packetId', packetId))
   }
 
   saveModuleImplementationPacket(projectId: string, packet: ModuleImplementationPacket): void {
     this.ensureInitialized(projectId)
-    const dest = path.join(this.root(projectId), 'packets', 'module-implementation', `${packet.packetId}.json`)
+    const dest = idFilePath(path.join(this.root(projectId), 'packets', 'module-implementation'), 'packetId', packet.packetId)
     if (fs.existsSync(dest)) {
       throw new Error(`module-implementation packet is immutable and already exists: ${packet.packetId}`)
     }
@@ -533,7 +599,7 @@ export class DesignWorkspace {
   }
 
   getModuleImplementationPacket(projectId: string, packetId: string): ModuleImplementationPacket | undefined {
-    return readJson(path.join(this.root(projectId), 'packets', 'module-implementation', `${packetId}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'packets', 'module-implementation'), 'packetId', packetId))
   }
 
   // -------------------------------------------------------------------------
@@ -544,7 +610,7 @@ export class DesignWorkspace {
 
   saveReturnedDelta(projectId: string, delta: ReturnedDelta): void {
     this.ensureInitialized(projectId)
-    const dest = path.join(this.root(projectId), 'deltas', `${delta.deltaId}.json`)
+    const dest = idFilePath(path.join(this.root(projectId), 'deltas'), 'deltaId', delta.deltaId)
     if (fs.existsSync(dest)) {
       throw new Error(`returned delta is immutable and already exists: ${delta.deltaId}`)
     }
@@ -552,19 +618,19 @@ export class DesignWorkspace {
   }
 
   getReturnedDelta(projectId: string, deltaId: string): ReturnedDelta | undefined {
-    return readJson(path.join(this.root(projectId), 'deltas', `${deltaId}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'deltas'), 'deltaId', deltaId))
   }
 
   saveDeltaInspection(projectId: string, inspection: DeltaInspection): void {
     this.ensureInitialized(projectId)
     atomicWriteJson(
-      path.join(this.root(projectId), 'delta-inspections', `${inspection.inspectionId}.json`),
+      idFilePath(path.join(this.root(projectId), 'delta-inspections'), 'inspectionId', inspection.inspectionId),
       inspection,
     )
   }
 
   getDeltaInspection(projectId: string, inspectionId: string): DeltaInspection | undefined {
-    return readJson(path.join(this.root(projectId), 'delta-inspections', `${inspectionId}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'delta-inspections'), 'inspectionId', inspectionId))
   }
 
   // -------------------------------------------------------------------------
@@ -573,11 +639,11 @@ export class DesignWorkspace {
 
   saveDesignImpactRecord(projectId: string, record: DesignImpactRecord): void {
     this.ensureInitialized(projectId)
-    atomicWriteJson(path.join(this.root(projectId), 'impacts', `${record.impactId}.json`), record)
+    atomicWriteJson(idFilePath(path.join(this.root(projectId), 'impacts'), 'impactId', record.impactId), record)
   }
 
   getDesignImpactRecord(projectId: string, impactId: string): DesignImpactRecord | undefined {
-    return readJson(path.join(this.root(projectId), 'impacts', `${impactId}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'impacts'), 'impactId', impactId))
   }
 
   listDesignImpactRecords(projectId: string): DesignImpactRecord[] {
@@ -592,7 +658,7 @@ export class DesignWorkspace {
 
   saveScenarioRun(projectId: string, run: ScenarioRun): void {
     this.ensureInitialized(projectId)
-    const dest = path.join(this.root(projectId), 'scenario-runs', `${run.runId}.json`)
+    const dest = idFilePath(path.join(this.root(projectId), 'scenario-runs'), 'runId', run.runId)
     if (fs.existsSync(dest)) {
       throw new Error(`scenario run is immutable and already exists: ${run.runId}`)
     }
@@ -600,7 +666,7 @@ export class DesignWorkspace {
   }
 
   getScenarioRun(projectId: string, runId: string): ScenarioRun | undefined {
-    return readJson(path.join(this.root(projectId), 'scenario-runs', `${runId}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'scenario-runs'), 'runId', runId))
   }
 
   listScenarioRuns(projectId: string): ScenarioRun[] {
@@ -657,6 +723,7 @@ export class DesignWorkspace {
 
   saveDiagramDiscussionEntry(projectId: string, entry: DiagramDiscussionEntry): void {
     this.ensureInitialized(projectId)
+    assertSafeSegment('diagramDiscussionEntryId', entry.id)
     atomicWriteJson(path.join(this.root(projectId), 'diagram-discussions', `${safeFileStem(entry.id)}.json`), entry)
   }
 
@@ -674,11 +741,11 @@ export class DesignWorkspace {
 
   saveJobRecord(projectId: string, job: JobRecord): void {
     this.ensureInitialized(projectId)
-    atomicWriteJson(path.join(this.root(projectId), 'jobs', `${job.jobId}.json`), job)
+    atomicWriteJson(idFilePath(path.join(this.root(projectId), 'jobs'), 'jobId', job.jobId), job)
   }
 
   getJobRecord(projectId: string, jobId: string): JobRecord | undefined {
-    return readJson(path.join(this.root(projectId), 'jobs', `${jobId}.json`))
+    return readJson(idFilePath(path.join(this.root(projectId), 'jobs'), 'jobId', jobId))
   }
 
   loadJobRecords(projectId: string): JobRecord[] {
@@ -700,6 +767,133 @@ export class DesignWorkspace {
   getWorkspaceState(projectId: string): { selectedModuleId?: string; lastRoute?: string } | undefined {
     return readJson(path.join(this.root(projectId), 'workspace-state.json'))
   }
+
+  // -------------------------------------------------------------------------
+  // Project roles (§4) — actorId -> held authorities. Authority is never
+  // caller-asserted alone: an approval operation checks the acting user's
+  // authority against this persisted configuration, not against a claim in
+  // the request. Single current record per project.
+  // -------------------------------------------------------------------------
+
+  saveProjectRoles(projectId: string, roles: ProjectRoles): void {
+    this.ensureInitialized(projectId)
+    atomicWriteJson(path.join(this.root(projectId), 'roles.json'), roles)
+  }
+
+  getProjectRoles(projectId: string): ProjectRoles | undefined {
+    return readJson(path.join(this.root(projectId), 'roles.json'))
+  }
+
+  // -------------------------------------------------------------------------
+  // Operation results (§5.3, §17.3) — the FULL result of a change operation,
+  // persisted by projectId + operation + idempotencyKey so a retry replays
+  // the first committed result (value included) even after a process
+  // restart, and so the same idempotencyKey used for a different operation
+  // or a different project is never treated as a replay. First write wins:
+  // a second save for the same key is a silent no-op, never an overwrite.
+  // -------------------------------------------------------------------------
+
+  private operationResultPath(projectId: string, operation: string, idempotencyKey: string): string {
+    assertSafeSegment('operation', operation)
+    return idFilePath(path.join(this.root(projectId), 'operation-results', operation), 'idempotencyKey', idempotencyKey)
+  }
+
+  saveOperationResult(projectId: string, operation: string, idempotencyKey: string, result: DesignOperationResult<unknown>): void {
+    this.ensureInitialized(projectId)
+    const dest = this.operationResultPath(projectId, operation, idempotencyKey)
+    if (fs.existsSync(dest)) return
+    atomicWriteJson(dest, result)
+  }
+
+  findOperationResult(projectId: string, operation: string, idempotencyKey: string): DesignOperationResult<unknown> | undefined {
+    return readJson(this.operationResultPath(projectId, operation, idempotencyKey))
+  }
+
+  // -------------------------------------------------------------------------
+  // Contract registry persistence (§9.7, EUC-05) — `RegisteredContract`
+  // records keyed by operationId + version. An approved version is
+  // immutable: `saveContract` refuses to change the content of a version
+  // already on disk with `status: 'approved'`.
+  // -------------------------------------------------------------------------
+
+  private contractPath(projectId: string, operationId: string, version: string): string {
+    assertSafeSegment('operationId', operationId)
+    return idFilePath(path.join(this.root(projectId), 'contracts', operationId), 'version', version)
+  }
+
+  saveContract(projectId: string, contract: RegisteredContract): void {
+    this.ensureInitialized(projectId)
+    const dest = this.contractPath(projectId, contract.operationId, contract.version)
+    const existing = readJson<RegisteredContract>(dest)
+    if (existing?.status === 'approved') {
+      if (existing.contentHash === contract.contentHash && existing.status === contract.status) return
+      throw new Error(
+        `approved contract ${contract.operationId}@${contract.version} is immutable and cannot be changed`,
+      )
+    }
+    atomicWriteJson(dest, contract)
+  }
+
+  getContract(projectId: string, operationId: string, version: string): RegisteredContract | undefined {
+    return readJson(this.contractPath(projectId, operationId, version))
+  }
+
+  listContracts(projectId: string): RegisteredContract[] {
+    const contractsRoot = path.join(this.root(projectId), 'contracts')
+    if (!fs.existsSync(contractsRoot)) return []
+    const contracts: RegisteredContract[] = []
+    for (const operationId of fs.readdirSync(contractsRoot).sort((a, b) => a.localeCompare(b))) {
+      const dir = path.join(contractsRoot, operationId)
+      if (!fs.statSync(dir).isDirectory()) continue
+      for (const version of listJsonRevisions(dir)) {
+        const contract = readJson<RegisteredContract>(path.join(dir, `${version}.json`))
+        if (contract) contracts.push(contract)
+      }
+    }
+    return contracts
+  }
+
+  // -------------------------------------------------------------------------
+  // Contract consumer acknowledgements (§9.7 "the provider and every known
+  // consumer shall review a changed contract") — recorded per contract
+  // version + consumer module, either implicitly (a consumer module's
+  // `analyzeModuleDesign` run against the current contract version) or
+  // explicitly (an ack recorded by `updateModuleDesignItem`).
+  // -------------------------------------------------------------------------
+
+  private consumerAckPath(projectId: string, operationId: string, version: string, consumerModuleId: string): string {
+    assertSafeSegment('operationId', operationId)
+    assertSafeSegment('version', version)
+    return idFilePath(
+      path.join(this.root(projectId), 'contracts', operationId, version, 'acks'),
+      'consumerModuleId',
+      consumerModuleId,
+    )
+  }
+
+  saveConsumerAck(projectId: string, ack: ConsumerContractAck): void {
+    this.ensureInitialized(projectId)
+    atomicWriteJson(this.consumerAckPath(projectId, ack.operationId, ack.version, ack.consumerModuleId), ack)
+  }
+
+  listConsumerAcks(projectId: string, operationId: string, version: string): ConsumerContractAck[] {
+    assertSafeSegment('operationId', operationId)
+    assertSafeSegment('version', version)
+    const dir = path.join(this.root(projectId), 'contracts', operationId, version, 'acks')
+    return listJsonRevisions(dir).map((id) => readJson<ConsumerContractAck>(path.join(dir, `${id}.json`))!)
+  }
 }
 
 export { canonicalHash }
+
+/** §4 — actorId -> the approval authorities that actor holds for this project. */
+export type ProjectRoles = Record<string, ApprovalAuthority[]>
+
+/** §9.7 — a consumer module's recorded review of one contract version. */
+export type ConsumerContractAck = {
+  operationId: string
+  version: string
+  consumerModuleId: string
+  ackedAt: string
+  source: 'analyze' | 'explicit'
+}

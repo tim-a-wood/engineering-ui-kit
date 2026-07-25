@@ -13,14 +13,27 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { DesignWorkspace } from '../../../src/capabilities/design/designWorkspace.js'
 import { createDesignOperations, type DesignOperationsService } from '../../../src/capabilities/design/operations.js'
-import type { ReturnedDelta } from '../../../src/capabilities/design/records.js'
+import { APPROVAL_AUTHORITIES, type ReturnedDelta } from '../../../src/capabilities/design/records.js'
 
 function tmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'euik-euc16-'))
 }
 
-function makeOps(): DesignOperationsService {
+const actor = 'user:alice'
+const agent = 'agent:copilot'
+
+/** §4 (finding R1c) — every approve* operation now checks a *configured*
+ * project role, never a caller-asserted authority alone. Test fixture: grant
+ * `actor` every authority on every project id this suite's `it()` uses, so
+ * the pre-existing happy-path/control assertions exercise the same
+ * operations they did before the fix, with a legitimate role behind them. */
+function seedFullAuthority(workspace: DesignWorkspace, projectId: string): void {
+  workspace.saveProjectRoles(projectId, { [actor]: [...APPROVAL_AUTHORITIES] })
+}
+
+function makeOps(...projectIds: string[]): DesignOperationsService {
   const workspace = new DesignWorkspace(tmpDir())
+  for (const projectId of projectIds) seedFullAuthority(workspace, projectId)
   return createDesignOperations({
     workspace,
     executors: {
@@ -36,9 +49,6 @@ function makeOps(): DesignOperationsService {
     },
   })
 }
-
-const actor = 'user:alice'
-const agent = 'agent:copilot'
 
 let idem = 0
 function key(): string {
@@ -82,7 +92,7 @@ const domainDetail = {
 }
 
 describe('EUC-16 core operations — full happy path', () => {
-  const ops = makeOps()
+  const ops = makeOps('proj-happy')
   const projectId = 'proj-happy'
 
   let analysisId = ''
@@ -297,7 +307,7 @@ describe('EUC-16 core operations — full happy path', () => {
     expect(created.ok).toBe(true)
     expect(created.value?.missingModuleIds).toEqual([])
 
-    const approved = ops.approveDesignBaseline({ projectId, actor, idempotencyKey: key(), authority: 'verification-lead' })
+    const approved = ops.approveDesignBaseline({ projectId, actor, idempotencyKey: key(), authority: 'software-architect' })
     expect(approved.ok).toBe(true)
     expect(approved.value?.status).toBe('approved')
   })
@@ -367,14 +377,14 @@ describe('EUC-16 core operations — full happy path', () => {
 
 describe('EUC-16 §17.3 controls', () => {
   it('rejects a change operation without an idempotency key', () => {
-    const ops = makeOps()
+    const ops = makeOps('proj-controls-1')
     const result = ops.createUseCaseDraft({ projectId: 'proj-controls-1', actor, workDescription: 'Track review approvals.' })
     expect(result.ok).toBe(false)
     expect(result.diagnostics.map((d) => d.code)).toContain('EUC16-IDEMPOTENCY-KEY-REQUIRED')
   })
 
   it('replays the first committed result for a duplicate idempotency key (byte-equal)', () => {
-    const ops = makeOps()
+    const ops = makeOps('proj-controls-2')
     const projectId = 'proj-controls-2'
     const sharedKey = key()
     const first = ops.createUseCaseDraft({ projectId, actor, idempotencyKey: sharedKey, workDescription: 'Track review approvals.' })
@@ -391,7 +401,7 @@ describe('EUC-16 §17.3 controls', () => {
   })
 
   it('rejects a stale expected base revision with a stable code', () => {
-    const ops = makeOps()
+    const ops = makeOps('proj-controls-3')
     const projectId = 'proj-controls-3'
     const created = ops.createUseCaseDraft({ projectId, actor, idempotencyKey: key(), workDescription: 'Track review approvals.' })
     expect(created.ok).toBe(true)
@@ -456,7 +466,7 @@ describe('EUC-16 §17.3 controls', () => {
   })
 
   it('out-of-scope delta import is stored as evidence but inspection rejects it', () => {
-    const ops = makeOps()
+    const ops = makeOps('proj-out-of-scope')
     const projectId = 'proj-out-of-scope'
 
     // Build a minimal single-module project through to an implementation packet.
@@ -489,7 +499,7 @@ describe('EUC-16 §17.3 controls', () => {
     const approved = ops.approveModuleDesign({ projectId, actor, idempotencyKey: key(), moduleId: 'mod.core', authority: 'module-owner' })
     expect(approved.ok).toBe(true)
     ops.createDesignBaseline({ projectId, actor, idempotencyKey: key() })
-    ops.approveDesignBaseline({ projectId, actor, idempotencyKey: key(), authority: 'verification-lead' })
+    ops.approveDesignBaseline({ projectId, actor, idempotencyKey: key(), authority: 'software-architect' })
 
     const packet = ops.createModuleImplementationPacket({ projectId, actor, idempotencyKey: key(), moduleId: 'mod.core' })
     expect(packet.ok).toBe(true)
@@ -525,6 +535,7 @@ describe('EUC-16 §17.3 controls', () => {
     const workspace = new DesignWorkspace(fs.mkdtempSync(path.join(os.tmpdir(), 'euik-euc16-incremental-')))
     const localOps = createDesignOperations({ workspace })
     const projectId = 'proj-incremental'
+    seedFullAuthority(workspace, projectId)
 
     localOps.createUseCaseDraft({ projectId, actor, idempotencyKey: key(), workDescription: 'Track review approvals.' })
     localOps.approveUseCaseAnalysis({ projectId, actor, idempotencyKey: key(), authority: 'product-lead' })

@@ -48,9 +48,8 @@ import { buildCapabilityGraph, detectCycles, type CapabilityGraph } from '../gra
 import type { CapDiagnostic } from '../diagnostics.js'
 import type { ApplicationSpecification, ArchitectureSpecification, ModuleType } from '../types.js'
 import { stableSortBy } from './identity.js'
-import { DesignWorkspace } from './designWorkspace.js'
+import { DesignWorkspace, type ConsumerContractAck } from './designWorkspace.js'
 import {
-  isAgentActor,
   type ApprovalAuthority,
   type DeltaApplyPlan,
   type DeltaApplyResult,
@@ -87,7 +86,12 @@ import * as Impact from './impactEngine.js'
 import * as VerificationPlanner from './verificationPlanner.js'
 import * as ContextPacket from './contextPacket.js'
 import * as DeltaInspector from './deltaInspector.js'
-import type { RegisteredContract } from './contractRegistry.js'
+import {
+  approveContract as approveRegisteredContract,
+  consumerReviewRequirements,
+  registerContract,
+  type RegisteredContract,
+} from './contractRegistry.js'
 
 // ---------------------------------------------------------------------------
 // Shared input/diagnostic helpers
@@ -151,6 +155,126 @@ function checkExpectedBase(
     )
   }
   return undefined
+}
+
+// ---------------------------------------------------------------------------
+// Actor authentication and authority (§4, §20.2, §20.3, finding R1)
+//
+// An actor is not authenticated by this service (that happens upstream, at
+// the IPC/CLI/API boundary); this gate only refuses a change operation whose
+// `actor` string does not have the required shape, and refuses to treat any
+// claimed `authority` as sufficient on its own. Detection of an `agent:` or
+// `service:` actor is case-insensitive and trims surrounding whitespace, so
+// `'Agent:copilot'` and `' AGENT:x '` are both recognized and rejected for
+// every approve* operation — the same operations the API must never expose
+// as an "approval shortcut for agents" (§17.3).
+// ---------------------------------------------------------------------------
+
+/** `kind:id` after trim; kind is `user`, `agent`, or `service` (case-insensitive). */
+const ACTOR_FORMAT = /^(user|agent|service):\S+$/i
+
+type ActorKind = 'user' | 'agent' | 'service'
+
+function actorKind(actor: string): ActorKind | undefined {
+  const match = ACTOR_FORMAT.exec(actor.trim())
+  return match ? (match[1]!.toLowerCase() as ActorKind) : undefined
+}
+
+/**
+ * §4 table — the authorities that may approve each record kind. Every
+ * approve* operation is keyed here; an operation absent from this map is not
+ * an approval and is not subject to the authority check.
+ */
+/**
+ * Sample bootstrap only. The bundled DO-178C Audit Hub sample project ships
+ * with no `projectRoles` configuration (it is a read-only demo fixture, not
+ * a real project with a real role assignment). Rather than silently
+ * accepting a caller-asserted authority for *every* unconfigured project
+ * (which finding R1 forbids), the default-deny rule below carves out this
+ * one hard-coded project id: an approval against this exact project id is
+ * exempt from `EUC16-AUTHORITY-NOT-CONFIGURED` only when the project has no
+ * `projectRoles` record at all. A real project — including one that reuses
+ * this id after `saveProjectRoles` has ever been called — is unaffected.
+ * Agent and service actors are still rejected before this check runs.
+ */
+export const SAMPLE_BOOTSTRAP_PROJECT_ID = 'sample-do178c-audit-hub'
+
+const APPROVE_OPERATION_AUTHORITIES: Record<string, readonly ApprovalAuthority[]> = {
+  approveUseCaseAnalysis: ['product-lead'],
+  approveSystemStructure: ['software-architect'],
+  approveModuleDesign: ['module-owner', 'software-architect'],
+  approveDesignBaseline: ['software-architect'],
+  approveChangePlan: ['software-architect', 'module-owner', 'interface-engineer', 'integration-engineer', 'verification-lead'],
+  approveAgentDelta: ['module-owner', 'software-architect'],
+  approveVerification: ['verification-lead'],
+}
+
+/**
+ * §4 "authority must not be caller-asserted alone" — checks the acting
+ * user's *configured* `projectRoles` (never the request's own claim) against
+ * the authorities allowed for `operation`. Default policy when no role is
+ * configured for this actor: reject (`EUC16-AUTHORITY-NOT-CONFIGURED`) — an
+ * unrecognized actor claiming an authority is never silently allowed.
+ */
+function checkApprovalAuthority(
+  workspace: DesignWorkspace,
+  projectId: string,
+  operation: string,
+  actor: string,
+  claimedAuthority: ApprovalAuthority | undefined,
+): DesignDiagnostic | undefined {
+  const required = APPROVE_OPERATION_AUTHORITIES[operation]
+  if (!required) return undefined
+
+  const roles = workspace.getProjectRoles(projectId)
+  if (roles === undefined && projectId === SAMPLE_BOOTSTRAP_PROJECT_ID) return undefined
+  const held = roles?.[actor] ?? []
+
+  if (held.length === 0) {
+    return makeDiagnostic(
+      'EUC16-AUTHORITY-NOT-CONFIGURED',
+      'blocker',
+      `no project role is configured for actor ${actor}; an approval requires a configured authority, not a caller-asserted one`,
+      'actor',
+      [actor],
+    )
+  }
+  if (claimedAuthority !== undefined && !required.includes(claimedAuthority)) {
+    return makeDiagnostic(
+      'EUC16-AUTHORITY-NOT-APPLICABLE',
+      'blocker',
+      `authority "${claimedAuthority}" is not applicable to ${operation}; expected one of: ${required.join(', ')}`,
+      'authority',
+      [claimedAuthority],
+    )
+  }
+  if (claimedAuthority !== undefined) {
+    if (!held.includes(claimedAuthority)) {
+      return makeDiagnostic(
+        'EUC16-AUTHORITY-NOT-HELD',
+        'blocker',
+        `actor ${actor} does not hold the claimed authority "${claimedAuthority}"`,
+        'authority',
+        [actor, claimedAuthority],
+      )
+    }
+    return undefined
+  }
+  if (!held.some((authority) => required.includes(authority))) {
+    return makeDiagnostic(
+      'EUC16-AUTHORITY-NOT-HELD',
+      'blocker',
+      `actor ${actor} does not hold an authority required for ${operation} (expected one of: ${required.join(', ')})`,
+      'actor',
+      [actor],
+    )
+  }
+  return undefined
+}
+
+/** §5.3 / §17.3 (finding R2) — an idempotency key is scoped to one project and one operation. */
+function operationResultCacheKey(projectId: string, operation: string, idempotencyKey: string): string {
+  return JSON.stringify([projectId, operation, idempotencyKey])
 }
 
 function summarize(messages: string[]): string {
@@ -229,6 +353,149 @@ function deriveContractRegistry(designs: ModuleDesignSpecification[]): Registere
     }
   }
   return list
+}
+
+// ---------------------------------------------------------------------------
+// Persisted contract lifecycle (§9.7, finding R3) — registers a draft
+// `RegisteredContract` for every provided operation on `analyzeModuleDesign`,
+// records a consumer acknowledgement when a module with a matching required
+// operation is (re-)analyzed, blocks re-approval of a changed contract until
+// every known consumer has acknowledged the new version, and approves the
+// provider's own contracts alongside its module-design approval (the same
+// authorized approver satisfies "the provider ... shall review").
+// `deriveContractRegistry` above remains a lightweight *preview* used only
+// for wave-planning and the enabled/disabled hint on `getValidNextActions`;
+// every place that actually blocks a change (packet creation, re-approval of
+// a changed contract) reads this persisted registry instead.
+// ---------------------------------------------------------------------------
+
+function registerProvidedContractDrafts(
+  workspace: DesignWorkspace,
+  projectId: string,
+  design: ModuleDesignSpecification,
+): CapDiagnostic[] {
+  const diagnostics: CapDiagnostic[] = []
+  const compiled = compileOperationContracts(design)
+  let contracts = workspace.listContracts(projectId)
+  for (const op of design.providedOperations) {
+    const contract = compiled.find((c) => c.operationId === op.operationId && c.version === op.version)
+    if (!contract) continue
+    const result = registerContract(
+      { contracts },
+      { operationId: op.operationId, version: op.version, providerModuleId: design.module.moduleId, contract },
+    )
+    if (!result.ok || !result.contract) {
+      diagnostics.push(...result.diagnostics)
+      continue
+    }
+    if (result.contract.status === 'draft') {
+      workspace.saveContract(projectId, result.contract)
+    }
+    contracts = result.registry?.contracts ?? contracts
+  }
+  return diagnostics
+}
+
+function recordConsumerAcksForRequiredOperations(
+  workspace: DesignWorkspace,
+  projectId: string,
+  design: ModuleDesignSpecification,
+  at: string,
+): void {
+  const contracts = workspace.listContracts(projectId)
+  for (const required of design.requiredOperations) {
+    for (const contract of contracts.filter((c) => c.operationId === required.operationId)) {
+      const ack: ConsumerContractAck = {
+        operationId: contract.operationId,
+        version: contract.version,
+        consumerModuleId: design.module.moduleId,
+        ackedAt: at,
+        source: 'analyze',
+      }
+      workspace.saveConsumerAck(projectId, ack)
+    }
+  }
+}
+
+/**
+ * §9.7 "The provider and every known consumer shall review a changed
+ * contract" — a provided operation whose compiled contract differs from an
+ * already-*approved* version of the same operationId (a different version
+ * string with different content) may not be approved until every known
+ * consumer (a module whose `requiredOperations` references the operationId)
+ * has acknowledged the new version, either by an `analyzeModuleDesign` run
+ * that observed it or an explicit ack.
+ */
+function findBlockedContractApprovals(
+  workspace: DesignWorkspace,
+  projectId: string,
+  design: ModuleDesignSpecification,
+  otherDesigns: ModuleDesignSpecification[],
+): DesignDiagnostic[] {
+  const diagnostics: DesignDiagnostic[] = []
+  const compiled = compileOperationContracts(design)
+  const allContracts = workspace.listContracts(projectId)
+  for (const op of design.providedOperations) {
+    const newContract = compiled.find((c) => c.operationId === op.operationId && c.version === op.version)
+    if (!newContract) continue
+    const priorApproved = allContracts.filter(
+      (c) => c.operationId === op.operationId && c.status === 'approved' && c.version !== op.version,
+    )
+    if (!priorApproved.length) continue
+    const changed = priorApproved.some((c) => canonicalHash(c.contract) !== canonicalHash(newContract))
+    if (!changed) continue
+    const requirements = consumerReviewRequirements(
+      { operationId: op.operationId, providerModuleId: design.module.moduleId },
+      { moduleDesigns: [...otherDesigns, design] },
+    )
+    const consumerModuleIds = requirements.filter((r) => r.role === 'consumer').map((r) => r.moduleId)
+    if (!consumerModuleIds.length) continue
+    const acked = new Set(workspace.listConsumerAcks(projectId, op.operationId, op.version).map((a) => a.consumerModuleId))
+    const missing = consumerModuleIds.filter((id) => !acked.has(id))
+    if (missing.length) {
+      diagnostics.push(
+        makeDiagnostic(
+          'EUC16-CONTRACT-CONSUMER-REVIEW-REQUIRED',
+          'blocker',
+          `contract ${op.operationId}@${op.version} changed from an approved version; these consumers have not re-analyzed against it: ${missing.join(', ')}`,
+          'providedOperations',
+          missing,
+        ),
+      )
+    }
+  }
+  return diagnostics
+}
+
+/** Approves the provider's own contracts alongside its module-design approval (§9.7 "provider ... review"). */
+function approveProvidedContracts(
+  workspace: DesignWorkspace,
+  projectId: string,
+  design: ModuleDesignSpecification,
+  approval: { approvedBy: string; authority: string; approvedAt: string },
+): void {
+  const compiled = compileOperationContracts(design)
+  let contracts = workspace.listContracts(projectId)
+  for (const op of design.providedOperations) {
+    const contract = compiled.find((c) => c.operationId === op.operationId && c.version === op.version)
+    if (!contract) continue
+    let registered = contracts.find((c) => c.operationId === op.operationId && c.version === op.version)
+    if (!registered) {
+      const registerResult = registerContract(
+        { contracts },
+        { operationId: op.operationId, version: op.version, providerModuleId: design.module.moduleId, contract },
+      )
+      if (!registerResult.ok || !registerResult.contract) continue
+      registered = registerResult.contract
+      contracts = registerResult.registry?.contracts ?? contracts
+      workspace.saveContract(projectId, registered)
+    }
+    if (registered.status === 'approved') continue
+    const approveResult = approveRegisteredContract({ contracts }, op.operationId, op.version, approval)
+    if (!approveResult.ok || !approveResult.contract) continue
+    workspace.saveContract(projectId, approveResult.contract)
+    contracts = approveResult.registry?.contracts ?? contracts
+  }
 }
 
 function collectOtherModuleDesigns(
@@ -531,6 +798,23 @@ export type DesignOperationExecutors = {
     input: { entry: VerificationPlanner.ScenarioTestPlanEntry; analysis: UseCaseAnalysis },
     context: ExecutionContext,
   ) => { steps: ScenarioStepEvidence[]; outcome: ScenarioRun['outcome']; startedAt: string; completedAt: string }
+  /**
+   * §11.4, §20.1, §20.2 (finding R5) — reads repository content restricted
+   * to the module's owned and editable-shared paths, for inclusion in the
+   * implementation-packet context manifest as `source` entries. Optional:
+   * when absent, `createModuleImplementationPacket` emits an explicit
+   * warning diagnostic instead of silently omitting repository context.
+   */
+  readRepositoryContext?: (input: { ownedPaths: string[]; editableSharedPaths: string[] }) => RepositoryContextEntry[]
+}
+
+/** One repository file (or file-like unit) offered as packet context by `readRepositoryContext`. */
+export type RepositoryContextEntry = {
+  ref: string
+  content?: string
+  bytes?: number
+  contentHash?: string
+  reason?: string
 }
 
 export type CreateDesignOperationsDeps = {
@@ -567,7 +851,15 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
   }
 
   function executeChange<T>(
-    meta: { operation: string; projectId: string; actor: string; idempotencyKey?: string; targetRecordId?: string },
+    meta: {
+      operation: string
+      projectId: string
+      actor: string
+      idempotencyKey?: string
+      targetRecordId?: string
+      /** The `authority` field of the request, when the operation input carries one (§4, finding R1). */
+      claimedAuthority?: ApprovalAuthority
+    },
     run: () => ChangeOutcome<T>,
   ): DesignOperationResult<T> {
     const { operation, projectId, actor, idempotencyKey, targetRecordId } = meta
@@ -604,39 +896,64 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         auditEventId: committed.eventId,
         validNextActions: computeValidNextActions(workspace, projectId),
       }
-      if (idempotencyKey) resultCache.set(idempotencyKey, result as DesignOperationResult<unknown>)
+      if (idempotencyKey) {
+        // §5.3 / §17.3 — the cache and the persisted result are keyed by
+        // projectId + operation + idempotencyKey, never the raw key alone
+        // (finding R2): the same key reused for a different operation or a
+        // different project is a fresh call, not a replay.
+        resultCache.set(operationResultCacheKey(projectId, operation, idempotencyKey), result as DesignOperationResult<unknown>)
+        workspace.saveOperationResult(projectId, operation, idempotencyKey, result as DesignOperationResult<unknown>)
+      }
       return result
     }
 
-    if (!actor || typeof actor !== 'string' || !actor.trim()) {
-      return finalize({ ok: false, diagnostics: [makeDiagnostic('EUC16-ACTOR-REQUIRED', 'blocker', 'actor is required for a change operation')] })
-    }
-    if (operation.startsWith('approve') && isAgentActor(actor)) {
+    // §17.3 "validate authorization" — actor format first, for every change
+    // operation (finding R1a).
+    const kind = actor && typeof actor === 'string' ? actorKind(actor) : undefined
+    if (!kind) {
       return finalize({
         ok: false,
-        diagnostics: [makeDiagnostic('EUC16-AGENT-APPROVAL-FORBIDDEN', 'blocker', `an agent actor cannot call ${operation}`, 'actor', [actor])],
+        diagnostics: [
+          makeDiagnostic(
+            'EUC16-ACTOR-INVALID',
+            'blocker',
+            `actor must match "user:<id>", "agent:<id>", or "service:<id>" after trimming whitespace (received ${JSON.stringify(actor)})`,
+            'actor',
+          ),
+        ],
+      })
+    }
+    // §4 / §20.2 "the API shall not expose an approval shortcut for agents"
+    // — case-insensitive; a service actor is rejected the same as an agent
+    // actor (finding R1b).
+    if (operation.startsWith('approve') && (kind === 'agent' || kind === 'service')) {
+      return finalize({
+        ok: false,
+        diagnostics: [
+          makeDiagnostic('EUC16-AGENT-APPROVAL-FORBIDDEN', 'blocker', `an ${kind} actor cannot call ${operation}`, 'actor', [actor]),
+        ],
       })
     }
     if (!idempotencyKey || typeof idempotencyKey !== 'string' || !idempotencyKey.trim()) {
       return finalize({ ok: false, diagnostics: [makeDiagnostic('EUC16-IDEMPOTENCY-KEY-REQUIRED', 'blocker', 'idempotencyKey is required for a change operation')] })
     }
 
-    const cached = resultCache.get(idempotencyKey)
+    const cacheKey = operationResultCacheKey(projectId, operation, idempotencyKey)
+    const cached = resultCache.get(cacheKey)
     if (cached) {
       return { ...(cached as DesignOperationResult<T>), idempotentReplay: true }
     }
-    const priorEvent = workspace.findAuditEventByIdempotencyKey(projectId, idempotencyKey)
-    if (priorEvent) {
-      return {
-        ok: priorEvent.outcome === 'ok',
-        value: undefined,
-        diagnostics: [],
-        revision: priorEvent.resultRevision,
-        contentHash: priorEvent.resultHash,
-        auditEventId: priorEvent.eventId,
-        validNextActions: computeValidNextActions(workspace, projectId),
-        idempotentReplay: true,
-      }
+    const persisted = workspace.findOperationResult(projectId, operation, idempotencyKey)
+    if (persisted) {
+      resultCache.set(cacheKey, persisted)
+      return { ...(persisted as DesignOperationResult<T>), idempotentReplay: true }
+    }
+
+    // §4 "authority must not be caller-asserted alone" (finding R1c) — only
+    // reached on a genuinely new attempt, after the replay checks above.
+    const authorityDiagnostic = checkApprovalAuthority(workspace, projectId, operation, actor, meta.claimedAuthority)
+    if (authorityDiagnostic) {
+      return finalize({ ok: false, diagnostics: [authorityDiagnostic] })
     }
 
     return finalize(run())
@@ -834,7 +1151,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
   function approveUseCaseAnalysis(
     input: ApproveUseCaseAnalysisInput,
   ): DesignOperationResult<{ analysis: UseCaseAnalysis; application?: ApplicationSpecification }> {
-    return executeChange({ operation: 'approveUseCaseAnalysis', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey }, () => {
+    return executeChange({ operation: 'approveUseCaseAnalysis', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey, claimedAuthority: input.authority }, () => {
       const draft = workspace.getUseCaseAnalysisDraft(input.projectId)
       if (!draft) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', 'no use-case analysis draft exists')] }
       const staleDiagnostic = checkExpectedBase(draft.revision, draft.contentHash, input)
@@ -956,7 +1273,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
   function approveSystemStructure(
     input: ApproveSystemStructureInput,
   ): DesignOperationResult<SystemDesign.SystemStructureSpecification> {
-    return executeChange({ operation: 'approveSystemStructure', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey }, () => {
+    return executeChange({ operation: 'approveSystemStructure', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey, claimedAuthority: input.authority }, () => {
       const draft = workspace.getArchitectureDraft(input.projectId) as SystemDesign.SystemStructureSpecification | undefined
       if (!draft) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', 'no system design draft exists')] }
       const staleDiagnostic = checkExpectedBase(draft.revision, draft.contentHash, input)
@@ -1097,6 +1414,37 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         if (!design) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', `no module design draft for ${input.moduleId}`)] }
         const staleDiagnostic = checkExpectedBase(design.revision, design.contentHash, input)
         if (staleDiagnostic) return { ok: false, diagnostics: [staleDiagnostic], baseRevision: design.revision, baseHash: design.contentHash }
+        // §9.7 (finding R3) — an explicit consumer-review acknowledgement of
+        // a provider's contract version. This does not change the module
+        // design record; `path: 'requiredOperations.ack'` is a dedicated
+        // signal handled here, not delegated to `ModuleDesign.updateModuleDesignItem`.
+        if (input.path === 'requiredOperations.ack') {
+          const ack = input.value as { operationId?: unknown; version?: unknown }
+          if (typeof ack?.operationId !== 'string' || typeof ack?.version !== 'string') {
+            return {
+              ok: false,
+              diagnostics: [makeDiagnostic('EUC16-CONTRACT-ACK-INVALID', 'blocker', 'requiredOperations.ack requires { operationId, version }', 'value')],
+              baseRevision: design.revision,
+              baseHash: design.contentHash,
+            }
+          }
+          workspace.saveConsumerAck(input.projectId, {
+            operationId: ack.operationId,
+            version: ack.version,
+            consumerModuleId: input.moduleId,
+            ackedAt: clock(),
+            source: 'explicit',
+          })
+          return {
+            ok: true,
+            diagnostics: [],
+            value: design,
+            revision: design.revision,
+            contentHash: design.contentHash,
+            baseRevision: design.revision,
+            baseHash: design.contentHash,
+          }
+        }
         const result = ModuleDesign.updateModuleDesignItem(design, input.path, input.value)
         if (!result.ok) return { ok: false, diagnostics: result.diagnostics, baseRevision: design.revision, baseHash: design.contentHash }
         workspace.saveModuleDesignDraft(input.projectId, input.moduleId, result.design)
@@ -1129,9 +1477,15 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         const stamped = stampProvidedOperationHashes(design)
         const { design: checked, evaluation } = ModuleDesign.applyModuleDesignChecks(stamped, { architecture, otherDesigns, approvedContracts })
         workspace.saveModuleDesignDraft(input.projectId, input.moduleId, checked)
+        // §9.7 (finding R3) — register/update a draft contract for every
+        // provided operation, and record this module's re-analysis as a
+        // consumer acknowledgement for every currently persisted contract
+        // version it requires.
+        const contractDiagnostics = registerProvidedContractDrafts(workspace, input.projectId, checked)
+        recordConsumerAcksForRequiredOperations(workspace, input.projectId, checked, clock())
         return {
           ok: true,
-          diagnostics: evaluation.diagnostics,
+          diagnostics: [...evaluation.diagnostics, ...contractDiagnostics.map(UseCase.toDesignDiagnostic)],
           value: { design: checked, evaluation },
           revision: checked.revision,
           contentHash: checked.contentHash,
@@ -1144,7 +1498,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
 
   function approveModuleDesign(input: ApproveModuleDesignOpInput): DesignOperationResult<ModuleDesignSpecification> {
     return executeChange(
-      { operation: 'approveModuleDesign', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey, targetRecordId: input.moduleId },
+      { operation: 'approveModuleDesign', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey, targetRecordId: input.moduleId, claimedAuthority: input.authority },
       () => {
         const design = workspace.getModuleDesignDraft(input.projectId, input.moduleId)
         if (!design) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', `no module design draft for ${input.moduleId}`)] }
@@ -1153,6 +1507,12 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         const architecture = workspace.getApprovedArchitecture(input.projectId)
         const otherDesigns = collectOtherModuleDesigns(workspace, input.projectId, input.moduleId)
         const approvedContracts = deriveContractRegistry(otherDesigns).map((c) => c.contract)
+        // §9.7 (finding R3) — a changed, already-approved contract may not
+        // be re-approved until every known consumer has reviewed it.
+        const blockedContracts = findBlockedContractApprovals(workspace, input.projectId, design, otherDesigns)
+        if (blockedContracts.length) {
+          return { ok: false, diagnostics: blockedContracts, baseRevision: design.revision, baseHash: design.contentHash }
+        }
         const result = ModuleDesign.approveModuleDesign(
           design,
           { approvedBy: input.actor, authority: input.authority, approvedAt: clock() },
@@ -1160,6 +1520,13 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         )
         if (!result.ok) return { ok: false, diagnostics: result.diagnostics, baseRevision: design.revision, baseHash: design.contentHash }
         const approved = workspace.approveModuleDesign(input.projectId, input.moduleId, result.design)
+        // §9.7 "the provider ... shall review" — the same authorized
+        // approval of this module approves its own provided contracts.
+        approveProvidedContracts(workspace, input.projectId, approved, {
+          approvedBy: input.actor,
+          authority: input.authority,
+          approvedAt: clock(),
+        })
         return {
           ok: true,
           diagnostics: [],
@@ -1217,7 +1584,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
   }
 
   function approveDesignBaseline(input: ApproveDesignBaselineOpInput): DesignOperationResult<DesignBaseline> {
-    return executeChange({ operation: 'approveDesignBaseline', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey }, () => {
+    return executeChange({ operation: 'approveDesignBaseline', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey, claimedAuthority: input.authority }, () => {
       const draft = workspace.getDesignBaselineDraft(input.projectId)
       if (!draft) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', 'no Design baseline draft exists')] }
       const staleDiagnostic = checkExpectedBase(draft.revision, draft.contentHash, input)
@@ -1305,7 +1672,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
 
   function approveChangePlan(input: ApproveChangePlanInput): DesignOperationResult<DesignImpactRecord> {
     return executeChange(
-      { operation: 'approveChangePlan', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey, targetRecordId: input.impactId },
+      { operation: 'approveChangePlan', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey, targetRecordId: input.impactId, claimedAuthority: input.authority },
       () => {
         const impact = workspace.getDesignImpactRecord(input.projectId, input.impactId)
         if (!impact) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', `no impact record: ${input.impactId}`)] }
@@ -1349,7 +1716,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         const policy = workspace.getDesignWorkflowPolicy(input.projectId) ?? Baseline.createDefaultPolicy(input.projectId)
         const baseline = workspace.getApprovedDesignBaseline(input.projectId)
         const allApprovedDesigns = collectApprovedDesigns(workspace, input.projectId, architecture)
-        const contracts = deriveContractRegistry(allApprovedDesigns)
+        const previewContracts = deriveContractRegistry(allApprovedDesigns)
         const otherActiveModules = allApprovedDesigns
           .filter((d) => d.module.moduleId !== input.moduleId)
           .map((d) => ({ moduleId: d.module.moduleId, ownedPaths: d.boundary.ownedPaths }))
@@ -1359,21 +1726,102 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
           baseline: baseline ?? ({ status: 'draft' } as DesignBaseline),
           moduleDesign: design,
           moduleProgress: { useCaseAnalysisApproved: Boolean(analysis), systemStructureApproved: true },
-          contracts,
+          contracts: previewContracts,
           otherActiveModules,
         })
         if (!gate.ok) return { ok: false, diagnostics: gate.diagnostics.map(UseCase.toDesignDiagnostic) }
+
+        // §9.7 / finding R3 — the packet's contract registry is the real
+        // persisted registry (approved-only versions win, not every
+        // approved-module's provided operation). `buildModuleImplementationPacket`
+        // (contextPacket.ts) refuses the packet when a provided or required
+        // contract has no approved persisted version
+        // (`assertNoUnapprovedContractForPacket`).
+        const persistedContracts = workspace.listContracts(input.projectId)
+
+        // §11.4 / finding R5 — the manifest carries more than the bare
+        // module-design JSON: every provided/required *approved* contract,
+        // referenced schemas, and applicable project rules from the design,
+        // plus (when configured) repository files from the module's owned
+        // paths as source entries.
+        const manifestDiagnostics: DesignDiagnostic[] = []
+        const candidates: ContextPacket.ContextManifestCandidate[] = [
+          { kind: 'record', ref: design.id, content: JSON.stringify(design), reason: 'approved module design' },
+        ]
+        for (const rule of design.rules) {
+          candidates.push({
+            kind: 'record',
+            ref: `rule:${rule.id}`,
+            content: JSON.stringify(rule),
+            reason: 'applicable project rule from the module design',
+          })
+        }
+        const contractCandidateKeys = new Set<string>()
+        const addContractCandidate = (operationId: string, version: string, reason: string) => {
+          const key = `${operationId}@${version}`
+          if (contractCandidateKeys.has(key)) return
+          const approvedContract = persistedContracts.find(
+            (c) => c.operationId === operationId && c.version === version && c.status === 'approved',
+          )
+          if (!approvedContract) return
+          contractCandidateKeys.add(key)
+          candidates.push({ kind: 'contract', ref: key, content: JSON.stringify(approvedContract.contract), reason })
+        }
+        for (const provided of design.providedOperations) {
+          addContractCandidate(provided.operationId, provided.version, 'provided contract for this module')
+        }
+        for (const required of design.requiredOperations) {
+          const approvedVersion = persistedContracts.find((c) => c.operationId === required.operationId && c.status === 'approved')
+          if (approvedVersion) addContractCandidate(required.operationId, approvedVersion.version, 'required contract for this module')
+        }
+        for (const schema of design.schemas) {
+          candidates.push({
+            kind: 'schema',
+            ref: schema.ref,
+            content: JSON.stringify(schema),
+            reason: `${schema.role} schema referenced by this module`,
+          })
+        }
+        const readRepositoryContext = executors?.readRepositoryContext
+        if (readRepositoryContext) {
+          const entries = readRepositoryContext({
+            ownedPaths: design.boundary.ownedPaths,
+            editableSharedPaths: design.boundary.editableSharedPaths,
+          })
+          for (const entry of entries) {
+            candidates.push({
+              kind: 'source',
+              ref: entry.ref,
+              content: entry.content,
+              bytes: entry.bytes,
+              contentHash: entry.contentHash,
+              reason: entry.reason ?? 'repository context from an owned or editable-shared path',
+            })
+          }
+        } else {
+          manifestDiagnostics.push(
+            makeDiagnostic(
+              'EUC16-REPO-CONTEXT-NOT-COMPILED',
+              'warning',
+              'repository context was not compiled: no readRepositoryContext executor is configured; the packet includes the module design, contracts, schemas, and rules only',
+            ),
+          )
+        }
 
         const contextManifest = ContextPacket.buildContextManifest({
           targetRecordId: design.id,
           targetRevision: design.revision,
           limit: input.contextLimitBytes ?? 200000,
-          candidates: [{ kind: 'record', ref: design.id, content: JSON.stringify(design), reason: 'approved module design' }],
+          candidates,
         })
+        const otherModuleOwnedPaths = collectApprovedDesigns(workspace, input.projectId, architecture)
+          .filter((other) => other.module.moduleId !== input.moduleId)
+          .flatMap((other) => other.boundary.ownedPaths)
         const result = ContextPacket.buildModuleImplementationPacket({
           projectId: input.projectId,
           design,
-          contractRegistry: { contracts },
+          contractRegistry: { contracts: persistedContracts },
+          otherModuleOwnedPaths,
           architectureRevision: architecture.revision,
           architectureHash: architecture.contentHash,
           contextManifest,
@@ -1392,7 +1840,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         workspace.saveModuleImplementationPacket(input.projectId, result.packet)
         return {
           ok: true,
-          diagnostics: [],
+          diagnostics: manifestDiagnostics,
           value: result.packet,
           revision: result.packet.moduleDesignRevision,
           contentHash: result.packet.contentHash,
@@ -1671,7 +2119,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
 
   function approveVerification(input: ApproveVerificationInput): DesignOperationResult<{ runId: string }> {
     return executeChange(
-      { operation: 'approveVerification', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey, targetRecordId: input.runId },
+      { operation: 'approveVerification', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey, targetRecordId: input.runId, claimedAuthority: input.authority },
       () => {
         const run = workspace.getScenarioRun(input.projectId, input.runId)
         if (!run) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', `no scenario run: ${input.runId}`)] }
