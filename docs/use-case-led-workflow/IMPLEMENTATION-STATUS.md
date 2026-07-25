@@ -53,8 +53,8 @@ working behavior. A row is `verified` only when automated evidence passes.
 | EUC-12 | Verification planner | partial (`verification.ts`) | verified | `packages/core/src/capabilities/design/verificationPlanner.ts` | `euc12-verification-planner.test.ts` (19 tests) |
 | EUC-13 | Persistence and migration adapter | partial (`persistence.ts`, `migration.ts`) | verified | `packages/core/src/capabilities/design/designWorkspace.ts`, `designMigration.ts` | `euc13-*.test.ts` (26 tests) |
 | EUC-14 | Provider adapters | partial (file-drop packets only) | verified | `packages/core/src/capabilities/design/providers.ts` | `euc14-providers.test.ts` (20 tests) |
-| EUC-15 | Repository and process adapters | partial (overlay apply, command runner) | missing | `packages/core/src/capabilities/design/repositoryAdapter.ts` | — |
-| EUC-16 | Desktop and machine API adapters | partial (legacy IPC only) | missing | `packages/core/src/capabilities/design/operations.ts`, `apps/desktop/src/capabilities/designIpc.ts`, `packages/core/src/designCli.ts` | — |
+| EUC-15 | Repository and process adapters | partial (overlay apply, command runner) | verified | `packages/core/src/capabilities/design/repositoryAdapter.ts` | `euc15-repository-adapter.test.ts` (23 tests) |
+| EUC-16 | Desktop and machine API adapters | partial (legacy IPC only) | core service verified; IPC/CLI/machine adapters in progress | `packages/core/src/capabilities/design/operations.ts`, `apps/desktop/src/capabilities/designIpc.ts`, `packages/core/src/designCli.ts`, `packages/core/src/designMachineApi.ts` | `euc16-operations.test.ts` (22 tests) |
 | EUC-17 | React workspaces | partial (legacy views) | missing | `apps/gui/src/views/design/*` | — |
 
 ## 3. Specification sections
@@ -139,11 +139,14 @@ working behavior. A row is `verified` only when automated evidence passes.
 
 ## 4. Approved deviations
 
-None recorded yet. Any unavoidable deviation from the specification is listed
-here with its reason and approval context.
+Any unavoidable deviation from the specification is listed here with its
+reason.
 
 | ID | Section | Deviation | Reason |
 | --- | --- | --- | --- |
+| DEV-01 | §17.2 / EUC-05 | Operation contracts are derived from `contentHash`-stamped provided operations on module designs rather than a separately persisted contract-registry store. The §17.2 operation list defines no `registerContract`/`approveContract` operation, so the registry (`contractRegistry.ts`) is used in-process and contract approval travels with module-design approval. | §17.2 is the normative operation list; a persisted standalone registry would add operations the specification does not define. Compatibility classification and consumer review requirements are still enforced through `contractRegistry.ts`. |
+| DEV-02 | §17.3 | Byte-equal idempotent replay is guaranteed within a process; across restart the replay is reconstructed from the persisted audit event (revision, hash, event id) without the full `value` payload. | The audit log persists the committed identity of the first result; storing full result payloads per idempotency key was judged unnecessary for correctness of §5.3 ("a retry returns the first committed result"). |
+| DEV-03 | §9.8 use-case diagrams | UML include/extend edges prefer the explicit `includesUseCaseIds`/`extendsUseCaseIds` fields; analyses without them fall back to a whole-token step-text scan. | `UseCaseDefinition` gained explicit fields; the fallback keeps older analyses projectable. |
 
 ## 5. Verification evidence log
 
