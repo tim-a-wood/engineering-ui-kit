@@ -705,6 +705,22 @@ export function projectUseCaseDiagram(input: UseCaseDiagramInput): DiagramProjec
     }
   }
 
+  const addExplicitReferences = (ucId: string, targetIds: readonly string[], relKind: 'include' | 'extend') => {
+    for (const otherId of targetIds) {
+      if (otherId === ucId) continue
+      const targetElement = ensureUseCaseElement(otherId)
+      if (!targetElement) continue
+      relationships.push({
+        id: childId(design.id, 'relationship', `${relKind}.${ucId}.${otherId}.explicit`),
+        kind: relKind,
+        fromId: useCaseElementId(ucId),
+        toId: targetElement.id,
+        label: `«${relKind}»`,
+        sourceRecordId: analysis.id,
+      })
+    }
+  }
+
   for (const ucId of selectedIds) {
     const uc = useCaseById.get(ucId)
     if (!uc) continue
@@ -722,9 +738,16 @@ export function projectUseCaseDiagram(input: UseCaseDiagramInput): DiagramProjec
       })
     }
 
-    scanForReferences(ucId, uc.mainFlow, 'include')
-    for (const alt of uc.alternatePaths) scanForReferences(ucId, alt.steps, 'extend')
-    for (const failure of uc.failurePaths) scanForReferences(ucId, failure.steps, 'extend')
+    // Explicit include/extend fields are authoritative when present; the
+    // step-text scan remains the fallback for analyses that predate them.
+    if (uc.includesUseCaseIds?.length || uc.extendsUseCaseIds?.length) {
+      addExplicitReferences(ucId, uc.includesUseCaseIds ?? [], 'include')
+      addExplicitReferences(ucId, uc.extendsUseCaseIds ?? [], 'extend')
+    } else {
+      scanForReferences(ucId, uc.mainFlow, 'include')
+      for (const alt of uc.alternatePaths) scanForReferences(ucId, alt.steps, 'extend')
+      for (const failure of uc.failurePaths) scanForReferences(ucId, failure.steps, 'extend')
+    }
   }
 
   return finalizeProjection({

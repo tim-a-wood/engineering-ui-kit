@@ -149,6 +149,10 @@ export type UseCaseDefinition = {
   name: string
   actors: string[]
   trigger: string
+  /** Explicit UML «include» targets; preferred over step-text inference. */
+  includesUseCaseIds?: string[]
+  /** Explicit UML «extend» targets; preferred over step-text inference. */
+  extendsUseCaseIds?: string[]
   preconditions: string[]
   mainFlow: ScenarioStep[]
   alternatePaths: UseCaseScenario[]
