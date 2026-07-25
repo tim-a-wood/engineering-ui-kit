@@ -1,6 +1,18 @@
 # Plan from use cases
 
-This folder explains a proposed workflow for Engineering UI Kit Capabilities.
+> **Implementation status:** the specification in this folder is implemented
+> in the product. The canonical records, rules, and operations live in
+> `packages/core/src/capabilities/design/`; the desktop IPC, CLI, and machine
+> API adapters in `apps/desktop/src/capabilities/designIpc.ts`,
+> `packages/core/src/designCli.ts`, and `packages/core/src/designMachineApi.ts`;
+> the Design workspace interface in `apps/gui/src/views/design/`; and the
+> 17-module DO-178C Audit Hub sample in
+> `packages/core/src/capabilities/design/sampleAuditHub.ts`. See
+> [`IMPLEMENTATION-STATUS.md`](./IMPLEMENTATION-STATUS.md) for the
+> requirement-by-requirement matrix and evidence.
+
+This folder explains the use-case-led workflow for Engineering UI Kit
+Capabilities.
 The workflow creates use cases before it creates the system design. Verify then
 runs every approved scenario as an automated end-to-end test and keeps
 step-level screenshot or structured evidence. Design detail views provide UML
