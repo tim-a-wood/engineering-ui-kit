@@ -109,7 +109,12 @@ export type DesignBridgeResponse = unknown
  * what the committed service exports") stays meaningful because these are
  * never added to that list.
  */
-export const ADAPTER_OPERATIONS = ['adapter:configureProjectRepository', 'adapter:getProjectRepository'] as const
+export const ADAPTER_OPERATIONS = [
+  'adapter:configureProjectRepository',
+  'adapter:getProjectRepository',
+  'adapter:configureProjectRoles',
+  'adapter:getPrincipal',
+] as const
 
 export type AdapterOperationName = (typeof ADAPTER_OPERATIONS)[number]
 

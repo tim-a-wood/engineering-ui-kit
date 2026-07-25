@@ -103,6 +103,8 @@ import {
   workspaceRevision,
   readScopedContext,
   runConfiguredCommandSync,
+  APPROVAL_AUTHORITIES,
+  type ApprovalAuthority,
   type CreateDesignOperationsDeps,
   type DesignAuditEvent,
   type DesignOperationExecutors,
@@ -425,6 +427,68 @@ function configureProjectRepository(dataDir: string, workspace: DesignWorkspace,
   return { ok: true, projectId, repositoryRoot: resolvedRoot, auditEventId: event.eventId }
 }
 
+/**
+ * `adapter:configureProjectRoles` — grants the given actor the listed §4
+ * approval authorities for one project via `DesignWorkspace.saveProjectRoles`.
+ * User-only (the stamped principal), idempotency-key deduplicated, and
+ * audit-logged like every other adapter configuration. When `grantee` is
+ * omitted the grant targets the stamped principal itself — the common
+ * "grant design authorities to this session user" setup action.
+ */
+function configureProjectRoles(workspace: DesignWorkspace, rawInput: unknown): AdapterConfigurationResponse {
+  const input = (rawInput ?? {}) as Partial<{
+    projectId: string
+    actor: string
+    idempotencyKey: string
+    grantee?: string
+    authorities?: string[]
+  }>
+  const { projectId, actor, idempotencyKey } = input
+  if (!isSafeProjectIdSegment(projectId)) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-ADAPTER-INVALID-PROJECT-ID', 'projectId must be a single safe path segment', 'projectId')] }
+  }
+  const kind = localActorKind(actor)
+  if (kind !== 'user') {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-ADAPTER-AGENT-FORBIDDEN', `only a user actor may configure project roles (received ${JSON.stringify(actor)})`, 'actor')] }
+  }
+  if (typeof idempotencyKey !== 'string' || !idempotencyKey.trim()) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-ADAPTER-IDEMPOTENCY-KEY-REQUIRED', 'idempotencyKey is required', 'idempotencyKey')] }
+  }
+  const existing = workspace.listAuditEvents(projectId).find((e) => e.operation === 'adapter:configureProjectRoles' && e.idempotencyKey === idempotencyKey)
+  if (existing) {
+    return existing.outcome === 'ok'
+      ? ({ ok: true, projectId, auditEventId: existing.eventId, idempotentReplay: true } as AdapterConfigurationResponse)
+      : { ok: false, diagnostics: existing.diagnosticCodes.map((code) => makeDiagnostic(code, `replayed rejection: ${code}`)) }
+  }
+  const grantee = typeof input.grantee === 'string' && input.grantee.trim() ? input.grantee.trim() : (actor as string)
+  if (localActorKind(grantee) !== 'user') {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-ADAPTER-GRANTEE-INVALID', `authorities can be granted to a user actor only (received ${JSON.stringify(grantee)})`, 'grantee')] }
+  }
+  const requested = Array.isArray(input.authorities) && input.authorities.length > 0 ? input.authorities : [...APPROVAL_AUTHORITIES]
+  const invalid = requested.filter((authority) => !(APPROVAL_AUTHORITIES as readonly string[]).includes(authority))
+  if (invalid.length > 0) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-ADAPTER-AUTHORITY-INVALID', `unknown authorities: ${invalid.join(', ')}`, 'authorities')] }
+  }
+  const roles = { ...(workspace.getProjectRoles(projectId) ?? {}) }
+  roles[grantee] = requested as ApprovalAuthority[]
+  workspace.saveProjectRoles(projectId, roles)
+  const event = appendAdapterAuditEvent(workspace, {
+    projectId,
+    actor: actor as string,
+    operation: 'adapter:configureProjectRoles',
+    idempotencyKey,
+    targetRecordId: grantee,
+    outcome: 'ok',
+    diagnosticCodes: [],
+  })
+  return { ok: true, projectId, auditEventId: event.eventId } as AdapterConfigurationResponse
+}
+
+/** `adapter:getPrincipal` — a read returning the principal this dispatcher stamps onto every change operation. */
+function getPrincipalResponse(principal: string): DesignBridgeResponse {
+  return { ok: true, principal }
+}
+
 /** `adapter:getProjectRepository` — a read; no actor/idempotencyKey required, consistent with every §17.1 read operation. */
 function getProjectRepository(dataDir: string, rawInput: unknown): AdapterConfigurationResponse {
   const input = (rawInput ?? {}) as Partial<GetProjectRepositoryInput>
@@ -587,6 +651,13 @@ export function createDesignIpcDispatch(
     }
     if (operation === 'adapter:getProjectRepository') {
       return getProjectRepository(dataDir, args[0])
+    }
+    if (operation === 'adapter:configureProjectRoles') {
+      const stampedArgs = stampPrincipalOnArgs(args, principal, workspace, operation)
+      return configureProjectRoles(workspace, stampedArgs[0])
+    }
+    if (operation === 'adapter:getPrincipal') {
+      return getPrincipalResponse(principal)
     }
 
     if (!(DESIGN_OPERATIONS as readonly string[]).includes(operation)) {

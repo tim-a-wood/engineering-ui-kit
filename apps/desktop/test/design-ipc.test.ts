@@ -306,6 +306,31 @@ describe('EUC-16 adapter-level project-repository configuration (reviewer P1 fix
     expect(mismatch[0]!.actor.startsWith('user:')).toBe(true)
   })
 
+  it('adapter:getPrincipal returns the stamped principal and adapter:configureProjectRoles grants authorities to it', () => {
+    const dataDir = tmpDir()
+    const dispatch = createDesignIpcDispatch(dataDir, { principal: actor })
+
+    const who = dispatch({ operation: 'adapter:getPrincipal', args: [] }) as { ok: boolean; principal?: string }
+    expect(who.ok).toBe(true)
+    expect(who.principal).toBe(actor)
+
+    const granted = dispatch({
+      operation: 'adapter:configureProjectRoles',
+      args: [{ projectId: 'proj-roles-1', actor, idempotencyKey: key() }],
+    }) as { ok: boolean; auditEventId?: string }
+    expect(granted.ok).toBe(true)
+
+    const roles = new DesignWorkspace(dataDir).getProjectRoles('proj-roles-1')
+    expect(roles?.[actor]?.length).toBeGreaterThan(0)
+
+    const invalid = dispatch({
+      operation: 'adapter:configureProjectRoles',
+      args: [{ projectId: 'proj-roles-1', actor, idempotencyKey: key(), authorities: ['made-up-authority'] }],
+    }) as { ok: boolean; diagnostics: { code: string }[] }
+    expect(invalid.ok).toBe(false)
+    expect(invalid.diagnostics.map((d) => d.code)).toContain('EUC16-ADAPTER-AUTHORITY-INVALID')
+  })
+
   it('a service actor claim is likewise overridden by the stamped principal', () => {
     const dataDir = tmpDir()
     const dispatch = createDesignIpcDispatch(dataDir)
