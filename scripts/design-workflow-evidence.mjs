@@ -15,7 +15,9 @@ import { chromium } from 'playwright-core'
 import axe from 'axe-core'
 import http from 'node:http'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
+import crypto from 'node:crypto'
 import { execSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
@@ -25,8 +27,9 @@ const guiDir = path.join(repoRoot, 'apps/gui')
 const guiDist = path.join(guiDir, 'dist')
 const coreDir = path.join(repoRoot, 'packages/core')
 const coreDist = path.join(coreDir, 'dist')
-const outDir = path.join(guiDir, 'validation-evidence/design-workflow')
-fs.mkdirSync(outDir, { recursive: true })
+const SUITE_NAME = 'browser-design-workflow'
+const baseOutDir = path.join(guiDir, 'validation-evidence/design-workflow')
+fs.mkdirSync(baseOutDir, { recursive: true })
 
 const PORT = 4329
 const MODULE_ID = 'mod.finding-review'
@@ -111,6 +114,53 @@ function startServer() {
 // ---------------------------------------------------------------------------
 
 const BUILD_HASH = execSync('git rev-parse --short HEAD', { cwd: repoRoot }).toString().trim()
+
+/**
+ * Review finding: committed evidence files were silently rewritten by later
+ * runs, destroying the prior run's record. Each run now writes into its own
+ * run-stamped subdirectory; the run id is a short content hash of {build
+ * hash, suite name}, so re-running the SAME build only ever overwrites its
+ * own (already-identical) run directory, while a DIFFERENT build gets a new
+ * directory and never clobbers a prior build's evidence. `latest.json` at
+ * the base directory is a small pointer to the most recent run.
+ */
+const RUN_ID = crypto.createHash('sha256').update(JSON.stringify({ buildRev: BUILD_HASH, suite: SUITE_NAME })).digest('hex').slice(0, 12)
+const outDir = path.join(baseOutDir, 'runs', RUN_ID)
+fs.mkdirSync(outDir, { recursive: true })
+
+// Runtime-derived environment (review finding): a hardcoded 'chromium-headless
+// linux' string would misreport evidence captured on macOS/Windows CI.
+const ENVIRONMENT = `${os.platform()}/${os.release()} chromium-headless node-${process.version}`
+
+/**
+ * §24.2 scenario cross-references (review finding): maps each numbered
+ * screenshot to the §24.2 (S01-S30) scenario(s) whose GUI-visible half it
+ * evidences. Derived honestly from what each screenshot actually shows —
+ * some screenshots are exact matches for one numbered scenario, some are
+ * shared/partial (the note explains the boundary), and one (15) evidences
+ * §22.3 sample defects / the FollowTrace capability rather than any single
+ * numbered §24.2 scenario.
+ */
+const SCENARIO_REFS = {
+  '01': { refs: ['S04'], note: 'Opens the module queue showing all 17 sample modules with the synthetic-data statement and counts-based status — §24.2 S04, exact match.' },
+  '02': { refs: ['S09'], note: 'Filtering to "Approved" shows the approved/remaining split ("13 modules shown" of 17) that is the visible state named by S09 ("approve one module while 16 remain incomplete"); the approve action itself is exercised at the operations level (core evidence), not by this screenshot.' },
+  '03': { refs: ['S05', 'S06'], note: 'Shows the six fixed module-design session steps — the same session UI S05 (create module draft) and S06 (stop/resume at the contracts step) both exercise, though this particular capture is of an already-approved module\'s completed steps.' },
+  '04': { refs: ['S03'], note: 'Views the approved system structure on the canvas in its default focus mode — §24.2 S03 ("create and approve the system structure"), viewed post-approval.' },
+  '05': { refs: ['S03'], note: 'Views the same approved system structure with all links shown — §24.2 S03.' },
+  '06': { refs: ['S03'], note: 'Opens a module\'s state/responsibility/provided/required detail from the approved system structure — §24.2 S03.' },
+  '07': { refs: ['S19'], note: 'Renders the UML component diagram that S19 (select a UML relationship and propose a change) is driven from.' },
+  '08': { refs: ['S19'], note: 'Selects a diagram element and opens its detail modal — the GUI-visible half of S19; the "propose a change" step is not captured in this screenshot.' },
+  '09': { refs: ['S19'], note: 'Shows the same diagram\'s accessible text alternative (§15.2, §18.4), still within S19\'s diagram-selection surface.' },
+  '10': { refs: ['S10'], note: 'Shows the Build tab\'s gate-mode blocking banner and one-module handoff panel — the general handoff-blocking mechanism S10 exercises; this run\'s specific blocking condition is baseline completeness, not the unapproved-required-contract condition named by S10 (that specific condition is exercised in core evidence).' },
+  '11': { refs: ['S11'], note: 'Creates one module implementation packet and shows its context manifest — §24.2 S11, exact match.' },
+  '12': { refs: ['S13'], note: 'Inspects a returned delta before any approve/apply action — the "inspect" half of S13; the approve/apply half is exercised at the operations level (core evidence).' },
+  '13': { refs: ['S21'], note: 'Shows the implementation-wave plan with no automatic dispatch-all action — §24.2 S21, exact match.' },
+  '14': { refs: ['S30'], note: 'Confirms Verify shows counts and links to Design and no design diagrams — §24.2 S30, exact match.' },
+  '15': { refs: [], note: 'Shows the Evidence Explorer\'s §22.3 sample defects with a "Follow trace" action back to Design (§9.7 FollowTrace; see IMPLEMENTATION-STATUS.md DEV-06). No single §24.2 numbered scenario names this view, so no scenario ref is claimed.' },
+  '16': { refs: ['S04'], note: 'Accessibility/responsive variant (§24.4 narrow viewport) of the same module-queue surface S04 covers; §24.2 has no separately numbered narrow-viewport scenario.' },
+  '17': { refs: ['S04'], note: 'Accessibility/responsive variant (§24.4 200 percent zoom) of the same workspace default view S04 covers; §24.2 has no separately numbered zoom scenario.' },
+}
+
 const manifest = []
 const notApplicable = []
 const axeReports = []
@@ -121,7 +171,15 @@ function note(text) {
   console.log('  •', text)
 }
 
+function writeLatestPointer() {
+  fs.writeFileSync(
+    path.join(baseOutDir, 'latest.json'),
+    JSON.stringify({ runId: RUN_ID, buildRev: BUILD_HASH, suite: SUITE_NAME, evidenceDir: `runs/${RUN_ID}`, updatedAt: new Date().toISOString() }, null, 2) + '\n',
+  )
+}
+
 function recordEvidence({ id, action, expectedResult, actualObservation, screenshot, viewport, theme = 'default' }) {
+  const scenarioRef = SCENARIO_REFS[id]
   manifest.push({
     id,
     action,
@@ -131,9 +189,11 @@ function recordEvidence({ id, action, expectedResult, actualObservation, screens
     viewport,
     theme,
     build: BUILD_HASH,
-    environment: 'chromium-headless linux',
+    environment: ENVIRONMENT,
     testDataRevision: 'sample-do178c-audit-hub',
     capturedAt: new Date().toISOString(),
+    scenarioRefs: scenarioRef?.refs ?? [],
+    scenarioRefsNote: scenarioRef?.note ?? 'No §24.2 numbered-scenario mapping derived for this step.',
   })
 }
 
@@ -512,6 +572,7 @@ async function run() {
     JSON.stringify({ generatedAt: new Date().toISOString(), build: BUILD_HASH, reports: axeReports }, null, 2) + '\n',
   )
   fs.writeFileSync(path.join(outDir, 'usability-log.json'), JSON.stringify(usabilityLog, null, 2) + '\n')
+  writeLatestPointer()
 
   console.log('\n--- Step summary -----------------------------------------------------')
   for (const entry of manifest) {

@@ -1,0 +1,20 @@
+{
+  "scenarioId": "S02",
+  "stepIds": [
+    "use-case-analysis.answer-question",
+    "use-case-analysis.approve"
+  ],
+  "expected": "A use-case draft with one open required decision (a material question) is approved once, and only once, that decision is resolved.",
+  "actual": "1 required decision resolved; use-case analysis approved at r2",
+  "revisions": {
+    "application": "1",
+    "design": "r2",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "0e734cce60deb44beea228965c97df75e4c5fe5fb93335293269bc9e6571d466"
+}

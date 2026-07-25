@@ -34,7 +34,9 @@
  * `sampleAuditHub.ts`, `../../hash.js`); it never mocks a core module.
  */
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
+import { execSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { canonicalHash } from '../../../src/capabilities/hash.js'
 import { DesignWorkspace } from '../../../src/capabilities/design/designWorkspace.js'
@@ -45,7 +47,53 @@ import type { SampleAuditHub } from '../../../src/capabilities/design/sampleAudi
 // ---------------------------------------------------------------------------
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
-const EVIDENCE_DIR = path.join(HERE, '__evidence__', 'product-scenarios')
+const SUITE_NAME = 'product-scenarios'
+const EVIDENCE_BASE_DIR = path.join(HERE, '__evidence__', SUITE_NAME)
+
+function detectBuildRev(): string {
+  try {
+    return execSync('git rev-parse --short HEAD', { cwd: HERE, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+  } catch {
+    return 'unknown'
+  }
+}
+
+const BUILD_REV = detectBuildRev()
+
+/**
+ * Review finding: committed evidence files were silently rewritten by later
+ * runs, destroying the prior run's record. Each run now writes into its own
+ * run-stamped subdirectory; the run id is a short content hash of {build
+ * rev, suite name}, so re-running the SAME build only ever overwrites its
+ * own (already-identical) run directory, while a DIFFERENT build gets a new
+ * directory and never clobbers a prior build's evidence. `latest.json` at
+ * the base directory is a small pointer to the most recent run.
+ */
+const RUN_ID = canonicalHash({ buildRev: BUILD_REV, suite: SUITE_NAME }).slice(0, 12)
+const EVIDENCE_DIR = path.join(EVIDENCE_BASE_DIR, 'runs', RUN_ID)
+
+function writeLatestPointer(): void {
+  atomicWriteJson(path.join(EVIDENCE_BASE_DIR, 'latest.json'), {
+    runId: RUN_ID,
+    buildRev: BUILD_REV,
+    suite: SUITE_NAME,
+    evidenceDir: `runs/${RUN_ID}`,
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+/**
+ * Review finding (§24.2 S26 honesty): S26 ("Complete Connect through a real
+ * entry point") is exercised here only at the operations-level record layer,
+ * with an injected test executor supplied directly by the test — not a
+ * deployed production entry point or a real browser/process connection. This
+ * note is attached to that scenario's evidence record (and covered by its
+ * content hash) so the evidence itself states the boundary, not only a code
+ * comment in the test file.
+ */
+const EXECUTOR_HONESTY_NOTES: Record<string, string> = {
+  S26: 'The Connect entry point exercised by this scenario is an injected test executor (a fake `verifyConnection` executor supplied directly by the test), not a deployed production entry point. This suite covers the operations-level record layer only; driving Connect through the real, deployed product is a GUI/desktop-level concern out of scope for this evidence record.',
+}
 
 export type ScenarioEvidenceRevisions = {
   application?: string
@@ -77,6 +125,8 @@ export type ScenarioEvidenceRecord = {
   contentHash: string
   /** §14.2 "reason when a screenshot does not apply" — always applicable here: this suite runs at the operations level, with no rendered surface to screenshot. */
   notApplicableScreenshotReason: string
+  /** Evidence-honesty note (review finding): present only for scenarios whose executor is a test double, not a deployed entry point. See `EXECUTOR_HONESTY_NOTES`. */
+  executorHonestyNote?: string
 }
 
 function atomicWriteJson(filePath: string, value: unknown): void {
@@ -92,6 +142,7 @@ function atomicWriteJson(filePath: string, value: unknown): void {
  * have to change to produce.
  */
 export function recordScenarioEvidence(input: ScenarioEvidenceInput): ScenarioEvidenceRecord {
+  const honestyNote = EXECUTOR_HONESTY_NOTES[input.scenarioId]
   const body: Omit<ScenarioEvidenceRecord, 'contentHash'> = {
     scenarioId: input.scenarioId,
     stepIds: input.stepIds,
@@ -103,13 +154,17 @@ export function recordScenarioEvidence(input: ScenarioEvidenceInput): ScenarioEv
       modules: input.revisions?.modules ?? {},
     },
     build: 'core-vitest',
-    environment: `${process.platform}/node-${process.version}`,
+    // Runtime-derived (review finding): a hardcoded environment string would
+    // misreport evidence captured on a different OS/Node version.
+    environment: `${os.platform()}/${os.release()} node-${process.version}`,
     testDataRevision: input.testDataRevision ?? 'n/a',
     outcome: input.outcome,
     notApplicableScreenshotReason: 'operations-level scenario; no visual surface to capture',
+    ...(honestyNote ? { executorHonestyNote: honestyNote } : {}),
   }
   const record: ScenarioEvidenceRecord = { ...body, contentHash: canonicalHash(body) }
   atomicWriteJson(path.join(EVIDENCE_DIR, `${input.scenarioId}.json`), record)
+  writeLatestPointer()
   return record
 }
 
