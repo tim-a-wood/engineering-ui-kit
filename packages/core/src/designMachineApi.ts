@@ -38,8 +38,47 @@
  * resolved for a request's project, `applyDelta` returns a structured
  * `{ applied: false, failure: 'repository-not-configured: ...' }` result
  * instead of silently applying into `dataDir` (the reviewer finding).
+ *
+ * --- Second-review P1 fix: trusted principal at the adapter boundary ------
+ *
+ * Trust model: `operations.ts`'s `createDesignOperations` is the low-level,
+ * already-trusted core service — it takes a request's `actor` at face value
+ * (as it always has), because the callers of `createDesignOperations`
+ * itself are other packets' own code, not an arbitrary remote caller. This
+ * *adapter* is different: it is the layer a caller who has not necessarily
+ * been authenticated by this process reaches. `CreateDesignMachineApiOptions
+ * .principal` (`"user:<id>"`) is the identity this embedder is calling on
+ * behalf of, authenticated however the embedder likes *before* constructing
+ * this API — this adapter never re-authenticates it. Every §17.2
+ * change-operation request built by a returned `DesignMachineApi` method has
+ * its own `actor` field stamped/overridden with `principal`
+ * (`stampPrincipal`) before it reaches the service, so a caller-supplied
+ * `actor` in the request body is decorative only — it can never assert a
+ * different identity, an agent identity, or a claimed authority the
+ * embedder did not actually authenticate. When a request's own claimed
+ * `actor` differs from the stamped principal, `stampPrincipal` appends a
+ * non-blocking `EUC16-ACTOR-CLAIM-MISMATCH` audit event so the mismatch is
+ * visible without blocking the call.
+ *
+ * `principal` is opt-in: an embedder that supplies it gets the full
+ * protection above (fail-fast at construction on a malformed value, then
+ * unconditional stamping of every change-operation request). An embedder
+ * that omits it keeps this adapter's pre-fix behavior unchanged — the
+ * request's own `actor` is trusted as before, with no stamping and no
+ * mismatch diagnostic. This is a deliberate, documented trust-model gap
+ * (see the packet report "trust model" section): a strict
+ * always-stamp-even-when-omitted default would retroactively change the
+ * `actor` (and therefore the authority-check outcome) of every existing
+ * caller that has not yet been updated to pass `principal` — including
+ * concurrently developed code this packet does not own. `deriveOsPrincipal`
+ * is exported so a caller (e.g. a future `euik-design` CLI binary wrapper
+ * around `designCli.ts`) can opt in to the OS-derived identity explicitly:
+ * `runDesignCli(argv, { ...opts, principal: opts.principal ??
+ * deriveOsPrincipal() })`.
  */
 
+import crypto from 'node:crypto'
+import os from 'node:os'
 import { DesignWorkspace } from './capabilities/design/designWorkspace.js'
 import {
   createDesignOperations,
@@ -47,7 +86,84 @@ import {
   type DesignOperationExecutors,
   type DesignOperationsService,
 } from './capabilities/design/operations.js'
+import type { DesignAuditEvent } from './capabilities/design/records.js'
 import { applyDeltaTransactionally, readScopedContext, runConfiguredCommandSync, workspaceRevision } from './capabilities/design/repositoryAdapter.js'
+
+/** `"user:<id>"` after trim — the only principal shape this adapter stamps onto a change-operation request. */
+const PRINCIPAL_FORMAT = /^user:\S+$/
+
+/** §4, §20.2 (finding — trusted principal at the adapter boundary) — the OS process identity, `user:<os.userInfo().username>`. Not applied automatically (see module doc); a caller opts in explicitly. */
+export function deriveOsPrincipal(): string {
+  const username = os.userInfo().username?.trim()
+  return `user:${username && username.length > 0 ? username : 'unknown'}`
+}
+
+/**
+ * Validates an explicitly supplied `principal`; returns `undefined`
+ * unchanged when omitted (see module doc — stamping is opt-in). Throws
+ * (fails fast at construction) for a malformed explicit value rather than
+ * silently accepting it.
+ */
+export function resolvePrincipal(principal: string | undefined): string | undefined {
+  if (principal === undefined) return undefined
+  const trimmed = principal.trim()
+  if (!PRINCIPAL_FORMAT.test(trimmed)) {
+    throw new Error(
+      `createDesignMachineApi/runDesignCli: options.principal must be "user:<id>" (received ${JSON.stringify(principal)}) — authenticate the caller before constructing this API`,
+    )
+  }
+  return trimmed
+}
+
+function isChangeOperationInput(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value) && 'actor' in (value as Record<string, unknown>)
+}
+
+/**
+ * §4, §20.2, §17.3 (finding — trusted principal at the adapter boundary) —
+ * when `principal` is set, every §17.2 change-operation request's `actor`
+ * field is stamped/overridden with it before the request reaches the
+ * service; the caller's own claimed `actor` is never trusted alone. A §17.1
+ * read operation (whose first argument is a bare positional value, never an
+ * object carrying its own `actor` field) always passes through unchanged.
+ * When the request's own claimed `actor` differs from the stamped
+ * principal, a non-blocking audit diagnostic records the mismatch — this
+ * never blocks the call, it only makes a forged claim visible. `principal
+ * === undefined` is a no-op (see module doc — stamping is opt-in).
+ */
+export function stampPrincipal(args: readonly unknown[], principal: string | undefined, workspace: DesignWorkspace, operation: string): unknown[] {
+  if (principal === undefined) return [...args]
+  const first = args[0]
+  if (!isChangeOperationInput(first)) return [...args]
+  const claimed = typeof first.actor === 'string' ? first.actor : undefined
+  const stamped = { ...first, actor: principal }
+  if (claimed !== undefined && claimed !== principal) {
+    const projectId = typeof first.projectId === 'string' ? first.projectId : undefined
+    if (projectId) {
+      const event: DesignAuditEvent = {
+        eventId: crypto.randomUUID(),
+        projectId,
+        actor: principal,
+        operation: 'actor-claim-mismatch',
+        targetRecordId: operation,
+        at: new Date().toISOString(),
+        outcome: 'ok',
+        diagnosticCodes: ['EUC16-ACTOR-CLAIM-MISMATCH'],
+        evidenceRefs: [claimed],
+      }
+      // Best-effort diagnostic only: an unsafe `projectId` (path traversal)
+      // is the *request's* own validation failure, surfaced by the
+      // dispatched operation itself — this non-blocking mismatch log must
+      // never throw ahead of that.
+      try {
+        workspace.appendAuditEvent(projectId, event)
+      } catch {
+        // ignore
+      }
+    }
+  }
+  return [stamped, ...args.slice(1)]
+}
 
 /**
  * One async method per `DesignOperationsService` operation, with the exact
@@ -78,6 +194,18 @@ export type CreateDesignMachineApiOptions = {
    * unconfigured (`verifyModule`) rather than touching `dataDir`.
    */
   repositoryRoot?: RepositoryRootOption
+  /**
+   * §4, §20.2 (finding — trusted principal at the adapter boundary) — the
+   * authenticated `"user:<id>"` principal this embedder is calling on
+   * behalf of. Every §17.2 change-operation request built by the returned
+   * `DesignMachineApi` has its `actor` field stamped/overridden with this
+   * value (see module doc "Trust model"); the embedder authenticates its
+   * caller however it likes *before* constructing this API. Opt-in: when
+   * omitted, this adapter keeps its pre-fix behavior and trusts the
+   * request's own `actor` unchanged (see module doc for why the default is
+   * not automatic).
+   */
+  principal?: string
 }
 
 /** Resolves `repositoryRoot` (single path or per-project map) for a given `projectId`; `undefined` when nothing is configured for it. */
@@ -233,6 +361,10 @@ function buildDepsForCall(workspace: DesignWorkspace, options: CreateDesignMachi
  * since it also rebuilds its service per invocation.
  */
 export function createDesignMachineApi(options: CreateDesignMachineApiOptions): DesignMachineApi {
+  // §4, §20.2 (finding — trusted principal at the adapter boundary):
+  // resolved once, at construction, from the already-authenticated embedder
+  // — never per call, and never from a request's own claimed `actor`.
+  const principal = resolvePrincipal(options.principal)
   const workspace = new DesignWorkspace(options.dataDir)
   // Built once, with no executors, purely to enumerate the operation names —
   // executors do not change which methods the service exposes.
@@ -241,11 +373,12 @@ export function createDesignMachineApi(options: CreateDesignMachineApiOptions): 
   const api: Record<string, (...args: unknown[]) => Promise<unknown>> = {}
   for (const operation of operationNames) {
     api[operation] = async (...args: unknown[]) => {
-      const projectId = extractProjectId(args)
+      const stampedArgs = stampPrincipal(args, principal, workspace, operation)
+      const projectId = extractProjectId(stampedArgs)
       const deps = buildDepsForCall(workspace, options, projectId)
       const service = createDesignOperations(deps)
       const byName = service as unknown as Record<string, (...args: unknown[]) => unknown>
-      return byName[operation]!(...args)
+      return byName[operation]!(...stampedArgs)
     }
   }
   return api as DesignMachineApi

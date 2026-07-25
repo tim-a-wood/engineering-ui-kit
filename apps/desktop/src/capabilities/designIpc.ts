@@ -92,6 +92,7 @@
  */
 
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { ipcMain } from 'electron'
@@ -102,7 +103,6 @@ import {
   workspaceRevision,
   readScopedContext,
   runConfiguredCommandSync,
-  isAgentActor,
   type CreateDesignOperationsDeps,
   type DesignAuditEvent,
   type DesignOperationExecutors,
@@ -165,6 +165,92 @@ function localActorKind(actor: unknown): 'user' | 'agent' | 'service' | undefine
 }
 
 // ---------------------------------------------------------------------------
+// §4, §20.2, §17.3 (second-review P1 finding — trusted principal at the
+// adapter boundary)
+//
+// Trust model: an Electron renderer process is not a separate authenticated
+// party from the desktop app's own OS user — it runs inside the same
+// process tree, as the same OS account, in the same session. What it is NOT
+// is a *trustworthy reporter of its own identity*: nothing stops a hostile
+// or buggy renderer from attaching `actor: 'agent:copilot'` (to reach for
+// the "no approval shortcut for agents" carve-out) or `actor:
+// 'user:someone-else'` (to forge a different real user's approval) to a
+// request body. `main.ts`'s single `ipcMain.handle` is the trust boundary:
+// everything that arrives on `DESIGN_CHANNEL` is, by construction, a request
+// from *this* desktop process's own OS user, so this adapter derives that
+// identity itself — once per dispatcher — and stamps/overrides it onto
+// every request's `actor` field before it reaches the service or the
+// adapter-owned repository-configuration operations. A request's own
+// claimed `actor` is decorative only; when it differs from the stamped
+// principal, `stampPrincipalOnArgs` appends a non-blocking
+// `EUC16-ACTOR-CLAIM-MISMATCH` audit event so the mismatch stays visible
+// without blocking the call.
+// ---------------------------------------------------------------------------
+
+/** `"user:<id>"` after trim — the only principal shape this adapter stamps onto a request. */
+const PRINCIPAL_FORMAT = /^user:\S+$/
+
+/** The OS process identity, `user:<os.userInfo().username>` — derived once per dispatcher (see block doc above), never per request. */
+function deriveOsPrincipal(): string {
+  const username = os.userInfo().username?.trim()
+  return `user:${username && username.length > 0 ? username : 'unknown'}`
+}
+
+/** Validates a test/embedder-supplied principal override; the real desktop app never supplies one (see `registerDesignIpcHandlers`). */
+function resolveDispatchPrincipal(explicit: string | undefined): string {
+  if (explicit === undefined) return deriveOsPrincipal()
+  const trimmed = explicit.trim()
+  if (!PRINCIPAL_FORMAT.test(trimmed)) {
+    throw new Error(`createDesignIpcDispatch: options.principal must be "user:<id>" (received ${JSON.stringify(explicit)})`)
+  }
+  return trimmed
+}
+
+function isChangeOperationInput(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value) && 'actor' in (value as Record<string, unknown>)
+}
+
+/**
+ * Stamps/overrides `args[0].actor` with `principal` for a §17.2
+ * change-operation request or an `adapter:*` request (both take one input
+ * object carrying its own `actor` field); a §17.1 read request (whose first
+ * argument is a bare positional value) passes through unchanged. Appends a
+ * non-blocking `EUC16-ACTOR-CLAIM-MISMATCH` audit event when the request's
+ * own claimed `actor` differs from the stamped principal.
+ */
+function stampPrincipalOnArgs(args: unknown[], principal: string, workspace: DesignWorkspace, operation: string): unknown[] {
+  const first = args[0]
+  if (!isChangeOperationInput(first)) return args
+  const claimed = typeof first.actor === 'string' ? first.actor : undefined
+  const stamped = { ...first, actor: principal }
+  if (claimed !== undefined && claimed !== principal) {
+    const projectId = typeof first.projectId === 'string' ? first.projectId : undefined
+    // Only log the mismatch when `projectId` is itself a safe path segment
+    // (the same check `configureProjectRepository`/the workspace path
+    // helpers apply) — an unsafe `projectId` is the *request's* own
+    // validation failure, reported by the dispatched operation itself; this
+    // non-blocking diagnostic must never throw ahead of that, and never let
+    // an unvalidated value reach a persisted path.
+    if (projectId && isSafeProjectIdSegment(projectId)) {
+      try {
+        appendAdapterAuditEvent(workspace, {
+          projectId,
+          actor: principal,
+          operation: 'actor-claim-mismatch',
+          targetRecordId: operation,
+          outcome: 'ok',
+          diagnosticCodes: ['EUC16-ACTOR-CLAIM-MISMATCH'],
+          evidenceRefs: [claimed],
+        })
+      } catch {
+        // Best-effort diagnostic only — never blocks or fails the dispatch.
+      }
+    }
+  }
+  return [stamped, ...args.slice(1)]
+}
+
+// ---------------------------------------------------------------------------
 // Adapter-owned per-project repository configuration
 // (`<dataDir>/projects/<projectId>/design-adapter/repository.json`)
 // ---------------------------------------------------------------------------
@@ -219,6 +305,7 @@ function appendAdapterAuditEvent(
     targetRecordId?: string
     outcome: DesignAuditEvent['outcome']
     diagnosticCodes: string[]
+    evidenceRefs?: string[]
   },
 ): DesignAuditEvent {
   return workspace.appendAuditEvent(input.projectId, {
@@ -231,7 +318,7 @@ function appendAdapterAuditEvent(
     at: new Date().toISOString(),
     outcome: input.outcome,
     diagnosticCodes: input.diagnosticCodes,
-    evidenceRefs: [],
+    evidenceRefs: input.evidenceRefs ?? [],
   })
 }
 
@@ -474,16 +561,29 @@ function extractProjectId(args: unknown[]): string | undefined {
  * own configured repository root, and `DesignOperationExecutors` carries no
  * `projectId` parameter of its own, so the executors must be selected
  * before the service is constructed).
+ *
+ * `options.principal` is a test/embedder-only override for the stamped
+ * identity (see the "trusted principal at the adapter boundary" block doc
+ * above) — `registerDesignIpcHandlers` never supplies one, so the real
+ * desktop app always derives it from the OS process identity.
  */
-export function createDesignIpcDispatch(dataDir: string): (request: DesignBridgeRequest) => DesignBridgeResponse {
+export function createDesignIpcDispatch(
+  dataDir: string,
+  options: { principal?: string } = {},
+): (request: DesignBridgeRequest) => DesignBridgeResponse {
   const workspace = new DesignWorkspace(dataDir)
+  // §4, §20.2, §17.3 — derived ONCE per dispatcher (per process, in
+  // production), never per request; a request's own claimed `actor` never
+  // decides this.
+  const principal = resolveDispatchPrincipal(options.principal)
 
   return function dispatch(request: DesignBridgeRequest): DesignBridgeResponse {
     const { operation, args: rawArgs } = request
     const args = Array.isArray(rawArgs) ? rawArgs : []
 
     if (operation === 'adapter:configureProjectRepository') {
-      return configureProjectRepository(dataDir, workspace, args[0])
+      const stampedArgs = stampPrincipalOnArgs(args, principal, workspace, operation)
+      return configureProjectRepository(dataDir, workspace, stampedArgs[0])
     }
     if (operation === 'adapter:getProjectRepository') {
       return getProjectRepository(dataDir, args[0])
@@ -493,7 +593,8 @@ export function createDesignIpcDispatch(dataDir: string): (request: DesignBridge
       return unknownOperationResult(operation)
     }
 
-    const projectId = extractProjectId(args)
+    const stampedArgs = stampPrincipalOnArgs(args, principal, workspace, operation)
+    const projectId = extractProjectId(stampedArgs)
     const repositoryRoot = projectId ? readProjectRepositoryConfig(dataDir, projectId)?.repositoryRoot : undefined
 
     const deps: CreateDesignOperationsDeps = {
@@ -506,11 +607,12 @@ export function createDesignIpcDispatch(dataDir: string): (request: DesignBridge
     if (typeof byName[operation] !== 'function') {
       return unknownOperationResult(operation)
     }
-    // `args` is spread positionally onto the named service method — the
-    // exact same call shape `designCli.ts` and `designMachineApi.ts` use, so
-    // the same operation with the same args produces the same result
-    // regardless of which adapter is called (§25.3).
-    return byName[operation]!(...args)
+    // `stampedArgs` is spread positionally onto the named service method —
+    // the exact same call shape `designCli.ts` and `designMachineApi.ts`
+    // use, so the same operation with the same args produces the same
+    // result regardless of which adapter is called (§25.3), modulo the
+    // `actor` stamp every adapter now applies at its own trust boundary.
+    return byName[operation]!(...stampedArgs)
   }
 }
 

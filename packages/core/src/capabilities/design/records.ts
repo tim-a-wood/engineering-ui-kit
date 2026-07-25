@@ -1096,7 +1096,29 @@ export type ApprovalAuthority = (typeof APPROVAL_AUTHORITIES)[number]
 
 /** §4 — agents create drafts and changes; they hold no approval authority. */
 export const AGENT_ACTOR_PREFIX = 'agent:'
+/** §4, §20.2 — a provider/service integration also holds no approval authority. */
+export const SERVICE_ACTOR_PREFIX = 'service:'
 
-export function isAgentActor(actor: string): boolean {
-  return actor.startsWith(AGENT_ACTOR_PREFIX)
+const NON_HUMAN_ACTOR_PREFIXES = [AGENT_ACTOR_PREFIX, SERVICE_ACTOR_PREFIX]
+
+/**
+ * §4, §17.3, §20.2 (second-review finding — self-asserted approval identity)
+ * — true when `actor` is not a human user principal: an `agent:` or
+ * `service:` actor. Detection trims surrounding whitespace and is
+ * case-insensitive, so `'Agent:copilot'` and `' SERVICE:bot '` both match —
+ * a caller cannot defeat the default-deny rule below by varying
+ * capitalization or padding. Every approval function (and every consumer
+ * contract acknowledgement, §9.7) must default-deny when this returns true,
+ * independent of any authority the actor claims to hold.
+ */
+export function isNonHumanActor(actor: string): boolean {
+  const normalized = actor.trim().toLowerCase()
+  return NON_HUMAN_ACTOR_PREFIXES.some((prefix) => normalized.startsWith(prefix))
 }
+
+/**
+ * @deprecated Case-sensitive and blind to `service:` actors — kept only as
+ * an alias so an existing import keeps compiling. Use
+ * {@link isNonHumanActor} for every new and updated call site.
+ */
+export const isAgentActor = isNonHumanActor

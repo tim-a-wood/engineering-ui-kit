@@ -27,7 +27,7 @@ import { diagnostic, sortDiagnostics, type CapDiagnostic } from '../diagnostics.
 import { detectCycles, type CapabilityGraph } from '../graph.js'
 import { canonicalHash } from '../hash.js'
 import type { GateResult } from '../gates.js'
-import { isAgentActor, type DesignApproval } from './records.js'
+import { isNonHumanActor, type DesignApproval } from './records.js'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -409,11 +409,14 @@ export function approveSystemStructure(
       ],
     }
   }
-  if (isAgentActor(approval.approvedBy)) {
+  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // case-insensitive after trim, and rejects a `service:` actor the same as
+  // an `agent:` actor.
+  if (isNonHumanActor(approval.approvedBy)) {
     return {
       ok: false,
       diagnostics: [
-        diagnostic('CAP-DES-SYS-AGENT-APPROVAL', 'an agent actor cannot approve the system structure', {
+        diagnostic('CAP-DES-SYS-AGENT-APPROVAL', 'a non-human (agent or service) actor cannot approve the system structure', {
           ruleId: 'CAP-4',
           relatedIds: [approval.approvedBy],
         }),

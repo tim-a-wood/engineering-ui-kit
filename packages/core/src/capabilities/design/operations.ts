@@ -207,6 +207,14 @@ const APPROVE_OPERATION_AUTHORITIES: Record<string, readonly ApprovalAuthority[]
   approveChangePlan: ['software-architect', 'module-owner', 'interface-engineer', 'integration-engineer', 'verification-lead'],
   approveAgentDelta: ['module-owner', 'software-architect'],
   approveVerification: ['verification-lead'],
+  // §9.7, §4 (second-review finding — forgeable consumer acks): an explicit
+  // consumer-review acknowledgement carries the same weight as an approval
+  // gate (it is the thing that unblocks re-approving a changed contract), so
+  // it is keyed here even though its own operation name
+  // (`updateModuleDesignItem`) is not itself an `approve*` operation — the
+  // check runs against `checkApprovalAuthority` under this synthetic key,
+  // scoped to the CONSUMER module's own project.
+  'requiredOperations.ack': ['module-owner', 'software-architect'],
 }
 
 /**
@@ -396,12 +404,27 @@ function registerProvidedContractDrafts(
   return diagnostics
 }
 
+/**
+ * §9.7, §4 (second-review finding — forgeable consumer acks) — the implicit
+ * ack recorded when a consumer module is (re-)analyzed. Only acks a contract
+ * `design.requiredOperations` actually references (never an unrelated
+ * operation) and that is actually persisted in the registry (`contracts`
+ * only ever contains operations `registerProvidedContractDrafts` registered
+ * for a real provider design — never a nonexistent one). Identity is derived
+ * from `actor`, the authenticated principal of *this* `analyzeModuleDesign`
+ * call — never a separately caller-supplied identity. An agent or service
+ * actor may still legitimately run `analyzeModuleDesign` while drafting
+ * (§4), but that run never counts as the human "consumer shall review"
+ * §9.7 requires, so no ack is recorded for a non-human actor.
+ */
 function recordConsumerAcksForRequiredOperations(
   workspace: DesignWorkspace,
   projectId: string,
   design: ModuleDesignSpecification,
+  actor: string,
   at: string,
 ): void {
+  if (actorKind(actor) !== 'user') return
   const contracts = workspace.listContracts(projectId)
   for (const required of design.requiredOperations) {
     for (const contract of contracts.filter((c) => c.operationId === required.operationId)) {
@@ -411,6 +434,8 @@ function recordConsumerAcksForRequiredOperations(
         consumerModuleId: design.module.moduleId,
         ackedAt: at,
         source: 'analyze',
+        ackedBy: actor,
+        consumerDesignRevision: design.revision,
       }
       workspace.saveConsumerAck(projectId, ack)
     }
@@ -1414,16 +1439,97 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         if (!design) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', `no module design draft for ${input.moduleId}`)] }
         const staleDiagnostic = checkExpectedBase(design.revision, design.contentHash, input)
         if (staleDiagnostic) return { ok: false, diagnostics: [staleDiagnostic], baseRevision: design.revision, baseHash: design.contentHash }
-        // §9.7 (finding R3) — an explicit consumer-review acknowledgement of
-        // a provider's contract version. This does not change the module
-        // design record; `path: 'requiredOperations.ack'` is a dedicated
-        // signal handled here, not delegated to `ModuleDesign.updateModuleDesignItem`.
+        // §9.7, §4 (second-review finding — forgeable consumer acks) — an
+        // explicit consumer-review acknowledgement of a provider's contract
+        // version. This does not change the module design record;
+        // `path: 'requiredOperations.ack'` is a dedicated signal handled
+        // here, not delegated to `ModuleDesign.updateModuleDesignItem`. A
+        // reviewer previously persisted an ack as `agent:copilot` for a
+        // nonexistent contract the acking module never required — every
+        // check below closes one part of that gap.
         if (input.path === 'requiredOperations.ack') {
-          const ack = input.value as { operationId?: unknown; version?: unknown }
+          const ack = input.value as { operationId?: unknown; version?: unknown; authority?: unknown }
           if (typeof ack?.operationId !== 'string' || typeof ack?.version !== 'string') {
             return {
               ok: false,
               diagnostics: [makeDiagnostic('EUC16-CONTRACT-ACK-INVALID', 'blocker', 'requiredOperations.ack requires { operationId, version }', 'value')],
+              baseRevision: design.revision,
+              baseHash: design.contentHash,
+            }
+          }
+          // Reject a non-human actor before anything else — an agent or
+          // service actor never satisfies "the consumer shall review a
+          // changed contract" (§4 authority table), independent of
+          // capitalization (`isNonHumanActor`/`actorKind` are both
+          // case-insensitive after trim).
+          const ackActorKind = actorKind(input.actor)
+          if (ackActorKind !== 'user') {
+            return {
+              ok: false,
+              diagnostics: [
+                makeDiagnostic(
+                  'EUC16-CONTRACT-ACK-NON-HUMAN',
+                  'blocker',
+                  `an ${ackActorKind ?? 'unrecognized'} actor cannot acknowledge a consumer contract review`,
+                  'actor',
+                  [input.actor],
+                ),
+              ],
+              baseRevision: design.revision,
+              baseHash: design.contentHash,
+            }
+          }
+          // Same authority check as an approve* operation (module-owner or
+          // software-architect), scoped to the CONSUMER module's own
+          // project — a consumer review ack carries the same weight as an
+          // approval gate (it is what unblocks re-approving a changed
+          // contract).
+          const claimedAuthority = typeof ack.authority === 'string' ? (ack.authority as ApprovalAuthority) : undefined
+          const authorityDiagnostic = checkApprovalAuthority(
+            workspace,
+            input.projectId,
+            'requiredOperations.ack',
+            input.actor,
+            claimedAuthority,
+          )
+          if (authorityDiagnostic) {
+            return { ok: false, diagnostics: [authorityDiagnostic], baseRevision: design.revision, baseHash: design.contentHash }
+          }
+          // The contract must exist in the persisted registry — never ack a
+          // nonexistent operationId@version.
+          const registeredContract = workspace.getContract(input.projectId, ack.operationId, ack.version)
+          if (!registeredContract) {
+            return {
+              ok: false,
+              diagnostics: [
+                makeDiagnostic(
+                  'EUC16-CONTRACT-ACK-UNKNOWN-CONTRACT',
+                  'blocker',
+                  `no registered contract ${ack.operationId}@${ack.version}`,
+                  'value',
+                  [ack.operationId, ack.version],
+                ),
+              ],
+              baseRevision: design.revision,
+              baseHash: design.contentHash,
+            }
+          }
+          // The acking module must actually require this operation — never
+          // ack an operation this consumer's design has no
+          // `requiredOperations` entry for.
+          const requiresOperation = design.requiredOperations.some((r) => r.operationId === ack.operationId)
+          if (!requiresOperation) {
+            return {
+              ok: false,
+              diagnostics: [
+                makeDiagnostic(
+                  'EUC16-CONTRACT-ACK-NOT-REQUIRED',
+                  'blocker',
+                  `module ${input.moduleId} does not require operation ${ack.operationId}`,
+                  'value',
+                  [input.moduleId, ack.operationId],
+                ),
+              ],
               baseRevision: design.revision,
               baseHash: design.contentHash,
             }
@@ -1434,6 +1540,10 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
             consumerModuleId: input.moduleId,
             ackedAt: clock(),
             source: 'explicit',
+            ackedBy: input.actor,
+            ...(claimedAuthority ? { authority: claimedAuthority } : {}),
+            // Bind the ack to the exact consumer design revision reviewed.
+            consumerDesignRevision: design.revision,
           })
           return {
             ok: true,
@@ -1482,7 +1592,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         // consumer acknowledgement for every currently persisted contract
         // version it requires.
         const contractDiagnostics = registerProvidedContractDrafts(workspace, input.projectId, checked)
-        recordConsumerAcksForRequiredOperations(workspace, input.projectId, checked, clock())
+        recordConsumerAcksForRequiredOperations(workspace, input.projectId, checked, input.actor, clock())
         return {
           ok: true,
           diagnostics: [...evaluation.diagnostics, ...contractDiagnostics.map(UseCase.toDesignDiagnostic)],
@@ -1976,10 +2086,37 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
             packetId: inspection.packetId,
           }
         }
-        const plan = DeltaInspector.buildApplyPlan(inspection, delta, {
+        const { plan, recordChanges } = DeltaInspector.buildApplyPlanWithRecords(inspection, delta, {
           planId: `${inspection.inspectionId}.plan`,
           backupRef: `${inspection.inspectionId}.backup`,
         })
+        // §11.6/§12.2 — inspected content and applied content must match:
+        // every accepted module-design record change is persisted as a DRAFT
+        // revision before the file apply; a failure here fails the whole
+        // operation rather than proceeding with only the file half.
+        const recordChangeDiagnostics: DesignDiagnostic[] = []
+        for (const change of recordChanges.moduleDesignChanges) {
+          const currentDesign =
+            workspace.getModuleDesignDraft(input.projectId, change.recordId) ??
+            workspace.getApprovedModuleDesign(input.projectId, change.recordId)
+          if (!currentDesign) {
+            return {
+              ok: false,
+              diagnostics: [
+                makeDiagnostic(
+                  'EUC16-DELTA-RECORD-CHANGE-TARGET-MISSING',
+                  'blocker',
+                  `the delta's record change targets module design "${change.recordId}", which does not exist; nothing was applied`,
+                ),
+              ],
+              deltaId: inspection.deltaId,
+              packetId: inspection.packetId,
+            }
+          }
+          const projected = DeltaInspector.applyRecordChangeToDesign(currentDesign, change)
+          workspace.saveModuleDesignDraft(input.projectId, change.recordId, projected.updated)
+          recordChangeDiagnostics.push(...projected.diagnostics.map(UseCase.toDesignDiagnostic))
+        }
         const applyResult = applyDelta(plan, delta, { deadlineAt: input.deadlineAt, cancellationRequested: input.cancellationRequested })
         if (!applyResult.applied) {
           return {
@@ -1992,7 +2129,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         }
         return {
           ok: true,
-          diagnostics: [],
+          diagnostics: recordChangeDiagnostics,
           value: applyResult,
           deltaId: inspection.deltaId,
           packetId: inspection.packetId,

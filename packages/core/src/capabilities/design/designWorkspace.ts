@@ -686,19 +686,38 @@ export class DesignWorkspace {
     return path.join(this.root(projectId), 'audit', 'events.jsonl')
   }
 
-  findAuditEventByIdempotencyKey(projectId: string, idempotencyKey: string): DesignAuditEvent | undefined {
-    return this.listAuditEvents(projectId).find((event) => event.idempotencyKey === idempotencyKey)
+  /**
+   * §5.3 / §17.3 (second-review finding — audit idempotency scope): scoped
+   * by `idempotencyKey` **and** `operation`, the same scope
+   * `operations.ts`'s own result-replay cache already uses
+   * (`projectId + operation + idempotencyKey`). Two different operations
+   * that happen to reuse the same idempotency key are two distinct calls,
+   * never a replay of each other — omitting `operation` previously made
+   * `appendAuditEvent` return the *first* operation's committed event for
+   * the *second* operation too, so both operations executed correctly but
+   * shared one audit event and one `auditEventId`.
+   *
+   * `operation` is optional only for a caller that predates this fix and
+   * cannot supply it; that fallback matches by `idempotencyKey` alone
+   * (the old, deprecated behavior) and must not be used by any new caller.
+   */
+  findAuditEventByIdempotencyKey(projectId: string, idempotencyKey: string, operation?: string): DesignAuditEvent | undefined {
+    const candidates = this.listAuditEvents(projectId).filter((event) => event.idempotencyKey === idempotencyKey)
+    if (operation === undefined) return candidates[0]
+    return candidates.find((event) => event.operation === operation)
   }
 
   /**
    * Appends `event` to the append-only audit log. If `event.idempotencyKey`
-   * is set and a prior event already committed with that key, this is a
-   * no-op that returns the first committed event unchanged (§5.3, §17.3).
+   * is set and a prior event already committed with that key **for the same
+   * operation**, this is a no-op that returns the first committed event
+   * unchanged (§5.3, §17.3) — a different operation reusing the same key
+   * always writes its own distinct event.
    */
   appendAuditEvent(projectId: string, event: DesignAuditEvent): DesignAuditEvent {
     this.ensureInitialized(projectId)
     if (event.idempotencyKey) {
-      const existing = this.findAuditEventByIdempotencyKey(projectId, event.idempotencyKey)
+      const existing = this.findAuditEventByIdempotencyKey(projectId, event.idempotencyKey, event.operation)
       if (existing) return existing
     }
     const logPath = this.auditLogPath(projectId)
@@ -889,11 +908,24 @@ export { canonicalHash }
 /** §4 — actorId -> the approval authorities that actor holds for this project. */
 export type ProjectRoles = Record<string, ApprovalAuthority[]>
 
-/** §9.7 — a consumer module's recorded review of one contract version. */
+/**
+ * §9.7, §4 (second-review finding — forgeable consumer acks) — a consumer
+ * module's recorded review of one contract version. `ackedBy` and
+ * `authority` identify the reviewing principal (never a caller-supplied
+ * identity attached to an unrelated operation/module), and
+ * `consumerDesignRevision` binds the ack to the exact consumer-module design
+ * revision that was reviewed against this contract version.
+ */
 export type ConsumerContractAck = {
   operationId: string
   version: string
   consumerModuleId: string
   ackedAt: string
   source: 'analyze' | 'explicit'
+  /** The actor who performed this review — always a human `user:` actor. */
+  ackedBy: string
+  /** The consumer-module authority the acking actor held at review time, when claimed/known. */
+  authority?: string
+  /** The consumer module's own design revision reviewed against this contract version. */
+  consumerDesignRevision: string
 }

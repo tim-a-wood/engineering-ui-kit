@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest'
 import {
   approveDeltaToApply,
   buildApplyPlan,
+  buildApplyPlanWithRecords,
   inspectDelta,
   missingRequiredDeltaFields,
   normalizeReturnedPath,
@@ -229,6 +230,37 @@ describe('EUC-11 validateReturnedDelta (§11.5 rejection rules)', () => {
     )
     expect(result.rejectionReasons).not.toContain('checks-not-run')
   })
+
+  // Second-review fix (P1): a non-contract record change used to be
+  // accepted whenever `recordId === packet.moduleId`, *regardless of
+  // kind* — see review-fixes-s4.test.ts for the full record-change policy
+  // suite (kind allowlist, §5.3 approval-setting rejection, the apply-plan
+  // record-changes carry-through, and the pure draft projection). These
+  // two extend (never weaken) this file's existing "in scope" coverage
+  // with the exact reproduced finding.
+  it('rejects an architecture-kind record change on the packet own module that tries to set an approved status (reproduces the second-review finding)', () => {
+    const result = validateReturnedDelta(
+      delta({
+        recordChanges: [{ recordId: 'mod.evidence-store', kind: 'architecture', summary: 'approval smuggled in', payload: { status: 'approved' } }],
+      }),
+      packet(),
+      workspace,
+    )
+    expect(result.accepted).toBe(false)
+    expect(result.rejectionReasons).toContain('record-change-not-allowed')
+  })
+
+  it('rejects a moduleDesign-kind record change on the packet own module that tries to set an approved status', () => {
+    const result = validateReturnedDelta(
+      delta({
+        recordChanges: [{ recordId: 'mod.evidence-store', kind: 'moduleDesign', summary: 'approval smuggled in', payload: { status: 'approved' } }],
+      }),
+      packet(),
+      workspace,
+    )
+    expect(result.accepted).toBe(false)
+    expect(result.rejectionReasons).toContain('record-change-sets-approval')
+  })
 })
 
 describe('EUC-11 missingRequiredDeltaFields (§19 partial response)', () => {
@@ -347,5 +379,22 @@ describe('EUC-11 buildApplyPlan and simulateApply (§12.2)', () => {
     const outcome = simulateApply(plan, files)
     expect(outcome.result.rolledBack).toBe(true)
     expect(outcome.files).toEqual(files)
+  })
+
+  // Second-review fix (P1): `buildApplyPlan` alone still cannot represent
+  // accepted record changes (the frozen `DeltaApplyPlan` type has no field
+  // for them); `buildApplyPlanWithRecords` carries them alongside an
+  // identical plan instead of silently discarding them.
+  it('buildApplyPlanWithRecords carries an accepted moduleDesign record change instead of silently discarding it', () => {
+    const d = delta({
+      recordChanges: [{ recordId: 'mod.evidence-store', kind: 'moduleDesign', summary: 'design update', payload: { invariants: ['x'] } }],
+    })
+    const inspection = inspectDelta(d, packet(), workspace, { rollbackPointRef: 'backup-1' })
+    expect(inspection.accepted).toBe(true)
+    const plainPlan = buildApplyPlan(inspection, d, { planId: 'plan-1', backupRef: 'backup-1' })
+    const { plan, recordChanges } = buildApplyPlanWithRecords(inspection, d, { planId: 'plan-1', backupRef: 'backup-1' })
+    expect(plan).toEqual(plainPlan)
+    expect(recordChanges.moduleDesignChanges).toHaveLength(1)
+    expect(recordChanges.moduleDesignChanges[0]?.recordId).toBe('mod.evidence-store')
   })
 })

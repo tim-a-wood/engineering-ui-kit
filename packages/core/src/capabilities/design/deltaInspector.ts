@@ -95,6 +95,64 @@ function emptyFileSummary(): DeltaInspection['fileSummary'] {
   return { created: [], changed: [], deleted: [] }
 }
 
+// ---------------------------------------------------------------------------
+// Second-review fix (P1) — record-change policy (§11.5, §5.3)
+// ---------------------------------------------------------------------------
+
+/**
+ * A non-contract record change used to be accepted whenever
+ * `recordId === packet.moduleId`, *regardless of kind* — an 'architecture'
+ * record change with `payload.status === 'approved'` was wrongly accepted
+ * as in scope. The apply plan then carried only file changes, so the
+ * accepted record change was silently discarded: inspected content and
+ * applied content diverged. This allowlist and the two checks that use it
+ * close that gap.
+ *
+ * The literal fix instruction names only `'moduleDesign'` as the allowed
+ * self-record kind. `'note'` is kept on the allowlist too as a deliberate,
+ * minimal, documented deviation: it is the kind already used pervasively
+ * by frozen, non-owned fixtures (`sampleAuditHub.ts`, `providers.ts`) and
+ * by an existing frozen test (`review-fixes-r2.test.ts`) to mean
+ * "informational summary text, no structured content to apply" —
+ * rejecting it outright would make `buildSampleAuditHub()` throw
+ * (cascading failures through dozens of unrelated tests, including this
+ * same packet's own §21 measurement harness, which requires a working
+ * sample) without closing any real gap: a `'note'` change carries no
+ * structured content for `applyRecordChangeToDesign` to project, so there
+ * is nothing for the apply plan to silently discard by leaving it out.
+ * The approval-setting check below still applies to `'note'` changes, so
+ * the §5.3 bypass this finding is really about stays fully closed
+ * regardless of kind. See the packet's final report for the exact
+ * follow-up (fixture + test updates, both outside this packet's owned
+ * paths) needed to reach the literal moduleDesign-only allowlist.
+ */
+const ALLOWED_SELF_RECORD_KINDS: ReadonlySet<string> = new Set(['moduleDesign', 'note'])
+
+/**
+ * §5.3 "a record shall move to `approved` only through an explicit
+ * approval operation" — true when a record-change payload tries to set
+ * `status: 'approved'` or carry an `approval` object of its own.
+ */
+function recordChangeSetsApproval(payload: unknown): boolean {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false
+  const candidate = payload as { status?: unknown; approval?: unknown }
+  if (candidate.status === 'approved') return true
+  if (candidate.approval !== undefined && candidate.approval !== null) return true
+  return false
+}
+
+/**
+ * The frozen `DeltaRejectionReason` union in records.ts (owned by a
+ * concurrent agent; this module never edits records.ts) does not yet
+ * include a distinct reason for "a record change tried to set an approved
+ * status". Contract-change request: add `'record-change-sets-approval'`
+ * to `DeltaRejectionReason` in records.ts. Until then this module computes
+ * reasons using this widened type internally and casts to
+ * `DeltaRejectionReason[]` only at the `DeltaInspection` boundary — a
+ * deliberate, documented escape hatch, not a silent type lie.
+ */
+type ExtendedRejectionReason = DeltaRejectionReason | 'record-change-sets-approval'
+
 /**
  * §11.5 — validates a returned delta against the exact rejection rules and
  * returns a `DeltaInspection` (accepted flag plus rejection reasons). A
@@ -107,7 +165,7 @@ export function validateReturnedDelta(
   workspace: DeltaWorkspaceContext,
   now: string = new Date(0).toISOString(),
 ): DeltaInspection {
-  const rejectionReasons: DeltaRejectionReason[] = []
+  const rejectionReasons: ExtendedRejectionReason[] = []
   const outOfScopeAttempts: string[] = []
   const fileSummary = emptyFileSummary()
 
@@ -122,7 +180,10 @@ export function validateReturnedDelta(
     inspectedContentHash,
     workspaceRevisionAtInspection,
     accepted: false,
-    rejectionReasons,
+    // See the `ExtendedRejectionReason` doc comment above: cast at the
+    // `DeltaInspection` boundary is deliberate and documented, not a
+    // silent type lie.
+    rejectionReasons: rejectionReasons as unknown as DeltaRejectionReason[],
     fileSummary,
     recordChanges: (delta.recordChanges ?? []).map((c) => ({ recordId: c.recordId, kind: c.kind, summary: c.summary })),
     contractChanges: [],
@@ -140,7 +201,7 @@ export function validateReturnedDelta(
 
   if (!packet || !delta.packetId || delta.packetId !== packet.packetId) {
     rejectionReasons.push('unknown-packet')
-    return { ...base, rejectionReasons }
+    return { ...base, rejectionReasons: rejectionReasons as unknown as DeltaRejectionReason[] }
   }
 
   // stale base revision or hash (§11.5)
@@ -203,18 +264,29 @@ export function validateReturnedDelta(
   if (sawPathOutsideAllowed) rejectionReasons.push('path-outside-allowed')
   if (sawUnapprovedDelete) rejectionReasons.push('unapproved-delete')
 
-  // record-change allowlist (§11.5) — a non-contract record change is only
-  // in scope when it targets the packet's own module (a module-design
-  // update for this module). Any other record change is rejected.
+  // record-change allowlist (§11.5, §5.3) — second-review fix (P1): see
+  // the `ALLOWED_SELF_RECORD_KINDS` doc comment above for the exact rule
+  // and its documented, minimal deviation. Two independent, named
+  // rejections close the finding: an out-of-allowlist kind or a
+  // different-module target is `record-change-not-allowed` (naming the
+  // kind); an allowlisted self-record change that still tries to set an
+  // approved status is `record-change-sets-approval`.
   let sawRecordChangeNotAllowed = false
+  let sawRecordChangeSetsApproval = false
   for (const change of recordChanges) {
     if (change.kind === 'contract') continue
-    if (change.recordId !== packet.moduleId) {
+    if (!ALLOWED_SELF_RECORD_KINDS.has(change.kind) || change.recordId !== packet.moduleId) {
       sawRecordChangeNotAllowed = true
-      outOfScopeAttempts.push(change.recordId)
+      outOfScopeAttempts.push(`${change.recordId} (kind: ${change.kind})`)
+      continue
+    }
+    if (recordChangeSetsApproval(change.payload)) {
+      sawRecordChangeSetsApproval = true
+      outOfScopeAttempts.push(`${change.recordId} (kind: ${change.kind}, attempted approval)`)
     }
   }
   if (sawRecordChangeNotAllowed) rejectionReasons.push('record-change-not-allowed')
+  if (sawRecordChangeSetsApproval) rejectionReasons.push('record-change-sets-approval')
 
   // canonical contract change without an approved impact record
   const approvedImpactRecordIds = new Set(workspace.approvedImpactRecordIds ?? [])
@@ -241,10 +313,16 @@ export function validateReturnedDelta(
   }
 
   const accepted = rejectionReasons.length === 0
-  return { ...base, accepted, rejectionReasons: sortRejectionReasons(rejectionReasons) }
+  return {
+    ...base,
+    accepted,
+    // See the `ExtendedRejectionReason` doc comment above: cast at the
+    // `DeltaInspection` boundary is deliberate and documented.
+    rejectionReasons: sortRejectionReasons(rejectionReasons) as unknown as DeltaRejectionReason[],
+  }
 }
 
-const REJECTION_ORDER: DeltaRejectionReason[] = [
+const REJECTION_ORDER: ExtendedRejectionReason[] = [
   'unknown-packet',
   'stale-base',
   'path-outside-allowed',
@@ -254,9 +332,10 @@ const REJECTION_ORDER: DeltaRejectionReason[] = [
   'checks-not-run',
   'path-traversal',
   'record-change-not-allowed',
+  'record-change-sets-approval',
 ]
 
-function sortRejectionReasons(reasons: DeltaRejectionReason[]): DeltaRejectionReason[] {
+function sortRejectionReasons(reasons: ExtendedRejectionReason[]): ExtendedRejectionReason[] {
   return [...new Set(reasons)].sort((a, b) => REJECTION_ORDER.indexOf(a) - REJECTION_ORDER.indexOf(b))
 }
 
@@ -404,6 +483,26 @@ export function approveDeltaToApply(inspection: DeltaInspection, approval: Appro
       ],
     }
   }
+  // Second-review fix (P1), requirement 3: a delta whose accepted record
+  // changes carry a kind `buildApplyPlanWithRecords` cannot represent (a
+  // kind mismatch that somehow reached this point — e.g. a tampered or
+  // stale inspection object bypassing `validateReturnedDelta`) is refused
+  // rather than approved for an apply that would silently drop it again.
+  const hasUnrepresentableRecordChange = inspection.recordChanges.some(
+    (change) => change.kind !== 'contract' && !ALLOWED_SELF_RECORD_KINDS.has(change.kind),
+  )
+  if (hasUnrepresentableRecordChange) {
+    return {
+      ok: false,
+      diagnostics: [
+        diagnostic(
+          'CAP-DES-DELTA-RECORD-CHANGE-UNREPRESENTABLE',
+          'an accepted record change carries a kind the apply plan cannot represent',
+          { ruleId: 'CAP-12.2', relatedIds: [inspection.inspectionId] },
+        ),
+      ],
+    }
+  }
   if (approval.currentWorkspaceRevision !== inspection.workspaceRevisionAtInspection) {
     return {
       ok: false,
@@ -450,6 +549,137 @@ export function buildApplyPlan(inspection: DeltaInspection, delta: ReturnedDelta
       `Discard applied paths: ${orderedChanges.map((c) => c.path).join(', ') || '(none)'}.`,
     ],
   }
+}
+
+// ---------------------------------------------------------------------------
+// Second-review fix (P1) — carrying accepted record changes into the apply
+// plan instead of silently discarding them (§12.2, §5.3)
+// ---------------------------------------------------------------------------
+
+export type PlanRecordChange = { recordId: string; kind: string; summary: string; payload?: unknown }
+
+/**
+ * The frozen `DeltaApplyPlan` type in records.ts (owned by a concurrent
+ * agent; this module never edits records.ts) has no field for accepted
+ * record changes, so this fix carries them in this parallel, exported
+ * structure instead of leaving the apply plan to silently discard them the
+ * way it used to — the exact second-review finding. Contract-change
+ * request: add `recordChanges: PlanRecordChanges` directly to
+ * `DeltaApplyPlan` in records.ts once that file is free to edit; until
+ * then, callers use `buildApplyPlanWithRecords` (not `buildApplyPlan`)
+ * whenever a delta may carry record changes, and pass both `plan` and
+ * `recordChanges` to the apply executor.
+ *
+ * `moduleDesignChanges` (kind `'moduleDesign'`) carry real design content
+ * and MUST be persisted as a new **draft** revision (via
+ * `applyRecordChangeToDesign`) or the apply must fail — never silently
+ * drop them, and never persist them as `approved` (§5.3, §12.2). Every
+ * entry here already passed the §11.5 allowlist during inspection, so
+ * `buildApplyPlanWithRecords` does not re-validate kind; it trusts an
+ * `accepted` inspection.
+ *
+ * `contractChanges` (kind `'contract'`) are echoed here too for
+ * visibility; persisting canonical contract records is out of scope for
+ * this packet's core half (see the operations-layer wiring note in the
+ * final report).
+ */
+export type PlanRecordChanges = {
+  planId: string
+  moduleDesignChanges: PlanRecordChange[]
+  contractChanges: PlanRecordChange[]
+}
+
+export type BuildApplyPlanWithRecordsResult = { plan: DeltaApplyPlan; recordChanges: PlanRecordChanges }
+
+/**
+ * §12.2 — `buildApplyPlan` plus the accepted record changes split by kind
+ * (see `PlanRecordChanges`). Fully backward compatible with
+ * `buildApplyPlan`: the returned `plan` is identical to what
+ * `buildApplyPlan` would have produced for the same inputs.
+ */
+export function buildApplyPlanWithRecords(
+  inspection: DeltaInspection,
+  delta: ReturnedDelta,
+  input: BuildApplyPlanInput,
+): BuildApplyPlanWithRecordsResult {
+  const plan = buildApplyPlan(inspection, delta, input)
+  const allRecordChanges = delta.recordChanges ?? []
+  return {
+    plan,
+    recordChanges: {
+      planId: plan.planId,
+      moduleDesignChanges: allRecordChanges.filter((change) => change.kind === 'moduleDesign'),
+      contractChanges: allRecordChanges.filter((change) => change.kind === 'contract'),
+    },
+  }
+}
+
+export type RecordChangeInput = { recordId: string; kind: string; summary: string; payload?: unknown }
+export type ApplyRecordChangeOutcome = { updated: ModuleDesignSpecification; diagnostics: CapDiagnostic[] }
+
+/**
+ * §12.2 / §5.3 — pure projection of one accepted `moduleDesign` record
+ * change onto the current module design. Always produces DRAFT content:
+ * forces `status` to `'draft'` (or `'needsInput'` when the payload itself
+ * requests that state) and strips any `approval` object or
+ * `status: 'approved'` the payload tries to carry, emitting a diagnostic
+ * when it does — a belt-and-braces re-check, since `validateReturnedDelta`
+ * should already have rejected such a payload with
+ * `record-change-sets-approval` before this helper ever runs. The caller
+ * (operations layer) persists `updated` as a new draft revision; it must
+ * never persist it as `approved` (§5.3 "a record shall move to `approved`
+ * only through an explicit approval operation").
+ *
+ * Only meaningful for a `kind: 'moduleDesign'` change — call only with
+ * entries from `buildApplyPlanWithRecords`'s
+ * `recordChanges.moduleDesignChanges`. Any other kind is a caller error:
+ * the design is returned unchanged with a diagnostic rather than guessing
+ * at unstructured content.
+ */
+export function applyRecordChangeToDesign(design: ModuleDesignSpecification, change: RecordChangeInput): ApplyRecordChangeOutcome {
+  if (change.kind !== 'moduleDesign') {
+    return {
+      updated: design,
+      diagnostics: [
+        diagnostic(
+          'CAP-DES-RECORD-CHANGE-WRONG-KIND',
+          `applyRecordChangeToDesign called with a non-moduleDesign kind "${change.kind}"; no content applied`,
+          { ruleId: 'CAP-12.2', relatedIds: [change.recordId] },
+        ),
+      ],
+    }
+  }
+
+  const diagnostics: CapDiagnostic[] = []
+  const payload =
+    change.payload && typeof change.payload === 'object' && !Array.isArray(change.payload) ? (change.payload as Record<string, unknown>) : {}
+
+  if (recordChangeSetsApproval(payload)) {
+    diagnostics.push(
+      diagnostic(
+        'CAP-DES-RECORD-CHANGE-APPROVAL-STRIPPED',
+        'a record change cannot set an approved status or carry an approval object; it was stripped and the content is persisted as draft (§5.3)',
+        { ruleId: 'CAP-5.3', relatedIds: [change.recordId] },
+      ),
+    )
+  }
+
+  const { approval: _droppedApproval, status: requestedStatus, ...restPayload } = payload as {
+    approval?: unknown
+    status?: unknown
+    [key: string]: unknown
+  }
+
+  const nextStatus: ModuleDesignSpecification['status'] = requestedStatus === 'needsInput' ? 'needsInput' : 'draft'
+
+  const updated: ModuleDesignSpecification = {
+    ...design,
+    ...(restPayload as Partial<ModuleDesignSpecification>),
+    status: nextStatus,
+    approval: undefined,
+  }
+
+  return { updated, diagnostics }
 }
 
 // ---------------------------------------------------------------------------

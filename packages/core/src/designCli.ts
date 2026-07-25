@@ -28,13 +28,33 @@
  * resolved for the invocation's project, `applyDelta` fails honestly
  * (`'repository-not-configured: ...'`) instead of silently applying into
  * `dataDir`.
+ *
+ * Second-review P1 fix (trusted principal at the adapter boundary, mirrors
+ * `designMachineApi.ts` — see its module doc "Trust model"):
+ * `DesignCliOptions.principal` (`"user:<id>"`) stamps/overrides the `actor`
+ * field of every §17.2 change-operation request this CLI dispatches — a
+ * `--json` argument cannot assert an arbitrary actor. `principal` is opt-in
+ * (see `designMachineApi.ts`'s module doc for why the default is not
+ * automatic): a real `euik-design` binary wrapper should pass
+ * `principal: deriveOsPrincipal()` (exported by `designMachineApi.ts`) so a
+ * real terminal invocation always stamps the actual OS user running the
+ * command; a caller that omits `principal` keeps this adapter's pre-fix
+ * behavior (the `--json` body's own `actor` is trusted unchanged).
  */
 
 import { DesignWorkspace } from './capabilities/design/designWorkspace.js'
 import { createDesignOperations, type CreateDesignOperationsDeps, type DesignOperationExecutors } from './capabilities/design/operations.js'
 import { workspaceRevision } from './capabilities/design/repositoryAdapter.js'
 import { canonicalize } from './capabilities/hash.js'
-import { buildDefaultExecutors, buildRepositoryNotConfiguredExecutors, extractProjectId, resolveRepositoryRoot, type RepositoryRootOption } from './designMachineApi.js'
+import {
+  buildDefaultExecutors,
+  buildRepositoryNotConfiguredExecutors,
+  extractProjectId,
+  resolvePrincipal,
+  resolveRepositoryRoot,
+  stampPrincipal,
+  type RepositoryRootOption,
+} from './designMachineApi.js'
 
 export type DesignCliOptions = {
   dataDir: string
@@ -44,6 +64,8 @@ export type DesignCliOptions = {
   executors?: DesignOperationExecutors
   /** The project's real repository root(s) — see module doc. */
   repositoryRoot?: RepositoryRootOption
+  /** §4, §20.2 (finding — trusted principal at the adapter boundary) — see module doc. Opt-in: no stamping when omitted. */
+  principal?: string
 }
 
 /** Stable stringify: recursively sorted object keys, so identical results serialize identically regardless of construction order (§25.3 equivalence). */
@@ -120,7 +142,19 @@ export async function runDesignCli(argv: string[], opts: DesignCliOptions): Prom
     args = parsed
   }
 
-  const projectId = extractProjectId(args)
+  // §4, §20.2 (finding — trusted principal at the adapter boundary):
+  // resolved once per invocation, from `opts.principal` (the embedder's
+  // authenticated caller) — opt-in; see `designMachineApi.ts` module doc.
+  let principal: string | undefined
+  try {
+    principal = resolvePrincipal(opts.principal)
+  } catch (error) {
+    opts.stderr(`${error instanceof Error ? error.message : String(error)}\n`)
+    return 2
+  }
+  const stampedArgs = stampPrincipal(args, principal, workspace, operation)
+
+  const projectId = extractProjectId(stampedArgs)
   const repositoryRoot = resolveRepositoryRoot(opts.repositoryRoot, projectId)
   const executors = opts.executors ?? (repositoryRoot ? buildDefaultExecutors(repositoryRoot) : buildRepositoryNotConfiguredExecutors())
   const deps: CreateDesignOperationsDeps = {
@@ -136,7 +170,7 @@ export async function runDesignCli(argv: string[], opts: DesignCliOptions): Prom
     return 2
   }
 
-  const result = await byName[operation]!(...args)
+  const result = await byName[operation]!(...stampedArgs)
   opts.stdout(stableStringify(result) + '\n')
   const ok =
     result && typeof result === 'object' && 'ok' in (result as Record<string, unknown>)

@@ -15,7 +15,7 @@
 import type { OperationContract } from '../types.js'
 import { diagnostic, sortDiagnostics, type CapDiagnostic } from '../diagnostics.js'
 import { canonicalHash } from '../hash.js'
-import { isAgentActor, type DesignApproval, type ModuleDesignSpecification } from './records.js'
+import { isNonHumanActor, type DesignApproval, type ModuleDesignSpecification } from './records.js'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -147,11 +147,15 @@ export function approveContract(
   if (!existing) {
     return { ok: false, diagnostics: [diagnostic('CAP-DES-CTR-UNKNOWN', `unknown contract: ${key}`, { relatedIds: [key] })] }
   }
-  if (isAgentActor(approval.approvedBy)) {
+  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // case-insensitive after trim, and rejects a `service:` actor the same as
+  // an `agent:` actor — `'Agent:copilot'` and `' SERVICE:bot '` are both
+  // rejected here, not just a lowercase `'agent:...'` string.
+  if (isNonHumanActor(approval.approvedBy)) {
     return {
       ok: false,
       diagnostics: [
-        diagnostic('CAP-DES-CTR-AGENT-APPROVAL', 'an agent actor cannot approve a contract', {
+        diagnostic('CAP-DES-CTR-AGENT-APPROVAL', 'a non-human (agent or service) actor cannot approve a contract', {
           ruleId: 'CAP-4',
           relatedIds: [approval.approvedBy],
         }),

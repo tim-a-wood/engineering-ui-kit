@@ -21,7 +21,7 @@ import type {
   UseCaseAnalysis,
   UseCaseDefinition,
 } from './records.js'
-import { isAgentActor } from './records.js'
+import { isNonHumanActor } from './records.js'
 import { canonicalHash, childId, designContentHash, firstRevision, nextRevision, stableSortStrings } from './identity.js'
 import { diagnostic, sortDiagnostics, type CapDiagnostic } from '../diagnostics.js'
 
@@ -464,14 +464,17 @@ export function approveUseCaseAnalysis(
   analysis: UseCaseAnalysis,
   input: { approvedBy: string; authority: string; at: string },
 ): UseCaseAnalysisResult {
-  if (isAgentActor(input.approvedBy)) {
+  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // case-insensitive after trim, and rejects a `service:` actor the same as
+  // an `agent:` actor.
+  if (isNonHumanActor(input.approvedBy)) {
     return {
       analysis,
       diagnostics: [
         designDiagnostic(
           EUC01_DIAGNOSTIC_CODES.agentActorForbidden,
           'blocker',
-          'an agent actor cannot approve a use-case analysis',
+          'a non-human (agent or service) actor cannot approve a use-case analysis',
           { target: 'approvedBy', relatedIds: [input.approvedBy] },
         ),
       ],

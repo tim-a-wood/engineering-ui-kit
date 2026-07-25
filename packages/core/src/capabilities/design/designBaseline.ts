@@ -17,7 +17,7 @@ import { diagnostic, sortDiagnostics, type CapDiagnostic } from '../diagnostics.
 import { canonicalHash } from '../hash.js'
 import { ownedPathsOverlap } from './identity.js'
 import {
-  isAgentActor,
+  isNonHumanActor,
   type DesignBaseline,
   type DesignWorkflowPolicy,
   type ModuleDesignSpecification,
@@ -167,11 +167,14 @@ export function approveDesignBaseline(
       diagnostics: [diagnostic('CAP-DES-BASE-ALREADY-APPROVED', 'the Design baseline is already approved', { relatedIds: [baseline.id] })],
     }
   }
-  if (isAgentActor(approval.approvedBy)) {
+  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // case-insensitive after trim, and rejects a `service:` actor the same as
+  // an `agent:` actor.
+  if (isNonHumanActor(approval.approvedBy)) {
     return {
       ok: false,
       diagnostics: [
-        diagnostic('CAP-DES-BASE-AGENT-APPROVAL', 'an agent actor cannot approve the Design baseline', {
+        diagnostic('CAP-DES-BASE-AGENT-APPROVAL', 'a non-human (agent or service) actor cannot approve the Design baseline', {
           ruleId: 'CAP-4',
           relatedIds: [approval.approvedBy],
         }),
@@ -252,11 +255,14 @@ export function changeGateMode(
   actor: string,
   changedAt = new Date(0).toISOString(),
 ): ChangeGateModeResult {
-  if (isAgentActor(actor)) {
+  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // case-insensitive after trim, and rejects a `service:` actor the same as
+  // an `agent:` actor.
+  if (isNonHumanActor(actor)) {
     return {
       ok: false,
       diagnostics: [
-        diagnostic('CAP-DES-POLICY-AGENT', 'an agent actor cannot change the Design-to-Build gate mode', {
+        diagnostic('CAP-DES-POLICY-AGENT', 'a non-human (agent or service) actor cannot change the Design-to-Build gate mode', {
           ruleId: 'CAP-4',
           relatedIds: [actor],
         }),

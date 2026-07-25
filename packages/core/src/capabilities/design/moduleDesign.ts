@@ -28,7 +28,7 @@ import type {
   UnresolvedDesignItem,
   WorkflowModuleDetail,
 } from './records.js'
-import { isAgentActor } from './records.js'
+import { isNonHumanActor } from './records.js'
 import {
   childId,
   compareRevisions,
@@ -937,11 +937,18 @@ export function approveModuleDesign(
   approval: ApproveModuleDesignInput,
   context: ModuleDesignCheckContext = {},
 ): ApproveModuleDesignResult {
-  if (isAgentActor(approval.approvedBy)) {
+  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // case-insensitive after trim, and rejects a `service:` actor the same as
+  // an `agent:` actor.
+  if (isNonHumanActor(approval.approvedBy)) {
     return {
       ok: false,
       design,
-      diagnostics: [makeDiagnostic('MODDESIGN-APPROVAL-AGENT', 'blocker', 'an agent actor cannot approve a module design', 'approval.approvedBy', [design.module.moduleId])],
+      diagnostics: [
+        makeDiagnostic('MODDESIGN-APPROVAL-AGENT', 'blocker', 'a non-human (agent or service) actor cannot approve a module design', 'approval.approvedBy', [
+          design.module.moduleId,
+        ]),
+      ],
     }
   }
   if (design.status !== 'readyForReview') {
