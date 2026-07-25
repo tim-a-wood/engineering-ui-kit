@@ -60,17 +60,45 @@ function detectBuildRev(): string {
 
 const BUILD_REV = detectBuildRev()
 
+function compactUtcTimestamp(date: Date): string {
+  // e.g. "2026-07-25T15:20:41.123Z" -> "20260725T152041Z"
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
+}
+
+function randomRunSuffix(): string {
+  return `${process.pid.toString(36)}${Math.random().toString(36).slice(2, 8)}`
+}
+
 /**
- * Review finding: committed evidence files were silently rewritten by later
- * runs, destroying the prior run's record. Each run now writes into its own
- * run-stamped subdirectory; the run id is a short content hash of {build
- * rev, suite name}, so re-running the SAME build only ever overwrites its
- * own (already-identical) run directory, while a DIFFERENT build gets a new
- * directory and never clobbers a prior build's evidence. `latest.json` at
- * the base directory is a small pointer to the most recent run.
+ * Second-review finding: a run id derived only from {build rev, suite name}
+ * made two EXECUTIONS of the same build collide on the same run directory —
+ * a later run (e.g. a passing re-run) silently overwrote an earlier failed
+ * run's evidence, destroying the record of the failure. The run id is now
+ * per-EXECUTION: `<buildRev>-<startedAt compact UTC timestamp>-<pid/random
+ * suffix>`, so every process invocation gets its own directory regardless of
+ * whether the build revision repeats. `ensureFreshRunDir` refuses (throws)
+ * rather than writing into an already-populated run directory — this run id
+ * should never collide, so a populated directory at this path means
+ * something unexpected reused it, and the safe response is to refuse, not
+ * overwrite. `latest.json` at the base directory is a small pointer to the
+ * most recent run, updated atomically (write-to-temp-then-rename) so a
+ * reader never observes a half-written pointer.
  */
-const RUN_ID = canonicalHash({ buildRev: BUILD_REV, suite: SUITE_NAME }).slice(0, 12)
+const STARTED_AT = new Date()
+const RUN_ID = `${BUILD_REV}-${compactUtcTimestamp(STARTED_AT)}-${randomRunSuffix()}`
 const EVIDENCE_DIR = path.join(EVIDENCE_BASE_DIR, 'runs', RUN_ID)
+
+let runDirVerifiedFresh = false
+function ensureFreshRunDir(): void {
+  if (runDirVerifiedFresh) return
+  runDirVerifiedFresh = true
+  if (fs.existsSync(EVIDENCE_DIR) && fs.readdirSync(EVIDENCE_DIR).length > 0) {
+    throw new Error(
+      `refusing to write evidence: run directory already exists and is non-empty: "${EVIDENCE_DIR}" ` +
+        '(this run id should be unique per execution — never delete or overwrite an existing run\'s evidence)',
+    )
+  }
+}
 
 function writeLatestPointer(): void {
   atomicWriteJson(path.join(EVIDENCE_BASE_DIR, 'latest.json'), {
@@ -78,6 +106,7 @@ function writeLatestPointer(): void {
     buildRev: BUILD_REV,
     suite: SUITE_NAME,
     evidenceDir: `runs/${RUN_ID}`,
+    startedAt: STARTED_AT.toISOString(),
     updatedAt: new Date().toISOString(),
   })
 }
@@ -129,19 +158,21 @@ export type ScenarioEvidenceRecord = {
   executorHonestyNote?: string
 }
 
+/** Write-to-temp-then-rename so a reader never observes a half-written file (matters most for `latest.json`). */
 function atomicWriteJson(filePath: string, value: unknown): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true })
-  fs.writeFileSync(filePath, JSON.stringify(value, null, 2) + '\n')
+  const tmpPath = path.join(path.dirname(filePath), `.tmp-${path.basename(filePath)}-${process.pid}-${Math.random().toString(36).slice(2)}`)
+  fs.writeFileSync(tmpPath, JSON.stringify(value, null, 2) + '\n')
+  fs.renameSync(tmpPath, filePath)
 }
 
 /**
- * Writes `__evidence__/product-scenarios/<scenarioId>.json`. Overwriting
- * with byte-identical content is fine (the packet allows "overwrite-same
- * content"); a real content change would only occur if the scenario's
- * expected/actual behavior changed, which the test itself would already
- * have to change to produce.
+ * Writes `__evidence__/product-scenarios/runs/<runId>/<scenarioId>.json`.
+ * Every process execution gets its own run directory (see `RUN_ID` above);
+ * this never deletes or overwrites another run's evidence.
  */
 export function recordScenarioEvidence(input: ScenarioEvidenceInput): ScenarioEvidenceRecord {
+  ensureFreshRunDir()
   const honestyNote = EXECUTOR_HONESTY_NOTES[input.scenarioId]
   const body: Omit<ScenarioEvidenceRecord, 'contentHash'> = {
     scenarioId: input.scenarioId,

@@ -360,7 +360,11 @@ describe('review-fixes-r4 — machine API real-repository round trip', () => {
 
     const markerPath = path.join(repoRoot, 'cwd-marker.txt')
     expect(fs.existsSync(markerPath)).toBe(true)
-    expect(fs.readFileSync(markerPath, 'utf8')).toBe(path.resolve(repoRoot))
+    // Normalize both sides (fs.realpathSync) before comparing: on macOS
+    // `os.tmpdir()` resolves under `/private/var/...` while the recorded
+    // `process.cwd()` may report the unresolved `/var/...` alias (or vice
+    // versa), which would otherwise make this assertion host-dependent.
+    expect(fs.realpathSync(fs.readFileSync(markerPath, 'utf8'))).toBe(fs.realpathSync(path.resolve(repoRoot)))
   })
 
   it('supports a per-project repositoryRoot map', async () => {

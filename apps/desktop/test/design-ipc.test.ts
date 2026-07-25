@@ -546,7 +546,11 @@ describe('EUC-16 real desktop project round trip against a configured repository
 
     const markerPath = path.join(repoRoot, 'cwd-marker.txt')
     expect(fs.existsSync(markerPath)).toBe(true)
-    expect(fs.readFileSync(markerPath, 'utf8')).toBe(path.resolve(repoRoot))
+    // Normalize both sides (fs.realpathSync) before comparing: on macOS
+    // `os.tmpdir()` resolves under `/private/var/...` while the recorded
+    // `process.cwd()` may report the unresolved `/var/...` alias (or vice
+    // versa), which would otherwise make this assertion host-dependent.
+    expect(fs.realpathSync(fs.readFileSync(markerPath, 'utf8'))).toBe(fs.realpathSync(path.resolve(repoRoot)))
   })
 
   it('produces the same applyAgentDelta result as a direct createDesignOperations call built with the identical repository-scoped executors (§25.3 adapter equivalence)', () => {

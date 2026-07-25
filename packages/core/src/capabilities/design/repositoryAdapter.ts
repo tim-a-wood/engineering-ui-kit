@@ -255,15 +255,59 @@ function ownershipManifestPath(resolvedRoot: string): string {
   return path.join(resolvedRoot, OWNERSHIP_FILE_NAME)
 }
 
-/** Reads the ownership manifest at the root of a repository, if any (§12.2 "update ownership manifests"). */
+/**
+ * §12.2 filesystem-safety fix — refuses to write through a symlink. Every
+ * path this module writes (the ownership manifest, backup files and backup
+ * manifest, and each applied delta target) must pass this check
+ * immediately before the write: (a) if the target currently exists and is a
+ * symbolic link, it is rejected outright — a symlinked control file or
+ * delta target is never followed, regardless of where it resolves; (b)
+ * otherwise the target (or its nearest existing ancestor directory) must
+ * resolve, by real path, inside the repository root
+ * (`isRealPathWithinProjectRoot`), so a symlinked ancestor directory cannot
+ * redirect the write outside the repository either. Callers re-verify at
+ * the actual write site rather than relying solely on an earlier
+ * normalization pass, since the filesystem can change between inspection
+ * (or backup) and the write itself.
+ */
+function assertSafeWriteTarget(resolvedRoot: string, absPath: string, label: string): void {
+  let lst: fs.Stats | undefined
+  try {
+    lst = fs.lstatSync(absPath)
+  } catch {
+    lst = undefined
+  }
+  if (lst?.isSymbolicLink()) {
+    throw new Error(`refused to write ${label}: existing target is a symbolic link, not a regular file: "${absPath}"`)
+  }
+  if (!isRealPathWithinProjectRoot(resolvedRoot, absPath)) {
+    throw new Error(`refused to write ${label}: target escapes the repository root: "${absPath}"`)
+  }
+}
+
+/**
+ * Reads the ownership manifest at the root of a repository, if any (§12.2
+ * "update ownership manifests"). Rejects — rather than silently following —
+ * a `design-ownership.json` that currently exists as a symbolic link: a
+ * control file must be a regular file (§12.2 filesystem-safety fix).
+ */
 export function readOwnershipManifest(root: string): DesignOwnershipManifest | undefined {
   const manifestPath = ownershipManifestPath(path.resolve(root))
-  if (!fs.existsSync(manifestPath)) return undefined
+  let lst: fs.Stats | undefined
+  try {
+    lst = fs.lstatSync(manifestPath)
+  } catch {
+    return undefined
+  }
+  if (lst.isSymbolicLink()) {
+    throw new Error(`refused to read ownership manifest: existing target is a symbolic link, not a regular file: "${manifestPath}"`)
+  }
   return JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as DesignOwnershipManifest
 }
 
 function writeOwnershipManifest(resolvedRoot: string, manifest: DesignOwnershipManifest): void {
   const manifestPath = ownershipManifestPath(resolvedRoot)
+  assertSafeWriteTarget(resolvedRoot, manifestPath, 'the ownership manifest')
   fs.mkdirSync(path.dirname(manifestPath), { recursive: true })
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
 }
@@ -336,6 +380,7 @@ function createBackup(resolvedRoot: string, planId: string, relPaths: string[], 
     }
     if (existedBefore) {
       const dest = backupFilePath(resolvedRoot, planId, relPath)
+      assertSafeWriteTarget(resolvedRoot, dest, `backup file for "${relPath}"`)
       fs.mkdirSync(path.dirname(dest), { recursive: true })
       fs.copyFileSync(absPath, dest)
     }
@@ -343,6 +388,7 @@ function createBackup(resolvedRoot: string, planId: string, relPaths: string[], 
   }
   const manifest: BackupManifest = { planId, createdAt: now, entries }
   const manifestDest = backupManifestPath(resolvedRoot, planId)
+  assertSafeWriteTarget(resolvedRoot, manifestDest, 'the backup manifest')
   fs.mkdirSync(path.dirname(manifestDest), { recursive: true })
   fs.writeFileSync(manifestDest, JSON.stringify(manifest, null, 2) + '\n')
   return manifest
@@ -355,6 +401,17 @@ function restoreFromBackup(resolvedRoot: string, planId: string): void {
   }
   for (const entry of manifest.entries) {
     const absPath = path.join(resolvedRoot, entry.path)
+    // §12.2 filesystem-safety fix: restoring from backup must not follow a
+    // symlink planted at the restore target after the backup was taken.
+    // When the target is currently unsafe, leave it untouched rather than
+    // writing through it — the transactional apply runs the identical
+    // guard immediately before every write, so an unsafe restore target
+    // was never actually written to in the first place.
+    try {
+      assertSafeWriteTarget(resolvedRoot, absPath, `rollback restore target "${entry.path}"`)
+    } catch {
+      continue
+    }
     if (entry.existedBefore) {
       const src = backupFilePath(resolvedRoot, planId, entry.path)
       fs.mkdirSync(path.dirname(absPath), { recursive: true })
@@ -435,7 +492,15 @@ export function applyDeltaTransactionally(
   }
 
   const backupPaths = stableSortStrings([...new Set([...touchedPaths, OWNERSHIP_FILE_NAME])])
-  createBackup(resolvedRoot, plan.planId, backupPaths, now)
+  try {
+    createBackup(resolvedRoot, plan.planId, backupPaths, now)
+  } catch (error) {
+    // Nothing has been touched yet (the backup itself failed to write) —
+    // §12.2 filesystem-safety fix: e.g. `.euik-design-backups` or a backup
+    // file destination was replaced by a symlink escaping the repository.
+    const failure = error instanceof Error ? error.message : String(error)
+    return failResult(plan.planId, now, failure)
+  }
 
   const appliedFiles: string[] = []
   try {
@@ -446,6 +511,12 @@ export function applyDeltaTransactionally(
         throw new Error(`induced apply failure after ${options.failAfter} change(s) (test hook)`)
       }
       const absPath = path.join(resolvedRoot, change.path)
+      // Apply-time re-verification (§12.2): inspection validated
+      // `change.path` as a relative, in-root path, but the filesystem may
+      // have changed since then (or since the backup was taken) — re-check
+      // containment and reject a target that is now a symlink immediately
+      // before writing or deleting it.
+      assertSafeWriteTarget(resolvedRoot, absPath, `delta target "${change.path}"`)
       if (change.action === 'delete') {
         if (!fs.existsSync(absPath)) {
           throw new Error(`delete target is missing at "${change.path}"`)

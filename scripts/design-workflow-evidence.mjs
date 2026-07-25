@@ -19,7 +19,7 @@ import os from 'node:os'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { execSync } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(scriptDir, '..')
@@ -115,17 +115,37 @@ function startServer() {
 
 const BUILD_HASH = execSync('git rev-parse --short HEAD', { cwd: repoRoot }).toString().trim()
 
+function compactUtcTimestamp(date) {
+  // e.g. "2026-07-25T15:20:41.123Z" -> "20260725T152041Z"
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
+}
+
+function randomRunSuffix() {
+  return `${process.pid.toString(36)}${Math.random().toString(36).slice(2, 8)}`
+}
+
 /**
- * Review finding: committed evidence files were silently rewritten by later
- * runs, destroying the prior run's record. Each run now writes into its own
- * run-stamped subdirectory; the run id is a short content hash of {build
- * hash, suite name}, so re-running the SAME build only ever overwrites its
- * own (already-identical) run directory, while a DIFFERENT build gets a new
- * directory and never clobbers a prior build's evidence. `latest.json` at
- * the base directory is a small pointer to the most recent run.
+ * Second-review finding: a run id derived only from {build hash, suite name}
+ * made two EXECUTIONS of the same build collide on the same run directory —
+ * a later run silently overwrote an earlier run's evidence (including a
+ * failed run's screenshots), destroying the record. The run id is now
+ * per-EXECUTION: `<buildRev>-<startedAt compact UTC timestamp>-<pid/random
+ * suffix>`, so every invocation of this script gets its own directory
+ * regardless of whether the build revision repeats. `latest.json` at the
+ * base directory is a small pointer to the most recent run, updated
+ * atomically (write-to-temp-then-rename).
  */
-const RUN_ID = crypto.createHash('sha256').update(JSON.stringify({ buildRev: BUILD_HASH, suite: SUITE_NAME })).digest('hex').slice(0, 12)
+const STARTED_AT = new Date()
+const RUN_ID = `${BUILD_HASH}-${compactUtcTimestamp(STARTED_AT)}-${randomRunSuffix()}`
 const outDir = path.join(baseOutDir, 'runs', RUN_ID)
+
+// This run id is derived from a wall-clock timestamp plus a pid/random
+// suffix, so a collision would mean something unexpected reused this path —
+// refuse rather than overwrite (never delete or overwrite an existing run).
+if (fs.existsSync(outDir) && fs.readdirSync(outDir).length > 0) {
+  console.error(`Refusing to write evidence: run directory already exists and is non-empty: "${outDir}"`)
+  process.exit(1)
+}
 fs.mkdirSync(outDir, { recursive: true })
 
 // Runtime-derived environment (review finding): a hardcoded 'chromium-headless
@@ -171,12 +191,60 @@ function note(text) {
   console.log('  •', text)
 }
 
+/** Write-to-temp-then-rename so a reader never observes a half-written `latest.json`. */
+function atomicWriteFile(filePath, contents) {
+  const tmpPath = path.join(path.dirname(filePath), `.tmp-${path.basename(filePath)}-${process.pid}-${Math.random().toString(36).slice(2)}`)
+  fs.writeFileSync(tmpPath, contents)
+  fs.renameSync(tmpPath, filePath)
+}
+
 function writeLatestPointer() {
-  fs.writeFileSync(
+  atomicWriteFile(
     path.join(baseOutDir, 'latest.json'),
-    JSON.stringify({ runId: RUN_ID, buildRev: BUILD_HASH, suite: SUITE_NAME, evidenceDir: `runs/${RUN_ID}`, updatedAt: new Date().toISOString() }, null, 2) + '\n',
+    JSON.stringify(
+      { runId: RUN_ID, buildRev: BUILD_HASH, suite: SUITE_NAME, evidenceDir: `runs/${RUN_ID}`, startedAt: STARTED_AT.toISOString(), updatedAt: new Date().toISOString() },
+      null,
+      2,
+    ) + '\n',
   )
 }
+
+/**
+ * §24.5 review finding: browser manifest entries recorded no way to prove a
+ * screenshot file's integrity, and no record of which application/design/
+ * module revisions were on screen when it was captured. `screenshotHash` is
+ * the sha256 of the actual screenshot file on disk (computed after it is
+ * written, so it always matches). `REVISIONS` is read from the same sample
+ * module the served app renders (`buildSampleAuditHub()`, the built
+ * `packages/core` dist this script already builds and serves) — the
+ * simplest honest source, since the sample data is static and deterministic
+ * and this script does not have a live handle into the running page's
+ * in-memory workspace state.
+ */
+function screenshotContentHash(filePath) {
+  return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex')
+}
+
+/**
+ * Reads `{ application, systemStructure, moduleDesigns }` straight from the
+ * built `packages/core` dist (`buildSampleAuditHub()`, imported by a plain
+ * relative file path — this reaches the same compiled module the served
+ * `apps/gui` bundle renders, without depending on that module being part of
+ * `@engineering-ui-kit/core`'s public `exports` map). Called after
+ * `ensureBuilt()`, so the dist file is guaranteed to exist.
+ */
+async function loadSampleRevisions() {
+  const modUrl = pathToFileURL(path.join(coreDist, 'capabilities/design/sampleAuditHub.js')).href
+  const { buildSampleAuditHub } = await import(modUrl)
+  const hub = buildSampleAuditHub()
+  return {
+    application: hub.applicationSpecification.revision,
+    systemStructure: hub.architecture.revision,
+    moduleDesigns: Object.fromEntries(Object.entries(hub.approvedModuleDesigns).map(([id, design]) => [id, design.revision])),
+  }
+}
+
+let REVISIONS = { application: 'unknown', systemStructure: 'unknown', moduleDesigns: {} }
 
 function recordEvidence({ id, action, expectedResult, actualObservation, screenshot, viewport, theme = 'default' }) {
   const scenarioRef = SCENARIO_REFS[id]
@@ -186,11 +254,13 @@ function recordEvidence({ id, action, expectedResult, actualObservation, screens
     expectedResult,
     actualObservation,
     screenshot,
+    screenshotHash: screenshot ? screenshotContentHash(path.join(outDir, screenshot)) : undefined,
     viewport,
     theme,
     build: BUILD_HASH,
     environment: ENVIRONMENT,
     testDataRevision: 'sample-do178c-audit-hub',
+    revisions: REVISIONS,
     capturedAt: new Date().toISOString(),
     scenarioRefs: scenarioRef?.refs ?? [],
     scenarioRefsNote: scenarioRef?.note ?? 'No §24.2 numbered-scenario mapping derived for this step.',
@@ -271,6 +341,7 @@ async function gotoDesign(page) {
 
 async function run() {
   ensureBuilt()
+  REVISIONS = await loadSampleRevisions()
   const EXECUTABLE = resolveBrowser()
   const server = startServer()
   await new Promise((resolve) => server.listen(PORT, resolve))
