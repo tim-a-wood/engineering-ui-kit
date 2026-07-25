@@ -29,6 +29,7 @@ import {
   type ReturnedFileChange,
 } from './records.js'
 import { classifyContractChange } from './contractRegistry.js'
+import { FORBIDDEN_EVERYTHING_ELSE_MARKER } from './contextPacket.js'
 
 // ---------------------------------------------------------------------------
 // Path validation (§20.2)
@@ -57,6 +58,20 @@ function isWithinBoundaries(path: string, boundaries: string[]): boolean {
     const normalized = boundary.replace(/\/+$/, '')
     return path === normalized || path.startsWith(`${normalized}/`)
   })
+}
+
+/**
+ * §11.5 / §20.2 — forbidden and protected paths take precedence over
+ * allowed paths. A file matching a concrete `forbiddenPaths` entry (exact
+ * file or directory-prefix match) is rejected even when it also falls
+ * inside an allowed directory. The `**` everything-else marker is a
+ * special case handled entirely by the allow check and is never treated
+ * as a concrete forbidden path here.
+ */
+function isForbiddenPath(path: string, forbiddenPaths: string[]): boolean {
+  const concrete = forbiddenPaths.filter((entry) => entry !== FORBIDDEN_EVERYTHING_ELSE_MARKER)
+  if (concrete.length === 0) return false
+  return isWithinBoundaries(path, concrete)
 }
 
 // ---------------------------------------------------------------------------
@@ -135,16 +150,25 @@ export function validateReturnedDelta(
     rejectionReasons.push('stale-base')
   }
 
-  // change manifest presence
+  // change manifest presence (§11.5 "the response omits its change manifest")
   const fileChanges = delta.fileChanges ?? []
   const recordChanges = delta.recordChanges ?? []
   if (fileChanges.length === 0 && recordChanges.length === 0) {
     rejectionReasons.push('missing-change-manifest')
   }
+  // required trailer fields — missing any of these is also a "response omits
+  // its change manifest" case; the inspection is still produced so the
+  // response is preserved as evidence rather than discarded (§19).
+  if (!delta.returnedAt || !delta.contentHash) {
+    rejectionReasons.push('missing-change-manifest')
+  }
 
-  // path and ownership checks
+  // path and ownership checks — forbidden/protected paths take precedence
+  // over allowed paths (§11.5, §20.2): a forbidden match is rejected even
+  // when the path also falls inside an allowed directory.
   const approvedDeletes = new Set(workspace.approvedDeletes ?? [])
   const boundaries = [...packet.allowedPaths, ...packet.editableSharedPaths]
+  const forbiddenPaths = packet.forbiddenPaths ?? []
   let sawPathTraversal = false
   let sawPathOutsideAllowed = false
   let sawUnapprovedDelete = false
@@ -152,6 +176,11 @@ export function validateReturnedDelta(
     const normalized = normalizeReturnedPath(change.path)
     if (!normalized) {
       sawPathTraversal = true
+      outOfScopeAttempts.push(change.path)
+      continue
+    }
+    if (isForbiddenPath(normalized, forbiddenPaths)) {
+      sawPathOutsideAllowed = true
       outOfScopeAttempts.push(change.path)
       continue
     }
@@ -173,6 +202,19 @@ export function validateReturnedDelta(
   if (sawPathTraversal) rejectionReasons.push('path-traversal')
   if (sawPathOutsideAllowed) rejectionReasons.push('path-outside-allowed')
   if (sawUnapprovedDelete) rejectionReasons.push('unapproved-delete')
+
+  // record-change allowlist (§11.5) — a non-contract record change is only
+  // in scope when it targets the packet's own module (a module-design
+  // update for this module). Any other record change is rejected.
+  let sawRecordChangeNotAllowed = false
+  for (const change of recordChanges) {
+    if (change.kind === 'contract') continue
+    if (change.recordId !== packet.moduleId) {
+      sawRecordChangeNotAllowed = true
+      outOfScopeAttempts.push(change.recordId)
+    }
+  }
+  if (sawRecordChangeNotAllowed) rejectionReasons.push('record-change-not-allowed')
 
   // canonical contract change without an approved impact record
   const approvedImpactRecordIds = new Set(workspace.approvedImpactRecordIds ?? [])
@@ -344,7 +386,14 @@ export function approveDeltaToApply(inspection: DeltaInspection, approval: Appro
       ],
     }
   }
-  if (!inspection.accepted) {
+  // Belt and braces (§11.6, §11.5): re-verify completeness and the absence
+  // of any blocking rejection independently of the `accepted` flag, so a
+  // tampered or stale inspection object can never be approved.
+  const hasBlockingRejections = inspection.rejectionReasons.length > 0
+  const hasMissingRequiredFields = inspection.newWarnings.some((w) => w.startsWith('missing required field:'))
+  const isIncomplete =
+    !inspection.inspectionId || !inspection.deltaId || !inspection.packetId || !inspection.inspectedContentHash
+  if (!inspection.accepted || hasBlockingRejections || hasMissingRequiredFields || isIncomplete) {
     return {
       ok: false,
       diagnostics: [

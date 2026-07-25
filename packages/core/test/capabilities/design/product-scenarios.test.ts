@@ -1175,13 +1175,17 @@ describe('S16-S23, S27, S30 — sample lifecycle at baseline', () => {
         const result = buildMultiModulePacket({
           projectId: sample.projectId,
           modules: [
-            { design: fsAdapter, packetInput: packetInputFor(fsAdapter, 'multi.fs.1') },
-            { design: gitAdapter, packetInput: packetInputFor(gitAdapter, 'multi.git.1') },
+            { design: fsAdapter, packetInput: packetInputFor(fsAdapter, 'multi.fs.1'), fixtureIsolationConfirmed: true },
+            { design: gitAdapter, packetInput: packetInputFor(gitAdapter, 'multi.git.1'), fixtureIsolationConfirmed: true },
           ],
           dependencyPlanMarksIndependent: true,
           fixturesIsolated: true,
           explicitUserSelection: true,
           receivingAgentSupportsCombinedTask: true,
+          // §3.3 review fix — explicit user confirmation of independence is a
+          // required input distinct from the tool-derived dependency plan
+          // signal; this scenario's user has explicitly confirmed it.
+          userConfirmedIndependence: true,
         })
 
         expect(result.ok).toBe(true)
@@ -1231,6 +1235,7 @@ describe('S16-S23, S27, S30 — sample lifecycle at baseline', () => {
                 passKind: 'initial',
                 createdAt: at(0),
               },
+              fixtureIsolationConfirmed: true,
             },
             {
               design: overlappingGitAdapter,
@@ -1248,12 +1253,14 @@ describe('S16-S23, S27, S30 — sample lifecycle at baseline', () => {
                 passKind: 'initial',
                 createdAt: at(0),
               },
+              fixtureIsolationConfirmed: true,
             },
           ],
           dependencyPlanMarksIndependent: true,
           fixturesIsolated: true,
           explicitUserSelection: true,
           receivingAgentSupportsCombinedTask: true,
+          userConfirmedIndependence: true,
         })
 
         expect(result.ok).toBe(false)

@@ -275,11 +275,29 @@ describe('EUC-10 buildContextManifest', () => {
       targetRecordId: 'design.mod.evidence-store',
       targetRevision: 'r1',
       limit: 10, // smaller than the canonical record alone
-      candidates: candidates(),
+      candidates: [{ kind: 'record', ref: 'design.mod.evidence-store', content: 'x'.repeat(400), reason: 'canonical module design' }],
     })
     expect(manifest.entries.some((e) => e.ref === 'design.mod.evidence-store')).toBe(true)
     expect(manifest.entries.length).toBe(1)
     expect(manifest.totalBytes).toBeGreaterThan(manifest.tokenOrByteLimit)
+  })
+
+  it('never omits a canonical schema reference either, since caller priority cannot demote a canonical kind (§11.4 review fix)', () => {
+    // Adversarial input: the canonical schema is given a very low (numerically
+    // high) priority while a non-canonical test entry is given the highest
+    // (numerically lowest) priority it could claim. The clamp must still
+    // keep the schema and drop the test first.
+    const manifest = buildContextManifest({
+      targetRecordId: 'design.mod.evidence-store',
+      targetRevision: 'r1',
+      limit: 350,
+      candidates: [
+        { kind: 'schema', ref: 'schema.canonical', content: 'x'.repeat(300), priority: 9, reason: 'canonical schema' },
+        { kind: 'test', ref: 'test/adversarial.test.ts', content: 'x'.repeat(300), priority: 1, reason: 'adversarial low-value test' },
+      ],
+    })
+    expect(manifest.entries.map((e) => e.ref)).toEqual(['schema.canonical'])
+    expect(manifest.omitted.map((o) => o.ref)).toEqual(['test/adversarial.test.ts'])
   })
 })
 
@@ -477,13 +495,18 @@ describe('EUC-10 buildMultiModulePacket', () => {
     return {
       projectId: 'proj-1',
       modules: [
-        { design: moduleDesign(), packetInput: implementationInput({ contractRegistry: registry }) },
-        { design: secondModuleDesign(), packetInput: implementationInput({ design: secondModuleDesign(), contractRegistry: registry, idempotencyKey: 'idem-second' }) },
+        { design: moduleDesign(), packetInput: implementationInput({ contractRegistry: registry }), fixtureIsolationConfirmed: true as const },
+        {
+          design: secondModuleDesign(),
+          packetInput: implementationInput({ design: secondModuleDesign(), contractRegistry: registry, idempotencyKey: 'idem-second' }),
+          fixtureIsolationConfirmed: true as const,
+        },
       ],
       dependencyPlanMarksIndependent: true,
       fixturesIsolated: true,
       explicitUserSelection: true,
       receivingAgentSupportsCombinedTask: true,
+      userConfirmedIndependence: true as const,
     }
   }
 
@@ -497,7 +520,11 @@ describe('EUC-10 buildMultiModulePacket', () => {
     const overlapping = secondModuleDesign()
     overlapping.boundary.ownedPaths = ['capabilities/modules/mod.evidence-store/']
     const input = baseInput()
-    input.modules[1] = { design: overlapping, packetInput: implementationInput({ design: overlapping, contractRegistry: approvedRegistry(), idempotencyKey: 'idem-second' }) }
+    input.modules[1] = {
+      design: overlapping,
+      packetInput: implementationInput({ design: overlapping, contractRegistry: approvedRegistry(), idempotencyKey: 'idem-second' }),
+      fixtureIsolationConfirmed: true,
+    }
     const result = buildMultiModulePacket(input)
     expect(result.ok).toBe(false)
     expect(result.diagnostics.some((d) => d.code === 'CAP-DES-PKT-MULTI-OWNED-PATH-OVERLAP')).toBe(true)
@@ -506,7 +533,11 @@ describe('EUC-10 buildMultiModulePacket', () => {
   it('refuses a combined handoff when a selected module design is not approved', () => {
     const input = baseInput()
     const draftSecond = { ...secondModuleDesign(), status: 'draft' as const, approval: undefined }
-    input.modules[1] = { design: draftSecond, packetInput: implementationInput({ design: draftSecond, contractRegistry: approvedRegistry(), idempotencyKey: 'idem-second' }) }
+    input.modules[1] = {
+      design: draftSecond,
+      packetInput: implementationInput({ design: draftSecond, contractRegistry: approvedRegistry(), idempotencyKey: 'idem-second' }),
+      fixtureIsolationConfirmed: true,
+    }
     const result = buildMultiModulePacket(input)
     expect(result.ok).toBe(false)
     expect(result.diagnostics.some((d) => d.code === 'CAP-DES-PKT-MULTI-UNAPPROVED')).toBe(true)
