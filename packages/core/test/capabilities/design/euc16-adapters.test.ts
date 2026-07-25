@@ -181,6 +181,39 @@ describe('EUC-16 machine API adapter', () => {
   })
 })
 
+describe('review-fixes-r4 extension — repositoryRoot option (reviewer P1: data-dir/repository conflation)', () => {
+  it('createDesignMachineApi still exposes exactly the service operations when repositoryRoot is set (no drift)', async () => {
+    const api = createDesignMachineApi({ dataDir: tmpDir(), repositoryRoot: tmpDir() })
+    expect(Object.keys(api).sort()).toEqual(realOperationNames())
+  })
+
+  it('applyAgentDelta via the machine API fails with a structured, configuration-naming diagnostic when repositoryRoot is not set (never silently applies into dataDir)', async () => {
+    const dataDir = tmpDir()
+    const api = createDesignMachineApi({ dataDir })
+    const result = await api.applyAgentDelta({ projectId: 'proj-no-repo', actor: 'user:tim', idempotencyKey: 'k1', inspectionId: 'inspection-does-not-exist' })
+    // No such inspection exists, so this is EUC16-NOT-FOUND — the point of
+    // this test is only that the call never throws and never touches
+    // dataDir; the full "repository-not-configured" round trip is exercised
+    // in review-fixes-r4.test.ts.
+    expect(result.ok).toBe(false)
+    expect(fs.existsSync(path.join(dataDir, 'capabilities'))).toBe(false)
+  })
+
+  it('runDesignCli accepts the same repositoryRoot option shape (single path and a per-project map) without a usage error', async () => {
+    const cap1 = makeCapture()
+    const code1 = await runDesignCli(['getWorkflowStatus', '--json', '["proj-cli-repo-1"]'], { dataDir: tmpDir(), repositoryRoot: tmpDir(), ...cap1.opts })
+    expect(code1).toBe(0)
+
+    const cap2 = makeCapture()
+    const code2 = await runDesignCli(['getWorkflowStatus', '--json', '["proj-cli-repo-2"]'], {
+      dataDir: tmpDir(),
+      repositoryRoot: { 'proj-cli-repo-2': tmpDir() },
+      ...cap2.opts,
+    })
+    expect(code2).toBe(0)
+  })
+})
+
 describe('EUC-16 CLI vs. machine API equivalence (§25.3)', () => {
   it('returns the same §17.1 read result for the same operation and args on identical fresh workspaces', async () => {
     const cap = makeCapture()

@@ -18,12 +18,23 @@
  * e.g. `--json '["project-1"]'` for a §17.1 read operation, or
  * `--json '[{"projectId":"project-1","actor":"user:tim","idempotencyKey":"k1",...}]'`
  * for a §17.2 change operation (which always takes one input object).
+ *
+ * Reviewer P1 fix (mirrors `apps/desktop/src/capabilities/designIpc.ts` and
+ * `designMachineApi.ts` — see those files' module docs): `DesignCliOptions.
+ * repositoryRoot` (a single path, or a `{ [projectId]: path }` map) supplies
+ * the project's real repository root for the `applyDelta`/`verifyModule`/
+ * `readRepositoryContext` executors `buildDefaultExecutors`
+ * (`designMachineApi.ts`) builds — never `dataDir`. With no `repositoryRoot`
+ * resolved for the invocation's project, `applyDelta` fails honestly
+ * (`'repository-not-configured: ...'`) instead of silently applying into
+ * `dataDir`.
  */
 
 import { DesignWorkspace } from './capabilities/design/designWorkspace.js'
-import { createDesignOperations, type DesignOperationExecutors } from './capabilities/design/operations.js'
+import { createDesignOperations, type CreateDesignOperationsDeps, type DesignOperationExecutors } from './capabilities/design/operations.js'
+import { workspaceRevision } from './capabilities/design/repositoryAdapter.js'
 import { canonicalize } from './capabilities/hash.js'
-import { buildDefaultExecutors } from './designMachineApi.js'
+import { buildDefaultExecutors, buildRepositoryNotConfiguredExecutors, extractProjectId, resolveRepositoryRoot, type RepositoryRootOption } from './designMachineApi.js'
 
 export type DesignCliOptions = {
   dataDir: string
@@ -31,6 +42,8 @@ export type DesignCliOptions = {
   stderr: (s: string) => void
   /** Test hook — overrides the default filesystem-backed executors. */
   executors?: DesignOperationExecutors
+  /** The project's real repository root(s) — see module doc. */
+  repositoryRoot?: RepositoryRootOption
 }
 
 /** Stable stringify: recursively sorted object keys, so identical results serialize identically regardless of construction order (§25.3 equivalence). */
@@ -79,22 +92,18 @@ export async function runDesignCli(argv: string[], opts: DesignCliOptions): Prom
   }
 
   const workspace = new DesignWorkspace(dataDir)
-  const service = createDesignOperations({
-    workspace,
-    executors: opts.executors ?? buildDefaultExecutors(dataDir),
-  })
-  const byName = service as unknown as Record<string, (...args: unknown[]) => unknown>
 
   if (operation === 'list-operations') {
-    opts.stdout(stableStringify(Object.keys(byName)) + '\n')
+    // No real executors needed to enumerate operation names — they do not
+    // change which methods the service exposes.
+    const names = Object.keys(createDesignOperations({ workspace }))
+    opts.stdout(stableStringify(names) + '\n')
     return 0
   }
 
-  if (typeof byName[operation] !== 'function') {
-    opts.stderr(`unknown operation: ${operation}\n`)
-    return 2
-  }
-
+  // Parsed before the service is built: the resolved `projectId` selects
+  // this invocation's `repositoryRoot` (see module doc), which the
+  // executors need before `createDesignOperations` is called.
   let args: unknown[] = []
   if (jsonArg !== undefined) {
     let parsed: unknown
@@ -109,6 +118,22 @@ export async function runDesignCli(argv: string[], opts: DesignCliOptions): Prom
       return 2
     }
     args = parsed
+  }
+
+  const projectId = extractProjectId(args)
+  const repositoryRoot = resolveRepositoryRoot(opts.repositoryRoot, projectId)
+  const executors = opts.executors ?? (repositoryRoot ? buildDefaultExecutors(repositoryRoot) : buildRepositoryNotConfiguredExecutors())
+  const deps: CreateDesignOperationsDeps = {
+    workspace,
+    executors,
+    ...(repositoryRoot ? { workspaceRevisionProvider: () => workspaceRevision(repositoryRoot) } : {}),
+  }
+  const service = createDesignOperations(deps)
+  const byName = service as unknown as Record<string, (...args: unknown[]) => unknown>
+
+  if (typeof byName[operation] !== 'function') {
+    opts.stderr(`unknown operation: ${operation}\n`)
+    return 2
   }
 
   const result = await byName[operation]!(...args)
