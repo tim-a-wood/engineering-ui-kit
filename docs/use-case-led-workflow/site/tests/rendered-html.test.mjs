@@ -14,6 +14,7 @@ test("publishes the current source artifacts", async () => {
     ["index.html", "public/briefing.html"],
     ["mockup.html", "public/mockup.html"],
     ["PROPOSAL.md", "public/PROPOSAL.md"],
+    ["SPECIFICATION.md", "public/SPECIFICATION.md"],
   ];
 
   for (const [sourceName, publicName] of pairs) {
@@ -26,10 +27,11 @@ test("publishes the current source artifacts", async () => {
 });
 
 test("uses direct task labels in the briefing and mockup", async () => {
-  const [briefing, mockup, proposal, layout] = await Promise.all([
+  const [briefing, mockup, proposal, specification, layout] = await Promise.all([
     readText(new URL("public/briefing.html", siteRoot)),
     readText(new URL("public/mockup.html", siteRoot)),
     readText(new URL("public/PROPOSAL.md", siteRoot)),
+    readText(new URL("public/SPECIFICATION.md", siteRoot)),
     readText(new URL("app/layout.tsx", siteRoot)),
   ]);
 
@@ -86,6 +88,11 @@ test("uses direct task labels in the briefing and mockup", async () => {
   assert.match(mockup, /Analyze impact/);
   assert.match(mockup, /Approve and assign to agent/);
   assert.match(mockup, /Required agent changes/);
+  assert.match(mockup, /Design one module at a time/);
+  assert.match(mockup, /Approve system structure/);
+  assert.match(mockup, /id="design-selected-module"/);
+  assert.match(mockup, /0 of 17 approved/);
+  assert.match(mockup, /Start \$\{selectedModuleName\} design/);
   assert.match(mockup, /<b>Requirements<\/b>/);
   assert.match(mockup, /closeNodeDetailModal\(\{restoreFocus:false\}\)/);
   assert.doesNotMatch(mockup, /id="scenario-diagrams"/);
@@ -101,7 +108,20 @@ test("uses direct task labels in the briefing and mockup", async () => {
   assert.match(proposal, /### 4\.6 UML diagrams in Design/);
   assert.match(proposal, /### 4\.7 UML 2\.5\.1 notation rules/);
   assert.match(proposal, /### 4\.8 Discuss and change a visual element/);
+  assert.match(proposal, /### 4\.9 Design modules one at a time/);
   assert.match(proposal, /Verify does not contain design\s+diagrams/);
+  assert.match(briefing, /href="\.\/SPECIFICATION\.md"/);
+  assert.match(briefing, /Approve modules one at a time/);
+  assert.match(specification, /^# Use-case-led Capabilities workflow/m);
+  assert.match(specification, /## 9\. Module-design workspace/);
+  assert.match(specification, /## 11\. Copilot and external-agent workflow/);
+  assert.match(specification, /one module per external handoff/i);
+  assert.match(specification, /type ModuleDesignSpecification/);
+  assert.match(specification, /17 modules/);
+  assert.match(specification, /## 24\. Test specification/);
+  assert.match(specification, /## 25\. Reference implementation architecture/);
+  assert.match(specification, /EUC-17/);
+  assert.match(specification, /## Appendix A — Module-design review checklist/);
   assert.match(layout, /const title = "Plan from use cases"/);
 
   const obsoletePhrases = [
@@ -124,6 +144,7 @@ test("keeps mobile links relative and openable", async () => {
 
   assert.match(briefing, /href="\.\/mockup\.html"/);
   assert.match(briefing, /href="\.\/PROPOSAL\.md"/);
+  assert.match(briefing, /href="\.\/SPECIFICATION\.md"/);
   assert.match(
     briefing,
     /<meta name="viewport" content="width=device-width, initial-scale=1">/,

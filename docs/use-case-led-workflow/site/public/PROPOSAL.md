@@ -1,5 +1,9 @@
 # Plan from use cases
 
+This proposal states the product direction and reasons. The
+[`SPECIFICATION.md`](./SPECIFICATION.md) document defines the complete product,
+record, module-by-module, Copilot handoff, validation, and test requirements.
+
 ## Decision
 
 Add use-case analysis to the current Plan stage.
@@ -23,10 +27,19 @@ application record. Then create a system design from that application record.
 The user workflow becomes:
 
 > Describe the work → review the use cases → answer open questions → approve the
-> use cases → review the system design → approve the design
+> use cases → review the system structure → design and approve modules one at a
+> time → approve the complete design
 
 The tool prepares the records. The user makes each decision that affects scope,
 safety, policy, ownership, or cost.
+
+Keep system design and module design as separate levels. The system design
+shows the complete structure. A module design defines one module in enough
+detail to build and verify it.
+
+Create one Copilot or external-agent handoff for one module by default. The
+tool can calculate implementation waves, but it must not require one agent to
+design or build the full application in one pass.
 
 ## 1. What changes for the user
 
@@ -88,10 +101,22 @@ The user can rename, merge, split, or move a module. The tool shows the effect
 before it applies the change. The tool saves the approved change as a design
 decision.
 
+After the user approves the system structure, the tool creates a module-design
+queue. The user can define, review, approve, hand off, build, and verify one
+module at a time. The design view continues to show the complete architecture
+and the state of every module.
+
 ### 1.3 Build and Connect keep their current purpose; Verify becomes scenario-led
 
 Build uses the approved use cases and architecture. It creates module plans in
 dependency order.
+
+In the default gate mode, Build starts after the complete Design baseline is
+approved. A project can explicitly use incremental mode and start Build with
+one approved, dependency-closed module. Neither mode needs one Copilot pass for
+every module. Each module handoff contains the approved module design, direct
+contracts, repository paths, acceptance cases, commands, and expected return
+format.
 
 Connect uses the approved ports and adapters. It connects real entry points and
 external systems.
@@ -424,6 +449,60 @@ Do not apply a diagram-only edit. Every approved change must update the
 canonical record first. Preserve the last approved revision until the new
 revision passes its checks and the user approves it.
 
+### 4.9 Design modules one at a time
+
+Approval of the system structure creates a module-design queue. The queue
+shows every allocated module and one of these states:
+
+- not started;
+- draft;
+- needs input;
+- ready for review;
+- approved;
+- old;
+- blocked.
+
+The user selects one module. The workspace keeps the selected module beside its
+direct dependencies, direct consumers, use-case paths, contracts, and UML
+detail.
+
+Each module-design session contains:
+
+1. review the boundary;
+2. define behavior;
+3. define contracts;
+4. review diagrams;
+5. run checks;
+6. approve the module.
+
+The module record contains the common boundary, behavior, data, runtime, and
+verification fields. It also contains type-specific fields:
+
+- user-interface state, interaction, accessibility, and responsive behavior;
+- workflow steps, decisions, transactions, retries, and recovery;
+- core vocabulary, invariants, calculations, and identity rules;
+- adapter formats, mappings, timeouts, failures, isolation, and fixtures;
+- shared-service consistency, retention, recovery, capacity, and health.
+
+Approval of one module does not approve another module. In incremental mode, a
+module can enter Build when its design and required contracts are approved and
+its dependency slice is complete. In the default complete-baseline mode, the
+handoff waits until every required module design is approved.
+
+The product creates one Copilot handoff for one module by default. The handoff
+contains the approved module design, the direct architecture slice, contracts,
+schemas, owned paths, repository context, acceptance cases, commands, and
+return format. It does not give Copilot authority to change the architecture or
+approve a record.
+
+The product can show dependency waves. It sends several modules in one handoff
+only when the user selects them, their paths do not overlap, and their
+dependencies and resources are independent.
+
+See the [product and implementation specification](./SPECIFICATION.md) for the
+complete module record, state model, gates, Copilot round trip, application
+operations, migration, and tests.
+
 ## 5. Data model
 
 The `UseCaseAnalysis` is a versioned record. It does not replace an approved
@@ -448,6 +527,57 @@ type UseCaseAnalysis = {
   approval?: Approval;
 };
 ```
+
+Add one versioned design record for each module:
+
+```ts
+type ModuleDesignSpecification = {
+  schemaVersion: "1.0";
+  projectId: string;
+  id: string;
+  revision: string;
+  status:
+    | "draft"
+    | "needsInput"
+    | "readyForReview"
+    | "approved"
+    | "stale"
+    | "conflict"
+    | "superseded";
+  architecture: {
+    id: string;
+    revision: string;
+    contentHash: string;
+  };
+  module: {
+    moduleId: string;
+    moduleVersion: string;
+    moduleType: ModuleType;
+    name: string;
+    responsibility: string;
+    nonResponsibilities: string[];
+  };
+  trace: ModuleTrace;
+  boundary: ModuleBoundary;
+  providedOperations: OperationContractRef[];
+  requiredOperations: RequiredOperationRef[];
+  schemas: ModuleSchemaRef[];
+  behavior: ModuleBehaviorSpecification;
+  data: ModuleDataSpecification;
+  runtime: ModuleRuntimeSpecification;
+  verification: ModuleVerificationSpecification;
+  diagrams: DiagramProjectionRef[];
+  unresolvedItems: UnresolvedDesignItem[];
+  gates: GateResult[];
+  approval?: Approval;
+  contentHash: string;
+};
+```
+
+Compile an approved module design to the existing `ModuleManifest`,
+`OperationContract`, and `ModuleImplementationSpecification` records. Keep the
+compiler pure and repeatable. Do not make a Copilot response a canonical
+record.
 
 Each generated item uses the same control fields:
 
@@ -734,7 +864,15 @@ Inbound ports include:
 - approve an analysis;
 - create a design;
 - apply a design decision;
-- approve a design;
+- approve the system structure;
+- start a module design;
+- update a module design item;
+- approve one module design;
+- reopen one module design;
+- create one module implementation handoff;
+- inspect and apply one returned change;
+- verify one module;
+- approve the complete design;
 - get current status;
 - get valid next actions.
 
@@ -948,6 +1086,13 @@ This phase does not change the interface.
 - Show reasons for modules.
 - Add design options.
 - Add module changes and decision replay.
+- Add separate system-structure approval.
+- Add `ModuleDesignSpecification`.
+- Add the module-design queue, states, filters, and resume behavior.
+- Add the six-step module-design workspace.
+- Add type-specific module detail.
+- Add separate module approval.
+- Add contract compatibility and owned-path checks.
 - Add UML 2.5.1 component, activity, state machine, sequence, and use-case
   detail diagrams.
 - Make each UML element selectable.
@@ -958,6 +1103,11 @@ This phase does not change the interface.
 ### Phase 5: Add the machine API
 
 - Expose the same application operations.
+- Add one-module design and implementation packets.
+- Add deterministic context manifests.
+- Validate returned paths, revisions, hashes, and delta manifests.
+- Add transactional apply and rollback.
+- Calculate dependency waves without automatic dispatch.
 - Add idempotency, stale-revision checks, and structured errors.
 - Add cancellation and deadlines.
 
@@ -965,6 +1115,10 @@ This phase does not change the interface.
 
 - Add use cases to module plans.
 - Add user tasks to interface briefs.
+- Compile approved module designs to current manifests, operation contracts,
+  and implementation specifications.
+- Keep one module as the default Copilot implementation target.
+- Support several handoff passes for one module.
 - Add ports and adapters to Connect.
 - Generate one automated end-to-end test for every approved scenario.
 - Capture screenshot evidence for each applicable visible step.
@@ -997,6 +1151,18 @@ Add tests for:
 - missing adapters;
 - use-case path coverage;
 - decision replay;
+- module-design state transitions;
+- separate module approval;
+- type-specific module fields;
+- operation contract compatibility;
+- owned-path conflicts;
+- deterministic one-module context manifests;
+- incomplete Copilot response recovery;
+- stale Copilot response rejection;
+- returned-delta path enforcement;
+- transactional apply and rollback;
+- dependency-wave calculation;
+- explicit multi-module eligibility;
 - supported UML 2.5.1 notation semantics;
 - selectable UML elements and keyboard access;
 - visual-element detail modals;
@@ -1029,7 +1195,13 @@ Use end-to-end product tests for:
 11. a UML element discussion;
 12. a proposed visual change with impact analysis;
 13. an approved change plan that updates records, diagrams, and affected tests;
-14. a check that Verify contains no design diagram.
+14. a check that Verify contains no design diagram;
+15. a system structure with 17 incomplete module designs;
+16. approval of one module while other modules remain incomplete;
+17. one module implemented through several Copilot passes;
+18. rejection of an out-of-scope returned file;
+19. incremental Build for an approved dependency-closed module;
+20. explicit selection of independent modules for a wave handoff.
 
 ### 13.2 Generated use-case scenario tests
 
@@ -1101,6 +1273,11 @@ Targets:
 - all applicable visible steps have screenshot evidence;
 - all nonvisual steps have structured evidence or a recorded reason;
 - no repeated project input between stages;
+- a user can stop and resume one module design at the same step;
+- one module can be approved without false completion of the other modules;
+- the default Copilot handoff contains one module and its direct context;
+- a second Copilot pass can continue from the applied module revision;
+- no returned file outside approved paths can be applied;
 - a user can identify each required decision in less than 30 seconds;
 - a user can state why a selected module exists;
 - a user can find the first failed source in less than one minute;
@@ -1127,6 +1304,12 @@ Compare the results with the Phase 0 measurements.
 | Screenshot evidence is missing or misleading | Require step links, preserve originals, and record approved masks. |
 | Diagrams contradict the approved records | Generate UML detail diagrams from the approved use-case and architecture records. Apply changes to canonical records first. |
 | A visual edit has an unknown effect | Run impact analysis before the agent changes a record. Show affected use cases, modules, interfaces, tests, approvals, and baselines. |
+| One Copilot pass is too large | Use one module per handoff by default. Support several short passes and persistent module state. |
+| A module is built from incomplete contracts | Require module and direct contract approval before its handoff. |
+| Batch work changes the same file twice | Check owned paths and shared resources before a multi-module handoff. |
+| A returned change expands scope | Reject paths and record changes outside the approved packet. |
+| A stale agent response overwrites current work | Check the base revision and hash before inspection and apply. |
+| A module approval implies complete Design | Show separate system, module, and complete-Design approvals with counts. |
 
 ## 16. Completion criteria
 
@@ -1135,6 +1318,18 @@ The work is complete when:
 - Plan can create an approved `UseCaseAnalysis`;
 - the converter creates the current `ApplicationSpecification`;
 - Design creates an editable system design;
+- Design has separate system-structure and module-design records;
+- the module queue shows the state of every allocated module;
+- the user can define and approve modules one at a time;
+- a project can explicitly use incremental mode so that an approved,
+  dependency-closed module can enter Build before unrelated modules are
+  complete;
+- the default Copilot design and implementation packets contain one module;
+- a module can use several Copilot passes without losing its approved boundary;
+- returned changes are checked against approved paths, records, revisions, and
+  hashes;
+- implementation apply is transactional and recoverable;
+- implementation waves are visible but are not dispatched automatically;
 - every main use case has a complete system path;
 - every external system has a named port and adapter;
 - each module has a clear purpose;

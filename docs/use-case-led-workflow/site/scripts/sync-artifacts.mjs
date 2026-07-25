@@ -12,6 +12,7 @@ for (const [source, destination] of [
   ["index.html", "briefing.html"],
   ["mockup.html", "mockup.html"],
   ["PROPOSAL.md", "PROPOSAL.md"],
+  ["SPECIFICATION.md", "SPECIFICATION.md"],
 ]) {
   await copyFile(join(artifactRoot, source), join(publicRoot, destination));
 }

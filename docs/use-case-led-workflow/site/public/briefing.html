@@ -532,7 +532,7 @@
         <a href="#success">Success</a>
       </nav>
       <div class="top-actions">
-        <a class="button" href="./PROPOSAL.md">Read full plan</a>
+        <a class="button" href="./SPECIFICATION.md">Read specification</a>
         <a class="button primary" href="./mockup.html">Open prototype →</a>
       </div>
     </div>
@@ -546,7 +546,8 @@
         <p>Tell the tool what users must do. The tool drafts the use cases and the system design. You review the decisions that affect scope, safety, or cost.</p>
         <div class="hero-actions">
           <a class="button primary" href="./mockup.html">Open the interactive mockup →</a>
-          <a class="button" href="./PROPOSAL.md">Read the full proposal</a>
+          <a class="button" href="./SPECIFICATION.md">Read the full specification</a>
+          <a class="button" href="./PROPOSAL.md">Read the proposal</a>
         </div>
         <div class="decision-note"><span class="dot"></span><span><strong style="color:var(--secondary)">Recommendation:</strong> add use-case analysis to Plan. Keep the current approved data contracts.</span></div>
       </div>
@@ -561,7 +562,7 @@
             <div class="analysis-step"><span class="check">✓</span><span><b>External systems</b><br>8 connections</span><code>DRAFT</code></div>
             <div class="analysis-step"><span class="check">✓</span><span><b>Open decision</b><br>1 answer required</span><code>ASK</code></div>
           </div>
-          <div class="signal-result"><span><b>Ready to create the design</b><small>You can open the technical record at any time.</small></span><strong>96%</strong></div>
+          <div class="signal-result"><span><b>Ready to create the design</b><small>You can open the technical record at any time.</small></span><strong>1 question</strong></div>
         </div>
       </aside>
     </section>
@@ -600,6 +601,7 @@
             <div class="work-row"><span class="work-symbol">?</span><span><b>Answer open questions</b><span>Decide only what the tool cannot determine.</span></span></div>
             <div class="work-row"><span class="work-symbol">✓</span><span><b>Approve the use cases</b><span>Check users, tasks, limits, rules, and acceptance checks.</span></span></div>
             <div class="work-row"><span class="work-symbol">↔</span><span><b>Change the design</b><span>Merge, split, rename, or move a module.</span></span></div>
+            <div class="work-row"><span class="work-symbol">M</span><span><b>Approve modules one at a time</b><span>Finish one module without claiming that every module is complete.</span></span></div>
           </div>
           <div class="work-vs">works with</div>
           <div class="work-column">
@@ -608,6 +610,7 @@
             <div class="work-row"><span class="work-symbol">S</span><span><b>Record each source</b><span>Mark data as sourced, inferred, confirmed, changed, or in conflict.</span></span></div>
             <div class="work-row"><span class="work-symbol">D</span><span><b>Draft the system design</b><span>Define modules, operations, ports, adapters, dependencies, and deployable units.</span></span></div>
             <div class="work-row"><span class="work-symbol">C</span><span><b>Run design checks</b><span>Find missing paths, unused modules, dependency cycles, missing owners, and old data.</span></span></div>
+            <div class="work-row"><span class="work-symbol">1</span><span><b>Prepare one module handoff</b><span>Give Copilot the approved boundary, direct contracts, paths, tests, and return format.</span></span></div>
             <div class="work-row"><span class="work-symbol">T</span><span><b>Run every scenario</b><span>Create automated end-to-end tests for main, alternate, failure, and recovery paths.</span></span></div>
             <div class="work-row"><span class="work-symbol">E</span><span><b>Keep step evidence</b><span>Capture screenshots for visible results and structured evidence for background checks.</span></span></div>
           </div>
@@ -619,6 +622,7 @@
           <div class="pipeline-node"><b>Application specification</b><span>Current approved data contract</span></div>
           <div class="pipeline-node accent"><b>System design draft</b><span>Modules and reasons</span></div>
           <div class="pipeline-node"><b>Architecture specification</b><span>Current approved data contract</span></div>
+          <div class="pipeline-node accent"><b>Module designs</b><span>Approve and build one module at a time</span></div>
           <div class="pipeline-node"><b>Scenario evidence</b><span>Automated runs, step results, screenshots, and structured checks</span></div>
         </div>
       </div>
@@ -642,6 +646,7 @@
           <div class="rule"><b>Trace every use case</b><p>Select a use case to show each user interface, workflow, core module, adapter, and store in its path.</p></div>
           <div class="rule"><b>Name each adapter</b><p>Use separate adapters for MATLAB, files, Git, spreadsheets, C source, coverage, and review data.</p></div>
           <div class="rule"><b>Inspect UML in Design</b><p>Open UML 2.5.1 component, activity, state machine, sequence, and use-case diagrams. Select any element for detail.</p></div>
+          <div class="rule"><b>Design one module at a time</b><p>Keep the full architecture visible. Approve one module and create one Copilot handoff without sending the full application.</p></div>
         </div>
       </div>
     </section>
@@ -657,7 +662,7 @@
           <div class="phase"><span class="phase-num">01</span><h3>Add the record and converter</h3><p>Add versioned analysis, source links, checks, stable IDs, migration, and repeatable conversion.</p><span class="phase-outcome">No screen change</span></div>
           <div class="phase"><span class="phase-num">02</span><h3>Add Guided Plan</h3><p>Add Describe, Review, and Approve. Show source selection, progress, open questions, and design details.</p><span class="phase-outcome">Usable first release</span></div>
           <div class="phase"><span class="phase-num">03</span><h3>Add analysis adapters</h3><p>Support the current Copilot handoff, an in-app agent, a fixed test provider, and approved source data.</p><span class="phase-outcome">Choice of automation</span></div>
-          <div class="phase"><span class="phase-num">04</span><h3>Add the design editor</h3><p>Show reasons, options, coverage, UML detail, agent discussion, impact analysis, saved decisions, and architecture approval.</p><span class="phase-outcome">Reviewable design</span></div>
+          <div class="phase"><span class="phase-num">04</span><h3>Add the design editor</h3><p>Show the system structure, module queue, one-module design sessions, contracts, UML detail, impact analysis, and separate approvals.</p><span class="phase-outcome">Reviewable module designs</span></div>
           <div class="phase"><span class="phase-num">05</span><h3>Add the machine API</h3><p>Provide the same operations to automation. Require IDs for retries and explicit approval.</p><span class="phase-outcome">Direct API access</span></div>
           <div class="phase"><span class="phase-num">06</span><h3>Use the data in later stages</h3><p>Send approved use cases to module plans and connections. Generate every scenario test, capture applicable screenshots, and link Verify back to Design.</p><span class="phase-outcome">Traceable test evidence</span></div>
           <div class="phase"><span class="phase-num">07</span><h3>Release and remove old screens</h3><p>Enable the workflow per project. Check each migration. Remove the old Guided screens only after the new flow passes user tests.</p><span class="phase-outcome">Controlled release</span></div>
@@ -691,8 +696,8 @@
     </section>
 
     <section class="wrap cta">
-      <div><h2>Try the proposed workflow.</h2><p>The mockup shows planning, interactive UML design details, controlled change impact, and the final scenario-evidence review.</p></div>
-      <div class="cta-actions"><a class="button" href="./PROPOSAL.md">Full plan</a><a class="button primary" href="./mockup.html">Open prototype →</a></div>
+      <div><h2>Try the proposed workflow.</h2><p>The mockup shows planning, interactive UML design details, controlled change impact, and the final scenario-evidence review. The specification defines the complete module-by-module workflow.</p></div>
+      <div class="cta-actions"><a class="button" href="./SPECIFICATION.md">Full specification</a><a class="button" href="./PROPOSAL.md">Proposal</a><a class="button primary" href="./mockup.html">Open prototype →</a></div>
     </section>
   </main>
 

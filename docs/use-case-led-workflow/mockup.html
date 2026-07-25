@@ -2549,7 +2549,7 @@
           <option value="describe">1 · Describe</option>
           <option value="review" selected>2 · Review draft</option>
           <option value="solution">3 · System design</option>
-          <option value="approval">4 · Send to Build</option>
+          <option value="approval">4 · Design modules</option>
           <option value="verification">5 · Verify evidence</option>
         </select>
       </div>
@@ -3617,6 +3617,7 @@
         <div class="inspector-section"><b>Depends on</b>${moduleLinks(detail.dependsOn)}</div>
         <div class="inspector-section"><b>Used by</b>${moduleLinks(detail.usedBy, 'No module depends on this user interface.')}</div>
         <div class="inspector-section"><b>Use cases</b>${storyLinks(detail.stories)}</div>
+        <div class="inspector-section"><b>Module design</b><p><span class="tag">Not started</span> Define and approve this module separately before its implementation handoff.</p><button class="btn btn-small" id="design-selected-module" type="button">Design this module</button></div>
         <div class="technical block mono" style="margin-top:10px;color:var(--muted);font-size:9.5px;line-height:1.6">module: ${moduleId}<br>group: ${detail.group.toLowerCase()}<br>deployable: ${detail.deployable.toLowerCase()}<br>decision lock: none</div>`;
     }
 
@@ -3626,7 +3627,7 @@
         ${heading('Design · Draft', 'Review and explore the system design', 'Use the architecture diagram to inspect every module, port, adapter, dependency, deployable unit, and use-case path. Select any item to see its full design record.')}
         <div class="command ready">
           <div><h2>Recommendation: one application and a separate MATLAB process</h2><p>The design covers all 6 use cases. It keeps deployment simple. The MATLAB process contains proprietary file extraction and its failures.</p></div>
-          <div class="command-actions"><button class="btn" type="button" id="restructure-selected">Change selected module</button><button class="btn btn-primary" type="button" id="approve-solution">Approve design and plan Build <span>→</span></button></div>
+          <div class="command-actions"><button class="btn" type="button" id="restructure-selected">Change selected module</button><button class="btn btn-primary" type="button" id="approve-solution">Approve system structure <span>→</span></button></div>
         </div>
         <div class="solution-layout">
           <section class="panel">
@@ -3752,46 +3753,48 @@
     }
 
     function approvalView() {
+      const selectedModuleName = moduleName(appState.selectedModule || 'evidence-store');
       return `
-        ${heading('Design · Approved', 'The system design is ready for Build', 'The approved records include the use cases, system design, design reasons, and your changes. Build, Connect, and Verify can use these records.')}
+        ${heading('Design · Module queue', 'Design one module at a time', 'The system structure is approved. Keep the full architecture visible while you define, review, approve, hand off, build, and verify each module separately.')}
         <div class="command ready">
-          <div><h2>Next action: create the module plans</h2><p>The tool will create modules in dependency order. It will use all approved use cases, rules, external systems, and design decisions.</p></div>
-          <div class="command-actions"><button class="btn" type="button" id="preview-verify">Preview final Verify</button><button class="btn btn-primary" type="button" id="continue-build">Continue to Build <span>→</span></button></div>
+          <div><h2>Selected module: ${selectedModuleName}</h2><p>Work on one module without losing the approved system context. The tool keeps this design session when you stop and return.</p></div>
+          <div class="command-actions"><button class="btn" type="button" id="preview-verify">Preview final Verify</button><button class="btn btn-primary" type="button" id="continue-build">Start ${selectedModuleName} design <span>→</span></button></div>
         </div>
         <div class="approval-grid">
           <section class="panel">
             <div class="panel-body">
-              <div class="approval-hero"><div class="approval-check">✓</div><div><p class="eyebrow">Two approvals saved</p><h2>Use cases and system design approved</h2><p>The user did not have to complete a technical form or enter a specification.</p></div></div>
+              <div class="approval-hero"><div class="approval-check">✓</div><div><p class="eyebrow">System structure approved</p><h2>Module designs stay under your control</h2><p>Approval of one module does not approve another module or claim that the complete design is ready.</p></div></div>
               <div class="figure-strip">
-                <div class="figure"><span>People</span><strong>4</strong></div>
-                <div class="figure"><span>Use cases</span><strong>6</strong></div>
+                <div class="figure"><span>System paths</span><strong>6 / 6</strong></div>
                 <div class="figure"><span>Modules</span><strong>17</strong></div>
-                <div class="figure"><span>Coverage</span><strong>100%</strong></div>
+                <div class="figure"><span>Approved designs</span><strong>0 / 17</strong></div>
+                <div class="figure"><span>Ready for Build</span><strong>0</strong></div>
               </div>
               <div class="handoff-list">
-                <p class="eyebrow">What Build receives</p>
-                <div class="handoff-row"><span class="handoff-icon">UC</span><span class="handoff-copy"><b>Approved use cases</b><small>Main flow, other paths, failures, recovery, rules, acceptance checks, and sources</small></span><span class="tag success">Current</span></div>
-                <div class="handoff-row"><span class="handoff-icon">AR</span><span class="handoff-copy"><b>Approved architecture</b><small>Module purpose, dependencies, operations, adapters, and use-case paths</small></span><span class="tag success">Current</span></div>
-                <div class="handoff-row"><span class="handoff-icon">DX</span><span class="handoff-copy"><b>Design decisions</b><small>The tool will apply approved user changes to each new design draft.</small></span><span class="tag">1 decision</span></div>
-                <div class="handoff-row"><span class="handoff-icon">FP</span><span class="handoff-copy"><b>Deployment design</b><small>One application and a separate MATLAB process</small></span><span class="tag accent">Ready next</span></div>
-                <div class="handoff-row"><span class="handoff-icon">VT</span><span class="handoff-copy"><b>Verification scenarios</b><small>13 automated end-to-end scenarios with step evidence requirements</small></span><span class="tag accent">Ready later</span></div>
+                <p class="eyebrow">Recommended design order</p>
+                <div class="handoff-row"><span class="handoff-icon">01</span><span class="handoff-copy"><b>Stores</b><small>Evidence Store · Job and Package Store</small></span><span class="tag accent">Next</span></div>
+                <div class="handoff-row"><span class="handoff-icon">02</span><span class="handoff-copy"><b>Core data and rules</b><small>Evidence Graph · Workspace Snapshots</small></span><span class="tag">After contracts</span></div>
+                <div class="handoff-row"><span class="handoff-icon">03</span><span class="handoff-copy"><b>Source adapters</b><small>Eight actor-specific adapters can be designed independently.</small></span><span class="tag">8 modules</span></div>
+                <div class="handoff-row"><span class="handoff-icon">04</span><span class="handoff-copy"><b>Workflows</b><small>Import and Publish · Finding Review · Package Export</small></span><span class="tag">3 modules</span></div>
+                <div class="handoff-row"><span class="handoff-icon">05</span><span class="handoff-copy"><b>User interfaces</b><small>Lifecycle Explorer · Audit Workspace</small></span><span class="tag">2 modules</span></div>
               </div>
             </div>
           </section>
           <aside class="side-stack">
             <section class="panel">
-              <div class="panel-head"><div><h2>Effort in this prototype</h2><p>Medium-sized sample</p></div></div>
+              <div class="panel-head"><div><h2>One module session</h2><p>Six controlled steps</p></div></div>
               <div class="panel-body">
-                <ul class="why-list"><li><b>1 work description</b>This is the only required free-text input.</li><li><b>1 required question</b>The answer sets the reviewer permission rule.</li><li><b>2 approvals</b>First approve the use cases. Then approve the system design.</li><li><b>1 optional module change</b>The tool saves the change as a design decision.</li><li><b>0 form fields</b>The user did not enter IDs, schemas, modules, or adapters.</li></ul>
+                <ul class="why-list"><li><b>1 · Review boundary</b>Check responsibility, exclusions, dependencies, consumers, and owned paths.</li><li><b>2 · Define behavior</b>Check operations, rules, state, failures, recovery, and runtime behavior.</li><li><b>3 · Review contracts</b>Approve provided and required operation versions and schemas.</li><li><b>4 · Review diagrams</b>Inspect selectable UML views generated from the draft.</li><li><b>5 · Run checks</b>Fix blocking module, contract, path, and trace problems.</li><li><b>6 · Approve module</b>Freeze one revision and hash. Then create one Copilot handoff.</li></ul>
               </div>
             </section>
             <section class="panel">
-              <div class="panel-head"><div><h2>Approval evidence</h2><p>Visible in Design mode</p></div><span class="status-line"><span class="dot success"></span>Saved</span></div>
+              <div class="panel-head"><div><h2>Approval evidence</h2><p>Separate records</p></div><span class="status-line"><span class="dot success"></span>Structure saved</span></div>
               <div class="panel-body">
                 <div class="change-row"><span class="state-icon">✓</span><span><b>Use-case analysis</b><br><span class="mono">r3 · 9ae1…d771</span></span></div>
                 <div class="change-row"><span class="state-icon">✓</span><span><b>Application specification</b><br><span class="mono">r8 · 4c0b…180a</span></span></div>
-                <div class="change-row"><span class="state-icon">✓</span><span><b>Architecture</b><br><span class="mono">r5 · 387f…991c</span></span></div>
-                <div class="change-row"><span class="state-icon">✓</span><span><b>Required checks</b><br><span>All blocking problems resolved</span></span></div>
+                <div class="change-row"><span class="state-icon">✓</span><span><b>System structure</b><br><span class="mono">r5 · 387f…991c</span></span></div>
+                <div class="change-row"><span class="state-icon">◇</span><span><b>Module designs</b><br><span>0 of 17 approved</span></span></div>
+                <div class="change-row"><span class="state-icon">◇</span><span><b>Complete Design baseline</b><br><span>Waiting for required module designs</span></span></div>
               </div>
             </section>
           </aside>
@@ -4488,12 +4491,13 @@
       document.querySelector('#edit-module')?.addEventListener('click', () => {
         openDrawer(appState.selectedModule, moduleName(appState.selectedModule));
       });
+      document.querySelector('#design-selected-module')?.addEventListener('click', () => go('approval'));
       document.querySelector('#restructure-selected')?.addEventListener('click', () => openDrawer(appState.selectedModule || 'evidence-graph', moduleName(appState.selectedModule || 'evidence-graph')));
       document.querySelector('#approve-solution')?.addEventListener('click', () => {
-        showToast('Architecture approved. Build can now use the design.');
+        showToast('System structure approved. Module designs are ready to start.');
         setTimeout(() => go('approval'), 420);
       });
-      document.querySelector('#continue-build')?.addEventListener('click', () => showToast('This mockup ends here. The current Build workflow starts next.'));
+      document.querySelector('#continue-build')?.addEventListener('click', () => showToast(`${moduleName(appState.selectedModule || 'evidence-store')} module-design session created. Progress is saved separately.`));
       document.querySelector('#preview-verify')?.addEventListener('click', () => go('verification'));
       document.querySelectorAll('[data-scenario]').forEach(button => button.addEventListener('click', () => {
         appState.selectedScenario = button.dataset.scenario;

@@ -1,7 +1,8 @@
 # Use-case planning proposal site
 
-This site publishes the visual summary, interactive mockup, and full proposal.
-It uses [vinext](https://github.com/cloudflare/vinext).
+This site publishes the visual summary, interactive mockup, proposal, and
+exhaustive product and implementation specification. It uses
+[vinext](https://github.com/cloudflare/vinext).
 
 ## Prerequisites
 
