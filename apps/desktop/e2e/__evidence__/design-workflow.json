@@ -23,7 +23,7 @@
       "detail": {
         "ok": true,
         "revision": "r1",
-        "auditEventId": "94fe676b-76bb-4607-8ba8-020315fb5a4a",
+        "auditEventId": "c25eef3f-4d49-498d-b044-bf5b6fc046f5",
         "validNextActionCount": 1
       }
     },
@@ -75,7 +75,7 @@
       "ok": true,
       "detail": {
         "revision": "r1",
-        "auditEventId": "94fe676b-76bb-4607-8ba8-020315fb5a4a",
+        "auditEventId": "c25eef3f-4d49-498d-b044-bf5b6fc046f5",
         "idempotentReplay": true
       }
     },
@@ -90,9 +90,9 @@
     "electron": "/home/user/engineering-ui-kit/node_modules/electron/dist/electron",
     "xvfbWrapped": true,
     "electronDisableSandbox": "1",
-    "euikDataDir": "/tmp/euik-design-e2e-0sedh2",
+    "euikDataDir": "/tmp/euik-design-e2e-NOWAgS",
     "builtWorkspaces": []
   },
-  "startedAt": "2026-07-25T14:47:42.112Z",
-  "endedAt": "2026-07-25T14:47:44.041Z"
+  "startedAt": "2026-07-25T15:04:00.508Z",
+  "endedAt": "2026-07-25T15:04:01.879Z"
 }
