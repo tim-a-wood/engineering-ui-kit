@@ -37,14 +37,14 @@ test("uses direct task labels in the briefing and mockup", async () => {
 
   assert.match(briefing, /Describe the work\./);
   assert.match(briefing, /Review the system design\./);
-  assert.match(mockup, /Create use-case draft/);
+  assert.match(mockup, /Create draft/);
   assert.match(mockup, /Define the system/);
-  assert.match(mockup, /Review the use-case draft/);
+  assert.match(mockup, /Check the use-case draft/);
   assert.match(mockup, /Architecture diagram/);
   assert.match(mockup, /Relationship canvas/);
   assert.match(mockup, /class="relationship-canvas"/);
   assert.match(mockup, /<canvas class="relationship-lines"/);
-  assert.match(mockup, /Focused relationships/);
+  assert.match(mockup, /Selected relationships/);
   assert.match(mockup, /data-relationship-mode="focus"/);
   assert.match(mockup, /data-relationship-mode="all"/);
   assert.match(mockup, /Deployment/);
@@ -59,7 +59,7 @@ test("uses direct task labels in the briefing and mockup", async () => {
   assert.match(mockup, /role="dialog"/);
   assert.match(mockup, /function openNodeDetailModal\(/);
   assert.match(mockup, /classList\.contains\('diagram-node'\)/);
-  assert.match(mockup, /5 · Verify evidence/);
+  assert.match(mockup, /5 · Check test evidence/);
   assert.match(mockup, /function verificationView\(/);
   assert.match(mockup, /data-scenario="\$\{item\.id\}"/);
   assert.match(mockup, /Screenshot evidence/);
@@ -83,16 +83,16 @@ test("uses direct task labels in the briefing and mockup", async () => {
   assert.match(mockup, /orthogonal routing/);
   assert.match(mockup, /data-uml-element=/);
   assert.match(mockup, /id="uml-element-modal"/);
-  assert.match(mockup, /Discuss with agent/);
+  assert.match(mockup, /Discuss with the agent/);
   assert.match(mockup, /Propose change/);
   assert.match(mockup, /Analyze impact/);
   assert.match(mockup, /Approve and assign to agent/);
   assert.match(mockup, /Required agent changes/);
   assert.match(mockup, /Design one module at a time/);
-  assert.match(mockup, /Approve system structure/);
+  assert.match(mockup, /Approve structure/);
   assert.match(mockup, /id="design-selected-module"/);
   assert.match(mockup, /0 of 17 approved/);
-  assert.match(mockup, /Start \$\{selectedModuleName\} design/);
+  assert.match(mockup, /Design \$\{selectedModuleName\}/);
   assert.match(mockup, /<b>Requirements<\/b>/);
   assert.match(mockup, /closeNodeDetailModal\(\{restoreFocus:false\}\)/);
   assert.doesNotMatch(mockup, /id="scenario-diagrams"/);
@@ -135,6 +135,32 @@ test("uses direct task labels in the briefing and mockup", async () => {
 
   for (const phrase of obsoletePhrases) {
     assert.doesNotMatch(briefing, new RegExp(phrase, "i"));
+    assert.doesNotMatch(mockup, new RegExp(phrase, "i"));
+  }
+});
+
+test("uses ASD-STE100 language in the workflow interface", async () => {
+  const mockup = await readText(new URL("public/mockup.html", siteRoot));
+
+  assert.match(mockup, /data-copy-standard="ASD-STE100 Issue 9"/);
+  assert.match(mockup, /Describe the user tasks/);
+  assert.match(mockup, /Check the system design/);
+  assert.match(mockup, /Design one module at a time/);
+  assert.match(mockup, /Check automated test evidence/);
+  assert.doesNotMatch(
+    mockup,
+    /\b(?:can't|don't|doesn't|won't|isn't|aren't|it's|that's|you'll|we'll|didn't|wasn't|weren't|shouldn't|wouldn't|couldn't)\b/i,
+  );
+
+  const obsoleteCopy = [
+    "What work must users do?",
+    "Review and explore the system design",
+    "Review automated scenario evidence",
+    "Draft is almost complete",
+    "screenshot not applicable",
+  ];
+
+  for (const phrase of obsoleteCopy) {
     assert.doesNotMatch(mockup, new RegExp(phrase, "i"));
   }
 });

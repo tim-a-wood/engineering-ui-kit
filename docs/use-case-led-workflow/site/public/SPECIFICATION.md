@@ -8,7 +8,7 @@
 | Product | Engineering UI Kit — Capabilities |
 | Scope | Plan, Design, Build, Connect, Verify |
 | Primary sample | DO-178C Audit Hub |
-| Language | ASD-STE100-informed plain technical English |
+| Language | ASD-STE100 Simplified Technical English, Issue 9 |
 | UML subset | UML 2.5.1 component, activity, state machine, sequence, and use-case diagrams |
 
 This document specifies the required behavior of the use-case-led Capabilities
@@ -930,7 +930,7 @@ The impact result shall identify:
 | Deployable allocation | Foundation, composition, commands, health checks, connection evidence |
 | Module split or merge | Architecture, affected module designs, paths, contracts, ownership, tests |
 | Use-case step | Application, architecture path, modules that perform the step, scenario test |
-| Screenshot expectation | Scenario test and Verify evidence policy |
+| Screenshot expectation | Scenario test and test-evidence policy |
 
 The product shall not mark unrelated modules stale.
 
@@ -2523,7 +2523,7 @@ module-handoff/
 | Use | Do not use |
 | --- | --- |
 | Define the work | Shape the product |
-| Review the use-case draft | Review generated intent |
+| Check the use-case draft | Check generated intent |
 | System design | Solution map |
 | Design modules | Decompose capabilities |
 | Module design | Capability elaboration |
