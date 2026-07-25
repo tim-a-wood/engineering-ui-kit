@@ -96,9 +96,33 @@ import {
   type DesignDiagnostic,
   type DesignAuditEvent,
   type DesignOperationResult,
+  APPROVAL_AUTHORITIES,
+  type ApprovalAuthority,
+  type VerifySummary,
 } from '@engineering-ui-kit/core/design-browser'
 import type { OperationContract, CapDiagnostic } from '@engineering-ui-kit/core'
-import { DesignBridgeClient, detectDesignBridgeCaller, LOCAL_USER_ACTOR, type DesignBridgeCaller, type BridgeChangeInput } from './designBridgeClient'
+import {
+  DesignBridgeClient,
+  detectDesignBridgeCaller,
+  isUnknownOperationResponse,
+  LOCAL_USER_ACTOR,
+  type AdapterConfigurationResponse,
+  type AdapterPrincipalResponse,
+  type AdapterRolesResponse,
+  type DesignBridgeCaller,
+  type BridgeChangeInput,
+} from './designBridgeClient'
+
+/**
+ * §4 "Users and authority" — the full authority list, mirrored from
+ * `records.ts` `APPROVAL_AUTHORITIES` (re-exported by
+ * `@engineering-ui-kit/core/design-browser`, imported directly above so this
+ * never drifts from the canonical list). `ProjectSetupPanel`'s "Grant design
+ * authorities to this session user" action requests every one of these for
+ * the current principal — the coordinator's `adapter:configureProjectRoles`
+ * implementation, not this GUI, decides whether the request is honored.
+ */
+export const ALL_DESIGN_AUTHORITIES: readonly ApprovalAuthority[] = APPROVAL_AUTHORITIES
 
 /**
  * Local mirror of `getWorkflowStatus`'s return shape
@@ -191,6 +215,41 @@ export type DesignWorkspaceMode = 'sample' | 'project'
 /** Status of the one in-flight or last-completed bridge round trip, for the mode banner / loading states in `project` mode. */
 export type BridgeStatus = 'idle' | 'loading' | 'ready' | 'error'
 
+// ---------------------------------------------------------------------------
+// Project setup (§4, §17.3, §20.2, §25.3 — second-review P1: "nothing
+// configures the repository adapter or project roles")
+// ---------------------------------------------------------------------------
+
+/** `adapter:getProjectRepository` / `adapter:configureProjectRepository` cache. */
+export type RepositoryConfigState =
+  | { status: 'idle' | 'loading' }
+  | { status: 'configured'; repositoryRoot: string }
+  | { status: 'not-configured'; message: string }
+  | { status: 'error'; message: string }
+
+/** `adapter:getPrincipal` cache — `'unavailable'` is the graceful fallback for a desktop build that has not implemented the operation yet (`EUC16-UNKNOWN-OPERATION`). */
+export type PrincipalState =
+  | { status: 'idle' | 'loading' }
+  | { status: 'ready'; principal: string }
+  | { status: 'unavailable'; message: string }
+  | { status: 'error'; message: string }
+
+/** `adapter:configureProjectRoles` cache — same `'unavailable'` graceful fallback. */
+export type RolesGrantState =
+  | { status: 'idle' | 'loading' }
+  | { status: 'granted'; principal: string; authorities: string[] }
+  | { status: 'unavailable'; message: string }
+  | { status: 'error'; message: string }
+
+/** `getScenarioCoverage` / `getVerificationEvidence` cache for `project`-mode Verify (§14.4, §17.1). */
+export type ProjectVerificationState =
+  | { status: 'idle' | 'loading' }
+  | { status: 'ready'; summary?: VerifySummary; evidence?: ScenarioRun }
+  | { status: 'error'; message: string }
+
+/** §17.3 "actor... does not hold... an authority" — the exact diagnostic code the Blocked-state guidance watches for. */
+export const AUTHORITY_NOT_CONFIGURED_CODE = 'EUC16-AUTHORITY-NOT-CONFIGURED'
+
 export type DesignState = {
   mode: DesignWorkspaceMode
   /** `project` mode only — the last bridge transport/service-level error, rendered verbatim; cleared on the next successful call. */
@@ -240,6 +299,14 @@ export type DesignState = {
   multiModuleHandoff?: { moduleIds: string[]; result: BuildMultiModulePacketResult }
   /** The returned-delta review flow, keyed by module id (§11.5, §11.6, §12). */
   deltaFlows: Record<string, DeltaFlowState>
+
+  // -- Project setup (`project` mode only) --------------------------------
+  repositoryConfig: RepositoryConfigState
+  principal: PrincipalState
+  rolesGrant: RolesGrantState
+
+  // -- Verify (`project` mode only) ---------------------------------------
+  projectVerification: ProjectVerificationState
 }
 
 const STORAGE_PREFIX = 'euik-design-workspace:'
@@ -575,6 +642,10 @@ function emptyProjectState(projectId: string, actor: string = LOCAL_USER_ACTOR):
     diagramImpacts: {},
     moduleHandoffs: {},
     deltaFlows: {},
+    repositoryConfig: { status: 'idle' },
+    principal: { status: 'idle' },
+    rolesGrant: { status: 'idle' },
+    projectVerification: { status: 'idle' },
   }
 }
 
@@ -719,6 +790,12 @@ export class DesignStore {
       diagramImpacts: {},
       moduleHandoffs: {},
       deltaFlows: {},
+      // `sample` mode never talks to the bridge/adapter — these stay `idle`
+      // and `ProjectSetupPanel`/`project`-mode Verify are never rendered.
+      repositoryConfig: { status: 'idle' },
+      principal: { status: 'idle' },
+      rolesGrant: { status: 'idle' },
+      projectVerification: { status: 'idle' },
     }
   }
 
@@ -930,6 +1007,168 @@ export class DesignStore {
       otherDesigns: this.state.moduleDesigns.filter((d) => d.module.moduleId !== moduleId),
       approvedContracts: this.state.approvedContracts,
     }
+  }
+
+  // ---------------------------------------------------------------------
+  // Project setup — repository root, session principal, project roles
+  // (§4, §17.3, §20.2, §25.3 — second-review P1: "nothing configures the
+  // repository adapter or project roles"). `project` mode only; every
+  // method here is a no-op outside `project` mode. `adapter:*` operations
+  // never appear in `getValidNextActions` (they are adapter-owned, not
+  // §17.2 change operations), so this store never gates them behind a
+  // service-reported enabled flag the way primaryAction does.
+  // ---------------------------------------------------------------------
+
+  /** Loads (or reloads) the repository-root and principal state shown by `ProjectSetupPanel`. Safe to call repeatedly (e.g. on every panel mount). */
+  async loadProjectSetup(): Promise<void> {
+    if (!this.isProjectMode()) return
+    const client = this.requireBridge()
+    this.patch({ repositoryConfig: { status: 'loading' }, principal: { status: 'loading' } })
+    this.emit()
+    const [repositoryConfig, principal] = await Promise.all([
+      this.readRepositoryConfig(client),
+      this.readPrincipal(client),
+    ])
+    this.patch({ repositoryConfig, principal })
+    this.emit()
+  }
+
+  private async readRepositoryConfig(client: DesignBridgeClient): Promise<RepositoryConfigState> {
+    try {
+      const response = await client.read<AdapterConfigurationResponse>('adapter:getProjectRepository', [{ projectId: client.projectId }])
+      if (response.ok) return { status: 'configured', repositoryRoot: response.repositoryRoot }
+      return { status: 'not-configured', message: response.diagnostics[0]?.message ?? 'No repository is configured for this project yet.' }
+    } catch (error) {
+      return { status: 'error', message: error instanceof Error ? error.message : String(error) }
+    }
+  }
+
+  private async readPrincipal(client: DesignBridgeClient): Promise<PrincipalState> {
+    try {
+      // `adapter:getPrincipal` takes no args — the principal is the
+      // dispatcher's own OS-derived identity, not scoped to a project.
+      const response = await client.read<AdapterPrincipalResponse>('adapter:getPrincipal', [])
+      if (isUnknownOperationResponse(response)) {
+        return { status: 'unavailable', message: 'Principal display requires a newer desktop build.' }
+      }
+      if (response.ok) return { status: 'ready', principal: response.principal }
+      return { status: 'error', message: response.diagnostics[0]?.message ?? 'Could not read the session principal.' }
+    } catch (error) {
+      return { status: 'error', message: error instanceof Error ? error.message : String(error) }
+    }
+  }
+
+  /** `ProjectSetupPanel`'s "Configure repository root" form. */
+  async configureRepositoryRoot(repositoryRoot: string): Promise<AdapterConfigurationResponse> {
+    if (!this.isProjectMode()) throw new Error('configureRepositoryRoot is only available in project mode')
+    const client = this.requireBridge()
+    this.patch({ repositoryConfig: { status: 'loading' } })
+    this.emit()
+    try {
+      const response = await client.change<AdapterConfigurationResponse>('adapter:configureProjectRepository', { projectId: client.projectId, repositoryRoot })
+      this.patch({
+        repositoryConfig: response.ok
+          ? { status: 'configured', repositoryRoot: response.repositoryRoot }
+          : { status: 'error', message: response.diagnostics[0]?.message ?? 'Could not configure the repository root.' },
+        announcement: response.ok ? `Configured the repository root: ${response.repositoryRoot}.` : `Could not configure the repository root: ${response.diagnostics[0]?.message ?? 'see diagnostics'}.`,
+      })
+      this.emit()
+      return response
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.patch({ repositoryConfig: { status: 'error', message } })
+      this.emit()
+      throw error
+    }
+  }
+
+  /**
+   * `ProjectSetupPanel`'s "Grant design authorities to this session user"
+   * action. Requests every §4 authority (`ALL_DESIGN_AUTHORITIES`) for the
+   * current principal — loads the principal first if it has not been read
+   * yet, then sends both `grantee` and `authorities` explicitly (rather
+   * than relying on `adapter:configureProjectRoles`'s own "defaults to the
+   * stamped principal / all authorities" server-side default) so the
+   * action's effect always matches its label exactly. The response
+   * (`{ ok, auditEventId }`) does not echo what was granted, so the granted
+   * `principal`/`authorities` shown afterward are what this call requested,
+   * not a server echo. Gracefully reports `'unavailable'` on an
+   * `EUC16-UNKNOWN-OPERATION` response — a defensive fallback for an older
+   * desktop build (§17.3, `designBridgeClient.ts`).
+   */
+  async grantDesignAuthoritiesToSessionUser(): Promise<RolesGrantState> {
+    if (!this.isProjectMode()) throw new Error('grantDesignAuthoritiesToSessionUser is only available in project mode')
+    const client = this.requireBridge()
+    let principalState = this.state.principal
+    if (principalState.status !== 'ready') {
+      principalState = await this.readPrincipal(client)
+      this.patch({ principal: principalState })
+      this.emit()
+    }
+    if (principalState.status !== 'ready') {
+      const result: RolesGrantState = { status: 'error', message: 'The session principal is not available yet; cannot grant authorities to an unknown user.' }
+      this.patch({ rolesGrant: result })
+      this.emit()
+      return result
+    }
+    const grantee = principalState.principal
+    const authorities = [...ALL_DESIGN_AUTHORITIES]
+    this.patch({ rolesGrant: { status: 'loading' } })
+    this.emit()
+    try {
+      const response = await client.change<AdapterRolesResponse>('adapter:configureProjectRoles', { projectId: client.projectId, grantee, authorities })
+      let result: RolesGrantState
+      if (isUnknownOperationResponse(response)) {
+        result = { status: 'unavailable', message: 'Granting authorities requires a newer desktop build.' }
+      } else if (response.ok) {
+        result = { status: 'granted', principal: grantee, authorities }
+      } else {
+        result = { status: 'error', message: response.diagnostics[0]?.message ?? 'Could not grant design authorities.' }
+      }
+      this.patch({
+        rolesGrant: result,
+        announcement:
+          result.status === 'granted'
+            ? `Granted ${result.authorities.length} design authorit${result.authorities.length === 1 ? 'y' : 'ies'} to ${result.principal}.`
+            : result.message,
+      })
+      this.emit()
+      return result
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      const result: RolesGrantState = { status: 'error', message }
+      this.patch({ rolesGrant: result })
+      this.emit()
+      return result
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Verify (`project` mode) — §14.4, §17.1. `getScenarioCoverage` returns
+  // the same `VerifySummary` shape `buildVerifySummary` computes locally
+  // for `sample` mode (`packages/core` `verificationPlanner.ts`), so
+  // `DesignVerifyView` renders both from one shared summary shape.
+  // `getVerificationEvidence` is only called for the summary's own
+  // `firstFailedStep.runId`, when one is reported — there is no bridge
+  // operation to list every scenario run, so this never invents one.
+  // ---------------------------------------------------------------------
+
+  async loadProjectVerification(): Promise<void> {
+    if (!this.isProjectMode()) return
+    const client = this.requireBridge()
+    this.patch({ projectVerification: { status: 'loading' } })
+    this.emit()
+    try {
+      const summary = await client.read<VerifySummary | undefined>('getScenarioCoverage', [client.projectId])
+      let evidence: ScenarioRun | undefined
+      if (summary?.firstFailedStep) {
+        evidence = await client.read<ScenarioRun | undefined>('getVerificationEvidence', [client.projectId, summary.firstFailedStep.runId])
+      }
+      this.patch({ projectVerification: { status: 'ready', summary, evidence } })
+    } catch (error) {
+      this.patch({ projectVerification: { status: 'error', message: error instanceof Error ? error.message : String(error) } })
+    }
+    this.emit()
   }
 
   // ---------------------------------------------------------------------
@@ -1240,17 +1479,70 @@ export class DesignStore {
   // Diagram discussion / propose-change (§9.8, §15, §10)
   // ---------------------------------------------------------------------
 
+  /** Appends one bridge-returned discussion entry to the local cache — a pure presentation cache, never an authoritative record (the service already persisted `entry` via `workspace.saveDiagramDiscussionEntry`). */
+  private appendDiagramDiscussionEntry(elementId: string, entry: DiagramDiscussionEntry): void {
+    const existing = this.state.diagramDiscussions[elementId] ?? []
+    this.patch({ diagramDiscussions: { ...this.state.diagramDiscussions, [elementId]: [...existing, entry] } })
+  }
+
+  /**
+   * `project` mode: `proposeVisualChange` then, on success, `analyzeVisualChange`
+   * (§17.2) — the same two-step service split sample mode's single local call
+   * (`analyzeDesignChange` + two synthesized entries) combines into one user
+   * action. Both calls' returned records (`DiagramDiscussionEntry`,
+   * `DesignImpactRecord`) are cached and rendered verbatim; the local
+   * "impact analysis" discussion entry below is a non-authoritative
+   * presentation link to that verbatim `DesignImpactRecord` (the service
+   * records its own `impactAnalysis` entry but `analyzeVisualChange` returns
+   * only the impact record, not that entry, so `DiagramDetailModal`'s
+   * existing "find the impact via the discussion history" lookup has
+   * something bridge-derived to find) — never a fabricated approval or
+   * check outcome.
+   */
+  private async proposeDiagramChangeProject(design: ModuleDesignSpecification, target: DiagramElementTarget, description: string): Promise<void> {
+    const client = this.requireBridge()
+    const proposeResult = await this.runChangeOperation<DiagramDiscussionEntry>('proposeVisualChange', {
+      projectId: client.projectId,
+      diagramId: target.diagramId,
+      elementId: target.elementId,
+      description,
+    })
+    if (!proposeResult.ok || !proposeResult.value) return
+    this.appendDiagramDiscussionEntry(target.elementId, proposeResult.value)
+
+    const changeKind: DesignChangeKind = target.isRenameable ? 'rename' : 'labelOnly'
+    const analyzeResult = await this.runChangeOperation<DesignImpactRecord>('analyzeVisualChange', {
+      projectId: client.projectId,
+      diagramId: target.diagramId,
+      elementId: target.elementId,
+      changeKind,
+      initiatingRecordId: design.id,
+      initiatingRevision: design.revision,
+      description,
+    })
+    if (!analyzeResult.ok || !analyzeResult.value) return
+    const impact = analyzeResult.value
+    this.patch({ diagramImpacts: { ...this.state.diagramImpacts, [impact.impactId]: impact } })
+    const now = this.now()
+    this.appendDiagramDiscussionEntry(target.elementId, {
+      id: childId(target.diagramId, 'discussion', `${target.elementId}.${now}.impact`),
+      elementId: target.elementId,
+      diagramId: target.diagramId,
+      author: 'system',
+      kind: 'impactAnalysis',
+      text: `Impact analysis: ${impact.items.length} affected item${impact.items.length === 1 ? '' : 's'}.`,
+      impactRecordId: impact.impactId,
+      at: now,
+    })
+    this.emit()
+  }
+
   /** Impact analysis runs BEFORE any record change — this method never mutates `design` (§9.8, §10). */
   proposeDiagramChange(moduleId: string, target: DiagramElementTarget, description: string): DesignImpactRecord | undefined {
     const design = this.getDesign(moduleId)
     if (!design || !description.trim()) return undefined
     if (this.isProjectMode()) {
-      // `proposeVisualChange`/`analyzeVisualChange`/`approveChangePlan` are
-      // real §17.2 bridge operations, but this GUI foundation packet does
-      // not yet wire the diagram-discussion flow through them — see review
-      // finding #1, remaining risks. No local mutation happens instead of a
-      // silently-approximate one.
-      this.announce('Diagram discussion is not available in project mode yet.')
+      this.pendingOperation = this.proposeDiagramChangeProject(design, target, description).catch(() => undefined)
       return undefined
     }
     const now = this.now()
@@ -1303,12 +1595,53 @@ export class DesignStore {
     return impact
   }
 
+  /**
+   * `project` mode: `approveChangePlan` (§17.2) against the pending impact
+   * record's id (found the same way sample mode finds it — the last
+   * `impactAnalysis` discussion entry). `approvedBy` in the resulting
+   * discussion entry is read from the service's own returned
+   * `DesignImpactRecord.approval.approvedBy` (§20.2 "no approval shortcut",
+   * second-review P1: never a caller-supplied or locally-invented name).
+   */
+  private async approveDiagramChangePlanProject(target: DiagramElementTarget): Promise<void> {
+    const history = this.state.diagramDiscussions[target.elementId] ?? []
+    const lastImpactEntry = [...history].reverse().find((entry) => entry.kind === 'impactAnalysis')
+    if (!lastImpactEntry?.impactRecordId) {
+      this.announce('Propose a change and run impact analysis before approving a change plan.')
+      this.emit()
+      return
+    }
+    const client = this.requireBridge()
+    const result = await this.runChangeOperation<DesignImpactRecord>('approveChangePlan', {
+      projectId: client.projectId,
+      diagramId: target.diagramId,
+      elementId: target.elementId,
+      impactId: lastImpactEntry.impactRecordId,
+      authority: 'module-owner',
+    })
+    if (!result.ok || !result.value) return
+    const impact = result.value
+    this.patch({ diagramImpacts: { ...this.state.diagramImpacts, [impact.impactId]: impact } })
+    const now = this.now()
+    this.appendDiagramDiscussionEntry(target.elementId, {
+      id: childId(target.diagramId, 'discussion', `${target.elementId}.${now}.approved`),
+      elementId: target.elementId,
+      diagramId: target.diagramId,
+      author: impact.approval?.approvedBy ?? 'unknown',
+      kind: 'approvedChangePlan',
+      text: 'Change plan approved.',
+      impactRecordId: impact.impactId,
+      at: now,
+    })
+    this.emit()
+  }
+
   /** User action — records approval and, for a renameable element, applies the approved rename to the underlying record so unaffected diagrams stay identical (§9.8, §9.11). */
   approveDiagramChangePlan(moduleId: string, target: DiagramElementTarget): void {
     const design = this.getDesign(moduleId)
     if (!design) return
     if (this.isProjectMode()) {
-      this.announce('Diagram discussion is not available in project mode yet.')
+      this.pendingOperation = this.approveDiagramChangePlanProject(target).catch(() => undefined)
       return
     }
     const now = this.now()
@@ -1340,12 +1673,31 @@ export class DesignStore {
     this.commit()
   }
 
+  /**
+   * `project` mode: `proposeVisualChange` (§17.2) — the closest matching
+   * bridge operation, since the service exposes no separate freeform
+   * "discussion" write; the returned `DiagramDiscussionEntry` (kind
+   * `'proposedChange'`) is rendered verbatim exactly as the service
+   * recorded it (`DISCUSSION_KIND_LABEL` in `DiagramDetailModal.tsx` labels
+   * that kind "Proposed change" regardless of which UI action produced it).
+   */
+  private async addDiagramDiscussionProject(target: DiagramElementTarget, text: string): Promise<void> {
+    const client = this.requireBridge()
+    const result = await this.runChangeOperation<DiagramDiscussionEntry>('proposeVisualChange', {
+      projectId: client.projectId,
+      diagramId: target.diagramId,
+      elementId: target.elementId,
+      description: text,
+    })
+    if (result.ok && result.value) this.appendDiagramDiscussionEntry(target.elementId, result.value)
+  }
+
   /** §9.8 `Discuss with agent`. */
   addDiagramDiscussion(moduleId: string, target: DiagramElementTarget, text: string): void {
     void moduleId
     if (!text.trim()) return
     if (this.isProjectMode()) {
-      this.announce('Diagram discussion is not available in project mode yet.')
+      this.pendingOperation = this.addDiagramDiscussionProject(target, text).catch(() => undefined)
       return
     }
     const now = this.now()

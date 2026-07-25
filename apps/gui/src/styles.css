@@ -7912,3 +7912,67 @@ code.path-wrap {
   gap: var(--semantic-spacing-2);
   font-size: var(--semantic-typography-size-sm);
 }
+
+/* ==========================================================================
+   Project setup panel + blocked-state guidance (§4, §17.3, §20.2, §25.3 —
+   second-review P1 finding: "nothing configures the repository adapter or
+   project roles")
+   ========================================================================== */
+
+.design-project-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-4);
+}
+
+.design-project-setup-section {
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-2);
+}
+
+.design-project-setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-1);
+}
+
+.design-authority-blocked {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--semantic-spacing-2);
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-4);
+  border-radius: var(--semantic-radius-md);
+  border: 1px solid var(--semantic-status-danger);
+  background: var(--semantic-status-danger-tint);
+  color: var(--semantic-text-primary);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-authority-blocked p {
+  margin: 0;
+}
+
+/* -- Verify project-mode evidence detail (§14.4, §17.1) ------------------- */
+
+.design-verify-evidence-detail {
+  margin-top: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+}
+
+.design-verify-evidence-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-1);
+}

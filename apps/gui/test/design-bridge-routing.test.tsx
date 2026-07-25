@@ -13,18 +13,30 @@
  * Asserts:
  *  - 'project' mode is entered only with a bridge AND a configured project;
  *  - every user action in 'project' mode issues exactly one bridge call for
- *    its operation, with a fresh idempotency key and a `user:`-prefixed
- *    actor;
+ *    its operation, with a fresh idempotency key and a present-but-
+ *    `undefined` `actor` field (second-review P1 fix — the desktop IPC's
+ *    own `stampPrincipalOnArgs` derives and stamps the real OS principal;
+ *    this GUI never asserts one — see `designBridgeClient.ts` `change()`);
  *  - no local state mutation happens before the bridge round trip resolves;
  *  - service rejection diagnostics render verbatim;
  *  - `getValidNextActions` — not local logic — drives whether `primaryAction`
  *    dispatches a bridge call at all;
  *  - the sample banner is present only in 'sample' mode, absent in 'project'
- *    mode.
+ *    mode;
+ *  - the diagram discussion flow (`Discuss with agent` / `Propose change` /
+ *    `Approve change plan`) issues the real `proposeVisualChange` /
+ *    `analyzeVisualChange` / `approveChangePlan` bridge operations;
+ *  - the project setup panel's bridge calls (`adapter:getProjectRepository`,
+ *    `adapter:configureProjectRepository`, `adapter:getPrincipal`,
+ *    `adapter:configureProjectRoles`) and their `EUC16-UNKNOWN-OPERATION`
+ *    graceful-fallback path;
+ *  - a rejected approval carrying `EUC16-AUTHORITY-NOT-CONFIGURED` surfaces
+ *    the "Go to project setup" link;
+ *  - `project`-mode Verify renders `getScenarioCoverage`'s returned summary.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import {
   buildApplyPlan,
   buildSampleAuditHub,
@@ -32,10 +44,12 @@ import {
   simulateApply,
   type DeltaApplyResult,
   type DesignDiagnostic,
+  type DesignImpactRecord,
+  type DiagramDiscussionEntry,
   type ModuleDesignSpecification,
   type ValidNextAction,
 } from '@engineering-ui-kit/core/design-browser'
-import { DesignStore } from '../src/views/design/designState'
+import { ALL_DESIGN_AUTHORITIES, DesignStore } from '../src/views/design/designState'
 import { DesignWorkspaceView } from '../src/views/design/DesignWorkspaceView'
 import { detectDesignBridgeCaller, type DesignBridgeRequest } from '../src/views/design/designBridgeClient'
 
@@ -158,15 +172,21 @@ function setup(initialValidNextActions: ValidNextAction[] = [{ operation: 'start
   }
 }
 
-/** Exactly one recorded call for `operation`; also checks the §17.3 idempotency key and `user:`-prefixed actor. */
+/**
+ * Exactly one recorded call for `operation`; also checks the §17.3
+ * idempotency key, and that `actor` is present as a key (so the desktop
+ * IPC's `stampPrincipalOnArgs` recognizes this as a change-operation input
+ * to stamp) but carries no client-asserted value (second-review P1 fix —
+ * see `designBridgeClient.ts` `change()`).
+ */
 function assertSingleChangeCall(calls: DesignBridgeRequest[], operation: string): Record<string, unknown> {
   const matches = calls.filter((c) => c.operation === operation)
   expect(matches.length, `expected exactly one ${operation} call, saw ${matches.length}`).toBe(1)
   const input = matches[0]!.args[0] as Record<string, unknown>
   expect(typeof input.idempotencyKey).toBe('string')
   expect((input.idempotencyKey as string).length).toBeGreaterThan(0)
-  expect(typeof input.actor).toBe('string')
-  expect((input.actor as string).startsWith('user:')).toBe(true)
+  expect('actor' in input).toBe(true)
+  expect(input.actor).toBeUndefined()
   return input
 }
 
@@ -383,5 +403,325 @@ describe('getValidNextActions drives button enablement — never local approval 
     store.primaryAction(APPROVED_MODULE_ID)
     await store.waitForPendingOperation()
     expect(calls.some((c) => c.operation === 'approveModuleDesign')).toBe(true)
+  })
+})
+
+describe('diagram discussion (§17.2) — proposeVisualChange → analyzeVisualChange → approveChangePlan', () => {
+  it('Propose change issues proposeVisualChange then analyzeVisualChange in order, caching the returned impact verbatim; Approve change plan then issues approveChangePlan reading approvedBy from the returned record', async () => {
+    const { store, calls, responses } = setup()
+    await store.ready
+    store.selectModule(APPROVED_MODULE_ID)
+    await store.waitForPendingOperation()
+
+    const design = store.getDesign(APPROVED_MODULE_ID)!
+    const target = {
+      diagramId: `${design.id}.diagram.component`,
+      diagramKind: 'component' as const,
+      elementId: `${design.id}.element.component.${APPROVED_MODULE_ID}`,
+      elementLabel: design.module.name,
+      isRenameable: false,
+    }
+
+    const proposedEntry: DiagramDiscussionEntry = {
+      id: 'entry.propose.1',
+      elementId: target.elementId,
+      diagramId: target.diagramId,
+      author: 'user:remote-principal',
+      kind: 'proposedChange',
+      text: 'Please rename',
+      at: '2026-07-25T00:00:00.000Z',
+    }
+    const impactRecord: DesignImpactRecord = {
+      schemaVersion: '1.0',
+      impactId: 'impact.remote.1',
+      projectId: PROJECT_ID,
+      initiatingRecordId: design.id,
+      initiatingRevision: design.revision,
+      changeKind: 'labelOnly',
+      description: 'Please rename',
+      items: [{ category: 'moduleDesign', targetId: APPROVED_MODULE_ID, reason: 'depends on this element', invalidation: 'reviewRequired' }],
+      orderedChangePlan: [],
+      createdAt: '2026-07-25T00:00:01.000Z',
+      contentHash: 'hash.impact.1',
+    }
+    responses.proposeVisualChange = () => okResult(proposedEntry)
+    responses.analyzeVisualChange = () => okResult(impactRecord)
+
+    store.proposeDiagramChange(APPROVED_MODULE_ID, target, 'Please rename')
+    await store.waitForPendingOperation()
+
+    const proposeInput = assertSingleChangeCall(calls, 'proposeVisualChange')
+    expect(proposeInput.diagramId).toBe(target.diagramId)
+    expect(proposeInput.elementId).toBe(target.elementId)
+    expect(proposeInput.description).toBe('Please rename')
+
+    const analyzeInput = assertSingleChangeCall(calls, 'analyzeVisualChange')
+    expect(analyzeInput.initiatingRecordId).toBe(design.id)
+    expect(analyzeInput.initiatingRevision).toBe(design.revision)
+
+    // §17.2 order: proposeVisualChange strictly before analyzeVisualChange.
+    const proposeIndex = calls.findIndex((c) => c.operation === 'proposeVisualChange')
+    const analyzeIndex = calls.findIndex((c) => c.operation === 'analyzeVisualChange')
+    expect(proposeIndex).toBeGreaterThanOrEqual(0)
+    expect(analyzeIndex).toBeGreaterThan(proposeIndex)
+
+    // Returned records rendered/cached verbatim — not locally re-derived.
+    expect(store.getState().diagramImpacts[impactRecord.impactId]).toBe(impactRecord)
+    const discussionAfterPropose = store.getDiagramDiscussion(target.elementId)
+    expect(discussionAfterPropose).toContain(proposedEntry)
+    expect(discussionAfterPropose.some((entry) => entry.kind === 'impactAnalysis' && entry.impactRecordId === impactRecord.impactId)).toBe(true)
+
+    const approvedImpact: DesignImpactRecord = {
+      ...impactRecord,
+      approval: {
+        approvedBy: 'user:remote-principal',
+        authority: 'module-owner',
+        approvedAt: '2026-07-25T00:00:02.000Z',
+        recordId: impactRecord.impactId,
+        revision: impactRecord.impactId,
+        contentHash: impactRecord.contentHash,
+      },
+    }
+    responses.approveChangePlan = () => okResult(approvedImpact)
+
+    store.approveDiagramChangePlan(APPROVED_MODULE_ID, target)
+    await store.waitForPendingOperation()
+
+    const approveInput = assertSingleChangeCall(calls, 'approveChangePlan')
+    expect(approveInput.impactId).toBe(impactRecord.impactId)
+    expect(approveInput.diagramId).toBe(target.diagramId)
+    expect(approveInput.elementId).toBe(target.elementId)
+
+    expect(store.getState().diagramImpacts[impactRecord.impactId]).toBe(approvedImpact)
+    const approvalEntry = store.getDiagramDiscussion(target.elementId).find((entry) => entry.kind === 'approvedChangePlan')
+    // §20.2 second-review P1 — the approver comes from the service's own
+    // returned record, never a local 'you'/constant.
+    expect(approvalEntry?.author).toBe('user:remote-principal')
+  })
+
+  it('Discuss with agent issues exactly one proposeVisualChange call and caches the returned entry verbatim', async () => {
+    const { store, calls, responses } = setup()
+    await store.ready
+    store.selectModule(APPROVED_MODULE_ID)
+    await store.waitForPendingOperation()
+
+    const design = store.getDesign(APPROVED_MODULE_ID)!
+    const target = {
+      diagramId: `${design.id}.diagram.component`,
+      diagramKind: 'component' as const,
+      elementId: `${design.id}.element.component.${APPROVED_MODULE_ID}`,
+      elementLabel: design.module.name,
+      isRenameable: false,
+    }
+    const discussEntry: DiagramDiscussionEntry = {
+      id: 'entry.discuss.1',
+      elementId: target.elementId,
+      diagramId: target.diagramId,
+      author: 'user:remote-principal',
+      kind: 'proposedChange',
+      text: 'What does this component depend on?',
+      at: '2026-07-25T00:00:00.000Z',
+    }
+    responses.proposeVisualChange = () => okResult(discussEntry)
+
+    store.addDiagramDiscussion(APPROVED_MODULE_ID, target, 'What does this component depend on?')
+    await store.waitForPendingOperation()
+
+    const input = assertSingleChangeCall(calls, 'proposeVisualChange')
+    expect(input.description).toBe('What does this component depend on?')
+    expect(store.getDiagramDiscussion(target.elementId)).toContain(discussEntry)
+  })
+})
+
+describe('project setup — repository root, session principal, project roles (§4, §17.3, §20.2, §25.3)', () => {
+  it('loadProjectSetup reads adapter:getProjectRepository and adapter:getPrincipal; configureRepositoryRoot then calls adapter:configureProjectRepository with a fresh idempotency key and no client-asserted actor', async () => {
+    const { store, calls, responses } = setup()
+    await store.ready
+
+    responses['adapter:getProjectRepository'] = () => ({
+      ok: false,
+      diagnostics: [{ id: 'r1', code: 'EUC16-ADAPTER-REPOSITORY-NOT-CONFIGURED', severity: 'blocker', message: `no repository is configured for project "${PROJECT_ID}"` }],
+    })
+    responses['adapter:getPrincipal'] = () => ({ ok: true, principal: 'user:remote-principal' })
+
+    await store.loadProjectSetup()
+
+    expect(store.getState().repositoryConfig.status).toBe('not-configured')
+    expect(store.getState().principal).toEqual({ status: 'ready', principal: 'user:remote-principal' })
+
+    responses['adapter:configureProjectRepository'] = () => ({ ok: true, projectId: PROJECT_ID, repositoryRoot: '/srv/repo', auditEventId: 'audit.repo.1' })
+    const response = await store.configureRepositoryRoot('/srv/repo')
+    expect(response.ok).toBe(true)
+
+    const matches = calls.filter((c) => c.operation === 'adapter:configureProjectRepository')
+    expect(matches.length).toBe(1)
+    const input = matches[0]!.args[0] as Record<string, unknown>
+    expect(typeof input.idempotencyKey).toBe('string')
+    expect('actor' in input).toBe(true)
+    expect(input.actor).toBeUndefined()
+    expect(input.repositoryRoot).toBe('/srv/repo')
+    expect(input.projectId).toBe(PROJECT_ID)
+
+    expect(store.getState().repositoryConfig).toEqual({ status: 'configured', repositoryRoot: '/srv/repo' })
+  })
+
+  it('grantDesignAuthoritiesToSessionUser loads the principal first, then calls adapter:configureProjectRoles with the full §4 authority list for that principal', async () => {
+    const { store, calls, responses } = setup()
+    await store.ready
+    responses['adapter:getPrincipal'] = () => ({ ok: true, principal: 'user:remote-principal' })
+    responses['adapter:configureProjectRoles'] = () => ({ ok: true, auditEventId: 'audit.roles.1' })
+
+    const result = await store.grantDesignAuthoritiesToSessionUser()
+
+    expect(calls.some((c) => c.operation === 'adapter:getPrincipal')).toBe(true)
+    const rolesCall = calls.find((c) => c.operation === 'adapter:configureProjectRoles')!
+    const input = rolesCall.args[0] as Record<string, unknown>
+    expect(input.grantee).toBe('user:remote-principal')
+    expect(input.authorities).toEqual([...ALL_DESIGN_AUTHORITIES])
+    expect('actor' in input).toBe(true)
+    expect(input.actor).toBeUndefined()
+    expect(typeof input.idempotencyKey).toBe('string')
+
+    expect(result).toEqual({ status: 'granted', principal: 'user:remote-principal', authorities: [...ALL_DESIGN_AUTHORITIES] })
+  })
+
+  it('gracefully reports "unavailable" (never an error or a crash) when adapter:getPrincipal / adapter:configureProjectRoles return EUC16-UNKNOWN-OPERATION', async () => {
+    const { store, responses } = setup()
+    await store.ready
+    const unknownOperation = (operation: string) => ({
+      ok: false,
+      diagnostics: [{ id: `unknown.${operation}`, code: 'EUC16-UNKNOWN-OPERATION', severity: 'blocker', message: `unknown operation: ${operation}` }],
+      validNextActions: [],
+    })
+    responses['adapter:getPrincipal'] = () => unknownOperation('adapter:getPrincipal')
+
+    await store.loadProjectSetup()
+    expect(store.getState().principal).toEqual({ status: 'unavailable', message: 'Principal display requires a newer desktop build.' })
+
+    const grantResult = await store.grantDesignAuthoritiesToSessionUser()
+    expect(grantResult).toEqual({ status: 'error', message: 'The session principal is not available yet; cannot grant authorities to an unknown user.' })
+  })
+
+  it('reports "unavailable" for adapter:configureProjectRoles specifically when the principal is known but the roles operation itself is unknown', async () => {
+    const { store, responses } = setup()
+    await store.ready
+    responses['adapter:getPrincipal'] = () => ({ ok: true, principal: 'user:remote-principal' })
+    responses['adapter:configureProjectRoles'] = () => ({
+      ok: false,
+      diagnostics: [{ id: 'unknown.roles', code: 'EUC16-UNKNOWN-OPERATION', severity: 'blocker', message: 'unknown operation: adapter:configureProjectRoles' }],
+      validNextActions: [],
+    })
+
+    const grantResult = await store.grantDesignAuthoritiesToSessionUser()
+    expect(grantResult).toEqual({ status: 'unavailable', message: 'Granting authorities requires a newer desktop build.' })
+  })
+})
+
+describe('blocked-state guidance (§17.3, §4) — EUC16-AUTHORITY-NOT-CONFIGURED links to the Setup tab', () => {
+  it('shows a "Go to project setup" button when the last operation was rejected for a missing authority, and clicking it opens the Setup tab', async () => {
+    const { store, responses, setDesign } = setup()
+    setDesign(APPROVED_MODULE_ID, readyForReviewDesign)
+    await store.ready
+    store.selectModule(APPROVED_MODULE_ID)
+    await store.waitForPendingOperation()
+
+    responses.approveModuleDesign = () =>
+      rejectedResult([
+        {
+          id: 'a1',
+          code: 'EUC16-AUTHORITY-NOT-CONFIGURED',
+          severity: 'blocker',
+          message: 'no project role is configured for actor user:remote-principal; an approval requires a configured authority, not a caller-asserted one',
+        },
+      ])
+    store.approveModule(APPROVED_MODULE_ID)
+    await store.waitForPendingOperation()
+
+    render(<DesignWorkspaceView store={store} />)
+    const link = screen.getByRole('button', { name: 'Go to project setup' })
+    expect(document.querySelector('.design-authority-blocked')?.textContent).toContain('no project role is configured for actor')
+
+    expect(document.getElementById('design-workspace-panel-setup')).toBeNull()
+    fireEvent.click(link)
+    expect(document.getElementById('design-workspace-panel-setup')).toBeTruthy()
+  })
+
+  it('never shows the link when there is no authority-not-configured diagnostic', async () => {
+    const { store } = setup()
+    await store.ready
+    render(<DesignWorkspaceView store={store} />)
+    expect(screen.queryByRole('button', { name: 'Go to project setup' })).toBeNull()
+  })
+})
+
+describe('project-mode Verify (§14.4, §17.1) — renders getScenarioCoverage / getVerificationEvidence verbatim', () => {
+  it('renders the returned summary counts, first failed step, and design links, then evidence for that first failed step', async () => {
+    const { store, calls, responses } = setup()
+    await store.ready
+
+    responses.getScenarioCoverage = () => ({
+      useCaseCount: 2,
+      scenarioCount: 3,
+      passedCount: 1,
+      failedCount: 1,
+      skippedCount: 1,
+      cancelledCount: 0,
+      stepCount: 5,
+      screenshotCount: 2,
+      structuredEvidenceCount: 1,
+      currentCount: 2,
+      oldCount: 1,
+      firstFailedStep: { runId: 'run.remote.1', scenarioId: 'scenario.remote.1', stepId: 'step.remote.1', action: 'Click submit' },
+      designLinks: [APPROVED_MODULE_ID],
+    })
+    responses.getVerificationEvidence = () => ({
+      schemaVersion: '1.0',
+      runId: 'run.remote.1',
+      projectId: PROJECT_ID,
+      scenarioId: 'scenario.remote.1',
+      useCaseId: 'uc.remote.1',
+      identity: {
+        useCaseAnalysisRevision: 'r1',
+        applicationRevision: 'r1',
+        systemStructureRevision: 'r1',
+        moduleDesignRevisions: {},
+        implementationRevisions: {},
+        connectionRevision: 'r1',
+        build: 'b1',
+        sourceRevision: 's1',
+        environment: 'e1',
+        testDataRevision: 't1',
+        runner: 'runner1',
+      },
+      steps: [{ stepId: 'step.remote.1', action: 'Click submit', expectedResult: 'ok', actualResult: 'error', startedAt: '2026-07-25T00:00:00.000Z', endedAt: '2026-07-25T00:00:01.000Z', outcome: 'failed' }],
+      outcome: 'failed',
+      startedAt: '2026-07-25T00:00:00.000Z',
+      completedAt: '2026-07-25T00:00:01.000Z',
+      evidenceHashes: [],
+      contentHash: 'hash.run.1',
+    })
+
+    render(<DesignWorkspaceView store={store} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Verify' }))
+
+    await waitFor(() => expect(calls.some((c) => c.operation === 'getScenarioCoverage')).toBe(true))
+    await waitFor(() => expect(calls.some((c) => c.operation === 'getVerificationEvidence')).toBe(true))
+    await waitFor(() => expect(screen.queryByText('First failed step')).toBeTruthy())
+    expect(screen.getByText(/Run run\.remote\.1, scenario scenario\.remote\.1, step step\.remote\.1: Click submit/)).toBeTruthy()
+    await waitFor(() => expect(screen.queryByText(/Evidence for run\.remote\.1/)).toBeTruthy())
+
+    const evidenceCall = calls.find((c) => c.operation === 'getVerificationEvidence')!
+    expect(evidenceCall.args).toEqual([PROJECT_ID, 'run.remote.1'])
+  })
+
+  it('shows an honest empty state when there are no scenario runs recorded yet', async () => {
+    const { store, responses } = setup()
+    await store.ready
+    responses.getScenarioCoverage = () => undefined
+
+    render(<DesignWorkspaceView store={store} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Verify' }))
+
+    await waitFor(() => expect(screen.queryByText('No scenario runs recorded yet.')).toBeTruthy())
   })
 })

@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { ModuleDesignStep } from '@engineering-ui-kit/core/design-browser'
-import { DesignStore, useDesignState, type MultiModuleConfirmations } from './designState'
+import { AUTHORITY_NOT_CONFIGURED_CODE, DesignStore, useDesignState, type MultiModuleConfirmations } from './designState'
 import { ModuleQueue } from './ModuleQueue'
 import { ModuleSessionView } from './ModuleSessionView'
 import { SystemCanvas } from './SystemCanvas'
@@ -14,17 +14,19 @@ import { WavesView } from './WavesView'
 import { BuildHandoffView } from './BuildHandoffView'
 import { DesignVerifyView } from './DesignVerifyView'
 import { EvidenceExplorer } from './EvidenceExplorer'
+import { ProjectSetupPanel } from './ProjectSetupPanel'
 import { SaveIndicator, approvalCountText } from './designShared'
 
 const NARROW_BREAKPOINT = 900
 
-type WorkspaceTab = 'design' | 'build' | 'verify' | 'evidence'
+type WorkspaceTab = 'design' | 'build' | 'verify' | 'evidence' | 'setup'
 
 const TABS: { id: WorkspaceTab; label: string }[] = [
   { id: 'design', label: 'Design' },
   { id: 'build', label: 'Build' },
   { id: 'verify', label: 'Verify' },
   { id: 'evidence', label: 'Evidence' },
+  { id: 'setup', label: 'Setup' },
 ]
 
 function useIsNarrow(breakpoint = NARROW_BREAKPOINT): boolean {
@@ -76,12 +78,18 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
     setActiveTab('design')
   }
 
+  // §17.3, §4, §20.2 — the Setup tab (repository root, session principal,
+  // project roles) only makes sense once there is a real project behind the
+  // bridge; `sample` mode has no adapter to configure (second-review P1
+  // finding).
+  const visibleTabs = state.mode === 'project' ? TABS : TABS.filter((tab) => tab.id !== 'setup')
+
   function onTabKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
-    const currentIndex = TABS.findIndex((tab) => tab.id === activeTab)
+    const currentIndex = visibleTabs.findIndex((tab) => tab.id === activeTab)
     if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
       event.preventDefault()
       const delta = event.key === 'ArrowRight' ? 1 : -1
-      const next = TABS[(currentIndex + delta + TABS.length) % TABS.length]!
+      const next = visibleTabs[(currentIndex + delta + visibleTabs.length) % visibleTabs.length]!
       setActiveTab(next.id)
       document.getElementById(`design-workspace-tab-${next.id}`)?.focus()
     }
@@ -90,6 +98,11 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
   const blockingModuleNamesForStatus = state.systemStatus.blockingModuleIds.map(
     (id) => state.progress.modules.find((entry) => entry.moduleId === id)?.name ?? id,
   )
+
+  // Blocked-state guidance (§17.3, §4 — second-review P1): a rejected
+  // approval whose diagnostics include `EUC16-AUTHORITY-NOT-CONFIGURED`
+  // gets an explicit link back to the Setup tab instead of a dead end.
+  const authorityNotConfigured = state.mode === 'project' && state.lastOperationDiagnostics.some((d) => d.code === AUTHORITY_NOT_CONFIGURED_CODE)
 
   return (
     <div className={narrow ? 'design-workspace narrow' : 'design-workspace'} data-mode={state.mode}>
@@ -115,6 +128,17 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
               {state.bridgeError}
             </p>
           )}
+          {authorityNotConfigured && (
+            <div className="design-authority-blocked" role="alert">
+              <p>
+                {state.lastOperationDiagnostics.find((d) => d.code === AUTHORITY_NOT_CONFIGURED_CODE)?.message ??
+                  'This session has no configured project role for the attempted approval.'}
+              </p>
+              <button type="button" className="btn btn-secondary" onClick={() => setActiveTab('setup')}>
+                Go to project setup
+              </button>
+            </div>
+          )}
         </>
       )}
 
@@ -133,7 +157,7 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
       </header>
 
       <div role="tablist" aria-label="Design workspace sections" className="design-workspace-tabs" onKeyDown={onTabKeyDown}>
-        {TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab.id}
             id={`design-workspace-tab-${tab.id}`}
@@ -233,25 +257,30 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
 
       {activeTab === 'verify' && (
         <div id="design-workspace-panel-verify" role="tabpanel" aria-labelledby="design-workspace-tab-verify">
-          {state.mode === 'project' ? (
-            <p className="secondary-text" role="note">
-              Verify details are not yet available for a live project in this GUI version.
-            </p>
-          ) : (
-            <DesignVerifyView store={props.store} onSelectDesignLink={goToDesignRecord} />
-          )}
+          <DesignVerifyView store={props.store} onSelectDesignLink={goToDesignRecord} />
         </div>
       )}
 
       {activeTab === 'evidence' && (
         <div id="design-workspace-panel-evidence" role="tabpanel" aria-labelledby="design-workspace-tab-evidence">
           {state.mode === 'project' ? (
+            // Evidence Explorer's backing data (§22 defects, findings, package-export
+            // freshness) is sample-specific (`packages/core` `sampleAuditHub.ts` — not
+            // canonical records a real project's bridge can honestly populate; see
+            // `designState.ts` `emptyModuleVerificationResult` doc). This stays an
+            // explicit, honest note rather than a fabricated Evidence view.
             <p className="secondary-text" role="note">
-              Evidence details are not yet available for a live project in this GUI version.
+              Evidence Explorer is sample data only; it is not available for a live project in this GUI version.
             </p>
           ) : (
             <EvidenceExplorer store={props.store} onFollowTrace={goToDesignRecord} />
           )}
+        </div>
+      )}
+
+      {activeTab === 'setup' && state.mode === 'project' && (
+        <div id="design-workspace-panel-setup" role="tabpanel" aria-labelledby="design-workspace-tab-setup">
+          <ProjectSetupPanel store={props.store} />
         </div>
       )}
     </div>
