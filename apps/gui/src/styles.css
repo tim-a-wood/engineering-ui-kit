@@ -7009,3 +7009,517 @@ code.path-wrap {
     border-left: 0;
   }
 }
+
+/* ==========================================================================
+   Design workspace (use-case-led Design view, EUC-17 GUI foundation)
+   ========================================================================== */
+
+.design-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-4);
+}
+
+.design-sample-statement {
+  margin: 0;
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-4);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-status-info-tint);
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-workspace-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--semantic-spacing-3);
+}
+
+.design-workspace-header h1 {
+  margin: 0;
+}
+
+.design-system-status {
+  margin: 0;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-save-indicator {
+  margin-left: auto;
+  color: var(--semantic-text-muted);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-workspace-body {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr) 260px;
+  gap: var(--semantic-spacing-4);
+  align-items: start;
+}
+
+.design-queue-drawer-toggle {
+  display: none;
+}
+
+/* -- module queue (§9.2) -------------------------------------------------- */
+
+.design-queue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+}
+
+.design-queue h2 {
+  margin: 0;
+  font-size: var(--semantic-typography-size-md);
+}
+
+.design-queue-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-1);
+}
+
+.design-filter-chip {
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--semantic-text-secondary);
+  padding: 4px var(--semantic-spacing-2);
+  font-size: var(--semantic-typography-size-sm);
+  cursor: pointer;
+  min-height: 32px;
+}
+
+.design-filter-chip.active {
+  border-color: var(--semantic-border-focus);
+  background: var(--semantic-accent-primary-tint);
+  color: var(--semantic-text-primary);
+}
+
+.design-filter-count {
+  color: var(--semantic-text-muted);
+}
+
+.design-queue-result-count {
+  margin: 0;
+  color: var(--semantic-text-muted);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-queue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-2);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.design-queue-empty {
+  color: var(--semantic-text-muted);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-queue-row-button {
+  width: 100%;
+  display: flex;
+  gap: var(--semantic-spacing-2);
+  align-items: flex-start;
+  text-align: left;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel-raised);
+  color: var(--semantic-text-primary);
+  padding: var(--semantic-spacing-2);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.design-queue-row.selected .design-queue-row-button {
+  border-color: var(--semantic-border-focus);
+  box-shadow: var(--semantic-focus-ring-offset);
+}
+
+.design-queue-row-order {
+  color: var(--semantic-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.design-queue-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.design-queue-row-name {
+  font-weight: var(--semantic-typography-weight-medium);
+}
+
+.design-queue-row-meta,
+.design-queue-row-stats {
+  color: var(--semantic-text-muted);
+  font-size: var(--semantic-typography-size-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-2);
+  align-items: center;
+}
+
+.design-queue-row-blocking {
+  color: var(--semantic-status-danger);
+}
+
+.design-queue-row-changed {
+  color: var(--semantic-status-warning);
+}
+
+.design-queue-row-explain {
+  color: var(--semantic-status-danger);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+/* -- state badge (non-color: glyph + text, §18.4) ------------------------- */
+
+.design-state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 2px var(--semantic-spacing-2);
+  font-size: var(--semantic-typography-size-sm);
+  background: var(--semantic-surface-inset);
+  color: var(--semantic-text-secondary);
+}
+
+.design-state-approved { color: var(--semantic-status-success); }
+.design-state-readyForReview { color: var(--semantic-status-info); }
+.design-state-needsInput { color: var(--semantic-status-warning); }
+.design-state-stale { color: var(--semantic-status-warning); }
+.design-state-blocked { color: var(--semantic-status-danger); }
+.design-state-notStarted,
+.design-state-draft { color: var(--semantic-text-muted); }
+
+/* -- module-design session (§9.3) ----------------------------------------- */
+
+.design-session {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-4);
+  padding: var(--semantic-spacing-4);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+}
+
+.design-session-blocked {
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-status-danger);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-status-danger-tint);
+  color: var(--semantic-text-primary);
+}
+
+.design-session-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--semantic-spacing-3);
+}
+
+.design-session-header h2 {
+  margin: 0;
+}
+
+.design-session-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-1);
+}
+
+.design-session-step button {
+  min-height: 44px;
+  padding: var(--semantic-spacing-1) var(--semantic-spacing-2);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  background: var(--semantic-surface-panel-raised);
+  color: var(--semantic-text-secondary);
+  cursor: pointer;
+}
+
+.design-session-step.current button {
+  border-color: var(--semantic-border-focus);
+  color: var(--semantic-text-primary);
+  font-weight: var(--semantic-typography-weight-medium);
+}
+
+.design-session-step.completed button {
+  color: var(--semantic-status-success);
+}
+
+.design-session-step.locked button {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.design-step-panel h3 {
+  margin-top: 0;
+}
+
+.design-definition-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--semantic-spacing-1) var(--semantic-spacing-3);
+  margin: 0;
+}
+
+.design-definition-grid dt {
+  color: var(--semantic-text-muted);
+}
+
+.design-required-questions {
+  border-top: 1px solid var(--semantic-border-subtle);
+  padding-top: var(--semantic-spacing-3);
+}
+
+.design-required-question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-1);
+  margin-bottom: var(--semantic-spacing-3);
+}
+
+.design-required-question textarea {
+  min-height: 44px;
+  border-radius: var(--semantic-radius-sm);
+  border: 1px solid var(--semantic-border-subtle);
+  background: var(--semantic-surface-inset);
+  color: var(--semantic-text-primary);
+  padding: var(--semantic-spacing-1);
+}
+
+.design-contract-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-1);
+}
+
+.design-contract-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-2);
+}
+
+.design-contract-status.approved { color: var(--semantic-status-success); }
+.design-contract-status.pending { color: var(--semantic-status-warning); }
+
+.design-error-summary {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.design-diagnostic-blocker { color: var(--semantic-status-danger); }
+.design-diagnostic-warning { color: var(--semantic-status-warning); }
+.design-diagnostic-info { color: var(--semantic-status-info); }
+
+.design-diagnostic-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
+  min-height: 32px;
+  font-size: inherit;
+}
+
+.design-approval-confirmation {
+  color: var(--semantic-status-success);
+}
+
+.design-session-primary-action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* -- system context panel (§18.2) ----------------------------------------- */
+
+.design-context-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-2);
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+}
+
+.design-context-toggle {
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: var(--semantic-text-primary);
+  font-weight: var(--semantic-typography-weight-medium);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.design-context-content h3 {
+  margin-bottom: 2px;
+  font-size: var(--semantic-typography-size-sm);
+  color: var(--semantic-text-muted);
+}
+
+.design-context-content ul {
+  margin: 0 0 var(--semantic-spacing-2);
+  padding-left: var(--semantic-spacing-4);
+}
+
+/* -- system canvas (§8.2) -------------------------------------------------- */
+
+.design-canvas {
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-panel);
+  padding: var(--semantic-spacing-3);
+}
+
+.design-canvas-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--semantic-spacing-2);
+  margin-bottom: var(--semantic-spacing-2);
+}
+
+.design-canvas-toolbar button {
+  min-height: 36px;
+  min-width: 36px;
+  border-radius: var(--semantic-radius-sm);
+  border: 1px solid var(--semantic-border-subtle);
+  background: var(--semantic-surface-panel-raised);
+  color: var(--semantic-text-secondary);
+  cursor: pointer;
+}
+
+.design-canvas-toggle[aria-pressed='true'] {
+  border-color: var(--semantic-border-focus);
+  color: var(--semantic-text-primary);
+}
+
+.design-canvas-zoom-level {
+  align-self: center;
+  color: var(--semantic-text-muted);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-canvas-viewport {
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  overflow: hidden;
+  touch-action: none;
+}
+
+.design-canvas-viewport:focus-visible {
+  outline: 2px solid var(--semantic-border-focus);
+  outline-offset: -2px;
+}
+
+.design-canvas-node rect {
+  fill: var(--semantic-surface-panel-raised);
+  stroke: var(--semantic-border-subtle);
+  stroke-width: 1.5;
+}
+
+.design-canvas-node:focus-visible rect,
+.design-canvas-node.selected rect {
+  stroke: var(--semantic-border-focus);
+  stroke-width: 2.5;
+}
+
+.design-canvas-node text {
+  fill: var(--semantic-text-primary);
+  font-size: 11px;
+}
+
+.design-canvas-node-title {
+  font-weight: var(--semantic-typography-weight-medium);
+}
+
+.design-canvas-node-meta,
+.design-canvas-node-state {
+  fill: var(--semantic-text-muted) !important;
+}
+
+.design-canvas-edge polyline {
+  fill: none;
+  stroke: var(--semantic-text-muted);
+  stroke-width: 1.5;
+}
+
+.design-canvas-deployable {
+  fill: none;
+  stroke: var(--semantic-border-subtle);
+  stroke-dasharray: 4 4;
+}
+
+.design-canvas-deployable-label {
+  fill: var(--semantic-text-muted);
+  font-size: 10px;
+}
+
+.design-canvas-list ul {
+  list-style: none;
+  margin: 0 0 var(--semantic-spacing-3);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--semantic-spacing-1);
+}
+
+/* -- narrow screen (§18.2) ------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .design-workspace-body {
+    grid-template-columns: 1fr;
+  }
+
+  .design-queue-drawer-toggle {
+    display: inline-flex;
+    min-height: 44px;
+  }
+
+  .design-session-primary-action {
+    justify-content: stretch;
+  }
+
+  .design-session-primary-action .btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .design-workspace * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

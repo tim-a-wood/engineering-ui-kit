@@ -14,6 +14,10 @@
     "./browser": {
       "types": "./dist/browser.d.ts",
       "default": "./dist/browser.js"
+    },
+    "./design-browser": {
+      "types": "./dist/capabilities/design/browser.d.ts",
+      "default": "./dist/capabilities/design/browser.js"
     }
   },
   "bin": {

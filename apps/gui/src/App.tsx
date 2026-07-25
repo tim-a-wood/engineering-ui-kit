@@ -22,10 +22,16 @@ import { RecipesView, ComponentsView } from './views/catalog'
 import { SettingsView } from './views/SettingsView'
 import { BuildView } from './views/build/BuildView'
 import { VerifyReviewView } from './views/workflow'
+import { getDesignStore } from './views/design/designState'
 
 const CapabilitiesView = lazy(async () => {
   const module = await import('./views/capabilities/CapabilitiesView')
   return { default: module.CapabilitiesView }
+})
+
+const DesignWorkspaceView = lazy(async () => {
+  const module = await import('./views/design/DesignWorkspaceView')
+  return { default: module.DesignWorkspaceView }
 })
 
 const TIPS: Partial<Record<ViewId, string>> = {
@@ -36,6 +42,7 @@ const TIPS: Partial<Record<ViewId, string>> = {
   'run-in-copilot': 'You can upload a maximum of 3 files to Microsoft 365 Copilot.',
   'apply-zip-overlay': 'Review every entry before applying. Blocked overlays can never be applied.',
   'verify-review': 'Review results carefully. If changes are needed, apply feedback and iterate from Build.',
+  design: 'Approve the system structure, then define, review, and approve one module design at a time.',
   projects: 'Organize and manage your Engineering UI Kit projects.',
   recipes: 'You can upload a maximum of 3 files to Microsoft 365 Copilot.',
   components: 'You can upload a maximum of 3 files to Microsoft 365 Copilot.',
@@ -43,7 +50,7 @@ const TIPS: Partial<Record<ViewId, string>> = {
 
 /** Sidebar structure: uppercase section labels grouping the flat NAV_ITEMS. */
 const NAV_SECTIONS: { label: string; items: ViewId[] }[] = [
-  { label: 'Workflow', items: ['copilot-handoff', 'capabilities'] },
+  { label: 'Workflow', items: ['copilot-handoff', 'capabilities', 'design'] },
   { label: 'Library', items: ['recipes', 'components'] },
   { label: 'System', items: ['projects', 'settings'] },
 ]
@@ -51,6 +58,7 @@ const NAV_SECTIONS: { label: string; items: ViewId[] }[] = [
 const NAV_GLYPHS: Partial<Record<ViewId, () => ReactNode>> = {
   'copilot-handoff': () => Icon.home(),
   capabilities: () => Icon.box(),
+  design: () => Icon.layers(),
   recipes: () => Icon.grid(),
   components: () => Icon.box(),
   projects: () => Icon.folder(),
@@ -94,6 +102,7 @@ class ViewErrorBoundary extends Component<{ viewKey: string; children: ReactNode
 
 export default function App() {
   const bridge = useMemo(() => getBridge(), [])
+  const designStore = useMemo(() => getDesignStore(), [])
   const [view, setView] = useState<ViewId>(initialApplicationView)
   // LAY-SHELL-001: the nav rail collapses to a 64px icon rail, persisted.
   const [navCollapsed, setNavCollapsed] = useState(() => {
@@ -263,6 +272,12 @@ export default function App() {
               onProjectsChanged={refreshProjects}
               onStartUiBuild={startUiModuleBuild}
             />
+          </Suspense>
+        )
+      case 'design':
+        return (
+          <Suspense fallback={<p className="secondary-text" role="status">Loading Design…</p>}>
+            <DesignWorkspaceView store={designStore} />
           </Suspense>
         )
       case 'build':
