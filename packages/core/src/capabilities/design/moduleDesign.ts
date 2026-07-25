@@ -35,6 +35,7 @@ import {
   designContentHash,
   firstRevision,
   nextRevision,
+  ownedPathsOverlap,
   stableSortBy,
   stableSortStrings,
 } from './identity.js'
@@ -779,20 +780,35 @@ export function evaluateModuleDesignChecks(
     }
   }
 
-  // an owned path overlaps another module
+  // an owned path overlaps another module (§9.9; overlap is containment-aware,
+  // not exact string equality — see identity.ts `ownedPathsOverlap`)
   for (const other of otherDesigns) {
     if (other.module.moduleId === moduleId) continue
-    const overlap = design.boundary.ownedPaths.filter((path) => other.boundary.ownedPaths.includes(path))
-    for (const path of overlap) {
-      blockers.push(
-        makeDiagnostic(
-          'MODDESIGN-OWNED-PATH-OVERLAP',
-          'blocker',
-          `owned path ${path} overlaps module ${other.module.moduleId}`,
-          `boundary.ownedPaths.${path}`,
-          [moduleId, other.module.moduleId],
-        ),
-      )
+    for (const path of design.boundary.ownedPaths) {
+      for (const otherOwnedPath of other.boundary.ownedPaths) {
+        if (!ownedPathsOverlap(path, otherOwnedPath)) continue
+        blockers.push(
+          makeDiagnostic(
+            'MODDESIGN-OWNED-PATH-OVERLAP',
+            'blocker',
+            `owned path ${path} of module ${moduleId} overlaps owned path ${otherOwnedPath} of module ${other.module.moduleId}`,
+            `boundary.ownedPaths.${path}`,
+            [moduleId, other.module.moduleId],
+          ),
+        )
+      }
+      for (const otherSharedPath of other.boundary.editableSharedPaths) {
+        if (!ownedPathsOverlap(path, otherSharedPath)) continue
+        blockers.push(
+          makeDiagnostic(
+            'MODDESIGN-OWNED-PATH-OVERLAP',
+            'blocker',
+            `owned path ${path} of module ${moduleId} overlaps editable shared path ${otherSharedPath} of module ${other.module.moduleId}`,
+            `boundary.ownedPaths.${path}`,
+            [moduleId, other.module.moduleId],
+          ),
+        )
+      }
     }
   }
 

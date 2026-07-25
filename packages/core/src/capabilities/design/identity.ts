@@ -64,3 +64,31 @@ export function stableSortBy<T>(values: readonly T[], key: (value: T) => string)
     return ka < kb ? -1 : ka > kb ? 1 : 0
   })
 }
+
+/**
+ * Normalizes a repository-relative path for overlap comparison: backslashes
+ * become forward slashes, a leading `./` is stripped, and repeated/trailing
+ * slashes are collapsed away, leaving normalized segments.
+ */
+function normalizeOwnedPathSegments(path: string): string[] {
+  const slashed = path.replace(/\\/g, '/')
+  const withoutLeadingDot = slashed.replace(/^\.\/+/, '')
+  return withoutLeadingDot.split('/').filter((segment) => segment.length > 0)
+}
+
+/**
+ * §6.2, §9.9 — two owned paths overlap when they are equal, or when one is a
+ * directory-prefix of the other (comparing normalized path segments, so
+ * `src/adapters` and `src/adapters/git` overlap but `src/adapters` and
+ * `src/adapters-extra` do not). Paths are normalized first: backslashes are
+ * treated as forward slashes, a leading `./` is stripped, and trailing
+ * slashes are ignored.
+ */
+export function ownedPathsOverlap(pathA: string, pathB: string): boolean {
+  const segmentsA = normalizeOwnedPathSegments(pathA)
+  const segmentsB = normalizeOwnedPathSegments(pathB)
+  const shorter = segmentsA.length <= segmentsB.length ? segmentsA : segmentsB
+  const longer = segmentsA.length <= segmentsB.length ? segmentsB : segmentsA
+  if (shorter.length === 0) return longer.length === 0
+  return shorter.every((segment, index) => segment === longer[index])
+}

@@ -15,6 +15,7 @@
 import type { ArchitectureSpecification } from '../types.js'
 import { diagnostic, sortDiagnostics, type CapDiagnostic } from '../diagnostics.js'
 import { canonicalHash } from '../hash.js'
+import { ownedPathsOverlap } from './identity.js'
 import {
   isAgentActor,
   type DesignBaseline,
@@ -378,16 +379,25 @@ export function evaluateBuildGate(input: BuildGateInput): BuildGateResult {
       }),
     )
   }
-  const ownedPaths = new Set(input.moduleDesign.boundary.ownedPaths)
+  // §6.2 — owned-path conflict against another active module; overlap is
+  // containment-aware, not exact string equality (see identity.ts
+  // `ownedPathsOverlap`).
+  const ownedPaths = input.moduleDesign.boundary.ownedPaths
   for (const other of input.otherActiveModules) {
-    const overlap = other.ownedPaths.filter((p) => ownedPaths.has(p))
-    if (overlap.length) {
-      diagnostics.push(
-        diagnostic('CAP-DES-BUILD-PATH-CONFLICT', 'the module owned paths conflict with another active module', {
-          ruleId: 'CAP-DES-BUILD-6.2',
-          relatedIds: [input.moduleDesign.module.moduleId, other.moduleId, ...overlap],
-        }),
-      )
+    for (const path of ownedPaths) {
+      for (const otherPath of other.ownedPaths) {
+        if (!ownedPathsOverlap(path, otherPath)) continue
+        diagnostics.push(
+          diagnostic(
+            'CAP-DES-BUILD-PATH-CONFLICT',
+            `the module owned path ${path} of ${input.moduleDesign.module.moduleId} conflicts with owned path ${otherPath} of active module ${other.moduleId}`,
+            {
+              ruleId: 'CAP-DES-BUILD-6.2',
+              relatedIds: [input.moduleDesign.module.moduleId, other.moduleId, path, otherPath],
+            },
+          ),
+        )
+      }
     }
   }
   if (input.blockingImpactRecordIds?.length) {
