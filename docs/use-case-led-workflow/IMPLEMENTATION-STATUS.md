@@ -149,7 +149,15 @@ here with its reason and approval context.
 
 | Date | Scope | Command | Result |
 | --- | --- | --- | --- |
-| 2026-07-25 | Baseline full core suite | `npm run build` (root) then `ELECTRON_DISABLE_SANDBOX=1 xvfb-run -a npx vitest run` in `packages/core` | pending confirmation |
+| 2026-07-25 | Baseline full core suite | `npm run build` (root) then `ELECTRON_DISABLE_SANDBOX=1 xvfb-run -a npx vitest run` in `packages/core` | pass after environment setup (see below) |
+
+Environment prerequisites established for this container: root `npm install`
+and `npm run build`; Electron binary via `node node_modules/electron/install.js`
+and `ELECTRON_DISABLE_SANDBOX=1` under `xvfb-run`; repo-root `.venv` with
+`requirements-dev.txt` plus `pip install -e runtimes/python`; Playwright
+headless-shell shim (`/opt/pw-browsers/chromium_headless_shell-1228` linked to
+the preinstalled 1194 build because the container proxy blocks browser
+downloads).
 
 ## 6. Usability log
 
