@@ -7017,7 +7017,9 @@ code.path-wrap {
 .design-workspace {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-spacing-3);
+  gap: var(--semantic-spacing-4);
+  width: min(100%, 100rem);
+  margin-inline: auto;
 }
 
 .design-sample-statement {
@@ -7065,10 +7067,33 @@ code.path-wrap {
 }
 
 .design-workspace-header {
+  display: grid;
+  grid-template-columns: minmax(13rem, auto) minmax(0, 1fr);
+  gap: var(--semantic-spacing-2) var(--semantic-spacing-5);
+  align-items: center;
+  padding: var(--semantic-spacing-3) var(--semantic-spacing-4);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: color-mix(in srgb, var(--semantic-surface-panel) 94%, transparent);
+  box-shadow: var(--semantic-shadow-sm);
+}
+
+.design-workspace-header-controls {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-end;
+  justify-content: flex-end;
   gap: var(--semantic-spacing-3);
+}
+
+.design-workspace-meta {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-4);
+  padding-top: var(--semantic-spacing-2);
+  border-top: 1px solid var(--semantic-border-subtle);
 }
 
 .design-projection-switch {
@@ -7122,7 +7147,10 @@ code.path-wrap {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  border-bottom: 1px solid var(--semantic-border-subtle);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: color-mix(in srgb, var(--semantic-surface-panel) 88%, transparent);
+  box-shadow: var(--semantic-shadow-sm);
   list-style: none;
 }
 
@@ -7130,13 +7158,17 @@ code.path-wrap {
   min-width: 0;
 }
 
+.design-journey-rail li + li {
+  border-left: 1px solid var(--semantic-border-subtle);
+}
+
 .design-journey-rail button {
   display: flex;
   align-items: center;
   gap: var(--semantic-spacing-2);
   width: 100%;
-  min-height: 58px;
-  padding: var(--semantic-spacing-1) var(--semantic-spacing-3);
+  min-height: 64px;
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
@@ -7206,7 +7238,7 @@ code.path-wrap {
   align-items: center;
   justify-content: space-between;
   gap: var(--semantic-spacing-4);
-  padding: var(--semantic-spacing-1) 0 var(--semantic-spacing-3);
+  padding: 0 var(--semantic-spacing-1) var(--semantic-spacing-3);
   border-bottom: 1px solid var(--semantic-border-subtle);
 }
 
@@ -7243,7 +7275,7 @@ code.path-wrap {
 }
 
 .design-save-indicator {
-  margin-left: auto;
+  flex: 0 0 auto;
   color: var(--semantic-text-muted);
   font-size: var(--semantic-typography-size-sm);
 }
@@ -7251,7 +7283,7 @@ code.path-wrap {
 .design-workspace-body {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr) 260px;
-  gap: var(--semantic-spacing-4);
+  gap: var(--semantic-spacing-3);
   align-items: start;
 }
 
@@ -7644,29 +7676,76 @@ code.path-wrap {
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-md);
   background: var(--semantic-surface-panel);
-  padding: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-4);
+  box-shadow: var(--semantic-shadow-sm);
+}
+
+.design-canvas-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-4);
+  margin-bottom: var(--semantic-spacing-3);
+}
+
+.design-canvas-header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.design-canvas-header :is(p, h2) {
+  margin: 0;
+}
+
+.design-canvas-header > div > p:last-child {
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-canvas-header > span {
+  flex: 0 0 auto;
+  padding: 4px var(--semantic-spacing-2);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: 999px;
+  background: var(--semantic-surface-inset);
+  color: var(--semantic-text-muted);
+  font-size: var(--semantic-typography-size-sm);
 }
 
 .design-canvas-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--semantic-spacing-2);
-  margin-bottom: var(--semantic-spacing-2);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-3);
+  margin-bottom: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-1);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  background: var(--semantic-surface-inset);
+}
+
+.design-canvas-toolbar > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .design-canvas-toolbar button {
-  min-height: 36px;
+  min-height: 34px;
   min-width: 36px;
   border-radius: var(--semantic-radius-sm);
-  border: 1px solid var(--semantic-border-subtle);
-  background: var(--semantic-surface-panel-raised);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--semantic-text-secondary);
   cursor: pointer;
 }
 
-.design-canvas-toggle[aria-pressed='true'] {
-  border-color: var(--semantic-border-focus);
+.design-canvas-toolbar button:is(:hover, :focus-visible, [aria-pressed='true']) {
+  border-color: var(--semantic-border-subtle);
+  background: var(--semantic-surface-panel-raised);
   color: var(--semantic-text-primary);
+  box-shadow: var(--semantic-shadow-sm);
 }
 
 .design-canvas-zoom-level {
@@ -7677,15 +7756,15 @@ code.path-wrap {
 
 .design-canvas-viewport {
   position: relative;
-  min-height: 30rem;
+  min-height: 34rem;
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-sm);
   overflow: auto;
   background:
-    linear-gradient(var(--semantic-border-subtle) 1px, transparent 1px),
-    linear-gradient(90deg, var(--semantic-border-subtle) 1px, transparent 1px),
+    radial-gradient(circle at center, color-mix(in srgb, var(--semantic-border-strong) 48%, transparent) 1px, transparent 1.2px),
     var(--semantic-surface-canvas);
-  background-size: 24px 24px;
+  background-size: 22px 22px;
+  box-shadow: inset 0 1px 2px color-mix(in srgb, black 10%, transparent);
   touch-action: none;
 }
 
@@ -7701,8 +7780,14 @@ code.path-wrap {
 
 .design-canvas-node rect {
   fill: var(--semantic-surface-panel-raised);
-  stroke: var(--semantic-border-subtle);
+  stroke: var(--semantic-border-strong);
   stroke-width: 1.5;
+}
+
+.design-canvas-component-mark rect {
+  fill: var(--semantic-surface-inset);
+  stroke: var(--semantic-accent-primary);
+  stroke-width: 1.2;
 }
 
 .design-canvas-node:focus-visible rect,
@@ -7727,10 +7812,27 @@ code.path-wrap {
 
 .design-canvas-edge polyline {
   fill: none;
-  stroke: var(--semantic-text-muted);
-  stroke-width: 1.5;
+  stroke: color-mix(in srgb, var(--semantic-text-secondary) 80%, var(--semantic-border-strong));
+  stroke-width: 1.65;
+  stroke-dasharray: 7 5;
   stroke-linecap: square;
   stroke-linejoin: round;
+}
+
+.design-canvas-edge.muted > polyline:first-child {
+  opacity: .2;
+}
+
+.design-canvas-edge.contextual > polyline:first-child {
+  stroke: color-mix(in srgb, var(--semantic-accent-primary) 56%, var(--semantic-text-secondary));
+  opacity: .92;
+}
+
+.design-canvas-edge marker path,
+#design-arrow path {
+  fill: none;
+  stroke: var(--semantic-text-secondary);
+  stroke-width: 1.4;
 }
 
 .design-canvas-edge .design-canvas-edge-hit {
@@ -7788,7 +7890,7 @@ code.path-wrap {
 }
 
 .design-canvas-deployable {
-  fill: none;
+  fill: color-mix(in srgb, var(--semantic-accent-primary-tint) 24%, transparent);
   stroke: var(--semantic-border-subtle);
   stroke-dasharray: 4 4;
 }
@@ -7796,6 +7898,16 @@ code.path-wrap {
 .design-canvas-deployable-label {
   fill: var(--semantic-text-muted);
   font-size: 10px;
+}
+
+.design-canvas-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-3);
+  margin-top: var(--semantic-spacing-2);
+  color: var(--semantic-text-muted);
+  font-size: var(--semantic-typography-size-sm);
 }
 
 .design-canvas-list ul {
@@ -7810,6 +7922,27 @@ code.path-wrap {
 /* -- narrow screen (§18.2) ------------------------------------------------- */
 
 @media (max-width: 900px) {
+  .design-workspace-header {
+    grid-template-columns: 1fr;
+  }
+  .design-workspace-header-controls,
+  .design-workspace-meta {
+    grid-column: 1;
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .design-workspace-header-controls {
+    justify-content: flex-start;
+  }
+  .design-project-picker {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .design-canvas-header,
+  .design-canvas-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
   .design-readiness-strip {
     align-items: stretch;
     flex-direction: column;
@@ -7866,16 +7999,21 @@ code.path-wrap {
 .design-workspace-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--semantic-spacing-1);
-  border-bottom: 1px solid var(--semantic-border-subtle);
+  gap: 0;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-inset);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--semantic-text-primary) 4%, transparent);
 }
 
 .design-workspace-tab {
-  min-height: 44px;
-  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  min-height: 36px;
+  padding: var(--semantic-spacing-1) var(--semantic-spacing-3);
   border: 1px solid transparent;
-  border-bottom: 0;
-  border-radius: var(--semantic-radius-sm) var(--semantic-radius-sm) 0 0;
+  border-radius: var(--semantic-radius-sm);
   background: transparent;
   color: var(--semantic-text-secondary);
   cursor: pointer;
@@ -7886,6 +8024,7 @@ code.path-wrap {
   background: var(--semantic-surface-panel);
   color: var(--semantic-text-primary);
   font-weight: var(--semantic-typography-weight-medium);
+  box-shadow: var(--semantic-shadow-sm);
 }
 
 /* -- integrated Plan / System / Connect / Evidence phases ---------------- */
@@ -7901,7 +8040,6 @@ code.path-wrap {
   display: flex;
   align-items: flex-end;
   gap: var(--semantic-spacing-2);
-  margin-left: auto;
 }
 
 .design-project-picker label {
@@ -9544,9 +9682,9 @@ code.path-wrap {
   position: fixed;
   z-index: 1000;
   inset: 0;
-  padding: var(--semantic-spacing-4);
+  padding: var(--semantic-spacing-4) clamp(var(--semantic-spacing-4), 4vw, var(--semantic-spacing-6));
   overflow: auto;
-  background: var(--semantic-surface-canvas);
+  background: var(--semantic-surface-panel);
 }
 
 .design-diagram-navigation,
@@ -9557,46 +9695,60 @@ code.path-wrap {
   gap: var(--semantic-spacing-3);
 }
 
+.design-diagram-navigation {
+  min-height: 42px;
+  padding: 3px;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-md);
+  background: var(--semantic-surface-inset);
+}
+
 .design-diagrams-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--semantic-spacing-1);
+  gap: 2px;
   align-items: center;
 }
 
 .design-diagrams-tab {
-  min-height: 36px;
-  padding: var(--semantic-spacing-1) var(--semantic-spacing-2);
-  border: 1px solid var(--semantic-border-subtle);
+  min-height: 34px;
+  padding: var(--semantic-spacing-1) var(--semantic-spacing-3);
+  border: 1px solid transparent;
   border-radius: var(--semantic-radius-sm);
-  background: var(--semantic-surface-panel-raised);
+  background: transparent;
   color: var(--semantic-text-secondary);
   cursor: pointer;
 }
 
 .design-diagrams-tab.active {
-  border-color: var(--semantic-border-focus);
+  border-color: var(--semantic-border-subtle);
+  background: var(--semantic-surface-panel-raised);
   color: var(--semantic-text-primary);
+  box-shadow: var(--semantic-shadow-sm);
+  font-weight: var(--semantic-typography-weight-medium);
 }
 
 .design-diagrams-toggle {
   margin-left: auto;
-  min-height: 36px;
-  border: 1px solid var(--semantic-border-subtle);
+  min-height: 34px;
+  padding-inline: var(--semantic-spacing-3);
+  border: 1px solid transparent;
   border-radius: var(--semantic-radius-sm);
-  background: var(--semantic-surface-panel-raised);
+  background: transparent;
   color: var(--semantic-text-secondary);
   cursor: pointer;
 }
 
 .design-diagrams-toggle[aria-pressed='true'] {
-  border-color: var(--semantic-border-focus);
-  background: var(--semantic-accent-subtle);
+  border-color: var(--semantic-border-subtle);
+  background: var(--semantic-surface-panel-raised);
   color: var(--semantic-text-primary);
+  box-shadow: var(--semantic-shadow-sm);
 }
 
 .design-diagram-view-heading {
-  margin-bottom: var(--semantic-spacing-2);
+  align-items: flex-end;
+  margin: var(--semantic-spacing-1) 0 var(--semantic-spacing-2);
 }
 
 .design-diagram-view-heading h3,
@@ -9610,27 +9762,60 @@ code.path-wrap {
   font-size: var(--semantic-typography-size-sm);
 }
 
+.design-diagram-description {
+  max-width: 46rem;
+  margin-top: 3px !important;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-size-sm);
+}
+
+.design-diagram-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--semantic-spacing-2);
+}
+
+.design-diagram-standard {
+  padding: 4px var(--semantic-spacing-2);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: 999px;
+  background: var(--semantic-surface-inset);
+  color: var(--semantic-text-muted);
+  font-size: 11px;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
 .design-diagram-viewport-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--semantic-spacing-1);
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  background: var(--semantic-surface-inset);
 }
 
 .design-diagram-viewport-controls button {
-  min-width: 36px;
-  min-height: 36px;
-  border: 1px solid var(--semantic-border-subtle);
+  min-width: 34px;
+  min-height: 32px;
+  padding-inline: var(--semantic-spacing-2);
+  border: 1px solid transparent;
   border-radius: var(--semantic-radius-sm);
-  background: var(--semantic-surface-panel-raised);
+  background: transparent;
   color: var(--semantic-text-secondary);
   cursor: pointer;
 }
 
 .design-diagram-viewport-controls button:is(:hover, :focus-visible, [aria-pressed='true']) {
-  border-color: var(--semantic-border-focus);
+  border-color: var(--semantic-border-subtle);
+  background: var(--semantic-surface-panel-raised);
   color: var(--semantic-text-primary);
+  box-shadow: var(--semantic-shadow-sm);
 }
 
 .design-diagram-viewport-controls output {
@@ -9641,7 +9826,7 @@ code.path-wrap {
 
 .design-uml-legend {
   width: fit-content;
-  margin-bottom: var(--semantic-spacing-2);
+  margin-bottom: var(--semantic-spacing-1);
   color: var(--semantic-text-muted);
   font-size: var(--semantic-typography-size-sm);
 }
@@ -9738,15 +9923,17 @@ code.path-wrap {
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-md);
   background:
-    linear-gradient(var(--semantic-border-subtle) 1px, transparent 1px),
-    linear-gradient(90deg, var(--semantic-border-subtle) 1px, transparent 1px),
+    radial-gradient(circle at center, color-mix(in srgb, var(--semantic-border-strong) 48%, transparent) 1px, transparent 1.2px),
     var(--semantic-surface-canvas);
-  background-size: 24px 24px;
+  background-size: 22px 22px;
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, black 10%, transparent),
+    var(--semantic-shadow-sm);
 }
 
 .design-diagram-viewport {
-  min-height: 24rem;
-  max-height: min(72vh, 50rem);
+  min-height: 34rem;
+  max-height: min(76vh, 54rem);
   overflow: auto;
   overscroll-behavior: contain;
 }
@@ -9759,7 +9946,19 @@ code.path-wrap {
 .design-diagram-svg {
   display: block;
   min-width: 100%;
+  min-height: 34rem;
   background: color-mix(in srgb, var(--semantic-surface-canvas) 84%, transparent);
+}
+
+.design-diagrams.fullscreen .design-diagram-viewport {
+  height: calc(100vh - 14.5rem);
+  min-height: 18rem;
+  max-height: calc(100vh - 14.5rem);
+}
+
+.design-diagrams.fullscreen .design-diagram-svg {
+  height: 100%;
+  min-height: 100%;
 }
 
 .design-diagram-minimap {
@@ -9769,7 +9968,7 @@ code.path-wrap {
   padding: 3px;
   border: 1px solid var(--semantic-border-strong);
   border-radius: var(--semantic-radius-sm);
-  background: color-mix(in srgb, var(--semantic-surface-panel) 94%, transparent);
+  background: color-mix(in srgb, var(--semantic-surface-panel) 96%, transparent);
   box-shadow: var(--semantic-shadow-sm);
   pointer-events: none;
 }
@@ -9823,14 +10022,14 @@ code.path-wrap {
 
 .design-diagram-node rect {
   fill: var(--semantic-surface-panel-raised);
-  stroke: var(--semantic-border-subtle);
+  stroke: var(--semantic-border-strong);
   stroke-width: 1.5;
 }
 
 .design-diagram-edge-visible {
   fill: none;
   stroke: color-mix(in srgb, var(--semantic-text-secondary) 82%, var(--semantic-border-strong));
-  stroke-width: 1.7;
+  stroke-width: 1.65;
   stroke-linecap: square;
   stroke-linejoin: round;
   pointer-events: none;
@@ -9873,7 +10072,7 @@ code.path-wrap {
 
 .design-diagram-node text {
   fill: var(--semantic-text-primary);
-  font-size: 11px;
+  font-size: 11.25px;
 }
 
 .design-diagram-node-title {
@@ -9890,6 +10089,10 @@ code.path-wrap {
 .design-uml-lifeline > rect {
   fill: var(--semantic-surface-panel-raised);
   stroke: var(--semantic-border-strong);
+}
+
+.design-uml-state > rect {
+  fill: color-mix(in srgb, var(--semantic-surface-panel-raised) 90%, var(--semantic-accent-primary-tint));
 }
 
 .design-uml-component-mark rect {
@@ -9911,7 +10114,7 @@ code.path-wrap {
 }
 
 .design-uml-actor :is(circle, line) {
-  fill: var(--semantic-surface-panel);
+  fill: var(--semantic-surface-canvas);
   stroke: var(--semantic-text-primary);
   stroke-width: 1.8;
 }
@@ -9927,7 +10130,6 @@ code.path-wrap {
   fill: color-mix(in srgb, var(--semantic-surface-panel) 72%, transparent);
   stroke: var(--semantic-text-muted);
   stroke-width: 1.4;
-  stroke-dasharray: 7 5;
 }
 
 .design-uml-fragment > path {
@@ -9964,6 +10166,20 @@ code.path-wrap {
   stroke-dasharray: 5 5;
 }
 
+.design-uml-recovery-note path {
+  fill: color-mix(in srgb, var(--semantic-status-info-tint) 72%, var(--semantic-surface-panel-raised));
+  stroke: color-mix(in srgb, var(--semantic-status-info) 62%, var(--semantic-border-strong));
+  stroke-width: 1.3;
+  stroke-dasharray: 4 3;
+}
+
+.design-uml-recovery-note .design-diagram-node-type {
+  fill: var(--semantic-status-info) !important;
+  font-size: 9px;
+  font-weight: var(--semantic-typography-weight-medium);
+  letter-spacing: .05em;
+}
+
 .design-diagram-edge-line {
   fill: none;
   stroke: var(--semantic-text-muted);
@@ -9983,15 +10199,24 @@ code.path-wrap {
 }
 
 .design-diagram-edge-label rect {
-  fill: color-mix(in srgb, var(--semantic-surface-panel) 94%, transparent);
+  fill: color-mix(in srgb, var(--semantic-surface-panel) 97%, transparent);
   stroke: var(--semantic-border-subtle);
   stroke-width: 1px;
 }
 
 .design-diagram-edge-label text {
   fill: var(--semantic-text-secondary);
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: var(--semantic-typography-weight-medium);
+}
+
+.design-diagram-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-3);
+  color: var(--semantic-text-muted);
+  font-size: var(--semantic-typography-size-sm);
 }
 
 .design-diagram-diagnostics {
@@ -10047,6 +10272,12 @@ code.path-wrap {
   }
 
   .design-diagrams-toggle { margin-left: 0; }
+  .design-diagram-heading-actions,
+  .design-diagram-footer {
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+  }
   .design-diagram-viewport-controls { justify-content: flex-start; }
   .design-diagram-minimap,
   .design-canvas-minimap { display: none; }

@@ -66,7 +66,10 @@ function isContainerKind(kind: UmlElement['kind'] | undefined): boolean {
 
 function relationshipLabelText(rel: UmlRelationship): string | undefined {
   if (rel.label) return rel.label
-  if (rel.guard) return `[${rel.guard}]`
+  if (rel.guard) {
+    const guard = rel.guard.trim()
+    return guard.startsWith('[') && guard.endsWith(']') ? guard : `[${guard}]`
+  }
   return undefined
 }
 
@@ -225,6 +228,322 @@ function buildLayeredLayout(projection: DiagramProjection, width: number, height
   return { nodes, edges }
 }
 
+/**
+ * Activity and state diagrams read as vertical narratives, not wiring
+ * harnesses. Place each semantic layer around one center line, route normal
+ * forward flows through the whitespace between layers, and reserve distinct
+ * outside rails only for loops or non-adjacent jumps. Recovery prose remains
+ * part of the projection but is presented as a side note rather than a loose
+ * action in the executable flow.
+ *
+ * This layout also handles system-level component projections, which have no
+ * single semantic "main module" and therefore should read as a centered
+ * topology rather than a module-and-ports diagram.
+ */
+function buildFlowLayout(
+  projection: DiagramProjection,
+  width: number,
+  height: number,
+  maxNodesPerRow: number,
+): { nodes: DiagramLayoutNode[]; edges: DiagramLayoutEdge[] } {
+  const annotations = projection.elements.filter((element) => element.sourceElementRef === 'recovery')
+  const graphElements = projection.elements.filter((element) => element.sourceElementRef !== 'recovery')
+  const graphIds = new Set(graphElements.map((element) => element.id))
+  const graphRelationships = projection.relationships.filter((rel) => graphIds.has(rel.fromId) && graphIds.has(rel.toId))
+  const layers = computeLayers(graphElements, graphRelationships)
+  const byLayer = new Map<number, string[]>()
+  for (const element of graphElements) {
+    const layer = layers.get(element.id) ?? 0
+    const ids = byLayer.get(layer) ?? []
+    ids.push(element.id)
+    byLayer.set(layer, ids)
+  }
+
+  const layerKeys = [...byLayer.keys()].sort((a, b) => a - b)
+  const layerWidths = layerKeys.map((layer) => {
+    const count = byLayer.get(layer)?.length ?? 0
+    const columns = Math.min(maxNodesPerRow, Math.max(1, count))
+    return columns * width + Math.max(0, columns - 1) * NODE_GAP_X
+  })
+  const systemTopology = projection.kind === 'component'
+    && graphElements.length > 0
+    && graphElements.every((element) => element.sourceElementRef?.startsWith('module:'))
+  let graphWidth = Math.max(width, ...layerWidths)
+  const nodes: DiagramLayoutNode[] = []
+  let layerY = 0
+
+  if (systemTopology) {
+    const elementById = new Map(graphElements.map((element) => [element.id, element]))
+    const relationshipCountToConnections = (elementId: string) => projection.relationships.filter((relationship) =>
+      relationship.fromId === elementId
+      && elementById.get(relationship.toId)?.sourceElementRef === 'module:connection',
+    ).length
+    const elementsOfType = (type: string) => graphElements
+      .filter((element) => element.sourceElementRef === `module:${type}`)
+      .sort((a, b) =>
+        relationshipCountToConnections(a.id) - relationshipCountToConnections(b.id)
+        || a.label.localeCompare(b.label)
+        || a.id.localeCompare(b.id),
+      )
+
+    const coreGap = 70
+    const coreColumns = 3
+    const coreWidth = coreColumns * width + (coreColumns - 1) * coreGap
+    const rowStep = height + 110
+    const placeCoreRow = (elements: UmlElement[], y: number) => {
+      const rowWidth = elements.length * width + Math.max(0, elements.length - 1) * coreGap
+      const startX = (coreWidth - rowWidth) / 2
+      elements.forEach((element, index) => {
+        nodes.push({ elementId: element.id, x: startX + index * (width + coreGap), y, width, height })
+      })
+    }
+
+    placeCoreRow(elementsOfType('experience'), 0)
+    placeCoreRow(elementsOfType('workflow'), rowStep)
+    placeCoreRow(elementsOfType('domain'), rowStep * 2)
+    placeCoreRow(elementsOfType('platform'), rowStep * 3)
+
+    const connections = elementsOfType('connection')
+    const adapterColumns = 2
+    const adapterGapX = 52
+    const adapterGapY = 42
+    const adapterStartX = coreWidth + 210
+    connections.forEach((element, index) => {
+      const column = index % adapterColumns
+      const row = Math.floor(index / adapterColumns)
+      nodes.push({
+        elementId: element.id,
+        x: adapterStartX + column * (width + adapterGapX),
+        y: rowStep * .65 + row * (height + adapterGapY),
+        width,
+        height,
+      })
+    })
+    graphWidth = adapterStartX + adapterColumns * width + (adapterColumns - 1) * adapterGapX
+    layerY = Math.max(rowStep * 3 + height, ...nodes.map((node) => node.y + node.height))
+  } else {
+    layerKeys.forEach((layer, layerIndex) => {
+      const ids = stableSortStrings(byLayer.get(layer) ?? [])
+      const rowCount = Math.max(1, Math.ceil(ids.length / maxNodesPerRow))
+      for (let row = 0; row < rowCount; row++) {
+        const rowIds = ids.slice(row * maxNodesPerRow, row * maxNodesPerRow + maxNodesPerRow)
+        const rowWidth = rowIds.length * width + Math.max(0, rowIds.length - 1) * NODE_GAP_X
+        const rowX = (graphWidth - rowWidth) / 2
+        rowIds.forEach((id, column) => {
+          nodes.push({
+            elementId: id,
+            x: rowX + column * (width + NODE_GAP_X),
+            y: layerY + row * (height + NODE_GAP_X),
+            width,
+            height,
+          })
+        })
+      }
+      const layerHeight = rowCount * height + Math.max(0, rowCount - 1) * NODE_GAP_X
+      layerY += layerHeight + (layerIndex === layerKeys.length - 1 ? 0 : LAYER_GAP_Y)
+    })
+  }
+
+  // Keep explanatory recovery behavior visibly related to the flow without
+  // implying that it is another executable step or leaving it detached below
+  // the final node.
+  annotations.forEach((element, index) => {
+    nodes.push({
+      elementId: element.id,
+      x: graphWidth + 220,
+      y: Math.min(Math.max(height + 28, layerY / 3), Math.max(height + 28, layerY - height * 1.3)) + index * (height * 1.35 + NODE_GAP_X),
+      width: Math.max(width * 1.45, 240),
+      height: Math.max(height * 1.15, 72),
+    })
+  })
+
+  const nodeById = new Map(nodes.map((node) => [node.elementId, node]))
+  const kindById = new Map(projection.elements.map((element) => [element.id, element.kind]))
+  const elementById = new Map(projection.elements.map((element) => [element.id, element]))
+  const outgoing = new Map<string, UmlRelationship[]>()
+  const incoming = new Map<string, UmlRelationship[]>()
+  for (const relationship of projection.relationships) {
+    const from = outgoing.get(relationship.fromId) ?? []
+    from.push(relationship)
+    outgoing.set(relationship.fromId, from)
+    const to = incoming.get(relationship.toId) ?? []
+    to.push(relationship)
+    incoming.set(relationship.toId, to)
+  }
+  for (const relationships of [...outgoing.values(), ...incoming.values()]) {
+    relationships.sort((a, b) => a.id.localeCompare(b.id))
+  }
+
+  const attachmentX = (node: DiagramLayoutNode, relationship: UmlRelationship, relationships: readonly UmlRelationship[]) => {
+    const index = Math.max(relationships.findIndex((candidate) => candidate.id === relationship.id), 0)
+    const step = Math.min(26, node.width / Math.max(relationships.length + 1, 2))
+    return node.x + node.width / 2 + (index - (relationships.length - 1) / 2) * step
+  }
+
+  const loopRailIndex = new Map<string, number>()
+  projection.relationships
+    .filter((relationship) => {
+      const fromLayer = layers.get(relationship.fromId) ?? 0
+      const toLayer = layers.get(relationship.toId) ?? 0
+      return toLayer <= fromLayer || toLayer - fromLayer > 1
+    })
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .forEach((relationship, index) => loopRailIndex.set(relationship.id, index))
+  const topologyRelationshipIndex = new Map(
+    [...projection.relationships]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((relationship, index) => [relationship.id, index]),
+  )
+  const connectionNodes = nodes.filter((node) => elementById.get(node.elementId)?.sourceElementRef === 'module:connection')
+  const coreNodes = nodes.filter((node) => elementById.get(node.elementId)?.sourceElementRef !== 'module:connection')
+  const connectionLeft = connectionNodes.length > 0 ? Math.min(...connectionNodes.map((node) => node.x)) : graphWidth
+  const coreRight = coreNodes.length > 0 ? Math.max(...coreNodes.map((node) => node.x + node.width)) : 0
+
+  const edges = projection.relationships.map((rel) => {
+    const from = nodeById.get(rel.fromId)
+    const to = nodeById.get(rel.toId)
+    if (!from || !to) return degenerateEdge(rel)
+
+    const fromLayer = layers.get(rel.fromId) ?? 0
+    const toLayer = layers.get(rel.toId) ?? 0
+    const normalForwardFlow = toLayer === fromLayer + 1 && to.y > from.y + from.height
+    let points: Point[]
+    let labelPosition: Point | undefined
+
+    if (projection.kind === 'component') {
+      const relationshipIndex = topologyRelationshipIndex.get(rel.id) ?? 0
+      const sourceX = attachmentX(from, rel, outgoing.get(rel.fromId) ?? [rel])
+      const targetX = attachmentX(to, rel, incoming.get(rel.toId) ?? [rel])
+      const sourceY = from.y + from.height
+      const targetY = to.y
+
+      if (systemTopology && elementById.get(rel.toId)?.sourceElementRef === 'module:connection') {
+        const availableGap = Math.max(72, connectionLeft - coreRight)
+        const laneStep = Math.max(10, (availableGap - 64) / Math.max(connectionNodes.length - 1, 1))
+        const laneX = coreRight + 32 + (relationshipIndex % Math.max(connectionNodes.length, 1)) * laneStep
+        const sourceCenterY = from.y + from.height / 2
+        const targetCenterY = to.y + to.height / 2
+        points = [
+          { x: from.x + from.width, y: sourceCenterY },
+          { x: laneX, y: sourceCenterY },
+          { x: laneX, y: targetCenterY },
+          { x: to.x, y: targetCenterY },
+        ]
+        labelPosition = labelAtMidpoint(points, 0)
+      } else if (Math.abs(from.y - to.y) < 1) {
+        // Same-rank dependencies use a short channel immediately below their
+        // row. This keeps peer relationships local instead of sending them to
+        // the edge of the whole architecture canvas.
+        const channelY = from.y + from.height + 24 + (relationshipIndex % 5) * 10
+        points = [
+          { x: sourceX, y: sourceY },
+          { x: sourceX, y: channelY },
+          { x: targetX, y: channelY },
+          { x: targetX, y: to.y + to.height },
+        ]
+        labelPosition = labelAtMidpoint(points, 1)
+      } else if (to.y > from.y + from.height) {
+        const verticalDistance = targetY - sourceY
+        if (verticalDistance <= LAYER_GAP_Y + 8) {
+          const channelY = sourceY + verticalDistance / 2
+          points = [
+            { x: sourceX, y: sourceY },
+            { x: sourceX, y: channelY },
+            { x: targetX, y: channelY },
+            { x: targetX, y: targetY },
+          ]
+          labelPosition = labelAtMidpoint(points, 1)
+        } else {
+          // Long forward dependencies travel down a real inter-column gap.
+          // The rail starts below the source and leaves above the target, so
+          // it never becomes a screen-wide bus across component faces.
+          const internalRails = Array.from(
+            { length: Math.max(1, maxNodesPerRow - 1) },
+            (_, index) => width + NODE_GAP_X / 2 + index * (width + NODE_GAP_X),
+          )
+          const railX = internalRails
+            .map((x) => ({ x, distance: Math.abs(sourceX - x) + Math.abs(targetX - x) }))
+            .sort((a, b) => a.distance - b.distance || a.x - b.x)[0]!.x
+          const exitY = sourceY + 22 + (relationshipIndex % 3) * 8
+          const entryY = targetY - 22 - (relationshipIndex % 3) * 8
+          points = [
+            { x: sourceX, y: sourceY },
+            { x: sourceX, y: exitY },
+            { x: railX, y: exitY },
+            { x: railX, y: entryY },
+            { x: targetX, y: entryY },
+            { x: targetX, y: targetY },
+          ]
+          labelPosition = labelAtMidpoint(points, 4)
+        }
+      } else {
+        const useLeftRail = from.x + from.width / 2 < graphWidth / 2
+        const railOffset = 72 + (relationshipIndex % 4) * 24
+        const railX = useLeftRail ? -railOffset : graphWidth + railOffset
+        const sourceCenterY = from.y + from.height / 2
+        const targetCenterY = to.y + to.height / 2
+        points = [
+          { x: useLeftRail ? from.x : from.x + from.width, y: sourceCenterY },
+          { x: railX, y: sourceCenterY },
+          { x: railX, y: targetCenterY },
+          { x: useLeftRail ? to.x : to.x + to.width, y: targetCenterY },
+        ]
+        labelPosition = labelAtMidpoint(points, 0)
+      }
+    } else if (normalForwardFlow) {
+      const sourceX = attachmentX(from, rel, outgoing.get(rel.fromId) ?? [rel])
+      const targetX = attachmentX(to, rel, incoming.get(rel.toId) ?? [rel])
+      const sourceKind = kindById.get(rel.fromId)
+      const targetKind = kindById.get(rel.toId)
+      const sourceY = sourceKind === 'initialNode' || sourceKind === 'finalNode'
+        ? from.y + from.height / 2 + 12
+        : from.y + from.height
+      const targetY = targetKind === 'initialNode' || targetKind === 'finalNode'
+        ? to.y + to.height / 2 - 12
+        : to.y
+      if (Math.abs(sourceX - targetX) < 1) {
+        points = [{ x: sourceX, y: sourceY }, { x: targetX, y: targetY }]
+        labelPosition = { x: sourceX + 36, y: (sourceY + targetY) / 2 }
+      } else {
+        const channelY = sourceY + (targetY - sourceY) / 2
+        points = [
+          { x: sourceX, y: sourceY },
+          { x: sourceX, y: channelY },
+          { x: targetX, y: channelY },
+          { x: targetX, y: targetY },
+        ]
+        labelPosition = labelAtMidpoint(points, 1)
+      }
+    } else {
+      // A loop exits from the nearest outside edge so it cannot run through a
+      // sibling node in the same row. A compact bank of stable rails prevents
+      // dense system topologies from expanding into a screen-wide collector.
+      const useLeftRail = from.x + from.width / 2 < graphWidth / 2
+      const railOffset = 72 + ((loopRailIndex.get(rel.id) ?? 0) % 6) * 30
+      const railX = useLeftRail ? -railOffset : graphWidth + railOffset
+      const sourceY = from.y + from.height / 2
+      const targetY = to.y + to.height / 2
+      const sourceX = useLeftRail ? from.x : from.x + from.width
+      const targetX = useLeftRail ? to.x : to.x + to.width
+      points = [
+        { x: sourceX, y: sourceY },
+        { x: railX, y: sourceY },
+        { x: railX, y: targetY },
+        { x: targetX, y: targetY },
+      ]
+      // Keep loop labels on the outside rail. Centering a long label on the
+      // short node-to-rail exit can place its background back over the source
+      // state even when the anchor point itself clears the node.
+      labelPosition = labelAtMidpoint(points, 1)
+    }
+
+    const label = relationshipLabelText(rel)
+    return { relationshipId: rel.id, points, ...(label && labelPosition ? { labelPosition } : {}) }
+  })
+
+  return { nodes, edges }
+}
+
 // ---------------------------------------------------------------------------
 // Component layout: semantic center with consumers, dependencies, and ports
 // ---------------------------------------------------------------------------
@@ -239,7 +558,13 @@ function buildLayeredLayout(projection: DiagramProjection, width: number, height
 function buildComponentLayout(projection: DiagramProjection, width: number, height: number): { nodes: DiagramLayoutNode[]; edges: DiagramLayoutEdge[] } {
   const elementById = new Map(projection.elements.map((element) => [element.id, element]))
   const components = projection.elements.filter((element) => element.kind === 'component')
-  const main = components.find((element) => element.sourceElementRef === 'module')
+  const semanticMain = components.find((element) => element.sourceElementRef === 'module')
+  const provided = projection.elements.filter((element) => element.kind === 'providedInterface')
+  const required = projection.elements.filter((element) => element.kind === 'requiredInterface')
+  if (!semanticMain && provided.length === 0 && required.length === 0) {
+    return buildFlowLayout(projection, width, height, 4)
+  }
+  const main = semanticMain
     ?? [...components].sort((a, b) => {
       const degree = projection.relationships.filter((rel) => rel.fromId === b.id || rel.toId === b.id).length
         - projection.relationships.filter((rel) => rel.fromId === a.id || rel.toId === a.id).length
@@ -247,8 +572,6 @@ function buildComponentLayout(projection: DiagramProjection, width: number, heig
     })[0]
   if (!main) return buildLayeredLayout(projection, width, height, 4)
 
-  const provided = projection.elements.filter((element) => element.kind === 'providedInterface')
-  const required = projection.elements.filter((element) => element.kind === 'requiredInterface')
   const consumerIds = new Set(
     projection.relationships.filter((rel) => rel.toId === main.id && elementById.get(rel.fromId)?.kind === 'component').map((rel) => rel.fromId),
   )
@@ -430,17 +753,18 @@ function buildUseCaseLayout(projection: DiagramProjection, width: number, height
   const useCases = projection.elements.filter((element) => element.kind === 'useCase')
 
   const actorWidth = Math.max(Math.round(width * 0.7), MIN_NODE_WIDTH)
+  const actorHeight = Math.max(height + 32, 96)
   const boundaryX = actorWidth + ACTOR_COLUMN_GAP
 
   const nodes: DiagramLayoutNode[] = []
   actors.forEach((actor, index) => {
-    nodes.push({ elementId: actor.id, x: 0, y: index * (height + NODE_GAP_X), width: actorWidth, height })
+    nodes.push({ elementId: actor.id, x: 0, y: index * (actorHeight + NODE_GAP_X), width: actorWidth, height: actorHeight })
   })
   useCases.forEach((uc, index) => {
     nodes.push({ elementId: uc.id, x: boundaryX + BOUNDARY_PADDING, y: BOUNDARY_PADDING + index * (height + NODE_GAP_X), width, height })
   })
 
-  const actorsBottom = actors.length > 0 ? actors.length * (height + NODE_GAP_X) : 0
+  const actorsBottom = actors.length > 0 ? actors.length * (actorHeight + NODE_GAP_X) : 0
   const useCasesBottom = useCases.length > 0 ? BOUNDARY_PADDING + useCases.length * (height + NODE_GAP_X) : height
   const contentBottom = Math.max(actorsBottom, useCasesBottom, height)
 
@@ -489,13 +813,13 @@ function buildUseCaseLayout(projection: DiagramProjection, width: number, height
       const actorAssociations = associationsByActor.get(rel.fromId) ?? [rel.id]
       const associationIndex = Math.max(actorAssociations.indexOf(rel.id), 0)
       const sourceOffset = (associationIndex - (actorAssociations.length - 1) / 2) * 14
-      const sy = from.y + from.height / 2 + sourceOffset
+      const sy = from.y + Math.min(34, from.height / 2) + sourceOffset
       const ty = to.y + to.height / 2
       // A distinct attachment and corridor for every association prevents
       // multiple actor lines from visually merging into one unexplained fork.
       const channelX = associationChannelX(rel.id)
       points = [
-        { x: from.x + from.width, y: sy },
+        { x: from.x + from.width / 2, y: sy },
         { x: channelX, y: sy },
         { x: channelX, y: ty },
         { x: to.x, y: ty },
@@ -505,13 +829,13 @@ function buildUseCaseLayout(projection: DiagramProjection, width: number, height
       const actorAssociations = associationsByActor.get(rel.toId) ?? [rel.id]
       const associationIndex = Math.max(actorAssociations.indexOf(rel.id), 0)
       const targetOffset = (associationIndex - (actorAssociations.length - 1) / 2) * 14
-      const ty = to.y + to.height / 2 + targetOffset
+      const ty = to.y + Math.min(34, to.height / 2) + targetOffset
       const channelX = associationChannelX(rel.id)
       points = [
         { x: from.x, y: sy },
         { x: channelX, y: sy },
         { x: channelX, y: ty },
-        { x: to.x + to.width, y: ty },
+        { x: to.x + to.width / 2, y: ty },
       ]
     } else {
       const sameColumn = from.x === to.x
@@ -749,9 +1073,9 @@ export function layoutDiagram(projection: DiagramProjection, viewportClass: Diag
       ? buildSequenceLayout(projection, nodeWidth, nodeHeight)
       : projection.kind === 'useCase'
         ? buildUseCaseLayout(projection, nodeWidth, nodeHeight)
-        : projection.kind === 'component'
+      : projection.kind === 'component'
           ? buildComponentLayout(projection, nodeWidth, nodeHeight)
-          : buildLayeredLayout(projection, nodeWidth, nodeHeight, viewportClass === 'narrow' ? 2 : 4)
+          : buildFlowLayout(projection, nodeWidth, nodeHeight, 4)
 
   const shell: DiagramLayout = {
     diagramId: projection.diagramId,

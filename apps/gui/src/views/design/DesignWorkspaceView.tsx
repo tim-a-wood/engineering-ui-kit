@@ -412,52 +412,56 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
           <p className="overline">Use-case-led delivery</p>
           <h1>Product delivery</h1>
         </div>
-        {props.projects && props.onProjectSelected && (
-          <div className="design-project-picker">
-            <label>
-              Project
-              <select
-                aria-label="Capabilities workflow project"
-                value={props.projectModeAvailable === false ? '' : props.activeProjectId ?? ''}
-                onChange={(event) => props.onProjectSelected?.(event.target.value)}
-              >
-                <option value="">DO-178C showcase</option>
-                {props.projects.map((project) => (
-                  <option key={project.id} value={project.id} disabled={props.projectModeAvailable === false}>
-                    {project.name}{props.projectModeAvailable === false ? ' (desktop app)' : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {props.onNavigateToProjects && <button type="button" className="btn btn-ghost btn-compact" onClick={props.onNavigateToProjects}>Manage projects</button>}
+        <div className="design-workspace-header-controls">
+          {props.projects && props.onProjectSelected && (
+            <div className="design-project-picker">
+              <label>
+                Project
+                <select
+                  aria-label="Capabilities workflow project"
+                  value={props.projectModeAvailable === false ? '' : props.activeProjectId ?? ''}
+                  onChange={(event) => props.onProjectSelected?.(event.target.value)}
+                >
+                  <option value="">DO-178C showcase</option>
+                  {props.projects.map((project) => (
+                    <option key={project.id} value={project.id} disabled={props.projectModeAvailable === false}>
+                      {project.name}{props.projectModeAvailable === false ? ' (desktop app)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {props.onNavigateToProjects && <button type="button" className="btn btn-ghost btn-compact" onClick={props.onNavigateToProjects}>Manage projects</button>}
+            </div>
+          )}
+          <div className="design-projection-switch" role="group" aria-label="Workflow view">
+            <button
+              type="button"
+              aria-pressed={projection === 'guided'}
+              className={projection === 'guided' ? 'active' : ''}
+              onClick={() => {
+                setProjection('guided')
+                if (activeTab === 'setup') setActiveTab(firstIncompleteStage ?? 'evidence')
+              }}
+            >
+              Guided
+            </button>
+            <button
+              type="button"
+              aria-pressed={projection === 'technical'}
+              className={projection === 'technical' ? 'active' : ''}
+              onClick={() => setProjection('technical')}
+            >
+              Technical
+            </button>
           </div>
-        )}
-        <p className="design-system-status">
-          Use cases {state.useCaseAnalysis.status === 'approved' ? 'approved' : 'not yet approved'} · system structure {state.systemStatus.approved ? 'approved' : 'not yet approved'} · {approvalCountText(state.progress)},{' '}
-          {state.progress.total - state.progress.approved} remain.
-          {blockingModuleNamesForStatus.length > 0 && <> Blocking: {blockingModuleNamesForStatus.join(', ')}.</>}
-        </p>
-        <SaveIndicator saveState={state.saveState} savedAt={state.savedAt} mode={state.mode} />
-        <div className="design-projection-switch" role="group" aria-label="Workflow view">
-          <button
-            type="button"
-            aria-pressed={projection === 'guided'}
-            className={projection === 'guided' ? 'active' : ''}
-            onClick={() => {
-              setProjection('guided')
-              if (activeTab === 'setup') setActiveTab(firstIncompleteStage ?? 'evidence')
-            }}
-          >
-            Guided
-          </button>
-          <button
-            type="button"
-            aria-pressed={projection === 'technical'}
-            className={projection === 'technical' ? 'active' : ''}
-            onClick={() => setProjection('technical')}
-          >
-            Technical
-          </button>
+        </div>
+        <div className="design-workspace-meta">
+          <p className="design-system-status">
+            Use cases {state.useCaseAnalysis.status === 'approved' ? 'approved' : 'not yet approved'} · system structure {state.systemStatus.approved ? 'approved' : 'not yet approved'} · {approvalCountText(state.progress)},{' '}
+            {state.progress.total - state.progress.approved} remain.
+            {blockingModuleNamesForStatus.length > 0 && <> Blocking: {blockingModuleNamesForStatus.join(', ')}.</>}
+          </p>
+          <SaveIndicator saveState={state.saveState} savedAt={state.savedAt} mode={state.mode} />
         </div>
       </header>
 

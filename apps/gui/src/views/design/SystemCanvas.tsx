@@ -47,7 +47,8 @@ function buildSystemProjection(architecture: SystemStructureSpecification): Diag
     kind: 'component',
     label: definition.name,
     sourceRecordId: architecture.id,
-    umlType: 'Component',
+    sourceElementRef: `module:${definition.moduleType}`,
+    umlType: `Component · ${definition.moduleType}`,
     definition: definition.responsibility,
   }))
 
@@ -81,6 +82,15 @@ function buildSystemProjection(architecture: SystemStructureSpecification): Diag
   // `layoutDiagram`'s seed derivation being stable across rerenders.
   const contentHash = `${architecture.contentHash}:${elements.length}:${relationships.length}`
   return { ...withoutHash, contentHash }
+}
+
+function humanizeIdentifier(value: string): string {
+  const normalized = value
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return normalized ? `${normalized[0]!.toUpperCase()}${normalized.slice(1)}` : normalized
 }
 
 export type SystemCanvasProps = {
@@ -141,12 +151,13 @@ export function SystemCanvas(props: SystemCanvasProps) {
   const viewBox = useMemo(() => {
     if (visibleNodes.length === 0) return { x: 0, y: 0, width: 900, height: 480 }
     const pad = 48
-    const minX = Math.min(...visibleNodes.map((n) => n.x)) - pad
-    const minY = Math.min(...visibleNodes.map((n) => n.y)) - pad
-    const maxX = Math.max(...visibleNodes.map((n) => n.x + n.width)) + pad
-    const maxY = Math.max(...visibleNodes.map((n) => n.y + n.height)) + pad
+    const edgePoints = visibleEdges.flatMap((edge) => edge.points)
+    const minX = Math.min(...visibleNodes.map((n) => n.x), ...edgePoints.map((point) => point.x)) - pad
+    const minY = Math.min(...visibleNodes.map((n) => n.y), ...edgePoints.map((point) => point.y)) - pad
+    const maxX = Math.max(...visibleNodes.map((n) => n.x + n.width), ...edgePoints.map((point) => point.x)) + pad
+    const maxY = Math.max(...visibleNodes.map((n) => n.y + n.height), ...edgePoints.map((point) => point.y)) + pad
     return { x: minX, y: minY, width: Math.max(maxX - minX, 480), height: Math.max(maxY - minY, 320) }
-  }, [visibleNodes])
+  }, [visibleEdges, visibleNodes])
 
   // A new selection or mode change re-fits the view; leftover pan from the
   // previous neighborhood would otherwise push the new content off screen.
@@ -236,16 +247,26 @@ export function SystemCanvas(props: SystemCanvasProps) {
 
   return (
     <section className="design-canvas" aria-label="System canvas">
-      <div className="design-canvas-toolbar" role="group" aria-label="Canvas controls">
-        <button type="button" className="design-canvas-toggle" aria-pressed={!focusMode} onClick={() => setFocusMode((v) => !v)}>
-          Show all links
-          <span className="sr-only">{focusMode ? ', off — showing only the selected module’s neighborhood' : ', on'}</span>
-        </button>
-        <button type="button" className="design-canvas-toggle" aria-pressed={listView} onClick={() => setListView((v) => !v)}>
-          List view
-        </button>
+      <header className="design-canvas-header">
+        <div>
+          <p className="overline">Approved system design</p>
+          <h2>Architecture canvas</h2>
+          <p>Module topology, deployable boundaries, and dependency direction</p>
+        </div>
+        <span>{projection.elements.length} modules · {projection.relationships.length} dependencies</span>
+      </header>
+      <div className="design-canvas-toolbar">
+        <div role="group" aria-label="Canvas display controls">
+          <button type="button" className="design-canvas-toggle" aria-pressed={!focusMode} onClick={() => setFocusMode((v) => !v)}>
+            Show all links
+            <span className="sr-only">{focusMode ? ', off — showing only the selected module’s neighborhood' : ', on'}</span>
+          </button>
+          <button type="button" className="design-canvas-toggle" aria-pressed={listView} onClick={() => setListView((v) => !v)}>
+            List view
+          </button>
+        </div>
         {!listView && (
-          <>
+          <div role="group" aria-label="Canvas viewport controls">
             <button type="button" aria-label="Zoom out" onClick={() => setScale((s) => clampScale(s - ZOOM_STEP))}>
               −
             </button>
@@ -259,7 +280,7 @@ export function SystemCanvas(props: SystemCanvasProps) {
             <button type="button" disabled={!props.selectedModuleId} onClick={() => { setFocusMode(true); setScale(1); setPan({ x: 0, y: 0 }) }}>
               Fit selection
             </button>
-          </>
+          </div>
         )}
       </div>
 
@@ -302,7 +323,7 @@ export function SystemCanvas(props: SystemCanvasProps) {
           onWheel={onWheel}
         >
           <svg
-            width={focusMode ? '100%' : Math.max(960, viewBox.width)}
+            width="100%"
             height={Math.max(480, Math.min(820, viewBox.height))}
             viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
             onPointerDown={onPointerDown}
@@ -319,8 +340,14 @@ export function SystemCanvas(props: SystemCanvasProps) {
                   </text>
                 </g>
               ))}
-              {visibleEdges.map((edge) => (
-                <g key={edge.relationshipId} className="design-canvas-edge">
+              {visibleEdges.map((edge) => {
+                const relationship = projection.relationships.find((candidate) => candidate.id === edge.relationshipId)
+                const selectedElementId = props.selectedModuleId ? elementIdFor(props.selectedModuleId) : undefined
+                const contextual = !selectedElementId
+                  || relationship?.fromId === selectedElementId
+                  || relationship?.toId === selectedElementId
+                return (
+                <g key={edge.relationshipId} className={contextual ? 'design-canvas-edge contextual' : 'design-canvas-edge muted'}>
                   <polyline points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')} markerEnd="url(#design-arrow)" />
                   <polyline
                     points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')}
@@ -340,7 +367,8 @@ export function SystemCanvas(props: SystemCanvasProps) {
                     }}
                   />
                 </g>
-              ))}
+                )
+              })}
               {visibleNodes.map((node) => {
                 const moduleId = moduleIdFromElementId(node.elementId)
                 const entry = stateByModuleId.get(moduleId)
@@ -364,6 +392,11 @@ export function SystemCanvas(props: SystemCanvasProps) {
                     onKeyDown={(event) => onNodeKeyDown(event, moduleId)}
                   >
                     <rect width={node.width} height={node.height} rx={6} />
+                    <g className="design-canvas-component-mark" aria-hidden="true">
+                      <rect x={node.width - 25} y={8} width={16} height={18} rx={1} />
+                      <rect x={node.width - 31} y={11} width={8} height={5} rx={1} />
+                      <rect x={node.width - 31} y={19} width={8} height={5} rx={1} />
+                    </g>
                     <text x={8} y={18} className="design-canvas-node-title">
                       {nameByModuleId.get(node.elementId) ?? moduleId}
                     </text>
@@ -384,7 +417,7 @@ export function SystemCanvas(props: SystemCanvasProps) {
                     )}
                     {entry && (
                       <text x={8} y={48} className="design-canvas-node-state" aria-hidden="true">
-                        {entry.state}
+                        {humanizeIdentifier(entry.state)}
                       </text>
                     )}
                   </g>
@@ -392,8 +425,8 @@ export function SystemCanvas(props: SystemCanvasProps) {
               })}
             </g>
             <defs>
-              <marker id="design-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-                <path d="M0,0 L6,3 L0,6 Z" />
+              <marker id="design-arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+                <path d="M0,0 L7,3 L0,6" />
               </marker>
             </defs>
           </svg>
@@ -404,6 +437,12 @@ export function SystemCanvas(props: SystemCanvasProps) {
             </svg>
           </div>
         </div>
+      )}
+      {!listView && (
+        <footer className="design-canvas-footer">
+          <span>Dashed open-arrow connectors denote UML dependencies.</span>
+          <span>Select a module or dependency for its approved design record.</span>
+        </footer>
       )}
 
       {(selectedElement || selectedRelationship) && (

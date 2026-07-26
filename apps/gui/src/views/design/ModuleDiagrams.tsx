@@ -45,6 +45,14 @@ const DIAGRAM_KIND_LABEL: Record<DiagramKind, string> = {
   useCase: 'Use case',
 }
 
+const DIAGRAM_KIND_DESCRIPTION: Record<DiagramKind, string> = {
+  component: 'Module boundary, dependencies, and provided or required interfaces',
+  activity: 'Executable control flow, guarded decisions, outcomes, and recovery behavior',
+  stateMachine: 'Lifecycle states and valid trigger-driven transitions',
+  sequence: 'Ordered collaboration between participants and module boundaries',
+  useCase: 'Approved actors and use-case relationships traced into this module',
+}
+
 export type ModuleDiagramsProps = {
   store: DesignStore
   design: ModuleDesignSpecification
@@ -77,10 +85,10 @@ function useDiagramContainer(breakpoint = NARROW_BREAKPOINT) {
 }
 
 function boundsOf(layout: DiagramLayout) {
-  let minX = 0
-  let minY = 0
-  let maxX = 400
-  let maxY = 260
+  let minX = Number.POSITIVE_INFINITY
+  let minY = Number.POSITIVE_INFINITY
+  let maxX = Number.NEGATIVE_INFINITY
+  let maxY = Number.NEGATIVE_INFINITY
   for (const node of layout.nodes) {
     minX = Math.min(minX, node.x)
     minY = Math.min(minY, node.y)
@@ -95,11 +103,26 @@ function boundsOf(layout: DiagramLayout) {
       maxY = Math.max(maxY, point.y)
     }
   }
-  return { minX: minX - 30, minY: minY - 30, width: maxX - minX + 60, height: maxY - minY + 60 }
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+    return { minX: 0, minY: 0, width: 480, height: 320 }
+  }
+  const padding = 48
+  return { minX: minX - padding, minY: minY - padding, width: maxX - minX + padding * 2, height: maxY - minY + padding * 2 }
 }
 
 function isModuleSelfElement(design: ModuleDesignSpecification, element: UmlElement): boolean {
   return element.kind === 'component' && element.sourceRecordId === design.id && element.sourceElementRef === 'module'
+}
+
+function humanizeDiagramText(value: string): string {
+  const normalized = value
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!normalized) return normalized
+  return `${normalized[0]!.toUpperCase()}${normalized.slice(1)}`
 }
 
 function wrapNodeLabel(label: string, limit = 25): string[] {
@@ -132,18 +155,33 @@ function visibleRelationshipLabel(kind: string | undefined, label: string | unde
   // not collide with neighboring routes.
   if (kind === 'dependency') return '«use»'
   if (!label) return undefined
-  return shortRelationshipLabel(label)
+  return shortRelationshipLabel(humanizeDiagramText(label))
 }
 
-function UmlNodeSymbol(props: { element: UmlElement; width: number; height: number }) {
-  const { element, width, height } = props
+function UmlNodeSymbol(props: { element: UmlElement; width: number; height: number; diagramHeight: number }) {
+  const { element, width, height, diagramHeight } = props
   const centerY = height / 2
-  const lines = wrapNodeLabel(element.label)
+  const isRecovery = element.sourceElementRef === 'recovery'
+  const displayLabel = humanizeDiagramText(isRecovery ? element.label.replace(/^Recovery:\s*/i, '') : element.label)
+  const lines = wrapNodeLabel(displayLabel, isRecovery ? 38 : 25)
   const text = (x: number, y: number, anchor: 'start' | 'middle' = 'start') => (
     <text x={x} y={y} textAnchor={anchor} className="design-diagram-node-title">
       {lines.map((line, index) => <tspan key={`${line}.${index}`} x={x} dy={index === 0 ? 0 : 15}>{line}</tspan>)}
     </text>
   )
+
+  if (isRecovery) {
+    const fold = 18
+    return (
+      <g className="design-uml-recovery-note">
+        <path d={`M 1 1 H ${width - fold} L ${width - 1} ${fold} V ${height - 1} H 1 Z M ${width - fold} 1 V ${fold} H ${width - 1}`} />
+        <text x={12} y={18} className="design-diagram-node-type">RECOVERY BEHAVIOR</text>
+        <text x={12} y={39} className="design-diagram-node-title">
+          {lines.map((line, index) => <tspan key={`${line}.${index}`} x={12} dy={index === 0 ? 0 : 15}>{line}</tspan>)}
+        </text>
+      </g>
+    )
+  }
 
   switch (element.kind) {
     case 'providedInterface':
@@ -165,16 +203,20 @@ function UmlNodeSymbol(props: { element: UmlElement; width: number; height: numb
         </g>
       )
     case 'actor':
+      {
+        const actorX = width / 2
+        const labelY = height - (lines.length > 1 ? 19 : 8)
       return (
         <g className="design-uml-actor">
-          <circle cx={28} cy={14} r={7} />
-          <line x1={28} y1={21} x2={28} y2={45} />
-          <line x1={16} y1={29} x2={40} y2={29} />
-          <line x1={28} y1={45} x2={18} y2={60} />
-          <line x1={28} y1={45} x2={38} y2={60} />
-          {text(52, centerY - (lines.length > 1 ? 7 : -4))}
+          <circle cx={actorX} cy={10} r={7} />
+          <line x1={actorX} y1={17} x2={actorX} y2={52} />
+          <line x1={actorX - 14} y1={29} x2={actorX + 14} y2={29} />
+          <line x1={actorX} y1={52} x2={actorX - 12} y2={70} />
+          <line x1={actorX} y1={52} x2={actorX + 12} y2={70} />
+          {text(actorX, labelY, 'middle')}
         </g>
       )
+      }
     case 'useCase':
       return (
         <g className="design-uml-use-case">
@@ -192,16 +234,16 @@ function UmlNodeSymbol(props: { element: UmlElement; width: number; height: numb
     case 'initialNode':
       return (
         <g className="design-uml-initial">
-          <circle cx={24} cy={centerY} r={10} />
-          {text(46, centerY + 4)}
+          <circle cx={width / 2} cy={centerY} r={10} />
+          {text(width / 2 + 24, centerY + 4)}
         </g>
       )
     case 'finalNode':
       return (
         <g className="design-uml-final">
-          <circle cx={24} cy={centerY} r={12} />
-          <circle cx={24} cy={centerY} r={7} />
-          {text(48, centerY + 4)}
+          <circle cx={width / 2} cy={centerY} r={12} />
+          <circle cx={width / 2} cy={centerY} r={7} />
+          {text(width / 2 + 26, centerY + 4)}
         </g>
       )
     case 'decision':
@@ -225,7 +267,7 @@ function UmlNodeSymbol(props: { element: UmlElement; width: number; height: numb
         <g className="design-uml-lifeline">
           <rect width={width} height={height} rx={3} />
           {text(width / 2, 28, 'middle')}
-          <line x1={width / 2} y1={height} x2={width / 2} y2={height + 120} />
+          <line x1={width / 2} y1={height} x2={width / 2} y2={Math.max(height + 120, diagramHeight - 36)} />
         </g>
       )
     case 'component':
@@ -374,7 +416,7 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
 
   function fitDiagram() {
     const available = Math.max(1, container.width - 32)
-    setScale(clampZoom(Math.min(1, available / bounds.width)))
+    setScale(clampZoom(Math.min(1.35, available / bounds.width)))
     requestAnimationFrame(() => {
       if (typeof viewportRef.current?.scrollTo === 'function') viewportRef.current.scrollTo({ left: 0, top: 0, behavior: 'smooth' })
     })
@@ -428,23 +470,23 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
   return (
     <div ref={container.ref} className={fullscreen ? 'design-diagrams fullscreen' : 'design-diagrams'}>
       <div className="design-diagram-navigation">
-      <div role="tablist" aria-label="Module diagrams" className="design-diagrams-tabs" onKeyDown={onTabsKeyDown}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.kind}
-            type="button"
-            role="tab"
-            id={`design-diagram-tab-${tab.kind}`}
-            aria-selected={tab.kind === activeKind}
-            aria-controls={`design-diagram-panel-${tab.kind}`}
-            tabIndex={tab.kind === activeKind ? 0 : -1}
-            className={tab.kind === activeKind ? 'design-diagrams-tab active' : 'design-diagrams-tab'}
-            onClick={() => activateTab(tab.kind)}
-          >
-            {DIAGRAM_KIND_LABEL[tab.kind]}
-          </button>
-        ))}
-      </div>
+        <div role="tablist" aria-label="Module diagrams" className="design-diagrams-tabs" onKeyDown={onTabsKeyDown}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.kind}
+              type="button"
+              role="tab"
+              id={`design-diagram-tab-${tab.kind}`}
+              aria-selected={tab.kind === activeKind}
+              aria-controls={`design-diagram-panel-${tab.kind}`}
+              tabIndex={tab.kind === activeKind ? 0 : -1}
+              className={tab.kind === activeKind ? 'design-diagrams-tab active' : 'design-diagrams-tab'}
+              onClick={() => activateTab(tab.kind)}
+            >
+              {DIAGRAM_KIND_LABEL[tab.kind]}
+            </button>
+          ))}
+        </div>
         <button type="button" className="design-diagrams-toggle" aria-pressed={showTextAlternative} onClick={() => setShowTextAlternative((value) => !value)}>
           Relationship list
         </button>
@@ -455,16 +497,20 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
           <div>
             <p className="overline">{showTextAlternative ? 'Relationship representation' : 'Diagram representation'}</p>
             <h3>{projection.title}</h3>
+            <p className="design-diagram-description">{DIAGRAM_KIND_DESCRIPTION[projection.kind]}</p>
             {selectedId && <p className="design-diagram-selection-breadcrumb">Selected · {selectedElement?.label ?? selectedRelationship?.label ?? selectedRelationship?.kind}</p>}
           </div>
           {!showTextAlternative && (
-            <div className="design-diagram-viewport-controls" role="group" aria-label="Diagram viewport controls">
-              <button type="button" aria-label="Zoom out" onClick={() => setScale((value) => clampZoom(value - .15))}>−</button>
-              <output aria-label="Diagram zoom">{Math.round(scale * 100)}%</output>
-              <button type="button" aria-label="Zoom in" onClick={() => setScale((value) => clampZoom(value + .15))}>+</button>
-              <button type="button" onClick={fitDiagram}>Fit diagram</button>
-              <button type="button" disabled={!selectedId} onClick={fitSelection}>Fit selection</button>
-              <button type="button" aria-pressed={fullscreen} onClick={() => setFullscreen((value) => !value)}>{fullscreen ? 'Exit full screen' : 'Full screen'}</button>
+            <div className="design-diagram-heading-actions">
+              <span className="design-diagram-standard">UML notation</span>
+              <div className="design-diagram-viewport-controls" role="group" aria-label="Diagram viewport controls">
+                <button type="button" aria-label="Zoom out" onClick={() => setScale((value) => clampZoom(value - .15))}>−</button>
+                <output aria-label="Diagram zoom">{Math.round(scale * 100)}%</output>
+                <button type="button" aria-label="Zoom in" onClick={() => setScale((value) => clampZoom(value + .15))}>+</button>
+                <button type="button" onClick={fitDiagram}>Fit</button>
+                <button type="button" disabled={!selectedId} onClick={fitSelection}>Selection</button>
+                <button type="button" aria-pressed={fullscreen} onClick={() => setFullscreen((value) => !value)}>{fullscreen ? 'Exit full screen' : 'Full screen'}</button>
+              </div>
             </div>
           )}
         </header>
@@ -522,10 +568,10 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
           >
           <svg
             className={narrow ? 'design-diagram-svg narrow' : 'design-diagram-svg wide'}
-            width={Math.max(480, bounds.width * scale)}
-            height={Math.max(320, Math.min(720, bounds.height * scale))}
+            width={Math.max(720, bounds.width * scale)}
+            height={Math.max(460, Math.min(820, bounds.height * scale))}
             viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
-            preserveAspectRatio="xMinYMin meet"
+            preserveAspectRatio="xMidYMid meet"
           >
             <defs>
               <marker id={`design-open-arrow-${activeKind}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -537,7 +583,7 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
             </defs>
             {layout.edges.map((edge) => {
               const relationship = projection.relationships.find((rel) => rel.id === edge.relationshipId)
-              const displayLabel = visibleRelationshipLabel(relationship?.kind, relationship?.label)
+              const displayLabel = visibleRelationshipLabel(relationship?.kind, relationship?.label ?? relationship?.guard)
               const arrowKind = relationship?.kind === 'provides' || relationship?.kind === 'requires' || relationship?.kind === 'association'
                 ? undefined
                 : relationship?.kind === 'dependency' || relationship?.kind === 'include' || relationship?.kind === 'extend' || relationship?.kind === 'reply'
@@ -600,7 +646,7 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
                     }
                   }}
                 >
-                  <UmlNodeSymbol element={element} width={node.width} height={node.height} />
+                  <UmlNodeSymbol element={element} width={node.width} height={node.height} diagramHeight={bounds.height} />
                 </g>
               )
             })}
@@ -613,6 +659,12 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
             </svg>
           </div>
           </div>
+        )}
+        {!showTextAlternative && (
+          <footer className="design-diagram-footer">
+            <span>Select any UML element or connector to inspect its source and traceability.</span>
+            <span>{projection.elements.length} elements · {projection.relationships.length} relationships · {layout.diagnostics.length === 0 ? 'layout verified' : `${layout.diagnostics.length} layout notes`}</span>
+          </footer>
         )}
 
         {layout.diagnostics.length > 0 && (
