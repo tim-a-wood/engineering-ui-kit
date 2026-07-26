@@ -147,10 +147,14 @@ test("uses ASD-STE100 language in the workflow interface", async () => {
   assert.match(mockup, /Check the system design/);
   assert.match(mockup, /Design one module at a time/);
   assert.match(mockup, /Check automated test evidence/);
+  assert.match(mockup, /interface that \$\{context\.title\} supplies/);
+  assert.match(mockup, /Modules that use this module/);
   assert.doesNotMatch(
     mockup,
     /\b(?:can't|don't|doesn't|won't|isn't|aren't|it's|that's|you'll|we'll|didn't|wasn't|weren't|shouldn't|wouldn't|couldn't)\b/i,
   );
+  assert.doesNotMatch(mockup, /interface supplied by/);
+  assert.doesNotMatch(mockup, /behavior delivered by/);
 
   const obsoleteCopy = [
     "What work must users do?",

@@ -3615,7 +3615,7 @@
         <div class="inspector-section"><b>Operations</b><ul class="inspector-list">${detail.operations.map(operation => `<li>${operation}</li>`).join('')}</ul></div>
         <div class="inspector-section"><b>Ports and adapters</b><ul class="inspector-list">${detail.ports.map(port => `<li class="mono">${port}</li>`).join('')}</ul></div>
         <div class="inspector-section"><b>Depends on</b>${moduleLinks(detail.dependsOn)}</div>
-        <div class="inspector-section"><b>Used by</b>${moduleLinks(detail.usedBy, 'No module depends on this user interface.')}</div>
+        <div class="inspector-section"><b>Modules that use this module</b>${moduleLinks(detail.usedBy, 'No module depends on this user interface.')}</div>
         <div class="inspector-section"><b>Use cases</b>${storyLinks(detail.stories)}</div>
         <div class="inspector-section"><b>Module design</b><p><span class="tag">Not started</span> Define this module. Approve it before you create the implementation handoff.</p><button class="btn btn-small" id="design-selected-module" type="button">Design this module</button></div>
         <div class="technical block mono" style="margin-top:10px;color:var(--muted);font-size:9.5px;line-height:1.6">module: ${moduleId}<br>group: ${detail.group.toLowerCase()}<br>deployable: ${detail.deployable.toLowerCase()}<br>decision lock: none</div>`;
@@ -4031,7 +4031,7 @@
           ${positionedUmlElement({
             id:`component-downstream-${context.id}`, type:'Component', label:downstreamLabel,
             description:`A component that ${context.title} uses.`,
-            relationships:[`used by ${context.title}`], traceIds:context.stories
+            relationships:[`${context.title} uses this component`], traceIds:context.stories
           }, 'uml-box-node uml-component-node', 696, 136, 190, 84, `<small>«component»</small><b>${escapeHtml(downstreamLabel)}</b>`)}
           ${positionedUmlElement({
               id:`interface-provided-${context.id}`, type:'Provided interface', label:providedPort,
@@ -4055,7 +4055,7 @@
           }, 'uml-link-label', 566, 262, 132, 26, '«use»')}`;
       return `
         <div class="diagram-caption"><span><b>Component diagram.</b> Provided and required interfaces form explicit assembly connections.</span><span>Dashed open arrows are dependencies.</span></div>
-        ${umlStage('component', 350, `UML component diagram for ${context.title}`, content, `${upstreamLabel} uses the ${providedPort} interface supplied by ${context.title}. ${context.title} requires ${requiredPort} from ${downstreamLabel}.`)}`;
+        ${umlStage('component', 350, `UML component diagram for ${context.title}`, content, `${upstreamLabel} uses the ${providedPort} interface that ${context.title} supplies. ${context.title} requires ${requiredPort} from ${downstreamLabel}.`)}`;
     }
 
     function activityDetailDiagram(context) {
@@ -4110,7 +4110,7 @@
         ${positionedUmlElement({id:`participant-actor-${context.id}`,type:'Lifeline',label:actor,description:'The actor that starts the evidence refresh interaction.',relationships:['Audit workspace'],traceIds:context.stories}, 'uml-participant-node', 28, 20, 174, 54, `<small>«actor»</small><b>${escapeHtml(actor)}</b>`)}
         ${positionedUmlElement({id:`participant-boundary-${context.id}`,type:'Lifeline',label:'Audit workspace',description:'The user interface boundary receives the request and presents the result.',relationships:[actor,context.title],traceIds:context.stories}, 'uml-participant-node', 248, 20, 174, 54, '<small>«boundary»</small><b>Audit workspace</b>')}
         ${positionedUmlElement({id:`participant-control-${context.id}`,type:'Lifeline',label:context.title,description:context.detail.purpose,relationships:['Audit workspace',dependency],traceIds:context.stories}, 'uml-participant-node primary', 468, 20, 174, 54, `<small>«control»</small><b>${escapeHtml(context.title)}</b>`)}
-        ${positionedUmlElement({id:`participant-entity-${context.id}`,type:'Lifeline',label:dependency,description:`The persistent evidence collaborator used by ${context.title}.`,relationships:[context.title],traceIds:context.stories}, 'uml-participant-node', 688, 20, 174, 54, `<small>«entity»</small><b>${escapeHtml(dependency)}</b>`)}
+        ${positionedUmlElement({id:`participant-entity-${context.id}`,type:'Lifeline',label:dependency,description:`${context.title} uses this persistent evidence collaborator.`,relationships:[context.title],traceIds:context.stories}, 'uml-participant-node', 688, 20, 174, 54, `<small>«entity»</small><b>${escapeHtml(dependency)}</b>`)}
         ${positionedUmlElement({id:`activation-boundary-${context.id}`,type:'Execution specification',label:'Audit workspace execution',description:'The workspace is active while it coordinates the request and displays its outcome.',relationships:['Audit workspace'],traceIds:context.stories}, 'uml-activation-node', 328, 112, 14, 352)}
         ${positionedUmlElement({id:`activation-control-${context.id}`,type:'Execution specification',label:`${context.title} execution`,description:`${context.title} is active while it validates and publishes the candidate.`,relationships:[context.title],traceIds:context.stories}, 'uml-activation-node', 548, 156, 14, 268)}
         ${positionedUmlElement({id:`activation-entity-${context.id}`,type:'Execution specification',label:`${dependency} execution`,description:`${dependency} is active while it reads and publishes snapshot data.`,relationships:[dependency],traceIds:context.stories}, 'uml-activation-node', 768, 202, 14, 178)}
@@ -4147,7 +4147,7 @@
       }, `uml-usecase-node${index === 0 ? ' primary' : ''}`, x, y, index === 4 ? 194 : 188, 70, `<span>${escapeHtml(storyId)}</span><b>${escapeHtml(label)}</b>`)).join('');
       const content = `
         <div class="uml-boundary" style="left:222px;top:36px;width:486px;height:376px"></div>
-        ${positionedUmlElement({id:`system-${context.id}`,type:'System boundary',label:'DO-178C Audit Hub',description:'The system boundary contains behavior delivered by the audit hub.',relationships:useCases.map(item => item[0]),traceIds:storyIds}, 'uml-system-node', 232, 42, 156, 24, 'DO-178C Audit Hub')}
+        ${positionedUmlElement({id:`system-${context.id}`,type:'System boundary',label:'DO-178C Audit Hub',description:'The system boundary contains behavior that the audit hub delivers.',relationships:useCases.map(item => item[0]),traceIds:storyIds}, 'uml-system-node', 232, 42, 156, 24, 'DO-178C Audit Hub')}
         ${positionedUmlElement({id:`actor-primary-${context.id}`,type:'Actor',label:actor,description:'The engineering role that prepares and checks audit evidence.',relationships:useCases.slice(0,3).map(item => item[1]),traceIds:storyIds}, 'uml-actor-node', 24, 132, 158, 126, `<span class="uml-stick-figure" aria-hidden="true"><i class="arms"></i><i class="leg leg-left"></i><i class="leg leg-right"></i></span><b>${escapeHtml(actor)}</b>`)}
         ${positionedUmlElement({id:`actor-reviewer-${context.id}`,type:'Actor',label:'Independent reviewer',description:'This role reviews evidence that a different person prepared.',relationships:useCases.slice(1).map(item => item[1]),traceIds:storyIds}, 'uml-actor-node', 744, 132, 158, 126, '<span class="uml-stick-figure" aria-hidden="true"><i class="arms"></i><i class="leg leg-left"></i><i class="leg leg-right"></i></span><b>Independent reviewer</b>')}
         ${useCaseNodes}
