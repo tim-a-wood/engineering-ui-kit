@@ -29,6 +29,8 @@ Copilot handoffs target one module by default.
 - [`SPECIFICATION.md`](./SPECIFICATION.md) — the exhaustive product and
   implementation requirements, including module-by-module design, one-module
   Copilot handoffs, records, gates, recovery, migration, and tests.
+- [`APP_INTEGRATION_GAP_ANALYSIS.md`](./APP_INTEGRATION_GAP_ANALYSIS.md) —
+  the mockup-to-app gap analysis, integrated result, and real browser evidence.
 - [`mockup.html`](./mockup.html) — an interactive mockup of planning, system
   design, selectable UML elements, controlled change impact, and scenario-test
   evidence.

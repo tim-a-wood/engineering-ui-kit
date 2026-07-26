@@ -30,7 +30,7 @@ describe('Design workspace — headings, landmarks, and named controls (§18.4)'
     const store = new DesignStore({ now: NOW })
     render(<DesignWorkspaceView store={store} />)
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Design' })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1, name: 'Capabilities workflow' })).toBeTruthy()
     expect(screen.getByRole('navigation', { name: 'Design modules' })).toBeTruthy()
     expect(screen.getByRole('region', { name: 'System canvas' })).toBeTruthy()
   })

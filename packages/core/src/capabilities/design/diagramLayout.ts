@@ -124,7 +124,7 @@ function computeLayers(elements: readonly UmlElement[], relationships: readonly 
   return layers
 }
 
-function layoutLayeredNodes(projection: DiagramProjection, width: number, height: number): DiagramLayoutNode[] {
+function layoutLayeredNodes(projection: DiagramProjection, width: number, height: number, maxNodesPerRow: number): DiagramLayoutNode[] {
   const layers = computeLayers(projection.elements, projection.relationships)
   const byLayer = new Map<number, string[]>()
   for (const element of projection.elements) {
@@ -136,17 +136,22 @@ function layoutLayeredNodes(projection: DiagramProjection, width: number, height
 
   const nodes: DiagramLayoutNode[] = []
   const layerKeys = [...byLayer.keys()].sort((a, b) => a - b)
+  let layerY = 0
   for (const layerIndex of layerKeys) {
     const ids = stableSortStrings(byLayer.get(layerIndex)!)
     ids.forEach((id, index) => {
+      const row = Math.floor(index / maxNodesPerRow)
+      const column = index % maxNodesPerRow
       nodes.push({
         elementId: id,
-        x: index * (width + NODE_GAP_X),
-        y: layerIndex * (height + LAYER_GAP_Y),
+        x: column * (width + NODE_GAP_X),
+        y: layerY + row * (height + NODE_GAP_X),
         width,
         height,
       })
     })
+    const rowCount = Math.max(1, Math.ceil(ids.length / maxNodesPerRow))
+    layerY += rowCount * height + Math.max(0, rowCount - 1) * NODE_GAP_X + LAYER_GAP_Y
   }
   return nodes
 }
@@ -200,8 +205,8 @@ function labelAtMidpoint(points: Point[], startIndex: number): Point {
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
 }
 
-function buildLayeredLayout(projection: DiagramProjection, width: number, height: number): { nodes: DiagramLayoutNode[]; edges: DiagramLayoutEdge[] } {
-  const nodes = layoutLayeredNodes(projection, width, height)
+function buildLayeredLayout(projection: DiagramProjection, width: number, height: number, maxNodesPerRow: number): { nodes: DiagramLayoutNode[]; edges: DiagramLayoutEdge[] } {
+  const nodes = layoutLayeredNodes(projection, width, height, maxNodesPerRow)
   const nodeById = new Map(nodes.map((node) => [node.elementId, node]))
   const collectorX = nodes.length > 0 ? Math.max(...nodes.map((node) => node.x + node.width)) + COLLECTOR_MARGIN : 0
 
@@ -211,9 +216,143 @@ function buildLayeredLayout(projection: DiagramProjection, width: number, height
     if (!from || !to) return degenerateEdge(rel)
     const points = routeGeneric(from, to, 'vertical', collectorX, GAP_BAND_OFFSET)
     const label = relationshipLabelText(rel)
-    return { relationshipId: rel.id, points, ...(label ? { labelPosition: labelAtMidpoint(points, 2) } : {}) }
+    // Put the label on the target approach instead of the shared collector
+    // rail. Several relationships intentionally share that rail; placing
+    // every label there made them overwrite one another.
+    return { relationshipId: rel.id, points, ...(label ? { labelPosition: labelAtMidpoint(points, 4) } : {}) }
   })
 
+  return { nodes, edges }
+}
+
+// ---------------------------------------------------------------------------
+// Component layout: semantic center with consumers, dependencies, and ports
+// ---------------------------------------------------------------------------
+
+/**
+ * Component projections are not generic flow charts. Treating every
+ * provided/required interface as another node in one BFS layer produced a
+ * multi-thousand-pixel row and a collector rail far outside the visible
+ * diagram. This layout keeps the module component central, consumers above,
+ * dependencies below, and UML interface symbols at the left/right edges.
+ */
+function buildComponentLayout(projection: DiagramProjection, width: number, height: number): { nodes: DiagramLayoutNode[]; edges: DiagramLayoutEdge[] } {
+  const elementById = new Map(projection.elements.map((element) => [element.id, element]))
+  const components = projection.elements.filter((element) => element.kind === 'component')
+  const main = components.find((element) => element.sourceElementRef === 'module')
+    ?? [...components].sort((a, b) => {
+      const degree = projection.relationships.filter((rel) => rel.fromId === b.id || rel.toId === b.id).length
+        - projection.relationships.filter((rel) => rel.fromId === a.id || rel.toId === a.id).length
+      return degree || a.id.localeCompare(b.id)
+    })[0]
+  if (!main) return buildLayeredLayout(projection, width, height, 4)
+
+  const provided = projection.elements.filter((element) => element.kind === 'providedInterface')
+  const required = projection.elements.filter((element) => element.kind === 'requiredInterface')
+  const consumerIds = new Set(
+    projection.relationships.filter((rel) => rel.toId === main.id && elementById.get(rel.fromId)?.kind === 'component').map((rel) => rel.fromId),
+  )
+  const dependencyIds = new Set(
+    projection.relationships.filter((rel) => rel.fromId === main.id && elementById.get(rel.toId)?.kind === 'component').map((rel) => rel.toId),
+  )
+  const consumers = components.filter((element) => consumerIds.has(element.id))
+  const dependencies = components.filter((element) => dependencyIds.has(element.id))
+  const remaining = components.filter((element) => element.id !== main.id && !consumerIds.has(element.id) && !dependencyIds.has(element.id))
+  const lowerComponents = [...dependencies, ...remaining]
+
+  const sideGap = 90
+  const centerX = width * 2 + sideGap * 2
+  const leftX = 0
+  const widestComponentRowCount = Math.max(
+    Math.min(4, consumers.length),
+    Math.min(4, lowerComponents.length),
+    1,
+  )
+  const widestComponentRowWidth = widestComponentRowCount * width
+    + Math.max(0, widestComponentRowCount - 1) * NODE_GAP_X
+  const componentRowRightEdge = centerX + width / 2 + widestComponentRowWidth / 2
+  // Interface columns sit beyond every peer component. Otherwise a route to
+  // the rightmost dependency can pass directly through required-interface
+  // glyphs, which is both visually ambiguous and invalid under §15.2.
+  const rightX = Math.max(
+    centerX + width + sideGap * 2,
+    componentRowRightEdge + sideGap,
+  )
+  const mainY = Math.max(180, consumers.length > 4 ? height * 2 + NODE_GAP_X + 100 : 180)
+  const sideStep = height + 22
+  const sideCount = Math.max(provided.length, required.length)
+  const dependencyY = Math.max(mainY + height + 250, 70 + sideCount * sideStep)
+
+  const nodes: DiagramLayoutNode[] = [{ elementId: main.id, x: centerX, y: mainY, width, height }]
+
+  function placeCenteredRow(elements: UmlElement[], y: number) {
+    const maxPerRow = 4
+    elements.forEach((element, index) => {
+      const row = Math.floor(index / maxPerRow)
+      const rowItems = elements.slice(row * maxPerRow, row * maxPerRow + maxPerRow)
+      const rowWidth = rowItems.length * width + Math.max(0, rowItems.length - 1) * NODE_GAP_X
+      const x = centerX + width / 2 - rowWidth / 2 + (index % maxPerRow) * (width + NODE_GAP_X)
+      nodes.push({ elementId: element.id, x, y: y + row * (height + NODE_GAP_X), width, height })
+    })
+  }
+
+  placeCenteredRow(consumers, 0)
+  placeCenteredRow(lowerComponents, dependencyY)
+  provided.forEach((element, index) => nodes.push({ elementId: element.id, x: leftX, y: 80 + index * sideStep, width, height }))
+  required.forEach((element, index) => nodes.push({ elementId: element.id, x: rightX, y: 45 + index * sideStep, width, height }))
+
+  const nodeById = new Map(nodes.map((node) => [node.elementId, node]))
+  let upperChannel = mainY - 42
+  let lowerChannel = mainY + height + 42
+  const providedIndex = new Map(provided.map((element, index) => [element.id, index]))
+  const requiredIndex = new Map(required.map((element, index) => [element.id, index]))
+  const interfaceAnchorY = (index: number, count: number) => mainY + ((index + 1) * height) / (count + 1)
+  const providedUpCount = provided.filter((_, index) => 80 + index * sideStep + height / 2 < interfaceAnchorY(index, provided.length)).length
+  const requiredUpCount = required.filter((_, index) => 45 + index * sideStep + height / 2 < interfaceAnchorY(index, required.length)).length
+
+  const edges = projection.relationships.map((rel) => {
+    const from = nodeById.get(rel.fromId)
+    const to = nodeById.get(rel.toId)
+    if (!from || !to) return degenerateEdge(rel)
+    let points: Point[]
+    let labelPosition: Point | undefined
+
+    if (rel.toId === main.id && elementById.get(rel.fromId)?.kind === 'component') {
+      const sx = from.x + from.width / 2
+      const tx = to.x + to.width / 2
+      points = [{ x: sx, y: from.y + from.height }, { x: sx, y: upperChannel }, { x: tx, y: upperChannel }, { x: tx, y: to.y }]
+      labelPosition = labelAtMidpoint(points, 1)
+      upperChannel -= 18
+    } else if (rel.fromId === main.id && elementById.get(rel.toId)?.kind === 'component') {
+      const sx = from.x + from.width / 2
+      const tx = to.x + to.width / 2
+      points = [{ x: sx, y: from.y + from.height }, { x: sx, y: lowerChannel }, { x: tx, y: lowerChannel }, { x: tx, y: to.y }]
+      labelPosition = labelAtMidpoint(points, 1)
+      lowerChannel += 26
+    } else if (rel.fromId === main.id && elementById.get(rel.toId)?.kind === 'providedInterface') {
+      const index = providedIndex.get(rel.toId) ?? 0
+      const sy = interfaceAnchorY(index, provided.length)
+      const ty = to.y + to.height / 2
+      const channelX = ty < sy
+        ? leftX + width + 48 + index * 12
+        : leftX + width + 78 - (index - providedUpCount) * 12
+      points = [{ x: from.x, y: sy }, { x: channelX, y: sy }, { x: channelX, y: ty }, { x: to.x + to.width, y: ty }]
+    } else if (rel.fromId === main.id && elementById.get(rel.toId)?.kind === 'requiredInterface') {
+      const index = requiredIndex.get(rel.toId) ?? 0
+      const sy = interfaceAnchorY(index, required.length)
+      const ty = to.y + to.height / 2
+      const channelX = ty < sy
+        ? rightX - 78 + index * 12
+        : rightX - 48 - (index - requiredUpCount) * 12
+      points = [{ x: from.x + from.width, y: sy }, { x: channelX, y: sy }, { x: channelX, y: ty }, { x: to.x, y: ty }]
+    } else {
+      const collector = rightX + width + COLLECTOR_MARGIN
+      points = routeGeneric(from, to, 'vertical', collector, GAP_BAND_OFFSET)
+      labelPosition = labelAtMidpoint(points, 4)
+    }
+    const label = relationshipLabelText(rel)
+    return { relationshipId: rel.id, points, ...(label && labelPosition ? { labelPosition } : {}) }
+  })
   return { nodes, edges }
 }
 
@@ -555,7 +694,9 @@ export function layoutDiagram(projection: DiagramProjection, viewportClass: Diag
       ? buildSequenceLayout(projection, nodeWidth, nodeHeight)
       : projection.kind === 'useCase'
         ? buildUseCaseLayout(projection, nodeWidth, nodeHeight)
-        : buildLayeredLayout(projection, nodeWidth, nodeHeight)
+        : projection.kind === 'component'
+          ? buildComponentLayout(projection, nodeWidth, nodeHeight)
+          : buildLayeredLayout(projection, nodeWidth, nodeHeight, viewportClass === 'narrow' ? 2 : 4)
 
   const shell: DiagramLayout = {
     diagramId: projection.diagramId,

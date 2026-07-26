@@ -12,9 +12,9 @@
  * `packages/core`'s own `getScenarioCoverage` operation calls the same
  * `buildVerifySummary` function server-side — and, when the summary reports
  * a `firstFailedStep`, fetches that one scenario run's full evidence via
- * `getVerificationEvidence`. There is no bridge operation to list every
- * scenario run, so `project` mode never invents one; an honest empty state
- * ("No scenario runs recorded yet") is shown instead.
+ * `getVerificationEvidence`. The workflow snapshot also returns the
+ * canonical immutable run list, which powers scenario rows and Evidence;
+ * an honest empty state is shown when that list is empty.
  */
 
 import { useEffect } from 'react'
@@ -25,6 +25,64 @@ import { currentStateLabel } from './designShared'
 export type DesignVerifyViewProps = {
   store: DesignStore
   onSelectDesignLink: (moduleId: string) => void
+}
+
+function ScenarioRunner(props: { store: DesignStore }) {
+  const state = useDesignState(props.store)
+  const projectMode = props.store.isProjectMode()
+  const latestRunByScenario = new Map<string, ScenarioRun>()
+  for (const run of [...state.scenarioRuns].sort((a, b) => a.completedAt.localeCompare(b.completedAt))) {
+    latestRunByScenario.set(run.scenarioId, run)
+  }
+
+  return (
+    <section className="design-scenario-runner" aria-label="Use-case scenarios">
+      <div className="design-scenario-runner-heading">
+        <div>
+          <h3>Use-case scenarios</h3>
+          <p>Each approved main, alternate, failure, and recovery path has one generated automation target.</p>
+        </div>
+        <span>{state.scenarioTestPlan.entries.length} scenario{state.scenarioTestPlan.entries.length === 1 ? '' : 's'}</span>
+      </div>
+      {state.scenarioTestPlan.entries.length === 0 ? (
+        <p className="secondary-text">Approve the use-case analysis to generate scenario tests.</p>
+      ) : (
+        <div className="design-scenario-grid">
+          {state.scenarioTestPlan.entries.map((entry) => {
+            const run = latestRunByScenario.get(entry.scenarioId)
+            return (
+              <article key={entry.scenarioId}>
+                <header>
+                  <span>{entry.scenarioKind}</span>
+                  <b>{entry.scenarioName}</b>
+                </header>
+                <code>{entry.scenarioId}</code>
+                <p>{entry.actions.length} action{entry.actions.length === 1 ? '' : 's'} · {entry.checks.length} check{entry.checks.length === 1 ? '' : 's'}</p>
+                <div className="design-scenario-result">
+                  {run ? <span className={`design-run-outcome design-run-${run.outcome}`}>{run.outcome}</span> : <span>Not run</span>}
+                  {run && <small>{run.steps.filter((step) => Boolean(step.screenshotRef)).length} screenshots · {run.evidenceHashes.length} evidence hashes</small>}
+                </div>
+                {projectMode ? (
+                  <div className="design-scenario-actions">
+                    <button type="button" className="btn btn-secondary btn-compact" disabled={state.saveState === 'saving'} onClick={() => props.store.runScenario(entry.scenarioId)}>
+                      {run ? 'Run again' : 'Run scenario'}
+                    </button>
+                    {run?.outcome === 'passed' && (
+                      <button type="button" className="btn btn-ghost btn-compact" disabled={state.saveState === 'saving'} onClick={() => props.store.approveScenarioRun(run.runId)}>
+                        Approve result
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <small className="secondary-text">Recorded sample evidence</small>
+                )}
+              </article>
+            )
+          })}
+        </div>
+      )}
+    </section>
+  )
 }
 
 function nameFor(progress: ModuleDesignProgress, moduleId: string): string {
@@ -125,6 +183,7 @@ function ProjectVerify(props: DesignVerifyViewProps) {
   return (
     <section className="design-verify" aria-label="Verify">
       <h2>Verify</h2>
+      <ScenarioRunner store={store} />
       {(projectVerification.status === 'idle' || projectVerification.status === 'loading') && (
         <p role="status" className="secondary-text">
           Loading verification data…
@@ -162,6 +221,7 @@ function SampleVerify(props: DesignVerifyViewProps) {
   return (
     <section className="design-verify" aria-label="Verify">
       <h2>Verify</h2>
+      <ScenarioRunner store={props.store} />
       <VerifySummaryGrid summary={summary} progress={state.progress} onSelectDesignLink={props.onSelectDesignLink} />
     </section>
   )

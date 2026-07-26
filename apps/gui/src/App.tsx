@@ -1,6 +1,6 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { HandoffRun, Project, Settings } from '@engineering-ui-kit/core'
-import { getBridge, type BuildPacketResult, type TaskPacketFields } from './bridge'
+import { getBridge, type BuildPacketResult } from './bridge'
 import {
   NAV_ITEMS,
   isStepReachable,
@@ -25,11 +25,6 @@ import { VerifyReviewView } from './views/workflow'
 import { DesignStore, getDesignStore } from './views/design/designState'
 import { detectDesignBridgeCaller } from './views/design/designBridgeClient'
 
-const CapabilitiesView = lazy(async () => {
-  const module = await import('./views/capabilities/CapabilitiesView')
-  return { default: module.CapabilitiesView }
-})
-
 const DesignWorkspaceView = lazy(async () => {
   const module = await import('./views/design/DesignWorkspaceView')
   return { default: module.DesignWorkspaceView }
@@ -43,7 +38,8 @@ const TIPS: Partial<Record<ViewId, string>> = {
   'run-in-copilot': 'You can upload a maximum of 3 files to Microsoft 365 Copilot.',
   'apply-zip-overlay': 'Review every entry before applying. Blocked overlays can never be applied.',
   'verify-review': 'Review results carefully. If changes are needed, apply feedback and iterate from Build.',
-  design: 'Approve the system structure, then define, review, and approve one module design at a time.',
+  capabilities: 'Start with approved use cases. The same records drive system design, modules, connections, and scenario evidence.',
+  design: 'Start with approved use cases. The same records drive system design, modules, connections, and scenario evidence.',
   projects: 'Organize and manage your Engineering UI Kit projects.',
   recipes: 'You can upload a maximum of 3 files to Microsoft 365 Copilot.',
   components: 'You can upload a maximum of 3 files to Microsoft 365 Copilot.',
@@ -51,7 +47,7 @@ const TIPS: Partial<Record<ViewId, string>> = {
 
 /** Sidebar structure: uppercase section labels grouping the flat NAV_ITEMS. */
 const NAV_SECTIONS: { label: string; items: ViewId[] }[] = [
-  { label: 'Workflow', items: ['copilot-handoff', 'capabilities', 'design'] },
+  { label: 'Workflow', items: ['copilot-handoff', 'capabilities'] },
   { label: 'Library', items: ['recipes', 'components'] },
   { label: 'System', items: ['projects', 'settings'] },
 ]
@@ -59,7 +55,6 @@ const NAV_SECTIONS: { label: string; items: ViewId[] }[] = [
 const NAV_GLYPHS: Partial<Record<ViewId, () => ReactNode>> = {
   'copilot-handoff': () => Icon.home(),
   capabilities: () => Icon.box(),
-  design: () => Icon.layers(),
   recipes: () => Icon.grid(),
   components: () => Icon.box(),
   projects: () => Icon.folder(),
@@ -220,45 +215,33 @@ export default function App() {
     setView('project-overview')
   }, [])
 
-  const startUiModuleBuild = useCallback(async (projectId: string, fields: TaskPacketFields) => {
-    const run = await bridge.createRun(projectId)
-    const prepared = await bridge.updateRun(run.id, {
-      taskTitle: fields.taskTitle,
-      taskTemplateId: 'new-ui-from-requirements',
-      taskPacketFields: fields,
-    })
-    setActiveRun(prepared)
-    setPacket(null)
-    setRecipe(null)
-    setBuildWorkspace('handoff')
-    setView('build')
-  }, [bridge])
-
   const activeProject = activeRun ? projects.find((p) => p.id === activeRun.projectId) : undefined
+  const workflowProjectId = capabilitiesProjectId || activeProject?.id || ''
+  const workflowProject = projects.find((project) => project.id === workflowProjectId)
 
   /**
    * §22.1 "sample ONLY when no project is configured" — 'project' mode
-   * requires BOTH the desktop bridge and a configured/selected project (the
-   * one the user is currently working in, via an open Build & Test run;
-   * `design` is reachable without ever opening one, in which case there is
-   * still no configured project and the workspace falls back to the sample
-   * — see `DesignWorkspaceView`'s mode banner / `data-mode` attribute).
+   * requires BOTH the desktop bridge and a configured/selected project.
+   * Project selection belongs to the Capabilities workflow itself; it is not
+   * coupled to an unrelated open Build & Test run.
    * Rebuilt only when the bridge or the selected project id actually
    * changes, so switching projects gets a fresh store instead of stale
    * cross-project state.
    */
   const designStore = useMemo(() => {
-    if (designBridgeCaller && activeProject) {
-      return new DesignStore({ bridge: { projectId: activeProject.id, call: designBridgeCaller } })
+    if (designBridgeCaller && workflowProject) {
+      return new DesignStore({ bridge: { projectId: workflowProject.id, call: designBridgeCaller } })
     }
     return getDesignStore()
-  }, [designBridgeCaller, activeProject?.id])
+  }, [designBridgeCaller, workflowProject?.id])
 
   const navActive: ViewId = isWorkflowView(view)
     ? 'copilot-handoff'
     : view === 'project-overview'
       ? 'projects'
-      : view
+      : view === 'design'
+        ? 'capabilities'
+        : view
 
   const renderView = (): ReactNode => {
     if (!settings) return <p className="secondary-text">Loading workspace…</p>
@@ -282,25 +265,17 @@ export default function App() {
           />
         )
       case 'capabilities':
-        return (
-          <Suspense fallback={<p className="secondary-text" role="status">Loading capabilities…</p>}>
-            <CapabilitiesView
-              bridge={bridge}
-              projects={projects}
-              activeProjectId={capabilitiesProjectId || activeProject?.id}
-              onProjectSelected={setCapabilitiesProjectId}
-              onOpenGuide={setGuideTopic}
-              onNavigateToProjects={() => setView('projects')}
-              onOpenBuildTest={(projectId) => void startRun(projectId)}
-              onProjectsChanged={refreshProjects}
-              onStartUiBuild={startUiModuleBuild}
-            />
-          </Suspense>
-        )
       case 'design':
         return (
-          <Suspense fallback={<p className="secondary-text" role="status">Loading Design…</p>}>
-            <DesignWorkspaceView store={designStore} />
+          <Suspense fallback={<p className="secondary-text" role="status">Loading capabilities workflow…</p>}>
+            <DesignWorkspaceView
+              store={designStore}
+              projects={projects}
+              activeProjectId={workflowProjectId}
+              onProjectSelected={setCapabilitiesProjectId}
+              onNavigateToProjects={() => setView('projects')}
+              initialTab="plan"
+            />
           </Suspense>
         )
       case 'build':
@@ -446,12 +421,12 @@ export default function App() {
           </button>
           <TipCard
             text={
-              view === 'capabilities'
-                ? 'Guided follows four steps: Plan, Design, Build, and Verify. Entry points are configured in Build before the shared setup is prepared.'
+              view === 'capabilities' || view === 'design'
+                ? 'One canonical path connects Plan, Design, Build, Connect, Verify, and immutable Evidence. Use-case revisions remain traceable in every later phase.'
                 : TIPS[view] ?? 'Keep handoffs small and reviewable.'
             }
-            linkLabel={view === 'capabilities' ? 'View Capabilities guide' : 'View workflow guide'}
-            onLink={() => setGuideTopic(view === 'capabilities' ? 'capabilities-overview' : 'workflow-overview')}
+            linkLabel={view === 'capabilities' || view === 'design' ? 'View Capabilities guide' : 'View workflow guide'}
+            onLink={() => setGuideTopic(view === 'capabilities' || view === 'design' ? 'capabilities-overview' : 'workflow-overview')}
           />
         </aside>
 

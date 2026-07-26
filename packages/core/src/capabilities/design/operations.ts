@@ -1009,6 +1009,12 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         approved: workspace.getApprovedDesignBaseline(projectId),
       },
       policy: workspace.getDesignWorkflowPolicy(projectId) ?? Baseline.createDefaultPolicy(projectId),
+      // Scenario runs are canonical, immutable evidence. Returning them with
+      // the workflow snapshot lets the human interface render the same live
+      // evidence the machine API can already retrieve one run at a time.
+      // This closes the former project-mode Evidence Explorer placeholder
+      // without inventing a second evidence store.
+      scenarioRuns: workspace.listScenarioRuns(projectId),
     }
   }
 

@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { ModuleDesignStep } from '@engineering-ui-kit/core/design-browser'
+import type { Project } from '@engineering-ui-kit/core'
 import { AUTHORITY_NOT_CONFIGURED_CODE, DesignStore, useDesignState, type MultiModuleConfirmations } from './designState'
 import { ModuleQueue } from './ModuleQueue'
 import { ModuleSessionView } from './ModuleSessionView'
@@ -16,14 +17,20 @@ import { DesignVerifyView } from './DesignVerifyView'
 import { EvidenceExplorer } from './EvidenceExplorer'
 import { ProjectSetupPanel } from './ProjectSetupPanel'
 import { SaveIndicator, approvalCountText } from './designShared'
+import { UseCasePlanView } from './UseCasePlanView'
+import { SystemDesignGate } from './SystemDesignGate'
+import { WorkflowConnectView } from './WorkflowConnectView'
+import { WorkflowEvidenceView } from './WorkflowEvidenceView'
 
 const NARROW_BREAKPOINT = 900
 
-type WorkspaceTab = 'design' | 'build' | 'verify' | 'evidence' | 'setup'
+type WorkspaceTab = 'plan' | 'design' | 'build' | 'connect' | 'verify' | 'evidence' | 'setup'
 
 const TABS: { id: WorkspaceTab; label: string }[] = [
+  { id: 'plan', label: 'Plan' },
   { id: 'design', label: 'Design' },
   { id: 'build', label: 'Build' },
+  { id: 'connect', label: 'Connect' },
   { id: 'verify', label: 'Verify' },
   { id: 'evidence', label: 'Evidence' },
   { id: 'setup', label: 'Setup' },
@@ -50,13 +57,19 @@ function useIsNarrow(breakpoint = NARROW_BREAKPOINT): boolean {
 
 export type DesignWorkspaceViewProps = {
   store: DesignStore
+  projects?: Project[]
+  activeProjectId?: string
+  onProjectSelected?: (projectId: string) => void
+  onNavigateToProjects?: () => void
+  /** The app opens at Plan; component-level design tests retain Design as their default. */
+  initialTab?: WorkspaceTab
 }
 
 export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
   const state = useDesignState(props.store)
   const narrow = useIsNarrow()
   const [queueOpen, setQueueOpen] = useState(!narrow)
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>('design')
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>(props.initialTab ?? 'design')
 
   const selectedEntry = useMemo(
     () => state.progress.modules.find((entry) => entry.moduleId === state.selectedModuleId),
@@ -147,9 +160,24 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
       </div>
 
       <header className="design-workspace-header">
-        <h1>Design</h1>
+        <div className="design-workspace-title">
+          <p className="overline">Use-case-led delivery</p>
+          <h1>Capabilities workflow</h1>
+        </div>
+        {props.projects && props.onProjectSelected && (
+          <div className="design-project-picker">
+            <label>
+              Project
+              <select aria-label="Capabilities workflow project" value={props.activeProjectId ?? ''} onChange={(event) => props.onProjectSelected?.(event.target.value)}>
+                <option value="">DO-178C sample</option>
+                {props.projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+              </select>
+            </label>
+            {props.onNavigateToProjects && <button type="button" className="btn btn-ghost btn-compact" onClick={props.onNavigateToProjects}>Manage projects</button>}
+          </div>
+        )}
         <p className="design-system-status">
-          System structure {state.systemStatus.approved ? 'approved' : 'not yet approved'}. {approvalCountText(state.progress)},{' '}
+          Use cases {state.useCaseAnalysis.status === 'approved' ? 'approved' : 'not yet approved'} · system structure {state.systemStatus.approved ? 'approved' : 'not yet approved'} · {approvalCountText(state.progress)},{' '}
           {state.progress.total - state.progress.approved} remain.
           {blockingModuleNamesForStatus.length > 0 && <> Blocking: {blockingModuleNamesForStatus.join(', ')}.</>}
         </p>
@@ -175,8 +203,20 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
         ))}
       </div>
 
+      {activeTab === 'plan' && (
+        <div id="design-workspace-panel-plan" role="tabpanel" aria-labelledby="design-workspace-tab-plan">
+          <UseCasePlanView store={props.store} onContinueToDesign={() => setActiveTab('design')} />
+        </div>
+      )}
+
       {activeTab === 'design' && (
-        <div id="design-workspace-panel-design" role="tabpanel" aria-labelledby="design-workspace-tab-design">
+        <div
+          id="design-workspace-panel-design"
+          role="tabpanel"
+          aria-labelledby="design-workspace-tab-design"
+          className={session?.currentStep === 'diagrams' ? 'design-workspace-design-panel diagram-focus' : 'design-workspace-design-panel'}
+        >
+          <SystemDesignGate store={props.store} onOpenPlan={() => setActiveTab('plan')} />
           <SystemCanvas
             architecture={state.architecture}
             progress={state.progress}
@@ -195,7 +235,7 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
             </button>
           )}
 
-          <div className="design-workspace-body">
+          <div className={session?.currentStep === 'diagrams' ? 'design-workspace-body diagram-focus' : 'design-workspace-body'}>
             {(!narrow || queueOpen) && (
               <ModuleQueue
                 progress={state.progress}
@@ -241,6 +281,12 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
         </div>
       )}
 
+      {activeTab === 'connect' && (
+        <div id="design-workspace-panel-connect" role="tabpanel" aria-labelledby="design-workspace-tab-connect">
+          <WorkflowConnectView store={props.store} />
+        </div>
+      )}
+
       {activeTab === 'build' && (
         <div id="design-workspace-panel-build" role="tabpanel" aria-labelledby="design-workspace-tab-build">
           <WavesView
@@ -263,17 +309,12 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
 
       {activeTab === 'evidence' && (
         <div id="design-workspace-panel-evidence" role="tabpanel" aria-labelledby="design-workspace-tab-evidence">
-          {state.mode === 'project' ? (
-            // Evidence Explorer's backing data (§22 defects, findings, package-export
-            // freshness) is sample-specific (`packages/core` `sampleAuditHub.ts` — not
-            // canonical records a real project's bridge can honestly populate; see
-            // `designState.ts` `emptyModuleVerificationResult` doc). This stays an
-            // explicit, honest note rather than a fabricated Evidence view.
-            <p className="secondary-text" role="note">
-              Evidence Explorer is sample data only; it is not available for a live project in this GUI version.
-            </p>
-          ) : (
-            <EvidenceExplorer store={props.store} onFollowTrace={goToDesignRecord} />
+          <WorkflowEvidenceView store={props.store} />
+          {state.mode === 'sample' && (
+            <details className="design-sample-defect-gallery">
+              <summary>Open the sample defect gallery</summary>
+              <EvidenceExplorer store={props.store} onFollowTrace={goToDesignRecord} />
+            </details>
           )}
         </div>
       )}

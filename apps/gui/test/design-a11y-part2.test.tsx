@@ -59,12 +59,12 @@ function assertAllButtonsNamed(container: HTMLElement) {
 }
 
 describe('Workspace tabs — tablist semantics, aria-current/aria-selected, arrow-key nav (§18.4, §24.4)', () => {
-  it('exposes Design/Build/Verify/Evidence as a tablist with aria-selected and aria-current on the active tab', () => {
+  it('exposes the complete Plan-to-Evidence workflow as one tablist', () => {
     const store = new DesignStore({ now: NOW })
     render(<DesignWorkspaceView store={store} />)
     const tablist = screen.getByRole('tablist', { name: 'Design workspace sections' })
     const tabs = within(tablist).getAllByRole('tab')
-    expect(tabs.map((tab) => tab.textContent)).toEqual(['Design', 'Build', 'Verify', 'Evidence'])
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Plan', 'Design', 'Build', 'Connect', 'Verify', 'Evidence'])
 
     const designTab = within(tablist).getByRole('tab', { name: 'Design' })
     expect(designTab.getAttribute('aria-selected')).toBe('true')
@@ -85,6 +85,9 @@ describe('Workspace tabs — tablist semantics, aria-current/aria-selected, arro
     expect(document.activeElement?.id).toBe('design-workspace-tab-build')
 
     fireEvent.keyDown(tablist, { key: 'ArrowRight' })
+    expect(within(tablist).getByRole('tab', { name: 'Connect' }).getAttribute('aria-selected')).toBe('true')
+
+    fireEvent.keyDown(tablist, { key: 'ArrowRight' })
     expect(within(tablist).getByRole('tab', { name: 'Verify' }).getAttribute('aria-selected')).toBe('true')
 
     fireEvent.keyDown(tablist, { key: 'ArrowRight' })
@@ -92,7 +95,7 @@ describe('Workspace tabs — tablist semantics, aria-current/aria-selected, arro
 
     // Wraps forward past the last tab back to the first.
     fireEvent.keyDown(tablist, { key: 'ArrowRight' })
-    expect(within(tablist).getByRole('tab', { name: 'Design' }).getAttribute('aria-selected')).toBe('true')
+    expect(within(tablist).getByRole('tab', { name: 'Plan' }).getAttribute('aria-selected')).toBe('true')
 
     // Wraps backward past the first tab to the last.
     fireEvent.keyDown(tablist, { key: 'ArrowLeft' })

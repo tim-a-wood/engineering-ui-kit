@@ -143,6 +143,7 @@ function setup(initialValidNextActions: ValidNextAction[] = [{ operation: 'start
       systemStructure: { approved: architecture },
       baseline: { approved: sample.designBaseline },
       policy: sample.policy,
+      scenarioRuns: sample.scenarioRuns,
     }),
     listModuleDesigns: () => computeModuleDesignProgress(architecture, Object.values(designsById), []),
     getImplementationWaves: () => ({ projectId: PROJECT_ID, architectureRevision: architecture.revision, waves: [], autoDispatch: false }),
@@ -723,5 +724,60 @@ describe('project-mode Verify (§14.4, §17.1) — renders getScenarioCoverage /
     fireEvent.click(screen.getByRole('tab', { name: 'Verify' }))
 
     await waitFor(() => expect(screen.queryByText('No scenario runs recorded yet.')).toBeTruthy())
+  })
+})
+
+describe('complete Capabilities workflow routing — Plan, System, Connect, Verify, Evidence', () => {
+  it('routes Plan and system-design actions through canonical bridge operations', async () => {
+    const { store, calls, responses } = setup()
+    await store.ready
+    responses.createUseCaseDraft = () => okResult(sample.useCaseAnalysis)
+    responses.approveUseCaseAnalysis = () => okResult({ analysis: sample.useCaseAnalysis })
+    responses.createSystemDesignDraft = () => okResult(architecture)
+    responses.approveSystemStructure = () => okResult(architecture)
+
+    store.createUseCaseAnalysis({ workDescription: 'Review controlled evidence.' })
+    await store.waitForPendingOperation()
+    store.approveUseCaseAnalysis()
+    await store.waitForPendingOperation()
+    store.createSystemStructure()
+    await store.waitForPendingOperation()
+    store.approveSystemStructure()
+    await store.waitForPendingOperation()
+
+    for (const operation of ['createUseCaseDraft', 'approveUseCaseAnalysis', 'createSystemDesignDraft', 'approveSystemStructure']) {
+      assertSingleChangeCall(calls, operation)
+    }
+  })
+
+  it('routes Connect and scenario execution through real executor-backed operation names', async () => {
+    const { store, calls, responses } = setup()
+    await store.ready
+    const binding = { bindingId: 'binding.remote' }
+    responses.configureBinding = () => okResult({ bindingId: 'binding.remote', storedAt: '2026-07-25T00:00:00.000Z' })
+    responses.verifyConnection = () => okResult({ verificationId: 'verification.remote', verificationStatus: 'verified' })
+    responses.runScenario = () => okResult(sample.scenarioRuns[0])
+
+    store.configureConnection(APPROVED_MODULE_ID, binding)
+    await store.waitForPendingOperation()
+    store.verifyConnection(APPROVED_MODULE_ID)
+    await store.waitForPendingOperation()
+    store.runScenario(sample.scenarioRuns[0]!.scenarioId)
+    await store.waitForPendingOperation()
+
+    expect(assertSingleChangeCall(calls, 'configureBinding').bindingConfig).toEqual(binding)
+    assertSingleChangeCall(calls, 'verifyConnection')
+    assertSingleChangeCall(calls, 'runScenario')
+  })
+
+  it('renders live project evidence from canonical scenario runs instead of a placeholder note', async () => {
+    const { store } = setup()
+    await store.ready
+    render(<DesignWorkspaceView store={store} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Evidence' }))
+
+    expect(screen.queryByText(/not available for a live project/i)).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Trace scenario results to exact design revisions' })).toBeTruthy()
+    expect(screen.getAllByText(sample.scenarioRuns[0]!.scenarioId).length).toBeGreaterThan(0)
   })
 })

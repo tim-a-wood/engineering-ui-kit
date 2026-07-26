@@ -8,6 +8,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { accessibleDescription, checkLayout, layoutDiagram } from '../../../src/capabilities/design/diagramLayout.js'
+import { buildSampleAuditHub } from '../../../src/capabilities/design/sampleAuditHub.js'
 import {
   projectActivityDiagram,
   projectComponentDiagram,
@@ -454,6 +455,20 @@ describe('EUC-09 layoutDiagram — never hides a relationship', () => {
 // ---------------------------------------------------------------------------
 
 describe('EUC-09 layoutDiagram — layout quality', () => {
+  it('keeps the dense Package Export sample clear of ports and below the crossing threshold', () => {
+    const sample = buildSampleAuditHub()
+    const design = sample.moduleDesigns.find((candidate) => candidate.module.name === 'Package Export')!
+    const projection = projectComponentDiagram({
+      design,
+      architecture: sample.architecture,
+      allDesigns: sample.moduleDesigns,
+    })
+    const layout = layoutDiagram(projection, 'wide', { nodeWidth: 180, nodeHeight: 68 })
+
+    expect(layout.diagnostics).toEqual([])
+    expect(layout.crossingCount).toBeLessThanOrEqual(8)
+  })
+
   it('never overlaps two nodes in a crowded component diagram', () => {
     const projection = crowdedComponentProjection()
     const layout = layoutDiagram(projection, 'wide')
@@ -529,7 +544,8 @@ describe('EUC-09 checkLayout', () => {
   it('flags a hand-built layout where an edge passes through an unrelated node', () => {
     const projection = crowdedComponentProjection()
     const layout = layoutDiagram(projection, 'wide')
-    const targetNode = layout.nodes.find((node) => !layout.edges[0] || node.elementId !== layout.edges[0]!.relationshipId)!
+    const firstRelationship = projection.relationships.find((relationship) => relationship.id === layout.edges[0]?.relationshipId)!
+    const targetNode = layout.nodes.find((node) => node.elementId !== firstRelationship.fromId && node.elementId !== firstRelationship.toId)!
     const clipped: DiagramLayout = {
       ...layout,
       edges: layout.edges.map((edge, index) =>

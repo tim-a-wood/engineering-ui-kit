@@ -56,6 +56,7 @@ import {
   buildApplyPlan,
   simulateApply,
   deterministicTestProvider,
+  buildScenarioTestPlan,
   childId,
   type SystemStructureSpecification,
   type ModuleDesignSpecification,
@@ -135,6 +136,7 @@ type WorkflowStatusResult = {
   systemStructure: { draft?: SystemStructureSpecification; approved?: SystemStructureSpecification }
   baseline: { draft?: DesignBaseline; approved?: DesignBaseline }
   policy: DesignWorkflowPolicy
+  scenarioRuns?: ScenarioRun[]
 }
 
 // ---------------------------------------------------------------------------
@@ -247,6 +249,14 @@ export type ProjectVerificationState =
   | { status: 'ready'; summary?: VerifySummary; evidence?: ScenarioRun }
   | { status: 'error'; message: string }
 
+/** Results returned by the real Connect executors, keyed by module id. */
+export type WorkflowConnectionState = {
+  status: 'idle' | 'configuring' | 'configured' | 'verifying' | 'verified' | 'failed'
+  configuration?: unknown
+  verification?: unknown
+  message?: string
+}
+
 /** §17.3 "actor... does not hold... an authority" — the exact diagnostic code the Blocked-state guidance watches for. */
 export const AUTHORITY_NOT_CONFIGURED_CODE = 'EUC16-AUTHORITY-NOT-CONFIGURED'
 
@@ -307,6 +317,8 @@ export type DesignState = {
 
   // -- Verify (`project` mode only) ---------------------------------------
   projectVerification: ProjectVerificationState
+  /** Live-project Connect results. The persisted binding itself remains adapter-owned. */
+  connections: Record<string, WorkflowConnectionState>
 }
 
 const STORAGE_PREFIX = 'euik-design-workspace:'
@@ -549,12 +561,10 @@ function emptyPolicy(projectId: string, actor: string, now: string): DesignWorkf
  * sampleAuditHub.ts` as "sample-specific supporting types (not canonical
  * records)" — there is no bridge operation that could honestly populate
  * them for a real project, and this store never fabricates defect or
- * verification content for one. These placeholders exist only so
- * `DesignState`'s shared type (used by the still-sample-only Verify/Evidence
- * tabs) type-checks in `project` mode; `DesignWorkspaceView` shows an
- * explicit "not available in project mode yet" note instead of the
- * Verify/Evidence panels when `mode === 'project'` — see review finding #1,
- * remaining risks.
+ * defect-demo content for one. These placeholders exist only so
+ * `DesignState`'s shared type can retain the sample-only defect gallery in
+ * sample mode. Live-project Verify and Evidence use canonical `ScenarioRun`
+ * records returned by `getWorkflowStatus`; they never read these values.
  */
 function emptyModuleVerificationResult(now: string): ModuleVerificationResult {
   return { moduleId: '', caseId: '', outcome: 'skipped', summary: 'Not available in project mode yet.', evidenceRefs: [], recordedAt: now }
@@ -646,6 +656,7 @@ function emptyProjectState(projectId: string, actor: string = LOCAL_USER_ACTOR):
     principal: { status: 'idle' },
     rolesGrant: { status: 'idle' },
     projectVerification: { status: 'idle' },
+    connections: {},
   }
 }
 
@@ -796,6 +807,7 @@ export class DesignStore {
       principal: { status: 'idle' },
       rolesGrant: { status: 'idle' },
       projectVerification: { status: 'idle' },
+      connections: {},
     }
   }
 
@@ -907,6 +919,10 @@ export class DesignStore {
       const useCaseAnalysis = workflowStatus.useCaseAnalysis?.approved ?? workflowStatus.useCaseAnalysis?.draft ?? emptyUseCaseAnalysis(client.projectId, this.now())
       const designBaseline = workflowStatus.baseline?.approved ?? workflowStatus.baseline?.draft ?? emptyDesignBaseline(client.projectId, architecture)
       const policy = workflowStatus.policy ?? emptyPolicy(client.projectId, client.actor, this.now())
+      const scenarioRuns = workflowStatus.scenarioRuns ?? []
+      const scenarioTestPlan = useCaseAnalysis.status === 'approved'
+        ? buildScenarioTestPlan(useCaseAnalysis)
+        : { projectId: client.projectId, analysisId: useCaseAnalysis.id, analysisRevision: useCaseAnalysis.revision, entries: [], diagnostics: [] }
       const systemStatus = systemStructureStatus(
         architecture,
         progress.modules.map((entry) => ({ moduleId: entry.moduleId, approved: entry.state === 'approved' })),
@@ -921,6 +937,8 @@ export class DesignStore {
         useCaseAnalysis,
         designBaseline,
         policy,
+        scenarioRuns,
+        scenarioTestPlan,
         progress,
         systemStatus,
         wavePlan,
@@ -1148,9 +1166,9 @@ export class DesignStore {
   // the same `VerifySummary` shape `buildVerifySummary` computes locally
   // for `sample` mode (`packages/core` `verificationPlanner.ts`), so
   // `DesignVerifyView` renders both from one shared summary shape.
-  // `getVerificationEvidence` is only called for the summary's own
-  // `firstFailedStep.runId`, when one is reported — there is no bridge
-  // operation to list every scenario run, so this never invents one.
+  // `getVerificationEvidence` is called for the summary's first failed run
+  // so the failure detail can refresh independently. The full canonical run
+  // list also arrives in `getWorkflowStatus` for Verify and Evidence.
   // ---------------------------------------------------------------------
 
   async loadProjectVerification(): Promise<void> {
@@ -1206,6 +1224,177 @@ export class DesignStore {
 
   filteredModules(): ModuleDesignProgressEntry[] {
     return filterModuleQueue(this.state.progress, this.state.queueFilter)
+  }
+
+  // ---------------------------------------------------------------------
+  // Plan and system-design lifecycle (§6.1, §7, §8)
+  // ---------------------------------------------------------------------
+
+  /** Creates the canonical use-case analysis through the same operation used by the machine API. */
+  createUseCaseAnalysis(input: { workDescription: string; examples?: string[]; prohibitedResults?: string[] }): void {
+    if (!this.isProjectMode()) {
+      this.announce('The bundled sample is read-only. Select a project to create a use-case analysis.')
+      this.emit()
+      return
+    }
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<UseCaseAnalysis>(
+      'createUseCaseDraft',
+      {
+        projectId: client.projectId,
+        workDescription: input.workDescription,
+        examples: input.examples ?? [],
+        prohibitedResults: input.prohibitedResults ?? [],
+        expectedBaseRevision: this.state.useCaseAnalysis.revision || undefined,
+      },
+      (analysis) => this.patch({ useCaseAnalysis: analysis }),
+    ).catch(() => undefined)
+  }
+
+  /** Reviews one actor, rule, quality need, or acceptance check in the canonical analysis. */
+  updateUseCaseAnalysisItem(itemId: string, action: 'accept' | 'correct' | 'reject', text?: string): void {
+    if (!this.isProjectMode()) return
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<UseCaseAnalysis>(
+      'updateUseCaseItem',
+      {
+        projectId: client.projectId,
+        expectedBaseRevision: this.state.useCaseAnalysis.revision,
+        target: { kind: 'item', itemId, action, ...(text === undefined ? {} : { text }) },
+      },
+      (analysis) => this.patch({ useCaseAnalysis: analysis }),
+    ).catch(() => undefined)
+  }
+
+  /** Answers a material Plan question; approval stays blocked until the service accepts the answer. */
+  answerUseCaseQuestion(questionId: string, answer: string): void {
+    if (!this.isProjectMode() || !answer.trim()) return
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<UseCaseAnalysis>(
+      'updateUseCaseItem',
+      {
+        projectId: client.projectId,
+        expectedBaseRevision: this.state.useCaseAnalysis.revision,
+        target: { kind: 'question', questionId, answer },
+      },
+      (analysis) => this.patch({ useCaseAnalysis: analysis }),
+    ).catch(() => undefined)
+  }
+
+  /** Approves the analysis and compiles it to the application specification in one service transaction. */
+  approveUseCaseAnalysis(): void {
+    if (!this.isProjectMode()) return
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<{ analysis: UseCaseAnalysis }>(
+      'approveUseCaseAnalysis',
+      {
+        projectId: client.projectId,
+        authority: 'product-lead',
+        expectedBaseRevision: this.state.useCaseAnalysis.revision,
+      },
+      (value) => this.patch({ useCaseAnalysis: value.analysis }),
+    ).catch(() => undefined)
+  }
+
+  /** Creates a system-structure draft from the approved, compiled application record. */
+  createSystemStructure(): void {
+    if (!this.isProjectMode()) return
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<SystemStructureSpecification>(
+      'createSystemDesignDraft',
+      { projectId: client.projectId },
+      (architecture) => this.patch({ architecture }),
+    ).catch(() => undefined)
+  }
+
+  /** Freezes the current system structure before module design begins. */
+  approveSystemStructure(): void {
+    if (!this.isProjectMode() || !this.state.architecture.revision) return
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<SystemStructureSpecification>(
+      'approveSystemStructure',
+      {
+        projectId: client.projectId,
+        authority: 'software-architect',
+        expectedBaseRevision: this.state.architecture.revision,
+      },
+      (architecture) => this.patch({ architecture }),
+    ).catch(() => undefined)
+  }
+
+  // ---------------------------------------------------------------------
+  // Connect and scenario execution (§13, §14)
+  // ---------------------------------------------------------------------
+
+  private patchConnection(moduleId: string, state: WorkflowConnectionState): void {
+    this.patch({ connections: { ...this.state.connections, [moduleId]: state } })
+  }
+
+  /** Validates and persists a real inbound binding through the desktop executor. */
+  configureConnection(moduleId: string, bindingConfig: unknown): void {
+    if (!this.isProjectMode()) return
+    const client = this.requireBridge()
+    this.patchConnection(moduleId, { status: 'configuring' })
+    this.emit()
+    this.pendingOperation = this.runChangeOperation<unknown>(
+      'configureBinding',
+      { projectId: client.projectId, moduleId, bindingConfig },
+      (configuration) => this.patchConnection(moduleId, { status: 'configured', configuration }),
+    ).then((result) => {
+      if (!result.ok) {
+        this.patchConnection(moduleId, { status: 'failed', message: result.diagnostics[0]?.message ?? 'Binding configuration failed.' })
+        this.emit()
+      }
+    }).catch((error) => {
+      this.patchConnection(moduleId, { status: 'failed', message: error instanceof Error ? error.message : String(error) })
+      this.emit()
+    })
+  }
+
+  /** Launches the configured entry point and records real connection evidence. */
+  verifyConnection(moduleId: string, bindingConfig?: unknown): void {
+    if (!this.isProjectMode()) return
+    const client = this.requireBridge()
+    const current = this.state.connections[moduleId]
+    this.patchConnection(moduleId, { ...current, status: 'verifying' })
+    this.emit()
+    this.pendingOperation = this.runChangeOperation<unknown>(
+      'verifyConnection',
+      { projectId: client.projectId, moduleId, ...(bindingConfig === undefined ? {} : { bindingConfig }) },
+      (verification) => this.patchConnection(moduleId, { ...this.state.connections[moduleId], status: 'verified', verification }),
+    ).then((result) => {
+      if (!result.ok) {
+        this.patchConnection(moduleId, { ...this.state.connections[moduleId], status: 'failed', message: result.diagnostics[0]?.message ?? 'Connection verification failed.' })
+        this.emit()
+      }
+    }).catch((error) => {
+      this.patchConnection(moduleId, { ...this.state.connections[moduleId], status: 'failed', message: error instanceof Error ? error.message : String(error) })
+      this.emit()
+    })
+  }
+
+  /** Runs one approved scenario with the configured production executor and caches its immutable evidence. */
+  runScenario(scenarioId: string): void {
+    if (!this.isProjectMode()) return
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<ScenarioRun>(
+      'runScenario',
+      { projectId: client.projectId, scenarioId },
+      (run) => {
+        const withoutEarlierCopy = this.state.scenarioRuns.filter((candidate) => candidate.runId !== run.runId)
+        this.patch({ scenarioRuns: [...withoutEarlierCopy, run], projectVerification: { status: 'idle' } })
+      },
+    ).catch(() => undefined)
+  }
+
+  /** Approves one exact scenario-run revision through the verification authority gate. */
+  approveScenarioRun(runId: string): void {
+    if (!this.isProjectMode()) return
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<{ runId: string }>(
+      'approveVerification',
+      { projectId: client.projectId, runId, authority: 'verification-lead' },
+    ).catch(() => undefined)
   }
 
   // ---------------------------------------------------------------------
