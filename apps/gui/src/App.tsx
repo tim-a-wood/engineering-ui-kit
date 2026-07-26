@@ -1,6 +1,7 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { HandoffRun, Project, Settings } from '@engineering-ui-kit/core'
-import { getBridge, type BuildPacketResult } from './bridge'
+import type { ModuleImplementationPacket } from '@engineering-ui-kit/core/design-browser'
+import { getBridge, type BuildPacketResult, type TaskPacketFields } from './bridge'
 import {
   NAV_ITEMS,
   isStepReachable,
@@ -210,6 +211,67 @@ export default function App() {
     setView('build')
   }, [bridge])
 
+  const continueCapabilitiesPacket = useCallback(async (input: {
+    packet: ModuleImplementationPacket
+    moduleName: string
+  }) => {
+    const project = projects.find((candidate) => candidate.id === input.packet.projectId)
+    if (!project) throw new Error('The packet project is not available in Build & Test.')
+
+    const acceptanceCriteria = input.packet.acceptanceCases.length > 0
+      ? input.packet.acceptanceCases.map((item) => `${item.description}: ${item.expectedOutcome}`).join('\n')
+      : 'Run every configured module check and attach the resulting evidence.'
+    const fields: TaskPacketFields = {
+      taskTitle: `Implement ${input.moduleName}`,
+      goal: `Implement the approved ${input.moduleName} module without changing its approved behavior, boundaries, or contracts.`,
+      scope: [
+        ...input.packet.implementationSteps,
+        `Allowed paths: ${input.packet.allowedPaths.join(', ') || 'none listed'}`,
+        ...(input.packet.editableSharedPaths.length ? [`Editable shared paths: ${input.packet.editableSharedPaths.join(', ')}`] : []),
+      ].join('\n'),
+      constraints: [
+        `Do not change forbidden paths: ${input.packet.forbiddenPaths.join(', ') || 'none listed'}.`,
+        `Preserve module design revision ${input.packet.moduleDesignRevision} and architecture revision ${input.packet.architectureRevision}.`,
+        'Return implementation files through the inspected overlay flow; do not approve or apply your own changes.',
+      ].join('\n'),
+      acceptanceCriteria,
+      references: [
+        `Capabilities packet: ${input.packet.packetId}`,
+        `Packet content hash: ${input.packet.contentHash}`,
+        `Module design: ${input.packet.moduleId}@${input.packet.moduleDesignRevision}`,
+        `Context manifest: ${input.packet.contextManifest.id}`,
+        ...input.packet.providedContracts.map((contract) => `Provides: ${contract.operationId}@${contract.version}`),
+        ...input.packet.requiredContracts.map((contract) => `Requires: ${contract.operationId}@${contract.version}`),
+      ].join('\n'),
+    }
+
+    let run = activeRun?.designHandoff?.packetId === input.packet.packetId
+      ? activeRun
+      : undefined
+    if (!run || run.currentStep === 'complete') run = await bridge.createRun(project.id)
+    run = await bridge.updateRun(run.id, {
+      taskId: input.packet.packetId,
+      taskTitle: fields.taskTitle,
+      taskPacketFields: fields,
+      designHandoff: {
+        schemaVersion: '1.0',
+        packetId: input.packet.packetId,
+        packetContentHash: input.packet.contentHash,
+        moduleId: input.packet.moduleId,
+        moduleName: input.moduleName,
+        moduleDesignRevision: input.packet.moduleDesignRevision,
+        architectureRevision: input.packet.architectureRevision,
+        linkedAt: new Date().toISOString(),
+      },
+    })
+    setCapabilitiesProjectId(project.id)
+    setActiveRun(run)
+    setPacket(null)
+    setRecipe(null)
+    setBuildWorkspace('handoff')
+    setView('build')
+  }, [activeRun, bridge, projects])
+
   const openProjectOverview = useCallback((projectId: string) => {
     setProjectOverviewId(projectId)
     setView('project-overview')
@@ -273,7 +335,10 @@ export default function App() {
               projects={projects}
               activeProjectId={workflowProjectId}
               onProjectSelected={setCapabilitiesProjectId}
+              projectModeAvailable={Boolean(designBridgeCaller)}
               onNavigateToProjects={() => setView('projects')}
+              linkedRun={activeRun?.projectId === workflowProjectId ? activeRun : undefined}
+              onContinueToBuild={workflowProject ? continueCapabilitiesPacket : undefined}
               initialTab="plan"
             />
           </Suspense>

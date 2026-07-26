@@ -278,7 +278,15 @@ function buildComponentLayout(projection: DiagramProjection, width: number, heig
     centerX + width + sideGap * 2,
     componentRowRightEdge + sideGap,
   )
-  const mainY = Math.max(180, consumers.length > 4 ? height * 2 + NODE_GAP_X + 100 : 180)
+  const consumerRows = Math.max(1, Math.ceil(consumers.length / 4))
+  const consumerBottom = consumers.length > 0
+    ? consumerRows * height + Math.max(0, consumerRows - 1) * NODE_GAP_X
+    : 0
+  // Reserve one distinct horizontal channel per consumer between the peer
+  // rows and the main component. Without this dynamic band, the fifth and
+  // later consumer routes could climb back into a wrapped peer row, putting
+  // both the connector and its label on top of an unrelated component.
+  const mainY = Math.max(180, consumerBottom + 64 + Math.max(0, consumers.length - 1) * 18)
   const sideStep = height + 22
   const sideCount = Math.max(provided.length, required.length)
   const dependencyY = Math.max(mainY + height + 250, 70 + sideCount * sideStep)
@@ -302,13 +310,14 @@ function buildComponentLayout(projection: DiagramProjection, width: number, heig
   required.forEach((element, index) => nodes.push({ elementId: element.id, x: rightX, y: 45 + index * sideStep, width, height }))
 
   const nodeById = new Map(nodes.map((node) => [node.elementId, node]))
-  let upperChannel = mainY - 42
-  let lowerChannel = mainY + height + 42
+  // Component-to-component relationships share a rail in the clear corridor
+  // between the peer rows and the required-interface column. Branching from
+  // that rail immediately above each target row prevents a dependency bound
+  // for a wrapped row from running through components in earlier rows.
+  const componentCollectorX = componentRowRightEdge + 24
   const providedIndex = new Map(provided.map((element, index) => [element.id, index]))
   const requiredIndex = new Map(required.map((element, index) => [element.id, index]))
   const interfaceAnchorY = (index: number, count: number) => mainY + ((index + 1) * height) / (count + 1)
-  const providedUpCount = provided.filter((_, index) => 80 + index * sideStep + height / 2 < interfaceAnchorY(index, provided.length)).length
-  const requiredUpCount = required.filter((_, index) => 45 + index * sideStep + height / 2 < interfaceAnchorY(index, required.length)).length
 
   const edges = projection.relationships.map((rel) => {
     const from = nodeById.get(rel.fromId)
@@ -318,32 +327,27 @@ function buildComponentLayout(projection: DiagramProjection, width: number, heig
     let labelPosition: Point | undefined
 
     if (rel.toId === main.id && elementById.get(rel.fromId)?.kind === 'component') {
-      const sx = from.x + from.width / 2
-      const tx = to.x + to.width / 2
-      points = [{ x: sx, y: from.y + from.height }, { x: sx, y: upperChannel }, { x: tx, y: upperChannel }, { x: tx, y: to.y }]
-      labelPosition = labelAtMidpoint(points, 1)
-      upperChannel -= 18
+      points = routeGeneric(from, to, 'vertical', componentCollectorX, GAP_BAND_OFFSET)
+      labelPosition = labelAtMidpoint(points, 0)
     } else if (rel.fromId === main.id && elementById.get(rel.toId)?.kind === 'component') {
-      const sx = from.x + from.width / 2
-      const tx = to.x + to.width / 2
-      points = [{ x: sx, y: from.y + from.height }, { x: sx, y: lowerChannel }, { x: tx, y: lowerChannel }, { x: tx, y: to.y }]
-      labelPosition = labelAtMidpoint(points, 1)
-      lowerChannel += 26
+      points = routeGeneric(from, to, 'vertical', componentCollectorX, GAP_BAND_OFFSET)
+      labelPosition = labelAtMidpoint(points, 4)
     } else if (rel.fromId === main.id && elementById.get(rel.toId)?.kind === 'providedInterface') {
       const index = providedIndex.get(rel.toId) ?? 0
       const sy = interfaceAnchorY(index, provided.length)
       const ty = to.y + to.height / 2
-      const channelX = ty < sy
-        ? leftX + width + 48 + index * 12
-        : leftX + width + 78 - (index - providedUpCount) * 12
+      // Provided interfaces share the matching left-side rail. Branches meet
+      // the rail orthogonally instead of weaving through one another.
+      const channelX = leftX + width + 36
       points = [{ x: from.x, y: sy }, { x: channelX, y: sy }, { x: channelX, y: ty }, { x: to.x + to.width, y: ty }]
     } else if (rel.fromId === main.id && elementById.get(rel.toId)?.kind === 'requiredInterface') {
       const index = requiredIndex.get(rel.toId) ?? 0
       const sy = interfaceAnchorY(index, required.length)
       const ty = to.y + to.height / 2
-      const channelX = ty < sy
-        ? rightX - 78 + index * 12
-        : rightX - 48 - (index - requiredUpCount) * 12
+      // Required interfaces share a stable rail in the right-side corridor.
+      // Keeping that rail beyond the component collector prevents the
+      // dependency bus from cutting across every required-interface branch.
+      const channelX = rightX - 36
       points = [{ x: from.x + from.width, y: sy }, { x: channelX, y: sy }, { x: channelX, y: ty }, { x: to.x, y: ty }]
     } else {
       const collector = rightX + width + COLLECTOR_MARGIN
@@ -447,6 +451,24 @@ function buildUseCaseLayout(projection: DiagramProjection, width: number, height
   const nodeById = new Map(nodes.map((node) => [node.elementId, node]))
   const collectorY = (nodes.length > 0 ? Math.max(...nodes.map((node) => node.y + node.height)) : 0) + COLLECTOR_MARGIN
   const columnCollectorX = boundaryX + BOUNDARY_PADDING / 2
+  const associationsByActor = new Map<string, string[]>()
+  const actorAssociationIds: string[] = []
+  for (const relationship of projection.relationships) {
+    const actorId = actors.some((actor) => actor.id === relationship.fromId)
+      ? relationship.fromId
+      : actors.some((actor) => actor.id === relationship.toId)
+        ? relationship.toId
+        : undefined
+    if (!actorId) continue
+    actorAssociationIds.push(relationship.id)
+    const associations = associationsByActor.get(actorId) ?? []
+    associations.push(relationship.id)
+    associationsByActor.set(actorId, associations)
+  }
+  const associationChannelIndex = new Map(actorAssociationIds.map((id, index) => [id, index]))
+  const associationChannelStep = Math.min(12, 72 / Math.max(actorAssociationIds.length - 1, 1))
+  const associationChannelX = (relationshipId: string) =>
+    actorWidth + 16 + (actorAssociationIds.length - 1 - (associationChannelIndex.get(relationshipId) ?? 0)) * associationChannelStep
 
   const edges: DiagramLayoutEdge[] = projection.relationships.map((rel) => {
     const from = nodeById.get(rel.fromId)
@@ -460,10 +482,43 @@ function buildUseCaseLayout(projection: DiagramProjection, width: number, height
       return { relationshipId: rel.id, points: [center, center] }
     }
 
-    const sameColumn = from.x === to.x
-    const points = sameColumn
-      ? routeGeneric(from, to, 'vertical', columnCollectorX, USE_CASE_ROW_GAP_OFFSET)
-      : routeGeneric(from, to, 'horizontal', collectorY, USE_CASE_COLUMN_GAP_OFFSET)
+    const fromKind = projection.elements.find((element) => element.id === rel.fromId)?.kind
+    const toKind = projection.elements.find((element) => element.id === rel.toId)?.kind
+    let points: Point[]
+    if (fromKind === 'actor' && toKind === 'useCase') {
+      const actorAssociations = associationsByActor.get(rel.fromId) ?? [rel.id]
+      const associationIndex = Math.max(actorAssociations.indexOf(rel.id), 0)
+      const sourceOffset = (associationIndex - (actorAssociations.length - 1) / 2) * 14
+      const sy = from.y + from.height / 2 + sourceOffset
+      const ty = to.y + to.height / 2
+      // A distinct attachment and corridor for every association prevents
+      // multiple actor lines from visually merging into one unexplained fork.
+      const channelX = associationChannelX(rel.id)
+      points = [
+        { x: from.x + from.width, y: sy },
+        { x: channelX, y: sy },
+        { x: channelX, y: ty },
+        { x: to.x, y: ty },
+      ]
+    } else if (fromKind === 'useCase' && toKind === 'actor') {
+      const sy = from.y + from.height / 2
+      const actorAssociations = associationsByActor.get(rel.toId) ?? [rel.id]
+      const associationIndex = Math.max(actorAssociations.indexOf(rel.id), 0)
+      const targetOffset = (associationIndex - (actorAssociations.length - 1) / 2) * 14
+      const ty = to.y + to.height / 2 + targetOffset
+      const channelX = associationChannelX(rel.id)
+      points = [
+        { x: from.x, y: sy },
+        { x: channelX, y: sy },
+        { x: channelX, y: ty },
+        { x: to.x + to.width, y: ty },
+      ]
+    } else {
+      const sameColumn = from.x === to.x
+      points = sameColumn
+        ? routeGeneric(from, to, 'vertical', columnCollectorX, USE_CASE_ROW_GAP_OFFSET)
+        : routeGeneric(from, to, 'horizontal', collectorY, USE_CASE_COLUMN_GAP_OFFSET)
+    }
     const label = relationshipLabelText(rel)
     return { relationshipId: rel.id, points, ...(label ? { labelPosition: labelAtMidpoint(points, 2) } : {}) }
   })

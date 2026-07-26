@@ -455,6 +455,14 @@ describe('EUC-09 layoutDiagram — never hides a relationship', () => {
 // ---------------------------------------------------------------------------
 
 describe('EUC-09 layoutDiagram — layout quality', () => {
+  it('keeps long semantic element and relationship identities distinct', () => {
+    const sample = buildSampleAuditHub()
+    for (const projection of sample.diagrams) {
+      expect(new Set(projection.elements.map((element) => element.id)).size, `${projection.diagramId} element IDs`).toBe(projection.elements.length)
+      expect(new Set(projection.relationships.map((relationship) => relationship.id)).size, `${projection.diagramId} relationship IDs`).toBe(projection.relationships.length)
+    }
+  })
+
   it('keeps the dense Package Export sample clear of ports and below the crossing threshold', () => {
     const sample = buildSampleAuditHub()
     const design = sample.moduleDesigns.find((candidate) => candidate.module.name === 'Package Export')!
@@ -467,6 +475,51 @@ describe('EUC-09 layoutDiagram — layout quality', () => {
 
     expect(layout.diagnostics).toEqual([])
     expect(layout.crossingCount).toBeLessThanOrEqual(8)
+  })
+
+  it('keeps every bundled sample projection free of layout diagnostics', () => {
+    const sample = buildSampleAuditHub()
+    for (const projection of sample.diagrams) {
+      expect(layoutDiagram(projection, 'wide').diagnostics, `${projection.diagramId} wide`).toEqual([])
+      expect(layoutDiagram(projection, 'narrow').diagnostics, `${projection.diagramId} narrow`).toEqual([])
+    }
+  })
+
+  it('keeps every actor association on a distinct attachment and routing corridor', () => {
+    const sample = buildSampleAuditHub()
+    const evidenceStore = sample.moduleDesigns.find((candidate) => candidate.module.name === 'Evidence Store')!
+    const projections = [
+      ...sample.diagrams.filter((candidate) => candidate.kind === 'useCase'),
+      projectUseCaseDiagram({ design: evidenceStore, analysis: sample.useCaseAnalysis }),
+    ]
+    for (const projection of projections) {
+      const layout = layoutDiagram(projection, 'wide')
+      const kindById = new Map(projection.elements.map((element) => [element.id, element.kind]))
+      const edgeById = new Map(layout.edges.map((edge) => [edge.relationshipId, edge]))
+      const actorAssociations = projection.relationships.filter(
+        (relationship) => kindById.get(relationship.fromId) === 'actor' || kindById.get(relationship.toId) === 'actor',
+      )
+      const channelCoordinates: number[] = []
+      const attachmentCoordinatesByActor = new Map<string, string[]>()
+
+      for (const relationship of actorAssociations) {
+        const edge = edgeById.get(relationship.id)!
+        const fromActor = kindById.get(relationship.fromId) === 'actor'
+        const actorId = fromActor ? relationship.fromId : relationship.toId
+        const attachment = fromActor ? edge.points[0]! : edge.points.at(-1)!
+        const channel = fromActor ? edge.points[1]! : edge.points.at(-2)!
+        channelCoordinates.push(channel.x)
+        const actorAttachments = attachmentCoordinatesByActor.get(actorId) ?? []
+        actorAttachments.push(`${attachment.x}:${attachment.y}`)
+        attachmentCoordinatesByActor.set(actorId, actorAttachments)
+      }
+
+      expect(new Set(channelCoordinates).size, `${projection.diagramId} association corridors`).toBe(channelCoordinates.length)
+      expect(layout.crossingCount, `${projection.diagramId} association crossings`).toBe(0)
+      for (const [actorId, attachments] of attachmentCoordinatesByActor) {
+        expect(new Set(attachments).size, `${projection.diagramId} ${actorId} attachments`).toBe(attachments.length)
+      }
+    }
   })
 
   it('never overlaps two nodes in a crowded component diagram', () => {

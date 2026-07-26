@@ -97,6 +97,16 @@ describe('Primary action label (§9.3, §18.1 "one primary action")', () => {
     expect(store.primaryActionLabel('mod.package-export')).toBe('Approve module')
   })
 
+  it('does not skip unfinished session steps after resolving the last required question', () => {
+    const store = new DesignStore({ now: NOW })
+    const moduleId = 'mod.evidence-graph'
+    const requiredItem = store.getDesign(moduleId)!.unresolvedItems.find((item) => item.materiality === 'material' && !item.resolvedAt)!
+    store.answerRequiredQuestion(moduleId, requiredItem.id, 'Use the tailored DAL when supplied.')
+    expect(store.getDesign(moduleId)!.status).toBe('readyForReview')
+    expect(store.getSession(moduleId)!.currentStep).toBe('behavior')
+    expect(store.primaryActionLabel(moduleId)).toBe('Continue module design')
+  })
+
   it('asks to create a module draft when no design exists yet', () => {
     const store = new DesignStore({ now: NOW })
     expect(store.primaryActionLabel('mod.does-not-exist')).toBe('Create module draft')

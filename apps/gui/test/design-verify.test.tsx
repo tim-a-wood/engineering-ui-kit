@@ -6,7 +6,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { DesignStore } from '../src/views/design/designState'
 import { DesignVerifyView } from '../src/views/design/DesignVerifyView'
 
@@ -22,15 +22,16 @@ describe('Verify view (§14.4)', () => {
     const store = new DesignStore({ now: NOW })
     render(<DesignVerifyView store={store} onSelectDesignLink={() => {}} />)
 
-    expect(screen.getByText('Use cases')).toBeTruthy()
-    expect(screen.getByText('Scenarios')).toBeTruthy()
-    expect(screen.getByText('Passed')).toBeTruthy()
-    expect(screen.getByText('Failed')).toBeTruthy()
-    expect(screen.getByText('Skipped')).toBeTruthy()
-    expect(screen.getByText('Cancelled')).toBeTruthy()
-    expect(screen.getByText('Steps')).toBeTruthy()
-    expect(screen.getByText('Screenshots')).toBeTruthy()
-    expect(screen.getByText('Structured evidence')).toBeTruthy()
+    const summary = screen.getByLabelText('Verification summary')
+    expect(within(summary).getByText('Use cases')).toBeTruthy()
+    expect(within(summary).getByText('Scenarios')).toBeTruthy()
+    expect(within(summary).getByText('Recorded passed')).toBeTruthy()
+    expect(within(summary).getByText('Recorded failed')).toBeTruthy()
+    expect(within(summary).getByText('Skipped')).toBeTruthy()
+    expect(within(summary).getByText('Cancelled')).toBeTruthy()
+    expect(within(summary).getByText('Steps')).toBeTruthy()
+    expect(within(summary).getByText('Screenshots')).toBeTruthy()
+    expect(within(summary).getByText('Structured evidence')).toBeTruthy()
 
     const sample = store.getState()
     expect(sample.scenarioRuns.length).toBeGreaterThan(0)

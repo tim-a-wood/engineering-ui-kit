@@ -41,6 +41,7 @@ export const DESIGN_OPERATIONS = [
   'createUseCaseDraft',
   'updateUseCaseItem',
   'approveUseCaseAnalysis',
+  'reopenUseCaseAnalysis',
   'createSystemDesignDraft',
   'applySystemDesignDecision',
   'approveSystemStructure',
@@ -55,6 +56,7 @@ export const DESIGN_OPERATIONS = [
   'proposeVisualChange',
   'analyzeVisualChange',
   'approveChangePlan',
+  'executeChangePlan',
   'createModuleImplementationPacket',
   'importAgentDelta',
   'inspectAgentDelta',
@@ -113,7 +115,11 @@ export const ADAPTER_OPERATIONS = [
   'adapter:configureProjectRepository',
   'adapter:getProjectRepository',
   'adapter:configureProjectRoles',
+  'adapter:getProjectRoles',
   'adapter:getPrincipal',
+  'adapter:getProjectSource',
+  'adapter:getConnectionState',
+  'adapter:getEvidenceArtifact',
 ] as const
 
 export type AdapterOperationName = (typeof ADAPTER_OPERATIONS)[number]
@@ -138,6 +144,63 @@ export type ConfigureProjectRepositoryInput = {
 export type GetProjectRepositoryInput = {
   projectId: string
 }
+
+export type GetEvidenceArtifactInput = {
+  projectId: string
+  /** Opaque `design-evidence://<execution>/<file>` reference from a persisted run. */
+  ref: string
+}
+
+export type GetProjectRolesInput = {
+  projectId: string
+}
+
+export type GetProjectSourceInput = {
+  projectId: string
+  /** Repository-relative reference captured in the use-case analysis. */
+  ref: string
+}
+
+export type GetConnectionStateInput = {
+  projectId: string
+  moduleId: string
+}
+
+export type ProjectSourceResponse =
+  | {
+      ok: true
+      projectId: string
+      ref: string
+      fileName: string
+      mediaType: 'text/plain' | 'application/json'
+      sha256: string
+      bytes: number
+      content: string
+      truncated: boolean
+    }
+  | { ok: false; diagnostics: { id: string; code: string; severity: 'blocker' | 'warning' | 'info'; message: string; target?: string }[] }
+
+export type ProjectRolesResponse =
+  | { ok: true; projectId: string; principal: string; authorities: string[]; configuredAt?: string }
+  | { ok: false; diagnostics: { id: string; code: string; severity: 'blocker' | 'warning' | 'info'; message: string; target?: string }[] }
+
+export type ConnectionStateResponse =
+  | { ok: true; projectId: string; moduleId: string; binding?: unknown; verification?: unknown }
+  | { ok: false; diagnostics: { id: string; code: string; severity: 'blocker' | 'warning' | 'info'; message: string; target?: string }[] }
+
+export type EvidenceArtifactResponse =
+  | {
+      ok: true
+      projectId: string
+      ref: string
+      mediaType: 'image/png' | 'image/jpeg' | 'image/webp' | 'application/json' | 'text/plain'
+      sha256: string
+      bytes: number
+      encoding: 'base64' | 'utf8'
+      content: string
+      fileName: string
+    }
+  | { ok: false; diagnostics: { id: string; code: string; severity: 'blocker' | 'warning' | 'info'; message: string; target?: string }[] }
 
 /** Structured response shape both adapter operations return — never a throw. */
 export type AdapterConfigurationResponse =

@@ -205,6 +205,46 @@ describe('EUC-13 DesignWorkspace — immutable approved revisions', () => {
     ws.saveScenarioRun('proj-1', run)
     expect(() => ws.saveScenarioRun('proj-1', run)).toThrow(/immutable/)
   })
+
+  it('persists and retrieves a semantic scenario-run id longer than an OS filename segment', () => {
+    const dir = tmpDir()
+    const ws = new DesignWorkspace(dir)
+    const runId = `run.${'failure-path-segment.'.repeat(12)}result`
+    const run = {
+      schemaVersion: '1.0' as const,
+      runId,
+      projectId: 'proj-1',
+      scenarioId: `${'scenario.failure.'.repeat(10)}final`,
+      useCaseId: 'uc-1',
+      identity: {
+        useCaseAnalysisRevision: 'r1',
+        applicationRevision: 'r1',
+        systemStructureRevision: 'r1',
+        moduleDesignRevisions: {},
+        implementationRevisions: {},
+        connectionRevision: 'r1',
+        build: 'build-1',
+        sourceRevision: 'src-1',
+        environment: 'test',
+        testDataRevision: 'r1',
+        runner: 'vitest',
+      },
+      steps: [],
+      outcome: 'passed' as const,
+      startedAt: '2026-01-01T00:00:00.000Z',
+      completedAt: '2026-01-01T00:00:01.000Z',
+      evidenceHashes: [],
+      contentHash: 'long-run-hash',
+    }
+
+    expect(runId.length).toBeGreaterThan(255)
+    ws.saveScenarioRun('proj-1', run)
+    expect(ws.getScenarioRun('proj-1', runId)).toEqual(run)
+    expect(ws.listScenarioRuns('proj-1')).toEqual([run])
+    const persistedNames = fs.readdirSync(path.join(dir, 'projects', 'proj-1', 'design', 'scenario-runs'))
+    expect(persistedNames).toHaveLength(1)
+    expect(persistedNames[0]!.length).toBeLessThan(140)
+  })
 })
 
 describe('EUC-13 DesignWorkspace — audit append-only + idempotent retry', () => {

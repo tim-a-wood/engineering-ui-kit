@@ -1164,7 +1164,7 @@ function progressValidNextActions(state: ModuleDesignProgressEntry['state'], blo
     case 'readyForReview':
       return ['Run checks', 'Approve module']
     case 'approved':
-      return ['Create Copilot handoff', 'Reopen module']
+      return ['Create implementation handoff', 'Reopen module']
     case 'stale':
       return ['Review upstream change']
     case 'blocked':

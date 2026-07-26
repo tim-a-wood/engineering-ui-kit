@@ -97,6 +97,12 @@ describe('EUC-03 proposeSystemStructure', () => {
     }
   })
 
+  it('uses the approved use cases—not the raw application paragraph—as the primary module responsibility', () => {
+    const draft = propose()
+    expect(draft.moduleDefinitions?.find((definition) => definition.moduleId === 'mod.core')?.responsibility)
+      .toBe('Coordinates the approved workflows for Import evidence; Review evidence.')
+  })
+
   it('CAP-DES-SYS-008 identifies deployable units', () => {
     const draft = propose()
     expect(draft.deployables[0]!.moduleIds).toEqual([...draft.moduleIds].sort((a, b) => a.localeCompare(b)))
@@ -107,6 +113,7 @@ describe('EUC-03 proposeSystemStructure', () => {
     const gate = evaluateSystemStructureGate(draft, application, operationIds)
     expect(gate.passed).toBe(true)
     expect(gate.diagnostics).toEqual([])
+    expect(draft.gateResult).toEqual(gate)
   })
 
   it('is deterministic for the same input', () => {

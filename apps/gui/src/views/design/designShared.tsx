@@ -3,7 +3,7 @@
  *
  * Labels follow Appendix C of the specification verbatim (the "Use" column):
  * `Design modules`, `Module design`, `Required question`, `Review contracts`,
- * `Create Copilot handoff`, `Old`, `Waiting for dependency`,
+ * `Create implementation handoff`, `Old`, `Waiting for dependency`,
  * `Run module checks`.
  */
 
@@ -127,8 +127,12 @@ export function StateBadge(props: { state: ModuleDesignProgressEntry['state'] })
 }
 
 /** §18.1 "Autosave drafts locally and show save state." Text alone carries the state (non-color). */
-export function SaveIndicator(props: { saveState: SaveState; savedAt?: string }): ReactNode {
-  const text = props.saveState === 'saving' ? 'Saving…' : props.saveState === 'saved' ? 'Saved' : 'Not saved yet'
+export function SaveIndicator(props: { saveState: SaveState; savedAt?: string; mode?: 'sample' | 'project' }): ReactNode {
+  const text = props.saveState === 'saving'
+    ? 'Saving…'
+    : props.saveState === 'saved'
+      ? props.mode === 'project' ? 'Synced to project' : 'Saved in this browser'
+      : props.mode === 'sample' ? 'Bundled baseline' : 'Synced to project'
   return (
     <span className="design-save-indicator" role="status" aria-live="polite">
       {text}

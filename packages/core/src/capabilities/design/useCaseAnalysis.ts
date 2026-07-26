@@ -70,6 +70,43 @@ export type UseCaseAnalysisResult = {
 
 export type AnalysisReviewCounts = Record<AnalysisItemStatus, number>
 
+export type UseCaseContentTarget =
+  | {
+      kind: 'useCaseContent'
+      useCaseId: string
+      content: 'scalar'
+      field: 'name' | 'trigger' | 'recoveryBehavior'
+      action: 'accept' | 'correct' | 'reject'
+      text?: string
+    }
+  | {
+      kind: 'useCaseContent'
+      useCaseId: string
+      content: 'list'
+      field: 'preconditions' | 'inputs' | 'outputs' | 'sourceLinks'
+      action: 'accept' | 'correct' | 'reject' | 'add'
+      index?: number
+      text?: string
+    }
+  | {
+      kind: 'useCaseContent'
+      useCaseId: string
+      content: 'step'
+      stepId: string
+      field: 'action' | 'expectedResult'
+      action: 'accept' | 'correct' | 'reject'
+      text?: string
+    }
+  | {
+      kind: 'useCaseContent'
+      useCaseId: string
+      content: 'path'
+      pathKind: 'alternatePaths' | 'failurePaths'
+      scenarioId: string
+      action: 'accept' | 'correct' | 'reject'
+      text?: string
+    }
+
 /** Build a DesignDiagnostic with a stable, deterministic id. Shared with
  * EUC-02, which depends on EUC-01 (§25.2). */
 export function designDiagnostic(
@@ -222,6 +259,112 @@ function withNextRevision(analysis: UseCaseAnalysis, patch: Partial<UseCaseAnaly
   return finalizeAnalysis(merged)
 }
 
+const ACTOR_ACTION =
+  'needs?|wants?|can|must|should|shall|runs?|uses?|reviews?|creates?|approves?|validates?|submits?|opens?|views?|manages?|tracks?|configures?|records?|checks?|uploads?|downloads?|requests?|starts?|performs?|refreshes?'
+
+function sentenceFragments(text: string): string[] {
+  return (text.match(/[^.!?]+[.!?]?/g) ?? [])
+    .map((sentence) => sentence.trim().replace(/[.!?]+$/, ''))
+    .filter(Boolean)
+}
+
+function sentenceCase(text: string): string {
+  const trimmed = text.trim().replace(/[.!?]+$/, '')
+  return trimmed ? `${trimmed[0]!.toUpperCase()}${trimmed.slice(1)}` : ''
+}
+
+function inferPrimaryActor(description: string): string {
+  const firstSentence = sentenceFragments(description)[0] ?? ''
+  const match = firstSentence.match(new RegExp(`^(?:an?|the)\\s+(.{1,64}?)\\s+(?:${ACTOR_ACTION})\\b`, 'i'))
+  return match ? sentenceCase(match[1]!) : 'Primary user'
+}
+
+function inferUseCaseName(description: string): string {
+  const firstSentence = sentenceFragments(description)[0] ?? description
+  const purpose = firstSentence.match(
+    /\bto\s+((?:approve|build|check|configure|create|deliver|inspect|manage|open|record|report|review|run|submit|track|validate|verify)\b[^,;.!?]*)/i,
+  )
+  if (purpose) return sentenceCase(purpose[1]!)
+
+  const actorLead = firstSentence.match(new RegExp(`^(?:an?|the)\\s+.{1,64}?\\s+(${ACTOR_ACTION})\\b\\s*(.*)$`, 'i'))
+  if (actorLead) {
+    const verb = actorLead[1]!
+      .replace(/ies$/i, 'y')
+      .replace(/(sh|ch|x|z|ss|o)es$/i, '$1')
+      .replace(/s$/i, '')
+    return sentenceCase(`${verb} ${actorLead[2]!.split(',')[0]}`.trim())
+  }
+
+  return sentenceCase(firstSentence)
+}
+
+function requirementClauses(description: string): string[] {
+  const sentences = sentenceFragments(description)
+  const firstSentenceClauses = sentences[0]?.includes(',') ? sentences[0]!.split(',').slice(1) : []
+  const requirementSentences = [...firstSentenceClauses, ...sentences.slice(1)]
+  return requirementSentences
+    .flatMap((sentence) => sentence.split(/,\s*(?:and\s+)?|\s+and\s+(?=(?:allow|ensure|keep|notify|preserve|prevent|record|reject|report|restore|retain|retry|return|show)\b)/i))
+    .map((clause) =>
+      clause
+        .trim()
+        .replace(/^(?:the\s+(?:application|service|system|tool|workflow)|it)\s+(?:must|shall|should|will)\s+/i, '')
+        .replace(/^(?:and|then)\s+/i, ''),
+    )
+    .filter(Boolean)
+}
+
+function passiveOutcome(requirement: string): string {
+  const normalized = requirement.trim().replace(/[.!?]+$/, '')
+  const passive = normalized
+    .replace(/^report\s+(an?|the)\s+(.+)$/i, (_match, article: string, result: string) => `${article} ${result} is reported`)
+    .replace(/^preserve\s+(an?|the)\s+(.+)$/i, (_match, article: string, result: string) => `${article} ${result} is preserved`)
+    .replace(/^retain\s+evidence\s+that\s+an?\s+independent\s+reviewer\s+can\s+inspect$/i, 'evidence is retained for independent review')
+    .replace(/^retain\s+(.+)$/i, (_match, result: string) => `${result} is retained`)
+    .replace(/^record\s+(.+)$/i, (_match, result: string) => `${result} is recorded`)
+    .replace(/^return\s+(.+)$/i, (_match, result: string) => `${result} is returned`)
+  if (passive !== normalized) return `${sentenceCase(passive)}.`
+  return `The workflow satisfies the requirement to ${normalized}.`
+}
+
+function inferredExpectedResult(exampleIndex: number, exampleCount: number, requirements: string[]): string {
+  if (requirements.length === 0) return 'The described outcome is observable and reviewable.'
+  const requirementIndex = exampleCount <= 1
+    ? 0
+    : Math.round((exampleIndex / (exampleCount - 1)) * (requirements.length - 1))
+  return passiveOutcome(requirements[requirementIndex]!)
+}
+
+function inferRecoveryBehavior(requirements: string[]): string {
+  const recovery = requirements.filter((requirement) =>
+    /\b(?:preserv\w*|recover\w*|restore\w*|retry|roll\s*back|last approved|on fail\w*|after fail\w*)\b/i.test(requirement),
+  )
+  return recovery.length ? recovery.map(sentenceCase).join('; ') + '.' : ''
+}
+
+function inferredFailureScenario(prohibitedResult: string, index: number, useCaseId: string) {
+  const prohibitedOutcome = prohibitedResult.trim().replace(/^never\s+/i, '').replace(/[.!?]+$/, '')
+  const protectsApprovedResult = /\b(?:replace|overwrite)\b.*\blast approved result\b/i.test(prohibitedOutcome)
+  const scenarioId = childId(useCaseId, 'scenario', `failure.${index + 1}.${prohibitedResult}`)
+  const step: ScenarioStep = {
+    id: childId(scenarioId, 'step', 'prevent-prohibited-result'),
+    action: protectsApprovedResult
+      ? 'Run validation when the current attempt fails'
+      : `Exercise the failure path related to: ${prohibitedOutcome}`,
+    expectedResult: protectsApprovedResult
+      ? 'The last approved result remains unchanged after the failed validation.'
+      : `The prohibited outcome is prevented: ${prohibitedOutcome}.`,
+    visibleResult: true,
+  }
+  return {
+    id: scenarioId,
+    name: protectsApprovedResult
+      ? 'Preserve the last approved result on failure'
+      : `Prevent prohibited outcome ${index + 1}`,
+    kind: 'failure' as const,
+    steps: [step],
+  }
+}
+
 /**
  * §7.1 / §7.2 — build the first use-case draft from a plain work description.
  * Deterministic: the same input produces the same ids and contentHash. Always
@@ -238,7 +381,10 @@ export function createUseCaseDraft(input: UseCaseAnalysisInput): UseCaseAnalysis
 
   const description = input.workDescription.trim()
   const hasDescription = description.length > 0
-  const useCaseName = hasDescription ? description : 'Untitled work'
+  const useCaseName = hasDescription ? inferUseCaseName(description) : 'Untitled work'
+  const primaryActorText = hasDescription ? inferPrimaryActor(description) : 'Primary user'
+  const requirements = requirementClauses(description)
+  const recoveryBehavior = inferRecoveryBehavior(requirements)
 
   const analysisId = childId(input.projectId, 'use-case-analysis', description || 'untitled')
   const useCaseId = childId(analysisId, 'use-case', 'main')
@@ -249,45 +395,70 @@ export function createUseCaseDraft(input: UseCaseAnalysisInput): UseCaseAnalysis
     ? examples.map((example, index) => ({
         id: childId(useCaseId, 'step', `${index + 1}.${example}`),
         action: example,
-        expectedResult: 'Matches the described example.',
+        expectedResult: inferredExpectedResult(index, examples.length, requirements),
         visibleResult: true,
       }))
     : [
         {
           id: childId(useCaseId, 'step', 'primary'),
           action: useCaseName,
-          expectedResult: 'The work described is completed.',
+          expectedResult: requirements.length ? passiveOutcome(requirements[0]!) : 'The described outcome is observable and reviewable.',
           visibleResult: true,
         },
       ]
 
-  const primaryActorText = 'Primary user'
   const primaryActorId = childId(analysisId, 'actor', primaryActorText)
   const actors: AnalysisItem[] = [{ id: primaryActorId, text: primaryActorText, status: 'inferred' }]
+  const prohibitedResults = [...(input.prohibitedResults ?? [])]
+  const failurePaths = prohibitedResults.map((prohibitedResult, index) =>
+    inferredFailureScenario(prohibitedResult, index, useCaseId),
+  )
+  const recoveryScenario = recoveryBehavior
+    ? {
+        id: childId(useCaseId, 'scenario', 'recovery'),
+        name: `Recover from a failed attempt to ${useCaseName.toLocaleLowerCase()}`,
+        kind: 'recovery' as const,
+        steps: [
+          {
+            id: childId(useCaseId, 'step', 'recovery'),
+            action: `Recover after an attempt to ${useCaseName.toLocaleLowerCase()} fails`,
+            expectedResult: recoveryBehavior,
+            visibleResult: true,
+          },
+        ],
+      }
+    : undefined
+  const scenarios = [
+    { id: mainScenarioId, name: useCaseName, kind: 'main' as const, steps: mainFlow },
+    ...failurePaths,
+    ...(recoveryScenario ? [recoveryScenario] : []),
+  ]
 
   const acceptanceCheckId = childId(useCaseId, 'acceptance', 'primary')
   const useCase: UseCaseDefinition = {
     id: useCaseId,
     name: useCaseName,
     actors: [primaryActorId],
-    trigger: `A user needs to: ${useCaseName}.`,
+    trigger: `${primaryActorText} needs to ${useCaseName.toLocaleLowerCase()}.`,
     preconditions: [],
     mainFlow,
     alternatePaths: [],
-    failurePaths: [],
-    recoveryBehavior: '',
+    failurePaths,
+    recoveryBehavior,
     rules: [],
     inputs: [],
-    outputs: [`Result: ${useCaseName}`],
+    outputs: requirements.length ? requirements.map(passiveOutcome) : [`Completed outcome: ${useCaseName}`],
     acceptanceChecks: [
       {
         id: acceptanceCheckId,
-        text: `The work "${useCaseName}" is completed as described.`,
+        text: requirements.length
+          ? `The primary path satisfies the approved requirements to ${requirements.join('; ')}.`
+          : `The work "${useCaseName}" is completed with an observable, reviewable result.`,
         status: 'inferred',
       },
     ],
     sourceLinks: [],
-    scenarios: [{ id: mainScenarioId, name: 'Main scenario', kind: 'main', steps: mainFlow }],
+    scenarios,
   }
 
   const sources: AnalysisSource[] = (input.sources ?? []).map((source, index) => ({
@@ -318,7 +489,7 @@ export function createUseCaseDraft(input: UseCaseAnalysisInput): UseCaseAnalysis
     status: 'draft',
     workDescription: description,
     examples,
-    prohibitedResults: [...(input.prohibitedResults ?? [])],
+    prohibitedResults,
     actors,
     useCases: [useCase],
     rules: [],
@@ -426,6 +597,93 @@ export function rejectAnalysisItem(analysis: UseCaseAnalysis, itemId: string, ac
   return transformAnalysisItem(analysis, itemId, (item) => ({ ...item, status: 'rejected' }))
 }
 
+/**
+ * Reviews structural use-case content with the same accept/correct/reject
+ * semantics as inferred `AnalysisItem`s. Corrections update the canonical
+ * field itself; rejection removes list/path/step content while retaining a
+ * stable review disposition for scalar identity fields.
+ */
+export function updateUseCaseContent(
+  analysis: UseCaseAnalysis,
+  target: UseCaseContentTarget,
+  actor: string,
+): UseCaseAnalysisResult {
+  void actor
+  const index = analysis.useCases.findIndex((candidate) => candidate.id === target.useCaseId)
+  if (index === -1) {
+    return {
+      analysis,
+      diagnostics: [designDiagnostic(EUC01_DIAGNOSTIC_CODES.unknownItem, 'blocker', `use case not found: ${target.useCaseId}`, { target: target.useCaseId })],
+    }
+  }
+  const current = analysis.useCases[index]!
+  let updated: UseCaseDefinition = { ...current, reviewStates: { ...(current.reviewStates ?? {}) } }
+  const state = target.action === 'accept' ? 'confirmed' : target.action === 'correct' || target.action === 'add' ? 'changed' : 'rejected'
+
+  if (target.content === 'scalar') {
+    const key = `scalar.${target.field}`
+    if (target.action === 'correct') updated = { ...updated, [target.field]: (target.text ?? '').trim() }
+    updated.reviewStates![key] = state
+  } else if (target.content === 'list') {
+    const list = [...current[target.field]]
+    if (target.action === 'add') {
+      const value = (target.text ?? '').trim()
+      if (!value) {
+        return { analysis, diagnostics: [designDiagnostic(EUC01_DIAGNOSTIC_CODES.unknownItem, 'blocker', 'new review content cannot be empty', { target: target.field })] }
+      }
+      list.push(value)
+      updated.reviewStates![`list.${target.field}.${list.length - 1}`] = state
+    } else if (typeof target.index !== 'number' || target.index < 0 || target.index >= list.length) {
+      return { analysis, diagnostics: [designDiagnostic(EUC01_DIAGNOSTIC_CODES.unknownItem, 'blocker', `list item not found: ${target.field}[${String(target.index)}]`, { target: target.field })] }
+    } else {
+      const key = `list.${target.field}.${target.index}`
+      if (target.action === 'correct') list[target.index] = (target.text ?? '').trim()
+      if (target.action === 'reject') list.splice(target.index, 1)
+      updated.reviewStates![key] = state
+    }
+    updated = { ...updated, [target.field]: list }
+  } else if (target.content === 'step') {
+    let found = false
+    const transform = (step: ScenarioStep): ScenarioStep => {
+      if (step.id !== target.stepId) return step
+      found = true
+      if (target.action === 'correct') return { ...step, [target.field]: (target.text ?? '').trim() }
+      return step
+    }
+    let mainFlow = current.mainFlow.map(transform)
+    const mapScenarios = (items: UseCaseDefinition['scenarios']) =>
+      items.map((scenario) => ({ ...scenario, steps: scenario.steps.map(transform) }))
+    let scenarios = mapScenarios(current.scenarios)
+    let alternatePaths = mapScenarios(current.alternatePaths)
+    let failurePaths = mapScenarios(current.failurePaths)
+    if (!found) {
+      return { analysis, diagnostics: [designDiagnostic(EUC01_DIAGNOSTIC_CODES.unknownItem, 'blocker', `scenario step not found: ${target.stepId}`, { target: target.stepId })] }
+    }
+    if (target.action === 'reject') {
+      mainFlow = mainFlow.filter((step) => step.id !== target.stepId)
+      const remove = (items: UseCaseDefinition['scenarios']) => items.map((scenario) => ({ ...scenario, steps: scenario.steps.filter((step) => step.id !== target.stepId) }))
+      scenarios = remove(scenarios)
+      alternatePaths = remove(alternatePaths)
+      failurePaths = remove(failurePaths)
+    }
+    updated = { ...updated, mainFlow, scenarios, alternatePaths, failurePaths }
+    updated.reviewStates![`step.${target.stepId}.${target.field}`] = state
+  } else {
+    const paths = [...current[target.pathKind]]
+    const pathIndex = paths.findIndex((candidate) => candidate.id === target.scenarioId)
+    if (pathIndex === -1) {
+      return { analysis, diagnostics: [designDiagnostic(EUC01_DIAGNOSTIC_CODES.unknownItem, 'blocker', `scenario path not found: ${target.scenarioId}`, { target: target.scenarioId })] }
+    }
+    if (target.action === 'correct') paths[pathIndex] = { ...paths[pathIndex]!, name: (target.text ?? '').trim() }
+    if (target.action === 'reject') paths.splice(pathIndex, 1)
+    updated = { ...updated, [target.pathKind]: paths }
+    updated.reviewStates![`path.${target.scenarioId}`] = state
+  }
+
+  const useCases = analysis.useCases.map((candidate, candidateIndex) => candidateIndex === index ? updated : candidate)
+  return { analysis: withNextRevision(analysis, { useCases }), diagnostics: [] }
+}
+
 /** CAP-PLAN-014 — answer a question; only material questions block
  * readyForReview, but any question can be answered. */
 export function answerQuestion(
@@ -519,7 +777,7 @@ export function approveUseCaseAnalysis(
     sourceHashes[source.id] = canonicalHash(source)
   }
 
-  const approvedRecord: UseCaseAnalysis = { ...analysis, status: 'approved' }
+  const approvedRecord: UseCaseAnalysis = { ...analysis, status: 'approved', previousApproval: undefined }
   const contentHash = designContentHash(approvedRecord)
   const approval: DesignApproval = {
     approvedBy: input.approvedBy,
@@ -532,4 +790,27 @@ export function approveUseCaseAnalysis(
   }
   const finalRecord: UseCaseAnalysis = { ...approvedRecord, approval, contentHash }
   return { analysis: finalRecord, diagnostics: [] }
+}
+
+/**
+ * Starts a new editable revision while preserving the exact approved record
+ * in approved history. Downstream records continue to reference the last
+ * approved revision until this new draft is reviewed and approved.
+ */
+export function reopenUseCaseAnalysis(approved: UseCaseAnalysis): UseCaseAnalysisResult {
+  if (approved.status !== 'approved' || !approved.approval) {
+    return {
+      analysis: approved,
+      diagnostics: [
+        designDiagnostic(
+          EUC01_DIAGNOSTIC_CODES.notReadyForReview,
+          'blocker',
+          'only an approved use-case analysis can be revised',
+          { target: 'status', relatedIds: [approved.id, approved.revision] },
+        ),
+      ],
+    }
+  }
+  const reopened = withNextRevision(approved, { previousApproval: approved.approval })
+  return { analysis: reopened, diagnostics: [] }
 }

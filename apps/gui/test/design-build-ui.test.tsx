@@ -3,7 +3,7 @@
  * React-rendered wiring tests for `BuildHandoffView` and `WavesView` — the
  * two Build-tab views that were previously exercised only against the store
  * directly (see `design-build-handoff.test.tsx`). These tests drive the real
- * `DesignStore` through the DOM: module picker, the one-module Copilot
+ * `DesignStore` through the DOM: module picker, the one-module implementation
  * handoff button, the Build-gate blocked banner (§3.5), the returned-delta
  * paste/inspect/approve/apply/rollback round trip (§11.5, §11.6, §12.2), the
  * implementation-waves table (§11.8, no dispatch-all control), and the
@@ -54,7 +54,7 @@ function baseSnapshot() {
 /** Renders the full workspace and switches to the Build tab (WavesView + BuildHandoffView). */
 function renderBuildTab(store: DesignStore) {
   const result = render(<DesignWorkspaceView store={store} />)
-  fireEvent.click(screen.getByRole('tab', { name: 'Build' }))
+  fireEvent.click(screen.getByRole('button', { name: /^Build\b/ }))
   return result
 }
 
@@ -64,7 +64,7 @@ function selectModule(name: string, moduleId: string) {
   void name
 }
 
-/** The `BuildHandoffView` section, scoped away from `WavesView`'s per-row "Create Copilot handoff" buttons. */
+/** The focused `BuildHandoffView` section, scoped away from the wave-plan summary. */
 function buildHandoffSection(): HTMLElement {
   return document.querySelector('.design-build-handoff') as HTMLElement
 }
@@ -82,18 +82,18 @@ describe('BuildHandoffView — gate mode banner (§3.5)', () => {
   })
 })
 
-describe('BuildHandoffView — one-module Copilot handoff (§11.2, §11.3, §6.2)', () => {
-  it('"Create Copilot handoff" produces a packet summary in the DOM for exactly one module', () => {
+describe('BuildHandoffView — one-module implementation handoff (§11.2, §11.3, §6.2)', () => {
+  it('"Create implementation handoff" produces a packet summary in the DOM for exactly one module', () => {
     const store = new DesignStore({ now: NOW })
     renderBuildTab(store)
     selectModule('Evidence Store', 'mod.evidence-store')
 
-    fireEvent.click(within(buildHandoffSection()).getByRole('button', { name: 'Create Copilot handoff' }))
+    fireEvent.click(within(buildHandoffSection()).getByRole('button', { name: 'Create implementation handoff' }))
 
     const result = document.querySelector('.design-handoff-result')
     expect(result).toBeTruthy()
-    expect(result!.textContent).toMatch(/Created a implementation handoff packet\.|Created a design handoff packet\./)
-    expect(within(result as HTMLElement).getByText('Context manifest')).toBeTruthy()
+    expect(result!.textContent).toMatch(/Created an implementation handoff packet\.|Created a design handoff packet\./)
+    expect(within(result as HTMLElement).getByText(/Context manifest/)).toBeTruthy()
     expect((result as HTMLElement).querySelectorAll('.design-context-manifest li').length).toBeGreaterThan(0)
 
     // Exactly one module's handoff was recorded, not a batch.
@@ -107,18 +107,17 @@ describe('BuildHandoffView — one-module Copilot handoff (§11.2, §11.3, §6.2
     renderBuildTab(store)
     selectModule('Evidence Store', 'mod.evidence-store')
 
-    fireEvent.click(within(buildHandoffSection()).getByRole('button', { name: 'Create Copilot handoff' }))
-
-    const result = document.querySelector('.design-handoff-result')
-    expect(result!.textContent).toMatch(/Handoff blocked \(implementation\)\./)
-    const reasons = within(result as HTMLElement).getByRole('list', { name: 'Handoff blocked reasons' })
+    const button = within(buildHandoffSection()).getByRole('button', { name: 'Create implementation handoff' }) as HTMLButtonElement
+    expect(button.disabled).toBe(true)
+    const reasons = within(buildHandoffSection()).getByRole('list', { name: 'Build gate blocked reasons' })
     expect(reasons.textContent).toContain('implementation handoffs remain blocked until the complete Design baseline is approved')
   })
 })
 
 describe('BuildHandoffView — returned-delta review round trip (§11.5, §11.6, §12.2)', () => {
   function pasteAndImport(delta: unknown) {
-    fireEvent.change(screen.getByLabelText('Paste a returned delta (JSON)'), { target: { value: JSON.stringify(delta) } })
+    fireEvent.click(screen.getByText('Paste JSON instead'))
+    fireEvent.change(screen.getByLabelText('Returned delta JSON'), { target: { value: JSON.stringify(delta) } })
     fireEvent.click(screen.getByRole('button', { name: 'Import pasted delta' }))
   }
 
@@ -126,7 +125,7 @@ describe('BuildHandoffView — returned-delta review round trip (§11.5, §11.6,
     const store = new DesignStore({ now: NOW })
     renderBuildTab(store)
     selectModule('Evidence Store', 'mod.evidence-store')
-    fireEvent.click(within(buildHandoffSection()).getByRole('button', { name: 'Create Copilot handoff' }))
+    fireEvent.click(within(buildHandoffSection()).getByRole('button', { name: 'Create implementation handoff' }))
 
     const packet = store.getState().moduleHandoffs['mod.evidence-store']!.packet as ModuleImplementationPacket
     pasteAndImport({
@@ -146,7 +145,7 @@ describe('BuildHandoffView — returned-delta review round trip (§11.5, §11.6,
       contentHash: 'test-content-hash',
     })
 
-    expect(screen.getByText(/imported \(pasted\)/)).toBeTruthy()
+    expect(screen.getByText(/Imported from pasted JSON/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Inspect returned changes' }))
 
     const outOfScope = screen.getByRole('list', { name: 'Out-of-scope attempts' })
@@ -159,7 +158,7 @@ describe('BuildHandoffView — returned-delta review round trip (§11.5, §11.6,
     const store = new DesignStore({ now: NOW })
     renderBuildTab(store)
     selectModule('Evidence Store', 'mod.evidence-store')
-    fireEvent.click(within(buildHandoffSection()).getByRole('button', { name: 'Create Copilot handoff' }))
+    fireEvent.click(within(buildHandoffSection()).getByRole('button', { name: 'Create implementation handoff' }))
 
     const packet = store.getState().moduleHandoffs['mod.evidence-store']!.packet as ModuleImplementationPacket & { allowedPaths: string[] }
     const targetPath = `${packet.allowedPaths[0]}notes.md`
@@ -200,19 +199,19 @@ describe('BuildHandoffView — returned-delta review round trip (§11.5, §11.6,
   })
 })
 
-describe('WavesView — implementation waves table (§11.8)', () => {
+describe('WavesView — progressive implementation-wave plan (§11.8)', () => {
   it('lists modules with their batch eligibility', () => {
     const store = new DesignStore({ now: NOW })
     renderBuildTab(store)
 
     const wavesSection = document.querySelector('.design-waves') as HTMLElement
-    const headers = within(wavesSection).getAllByRole('columnheader', { name: 'Batch eligible' })
-    expect(headers.length).toBeGreaterThan(0)
-
-    const filesystemRow = within(wavesSection).getByRole('cell', { name: 'File-system adapter' }).closest('tr')!
-    expect(within(filesystemRow).getByRole('cell', { name: 'Yes' })).toBeTruthy()
-    const compositionRow = within(wavesSection).getByRole('cell', { name: 'composition.entry-points' }).closest('tr')!
-    expect(within(compositionRow).getByRole('cell', { name: 'No' })).toBeTruthy()
+    const filesystemItem = within(wavesSection).getAllByText('File-system adapter').find((element) => element.tagName === 'B')!.closest('li')!
+    fireEvent.click(within(filesystemItem).getByText('Scope'))
+    expect(filesystemItem.textContent).toContain('Batch safe')
+    expect(filesystemItem.textContent).toContain('Yes')
+    const compositionItem = within(wavesSection).getAllByText('composition.entry-points').find((element) => element.tagName === 'B')!.closest('li')!
+    fireEvent.click(within(compositionItem).getByText('Scope'))
+    expect(compositionItem.textContent).toContain('No')
   })
 
   it('has no dispatch-all control anywhere on the Build tab', () => {
@@ -226,6 +225,7 @@ describe('WavesView — implementation waves table (§11.8)', () => {
     const store = new DesignStore({ now: NOW })
     renderBuildTab(store)
 
+    fireEvent.click(screen.getByText('Advanced sample: combine independent modules'))
     const disabledButton = screen.getByRole('button', { name: 'Create multi-module handoff (0 selected)' })
     expect((disabledButton as HTMLButtonElement).disabled).toBe(true)
 
@@ -262,6 +262,7 @@ describe('WavesView — implementation waves table (§11.8)', () => {
     const store = new DesignStore({ now: NOW, snapshot: { ...snapshot, moduleDesigns, approvedModuleDesigns } })
     renderBuildTab(store)
 
+    fireEvent.click(screen.getByText('Advanced sample: combine independent modules'))
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select File-system adapter for a multi-module handoff' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select Git adapter for a multi-module handoff' }))
     fireEvent.click(screen.getByRole('button', { name: 'Create multi-module handoff (2 selected)' }))

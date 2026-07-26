@@ -138,10 +138,12 @@ function assertSafeSegment(kind: string, value: string): void {
   }
 }
 
-/** `assertSafeSegment` followed by `<dirPath>/<id>.json` — the common id-file shape. */
+/** `assertSafeSegment` followed by a bounded, collision-resistant file stem.
+ * The complete semantic id remains inside the JSON record and callers can
+ * still retrieve it by that id. */
 function idFilePath(dirPath: string, kind: string, id: string): string {
   assertSafeSegment(kind, id)
-  return path.join(dirPath, `${id}.json`)
+  return path.join(dirPath, `${safeFileStem(id)}.json`)
 }
 
 // ---------------------------------------------------------------------------

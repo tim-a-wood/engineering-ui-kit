@@ -29,6 +29,7 @@ const DIAGRAM_MODULE_ID = 'mod.finding-review'
 
 beforeEach(() => {
   window.localStorage.clear()
+  window.history.replaceState(null, '', '/')
 })
 afterEach(cleanup)
 
@@ -59,10 +60,21 @@ function assertAllButtonsNamed(container: HTMLElement) {
 }
 
 describe('Workspace tabs — tablist semantics, aria-current/aria-selected, arrow-key nav (§18.4, §24.4)', () => {
-  it('exposes the complete Plan-to-Evidence workflow as one tablist', () => {
+  it('exposes a six-stage journey by default and the complete workflow as one expert tablist', () => {
     const store = new DesignStore({ now: NOW })
     render(<DesignWorkspaceView store={store} />)
-    const tablist = screen.getByRole('tablist', { name: 'Design workspace sections' })
+    const journey = screen.getByRole('list', { name: 'Product delivery stages' })
+    expect(within(journey).getAllByRole('button').map((button) => button.querySelector('b')?.textContent)).toEqual([
+      'Plan',
+      'Design',
+      'Build',
+      'Connect',
+      'Verify',
+      'Evidence',
+    ])
+
+    fireEvent.click(screen.getByRole('button', { name: 'Technical' }))
+    const tablist = screen.getByRole('tablist', { name: 'Technical workflow sections' })
     const tabs = within(tablist).getAllByRole('tab')
     expect(tabs.map((tab) => tab.textContent)).toEqual(['Plan', 'Design', 'Build', 'Connect', 'Verify', 'Evidence'])
 
@@ -78,7 +90,8 @@ describe('Workspace tabs — tablist semantics, aria-current/aria-selected, arro
   it('moves the active tab and focus with ArrowRight/ArrowLeft, wrapping at both ends', () => {
     const store = new DesignStore({ now: NOW })
     render(<DesignWorkspaceView store={store} />)
-    const tablist = screen.getByRole('tablist', { name: 'Design workspace sections' })
+    fireEvent.click(screen.getByRole('button', { name: 'Technical' }))
+    const tablist = screen.getByRole('tablist', { name: 'Technical workflow sections' })
 
     fireEvent.keyDown(tablist, { key: 'ArrowRight' })
     expect(within(tablist).getByRole('tab', { name: 'Build' }).getAttribute('aria-selected')).toBe('true')
@@ -125,11 +138,11 @@ describe('Diagram detail modal focus containment/return for a relationship selec
 })
 
 describe('Diagram text alternative is keyboard reachable (§15.2, §18.4)', () => {
-  it('the "Show relationship list" control is a native, focusable button and reveals a named list on activation', () => {
+  it('the stable "Relationship list" control is a native, focusable button and reveals a named list on activation', () => {
     const store = new DesignStore({ now: NOW })
     renderDiagramsFor(store, DIAGRAM_MODULE_ID)
 
-    const toggle = screen.getByRole('button', { name: 'Show relationship list' })
+    const toggle = screen.getByRole('button', { name: 'Relationship list' })
     expect(toggle.tagName).toBe('BUTTON')
     expect(toggle.getAttribute('type')).toBe('button')
     expect(toggle.tabIndex).not.toBe(-1)
@@ -141,13 +154,13 @@ describe('Diagram text alternative is keyboard reachable (§15.2, §18.4)', () =
     expect(document.querySelector('svg')).toBeNull()
     const list = screen.getByRole('list', { name: 'Relationship list' })
     expect(list.querySelectorAll('li').length).toBeGreaterThan(0)
-    // The toggle itself remains keyboard-focusable and now offers to go back.
-    expect(screen.getByRole('button', { name: 'Show diagram' })).toBeTruthy()
+    // The stable label remains keyboard-focusable and exposes its state.
+    expect(screen.getByRole('button', { name: 'Relationship list' }).getAttribute('aria-pressed')).toBe('true')
   })
 })
 
 describe('Status announcements fire on handoff creation and delta apply (§18.4, §11, §12)', () => {
-  it('announces a Copilot handoff creation through the polite live region', () => {
+  it('announces an implementation handoff creation through the polite live region', () => {
     const store = new DesignStore({ now: NOW })
     render(<DesignWorkspaceView store={store} />)
 
@@ -156,7 +169,7 @@ describe('Status announcements fire on handoff creation and delta apply (§18.4,
     })
 
     const liveRegions = screen.getAllByRole('status')
-    expect(liveRegions.some((region) => /Created a Copilot implementation handoff for Evidence Store/.test(region.textContent ?? ''))).toBe(true)
+    expect(liveRegions.some((region) => /Created an implementation handoff for Evidence Store/.test(region.textContent ?? ''))).toBe(true)
   })
 
   it('announces a simulated delta apply through the polite live region', () => {
@@ -208,7 +221,7 @@ describe('BuildHandoffView and EvidenceExplorer controls are all named (§18.4, 
     const { container } = render(<BuildHandoffView store={store} />)
 
     fireEvent.change(screen.getByLabelText('Module'), { target: { value: 'mod.evidence-store' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Create Copilot handoff' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create implementation handoff' }))
 
     assertAllButtonsNamed(container)
   })
@@ -248,6 +261,7 @@ describe('Reduced motion coverage extends to the Build/Verify/Evidence panels (�
     // them without any additional selectors.
     const store = new DesignStore({ now: NOW })
     render(<DesignWorkspaceView store={store} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Technical' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Build' }))
     expect(document.querySelector('.design-workspace .design-build-handoff')).toBeTruthy()
     expect(document.querySelector('.design-workspace .design-waves')).toBeTruthy()

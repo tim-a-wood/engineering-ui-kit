@@ -77,6 +77,21 @@ export type HandoffRun = {
   }
   /** When the packet was last exported — feedback saved after this drives the iteration prefill. */
   taskPacketBuiltAt?: string
+  /**
+   * Immutable origin link when this delivery run was opened from an approved
+   * Capabilities module packet. Build & Test adds delivery artifacts to this
+   * same run; it never creates a second, untraceable module task.
+   */
+  designHandoff?: {
+    schemaVersion: '1.0'
+    packetId: string
+    packetContentHash: string
+    moduleId: string
+    moduleName: string
+    moduleDesignRevision: string
+    architectureRevision: string
+    linkedAt: string
+  }
   currentStep: HandoffStep
   uploadSetType?: 'text-only' | 'visual' | 'follow-up-text' | 'follow-up-visual'
   repoFlatfilePath?: string

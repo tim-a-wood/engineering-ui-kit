@@ -33,6 +33,13 @@ const STEP_LABEL: Record<ModuleDesignStep, string> = {
   approval: 'Approve module',
 }
 
+function readableDate(value: string): string {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+}
+
 export type ModuleSessionViewProps = {
   entry: ModuleDesignProgressEntry
   design?: ModuleDesignSpecification
@@ -42,6 +49,7 @@ export type ModuleSessionViewProps = {
   approvedContracts: OperationContract[]
   primaryActionLabel: string
   saveState: SaveState
+  mode?: 'sample' | 'project'
   onPrimaryAction: () => void
   onGoToStep: (step: ModuleDesignStep) => void
   onAnswerQuestion: (itemId: string, text: string) => void
@@ -55,6 +63,8 @@ export type ModuleSessionViewProps = {
   useCaseAnalysis?: UseCaseAnalysis
   diagramDiscussions?: Record<string, DiagramDiscussionEntry[]>
   diagramImpacts?: Record<string, DesignImpactRecord>
+  initialDiagramSelectionId?: string
+  onDiagramSelectionChange?: (selectionId?: string) => void
 }
 
 export function ModuleSessionView(props: ModuleSessionViewProps) {
@@ -88,11 +98,11 @@ export function ModuleSessionView(props: ModuleSessionViewProps) {
         <div>
           <h2 id={headingId}>{design.module.name}</h2>
           <p className="secondary-text">
-            {moduleTypeLabel(design.module.moduleType)} · Module design revision {design.revision}
+            {moduleTypeLabel(design.module.moduleType)}
           </p>
         </div>
         <StateBadge state={entry.state} />
-        <SaveIndicator saveState={props.saveState} />
+        <SaveIndicator saveState={props.saveState} mode={props.mode} />
       </header>
 
       <ol className="design-session-steps" aria-label="Module-design session steps">
@@ -131,6 +141,8 @@ export function ModuleSessionView(props: ModuleSessionViewProps) {
             useCaseAnalysis={props.useCaseAnalysis}
             diagramDiscussions={props.diagramDiscussions}
             diagramImpacts={props.diagramImpacts}
+            initialSelectionId={props.initialDiagramSelectionId}
+            onSelectionChange={props.onDiagramSelectionChange}
           />
         )}
         {currentStep === 'checks' && <ChecksStep checks={props.checks} onRunChecks={props.onRunChecks} onGoToStep={props.onGoToStep} />}
@@ -139,11 +151,13 @@ export function ModuleSessionView(props: ModuleSessionViewProps) {
         )}
       </div>
 
-      <div className="design-session-primary-action">
-        <button type="button" className="btn btn-primary" onClick={props.onPrimaryAction}>
-          {props.primaryActionLabel}
-        </button>
-      </div>
+      {!(currentStep === 'approval' && (design.status === 'readyForReview' || design.status === 'approved')) && (
+        <div className="design-session-primary-action">
+          <button type="button" className="btn btn-primary" onClick={props.onPrimaryAction}>
+            {props.primaryActionLabel}
+          </button>
+        </div>
+      )}
     </section>
   )
 }
@@ -281,6 +295,8 @@ function DiagramsStep(props: {
   useCaseAnalysis?: UseCaseAnalysis
   diagramDiscussions?: Record<string, DiagramDiscussionEntry[]>
   diagramImpacts?: Record<string, DesignImpactRecord>
+  initialSelectionId?: string
+  onSelectionChange?: (selectionId?: string) => void
 }) {
   if (!props.store || !props.architecture) {
     return (
@@ -301,6 +317,8 @@ function DiagramsStep(props: {
         useCaseAnalysis={props.useCaseAnalysis}
         diagramDiscussions={props.diagramDiscussions ?? {}}
         diagramImpacts={props.diagramImpacts ?? {}}
+        initialSelectionId={props.initialSelectionId}
+        onSelectionChange={props.onSelectionChange}
       />
     </div>
   )
@@ -360,7 +378,7 @@ function ApprovalStep(props: {
       <h3>Approve module</h3>
       {design.status === 'approved' && design.approval ? (
         <p className="design-approval-confirmation" role="status">
-          Approved by {design.approval.approvedBy} on {design.approval.approvedAt}.
+          Approved by {design.approval.approvedBy} on {readableDate(design.approval.approvedAt)}.
         </p>
       ) : (
         <>
@@ -380,12 +398,12 @@ function ApprovalStep(props: {
       )}
       {changed && (
         <p className="design-last-approved secondary-text">
-          Last approved revision: {approvedDesign!.revision} ({approvedDesign!.status}). This draft is revision {design.revision}.
+          An approved version remains available while this updated draft is reviewed.
         </p>
       )}
       {design.status === 'approved' && (
         <button type="button" className="btn btn-secondary" onClick={props.onCreateHandoff}>
-          Create Copilot handoff
+          Create implementation handoff
         </button>
       )}
     </div>

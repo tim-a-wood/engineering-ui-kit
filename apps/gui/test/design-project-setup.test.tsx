@@ -126,6 +126,11 @@ describe('ProjectSetupPanel — session principal (adapter:getPrincipal)', () =>
         diagnostics: [{ id: 'unknown', code: 'EUC16-UNKNOWN-OPERATION', severity: 'blocker', message: 'unknown operation: adapter:getPrincipal' }],
         validNextActions: [],
       }),
+      'adapter:getProjectRoles': () => ({
+        ok: false,
+        diagnostics: [{ id: 'unknown-roles', code: 'EUC16-UNKNOWN-OPERATION', severity: 'blocker', message: 'unknown operation: adapter:getProjectRoles' }],
+        validNextActions: [],
+      }),
     })
     await store.ready
     render(<ProjectSetupPanel store={store} />)

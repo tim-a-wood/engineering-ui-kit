@@ -128,8 +128,13 @@ function bootstrapApprovedModule(dispatch: Dispatch, projectId: string, configur
   return { scenarioId, deployableId: approved.value.boundary.deployableId, operationId, operationVersion }
 }
 
-function bootstrapProject(dataDir: string, repositoryRoot: string, projectId: string): Dispatch {
-  const dispatch = createDesignIpcDispatch(dataDir, { principal: actor })
+function bootstrapProject(
+  dataDir: string,
+  repositoryRoot: string,
+  projectId: string,
+  options: Omit<Parameters<typeof createDesignIpcDispatch>[1], 'principal'> = {},
+): Dispatch {
+  const dispatch = createDesignIpcDispatch(dataDir, { principal: actor, ...options })
   const repoConfig = dispatch({ operation: 'adapter:configureProjectRepository', args: [{ projectId, actor, idempotencyKey: key(), repositoryRoot }] })
   expect(repoConfig.ok, JSON.stringify(repoConfig.diagnostics)).toBe(true)
   const roles = dispatch({ operation: 'adapter:configureProjectRoles', args: [{ projectId, actor, idempotencyKey: key() }] })
@@ -231,7 +236,11 @@ describe('EUC-16 desktop IPC — real configureBinding/verifyConnection/runScena
     const approvedAnalysis = dispatch({ operation: 'approveUseCaseAnalysis', args: [{ projectId, actor, idempotencyKey: key(), authority: 'product-lead' }] })
     expect(approvedAnalysis.ok, JSON.stringify(approvedAnalysis.diagnostics)).toBe(true)
 
-    writeScript(repositoryRoot, 'scripts/step.cjs', 'process.exit(0);\n')
+    writeScript(
+      repositoryRoot,
+      'scripts/step.cjs',
+      "require('node:fs').writeFileSync(process.env.EUIK_SCREENSHOT_PATH, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'));\nprocess.exit(0);\n",
+    )
     const sysDraft = dispatch({ operation: 'createSystemDesignDraft', args: [{ projectId, actor, idempotencyKey: key() }] })
     expect(sysDraft.ok, JSON.stringify(sysDraft.diagnostics)).toBe(true)
     const sysApproved = dispatch({ operation: 'approveSystemStructure', args: [{ projectId, actor, idempotencyKey: key(), authority: 'software-architect' }] })
@@ -274,7 +283,16 @@ describe('EUC-16 desktop IPC — real configureBinding/verifyConnection/runScena
     expect(ran.ok, JSON.stringify(ran.diagnostics)).toBe(true)
     expect(ran.value.outcome).toBe('passed')
     expect(ran.value.steps[0].outcome).toBe('passed')
-    expect(ran.value.steps[0].structuredEvidenceRef).toContain('exit=0')
+    expect(ran.value.steps[0].structuredEvidenceRef).toMatch(/^design-evidence:\/\//)
+    expect(ran.value.steps[0].screenshotRef).toMatch(/^design-evidence:\/\//)
+    expect(ran.value.steps[0].artifacts).toHaveLength(2)
+
+    const structured = dispatch({
+      operation: 'adapter:getEvidenceArtifact',
+      args: [{ projectId, ref: ran.value.steps[0].structuredEvidenceRef }],
+    })
+    expect(structured.ok).toBe(true)
+    expect(JSON.parse(structured.content).command).toContain('scripts/step.cjs')
 
     // Real persistence: `runScenario`'s own operation-level code persists the run (the executor only executes).
     const coverage = dispatch({ operation: 'getScenarioCoverage', args: [projectId] })

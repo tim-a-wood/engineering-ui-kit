@@ -129,6 +129,7 @@ import {
 } from './verificationPlanner.js'
 import { compileModuleImplementationSpecification, compileOperationContracts } from './moduleDesignCompilers.js'
 import type { DiagramLayout } from './records.js'
+import { SAMPLE_EVIDENCE_MANIFEST } from './sampleEvidenceManifest.js'
 
 // ---------------------------------------------------------------------------
 // Fixed clock — deterministic timestamps only (no Date.now / Math.random)
@@ -2645,6 +2646,38 @@ export function buildSampleAuditHub(): SampleAuditHub {
       const startedAt = at(startMinute + index * 2)
       const endedAt = at(startMinute + index * 2 + 1)
       const policy = policyByStep.get(s.id)
+      const artifact = SAMPLE_EVIDENCE_MANIFEST[s.id]
+      if (!artifact) throw new Error(`sample evidence manifest is missing step: ${s.id}`)
+      const screenshotRef = `sample-evidence://screenshots/${artifact.screenshot.fileName}`
+      const structuredEvidenceRef = `sample-evidence://structured/${artifact.structured.fileName}`
+      const artifacts: NonNullable<ScenarioStepEvidence['artifacts']> = [
+        {
+          artifactId: `${s.id}.screenshot`,
+          kind: 'screenshot',
+          status: 'available',
+          ref: screenshotRef,
+          mediaType: 'image/png',
+          role: 'original',
+          sha256: artifact.screenshot.sha256,
+          bytes: artifact.screenshot.bytes,
+          capturedAt: endedAt,
+          fileName: artifact.screenshot.fileName,
+          width: artifact.screenshot.width,
+          height: artifact.screenshot.height,
+        },
+        {
+          artifactId: `${s.id}.structured`,
+          kind: 'structured',
+          status: 'available',
+          ref: structuredEvidenceRef,
+          mediaType: 'application/json',
+          role: 'original',
+          sha256: artifact.structured.sha256,
+          bytes: artifact.structured.bytes,
+          capturedAt: endedAt,
+          fileName: artifact.structured.fileName,
+        },
+      ]
       const base = {
         stepId: s.id,
         action: s.action,
@@ -2653,12 +2686,18 @@ export function buildSampleAuditHub(): SampleAuditHub {
         startedAt,
         endedAt,
         outcome,
-        evidenceHash: sha256Hex(`${s.id}:${outcome}`),
+        structuredEvidenceRef,
+        artifacts,
+        evidenceHash: canonicalHash(artifacts.map((item) => ({
+          artifactId: item.artifactId,
+          sha256: item.sha256,
+          bytes: item.bytes,
+        }))),
       }
       if (policy?.evidenceKind === 'screenshot') {
         const withScreenshot: ScenarioStepEvidence = {
           ...base,
-          screenshotRef: `evidence/screenshots/${s.id}.png`,
+          screenshotRef,
           screenshotMetadata: {
             browser: 'chromium',
             viewport: '1280x800',
@@ -2674,7 +2713,6 @@ export function buildSampleAuditHub(): SampleAuditHub {
       }
       const withStructured: ScenarioStepEvidence = {
         ...base,
-        structuredEvidenceRef: `evidence/structured/${s.id}.json`,
         ...(policy?.screenshotNotApplicableReason ? { screenshotNotApplicableReason: policy.screenshotNotApplicableReason } : {}),
       }
       return withStructured

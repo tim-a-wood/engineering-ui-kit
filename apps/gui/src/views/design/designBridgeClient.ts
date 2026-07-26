@@ -175,6 +175,25 @@ export type AdapterPrincipalResponse = { ok: true; principal: string } | { ok: f
  */
 export type ConfigureProjectRolesInput = { projectId: string; actor?: string; idempotencyKey: string; grantee?: string; authorities?: string[] }
 export type AdapterRolesResponse = { ok: true; auditEventId?: string } | { ok: false; diagnostics: AdapterDiagnostic[] }
+export type AdapterProjectRolesResponse =
+  | { ok: true; projectId: string; principal: string; authorities: string[]; configuredAt?: string }
+  | { ok: false; diagnostics: AdapterDiagnostic[] }
+export type AdapterProjectSourceResponse =
+  | {
+      ok: true
+      projectId: string
+      ref: string
+      fileName: string
+      mediaType: 'text/plain' | 'application/json'
+      sha256: string
+      bytes: number
+      content: string
+      truncated: boolean
+    }
+  | { ok: false; diagnostics: AdapterDiagnostic[] }
+export type AdapterConnectionStateResponse =
+  | { ok: true; projectId: string; moduleId: string; binding?: unknown; verification?: unknown }
+  | { ok: false; diagnostics: AdapterDiagnostic[] }
 
 /**
  * True when a bridge response is the adapter's `EUC16-UNKNOWN-OPERATION`

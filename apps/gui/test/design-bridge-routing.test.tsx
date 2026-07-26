@@ -45,6 +45,7 @@ import {
   type DeltaApplyResult,
   type DesignDiagnostic,
   type DesignImpactRecord,
+  type DesignBaseline,
   type DiagramDiscussionEntry,
   type ModuleDesignSpecification,
   type ValidNextAction,
@@ -131,7 +132,10 @@ function rejectedResult(diagnostics: DesignDiagnostic[], validNextActions: Valid
  * trusts the change response alone) sees the persisted result, the same way
  * a real backend would.
  */
-function setup(initialValidNextActions: ValidNextAction[] = [{ operation: 'startModuleDesign', targetId: NOT_STARTED_MODULE_ID, label: `Design module: ${NOT_STARTED_MODULE_ID}`, enabled: true }]) {
+function setup(
+  initialValidNextActions: ValidNextAction[] = [{ operation: 'startModuleDesign', targetId: NOT_STARTED_MODULE_ID, label: `Design module: ${NOT_STARTED_MODULE_ID}`, enabled: true }],
+  workflowScenarioRuns = sample.scenarioRuns,
+) {
   const calls: DesignBridgeRequest[] = []
   const designsById: Record<string, ModuleDesignSpecification> = { [APPROVED_MODULE_ID]: approvedDesign }
   let validNextActions: ValidNextAction[] = initialValidNextActions
@@ -143,7 +147,7 @@ function setup(initialValidNextActions: ValidNextAction[] = [{ operation: 'start
       systemStructure: { approved: architecture },
       baseline: { approved: sample.designBaseline },
       policy: sample.policy,
-      scenarioRuns: sample.scenarioRuns,
+      scenarioRuns: workflowScenarioRuns,
     }),
     listModuleDesigns: () => computeModuleDesignProgress(architecture, Object.values(designsById), []),
     getImplementationWaves: () => ({ projectId: PROJECT_ID, architectureRevision: architecture.revision, waves: [], autoDispatch: false }),
@@ -207,8 +211,8 @@ describe('project mode detection', () => {
 
     render(<DesignWorkspaceView store={sampleStore} />)
     expect(document.querySelector('.design-workspace')?.getAttribute('data-mode')).toBe('sample')
-    expect(document.querySelector('.design-sample-mode-banner')?.textContent).toMatch(
-      /Sample workspace — changes stay in this browser and do not affect any project/,
+    expect(document.querySelector('.design-sample-banner')?.textContent).toMatch(
+      /Synthetic workflow showcase.*no production data/s,
     )
   })
 
@@ -216,7 +220,7 @@ describe('project mode detection', () => {
     const { store } = setup()
     await store.ready
     render(<DesignWorkspaceView store={store} />)
-    expect(document.querySelector('.design-sample-mode-banner')).toBeNull()
+    expect(document.querySelector('.design-sample-banner')).toBeNull()
   })
 })
 
@@ -242,7 +246,15 @@ describe('change operations — exactly one bridge call, fresh idempotency key, 
     await store.ready
 
     const draft: ModuleDesignSpecification = { ...approvedDesign, module: { ...approvedDesign.module, moduleId: NOT_STARTED_MODULE_ID }, status: 'draft', approval: undefined }
-    responses.startModuleDesign = () => okResult(draft)
+    responses.startModuleDesign = () => okResult({
+      design: draft,
+      session: {
+        ...sample.sessions[0]!,
+        moduleId: NOT_STARTED_MODULE_ID,
+        currentStep: 'boundary',
+        completedSteps: [],
+      },
+    })
 
     store.ensureDraft(NOT_STARTED_MODULE_ID)
     // No local mutation before the bridge round trip resolves.
@@ -259,7 +271,14 @@ describe('change operations — exactly one bridge call, fresh idempotency key, 
     store.selectModule(APPROVED_MODULE_ID)
     await store.waitForPendingOperation()
 
-    responses.answerModuleDesignQuestion = () => okResult(approvedDesign)
+    responses.answerModuleDesignQuestion = () => okResult({
+      design: approvedDesign,
+      session: {
+        ...sample.sessions[0]!,
+        moduleId: APPROVED_MODULE_ID,
+        currentStep: 'behavior',
+      },
+    })
     store.answerRequiredQuestion(APPROVED_MODULE_ID, 'item.1', 'Use the tailored DAL.')
     await store.waitForPendingOperation()
 
@@ -274,7 +293,10 @@ describe('change operations — exactly one bridge call, fresh idempotency key, 
     store.selectModule(APPROVED_MODULE_ID)
     await store.waitForPendingOperation()
 
-    responses.analyzeModuleDesign = () => okResult(approvedDesign)
+    responses.analyzeModuleDesign = () => okResult({
+      design: approvedDesign,
+      evaluation: { gateId: 'EUC-04-MODULE-DESIGN-CHECKS', passed: true, diagnostics: [], blockerCount: 0, warningCount: 0 },
+    })
     store.runChecks(APPROVED_MODULE_ID)
     await store.waitForPendingOperation()
 
@@ -316,6 +338,24 @@ describe('change operations — exactly one bridge call, fresh idempotency key, 
     const handoff = store.getState().moduleHandoffs[APPROVED_MODULE_ID]
     expect(handoff?.ok).toBe(true)
     expect(handoff?.packet).toBe(implementationPacket)
+  })
+
+  it('creates and approves a Design baseline through explicit service operations', async () => {
+    const { store, calls, responses } = setup()
+    await store.ready
+    const draftBaseline: DesignBaseline = { ...sample.designBaseline, projectId: PROJECT_ID, status: 'draft', approval: undefined }
+    const approvedBaseline: DesignBaseline = { ...draftBaseline, status: 'approved', approval: sample.designBaseline.approval }
+
+    responses.createDesignBaseline = () => okResult(draftBaseline)
+    store.createDesignBaseline()
+    await store.waitForPendingOperation()
+    assertSingleChangeCall(calls, 'createDesignBaseline')
+
+    responses.approveDesignBaseline = () => okResult(approvedBaseline)
+    store.approveDesignBaseline()
+    await store.waitForPendingOperation()
+    const input = assertSingleChangeCall(calls, 'approveDesignBaseline')
+    expect(input.authority).toBe('software-architect')
   })
 
   it('the returned-delta flow (import, inspect, approve, apply) issues exactly one bridge call per step', async () => {
@@ -371,6 +411,48 @@ describe('service rejection diagnostics render verbatim', () => {
 })
 
 describe('getValidNextActions drives button enablement — never local approval logic', () => {
+  it('uses the generic editable-draft action to advance review steps and routes checks through the service', async () => {
+    const draft: ModuleDesignSpecification = {
+      ...readyForReviewDesign,
+      status: 'draft',
+      approval: undefined,
+      gates: [],
+      unresolvedItems: readyForReviewDesign.unresolvedItems.map((item) => ({ ...item, resolvedAt: item.resolvedAt ?? '2026-07-25T00:00:00.000Z' })),
+    }
+    const { store, calls, responses, setDesign, setValidNextActions } = setup([
+      { operation: 'updateModuleDesignItem', targetId: APPROVED_MODULE_ID, label: `Continue module design: ${APPROVED_MODULE_ID}`, enabled: true },
+    ])
+    setDesign(APPROVED_MODULE_ID, draft)
+    await store.ready
+    store.selectModule(APPROVED_MODULE_ID)
+    await store.waitForPendingOperation()
+
+    expect(store.getState().sessions[APPROVED_MODULE_ID]?.currentStep).toBe('boundary')
+    for (const expected of ['behavior', 'contracts', 'diagrams', 'checks'] as const) {
+      store.primaryAction(APPROVED_MODULE_ID)
+      expect(store.getState().sessions[APPROVED_MODULE_ID]?.currentStep).toBe(expected)
+    }
+    expect(calls.some((call) => call.operation === 'updateModuleDesignItem')).toBe(false)
+    expect(store.primaryActionLabel(APPROVED_MODULE_ID)).toBe('Run design checks')
+
+    setValidNextActions([
+      { operation: 'approveModuleDesign', targetId: APPROVED_MODULE_ID, label: 'Approve module design', enabled: true },
+    ])
+    responses.analyzeModuleDesign = () => {
+      setDesign(APPROVED_MODULE_ID, readyForReviewDesign)
+      return okResult({
+        design: readyForReviewDesign,
+        evaluation: { gateId: 'EUC-04-MODULE-DESIGN-CHECKS', passed: true, diagnostics: [], blockerCount: 0, warningCount: 0 },
+      })
+    }
+    store.primaryAction(APPROVED_MODULE_ID)
+    await store.waitForPendingOperation()
+
+    assertSingleChangeCall(calls, 'analyzeModuleDesign')
+    expect(store.getState().sessions[APPROVED_MODULE_ID]?.currentStep).toBe('approval')
+    expect(store.primaryActionLabel(APPROVED_MODULE_ID)).toBe('Approve module design')
+  })
+
   it('primaryAction does not call the bridge when the matching action is disabled, and calls it once the service reports it enabled', async () => {
     const { store, calls, responses, setDesign, setValidNextActions } = setup([
       { operation: 'approveModuleDesign', targetId: APPROVED_MODULE_ID, label: 'Approve module design', enabled: false, blockedReason: 'Fix required issues first.' },
@@ -392,7 +474,10 @@ describe('getValidNextActions drives button enablement — never local approval 
     // simulated by a distinct successful `analyzeModuleDesign` round trip),
     // never by this test poking the store's cached state directly.
     setValidNextActions([{ operation: 'approveModuleDesign', targetId: APPROVED_MODULE_ID, label: 'Approve module design', enabled: true }])
-    responses.analyzeModuleDesign = () => okResult(readyForReviewDesign)
+    responses.analyzeModuleDesign = () => okResult({
+      design: readyForReviewDesign,
+      evaluation: { gateId: 'EUC-04-MODULE-DESIGN-CHECKS', passed: true, diagnostics: [], blockerCount: 0, warningCount: 0 },
+    })
     store.runChecks(APPROVED_MODULE_ID)
     await store.waitForPendingOperation()
     assertSingleChangeCall(calls, 'analyzeModuleDesign')
@@ -500,7 +585,7 @@ describe('diagram discussion (§17.2) — proposeVisualChange → analyzeVisualC
     expect(approvalEntry?.author).toBe('user:remote-principal')
   })
 
-  it('Discuss with agent issues exactly one proposeVisualChange call and caches the returned entry verbatim', async () => {
+  it('a discussion request is not misrouted into proposeVisualChange when no discussion provider exists', async () => {
     const { store, calls, responses } = setup()
     await store.ready
     store.selectModule(APPROVED_MODULE_ID)
@@ -514,23 +599,12 @@ describe('diagram discussion (§17.2) — proposeVisualChange → analyzeVisualC
       elementLabel: design.module.name,
       isRenameable: false,
     }
-    const discussEntry: DiagramDiscussionEntry = {
-      id: 'entry.discuss.1',
-      elementId: target.elementId,
-      diagramId: target.diagramId,
-      author: 'user:remote-principal',
-      kind: 'proposedChange',
-      text: 'What does this component depend on?',
-      at: '2026-07-25T00:00:00.000Z',
-    }
-    responses.proposeVisualChange = () => okResult(discussEntry)
-
     store.addDiagramDiscussion(APPROVED_MODULE_ID, target, 'What does this component depend on?')
     await store.waitForPendingOperation()
 
-    const input = assertSingleChangeCall(calls, 'proposeVisualChange')
-    expect(input.description).toBe('What does this component depend on?')
-    expect(store.getDiagramDiscussion(target.elementId)).toContain(discussEntry)
+    expect(calls.filter((call) => call.operation === 'proposeVisualChange')).toHaveLength(0)
+    expect(store.getDiagramDiscussion(target.elementId)).toHaveLength(0)
+    expect(store.getState().announcement).toMatch(/agent discussion/i)
   })
 })
 
@@ -656,6 +730,56 @@ describe('blocked-state guidance (§17.3, §4) — EUC16-AUTHORITY-NOT-CONFIGURE
 })
 
 describe('project-mode Verify (§14.4, §17.1) — renders getScenarioCoverage / getVerificationEvidence verbatim', () => {
+  it('does not let an older coverage request overwrite a newer post-run summary', async () => {
+    const { store, responses } = setup()
+    await store.ready
+
+    let resolveOlder!: (value: unknown) => void
+    let resolveNewer!: (value: unknown) => void
+    const older = new Promise((resolve) => { resolveOlder = resolve })
+    const newer = new Promise((resolve) => { resolveNewer = resolve })
+    let requestCount = 0
+    responses.getScenarioCoverage = () => (++requestCount === 1 ? older : newer)
+
+    const firstLoad = store.loadProjectVerification()
+    const secondLoad = store.loadProjectVerification()
+    resolveNewer({
+      useCaseCount: 1,
+      scenarioCount: 2,
+      passedCount: 2,
+      failedCount: 0,
+      skippedCount: 0,
+      cancelledCount: 0,
+      stepCount: 4,
+      screenshotCount: 2,
+      structuredEvidenceCount: 2,
+      currentCount: 2,
+      oldCount: 0,
+      designLinks: [APPROVED_MODULE_ID],
+    })
+    await secondLoad
+    resolveOlder({
+      useCaseCount: 1,
+      scenarioCount: 2,
+      passedCount: 0,
+      failedCount: 0,
+      skippedCount: 0,
+      cancelledCount: 0,
+      stepCount: 0,
+      screenshotCount: 0,
+      structuredEvidenceCount: 0,
+      currentCount: 0,
+      oldCount: 0,
+      designLinks: [],
+    })
+    await firstLoad
+
+    expect(store.getState().projectVerification).toMatchObject({
+      status: 'ready',
+      summary: { passedCount: 2, currentCount: 2 },
+    })
+  })
+
   it('renders the returned summary counts, first failed step, and design links, then evidence for that first failed step', async () => {
     const { store, calls, responses } = setup()
     await store.ready
@@ -707,16 +831,16 @@ describe('project-mode Verify (§14.4, §17.1) — renders getScenarioCoverage /
 
     await waitFor(() => expect(calls.some((c) => c.operation === 'getScenarioCoverage')).toBe(true))
     await waitFor(() => expect(calls.some((c) => c.operation === 'getVerificationEvidence')).toBe(true))
-    await waitFor(() => expect(screen.queryByText('First failed step')).toBeTruthy())
-    expect(screen.getByText(/Run run\.remote\.1, scenario scenario\.remote\.1, step step\.remote\.1: Click submit/)).toBeTruthy()
-    await waitFor(() => expect(screen.queryByText(/Evidence for run\.remote\.1/)).toBeTruthy())
+    await waitFor(() => expect(screen.queryByText('First recorded failed step')).toBeTruthy())
+    expect(screen.getByRole('heading', { name: 'Click submit' })).toBeTruthy()
+    await waitFor(() => expect(screen.getByRole('list', { name: 'Failed run evidence' }).textContent).toContain('error'))
 
     const evidenceCall = calls.find((c) => c.operation === 'getVerificationEvidence')!
     expect(evidenceCall.args).toEqual([PROJECT_ID, 'run.remote.1'])
   })
 
   it('shows an honest empty state when there are no scenario runs recorded yet', async () => {
-    const { store, responses } = setup()
+    const { store, responses } = setup(undefined, [])
     await store.ready
     responses.getScenarioCoverage = () => undefined
 
@@ -757,6 +881,13 @@ describe('complete Capabilities workflow routing — Plan, System, Connect, Veri
     responses.configureBinding = () => okResult({ bindingId: 'binding.remote', storedAt: '2026-07-25T00:00:00.000Z' })
     responses.verifyConnection = () => okResult({ verificationId: 'verification.remote', verificationStatus: 'verified' })
     responses.runScenario = () => okResult(sample.scenarioRuns[0])
+    store.setExecutionIdentity({
+      build: 'build.remote',
+      sourceRevision: 'source.remote',
+      environment: 'desktop-project',
+      testDataRevision: 'data.remote',
+      runner: 'desktop-project-runner',
+    })
 
     store.configureConnection(APPROVED_MODULE_ID, binding)
     await store.waitForPendingOperation()
@@ -767,7 +898,15 @@ describe('complete Capabilities workflow routing — Plan, System, Connect, Veri
 
     expect(assertSingleChangeCall(calls, 'configureBinding').bindingConfig).toEqual(binding)
     assertSingleChangeCall(calls, 'verifyConnection')
-    assertSingleChangeCall(calls, 'runScenario')
+    const scenarioInput = assertSingleChangeCall(calls, 'runScenario')
+    expect(scenarioInput.identity).toEqual({
+      build: 'build.remote',
+      sourceRevision: 'source.remote',
+      environment: 'desktop-project',
+      testDataRevision: 'data.remote',
+      runner: 'desktop-project-runner',
+      connectionRevision: 'verification.remote',
+    })
   })
 
   it('renders live project evidence from canonical scenario runs instead of a placeholder note', async () => {
@@ -777,7 +916,7 @@ describe('complete Capabilities workflow routing — Plan, System, Connect, Veri
     fireEvent.click(screen.getByRole('tab', { name: 'Evidence' }))
 
     expect(screen.queryByText(/not available for a live project/i)).toBeNull()
-    expect(screen.getByRole('heading', { name: 'Trace scenario results to exact design revisions' })).toBeTruthy()
-    expect(screen.getAllByText(sample.scenarioRuns[0]!.scenarioId).length).toBeGreaterThan(0)
+    expect(screen.getByRole('heading', { name: 'Follow the result from intent to original artifacts' })).toBeTruthy()
+    expect(screen.getByText(/Recorded runs/)).toBeTruthy()
   })
 })

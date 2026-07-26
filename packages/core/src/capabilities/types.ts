@@ -754,6 +754,8 @@ export type HttpInboundBinding = InboundBindingBase & {
   kind: 'http'
   method: HttpMethod
   path: string
+  /** Local origin used by the desktop verification executor after it launches the configured process. */
+  localBaseUrl?: string
   statusMapping?: { outcome: string; status: number }[]
   authRequirement?: string
 }

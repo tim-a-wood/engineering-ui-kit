@@ -363,6 +363,22 @@ export function BuildView(props: BuildViewProps) {
         )}
       />
 
+      {props.run.designHandoff && (
+        <section className="build-origin-banner" aria-label="Capabilities packet origin">
+          <div>
+            <p className="overline">Approved Capabilities packet</p>
+            <h2>{props.run.designHandoff.moduleName}</h2>
+            <p>
+              This delivery run is linked to module design revision <code>{props.run.designHandoff.moduleDesignRevision}</code>.
+              Applied files, verification results, and completion remain on this run.
+            </p>
+          </div>
+          <button type="button" className="btn btn-secondary" onClick={() => props.onNavigate('capabilities')}>
+            Back to Capabilities
+          </button>
+        </section>
+      )}
+
       <div className="build-layout build-layout-workspace-first">
         <BuildWorkspace {...workspaceProps} />
       </div>

@@ -96,7 +96,15 @@ import { validateContractRecord } from '../validation.js'
 import { HTTP_METHODS, INBOUND_BINDING_KINDS } from '../parity.js'
 import { canonicalHash } from '../hash.js'
 import type { CliInboundBinding, ConnectionVerificationRecord, HttpInboundBinding, InboundBinding } from '../types.js'
-import type { DesignDiagnostic, ModuleDesignSpecification, ScenarioRun, ScenarioStepEvidence, UseCaseAnalysis } from './records.js'
+import type {
+  DesignDiagnostic,
+  ModuleDesignSpecification,
+  ScenarioEvidenceArtifact,
+  ScenarioRun,
+  ScenarioStep,
+  ScenarioStepEvidence,
+  UseCaseAnalysis,
+} from './records.js'
 import type { ScenarioTestPlanEntry } from './verificationPlanner.js'
 import { runConfiguredCommandSync, type RunConfiguredCommandResult } from './repositoryAdapter.js'
 import type { DesignOperationExecutors, ExecutionContext } from './operations.js'
@@ -155,6 +163,10 @@ function bindingFilePath(dataDir: string, projectId: string, bindingId: string):
 
 function bindingIndexFilePath(dataDir: string, projectId: string, moduleId: string): string {
   return path.join(bindingsRoot(dataDir, projectId), 'by-module', `${moduleId}.json`)
+}
+
+function connectionVerificationFilePath(dataDir: string, projectId: string, moduleId: string): string {
+  return path.join(dataDir, 'projects', projectId, 'design-adapter', 'connections', 'by-module', `${moduleId}.json`)
 }
 
 function writeJsonAtomic(file: string, value: unknown): void {
@@ -228,6 +240,17 @@ export type ConnectExecutorDeps = {
   listApprovedOperations: (projectId: string) => { operationId: string; version: string }[]
   /** Reads every approved module design for the project (used to resolve `runScenario`'s per-step configured commands). */
   listApprovedModuleDesigns: (projectId: string) => ModuleDesignSpecification[]
+  /**
+   * Optional real visual-capture adapter. When absent, a visible step cannot
+   * pass merely because its command exited zero: the run records a missing
+   * screenshot integrity failure.
+   */
+  captureScreenshot?: (input: {
+    projectId: string
+    scenarioId: string
+    stepId: string
+    outputPath: string
+  }) => { ok: boolean; width?: number; height?: number; failure?: string }
 }
 
 function configureBindingExecutor(deps: ConnectExecutorDeps) {
@@ -635,6 +658,13 @@ function verifyConnectionExecutor(deps: ConnectExecutorDeps) {
         ? runCliConnectionCheck(deps.repositoryRoot, input.projectId, binding, design, commands, context)
         : runHttpConnectionCheck(deps.repositoryRoot, input.projectId, binding, design, commands, input.bindingConfig)
 
+    writeJsonAtomic(connectionVerificationFilePath(deps.dataDir, input.projectId, input.moduleId), {
+      moduleId: input.moduleId,
+      bindingId: binding.bindingId,
+      recordedAt: record.completedAt,
+      verification: record,
+    })
+
     return {
       ok: record.verificationStatus === 'pass',
       value: record,
@@ -660,6 +690,181 @@ function findStepCommand(stepId: string, allCommands: string[]): string | undefi
   return undefined
 }
 
+const DESIGN_EVIDENCE_SCHEME = 'design-evidence://'
+
+function evidenceSegment(value: string): string {
+  return crypto.createHash('sha256').update(value).digest('hex').slice(0, 16)
+}
+
+function evidenceRunDirectory(dataDir: string, projectId: string, executionId: string): string {
+  return path.join(dataDir, 'projects', projectId, 'design-adapter', 'evidence', executionId)
+}
+
+function artifactRef(executionId: string, fileName: string): string {
+  return `${DESIGN_EVIDENCE_SCHEME}${executionId}/${fileName}`
+}
+
+function artifactHash(file: string): { sha256: string; bytes: number } {
+  const bytes = fs.readFileSync(file)
+  return {
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    bytes: bytes.byteLength,
+  }
+}
+
+type StepEvidenceInput = {
+  deps: ConnectExecutorDeps
+  projectId: string
+  scenarioId: string
+  executionId: string
+  step: ScenarioStep
+  stepIndex: number
+  commandLine?: string
+  screenshotSourcePath?: string
+  result: Omit<ScenarioStepEvidence, 'artifacts' | 'structuredEvidenceRef' | 'screenshotRef' | 'evidenceHash'>
+}
+
+/**
+ * Persists the structured record for every step and, for a visible result,
+ * asks the adapter for an original PNG. The returned refs are opaque
+ * adapter refs; callers never receive host paths.
+ */
+function persistStepEvidence(input: StepEvidenceInput): ScenarioStepEvidence {
+  const { deps, projectId, scenarioId, executionId, step, stepIndex } = input
+  const dir = evidenceRunDirectory(deps.dataDir, projectId, executionId)
+  fs.mkdirSync(dir, { recursive: true })
+  const stem = `${String(stepIndex + 1).padStart(2, '0')}-${evidenceSegment(step.id)}`
+  const structuredName = `${stem}.json`
+  const structuredPath = path.join(dir, structuredName)
+  const structuredPayload = {
+    schemaVersion: '1.0',
+    projectId,
+    scenarioId,
+    executionId,
+    stepId: step.id,
+    action: input.result.action,
+    expectedResult: input.result.expectedResult,
+    actualResult: input.result.actualResult,
+    outcome: input.result.outcome,
+    command: input.commandLine ?? null,
+    startedAt: input.result.startedAt,
+    endedAt: input.result.endedAt,
+  }
+  writeJsonAtomic(structuredPath, structuredPayload)
+  const structuredIdentity = artifactHash(structuredPath)
+  const structuredRef = artifactRef(executionId, structuredName)
+  const artifacts: ScenarioEvidenceArtifact[] = [{
+    artifactId: `${executionId}.${stem}.structured`,
+    kind: 'structured',
+    status: 'available',
+    ref: structuredRef,
+    mediaType: 'application/json',
+    role: 'original',
+    sha256: structuredIdentity.sha256,
+    bytes: structuredIdentity.bytes,
+    capturedAt: input.result.endedAt,
+    fileName: structuredName,
+  }]
+
+  let screenshotRef: string | undefined
+  let screenshotNotApplicableReason = step.screenshotNotApplicableReason
+  let actualResult = input.result.actualResult
+  let outcome = input.result.outcome
+
+  if (step.visibleResult && !screenshotNotApplicableReason) {
+    const screenshotName = `${stem}.png`
+    const screenshotPath = path.join(dir, screenshotName)
+    let capture: { ok: boolean; width?: number; height?: number; failure?: string } | undefined
+    if (input.screenshotSourcePath && fs.existsSync(input.screenshotSourcePath)) {
+      try {
+        const sourceStat = fs.lstatSync(input.screenshotSourcePath)
+        const sourceBytes = sourceStat.isFile() && !sourceStat.isSymbolicLink()
+          ? fs.readFileSync(input.screenshotSourcePath)
+          : undefined
+        const isPng = Boolean(
+          sourceBytes
+          && sourceBytes.byteLength <= 25 * 1024 * 1024
+          && sourceBytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
+        )
+        if (!isPng || !sourceBytes) {
+          capture = { ok: false, failure: 'The scenario command produced an invalid, symbolic-link, oversized, or non-PNG screenshot.' }
+        } else {
+          fs.writeFileSync(screenshotPath, sourceBytes)
+          capture = { ok: true }
+        }
+      } catch (error) {
+        capture = { ok: false, failure: error instanceof Error ? error.message : String(error) }
+      }
+    } else {
+      capture = deps.captureScreenshot?.({
+        projectId,
+        scenarioId,
+        stepId: step.id,
+        outputPath: screenshotPath,
+      })
+    }
+    const exists = Boolean(capture?.ok && fs.existsSync(screenshotPath) && fs.statSync(screenshotPath).isFile())
+    if (exists) {
+      const screenshotIdentity = artifactHash(screenshotPath)
+      screenshotRef = artifactRef(executionId, screenshotName)
+      artifacts.unshift({
+        artifactId: `${executionId}.${stem}.screenshot`,
+        kind: 'screenshot',
+        status: 'available',
+        ref: screenshotRef,
+        mediaType: 'image/png',
+        role: 'original',
+        sha256: screenshotIdentity.sha256,
+        bytes: screenshotIdentity.bytes,
+        capturedAt: input.result.endedAt,
+        fileName: screenshotName,
+        ...(capture?.width ? { width: capture.width } : {}),
+        ...(capture?.height ? { height: capture.height } : {}),
+      })
+    } else {
+      const failure = capture?.failure ?? 'No visual-capture adapter is configured for this project.'
+      artifacts.unshift({
+        artifactId: `${executionId}.${stem}.screenshot`,
+        kind: 'screenshot',
+        status: 'missing',
+        role: 'original',
+        capturedAt: input.result.endedAt,
+        failure,
+      })
+      // A command exit code cannot prove a visible result. Preserve a command
+      // failure, otherwise promote the missing original to a run failure.
+      if (outcome === 'passed') outcome = 'failed'
+      actualResult = `${input.result.actualResult} Screenshot integrity failure: ${failure}`
+    }
+  } else if (screenshotNotApplicableReason) {
+    artifacts.unshift({
+      artifactId: `${executionId}.${stem}.screenshot`,
+      kind: 'screenshot',
+      status: 'notApplicable',
+      role: 'original',
+      capturedAt: input.result.endedAt,
+      notApplicableReason: screenshotNotApplicableReason,
+    })
+  }
+
+  const evidenceHash = canonicalHash(artifacts.map((artifact) => ({
+    artifactId: artifact.artifactId,
+    status: artifact.status,
+    sha256: artifact.sha256 ?? '',
+  })))
+
+  return {
+    ...input.result,
+    actualResult,
+    outcome,
+    structuredEvidenceRef: structuredRef,
+    ...(screenshotRef ? { screenshotRef } : {}),
+    ...(screenshotNotApplicableReason ? { screenshotNotApplicableReason } : {}),
+    artifacts,
+    evidenceHash,
+  }
+}
+
 function runScenarioExecutor(deps: ConnectExecutorDeps) {
   return (
     input: { entry: ScenarioTestPlanEntry; analysis: UseCaseAnalysis },
@@ -673,40 +878,59 @@ function runScenarioExecutor(deps: ConnectExecutorDeps) {
     }
 
     const allCommands = deps.listApprovedModuleDesigns(input.analysis.projectId).flatMap((d) => d.verification.configuredCommands)
+    const executionId = crypto.randomUUID()
 
     const steps: ScenarioStepEvidence[] = []
-    for (const step of scenario.steps) {
+    for (const [stepIndex, step] of scenario.steps.entries()) {
       const stepStartedAt = new Date().toISOString()
       if (context.cancellationRequested) {
-        steps.push({
-          stepId: step.id,
-          action: step.action,
-          expectedResult: step.expectedResult,
-          actualResult: '(not executed — cancellation requested)',
-          startedAt: stepStartedAt,
-          endedAt: new Date().toISOString(),
-          outcome: 'cancelled',
-          structuredEvidenceRef: 'cancelled: cancellationRequested was set before this step ran',
-        })
+        steps.push(persistStepEvidence({
+          deps,
+          projectId: input.analysis.projectId,
+          scenarioId: input.entry.scenarioId,
+          executionId,
+          step,
+          stepIndex,
+          result: {
+            stepId: step.id,
+            action: step.action,
+            expectedResult: step.expectedResult,
+            actualResult: '(not executed — cancellation requested)',
+            startedAt: stepStartedAt,
+            endedAt: new Date().toISOString(),
+            outcome: 'cancelled',
+          },
+        }))
         continue
       }
 
       const commandLine = findStepCommand(step.id, allCommands)
       if (!commandLine) {
-        steps.push({
-          stepId: step.id,
-          action: step.action,
-          expectedResult: step.expectedResult,
-          actualResult: '(not executed — no configured command)',
-          startedAt: stepStartedAt,
-          endedAt: new Date().toISOString(),
-          outcome: 'skipped',
-          structuredEvidenceRef: `skipped: no verification.configuredCommands entry formatted "${step.id}: <command>" was found for this step`,
-        })
+        steps.push(persistStepEvidence({
+          deps,
+          projectId: input.analysis.projectId,
+          scenarioId: input.entry.scenarioId,
+          executionId,
+          step,
+          stepIndex,
+          result: {
+            stepId: step.id,
+            action: step.action,
+            expectedResult: step.expectedResult,
+            actualResult: `Not executed: no verification command is mapped to step "${step.id}".`,
+            startedAt: stepStartedAt,
+            endedAt: new Date().toISOString(),
+            outcome: 'skipped',
+          },
+        }))
         continue
       }
 
       const { command, args } = parseCommandLine(commandLine)
+      const screenshotSourcePath = step.visibleResult && !step.screenshotNotApplicableReason
+        ? path.join(evidenceRunDirectory(deps.dataDir, input.analysis.projectId, executionId), `${String(stepIndex + 1).padStart(2, '0')}-${evidenceSegment(step.id)}.png`)
+        : undefined
+      if (screenshotSourcePath) fs.mkdirSync(path.dirname(screenshotSourcePath), { recursive: true })
       const outcome = runConfiguredCommandSync({
         command,
         args,
@@ -715,18 +939,32 @@ function runScenarioExecutor(deps: ConnectExecutorDeps) {
         timeoutMs: 60_000,
         allowedCommands: [command],
         envAllowlist: ['PATH'],
+        extraEnv: {
+          EUIK_SCENARIO_ID: input.entry.scenarioId,
+          EUIK_STEP_ID: step.id,
+          ...(screenshotSourcePath ? { EUIK_SCREENSHOT_PATH: screenshotSourcePath } : {}),
+        },
       })
       const passed = outcome.exitCode === 0 && !outcome.timedOut && !outcome.cancelled
-      steps.push({
-        stepId: step.id,
-        action: step.action,
-        expectedResult: step.expectedResult,
-        actualResult: passed ? step.expectedResult : `command failed (exit ${outcome.exitCode ?? 'none'}${outcome.timedOut ? ', timeout' : ''}): ${commandLine}`,
-        startedAt: stepStartedAt,
-        endedAt: new Date().toISOString(),
-        outcome: passed ? 'passed' : 'failed',
-        structuredEvidenceRef: `command:${commandLine}:exit=${outcome.exitCode ?? 'none'}${outcome.timedOut ? ':timeout' : ''}`,
-      })
+      steps.push(persistStepEvidence({
+        deps,
+        projectId: input.analysis.projectId,
+        scenarioId: input.entry.scenarioId,
+        executionId,
+        step,
+        stepIndex,
+        commandLine,
+        screenshotSourcePath,
+        result: {
+          stepId: step.id,
+          action: step.action,
+          expectedResult: step.expectedResult,
+          actualResult: passed ? step.expectedResult : `command failed (exit ${outcome.exitCode ?? 'none'}${outcome.timedOut ? ', timeout' : ''}): ${commandLine}`,
+          startedAt: stepStartedAt,
+          endedAt: new Date().toISOString(),
+          outcome: passed ? 'passed' : 'failed',
+        },
+      }))
     }
 
     const ranSteps = steps.filter((s) => s.outcome !== 'skipped')

@@ -26,7 +26,7 @@ import { StateBadge, moduleTypeLabel } from './designShared'
 
 const NODE_WIDTH = 160
 const NODE_HEIGHT = 56
-const MIN_SCALE = 0.5
+const MIN_SCALE = 0.75
 const MAX_SCALE = 3
 const ZOOM_STEP = 0.2
 const PAN_STEP = 40
@@ -225,6 +225,7 @@ export function SystemCanvas(props: SystemCanvasProps) {
   }
 
   const selectedElement = detailId ? projection.elements.find((element) => element.id === detailId) : undefined
+  const selectedRelationship = detailId ? projection.relationships.find((relationship) => relationship.id === detailId) : undefined
   const selectedEntry = selectedElement ? stateByModuleId.get(moduleIdFromElementId(selectedElement.id)) : undefined
   const selectedDependencies = selectedElement
     ? props.architecture.dependencyEdges.filter((edge) => elementIdFor(edge.fromModuleId) === selectedElement.id)
@@ -252,8 +253,11 @@ export function SystemCanvas(props: SystemCanvasProps) {
             <button type="button" aria-label="Zoom in" onClick={() => setScale((s) => clampScale(s + ZOOM_STEP))}>
               +
             </button>
-            <button type="button" onClick={() => { setScale(1); setPan({ x: 0, y: 0 }) }}>
-              Reset view
+            <button type="button" onClick={() => { setFocusMode(false); setScale(1); setPan({ x: 0, y: 0 }) }}>
+              Fit system
+            </button>
+            <button type="button" disabled={!props.selectedModuleId} onClick={() => { setFocusMode(true); setScale(1); setPan({ x: 0, y: 0 }) }}>
+              Fit selection
             </button>
           </>
         )}
@@ -298,8 +302,8 @@ export function SystemCanvas(props: SystemCanvasProps) {
           onWheel={onWheel}
         >
           <svg
-            width="100%"
-            height="480"
+            width={focusMode ? '100%' : Math.max(960, viewBox.width)}
+            height={Math.max(480, Math.min(820, viewBox.height))}
             viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
@@ -318,6 +322,23 @@ export function SystemCanvas(props: SystemCanvasProps) {
               {visibleEdges.map((edge) => (
                 <g key={edge.relationshipId} className="design-canvas-edge">
                   <polyline points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')} markerEnd="url(#design-arrow)" />
+                  <polyline
+                    points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')}
+                    className={detailId === edge.relationshipId ? 'design-canvas-edge-hit selected' : 'design-canvas-edge-hit'}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Dependency: ${projection.relationships.find((relationship) => relationship.id === edge.relationshipId)?.label ?? 'module dependency'}`}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setDetailId(edge.relationshipId)
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setDetailId(edge.relationshipId)
+                      }
+                    }}
+                  />
                 </g>
               ))}
               {visibleNodes.map((node) => {
@@ -332,12 +353,14 @@ export function SystemCanvas(props: SystemCanvasProps) {
                     data-node-id={node.elementId}
                     tabIndex={0}
                     role="button"
-                    aria-label={`${nameByModuleId.get(node.elementId) ?? moduleId}${entry ? `, ${entry.state}` : ''}`}
+                    aria-label={`${nameByModuleId.get(node.elementId) ?? moduleId}${entry ? `, ${entry.state}` : ''}; provides ${providedCount} interfaces; requires ${requiredCount} interfaces`}
                     aria-pressed={selected}
                     className={selected ? 'design-canvas-node selected' : 'design-canvas-node'}
                     transform={`translate(${node.x} ${node.y})`}
-                    onClick={() => props.onSelectModule(moduleId)}
-                    onDoubleClick={() => setDetailId(node.elementId)}
+                    onClick={() => {
+                      props.onSelectModule(moduleId)
+                      setDetailId(node.elementId)
+                    }}
                     onKeyDown={(event) => onNodeKeyDown(event, moduleId)}
                   >
                     <rect width={node.width} height={node.height} rx={6} />
@@ -345,8 +368,20 @@ export function SystemCanvas(props: SystemCanvasProps) {
                       {nameByModuleId.get(node.elementId) ?? moduleId}
                     </text>
                     <text x={8} y={34} className="design-canvas-node-meta" aria-hidden="true">
-                      ▲{providedCount} ▽{requiredCount}
+                      provides {providedCount} · requires {requiredCount}
                     </text>
+                    {providedCount > 0 && (
+                      <g className="design-canvas-interface provided" aria-hidden="true">
+                        <line x1={node.width} y1={20} x2={node.width + 8} y2={20} />
+                        <circle cx={node.width + 13} cy={20} r={5} />
+                      </g>
+                    )}
+                    {requiredCount > 0 && (
+                      <g className="design-canvas-interface required" aria-hidden="true">
+                        <line x1={0} y1={34} x2={-8} y2={34} />
+                        <path d="M -8 28 A 6 6 0 0 0 -8 40" />
+                      </g>
+                    )}
                     {entry && (
                       <text x={8} y={48} className="design-canvas-node-state" aria-hidden="true">
                         {entry.state}
@@ -362,36 +397,57 @@ export function SystemCanvas(props: SystemCanvasProps) {
               </marker>
             </defs>
           </svg>
+          <div className="design-canvas-minimap" aria-label="System minimap">
+            <svg viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`} width="180" height="100" aria-hidden="true">
+              {layout.edges.map((edge) => <polyline key={edge.relationshipId} points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')} />)}
+              {layout.nodes.map((node) => <rect key={node.elementId} x={node.x} y={node.y} width={node.width} height={node.height} rx={4} />)}
+            </svg>
+          </div>
         </div>
       )}
 
-      {selectedElement && (
-        <Dialog title={`${selectedElement.label}`} onClose={() => setDetailId(undefined)}>
-          {selectedEntry && (
+      {(selectedElement || selectedRelationship) && (
+        <Dialog title={selectedElement?.label ?? 'Dependency details'} onClose={() => setDetailId(undefined)}>
+          {selectedRelationship ? (
+            <>
+              <p className="overline">System relationship</p>
+              <h3>{nameByModuleId.get(selectedRelationship.fromId) ?? selectedRelationship.fromId} → {nameByModuleId.get(selectedRelationship.toId) ?? selectedRelationship.toId}</h3>
+              <p>{selectedRelationship.label || 'No dependency rationale recorded.'}</p>
+              <dl className="design-definition-grid">
+                <dt>Relationship</dt><dd>{selectedRelationship.kind}</dd>
+                <dt>From</dt><dd>{nameByModuleId.get(selectedRelationship.fromId) ?? selectedRelationship.fromId}</dd>
+                <dt>To</dt><dd>{nameByModuleId.get(selectedRelationship.toId) ?? selectedRelationship.toId}</dd>
+              </dl>
+            </>
+          ) : selectedEntry && (
             <p>
               <StateBadge state={selectedEntry.state} /> · {moduleTypeLabel(selectedEntry.moduleType)}
             </p>
           )}
-          <p>{selectedElement.definition || 'No responsibility recorded yet.'}</p>
-          <h3>Provides</h3>
-          {selectedConsumers.length === 0 ? (
-            <p className="secondary-text">No consumers depend on this module.</p>
-          ) : (
-            <ul>
-              {selectedConsumers.map((edge) => (
-                <li key={`${edge.fromModuleId}-consumer`}>{nameByModuleId.get(elementIdFor(edge.fromModuleId)) ?? edge.fromModuleId} depends on this module: {edge.reason}</li>
-              ))}
-            </ul>
-          )}
-          <h3>Requires</h3>
-          {selectedDependencies.length === 0 ? (
-            <p className="secondary-text">This module has no direct dependencies.</p>
-          ) : (
-            <ul>
-              {selectedDependencies.map((edge) => (
-                <li key={`${edge.toModuleId}-dependency`}>Depends on {nameByModuleId.get(elementIdFor(edge.toModuleId)) ?? edge.toModuleId}: {edge.reason}</li>
-              ))}
-            </ul>
+          {selectedElement && (
+            <>
+              <p>{selectedElement.definition || 'No responsibility recorded yet.'}</p>
+              <h3>Provides</h3>
+              {selectedConsumers.length === 0 ? (
+                <p className="secondary-text">No consumers depend on this module.</p>
+              ) : (
+                <ul>
+                  {selectedConsumers.map((edge) => (
+                    <li key={`${edge.fromModuleId}-consumer`}>{nameByModuleId.get(elementIdFor(edge.fromModuleId)) ?? edge.fromModuleId} depends on this module: {edge.reason}</li>
+                  ))}
+                </ul>
+              )}
+              <h3>Requires</h3>
+              {selectedDependencies.length === 0 ? (
+                <p className="secondary-text">This module has no direct dependencies.</p>
+              ) : (
+                <ul>
+                  {selectedDependencies.map((edge) => (
+                    <li key={`${edge.toModuleId}-dependency`}>Depends on {nameByModuleId.get(elementIdFor(edge.toModuleId)) ?? edge.toModuleId}: {edge.reason}</li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </Dialog>
       )}

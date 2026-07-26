@@ -8,4 +8,9 @@ export default defineConfig({
     port: 5300,
     strictPort: false,
   },
+  test: {
+    setupFiles: ['./test/setup.ts'],
+    isolate: true,
+    fileParallelism: false,
+  },
 })

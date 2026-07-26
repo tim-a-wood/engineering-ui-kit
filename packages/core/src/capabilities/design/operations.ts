@@ -47,7 +47,7 @@ import { canonicalHash } from '../hash.js'
 import { buildCapabilityGraph, detectCycles, type CapabilityGraph } from '../graph.js'
 import type { CapDiagnostic } from '../diagnostics.js'
 import type { ApplicationSpecification, ArchitectureSpecification, ModuleType } from '../types.js'
-import { stableSortBy } from './identity.js'
+import { designContentHash, stableSortBy, stableSortStrings } from './identity.js'
 import { DesignWorkspace, type ConsumerContractAck } from './designWorkspace.js'
 import {
   type ApprovalAuthority,
@@ -342,6 +342,265 @@ function stampProvidedOperationHashes(design: ModuleDesignSpecification): Module
   return { ...design, providedOperations }
 }
 
+/**
+ * The low-level draft constructor intentionally returns a blank specification
+ * so API clients can build a module design field by field. The guided product
+ * workflow, however, promises a reviewable first pass derived from the
+ * approved application and architecture. Populate that first pass here, at
+ * the application-operation boundary, and mark every generated field as
+ * inferred so none of it is mistaken for human-authored design intent.
+ */
+function hydrateGuidedModuleDraft(
+  draft: ModuleDesignSpecification,
+  application: ApplicationSpecification | undefined,
+  analysis: UseCaseAnalysis | undefined,
+): ModuleDesignSpecification {
+  const moduleId = draft.module.moduleId
+  const moduleName = draft.module.name
+  const responsibility = draft.module.responsibility.trim() || `Deliver the ${moduleName} capability.`
+  const primaryOperation = draft.providedOperations[0]?.operationId ?? `op.${moduleId}.execute`
+  const schemas =
+    draft.providedOperations.length === 0
+      ? []
+      : [
+          { schemaId: `${moduleId}.input`, version: '1.0.0', role: 'input' as const, ref: `schemas/${moduleId}/input.schema.json` },
+          { schemaId: `${moduleId}.output`, version: '1.0.0', role: 'output' as const, ref: `schemas/${moduleId}/output.schema.json` },
+        ]
+  const allocatedOperationIds = new Set(draft.providedOperations.map((operation) => operation.operationId))
+  const sourceAcceptanceCases = (application?.acceptanceCases ?? []).filter((acceptanceCase) =>
+    allocatedOperationIds.has(`op.${acceptanceCase.id}`),
+  )
+  const acceptanceCases =
+    sourceAcceptanceCases.length > 0
+      ? sourceAcceptanceCases
+      : [
+          {
+            id: `${moduleId}.acceptance.primary`,
+            description: `A valid request reaches ${moduleName}.`,
+            expectedOutcome: responsibility,
+            kind: 'example' as const,
+          },
+        ]
+  const actor = application?.actors[0]?.text ?? 'Authorized user'
+  const externalSystem = application?.externalSystems[0]?.text ?? 'Approved external system'
+  const surface = `${moduleName} workspace`
+  const operationNames = draft.providedOperations.map((operation) => operation.operationId)
+  const listedOperations = operationNames.length > 0 ? operationNames.join(', ') : primaryOperation
+  const tracedUseCaseIds = new Set(draft.trace.useCaseIds)
+  const scenarioStepIds = stableSortStrings(
+    (analysis?.useCases ?? [])
+      .filter((useCase) => tracedUseCaseIds.has(useCase.id))
+      .flatMap((useCase) => useCase.scenarios)
+      .flatMap((scenario) => scenario.steps)
+      .map((step) => step.id),
+  )
+  const moduleTestCommand = `npm test -- ${moduleId}`
+
+  const typeSpecific: ModuleDesignSpecification['typeSpecific'] = (() => {
+    switch (draft.module.moduleType) {
+      case 'experience':
+        return {
+          moduleType: 'experience',
+          detail: {
+            userRolesAndTasks: [{ id: `${moduleId}.role.primary`, text: `${actor}: ${responsibility}` }],
+            surfaces: [{ id: `${moduleId}.surface.primary`, text: surface }],
+            informationHierarchy: `Present the primary outcome and current state first, followed by supporting details and available actions.`,
+            commandsAndNavigation: [`Open ${surface}`, ...operationNames.map((operation) => `Run ${operation}`)],
+            viewStates: [
+              { id: `${moduleId}.state.loading`, text: 'Loading the current state.' },
+              { id: `${moduleId}.state.ready`, text: 'Ready for the next valid action.' },
+              { id: `${moduleId}.state.empty`, text: 'No matching records are available.' },
+              { id: `${moduleId}.state.error`, text: 'The requested operation could not complete.' },
+            ],
+            loadingBehavior: 'Show a stable skeleton and preserve the page structure while data loads.',
+            emptyStates: 'Explain why no records are available and offer the next valid action.',
+            validationMessages: 'Place a specific correction beside the invalid field and summarize it for assistive technology.',
+            permissionStates: 'Show read-only state and explain which authority is required when an action is unavailable.',
+            partialDataStates: 'Keep valid data visible and identify which portion is stale or unavailable.',
+            recoverableFailures: 'Keep entered data, explain the failure, and provide a safe retry action.',
+            unrecoverableFailures: 'Preserve the last valid state and provide a traceable diagnostic reference.',
+            responsiveBehavior: 'Use one primary column on narrow screens and retain the same task order at every width.',
+            touchTargets: 'Interactive targets are at least 44 by 44 CSS pixels.',
+            keyboardBehavior: 'Every command is reachable and operable with the keyboard alone.',
+            focusOrderAndReturn: 'Focus follows visual task order and returns to the invoking control when a layer closes.',
+            screenReaderNamesAndStatus: 'Controls have specific accessible names and operation outcomes are announced.',
+            reducedMotionBehavior: 'Nonessential motion is removed when reduced motion is requested.',
+            themeAndContrast: 'Text, controls, focus indicators, and state colors meet WCAG AA contrast.',
+            approvedComponentSources: ['@engineering-ui-kit/ui'],
+            inboundBindingIds: [`binding.${moduleId}.open`],
+            scenarioScreenshotIds: [`screenshot.${moduleId}.primary`],
+          },
+        }
+      case 'workflow':
+        return {
+          moduleType: 'workflow',
+          detail: {
+            trigger: `An authorized caller requests ${primaryOperation}.`,
+            orderedSteps: [
+              { id: `${moduleId}.step.validate`, text: 'Validate the request and caller context.' },
+              { id: `${moduleId}.step.execute`, text: responsibility },
+              { id: `${moduleId}.step.report`, text: 'Return the observable result and record required evidence.' },
+            ],
+            participants: stableSortStrings([actor, moduleName, ...draft.boundary.directDependencyIds]),
+            decisionsAndGuards: [
+              { id: `${moduleId}.decision.valid`, text: 'Continue only when the request and current state satisfy the approved contract.' },
+            ],
+            transactionBoundary: `One ${primaryOperation} request is the consistency boundary.`,
+            partialCompletion: 'Do not report success until every required step has completed.',
+            compensation: 'Preserve the last valid state and reverse any reversible side effects after a downstream failure.',
+            retryPolicy: 'Retry only transient failures and retain the original idempotency key.',
+            deduplication: 'Treat a repeated request with the same idempotency key as the original operation.',
+            idempotencyKeyUse: 'Require and propagate one idempotency key for each change operation.',
+            cancellationPoints: ['Before committing side effects', 'Between calls to external dependencies'],
+            deadlinePropagation: 'Propagate the caller deadline to every dependency and stop work when it expires.',
+            resourceLocks: [`Serialize conflicting changes owned by ${moduleId}.`],
+            progressReporting: 'Report the current step, terminal outcome, and traceable diagnostic on failure.',
+            finalOutcomes: ['Completed', 'Rejected by an approved rule', 'Cancelled', 'Failed with the last valid state preserved'],
+          },
+        }
+      case 'domain':
+        return {
+          moduleType: 'domain',
+          detail: {
+            domainVocabulary: [{ id: `${moduleId}.term.primary`, text: `${moduleName}: ${responsibility}` }],
+            valueObjects: [{ id: `${moduleId}.value.identity`, text: `${moduleName} identity is stable within one project.` }],
+            consistencyBoundary: `One project-scoped ${moduleName} aggregate is the consistency boundary.`,
+            invariants: [`${moduleName} never exposes a state that violates an approved use-case rule.`],
+            calculations: [{ id: `${moduleId}.calculation.primary`, text: 'Derive outcomes deterministically from validated inputs and the current revision.' }],
+            decisionTables: [{ id: `${moduleId}.decision.validity`, text: 'Valid input continues; invalid input is rejected without changing the last valid state.' }],
+            deterministicOrdering: 'Order equal-priority records by stable canonical identity.',
+            canonicalIdentityRules: 'Identity is project-scoped, stable across display-name changes, and never derived from wall-clock time.',
+            revisionComparison: 'Compare canonical revision numbers and content hashes, not presentation timestamps.',
+            invalidStatePrevention: 'Reject a change before persistence when it would violate an invariant.',
+            operationPurity:
+              draft.providedOperations.length > 0
+                ? draft.providedOperations.map((operation) => ({ operationId: operation.operationId, pure: false }))
+                : [{ operationId: primaryOperation, pure: false }],
+          },
+        }
+      case 'connection':
+        return {
+          moduleType: 'connection',
+          detail: {
+            externalActor: externalSystem,
+            implementedPortId: primaryOperation,
+            supportedFormats: ['application/json'],
+            inputDiscovery: 'Discover input only through the configured connection boundary.',
+            inputValidation: 'Validate structure, required fields, size limits, and supported version before mapping.',
+            canonicalMapping: `Map external values to the canonical ${moduleName} contract without leaking provider-specific types.`,
+            provenanceExtraction: 'Record source identity, source revision, observed time, and content hash.',
+            authenticationRef: `secret-ref.${moduleId}`,
+            licenseOrSessionNeeds: 'Validate any required authenticated session before reading input.',
+            timeouts: 'Apply the caller deadline and a connection-specific timeout to every external call.',
+            cancellation: 'Propagate cancellation to the external operation and release held resources.',
+            retrySafety: 'Retry only idempotent reads or writes protected by the original idempotency key.',
+            partialReadBehavior: 'Reject incomplete records while preserving every previously valid imported record.',
+            corruptInputBehavior: 'Quarantine corrupt input and return a specific validation diagnostic.',
+            compatibilityErrors: 'Map unsupported versions and formats to the approved compatibility-error contract.',
+            processIsolation: 'Keep provider libraries behind the connection boundary and isolate unstable processes.',
+            cleanup: 'Close sessions, file handles, and child processes on success, failure, cancellation, and timeout.',
+            representativeFixtures: [`fixtures/${moduleId}/valid.json`, `fixtures/${moduleId}/invalid.json`],
+          },
+        }
+      case 'platform':
+        return {
+          moduleType: 'platform',
+          detail: {
+            storedOrScheduledResource: `${moduleName} project records`,
+            ownershipAndAccess: `${moduleId} owns its records; callers use the provided operation contracts.`,
+            consistency: 'Changes are atomic within one project and preserve the last valid committed revision.',
+            transactionBehavior: 'Commit the record and its audit metadata together or commit neither.',
+            indexing: 'Index by project id, canonical record id, revision, and status.',
+            retention: 'Retain approved revisions for the life of the project unless an explicit archival policy supersedes them.',
+            backupAndRecovery: 'Recover to the newest internally consistent approved revision and verify its content hash.',
+            capacity: 'Apply configured project limits and report a specific capacity diagnostic before data loss can occur.',
+            cleanup: 'Remove temporary resources after terminal completion while retaining required audit evidence.',
+            healthChecks: 'Report storage reachability, schema compatibility, and ability to read the current approved revision.',
+            failureInjection: 'Exercise unavailable storage, interrupted commit, stale revision, and corrupt record recovery.',
+            testImplementation: `Use an isolated deterministic implementation of ${moduleId} with the same operation contracts.`,
+          },
+        }
+    }
+  })()
+
+  const next: ModuleDesignSpecification = {
+    ...draft,
+    module: {
+      ...draft.module,
+      nonResponsibilities: [`Does not own responsibilities allocated to ${draft.boundary.directDependencyIds.join(', ') || 'other modules'}.`],
+      ownedConcerns: [responsibility],
+      excludedConcerns: ['Provider-specific presentation and storage concerns outside this module boundary.'],
+    },
+    schemas,
+    behavior: {
+      ...draft.behavior,
+      preconditions: ['The caller is authorized and the request satisfies the approved input contract.'],
+      postconditions: [`${moduleName} returns an outcome consistent with: ${responsibility}`],
+      domainRejections: ['Reject an invalid request without changing the last valid state.'],
+      technicalFailures: ['Return a traceable diagnostic when a required dependency is unavailable.'],
+      sideEffects: [`Execute only the side effects declared by ${listedOperations}.`],
+      idempotency: 'Reads are idempotent; changes require an idempotency key and replay the original committed result.',
+      cancellation: 'Honor cancellation before committing side effects and report a cancelled terminal outcome.',
+      timeouts: 'Propagate deadlines to dependencies and return a timeout diagnostic without replacing the last valid state.',
+      concurrency: 'Reject stale base revisions and serialize conflicting changes within the module boundary.',
+      retry: 'Retry only transient failures and preserve the original idempotency key.',
+      recovery: 'Preserve the last valid state and expose enough evidence to diagnose and safely retry a failed operation.',
+    },
+    data: {
+      ...draft.data,
+      inputSchemas: schemas.filter((schema) => schema.role === 'input'),
+      outputSchemas: schemas.filter((schema) => schema.role === 'output'),
+      dataOwnership: `${moduleId} owns only data required to fulfill its approved responsibility.`,
+      retention: 'Retain approved records and required evidence according to the project policy.',
+      migrationNeeds: 'Version schema and contract changes explicitly before implementation.',
+      confidentiality: 'Apply the project data-classification and least-privilege policy.',
+      provenanceFields: ['source', 'recordedAt', 'contentHash'],
+    },
+    runtime: {
+      ...draft.runtime,
+      configurationRefs: [`config.${moduleId}`],
+      lifecycleRegistration: 'Register once per application lifecycle.',
+      healthBehavior: `Report healthy only when ${moduleName} can serve its approved contracts.`,
+      telemetry: `Record duration, outcome, and diagnostic code for ${listedOperations}.`,
+      resourceOwnership: `Own resources only under ${draft.boundary.ownedPaths.join(', ')}.`,
+      startupBehavior: 'Validate configuration and register operation handlers before accepting work.',
+      shutdownBehavior: 'Stop accepting work, finish or cancel in-flight operations, and release owned resources.',
+      compatibilityConstraints: ['Preserve approved operation versions or publish an explicit versioned change.'],
+    },
+    verification: {
+      ...draft.verification,
+      examples: [`${primaryOperation} succeeds for a valid request.`],
+      edgeCases: [`${primaryOperation} rejects malformed input without changing the last valid state.`],
+      acceptanceCases,
+      verificationSuiteIds: [`suite.${moduleId}`],
+      requiredEvidence: [`Test log for ${moduleId}`, `Scenario evidence for ${primaryOperation}`],
+      testDoubles: draft.boundary.directDependencyIds.map((dependencyId) => `fake-${dependencyId}`),
+      fixtureNeeds: [`fixtures/${moduleId}/`],
+      // The first command proves the module/entry point. Each approved
+      // scenario step also receives an explicit command mapping so Verify
+      // executes the traced use-case paths instead of silently skipping
+      // every step for lack of a hidden API-only configuration.
+      configuredCommands: [
+        moduleTestCommand,
+        ...scenarioStepIds.map((stepId) => `${stepId}: ${moduleTestCommand}`),
+      ],
+    },
+    typeSpecific,
+    inferredFieldPaths: stableSortStrings([
+      'module.nonResponsibilities',
+      'module.ownedConcerns',
+      'module.excludedConcerns',
+      'schemas',
+      'behavior',
+      'data',
+      'runtime',
+      'verification',
+      'typeSpecific',
+    ]),
+  }
+  return { ...next, contentHash: designContentHash(next) }
+}
+
 function deriveContractRegistry(designs: ModuleDesignSpecification[]): RegisteredContract[] {
   const list: RegisteredContract[] = []
   for (const design of designs) {
@@ -632,8 +891,15 @@ function computeValidNextActions(workspace: DesignWorkspace, projectId: string):
   const actions: ValidNextAction[] = []
 
   const approvedAnalysis = workspace.getApprovedUseCaseAnalysis(projectId)
-  if (!approvedAnalysis) {
-    const draft = workspace.getUseCaseAnalysisDraft(projectId)
+  const currentAnalysisDraft = workspace.getUseCaseAnalysisDraft(projectId)
+  const hasReopenedAnalysis = Boolean(
+    approvedAnalysis &&
+    currentAnalysisDraft &&
+    currentAnalysisDraft.revision !== approvedAnalysis.revision &&
+    currentAnalysisDraft.status !== 'approved',
+  )
+  if (!approvedAnalysis || hasReopenedAnalysis) {
+    const draft = currentAnalysisDraft
     if (!draft) {
       actions.push(action('createUseCaseDraft', 'Create use-case draft', true))
       return actions
@@ -790,7 +1056,7 @@ function computeValidNextActions(workspace: DesignWorkspace, projectId: string):
       otherActiveModules: otherActive,
     })
     actions.push(
-      action('createModuleImplementationPacket', `Create Copilot handoff: ${design.module.moduleId}`, gate.ok, {
+      action('createModuleImplementationPacket', `Create implementation handoff: ${design.module.moduleId}`, gate.ok, {
         targetId: design.module.moduleId,
         blockedReason: gate.ok ? undefined : summarizeCapDiagnostics(gate.diagnostics),
       }),
@@ -1015,6 +1281,15 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
       // This closes the former project-mode Evidence Explorer placeholder
       // without inventing a second evidence store.
       scenarioRuns: workspace.listScenarioRuns(projectId),
+      verificationApprovals: workspace
+        .listAuditEvents(projectId)
+        .filter((event) => event.operation === 'approveVerification' && event.outcome === 'ok' && event.targetRecordId)
+        .map((event) => ({
+          runId: event.targetRecordId!,
+          approvedAt: event.at,
+          approvalRef: event.approvalRef,
+          approvedBy: event.actor,
+        })),
     }
   }
 
@@ -1091,7 +1366,12 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
     const testPlan = VerificationPlanner.buildScenarioTestPlan(analysis)
     const runs = workspace.listScenarioRuns(projectId)
     const architecture = workspace.getApprovedArchitecture(projectId)
-    const application = workspace.getApprovedApplication(projectId)
+    // Use the same compiled application record as `runScenario`. The
+    // use-case approval operation creates this draft and System Design freezes
+    // its revision; there is no separate application-approval operation in
+    // this workflow. Leaving this undefined made currency checks silently
+    // ignore the application revision.
+    const application = workspace.getApprovedApplication(projectId) ?? workspace.getApplicationDraft(projectId)
     const approvedDesigns = architecture ? collectApprovedDesigns(workspace, projectId, architecture) : []
     const moduleDesignRevisions: Record<string, string> = {}
     for (const d of approvedDesigns) moduleDesignRevisions[d.module.moduleId] = d.revision
@@ -1145,7 +1425,12 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         projectId: input.projectId,
         actor: input.actor,
         idempotencyKey: input.idempotencyKey,
-        targetRecordId: input.target.kind === 'question' ? input.target.questionId : input.target.itemId,
+        targetRecordId:
+          input.target.kind === 'question'
+            ? input.target.questionId
+            : input.target.kind === 'useCaseContent'
+              ? input.target.useCaseId
+              : input.target.itemId,
       },
       () => {
         const draft = workspace.getUseCaseAnalysisDraft(input.projectId)
@@ -1156,6 +1441,8 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         const result =
           input.target.kind === 'question'
             ? UseCase.answerQuestion(draft, input.target.questionId, input.target.answer, input.actor, clock())
+            : input.target.kind === 'useCaseContent'
+              ? UseCase.updateUseCaseContent(draft, input.target, input.actor)
             : input.target.action === 'accept'
               ? UseCase.acceptAnalysisItem(draft, input.target.itemId, input.actor)
               : input.target.action === 'correct'
@@ -1211,6 +1498,30 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
     })
   }
 
+  function reopenUseCaseAnalysis(input: ReopenUseCaseAnalysisInput): DesignOperationResult<UseCaseAnalysis> {
+    return executeChange(
+      { operation: 'reopenUseCaseAnalysis', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey },
+      () => {
+        const approved = workspace.getApprovedUseCaseAnalysis(input.projectId)
+        if (!approved) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', 'no approved use-case analysis exists')] }
+        const staleDiagnostic = checkExpectedBase(approved.revision, approved.contentHash, input)
+        if (staleDiagnostic) return { ok: false, diagnostics: [staleDiagnostic], baseRevision: approved.revision, baseHash: approved.contentHash }
+        const result = UseCase.reopenUseCaseAnalysis(approved)
+        if (result.diagnostics.length) return { ok: false, diagnostics: result.diagnostics }
+        workspace.saveUseCaseAnalysisDraft(input.projectId, result.analysis)
+        return {
+          ok: true,
+          diagnostics: [],
+          value: result.analysis,
+          revision: result.analysis.revision,
+          contentHash: result.analysis.contentHash,
+          baseRevision: approved.revision,
+          baseHash: approved.contentHash,
+        }
+      },
+    )
+  }
+
   function createSystemDesignDraft(
     input: CreateSystemDesignDraftInput,
   ): DesignOperationResult<SystemDesign.SystemStructureSpecification> {
@@ -1244,6 +1555,8 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
       if (!current) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', 'no system design draft exists')] }
       const staleDiagnostic = checkExpectedBase(current.revision, current.contentHash, input)
       if (staleDiagnostic) return { ok: false, diagnostics: [staleDiagnostic], baseRevision: current.revision, baseHash: current.contentHash }
+      const application = workspace.getApprovedApplication(input.projectId) ?? workspace.getApplicationDraft(input.projectId)
+      if (!application) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', 'no compiled application specification is available')] }
 
       const decision = input.decision
       let result: SystemDesign.SystemStructureCommandResult
@@ -1288,13 +1601,15 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
       if (!result.ok || !result.architecture) {
         return { ok: false, diagnostics: result.diagnostics.map(UseCase.toDesignDiagnostic), baseRevision: current.revision, baseHash: current.contentHash }
       }
-      workspace.saveArchitectureDraft(input.projectId, result.architecture)
+      const requiredOperationIds = deriveOperations(application).map((operation) => operation.operationId)
+      const architecture = SystemDesign.refreshSystemStructureGate(result.architecture, application, requiredOperationIds)
+      workspace.saveArchitectureDraft(input.projectId, architecture)
       return {
         ok: true,
         diagnostics: [],
-        value: result.architecture,
-        revision: result.architecture.revision,
-        contentHash: result.architecture.contentHash,
+        value: architecture,
+        revision: architecture.revision,
+        contentHash: architecture.contentHash,
         baseRevision: current.revision,
         baseHash: current.contentHash,
       }
@@ -1351,7 +1666,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         if (existingApproved || existingDraft) {
           return { ok: false, diagnostics: [makeDiagnostic('EUC16-ALREADY-STARTED', 'blocker', `module design already started: ${input.moduleId}`, 'moduleId', [input.moduleId])] }
         }
-        const draft = ModuleDesign.createModuleDesignDraft({
+        const blankDraft = ModuleDesign.createModuleDesignDraft({
           projectId: input.projectId,
           architecture,
           moduleId: input.moduleId,
@@ -1363,6 +1678,11 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
           ownedPaths: input.ownedPaths,
           editableSharedPaths: input.editableSharedPaths,
         })
+        const draft = hydrateGuidedModuleDraft(
+          blankDraft,
+          workspace.getApprovedApplication(input.projectId),
+          workspace.getApprovedUseCaseAnalysis(input.projectId),
+        )
         workspace.saveModuleDesignDraft(input.projectId, input.moduleId, draft)
         const manifest = ContextPacket.buildContextManifest({
           targetRecordId: draft.id,
@@ -1819,6 +2139,68 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
     )
   }
 
+  function executeChangePlan(
+    input: ExecuteChangePlanInput,
+  ): DesignOperationResult<{ impact: DesignImpactRecord; updatedDesign: ModuleDesignSpecification }> {
+    return executeChange(
+      { operation: 'executeChangePlan', projectId: input.projectId, actor: input.actor, idempotencyKey: input.idempotencyKey, targetRecordId: input.impactId },
+      () => {
+        const impact = workspace.getDesignImpactRecord(input.projectId, input.impactId)
+        if (!impact) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', `no impact record: ${input.impactId}`)] }
+        if (!impact.approval) return { ok: false, diagnostics: [makeDiagnostic('EUC16-CHANGE-PLAN-NOT-APPROVED', 'blocker', 'approve the change plan before execution')] }
+        if (impact.execution) return { ok: false, diagnostics: [makeDiagnostic('EUC16-CHANGE-PLAN-ALREADY-EXECUTED', 'blocker', 'the approved change plan has already been executed')] }
+        if (impact.changeKind !== 'rename') {
+          return {
+            ok: false,
+            diagnostics: [makeDiagnostic('EUC16-CHANGE-EXECUTION-UNSUPPORTED', 'blocker', `controlled execution currently supports a module rename; apply ${impact.changeKind} changes through the module or system structure editor`)],
+          }
+        }
+        const architecture = workspace.getApprovedArchitecture(input.projectId) ?? workspace.getArchitectureDraft(input.projectId)
+        const moduleId = architecture?.moduleIds.find((candidate) => {
+          const design = workspace.getModuleDesignDraft(input.projectId, candidate) ?? workspace.getApprovedModuleDesign(input.projectId, candidate)
+          return design?.id === impact.initiatingRecordId
+        })
+        if (!moduleId) {
+          return { ok: false, diagnostics: [makeDiagnostic('EUC16-CHANGE-TARGET-NOT-FOUND', 'blocker', `no module design matches ${impact.initiatingRecordId}`)] }
+        }
+        const current = workspace.getModuleDesignDraft(input.projectId, moduleId) ?? workspace.getApprovedModuleDesign(input.projectId, moduleId)
+        if (!current) return { ok: false, diagnostics: [makeDiagnostic('EUC16-NOT-FOUND', 'blocker', `no module design for ${moduleId}`)] }
+        const base = current.status === 'approved' ? ModuleDesign.reopenModuleDesign(current).draft : current
+        const changed = ModuleDesign.updateModuleDesignItem(base, 'module.name', impact.description.trim())
+        if (!changed.ok) return { ok: false, diagnostics: changed.diagnostics }
+        workspace.saveModuleDesignDraft(input.projectId, moduleId, changed.design)
+        const executedAt = clock()
+        const executed: DesignImpactRecord = {
+          ...impact,
+          execution: {
+            executedBy: input.actor,
+            executedAt,
+            updatedRecordIds: [changed.design.id],
+            regeneratedProjectionIds: changed.design.diagrams.map((diagram) => diagram.diagramId),
+          },
+        }
+        workspace.saveDesignImpactRecord(input.projectId, executed)
+        workspace.saveDiagramDiscussionEntry(input.projectId, {
+          id: `${input.diagramId}.${input.elementId}.${impact.impactId}.executed`,
+          elementId: input.elementId,
+          diagramId: input.diagramId,
+          author: input.actor,
+          kind: 'executedChange',
+          text: `change executed; updated ${changed.design.id} and regenerated ${changed.design.diagrams.length} projections`,
+          impactRecordId: impact.impactId,
+          at: executedAt,
+        })
+        return {
+          ok: true,
+          diagnostics: [],
+          value: { impact: executed, updatedDesign: changed.design },
+          revision: changed.design.revision,
+          contentHash: changed.design.contentHash,
+        }
+      },
+    )
+  }
+
   function createModuleImplementationPacket(
     input: CreateModuleImplementationPacketInput,
   ): DesignOperationResult<ModuleImplementationPacket> {
@@ -2222,7 +2604,13 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
         }
         const outcome = runner({ entry, analysis }, { deadlineAt: input.deadlineAt, cancellationRequested: input.cancellationRequested })
         const architecture = workspace.getApprovedArchitecture(input.projectId)
-        const application = workspace.getApprovedApplication(input.projectId)
+        // The approved use-case operation compiles an application draft and
+        // System Design freezes its revision into the approved architecture;
+        // there is no separate application-approval operation in this
+        // workflow. Use that same compiled record for run identity so a run
+        // created immediately after Verify is current, not born stale with
+        // an empty application revision.
+        const application = workspace.getApprovedApplication(input.projectId) ?? workspace.getApplicationDraft(input.projectId)
         const approvedDesigns = architecture ? collectApprovedDesigns(workspace, input.projectId, architecture) : []
         const moduleDesignRevisions: Record<string, string> = {}
         for (const d of approvedDesigns) moduleDesignRevisions[d.module.moduleId] = d.revision
@@ -2287,6 +2675,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
     createUseCaseDraft,
     updateUseCaseItem,
     approveUseCaseAnalysis,
+    reopenUseCaseAnalysis,
     createSystemDesignDraft,
     applySystemDesignDecision,
     approveSystemStructure,
@@ -2301,6 +2690,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
     proposeVisualChange,
     analyzeVisualChange,
     approveChangePlan,
+    executeChangePlan,
     createModuleImplementationPacket,
     importAgentDelta,
     inspectAgentDelta,
@@ -2333,9 +2723,11 @@ export type UpdateUseCaseItemInput = ChangeOperationInput & {
   target:
     | { kind: 'question'; questionId: string; answer: string }
     | { kind: 'item'; itemId: string; action: 'accept' | 'correct' | 'reject'; text?: string }
+    | UseCase.UseCaseContentTarget
 }
 
 export type ApproveUseCaseAnalysisInput = ChangeOperationInput & { projectId: string; authority: ApprovalAuthority }
+export type ReopenUseCaseAnalysisInput = ChangeOperationInput & { projectId: string }
 
 export type CreateSystemDesignDraftInput = ChangeOperationInput & {
   projectId: string
@@ -2421,6 +2813,12 @@ export type ApproveChangePlanInput = ChangeOperationInput & {
   elementId: string
   impactId: string
   authority: ApprovalAuthority
+}
+export type ExecuteChangePlanInput = ChangeOperationInput & {
+  projectId: string
+  diagramId: string
+  elementId: string
+  impactId: string
 }
 
 export type CreateModuleImplementationPacketInput = ChangeOperationInput & {

@@ -164,6 +164,12 @@ export type UseCaseDefinition = {
   acceptanceChecks: AnalysisItem[]
   sourceLinks: string[]
   scenarios: UseCaseScenario[]
+  /**
+   * Review disposition for structural use-case content that is not itself an
+   * `AnalysisItem` (trigger, flow steps, paths, inputs, outputs, and so on).
+   * Keys are stable semantic paths produced by the Plan review operation.
+   */
+  reviewStates?: Record<string, AnalysisItemStatus>
 }
 
 /** §5.1 — users, tasks, paths, rules, quality needs, and acceptance. */
@@ -184,6 +190,8 @@ export type UseCaseAnalysis = {
   questions: AnalysisQuestion[]
   gates: GateResult[]
   approval?: DesignApproval
+  /** Last approved identity retained while a newer draft is being revised. */
+  previousApproval?: DesignApproval
   contentHash: string
 }
 
@@ -962,6 +970,12 @@ export type DesignImpactRecord = {
   orderedChangePlan: { order: number; targetId: string; description: string }[]
   createdAt: string
   approval?: DesignApproval
+  execution?: {
+    executedBy: string
+    executedAt: string
+    updatedRecordIds: string[]
+    regeneratedProjectionIds: string[]
+  }
   contentHash: string
 }
 
@@ -971,7 +985,7 @@ export type DiagramDiscussionEntry = {
   elementId: string
   diagramId: string
   author: string
-  kind: 'discussion' | 'proposedChange' | 'impactAnalysis' | 'approvedChangePlan'
+  kind: 'discussion' | 'proposedChange' | 'impactAnalysis' | 'approvedChangePlan' | 'executedChange'
   text: string
   impactRecordId?: string
   at: string
@@ -1004,6 +1018,33 @@ export type ImplementationWavePlan = {
 // Scenario runs and evidence (§14)
 // ---------------------------------------------------------------------------
 
+/**
+ * One reviewable artifact captured for a scenario step.
+ *
+ * A reference is only present when the artifact was actually persisted.
+ * `missing` is an integrity failure, never a synonym for "not captured";
+ * `notApplicable` requires an explicit reason. The descriptor carries the
+ * hash and byte size of the original persisted bytes so every viewer can
+ * verify what it opens instead of trusting a display-only path.
+ */
+export type ScenarioEvidenceArtifact = {
+  artifactId: string
+  kind: 'screenshot' | 'structured' | 'log'
+  status: 'available' | 'missing' | 'notApplicable'
+  /** Adapter-owned opaque reference; never a host filesystem path. */
+  ref?: string
+  mediaType?: 'image/png' | 'image/jpeg' | 'image/webp' | 'application/json' | 'text/plain'
+  role: 'original' | 'derived'
+  sha256?: string
+  bytes?: number
+  capturedAt: string
+  fileName?: string
+  width?: number
+  height?: number
+  notApplicableReason?: string
+  failure?: string
+}
+
 export type ScenarioStepEvidence = {
   stepId: string
   action: string
@@ -1025,6 +1066,9 @@ export type ScenarioStepEvidence = {
   }
   structuredEvidenceRef?: string
   screenshotNotApplicableReason?: string
+  /** Canonical, integrity-bearing artifact descriptors. Legacy `*Ref`
+   * fields above remain as projections for existing API consumers. */
+  artifacts?: ScenarioEvidenceArtifact[]
   evidenceHash?: string
 }
 

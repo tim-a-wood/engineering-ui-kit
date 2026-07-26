@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * §11 Copilot workflow, §12 Build, §3.5 gate mode tests: one-module handoff
+ * §11 implementation-handoff workflow, §12 Build, §3.5 gate mode tests: one-module handoff
  * by default, the Build gate blocking implementation handoffs verbatim in
  * `completeBaseline` mode while the baseline is unapproved, multi-module
  * handoff acceptance/rejection (§3.3), and the full returned-delta review
@@ -42,7 +42,7 @@ function baseSnapshot() {
   }
 }
 
-describe('One-module Copilot handoff (§11.2, §11.3, §6.2)', () => {
+describe('One-module implementation handoff (§11.2, §11.3, §6.2)', () => {
   it('creates an implementation packet for exactly one module by default when the Build gate passes', () => {
     const store = new DesignStore({ now: NOW, snapshot: baseSnapshot() })
     const result = store.createModuleHandoff('mod.evidence-store')

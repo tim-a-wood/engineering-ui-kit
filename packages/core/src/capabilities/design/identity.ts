@@ -10,11 +10,16 @@ export { canonicalHash }
 
 /** Slug for stable, human-readable record ids. */
 export function stableSlug(text: string): string {
-  return text
+  const normalized = text
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 64)
+  if (normalized.length <= 64) return normalized
+  // A plain prefix truncation makes two long semantic paths with the same
+  // opening segments collapse to one ID (for example two activity flows
+  // leaving the same decision). Retain a readable prefix and append a stable
+  // digest so long discriminators remain deterministic and collision-safe.
+  return `${normalized.slice(0, 51).replace(/-+$/g, '')}-${canonicalHash(normalized).slice(0, 12)}`
 }
 
 /** Deterministic child id: parent id + discriminator. */

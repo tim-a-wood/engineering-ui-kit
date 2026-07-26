@@ -120,7 +120,7 @@ function requiredOpenQuestionCount(design: ModuleDesignSpecification): number {
 /**
  * §9.3 — the single primary action label for the session. Examples:
  * `Create module draft`, `Answer 2 required questions`, `Review contracts`,
- * `Fix 1 design error`, `Approve module`, `Create Copilot handoff`.
+ * `Fix 1 design error`, `Approve module`, `Create implementation handoff`.
  */
 export function sessionPrimaryAction(
   session: ModuleDesignSession,
@@ -138,13 +138,24 @@ export function sessionPrimaryAction(
     return 'Review contracts'
   }
 
-  const blockerCount = checks?.diagnostics.filter((diagnostic) => diagnostic.severity === 'blocker').length ?? 0
-  if (blockerCount > 0) {
-    return `Fix ${blockerCount} design error${blockerCount === 1 ? '' : 's'}`
+  // A live preview evaluation can contain expected first-pass blockers (for
+  // example, operation hashes are stamped by analyzeModuleDesign itself).
+  // Until a persisted checks gate exists, the useful action is to run the
+  // checks—not to tell the user to fix an issue the checks operation resolves.
+  if (session.currentStep === 'checks' && !session.completedSteps.includes('checks') && design.gates.length === 0) {
+    return 'Run design checks'
   }
 
-  if (design.status === 'readyForReview') return 'Approve module'
-  if (design.status === 'approved') return 'Create Copilot handoff'
+  const blockerCount = checks?.diagnostics.filter((diagnostic) => diagnostic.severity === 'blocker').length ?? 0
+  if (session.currentStep === 'checks' && !session.completedSteps.includes('checks') && blockerCount > 0) {
+    return `Fix ${blockerCount} design error${blockerCount === 1 ? '' : 's'}`
+  }
+  if (session.currentStep === 'checks' && !session.completedSteps.includes('checks')) {
+    return 'Run design checks'
+  }
+
+  if (design.status === 'readyForReview' && session.currentStep === 'approval') return 'Approve module'
+  if (design.status === 'approved') return 'Create implementation handoff'
 
   return 'Continue module design'
 }

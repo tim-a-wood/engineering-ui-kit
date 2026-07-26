@@ -109,6 +109,7 @@ import {
   APPROVAL_AUTHORITIES,
   type ApprovalAuthority,
   type CreateDesignOperationsDeps,
+  type ConnectExecutorDeps,
   type DesignAuditEvent,
   type DesignOperationExecutors,
   type DesignOperationsService,
@@ -120,7 +121,15 @@ import {
   type ConfigureProjectRepositoryInput,
   type DesignBridgeRequest,
   type DesignBridgeResponse,
+  type EvidenceArtifactResponse,
+  type ConnectionStateResponse,
+  type GetConnectionStateInput,
+  type GetEvidenceArtifactInput,
+  type GetProjectRolesInput,
   type GetProjectRepositoryInput,
+  type GetProjectSourceInput,
+  type ProjectRolesResponse,
+  type ProjectSourceResponse,
 } from './designBridge.js'
 import { buildDesktopConnectExecutors } from './designExecutors.js'
 
@@ -515,6 +524,188 @@ function getProjectRepository(dataDir: string, rawInput: unknown): AdapterConfig
   return { ok: true, projectId: input.projectId, repositoryRoot: config.repositoryRoot }
 }
 
+function getProjectRoles(workspace: DesignWorkspace, rawInput: unknown): ProjectRolesResponse {
+  const input = (rawInput ?? {}) as Partial<GetProjectRolesInput>
+  if (!isSafeProjectIdSegment(input.projectId)) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-ADAPTER-INVALID-PROJECT-ID', 'projectId must be a single safe path segment', 'projectId')] }
+  }
+  const roles = workspace.getProjectRoles(input.projectId)
+  if (!roles) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-AUTHORITY-NOT-CONFIGURED', 'No project roles are configured yet.', 'projectId')] }
+  }
+  const entries = Object.entries(roles)
+  const first = entries[0]
+  if (!first) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-AUTHORITY-NOT-CONFIGURED', 'No project roles are configured yet.', 'projectId')] }
+  }
+  return {
+    ok: true,
+    projectId: input.projectId,
+    principal: first[0],
+    authorities: [...first[1]].sort(),
+  }
+}
+
+const MAX_PROJECT_SOURCE_BYTES = 1024 * 1024
+const TEXT_SOURCE_EXTENSIONS = new Set([
+  '.c', '.cc', '.cpp', '.cs', '.css', '.csv', '.h', '.hpp', '.html', '.ini',
+  '.java', '.js', '.json', '.jsx', '.m', '.md', '.py', '.rs', '.sh', '.sql',
+  '.toml', '.ts', '.tsx', '.txt', '.xml', '.yaml', '.yml',
+])
+
+function getProjectSource(dataDir: string, rawInput: unknown): ProjectSourceResponse {
+  const input = (rawInput ?? {}) as Partial<GetProjectSourceInput>
+  if (!isSafeProjectIdSegment(input.projectId)) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-ADAPTER-INVALID-PROJECT-ID', 'projectId must be a single safe path segment', 'projectId')] }
+  }
+  if (typeof input.ref !== 'string' || !input.ref.trim()) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-SOURCE-REF-INVALID', 'A repository-relative source reference is required.', 'ref')] }
+  }
+  const config = readProjectRepositoryConfig(dataDir, input.projectId)
+  if (!config) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-ADAPTER-REPOSITORY-NOT-CONFIGURED', 'Configure the project repository before opening a source.', 'projectId')] }
+  }
+  const normalizedRef = input.ref.replace(/^repo:\/\//, '').replace(/^\.\/+/, '')
+  if (path.isAbsolute(normalizedRef) || normalizedRef.includes('\0')) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-SOURCE-REF-INVALID', 'Source references must be repository-relative.', 'ref')] }
+  }
+  const root = path.resolve(config.repositoryRoot)
+  const candidate = path.resolve(root, normalizedRef)
+  if (candidate !== root && !candidate.startsWith(`${root}${path.sep}`)) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-SOURCE-REF-ESCAPES-ROOT', 'The source reference resolves outside the configured repository.', 'ref')] }
+  }
+  let stat: fs.Stats
+  try {
+    stat = fs.lstatSync(candidate)
+  } catch {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-SOURCE-NOT-FOUND', `Source does not exist: ${input.ref}`, 'ref')] }
+  }
+  if (!stat.isFile() || stat.isSymbolicLink()) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-SOURCE-UNSAFE', 'The source must be a regular, non-symbolic-link file.', 'ref')] }
+  }
+  const extension = path.extname(candidate).toLowerCase()
+  if (!TEXT_SOURCE_EXTENSIONS.has(extension)) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-SOURCE-MEDIA-UNSUPPORTED', `Source preview does not support ${extension || 'files without an extension'}.`, 'ref')] }
+  }
+  const bytes = fs.readFileSync(candidate)
+  const visible = bytes.subarray(0, MAX_PROJECT_SOURCE_BYTES)
+  return {
+    ok: true,
+    projectId: input.projectId,
+    ref: input.ref,
+    fileName: path.basename(candidate),
+    mediaType: extension === '.json' ? 'application/json' : 'text/plain',
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    bytes: bytes.byteLength,
+    content: visible.toString('utf8'),
+    truncated: bytes.byteLength > visible.byteLength,
+  }
+}
+
+function getConnectionState(dataDir: string, rawInput: unknown): ConnectionStateResponse {
+  const input = (rawInput ?? {}) as Partial<GetConnectionStateInput>
+  if (!isSafeProjectIdSegment(input.projectId)) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-ADAPTER-INVALID-PROJECT-ID', 'projectId must be a single safe path segment', 'projectId')] }
+  }
+  if (typeof input.moduleId !== 'string' || !isSafeProjectIdSegment(input.moduleId)) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-CONNECT-MODULE-ID-INVALID', 'moduleId must be a single safe path segment', 'moduleId')] }
+  }
+  const adapterRoot = path.join(dataDir, 'projects', input.projectId, 'design-adapter')
+  const index = (() => {
+    try {
+      return JSON.parse(fs.readFileSync(path.join(adapterRoot, 'bindings', 'by-module', `${input.moduleId}.json`), 'utf8')) as { bindingId?: string }
+    } catch {
+      return undefined
+    }
+  })()
+  const binding = index?.bindingId && isSafeProjectIdSegment(index.bindingId)
+    ? (() => {
+        try {
+          return JSON.parse(fs.readFileSync(path.join(adapterRoot, 'bindings', `${index.bindingId}.json`), 'utf8')) as unknown
+        } catch {
+          return undefined
+        }
+      })()
+    : undefined
+  const verification = (() => {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(path.join(adapterRoot, 'connections', 'by-module', `${input.moduleId}.json`), 'utf8')) as { verification?: unknown }
+      return parsed.verification
+    } catch {
+      return undefined
+    }
+  })()
+  return { ok: true, projectId: input.projectId, moduleId: input.moduleId, binding, verification }
+}
+
+const MAX_EVIDENCE_ARTIFACT_BYTES = 25 * 1024 * 1024
+const EVIDENCE_REF = /^design-evidence:\/\/([a-f0-9-]{36})\/([a-z0-9][a-z0-9.-]{0,180})$/i
+type EvidenceMediaType = Extract<EvidenceArtifactResponse, { ok: true }>['mediaType']
+const EVIDENCE_MEDIA_TYPES: Record<string, EvidenceMediaType> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.json': 'application/json',
+  '.txt': 'text/plain',
+  '.log': 'text/plain',
+}
+
+/**
+ * Opens one adapter-owned scenario artifact. The renderer supplies the opaque
+ * ref stored in the immutable run; it can never supply an absolute path.
+ * Traversal, symlinks, unknown media, oversize content, and hashless reads are
+ * rejected before any bytes leave the main process.
+ */
+function getEvidenceArtifact(dataDir: string, rawInput: unknown): EvidenceArtifactResponse {
+  const input = (rawInput ?? {}) as Partial<GetEvidenceArtifactInput>
+  if (!isSafeProjectIdSegment(input.projectId)) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-ADAPTER-INVALID-PROJECT-ID', 'projectId must be a single safe path segment', 'projectId')] }
+  }
+  if (typeof input.ref !== 'string') {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-EVIDENCE-REF-INVALID', 'an opaque design-evidence reference is required', 'ref')] }
+  }
+  const match = EVIDENCE_REF.exec(input.ref)
+  if (!match) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-EVIDENCE-REF-INVALID', 'evidence ref must match design-evidence://<execution-id>/<artifact-file>', 'ref')] }
+  }
+  const [, executionId = '', fileName = ''] = match
+  const root = path.resolve(dataDir, 'projects', input.projectId, 'design-adapter', 'evidence')
+  const candidate = path.resolve(root, executionId, fileName)
+  if (!candidate.startsWith(`${root}${path.sep}`)) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-EVIDENCE-REF-ESCAPES-ROOT', 'evidence ref resolves outside the project evidence store', 'ref')] }
+  }
+  let stat: fs.Stats
+  try {
+    stat = fs.lstatSync(candidate)
+  } catch {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-EVIDENCE-ARTIFACT-MISSING', `artifact does not exist: ${input.ref}`, 'ref')] }
+  }
+  if (!stat.isFile() || stat.isSymbolicLink()) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-EVIDENCE-ARTIFACT-UNSAFE', 'evidence artifact must be a regular, non-symbolic-link file', 'ref')] }
+  }
+  if (stat.size > MAX_EVIDENCE_ARTIFACT_BYTES) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-EVIDENCE-ARTIFACT-TOO-LARGE', `artifact exceeds the ${MAX_EVIDENCE_ARTIFACT_BYTES}-byte viewer limit`, 'ref')] }
+  }
+  const mediaType = EVIDENCE_MEDIA_TYPES[path.extname(fileName).toLowerCase()]
+  if (!mediaType) {
+    return { ok: false, diagnostics: [makeDiagnostic('EUC16-EVIDENCE-MEDIA-UNSUPPORTED', `unsupported evidence artifact type: ${path.extname(fileName) || '(none)'}`, 'ref')] }
+  }
+  const bytes = fs.readFileSync(candidate)
+  const binary = mediaType.startsWith('image/')
+  return {
+    ok: true,
+    projectId: input.projectId,
+    ref: input.ref,
+    mediaType,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    bytes: bytes.byteLength,
+    encoding: binary ? 'base64' : 'utf8',
+    content: binary ? bytes.toString('base64') : bytes.toString('utf8'),
+    fileName,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Executors backed by the real filesystem (`packages/core`
 // `capabilities/design/repositoryAdapter.ts`, EUC-15), scoped to the
@@ -531,7 +722,12 @@ function shortHash(text: string): string {
   return hash.toString(16)
 }
 
-function buildExecutors(dataDir: string, workspace: DesignWorkspace, repositoryRoot: string | undefined): DesignOperationExecutors {
+function buildExecutors(
+  dataDir: string,
+  workspace: DesignWorkspace,
+  repositoryRoot: string | undefined,
+  captureScreenshot?: ConnectExecutorDeps['captureScreenshot'],
+): DesignOperationExecutors {
   if (!repositoryRoot) {
     return {
       // §12.2 "apply ... against the real filesystem" — with no repository
@@ -563,7 +759,7 @@ function buildExecutors(dataDir: string, workspace: DesignWorkspace, repositoryR
     // Second-review P1 fix (was DEV-05): real configureBinding/
     // verifyConnection/runScenario, scoped to the same configured
     // repository root — see the module doc and `designExecutors.ts`.
-    ...buildDesktopConnectExecutors(workspace, dataDir, repositoryRoot),
+    ...buildDesktopConnectExecutors(workspace, dataDir, repositoryRoot, captureScreenshot),
     verifyModule: ({ design }, context) => {
       const commands = design.verification.configuredCommands
       if (commands.length === 0) {
@@ -641,7 +837,7 @@ function extractProjectId(args: unknown[]): string | undefined {
  */
 export function createDesignIpcDispatch(
   dataDir: string,
-  options: { principal?: string } = {},
+  options: { principal?: string; captureScreenshot?: ConnectExecutorDeps['captureScreenshot'] } = {},
 ): (request: DesignBridgeRequest) => DesignBridgeResponse {
   const workspace = new DesignWorkspace(dataDir)
   // §4, §20.2, §17.3 — derived ONCE per dispatcher (per process, in
@@ -664,8 +860,20 @@ export function createDesignIpcDispatch(
       const stampedArgs = stampPrincipalOnArgs(args, principal, workspace, operation)
       return configureProjectRoles(workspace, stampedArgs[0])
     }
+    if (operation === 'adapter:getProjectRoles') {
+      return getProjectRoles(workspace, args[0])
+    }
     if (operation === 'adapter:getPrincipal') {
       return getPrincipalResponse(principal)
+    }
+    if (operation === 'adapter:getProjectSource') {
+      return getProjectSource(dataDir, args[0])
+    }
+    if (operation === 'adapter:getConnectionState') {
+      return getConnectionState(dataDir, args[0])
+    }
+    if (operation === 'adapter:getEvidenceArtifact') {
+      return getEvidenceArtifact(dataDir, args[0])
     }
 
     if (!(DESIGN_OPERATIONS as readonly string[]).includes(operation)) {
@@ -678,7 +886,7 @@ export function createDesignIpcDispatch(
 
     const deps: CreateDesignOperationsDeps = {
       workspace,
-      executors: buildExecutors(dataDir, workspace, repositoryRoot),
+      executors: buildExecutors(dataDir, workspace, repositoryRoot, options.captureScreenshot),
       ...(repositoryRoot ? { workspaceRevisionProvider: () => workspaceRevision(repositoryRoot) } : {}),
     }
     const service = createDesignOperations(deps)

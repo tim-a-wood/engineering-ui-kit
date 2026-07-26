@@ -1,5 +1,5 @@
 /**
- * §11 Copilot workflow UI, §12 Build, §3.5 gate-mode UI.
+ * §11 implementation-handoff UI, §12 Build, §3.5 gate-mode UI.
  *
  * Shows the current Design-to-Build gate mode beside every handoff action,
  * the sample's saved `incrementalModules` preview as a read-only comparison,
@@ -9,13 +9,16 @@
  * (import → inspect → approve → apply (simulated in browser) → rollback).
  */
 
-import { useState, type FormEvent } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
+import type { HandoffRun } from '@engineering-ui-kit/core'
 import type { ModuleImplementationPacket } from '@engineering-ui-kit/core/design-browser'
 import { useDesignState, type DesignStore } from './designState'
-import { gateModeDescription, gateModeLabel } from './designShared'
+import { gateModeDescription, gateModeLabel, stateLabel } from './designShared'
 
 export type BuildHandoffViewProps = {
   store: DesignStore
+  linkedRun?: HandoffRun
+  onContinueToBuild?: (input: { packet: ModuleImplementationPacket; moduleName: string }) => Promise<void> | void
 }
 
 const CONTINUATION_ACTIONS: { passKind: ModuleImplementationPacket['passKind']; label: string }[] = [
@@ -32,12 +35,19 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
   const state = useDesignState(store)
   const [moduleId, setModuleId] = useState<string>(state.selectedModuleId ?? state.progress.modules[0]?.moduleId ?? '')
   const [pasteText, setPasteText] = useState('')
+  const [continuing, setContinuing] = useState(false)
 
   const design = moduleId ? store.getDesign(moduleId) : undefined
+  const progressEntry = state.progress.modules.find((entry) => entry.moduleId === moduleId)
   const gate = moduleId ? store.buildGateFor(moduleId) : undefined
   const handoff = state.moduleHandoffs[moduleId]
   const deltaFlow = state.deltaFlows[moduleId]
   const canContinue = handoff?.kind === 'implementation' && handoff.ok && handoff.packet
+  const linkedRun = props.linkedRun
+  const baselineAction = state.validNextActions.find(
+    (action) => action.operation === 'createDesignBaseline' || action.operation === 'approveDesignBaseline',
+  )
+  const baselineApproved = Boolean(state.designBaseline.revision && state.designBaseline.status === 'approved')
 
   function submitPaste(event: FormEvent) {
     event.preventDefault()
@@ -46,16 +56,67 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
     setPasteText('')
   }
 
+  async function importDeltaFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    try {
+      store.importReturnedDeltaText(moduleId, await file.text(), 'file')
+    } catch (error) {
+      store.importReturnedDeltaText(moduleId, '', 'file')
+    } finally {
+      event.target.value = ''
+    }
+  }
+
   return (
     <section className="design-build-handoff" aria-label="Build handoff">
+      <div className="design-handoff-heading">
+        <div>
+          <p className="overline">Focused handoff</p>
+          <h2>Prepare one module for delivery</h2>
+          <p>Select a module, resolve its gate, create one bounded packet, then continue the same packet into Build &amp; Test.</p>
+        </div>
+      </div>
       <div className="design-gate-mode-banner" role="note">
         <strong>Gate mode: {gateModeLabel(state.policy.mode)}</strong>
         <p className="secondary-text">{gateModeDescription(state.policy.mode)}</p>
       </div>
 
+      {state.mode === 'project' && state.policy.mode === 'completeBaseline' && (
+        <section className={`design-baseline-gate ${baselineApproved ? 'complete' : 'current'}`} aria-label="Design baseline gate">
+          <div>
+            <p className="overline">Required release gate</p>
+            <h3>{baselineApproved ? 'Design baseline approved' : baselineAction?.operation === 'approveDesignBaseline' ? 'Approve the Design baseline' : 'Freeze the complete Design baseline'}</h3>
+            <p>
+              {baselineApproved
+                ? `Revision ${state.designBaseline.revision} freezes the approved system structure, module designs, and contracts used by every implementation packet.`
+                : baselineAction?.operation === 'approveDesignBaseline'
+                  ? 'Review and explicitly approve the frozen structure, module revisions, and operation contracts before implementation starts.'
+                  : 'Create one immutable baseline from every approved module before preparing an implementation packet.'}
+            </p>
+            {!baselineApproved && baselineAction && !baselineAction.enabled && baselineAction.blockedReason && (
+              <p className="design-inline-blocker" role="note">{baselineAction.blockedReason}</p>
+            )}
+          </div>
+          {!baselineApproved && baselineAction && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!baselineAction.enabled || state.saveState === 'saving'}
+              onClick={() => {
+                if (baselineAction.operation === 'createDesignBaseline') store.createDesignBaseline()
+                else store.approveDesignBaseline()
+              }}
+            >
+              {baselineAction.label}
+            </button>
+          )}
+        </section>
+      )}
+
       {state.mode === 'sample' ? (
-        <div className="design-incremental-preview" aria-label="Incremental modules preview (not applied)">
-          <h3>Incremental modules preview</h3>
+        <details className="design-incremental-preview" aria-label="Incremental modules preview (not applied)">
+          <summary>Compare the optional incremental gate</summary>
           <p className="secondary-text">
             A saved preview of {gateModeLabel(state.incrementalPreview.policy.mode)} mode. This never changes the approved baseline or the active gate mode.
           </p>
@@ -70,11 +131,9 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
               ))}
             </ul>
           )}
-        </div>
+        </details>
       ) : (
-        <p className="secondary-text" role="note">
-          The incremental-modules preview is not available in project mode yet.
-        </p>
+        <></>
       )}
 
       <div className="design-handoff-module-picker">
@@ -96,6 +155,11 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
               <p>
                 Build gate: <strong>{gate.ok ? 'Open' : 'Blocked'}</strong>
               </p>
+              {progressEntry?.state !== 'approved' && (
+                <p className="design-inline-blocker" role="note">
+                  Current design work is {progressEntry ? stateLabel(progressEntry.state).toLowerCase() : 'not approved'}. This gate uses the last approved module revision; review and approve the current work before treating a new handoff as current.
+                </p>
+              )}
               {!gate.ok && (
                 <ul className="design-error-summary" aria-label="Build gate blocked reasons">
                   {gate.diagnostics.map((diagnostic, index) => (
@@ -110,13 +174,13 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
             </p>
           )}
 
-          <button type="button" className="btn btn-primary" onClick={() => store.createModuleHandoff(moduleId)}>
-            Create Copilot handoff
+          <button type="button" className="btn btn-primary design-handoff-primary" disabled={state.mode === 'sample' && !gate.ok} onClick={() => store.createModuleHandoff(moduleId)}>
+            Create implementation handoff
           </button>
 
           {handoff && (
             <div className="design-handoff-result" role="status" aria-live="polite">
-              <p>{handoff.ok ? `Created a ${handoff.kind} handoff packet.` : `Handoff blocked (${handoff.kind}).`}</p>
+              <p>{handoff.ok ? `Created ${handoff.kind === 'implementation' ? 'an implementation' : 'a design'} handoff packet.` : `Handoff blocked (${handoff.kind}).`}</p>
               {!handoff.ok && (
                 <ul className="design-error-summary" aria-label="Handoff blocked reasons">
                   {handoff.diagnostics.map((diagnostic, index) => (
@@ -124,17 +188,17 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
                   ))}
                 </ul>
               )}
-              <h4>Context manifest</h4>
-              <ul className="design-context-manifest">
-                {handoff.manifest.entries.map((entry) => (
-                  <li key={entry.ref}>
-                    [{entry.kind}] {entry.ref} — {entry.inclusionReason} ({entry.bytes} bytes)
-                  </li>
-                ))}
-              </ul>
-              <p>
-                {handoff.manifest.totalBytes} of {handoff.manifest.tokenOrByteLimit} bytes used.
-              </p>
+              <details className="design-handoff-manifest">
+                <summary>Context manifest · {handoff.manifest.entries.length} items · {handoff.manifest.totalBytes} bytes</summary>
+                <ul className="design-context-manifest">
+                  {handoff.manifest.entries.map((entry) => (
+                    <li key={entry.ref}>
+                      [{entry.kind}] {entry.ref} — {entry.inclusionReason} ({entry.bytes} bytes)
+                    </li>
+                  ))}
+                </ul>
+                <p>{handoff.manifest.totalBytes} of {handoff.manifest.tokenOrByteLimit} bytes used.</p>
+              </details>
               {handoff.limitReport && (
                 <div className="design-context-limit-report" role="alert">
                   <p>Over the configured context limit ({handoff.limitReport.configuredLimit} bytes).</p>
@@ -157,29 +221,91 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
                   <p className="secondary-text">You can always create a smaller subtask instead.</p>
                 </div>
               )}
+              {handoff.ok && handoff.kind === 'implementation' && handoff.packet && (
+                <div className="design-build-continuation">
+                  {props.linkedRun?.designHandoff?.packetId === handoff.packet.packetId ? (
+                    <>
+                      <p>
+                        Delivery run linked · <strong>{props.linkedRun.currentStep === 'complete' ? 'Complete' : 'In progress'}</strong>
+                      </p>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        disabled={!props.onContinueToBuild}
+                        onClick={() => props.onContinueToBuild?.({ packet: handoff.packet as ModuleImplementationPacket, moduleName: design.module.name })}
+                      >
+                        Resume Build &amp; Test
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      disabled={!props.onContinueToBuild || continuing}
+                      onClick={() => {
+                        if (!props.onContinueToBuild) return
+                        setContinuing(true)
+                        void Promise.resolve(props.onContinueToBuild({ packet: handoff.packet as ModuleImplementationPacket, moduleName: design.module.name }))
+                          .finally(() => setContinuing(false))
+                      }}
+                    >
+                      {continuing ? 'Opening Build & Test…' : 'Continue to Build & Test'}
+                    </button>
+                  )}
+                  {!props.onContinueToBuild && (
+                    <p className="secondary-text">Select a desktop project to continue this packet into a delivery run.</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
           {canContinue && (
-            <div className="design-multi-pass-actions" aria-label="Multi-pass continuation actions">
-              <h4>Continue this module (§11.7)</h4>
-              {CONTINUATION_ACTIONS.map((action) => (
-                <button key={action.passKind} type="button" className="btn btn-secondary" onClick={() => store.continueModuleHandoff(moduleId, action.passKind)}>
-                  {action.label}
-                </button>
-              ))}
-            </div>
+            <details className="design-multi-pass-actions" aria-label="Multi-pass continuation actions">
+              <summary>More handoff passes</summary>
+              <div>
+                {CONTINUATION_ACTIONS.map((action) => (
+                  <button key={action.passKind} type="button" className="btn btn-secondary" onClick={() => store.continueModuleHandoff(moduleId, action.passKind)}>
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </details>
           )}
 
           <div className="design-delta-flow" aria-label="Returned changes">
-            <h4>Returned changes</h4>
-            <form onSubmit={submitPaste}>
-              <label htmlFor="design-delta-paste">Paste a returned delta (JSON)</label>
-              <textarea id="design-delta-paste" rows={4} value={pasteText} onChange={(event) => setPasteText(event.target.value)} />
-              <button type="submit" className="btn btn-secondary" disabled={!pasteText.trim()}>
-                Import pasted delta
-              </button>
-            </form>
+            <div className="design-delta-heading">
+              <div>
+                <h4>Review returned changes</h4>
+                <p>Import a return manifest associated with this exact packet. Nothing is applied until inspection and explicit approval succeed.</p>
+              </div>
+              {handoff?.packet && <span title={handoff.packet.packetId}>Packet {handoff.packet.packetId.slice(0, 12)}…</span>}
+            </div>
+
+            <label className="design-delta-file">
+              <b>Choose returned manifest</b>
+              <span>JSON from the provider or delivery run</span>
+              <input type="file" accept="application/json,.json" onChange={(event) => void importDeltaFile(event)} />
+            </label>
+
+            {linkedRun && linkedRun.designHandoff?.packetId === handoff?.packet?.packetId && (
+              <div className="design-delta-provider-link">
+                <b>Delivery run linked</b>
+                <span>{linkedRun.taskTitle ?? linkedRun.id}</span>
+                <small>{linkedRun.changesZipPath ? 'A provider change archive is attached; import its returned manifest for review.' : 'Waiting for the provider return manifest.'}</small>
+              </div>
+            )}
+
+            <details className="design-delta-paste-fallback">
+              <summary>Paste JSON instead</summary>
+              <form onSubmit={submitPaste}>
+                <label htmlFor="design-delta-paste">Returned delta JSON</label>
+                <textarea id="design-delta-paste" rows={4} value={pasteText} onChange={(event) => setPasteText(event.target.value)} />
+                <button type="submit" className="btn btn-secondary" disabled={!pasteText.trim()}>
+                  Import pasted delta
+                </button>
+              </form>
+            </details>
             {state.mode === 'sample' && (
               <button
                 type="button"
@@ -188,7 +314,7 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
                   void store.importSampleReturnedDelta(moduleId)
                 }}
               >
-                Use sample deterministic-test-provider delta (sample only, not real Copilot output)
+                Use sample deterministic-test-provider delta (sample only, not real implementation output)
               </button>
             )}
             {deltaFlow?.importError && (
@@ -199,7 +325,24 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
 
             {deltaFlow?.delta && (
               <div className="design-delta-imported">
-                <p>Delta {deltaFlow.delta.deltaId} imported ({deltaFlow.deltaSource === 'sample-demo' ? 'sample demo' : 'pasted'}).</p>
+                <div className="design-delta-source">
+                  <span>Imported from {deltaFlow.deltaSource === 'sample-demo' ? 'labeled sample provider' : deltaFlow.deltaSource === 'file' ? 'selected file' : deltaFlow.deltaSource === 'provider' ? 'linked provider run' : 'pasted JSON'}</span>
+                  <b>{deltaFlow.delta.deltaId}</b>
+                  <small>Returned {deltaFlow.delta.returnedAt} · packet {deltaFlow.delta.packetId}</small>
+                </div>
+                <div className="design-delta-file-diff" aria-label="Returned file changes">
+                  {deltaFlow.delta.fileChanges.length === 0 ? (
+                    <p className="secondary-text">No file changes were returned.</p>
+                  ) : deltaFlow.delta.fileChanges.map((change) => (
+                    <article key={`${change.action}-${change.path}`}>
+                      <header><span>{change.action}</span><b>{change.path}</b></header>
+                      <div>
+                        <section><small>Before</small><pre>{change.action === 'create' ? 'File does not exist in the packet baseline.' : 'Resolved from the packet baseline during service inspection.'}</pre></section>
+                        <section><small>Returned</small><pre>{change.action === 'delete' ? 'File will be removed.' : change.content?.slice(0, 1200) || `Content hash ${change.contentHash ?? 'not supplied'}`}</pre></section>
+                      </div>
+                    </article>
+                  ))}
+                </div>
                 <button type="button" className="btn btn-primary" onClick={() => store.inspectReturnedDelta(moduleId)}>
                   Inspect returned changes
                 </button>

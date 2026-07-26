@@ -26,9 +26,10 @@ export type DiagramDetailModalProps = {
   discussion: DiagramDiscussionEntry[]
   pendingImpact?: DesignImpactRecord
   canApproveChangePlan: boolean
-  onDiscuss: (text: string) => void
+  canExecuteChangePlan: boolean
   onProposeChange: (description: string) => void
   onApproveChangePlan: () => void
+  onExecuteChangePlan: () => void
   onClose: () => void
 }
 
@@ -37,6 +38,7 @@ const DISCUSSION_KIND_LABEL: Record<DiagramDiscussionEntry['kind'], string> = {
   proposedChange: 'Proposed change',
   impactAnalysis: 'Impact analysis',
   approvedChangePlan: 'Approved change plan',
+  executedChange: 'Executed change',
 }
 
 function labelById(projection: DiagramProjection): Map<string, string> {
@@ -45,9 +47,7 @@ function labelById(projection: DiagramProjection): Map<string, string> {
 
 export function DiagramDetailModal(props: DiagramDetailModalProps) {
   const { selection, projection } = props
-  const [discussText, setDiscussText] = useState('')
   const [proposeText, setProposeText] = useState('')
-  const discussFieldId = useId()
   const proposeFieldId = useId()
   const names = labelById(projection)
 
@@ -73,13 +73,6 @@ export function DiagramDetailModal(props: DiagramDetailModalProps) {
         `to: ${names.get(selection.relationship.toId) ?? selection.relationship.toId}`,
       ]
 
-  function submitDiscuss(event: FormEvent) {
-    event.preventDefault()
-    if (!discussText.trim()) return
-    props.onDiscuss(discussText.trim())
-    setDiscussText('')
-  }
-
   function submitPropose(event: FormEvent) {
     event.preventDefault()
     if (!proposeText.trim()) return
@@ -89,48 +82,43 @@ export function DiagramDetailModal(props: DiagramDetailModalProps) {
 
   return (
     <Dialog title={`${label} — ${props.diagramTitle}`} onClose={props.onClose} wide>
-      <dl className="design-definition-grid design-diagram-detail-fields">
-        <dt>UML element type</dt>
-        <dd>{umlType}</dd>
-        <dt>Stable element ID</dt>
-        <dd className="design-diagram-detail-id">{stableId}</dd>
-        <dt>Label</dt>
-        <dd>{label}</dd>
-        <dt>Source record</dt>
-        <dd>{sourceRecordId}</dd>
-        {isElement && (
-          <>
-            <dt>Definition</dt>
-            <dd>{definition || 'No definition recorded yet.'}</dd>
-          </>
-        )}
-      </dl>
+      <section className="design-diagram-detail-summary">
+        <div>
+          <span className="design-state-badge">{umlType}</span>
+          <h3>{isElement ? definition || 'Definition not recorded yet.' : `${connected[0]} · ${connected[1]}`}</h3>
+        </div>
+        <dl>
+          <dt>Connections</dt><dd>{connected.length}</dd>
+          <dt>Trace links</dt><dd>{traceLinks.length}</dd>
+          <dt>Change events</dt><dd>{props.discussion.length}</dd>
+        </dl>
+      </section>
 
-      <h3>Connected elements</h3>
-      {connected.length === 0 ? (
-        <p className="secondary-text">No connected elements.</p>
-      ) : (
-        <ul>
-          {connected.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      )}
+      <div className="design-diagram-detail-columns">
+        <section>
+          <h3>Connected elements</h3>
+          {connected.length === 0 ? <p className="secondary-text">No connected elements.</p> : <ul>{connected.map((line) => <li key={line}>{line}</li>)}</ul>}
+        </section>
+        <section>
+          <h3>Trace links</h3>
+          {traceLinks.length === 0 ? <p className="secondary-text">No trace links recorded.</p> : <ul>{traceLinks.map((link) => <li key={link}>{link}</li>)}</ul>}
+        </section>
+      </div>
 
-      <h3>Trace links</h3>
-      {traceLinks.length === 0 ? (
-        <p className="secondary-text">No trace links recorded.</p>
-      ) : (
-        <ul>
-          {traceLinks.map((link) => (
-            <li key={link}>{link}</li>
-          ))}
-        </ul>
-      )}
+      <details className="design-technical-details design-diagram-identity">
+        <summary>Technical identity</summary>
+        <dl className="design-definition-grid design-diagram-detail-fields">
+          <dt>UML element type</dt><dd>{umlType}</dd>
+          <dt>Stable element ID</dt><dd className="design-diagram-detail-id">{stableId}</dd>
+          <dt>Label</dt><dd>{label}</dd>
+          <dt>Definition</dt><dd>{definition || 'Not recorded for this relationship.'}</dd>
+          <dt>Source record</dt><dd>{sourceRecordId}</dd>
+        </dl>
+      </details>
 
       <h3>Discussion history</h3>
       {props.discussion.length === 0 ? (
-        <p className="secondary-text">No discussion yet.</p>
+        <p className="secondary-text">No proposed or executed changes.</p>
       ) : (
         <ol className="design-diagram-discussion" aria-label="Discussion history">
           {props.discussion.map((entry) => (
@@ -162,24 +150,25 @@ export function DiagramDetailModal(props: DiagramDetailModalProps) {
               Approve change plan
             </button>
           )}
+          {props.canExecuteChangePlan && (
+            <button type="button" className="btn btn-primary" onClick={props.onExecuteChangePlan}>
+              Execute approved change
+            </button>
+          )}
+          {props.pendingImpact.execution && (
+            <p className="design-change-executed">
+              ✓ Executed by {props.pendingImpact.execution.executedBy}; updated {props.pendingImpact.execution.updatedRecordIds.length} record and regenerated {props.pendingImpact.execution.regeneratedProjectionIds.length} projection{props.pendingImpact.execution.regeneratedProjectionIds.length === 1 ? '' : 's'}.
+            </p>
+          )}
         </div>
       )}
 
       <form className="design-diagram-propose-form" onSubmit={submitPropose}>
-        <h3>Propose change</h3>
+        <h3>1. Propose a controlled change</h3>
         <label htmlFor={proposeFieldId}>{props.target.isRenameable ? 'New name' : 'Describe the proposed change'}</label>
         <textarea id={proposeFieldId} rows={2} value={proposeText} onChange={(event) => setProposeText(event.target.value)} />
         <button type="submit" className="btn btn-secondary" disabled={!proposeText.trim()}>
-          Propose change
-        </button>
-      </form>
-
-      <form className="design-diagram-discuss-form" onSubmit={submitDiscuss}>
-        <h3>Discuss with agent</h3>
-        <label htmlFor={discussFieldId}>Message</label>
-        <textarea id={discussFieldId} rows={2} value={discussText} onChange={(event) => setDiscussText(event.target.value)} />
-        <button type="submit" className="btn btn-secondary" disabled={!discussText.trim()}>
-          Discuss with agent
+          Analyze impact
         </button>
       </form>
     </Dialog>

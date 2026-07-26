@@ -38,6 +38,12 @@ function writeScript(repositoryRoot: string, relPath: string, content: string): 
   fs.writeFileSync(abs, content)
 }
 
+const SCREENSHOT_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
+
+function visualStepScript(exitCode: number): string {
+  return `require('node:fs').writeFileSync(process.env.EUIK_SCREENSHOT_PATH, Buffer.from('${SCREENSHOT_PNG_BASE64}', 'base64'));\nprocess.exit(${exitCode});\n`
+}
+
 /** A fresh workspace + one approved module design + one approved operation contract — the minimum `configureBinding` needs to accept a real binding. */
 function buildFixture() {
   const sample = buildSampleAuditHub()
@@ -306,10 +312,10 @@ describe('connectExecutors.runScenario', () => {
     const passStep = scenario.steps[0]!
     const failStep = scenario.steps[1]
 
-    writeScript(fixture.repositoryRoot, 'scripts/step-pass.js', 'process.exit(0);\n')
+    writeScript(fixture.repositoryRoot, 'scripts/step-pass.js', visualStepScript(0))
     const configuredCommands = [`${passStep.id}: ${process.execPath} scripts/step-pass.js`]
     if (failStep) {
-      writeScript(fixture.repositoryRoot, 'scripts/step-fail.js', 'process.exit(1);\n')
+      writeScript(fixture.repositoryRoot, 'scripts/step-fail.js', visualStepScript(1))
       configuredCommands.push(`${failStep.id}: ${process.execPath} scripts/step-fail.js`)
     }
     const design: ModuleDesignSpecification = { ...fixture.moduleDesign, verification: { ...fixture.moduleDesign.verification, configuredCommands } }
@@ -321,19 +327,21 @@ describe('connectExecutors.runScenario', () => {
 
     const passEvidence = result.steps.find((s) => s.stepId === passStep.id)!
     expect(passEvidence.outcome).toBe('passed')
-    expect(passEvidence.structuredEvidenceRef).toContain('exit=0')
+    expect(passEvidence.structuredEvidenceRef).toMatch(/^design-evidence:\/\//)
+    expect(passEvidence.screenshotRef).toMatch(/^design-evidence:\/\//)
+    expect(passEvidence.artifacts?.every((artifact) => artifact.status === 'available')).toBe(true)
 
     if (failStep) {
       const failEvidence = result.steps.find((s) => s.stepId === failStep.id)!
       expect(failEvidence.outcome).toBe('failed')
-      expect(failEvidence.structuredEvidenceRef).toContain('exit=1')
+      expect(failEvidence.structuredEvidenceRef).toMatch(/^design-evidence:\/\//)
     }
 
     const mappedStepIds = new Set([passStep.id, ...(failStep ? [failStep.id] : [])])
     const unmapped = result.steps.filter((s) => !mappedStepIds.has(s.stepId))
     for (const step of unmapped) {
       expect(step.outcome).toBe('skipped')
-      expect(step.structuredEvidenceRef).toMatch(/skipped: no verification\.configuredCommands entry/)
+      expect(step.structuredEvidenceRef).toMatch(/^design-evidence:\/\//)
     }
 
     // §19 "never fabricate success" — overall outcome reflects the real
@@ -374,7 +382,7 @@ describe('operations-level: configureBinding + verifyConnection + runScenario wi
     const entry = testPlan.entries[0]!
     const useCase = fixture.sample.useCaseAnalysis.useCases.find((u) => u.id === entry.useCaseId)!
     const scenario = useCase.scenarios.find((s) => s.id === entry.scenarioId)!
-    writeScript(fixture.repositoryRoot, 'scripts/step.js', 'process.exit(0);\n')
+    writeScript(fixture.repositoryRoot, 'scripts/step.js', visualStepScript(0))
     const configuredCommands = [`${process.execPath} scripts/cli-health.js`, ...scenario.steps.map((s) => `${s.id}: ${process.execPath} scripts/step.js`)]
     const design: ModuleDesignSpecification = { ...fixture.moduleDesign, verification: { ...fixture.moduleDesign.verification, configuredCommands } }
     const deps: ConnectExecutorDeps = { ...fixture.deps, getModuleDesign: () => design, listApprovedModuleDesigns: () => [design] }

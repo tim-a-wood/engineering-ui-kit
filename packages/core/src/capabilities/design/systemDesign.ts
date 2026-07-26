@@ -156,13 +156,19 @@ export function proposeSystemStructure(
   const deployableId = options.primaryDeployableId ?? DEFAULT_DEPLOYABLE_ID
 
   const externalSystems = [...(application.externalSystems ?? [])].sort((a, b) => a.id.localeCompare(b.id))
+  const useCaseNames = application.useCases.map((useCase) => useCase.text.trim()).filter(Boolean)
+  const primaryResponsibility = useCaseNames.length === 1
+    ? `Coordinates the approved workflow to ${useCaseNames[0]![0]!.toLocaleLowerCase()}${useCaseNames[0]!.slice(1)}.`
+    : useCaseNames.length > 1
+      ? `Coordinates the approved workflows for ${useCaseNames.join('; ')}.`
+      : `Coordinates ${application.purpose || 'the approved application workflow'}.`
 
   const moduleDefinitions: ArchitectureModuleDefinition[] = [
     {
       moduleId: primaryModuleId,
       name: primaryModuleName,
       moduleType: primaryModuleType,
-      responsibility: `Owns ${application.purpose || 'the application'} and every operation not delegated to an external-system adapter.`,
+      responsibility: primaryResponsibility,
     },
   ]
   const proposals: NamedText[] = [
@@ -234,7 +240,7 @@ export function proposeSystemStructure(
     modulePaths: [],
     contentHash: '',
   }
-  return withHash(draft)
+  return refreshSystemStructureGate(draft, application, operations.map((operation) => operation.operationId))
 }
 
 // ---------------------------------------------------------------------------
@@ -370,6 +376,28 @@ export function evaluateSystemStructureGate(
 
   const sorted = sortDiagnostics(diagnostics)
   return { gateId: 'CAP-DES-SYS', passed: sorted.length === 0, diagnostics: sorted }
+}
+
+/** Re-evaluates the visible draft gate and re-hashes the resulting record. */
+export function refreshSystemStructureGate(
+  architecture: SystemStructureSpecification,
+  application: ApplicationSpecification,
+  requiredOperationIds: string[] = [],
+): SystemStructureSpecification {
+  const gate = evaluateSystemStructureGate(architecture, application, requiredOperationIds)
+  return withHash({
+    ...architecture,
+    gateResult: {
+      gateId: gate.gateId,
+      passed: gate.passed,
+      diagnostics: gate.diagnostics.map((entry, index) => ({
+        id: `${gate.gateId}.${entry.code}.${index + 1}`,
+        code: entry.code,
+        message: entry.message,
+        relatedIds: entry.relatedIds,
+      })),
+    },
+  })
 }
 
 // ---------------------------------------------------------------------------

@@ -68,10 +68,9 @@ describe('Module diagrams (§9.8, §15) — an approved sample module', () => {
     expect(within(dialog).getByText('Source record')).toBeTruthy()
     expect(within(dialog).getByText('Definition')).toBeTruthy()
     expect(within(dialog).getByText('Connected elements')).toBeTruthy()
-    expect(within(dialog).getByText('Trace links')).toBeTruthy()
+    expect(within(dialog).getAllByText('Trace links')).toHaveLength(2)
     expect(within(dialog).getByText('Discussion history')).toBeTruthy()
-    expect(within(dialog).getByRole('button', { name: 'Discuss with agent' })).toBeTruthy()
-    expect(within(dialog).getByRole('button', { name: 'Propose change' })).toBeTruthy()
+    expect(within(dialog).getByRole('button', { name: 'Analyze impact' })).toBeTruthy()
 
     // Focus containment.
     expect(dialog.contains(document.activeElement)).toBe(true)
@@ -95,7 +94,7 @@ describe('Module diagrams (§9.8, §15) — an approved sample module', () => {
     const store = new DesignStore({ now: NOW })
     renderDiagrams(store)
     expect(document.querySelector('svg')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Show relationship list' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Relationship list' }))
     expect(document.querySelector('svg')).toBeNull()
     expect(screen.getByRole('list', { name: 'Relationship list' })).toBeTruthy()
   })
@@ -149,6 +148,7 @@ describe('Propose change → impact analysis → approve (§9.8, §10)', () => {
     const newName = 'Finding Review Desk'
     store.proposeDiagramChange(MODULE_ID, target, newName)
     store.approveDiagramChangePlan(MODULE_ID, target)
+    store.executeDiagramChangePlan(MODULE_ID, target)
 
     const after = store.getDesign(MODULE_ID)!
     expect(after.module.name).toBe(newName)
@@ -167,6 +167,6 @@ describe('Propose change → impact analysis → approve (§9.8, §10)', () => {
     expect(unrelatedProjectionAfter.contentHash).toBe(unrelatedProjectionBefore.contentHash)
 
     const discussion = store.getDiagramDiscussion(target.elementId)
-    expect(discussion.map((entry) => entry.kind)).toEqual(['proposedChange', 'impactAnalysis', 'approvedChangePlan'])
+    expect(discussion.map((entry) => entry.kind)).toEqual(['proposedChange', 'impactAnalysis', 'approvedChangePlan', 'executedChange'])
   })
 })

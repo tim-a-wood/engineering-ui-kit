@@ -58,6 +58,10 @@ export function buildDesktopConnectExecutors(
   workspace: DesignWorkspace,
   dataDir: string,
   repositoryRoot: string,
+  captureScreenshot?: ConnectExecutorDeps['captureScreenshot'],
 ): Pick<DesignOperationExecutors, 'configureBinding' | 'verifyConnection' | 'runScenario'> {
-  return createConnectExecutors(buildConnectExecutorDeps(workspace, dataDir, repositoryRoot))
+  return createConnectExecutors({
+    ...buildConnectExecutorDeps(workspace, dataDir, repositoryRoot),
+    ...(captureScreenshot ? { captureScreenshot } : {}),
+  })
 }

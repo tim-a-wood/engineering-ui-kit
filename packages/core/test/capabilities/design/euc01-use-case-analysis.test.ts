@@ -53,6 +53,34 @@ describe('EUC-01 createUseCaseDraft', () => {
     expect(again.analysis.useCases[0]!.scenarios[0]!.steps[0]!.id).toBe(useCase!.scenarios[0]!.steps[0]!.id)
   })
 
+  it('turns a narrative description into a concise actor, task, outcomes, failure path, and recovery scenario', () => {
+    const { analysis } = createUseCaseDraft({
+      projectId: 'proj-delivery',
+      workDescription:
+        'A release manager runs a repository-local command to validate a delivery package. '
+        + 'The workflow must report a structured pass or failure result, preserve the last approved result on failure, '
+        + 'and retain evidence that an independent reviewer can inspect.',
+      examples: ['Validate the current delivery package', 'Review the recorded result'],
+      prohibitedResults: ['Never replace the last approved result after a failed validation'],
+    })
+    const [useCase] = analysis.useCases
+
+    expect(analysis.actors[0]?.text).toBe('Release manager')
+    expect(useCase?.name).toBe('Validate a delivery package')
+    expect(useCase?.trigger).toBe('Release manager needs to validate a delivery package.')
+    expect(useCase?.mainFlow.map((step) => step.expectedResult)).toEqual([
+      'A structured pass or failure result is reported.',
+      'Evidence is retained for independent review.',
+    ])
+    expect(useCase?.failurePaths).toHaveLength(1)
+    expect(useCase?.failurePaths[0]?.name).toBe('Preserve the last approved result on failure')
+    expect(useCase?.failurePaths[0]?.steps[0]?.expectedResult).toBe('The last approved result remains unchanged after the failed validation.')
+    expect(useCase?.recoveryBehavior).toBe('Preserve the last approved result on failure.')
+    expect(useCase?.scenarios.map((scenario) => scenario.kind)).toEqual(['main', 'failure', 'recovery'])
+    expect(useCase?.scenarios[2]?.name).toBe('Recover from a failed attempt to validate a delivery package')
+    expect(useCase?.acceptanceChecks[0]?.text).toContain('report a structured pass or failure result')
+  })
+
   it('produces a material question and needsInput status when the work description is empty (CAP-PLAN-001)', () => {
     const { analysis } = createUseCaseDraft({ projectId: 'proj-1', workDescription: '' })
     expect(analysis.status).toBe('needsInput')

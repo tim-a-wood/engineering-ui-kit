@@ -10,7 +10,7 @@
  * relationship.
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import {
   layoutDiagram,
   projectActivityDiagram,
@@ -34,6 +34,8 @@ import type { DiagramElementTarget, DesignStore } from './designState'
 const NODE_WIDTH = 180
 const NODE_HEIGHT = 68
 const NARROW_BREAKPOINT = 700
+const MIN_SCALE = 0.75
+const MAX_SCALE = 2.5
 
 const DIAGRAM_KIND_LABEL: Record<DiagramKind, string> = {
   component: 'Component',
@@ -51,25 +53,27 @@ export type ModuleDiagramsProps = {
   useCaseAnalysis?: UseCaseAnalysis
   diagramDiscussions: Record<string, DiagramDiscussionEntry[]>
   diagramImpacts: Record<string, DesignImpactRecord>
+  initialSelectionId?: string
+  onSelectionChange?: (selectionId?: string) => void
 }
 
-function useIsNarrowContainer(breakpoint = NARROW_BREAKPOINT): boolean {
-  const [narrow, setNarrow] = useState<boolean>(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
-    return window.matchMedia(`(max-width: ${breakpoint}px)`).matches
-  })
+function useDiagramContainer(breakpoint = NARROW_BREAKPOINT) {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [width, setWidth] = useState(900)
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
-    const query = window.matchMedia(`(max-width: ${breakpoint}px)`)
-    const listener = () => setNarrow(query.matches)
-    if (query.addEventListener) query.addEventListener('change', listener)
-    else query.addListener(listener)
-    return () => {
-      if (query.removeEventListener) query.removeEventListener('change', listener)
-      else query.removeListener(listener)
+    const element = ref.current
+    if (!element) return
+    const update = () => setWidth(element.getBoundingClientRect().width || 900)
+    update()
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', update)
+      return () => window.removeEventListener('resize', update)
     }
-  }, [breakpoint])
-  return narrow
+    const observer = new ResizeObserver(update)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+  return { ref, width, narrow: width < breakpoint }
 }
 
 function boundsOf(layout: DiagramLayout) {
@@ -116,6 +120,10 @@ function wrapNodeLabel(label: string, limit = 25): string[] {
 
 function shortRelationshipLabel(label: string): string {
   return label.length > 32 ? `${label.slice(0, 29).trimEnd()}…` : label
+}
+
+function selectorEscape(value: string): string {
+  return value.replace(/["\\]/g, '\\$&')
 }
 
 function visibleRelationshipLabel(kind: string | undefined, label: string | undefined): string | undefined {
@@ -248,9 +256,13 @@ function UmlNodeSymbol(props: { element: UmlElement; width: number; height: numb
 
 export function ModuleDiagrams(props: ModuleDiagramsProps) {
   const { design, architecture, allDesigns, useCaseAnalysis } = props
-  const narrow = useIsNarrowContainer()
+  const container = useDiagramContainer()
+  const narrow = container.narrow
   const [showTextAlternative, setShowTextAlternative] = useState(false)
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
+  const [scale, setScale] = useState(1)
+  const [fullscreen, setFullscreen] = useState(false)
+  const viewportRef = useRef<HTMLDivElement | null>(null)
 
   const tabs = useMemo(() => {
     const built: { kind: DiagramKind; projection: DiagramProjection }[] = [
@@ -277,6 +289,22 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabs])
 
+  useEffect(() => {
+    setScale(1)
+    if (typeof viewportRef.current?.scrollTo === 'function') viewportRef.current.scrollTo({ left: 0, top: 0 })
+  }, [activeKind])
+
+  useEffect(() => {
+    if (!props.initialSelectionId) return
+    const containingTab = tabs.find((tab) =>
+      tab.projection.elements.some((element) => element.id === props.initialSelectionId)
+      || tab.projection.relationships.some((relationship) => relationship.id === props.initialSelectionId),
+    )
+    if (!containingTab) return
+    setActiveKind(containingTab.kind)
+    setSelectedId(props.initialSelectionId)
+  }, [props.initialSelectionId, tabs])
+
   const active = tabs.find((tab) => tab.kind === activeKind) ?? tabs[0]
   const layout = useMemo(() => {
     if (!active) return undefined
@@ -287,8 +315,9 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
     return <p className="secondary-text">No diagrams apply to this module yet.</p>
   }
 
+  const diagramLayout = layout
   const projection = active.projection
-  const bounds = boundsOf(layout)
+  const bounds = boundsOf(diagramLayout)
   const elementById = new Map(projection.elements.map((element) => [element.id, element]))
 
   const selectedElement = selectedId ? elementById.get(selectedId) : undefined
@@ -312,13 +341,94 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
 
   const discussion = selectedId ? props.diagramDiscussions[selectedId] ?? [] : []
   const lastImpactEntry = [...discussion].reverse().find((entry) => entry.kind === 'impactAnalysis')
-  const lastApprovalEntry = [...discussion].reverse().find((entry) => entry.kind === 'approvedChangePlan')
-  const impactIsPending = Boolean(lastImpactEntry) && (!lastApprovalEntry || discussion.indexOf(lastApprovalEntry) < discussion.indexOf(lastImpactEntry!))
-  const pendingImpact = impactIsPending && lastImpactEntry?.impactRecordId ? props.diagramImpacts[lastImpactEntry.impactRecordId] : undefined
+  const pendingImpact = lastImpactEntry?.impactRecordId ? props.diagramImpacts[lastImpactEntry.impactRecordId] : undefined
+
+  function selectId(id?: string) {
+    setSelectedId(id)
+    props.onSelectionChange?.(id)
+  }
+
+  function activateTab(kind: DiagramKind) {
+    setActiveKind(kind)
+    selectId(undefined)
+  }
+
+  function onTabsKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return
+    event.preventDefault()
+    const index = tabs.findIndex((tab) => tab.kind === activeKind)
+    const nextIndex =
+      event.key === 'Home' ? 0
+        : event.key === 'End' ? tabs.length - 1
+          : event.key === 'ArrowRight' ? (index + 1) % tabs.length
+            : (index - 1 + tabs.length) % tabs.length
+    const kind = tabs[nextIndex]?.kind
+    if (!kind) return
+    activateTab(kind)
+    requestAnimationFrame(() => document.getElementById(`design-diagram-tab-${kind}`)?.focus())
+  }
+
+  function clampZoom(value: number) {
+    return Math.min(MAX_SCALE, Math.max(MIN_SCALE, Number(value.toFixed(2))))
+  }
+
+  function fitDiagram() {
+    const available = Math.max(1, container.width - 32)
+    setScale(clampZoom(Math.min(1, available / bounds.width)))
+    requestAnimationFrame(() => {
+      if (typeof viewportRef.current?.scrollTo === 'function') viewportRef.current.scrollTo({ left: 0, top: 0, behavior: 'smooth' })
+    })
+  }
+
+  function fitSelection() {
+    if (!selectedId) return
+    const node = diagramLayout.nodes.find((candidate) => candidate.elementId === selectedId)
+    const edge = diagramLayout.edges.find((candidate) => candidate.relationshipId === selectedId)
+    const x = node?.x ?? edge?.points[0]?.x ?? 0
+    const y = node?.y ?? edge?.points[0]?.y ?? 0
+    if (typeof viewportRef.current?.scrollTo !== 'function') return
+    viewportRef.current.scrollTo({
+      left: Math.max(0, (x - bounds.minX) * scale - viewportRef.current.clientWidth / 2),
+      top: Math.max(0, (y - bounds.minY) * scale - viewportRef.current.clientHeight / 2),
+      behavior: 'smooth',
+    })
+  }
+
+  function moveNodeFocus(fromId: string, key: string) {
+    const from = diagramLayout.nodes.find((node) => node.elementId === fromId)
+    if (!from) return
+    const fromX = from.x + from.width / 2
+    const fromY = from.y + from.height / 2
+    const candidates = diagramLayout.nodes
+      .filter((node) => node.elementId !== fromId)
+      .map((node) => {
+        const dx = node.x + node.width / 2 - fromX
+        const dy = node.y + node.height / 2 - fromY
+        const inDirection =
+          key === 'ArrowRight' ? dx > 0
+            : key === 'ArrowLeft' ? dx < 0
+              : key === 'ArrowDown' ? dy > 0
+                : dy < 0
+        return { node, dx, dy, inDirection }
+      })
+      .filter((candidate) => candidate.inDirection)
+      .sort((a, b) => {
+        const aPrimary = key === 'ArrowRight' || key === 'ArrowLeft' ? Math.abs(a.dx) : Math.abs(a.dy)
+        const bPrimary = key === 'ArrowRight' || key === 'ArrowLeft' ? Math.abs(b.dx) : Math.abs(b.dy)
+        const aSecondary = key === 'ArrowRight' || key === 'ArrowLeft' ? Math.abs(a.dy) : Math.abs(a.dx)
+        const bSecondary = key === 'ArrowRight' || key === 'ArrowLeft' ? Math.abs(b.dy) : Math.abs(b.dx)
+        return aPrimary + aSecondary * .35 - (bPrimary + bSecondary * .35)
+      })
+    const next = candidates[0]?.node
+    if (!next) return
+    const element = viewportRef.current?.querySelector<SVGGElement>(`[data-diagram-node-id="${selectorEscape(next.elementId)}"]`)
+    element?.focus()
+  }
 
   return (
-    <div className="design-diagrams">
-      <div role="tablist" aria-label="Module diagrams" className="design-diagrams-tabs">
+    <div ref={container.ref} className={fullscreen ? 'design-diagrams fullscreen' : 'design-diagrams'}>
+      <div className="design-diagram-navigation">
+      <div role="tablist" aria-label="Module diagrams" className="design-diagrams-tabs" onKeyDown={onTabsKeyDown}>
         {tabs.map((tab) => (
           <button
             key={tab.kind}
@@ -327,41 +437,95 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
             id={`design-diagram-tab-${tab.kind}`}
             aria-selected={tab.kind === activeKind}
             aria-controls={`design-diagram-panel-${tab.kind}`}
+            tabIndex={tab.kind === activeKind ? 0 : -1}
             className={tab.kind === activeKind ? 'design-diagrams-tab active' : 'design-diagrams-tab'}
-            onClick={() => {
-              setActiveKind(tab.kind)
-              setSelectedId(undefined)
-            }}
+            onClick={() => activateTab(tab.kind)}
           >
             {DIAGRAM_KIND_LABEL[tab.kind]}
           </button>
         ))}
-        <button type="button" className="design-diagrams-toggle" aria-pressed={showTextAlternative} onClick={() => setShowTextAlternative((v) => !v)}>
-          {showTextAlternative ? 'Show diagram' : 'Show relationship list'}
+      </div>
+        <button type="button" className="design-diagrams-toggle" aria-pressed={showTextAlternative} onClick={() => setShowTextAlternative((value) => !value)}>
+          Relationship list
         </button>
       </div>
 
       <div role="tabpanel" id={`design-diagram-panel-${activeKind}`} aria-labelledby={`design-diagram-tab-${activeKind}`}>
-        <h3>{projection.title}</h3>
+        <header className="design-diagram-view-heading">
+          <div>
+            <p className="overline">{showTextAlternative ? 'Relationship representation' : 'Diagram representation'}</p>
+            <h3>{projection.title}</h3>
+            {selectedId && <p className="design-diagram-selection-breadcrumb">Selected · {selectedElement?.label ?? selectedRelationship?.label ?? selectedRelationship?.kind}</p>}
+          </div>
+          {!showTextAlternative && (
+            <div className="design-diagram-viewport-controls" role="group" aria-label="Diagram viewport controls">
+              <button type="button" aria-label="Zoom out" onClick={() => setScale((value) => clampZoom(value - .15))}>−</button>
+              <output aria-label="Diagram zoom">{Math.round(scale * 100)}%</output>
+              <button type="button" aria-label="Zoom in" onClick={() => setScale((value) => clampZoom(value + .15))}>+</button>
+              <button type="button" onClick={fitDiagram}>Fit diagram</button>
+              <button type="button" disabled={!selectedId} onClick={fitSelection}>Fit selection</button>
+              <button type="button" aria-pressed={fullscreen} onClick={() => setFullscreen((value) => !value)}>{fullscreen ? 'Exit full screen' : 'Full screen'}</button>
+            </div>
+          )}
+        </header>
+
+        {!showTextAlternative && (
+          <details className="design-uml-legend">
+            <summary>UML legend</summary>
+            <div>
+              <span><i className="component" />Component</span>
+              <span><i className="provided" />Provided interface</span>
+              <span><i className="required" />Required interface</span>
+              <span><i className="dependency" />Dependency</span>
+              <span><i className="flow" />Flow/message</span>
+            </div>
+          </details>
+        )}
 
         {showTextAlternative ? (
           <div className="design-diagrams-text-alternative">
-            {projection.textAlternative.length === 0 ? (
+            {projection.relationships.length === 0 ? (
               <p className="secondary-text">No relationships to list.</p>
             ) : (
               <ul aria-label="Relationship list">
-                {projection.textAlternative.map((line, index) => (
-                  <li key={`${line}.${index}`}>{line}</li>
+                {projection.relationships.map((relationship, index) => (
+                  <li key={relationship.id}>
+                    <button type="button" onClick={() => selectId(relationship.id)}>
+                      <span>{relationship.kind}</span>
+                      <b>{elementById.get(relationship.fromId)?.label ?? relationship.fromId} → {elementById.get(relationship.toId)?.label ?? relationship.toId}</b>
+                      <small>{projection.textAlternative[index] ?? relationship.label ?? 'No additional label'}</small>
+                    </button>
+                  </li>
                 ))}
               </ul>
             )}
           </div>
         ) : (
+          <div className="design-diagram-viewport-shell">
+          <div
+            ref={viewportRef}
+            className="design-diagram-viewport"
+            role="application"
+            tabIndex={0}
+            aria-label="Interactive UML diagram. Tab reaches elements and relationships. Arrow keys on a selected element move spatially. Use the Relationship list button for an equivalent linear representation."
+            onKeyDown={(event) => {
+              if (event.currentTarget !== event.target) return
+              const amount = 60
+              if (typeof event.currentTarget.scrollBy !== 'function') return
+              if (event.key === 'ArrowLeft') event.currentTarget.scrollBy({ left: -amount })
+              else if (event.key === 'ArrowRight') event.currentTarget.scrollBy({ left: amount })
+              else if (event.key === 'ArrowUp') event.currentTarget.scrollBy({ top: -amount })
+              else if (event.key === 'ArrowDown') event.currentTarget.scrollBy({ top: amount })
+              else return
+              event.preventDefault()
+            }}
+          >
           <svg
             className={narrow ? 'design-diagram-svg narrow' : 'design-diagram-svg wide'}
-            width="100%"
-            height={Math.min(560, bounds.height)}
+            width={Math.max(480, bounds.width * scale)}
+            height={Math.max(320, Math.min(720, bounds.height * scale))}
             viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
+            preserveAspectRatio="xMinYMin meet"
           >
             <defs>
               <marker id={`design-open-arrow-${activeKind}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -394,11 +558,11 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
                     role="button"
                     aria-label={`Relationship: ${relationship?.kind ?? 'relationship'}${relationship?.label ? `, ${relationship.label}` : ''}`}
                     className={selectedId === edge.relationshipId ? 'design-diagram-edge-line selected' : 'design-diagram-edge-line'}
-                    onClick={() => setSelectedId(edge.relationshipId)}
+                    onClick={() => selectId(edge.relationshipId)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault()
-                        setSelectedId(edge.relationshipId)
+                        selectId(edge.relationshipId)
                       }
                     }}
                   />
@@ -425,11 +589,14 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
                   aria-pressed={selected}
                   className={selected ? `design-diagram-node design-diagram-node-${element.kind} selected` : `design-diagram-node design-diagram-node-${element.kind}`}
                   transform={`translate(${node.x} ${node.y})`}
-                  onClick={() => setSelectedId(node.elementId)}
+                  onClick={() => selectId(node.elementId)}
                   onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
+                    if (event.key.startsWith('Arrow')) {
                       event.preventDefault()
-                      setSelectedId(node.elementId)
+                      moveNodeFocus(node.elementId, event.key)
+                    } else if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      selectId(node.elementId)
                     }
                   }}
                 >
@@ -438,6 +605,14 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
               )
             })}
           </svg>
+          </div>
+          <div className="design-diagram-minimap" aria-label="Diagram minimap">
+            <svg viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`} width="180" height="110" aria-hidden="true">
+              {layout.edges.map((edge) => <polyline key={edge.relationshipId} points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')} />)}
+              {layout.nodes.map((node) => <rect key={node.elementId} x={node.x} y={node.y} width={node.width} height={node.height} rx={4} />)}
+            </svg>
+          </div>
+          </div>
         )}
 
         {layout.diagnostics.length > 0 && (
@@ -468,14 +643,8 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
           projection={projection}
           discussion={discussion}
           pendingImpact={pendingImpact}
-          canApproveChangePlan={Boolean(pendingImpact)}
-          onDiscuss={(text) =>
-            props.store.addDiagramDiscussion(
-              design.module.moduleId,
-              targetFor(selectedId, selection.kind === 'element' ? selection.element.label : selection.relationship.label ?? selection.relationship.kind),
-              text,
-            )
-          }
+          canApproveChangePlan={Boolean(pendingImpact && !pendingImpact.approval)}
+          canExecuteChangePlan={Boolean(pendingImpact?.approval && !pendingImpact.execution && targetFor(selectedId, selection.kind === 'element' ? selection.element.label : selection.relationship.label ?? selection.relationship.kind).isRenameable)}
           onProposeChange={(description) =>
             props.store.proposeDiagramChange(
               design.module.moduleId,
@@ -489,7 +658,13 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
               targetFor(selectedId, selection.kind === 'element' ? selection.element.label : selection.relationship.label ?? selection.relationship.kind),
             )
           }
-          onClose={() => setSelectedId(undefined)}
+          onExecuteChangePlan={() =>
+            props.store.executeDiagramChangePlan(
+              design.module.moduleId,
+              targetFor(selectedId, selection.kind === 'element' ? selection.element.label : selection.relationship.label ?? selection.relationship.kind),
+            )
+          }
+          onClose={() => selectId(undefined)}
         />
       )}
     </div>

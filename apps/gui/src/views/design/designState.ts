@@ -69,6 +69,7 @@ import {
   type ModuleDesignCheckEvaluation,
   type SystemStructureStatusView,
   type UseCaseAnalysis,
+  type UseCaseContentTarget,
   type ContractRegistry,
   type DesignBaseline,
   type DesignWorkflowPolicy,
@@ -109,6 +110,9 @@ import {
   LOCAL_USER_ACTOR,
   type AdapterConfigurationResponse,
   type AdapterPrincipalResponse,
+  type AdapterProjectRolesResponse,
+  type AdapterProjectSourceResponse,
+  type AdapterConnectionStateResponse,
   type AdapterRolesResponse,
   type DesignBridgeCaller,
   type BridgeChangeInput,
@@ -137,6 +141,7 @@ type WorkflowStatusResult = {
   baseline: { draft?: DesignBaseline; approved?: DesignBaseline }
   policy: DesignWorkflowPolicy
   scenarioRuns?: ScenarioRun[]
+  verificationApprovals?: { runId: string; approvedAt: string; approvalRef?: string; approvedBy?: string }[]
 }
 
 // ---------------------------------------------------------------------------
@@ -186,7 +191,7 @@ export type MultiModuleConfirmations = {
 export type DeltaFlowState = {
   packet?: ModuleImplementationPacket
   delta?: ReturnedDelta
-  deltaSource?: 'pasted' | 'sample-demo'
+  deltaSource?: 'pasted' | 'file' | 'provider' | 'sample-demo'
   importError?: string
   inspection?: DeltaInspection
   approved: boolean
@@ -216,6 +221,19 @@ export type DesignWorkspaceMode = 'sample' | 'project'
 
 /** Status of the one in-flight or last-completed bridge round trip, for the mode banner / loading states in `project` mode. */
 export type BridgeStatus = 'idle' | 'loading' | 'ready' | 'error'
+
+export type EvidenceArtifactLoadResult =
+  | {
+      ok: true
+      ref: string
+      mediaType: 'image/png' | 'image/jpeg' | 'image/webp' | 'application/json' | 'text/plain'
+      sha256: string
+      bytes: number
+      encoding: 'base64' | 'utf8'
+      content: string
+      fileName: string
+    }
+  | { ok: false; message: string }
 
 // ---------------------------------------------------------------------------
 // Project setup (§4, §17.3, §20.2, §25.3 — second-review P1: "nothing
@@ -255,6 +273,17 @@ export type WorkflowConnectionState = {
   configuration?: unknown
   verification?: unknown
   message?: string
+}
+
+export type ProjectSourcePreviewState =
+  | { status: 'idle' | 'loading' }
+  | { status: 'ready'; ref: string; fileName: string; mediaType: string; sha256: string; bytes: number; content: string; truncated: boolean }
+  | { status: 'error'; ref: string; message: string }
+
+export type ScenarioActionState = {
+  status: 'idle' | 'running' | 'approving' | 'approved' | 'error'
+  message?: string
+  runId?: string
 }
 
 /** §17.3 "actor... does not hold... an authority" — the exact diagnostic code the Blocked-state guidance watches for. */
@@ -314,9 +343,12 @@ export type DesignState = {
   repositoryConfig: RepositoryConfigState
   principal: PrincipalState
   rolesGrant: RolesGrantState
+  sourcePreview: ProjectSourcePreviewState
 
   // -- Verify (`project` mode only) ---------------------------------------
   projectVerification: ProjectVerificationState
+  scenarioActions: Record<string, ScenarioActionState>
+  verificationApprovals: Record<string, { approvedAt: string; approvalRef?: string }>
   /** Live-project Connect results. The persisted binding itself remains adapter-owned. */
   connections: Record<string, WorkflowConnectionState>
 }
@@ -655,7 +687,10 @@ function emptyProjectState(projectId: string, actor: string = LOCAL_USER_ACTOR):
     repositoryConfig: { status: 'idle' },
     principal: { status: 'idle' },
     rolesGrant: { status: 'idle' },
+    sourcePreview: { status: 'idle' },
     projectVerification: { status: 'idle' },
+    scenarioActions: {},
+    verificationApprovals: {},
     connections: {},
   }
 }
@@ -695,6 +730,10 @@ export class DesignStore {
   private listeners = new Set<() => void>()
   private saveTimer: ReturnType<typeof setTimeout> | undefined
   private readonly now: () => string
+  private executionIdentity: Partial<Pick<
+    ScenarioRun['identity'],
+    'build' | 'sourceRevision' | 'environment' | 'testDataRevision' | 'runner'
+  >> = {}
   /** `project` mode only; unset in `sample` mode. */
   private readonly bridgeClient?: DesignBridgeClient
   /**
@@ -714,9 +753,75 @@ export class DesignStore {
    * deterministic point after the round trip has been applied to state.
    */
   private pendingOperation: Promise<unknown> = Promise.resolve()
+  /** Prevents an older Verify read from overwriting a newer post-run summary. */
+  private projectVerificationRequest = 0
 
   async waitForPendingOperation(): Promise<void> {
     await this.pendingOperation
+  }
+
+  /**
+   * Resolves one opaque evidence reference without exposing a host path to the
+   * renderer. Project artifacts cross the desktop trust boundary; bundled
+   * sample artifacts are fetched from the signed application bundle and
+   * hashed before display.
+   */
+  async loadEvidenceArtifact(ref: string): Promise<EvidenceArtifactLoadResult> {
+    if (this.bridgeClient) {
+      try {
+        const response = await this.bridgeClient.read<
+          | (Omit<Extract<EvidenceArtifactLoadResult, { ok: true }>, 'ref'> & { ok: true; ref: string })
+          | { ok: false; diagnostics?: { message?: string }[] }
+        >('adapter:getEvidenceArtifact', [{ projectId: this.state.projectId, ref }])
+        if (!response.ok) return { ok: false, message: response.diagnostics?.[0]?.message ?? 'The evidence artifact could not be opened.' }
+        return response
+      } catch (error) {
+        return { ok: false, message: error instanceof Error ? error.message : String(error) }
+      }
+    }
+
+    const match = /^sample-evidence:\/\/(screenshots|structured)\/([a-z0-9][a-z0-9.-]{0,180})$/i.exec(ref)
+    if (!match || typeof window === 'undefined') return { ok: false, message: 'This evidence reference is not supported.' }
+    const [, directory = '', fileName = ''] = match
+    try {
+      const url = new URL(`sample-evidence/${directory}/${fileName}`, document.baseURI)
+      const response = await fetch(url)
+      if (!response.ok) return { ok: false, message: `Bundled evidence is missing (${response.status}).` }
+      const bytes = new Uint8Array(await response.arrayBuffer())
+      const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes)
+      const sha256 = [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, '0')).join('')
+      const extension = fileName.split('.').pop()?.toLowerCase()
+      const mediaType: Extract<EvidenceArtifactLoadResult, { ok: true }>['mediaType'] =
+        extension === 'png' ? 'image/png'
+          : extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg'
+            : extension === 'webp' ? 'image/webp'
+              : extension === 'json' ? 'application/json'
+                : 'text/plain'
+      const binary = mediaType.startsWith('image/')
+      let content: string
+      if (binary) {
+        let raw = ''
+        const chunk = 0x8000
+        for (let offset = 0; offset < bytes.length; offset += chunk) {
+          raw += String.fromCharCode(...bytes.subarray(offset, Math.min(offset + chunk, bytes.length)))
+        }
+        content = window.btoa(raw)
+      } else {
+        content = new TextDecoder().decode(bytes)
+      }
+      return {
+        ok: true,
+        ref,
+        mediaType,
+        sha256,
+        bytes: bytes.byteLength,
+        encoding: binary ? 'base64' : 'utf8',
+        content,
+        fileName,
+      }
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : String(error) }
+    }
   }
 
   constructor(options: DesignStoreOptions = {}) {
@@ -806,7 +911,10 @@ export class DesignStore {
       repositoryConfig: { status: 'idle' },
       principal: { status: 'idle' },
       rolesGrant: { status: 'idle' },
+      sourcePreview: { status: 'idle' },
       projectVerification: { status: 'idle' },
+      scenarioActions: {},
+      verificationApprovals: {},
       connections: {},
     }
   }
@@ -869,6 +977,19 @@ export class DesignStore {
     return this.state.mode === 'project'
   }
 
+  /**
+   * Supplies the current desktop delivery-run identity to subsequent
+   * scenario executions. This is presentation/application context (the
+   * immutable run still gets its canonical design revisions from the
+   * service), and never grants an approval or changes a gate.
+   */
+  setExecutionIdentity(identity: Partial<Pick<
+    ScenarioRun['identity'],
+    'build' | 'sourceRevision' | 'environment' | 'testDataRevision' | 'runner'
+  >>): void {
+    this.executionIdentity = { ...identity }
+  }
+
   private requireBridge(): DesignBridgeClient {
     if (!this.bridgeClient) throw new Error('DesignStore is not in project mode')
     return this.bridgeClient
@@ -890,9 +1011,24 @@ export class DesignStore {
       this.patch({ approvedModuleDesigns: { ...this.state.approvedModuleDesigns, [design.module.moduleId]: design } })
     }
     const priorSession = this.state.sessions[design.module.moduleId]
+    const inferred = inferredCompletedSteps(design)
     const session =
       priorSession && priorSession.moduleId === design.module.moduleId
-        ? { ...priorSession, completedSteps: inferredCompletedSteps(design), currentStep: priorSession.currentStep }
+        ? (() => {
+            // Session navigation is presentation state: the service owns the
+            // design record and its gates, but it has no operation for
+            // acknowledging read-only Boundary/Contracts/Diagrams reviews.
+            // Preserve those completed steps across bridge refreshes, then
+            // advance when a service result (for example readyForReview)
+            // proves that the current step is complete.
+            const completedSteps = MODULE_DESIGN_STEPS.filter(
+              (step) => priorSession.completedSteps.includes(step) || inferred.includes(step),
+            )
+            const currentStep = completedSteps.includes(priorSession.currentStep)
+              ? MODULE_DESIGN_STEPS.find((step) => !completedSteps.includes(step)) ?? 'approval'
+              : priorSession.currentStep
+            return { ...priorSession, completedSteps, currentStep }
+          })()
         : materializeSession(this.state.projectId, this.state.architecture.revision, design, this.now())
     this.touchSession(session)
   }
@@ -916,12 +1052,23 @@ export class DesignStore {
         client.read<ValidNextAction[]>('getValidNextActions', [client.projectId]),
       ])
       const architecture = workflowStatus.systemStructure?.approved ?? workflowStatus.systemStructure?.draft ?? emptySystemStructure(client.projectId)
-      const useCaseAnalysis = workflowStatus.useCaseAnalysis?.approved ?? workflowStatus.useCaseAnalysis?.draft ?? emptyUseCaseAnalysis(client.projectId, this.now())
+      const approvedAnalysis = workflowStatus.useCaseAnalysis?.approved
+      const draftAnalysis = workflowStatus.useCaseAnalysis?.draft
+      const useCaseAnalysis =
+        draftAnalysis && (!approvedAnalysis || (draftAnalysis.revision !== approvedAnalysis.revision && draftAnalysis.status !== 'approved'))
+          ? draftAnalysis
+          : approvedAnalysis ?? draftAnalysis ?? emptyUseCaseAnalysis(client.projectId, this.now())
       const designBaseline = workflowStatus.baseline?.approved ?? workflowStatus.baseline?.draft ?? emptyDesignBaseline(client.projectId, architecture)
       const policy = workflowStatus.policy ?? emptyPolicy(client.projectId, client.actor, this.now())
       const scenarioRuns = workflowStatus.scenarioRuns ?? []
-      const scenarioTestPlan = useCaseAnalysis.status === 'approved'
-        ? buildScenarioTestPlan(useCaseAnalysis)
+      const verificationApprovals = Object.fromEntries(
+        (workflowStatus.verificationApprovals ?? []).map((approval) => [
+          approval.runId,
+          { approvedAt: approval.approvedAt, approvalRef: approval.approvalRef },
+        ]),
+      )
+      const scenarioTestPlan = approvedAnalysis
+        ? buildScenarioTestPlan(approvedAnalysis)
         : { projectId: client.projectId, analysisId: useCaseAnalysis.id, analysisRevision: useCaseAnalysis.revision, entries: [], diagnostics: [] }
       const systemStatus = systemStructureStatus(
         architecture,
@@ -938,6 +1085,7 @@ export class DesignStore {
         designBaseline,
         policy,
         scenarioRuns,
+        verificationApprovals,
         scenarioTestPlan,
         progress,
         systemStatus,
@@ -1041,13 +1189,14 @@ export class DesignStore {
   async loadProjectSetup(): Promise<void> {
     if (!this.isProjectMode()) return
     const client = this.requireBridge()
-    this.patch({ repositoryConfig: { status: 'loading' }, principal: { status: 'loading' } })
+    this.patch({ repositoryConfig: { status: 'loading' }, principal: { status: 'loading' }, rolesGrant: { status: 'loading' } })
     this.emit()
-    const [repositoryConfig, principal] = await Promise.all([
+    const [repositoryConfig, principal, rolesGrant] = await Promise.all([
       this.readRepositoryConfig(client),
       this.readPrincipal(client),
+      this.readProjectRoles(client),
     ])
-    this.patch({ repositoryConfig, principal })
+    this.patch({ repositoryConfig, principal, rolesGrant })
     this.emit()
   }
 
@@ -1074,6 +1223,101 @@ export class DesignStore {
     } catch (error) {
       return { status: 'error', message: error instanceof Error ? error.message : String(error) }
     }
+  }
+
+  private async readProjectRoles(client: DesignBridgeClient): Promise<RolesGrantState> {
+    try {
+      const response = await client.read<AdapterProjectRolesResponse>('adapter:getProjectRoles', [{ projectId: client.projectId }])
+      if (isUnknownOperationResponse(response)) {
+        return { status: 'unavailable', message: 'Project-role status requires a newer desktop build.' }
+      }
+      if (response.ok) {
+        return { status: 'granted', principal: response.principal, authorities: response.authorities }
+      }
+      const notConfigured = response.diagnostics.some((diagnostic) => diagnostic.code === AUTHORITY_NOT_CONFIGURED_CODE)
+      return notConfigured
+        ? { status: 'idle' }
+        : { status: 'error', message: response.diagnostics[0]?.message ?? 'Could not read project roles.' }
+    } catch (error) {
+      return { status: 'error', message: error instanceof Error ? error.message : String(error) }
+    }
+  }
+
+  async openProjectSource(ref: string): Promise<void> {
+    if (!this.isProjectMode()) {
+      this.patch({ sourcePreview: { status: 'error', ref, message: 'Bundled showcase sources are descriptive fixtures and do not resolve to project files.' } })
+      this.emit()
+      return
+    }
+    const client = this.requireBridge()
+    this.patch({ sourcePreview: { status: 'loading' } })
+    this.emit()
+    try {
+      const response = await client.read<AdapterProjectSourceResponse>('adapter:getProjectSource', [{ projectId: client.projectId, ref }])
+      if (response.ok) {
+        this.patch({
+          sourcePreview: {
+            status: 'ready',
+            ref: response.ref,
+            fileName: response.fileName,
+            mediaType: response.mediaType,
+            sha256: response.sha256,
+            bytes: response.bytes,
+            content: response.content,
+            truncated: response.truncated,
+          },
+        })
+      } else {
+        this.patch({ sourcePreview: { status: 'error', ref, message: response.diagnostics[0]?.message ?? 'Could not open source.' } })
+      }
+    } catch (error) {
+      this.patch({ sourcePreview: { status: 'error', ref, message: error instanceof Error ? error.message : String(error) } })
+    }
+    this.emit()
+  }
+
+  async checkProjectSource(ref: string): Promise<{ ok: boolean; message?: string }> {
+    if (!this.isProjectMode()) return { ok: false, message: 'Select a desktop project before checking a source.' }
+    const client = this.requireBridge()
+    try {
+      const response = await client.read<AdapterProjectSourceResponse>('adapter:getProjectSource', [{ projectId: client.projectId, ref }])
+      return response.ok ? { ok: true } : { ok: false, message: response.diagnostics[0]?.message ?? 'Could not read source.' }
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : String(error) }
+    }
+  }
+
+  closeProjectSource(): void {
+    this.patch({ sourcePreview: { status: 'idle' } })
+    this.emit()
+  }
+
+  async loadProjectConnections(): Promise<void> {
+    if (!this.isProjectMode()) return
+    const client = this.requireBridge()
+    const results = await Promise.all(this.state.progress.modules.map(async (entry) => {
+      try {
+        return await client.read<AdapterConnectionStateResponse>('adapter:getConnectionState', [{
+          projectId: client.projectId,
+          moduleId: entry.moduleId,
+        }])
+      } catch {
+        return undefined
+      }
+    }))
+    const connections = { ...this.state.connections }
+    for (const response of results) {
+      if (!response?.ok || (!response.binding && !response.verification)) continue
+      const verification = response.verification as { verificationStatus?: string } | undefined
+      connections[response.moduleId] = {
+        status: verification?.verificationStatus === 'pass' ? 'verified' : response.binding ? 'configured' : 'failed',
+        configuration: response.binding,
+        verification: response.verification,
+        ...(verification && verification.verificationStatus !== 'pass' ? { message: 'The last connection verification did not pass.' } : {}),
+      }
+    }
+    this.patch({ connections })
+    this.emit()
   }
 
   /** `ProjectSetupPanel`'s "Configure repository root" form. */
@@ -1174,6 +1418,7 @@ export class DesignStore {
   async loadProjectVerification(): Promise<void> {
     if (!this.isProjectMode()) return
     const client = this.requireBridge()
+    const request = ++this.projectVerificationRequest
     this.patch({ projectVerification: { status: 'loading' } })
     this.emit()
     try {
@@ -1182,8 +1427,10 @@ export class DesignStore {
       if (summary?.firstFailedStep) {
         evidence = await client.read<ScenarioRun | undefined>('getVerificationEvidence', [client.projectId, summary.firstFailedStep.runId])
       }
+      if (request !== this.projectVerificationRequest) return
       this.patch({ projectVerification: { status: 'ready', summary, evidence } })
     } catch (error) {
+      if (request !== this.projectVerificationRequest) return
       this.patch({ projectVerification: { status: 'error', message: error instanceof Error ? error.message : String(error) } })
     }
     this.emit()
@@ -1231,7 +1478,12 @@ export class DesignStore {
   // ---------------------------------------------------------------------
 
   /** Creates the canonical use-case analysis through the same operation used by the machine API. */
-  createUseCaseAnalysis(input: { workDescription: string; examples?: string[]; prohibitedResults?: string[] }): void {
+  createUseCaseAnalysis(input: {
+    workDescription: string
+    examples?: string[]
+    prohibitedResults?: string[]
+    sources?: { name: string; ref: string; required: boolean; status?: 'ok' | 'failed'; failureCause?: string }[]
+  }): void {
     if (!this.isProjectMode()) {
       this.announce('The bundled sample is read-only. Select a project to create a use-case analysis.')
       this.emit()
@@ -1245,6 +1497,7 @@ export class DesignStore {
         workDescription: input.workDescription,
         examples: input.examples ?? [],
         prohibitedResults: input.prohibitedResults ?? [],
+        sources: input.sources ?? [],
         expectedBaseRevision: this.state.useCaseAnalysis.revision || undefined,
       },
       (analysis) => this.patch({ useCaseAnalysis: analysis }),
@@ -1261,6 +1514,20 @@ export class DesignStore {
         projectId: client.projectId,
         expectedBaseRevision: this.state.useCaseAnalysis.revision,
         target: { kind: 'item', itemId, action, ...(text === undefined ? {} : { text }) },
+      },
+      (analysis) => this.patch({ useCaseAnalysis: analysis }),
+    ).catch(() => undefined)
+  }
+
+  updateUseCaseContent(target: UseCaseContentTarget): void {
+    if (!this.isProjectMode()) return
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<UseCaseAnalysis>(
+      'updateUseCaseItem',
+      {
+        projectId: client.projectId,
+        expectedBaseRevision: this.state.useCaseAnalysis.revision,
+        target,
       },
       (analysis) => this.patch({ useCaseAnalysis: analysis }),
     ).catch(() => undefined)
@@ -1296,13 +1563,47 @@ export class DesignStore {
     ).catch(() => undefined)
   }
 
+  reviseUseCaseAnalysis(): void {
+    if (!this.isProjectMode() || this.state.useCaseAnalysis.status !== 'approved') return
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<UseCaseAnalysis>(
+      'reopenUseCaseAnalysis',
+      {
+        projectId: client.projectId,
+        expectedBaseRevision: this.state.useCaseAnalysis.revision,
+        expectedBaseHash: this.state.useCaseAnalysis.contentHash,
+      },
+      (analysis) => this.patch({ useCaseAnalysis: analysis }),
+    ).catch(() => undefined)
+  }
+
   /** Creates a system-structure draft from the approved, compiled application record. */
-  createSystemStructure(): void {
+  createSystemStructure(options: {
+    primaryModuleId?: string
+    primaryModuleName?: string
+    primaryModuleType?: 'experience' | 'workflow' | 'domain' | 'connection' | 'platform'
+    primaryDeployableId?: string
+  } = {}): void {
     if (!this.isProjectMode()) return
     const client = this.requireBridge()
     this.pendingOperation = this.runChangeOperation<SystemStructureSpecification>(
       'createSystemDesignDraft',
-      { projectId: client.projectId },
+      { projectId: client.projectId, ...options },
+      (architecture) => this.patch({ architecture }),
+    ).catch(() => undefined)
+  }
+
+  applySystemDesignDecision(decision: Record<string, unknown>): void {
+    if (!this.isProjectMode() || !this.state.architecture.revision) return
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<SystemStructureSpecification>(
+      'applySystemDesignDecision',
+      {
+        projectId: client.projectId,
+        expectedBaseRevision: this.state.architecture.revision,
+        expectedBaseHash: this.state.architecture.contentHash,
+        decision,
+      },
       (architecture) => this.patch({ architecture }),
     ).catch(() => undefined)
   }
@@ -1340,10 +1641,12 @@ export class DesignStore {
       'configureBinding',
       { projectId: client.projectId, moduleId, bindingConfig },
       (configuration) => this.patchConnection(moduleId, { status: 'configured', configuration }),
-    ).then((result) => {
+    ).then(async (result) => {
       if (!result.ok) {
         this.patchConnection(moduleId, { status: 'failed', message: result.diagnostics[0]?.message ?? 'Binding configuration failed.' })
         this.emit()
+      } else {
+        await this.loadProjectConnections()
       }
     }).catch((error) => {
       this.patchConnection(moduleId, { status: 'failed', message: error instanceof Error ? error.message : String(error) })
@@ -1362,10 +1665,12 @@ export class DesignStore {
       'verifyConnection',
       { projectId: client.projectId, moduleId, ...(bindingConfig === undefined ? {} : { bindingConfig }) },
       (verification) => this.patchConnection(moduleId, { ...this.state.connections[moduleId], status: 'verified', verification }),
-    ).then((result) => {
+    ).then(async (result) => {
       if (!result.ok) {
         this.patchConnection(moduleId, { ...this.state.connections[moduleId], status: 'failed', message: result.diagnostics[0]?.message ?? 'Connection verification failed.' })
         this.emit()
+      } else {
+        await this.loadProjectConnections()
       }
     }).catch((error) => {
       this.patchConnection(moduleId, { ...this.state.connections[moduleId], status: 'failed', message: error instanceof Error ? error.message : String(error) })
@@ -1376,25 +1681,119 @@ export class DesignStore {
   /** Runs one approved scenario with the configured production executor and caches its immutable evidence. */
   runScenario(scenarioId: string): void {
     if (!this.isProjectMode()) return
+    this.pendingOperation = this.runScenarioInternal(scenarioId).catch(() => undefined)
+  }
+
+  private async runScenarioInternal(scenarioId: string): Promise<boolean> {
     const client = this.requireBridge()
-    this.pendingOperation = this.runChangeOperation<ScenarioRun>(
-      'runScenario',
-      { projectId: client.projectId, scenarioId },
-      (run) => {
-        const withoutEarlierCopy = this.state.scenarioRuns.filter((candidate) => candidate.runId !== run.runId)
-        this.patch({ scenarioRuns: [...withoutEarlierCopy, run], projectVerification: { status: 'idle' } })
+    const verifiedConnection = Object.values(this.state.connections)
+      .find((connection) => connection.status === 'verified' && connection.verification !== undefined)
+    const verification = verifiedConnection?.verification && typeof verifiedConnection.verification === 'object'
+      ? verifiedConnection.verification as Record<string, unknown>
+      : undefined
+    const connectionRevision =
+      typeof verification?.verificationId === 'string'
+        ? verification.verificationId
+        : verification?.hashes && typeof verification.hashes === 'object'
+          && typeof (verification.hashes as Record<string, unknown>).binding === 'string'
+          ? (verification.hashes as Record<string, string>).binding
+          : ''
+    this.patch({
+      scenarioActions: {
+        ...this.state.scenarioActions,
+        [scenarioId]: { status: 'running', message: 'Running the current scenario…' },
       },
-    ).catch(() => undefined)
+    })
+    this.emit()
+    try {
+      const result = await this.runChangeOperation<ScenarioRun>(
+        'runScenario',
+        {
+          projectId: client.projectId,
+          scenarioId,
+          identity: {
+            ...this.executionIdentity,
+            connectionRevision,
+          },
+        },
+        (run) => {
+          const withoutEarlierCopy = this.state.scenarioRuns.filter((candidate) => candidate.runId !== run.runId)
+          this.patch({ scenarioRuns: [...withoutEarlierCopy, run], projectVerification: { status: 'idle' } })
+        },
+      )
+      const run = result.value
+      this.patch({
+        scenarioActions: {
+          ...this.state.scenarioActions,
+          [scenarioId]: result.ok
+            ? { status: 'idle', runId: run?.runId, message: 'Run completed.' }
+            : { status: 'error', runId: run?.runId, message: result.diagnostics[0]?.message ?? 'The scenario did not pass.' },
+        },
+      })
+      this.emit()
+      return result.ok
+    } catch (error) {
+      this.patch({
+        scenarioActions: {
+          ...this.state.scenarioActions,
+          [scenarioId]: { status: 'error', message: error instanceof Error ? error.message : String(error) },
+        },
+      })
+      this.emit()
+      return false
+    }
+  }
+
+  async runAllCurrentScenarios(): Promise<void> {
+    if (!this.isProjectMode()) return
+    for (const entry of this.state.scenarioTestPlan.entries) {
+      await this.runScenarioInternal(entry.scenarioId)
+    }
   }
 
   /** Approves one exact scenario-run revision through the verification authority gate. */
   approveScenarioRun(runId: string): void {
     if (!this.isProjectMode()) return
     const client = this.requireBridge()
+    const run = this.state.scenarioRuns.find((candidate) => candidate.runId === runId)
+    const scenarioId = run?.scenarioId ?? runId
+    this.patch({
+      scenarioActions: {
+        ...this.state.scenarioActions,
+        [scenarioId]: { status: 'approving', runId, message: 'Approving this exact run…' },
+      },
+    })
+    this.emit()
     this.pendingOperation = this.runChangeOperation<{ runId: string }>(
       'approveVerification',
       { projectId: client.projectId, runId, authority: 'verification-lead' },
-    ).catch(() => undefined)
+    ).then((result) => {
+      this.patch({
+        scenarioActions: {
+          ...this.state.scenarioActions,
+          [scenarioId]: result.ok
+            ? { status: 'approved', runId, message: 'Approved and linked to its immutable evidence.' }
+            : { status: 'error', runId, message: result.diagnostics[0]?.message ?? 'Approval failed.' },
+        },
+        ...(result.ok
+          ? {
+              verificationApprovals: {
+                ...this.state.verificationApprovals,
+                [runId]: { approvedAt: this.now(), approvalRef: `${runId}@verified` },
+              },
+            }
+          : {}),
+      })
+      this.emit()
+    }).catch((error) => {
+      this.patch({
+        scenarioActions: {
+          ...this.state.scenarioActions,
+          [scenarioId]: { status: 'error', runId, message: error instanceof Error ? error.message : String(error) },
+        },
+      })
+      this.emit()
+    })
   }
 
   // ---------------------------------------------------------------------
@@ -1457,7 +1856,14 @@ export class DesignStore {
       this.emit()
       return
     }
-    await this.runChangeOperation<ModuleDesignSpecification>('startModuleDesign', { projectId: client.projectId, moduleId }, (design) => this.applyDesignRecord(design))
+    await this.runChangeOperation<{ design: ModuleDesignSpecification; session: ModuleDesignSession }>(
+      'startModuleDesign',
+      { projectId: client.projectId, moduleId },
+      ({ design, session }) => {
+        this.applyDesignRecord(design)
+        this.touchSession(session)
+      },
+    )
   }
 
   /** §9.3 — open a completed or current step without losing later draft data. */
@@ -1492,10 +1898,13 @@ export class DesignStore {
     if (this.isProjectMode()) {
       const session = this.state.sessions[moduleId]
       const client = this.requireBridge()
-      this.pendingOperation = this.runChangeOperation<ModuleDesignSpecification>(
+      this.pendingOperation = this.runChangeOperation<{ design: ModuleDesignSpecification; session: ModuleDesignSession }>(
         'answerModuleDesignQuestion',
         { projectId: client.projectId, moduleId, questionId: itemId, step: session?.currentStep ?? 'behavior', text: answerText, expectedBaseRevision: design.revision },
-        (updated) => this.applyDesignRecord(updated),
+        ({ design: updated, session: updatedSession }) => {
+          this.applyDesignRecord(updated)
+          this.touchSession(updatedSession)
+        },
       ).catch(() => undefined)
       return
     }
@@ -1519,10 +1928,10 @@ export class DesignStore {
     if (!design) return undefined
     if (this.isProjectMode()) {
       const client = this.requireBridge()
-      this.pendingOperation = this.runChangeOperation<ModuleDesignSpecification>(
+      this.pendingOperation = this.runChangeOperation<{ design: ModuleDesignSpecification; evaluation: ModuleDesignCheckEvaluation }>(
         'analyzeModuleDesign',
         { projectId: client.projectId, moduleId, expectedBaseRevision: design.revision },
-        (updated) => this.applyDesignRecord(updated),
+        ({ design: updated }) => this.applyDesignRecord(updated),
       ).catch(() => undefined)
       return undefined
     }
@@ -1569,9 +1978,42 @@ export class DesignStore {
     return result
   }
 
-  /** Appendix C `Create Copilot handoff` — the real one-module Build handoff (§11.2, §11.3, §6.2). */
+  /** The real one-module implementation handoff (§11.2, §11.3, §6.2). */
   createCopilotHandoff(moduleId: string): void {
     this.createModuleHandoff(moduleId)
+  }
+
+  /** Creates the complete Design baseline through the same service operation used by machine clients. */
+  createDesignBaseline(): void {
+    if (!this.isProjectMode()) {
+      this.announce('The bundled sample already includes an approved Design baseline.')
+      this.emit()
+      return
+    }
+    const client = this.requireBridge()
+    this.pendingOperation = this.runChangeOperation<DesignBaseline>(
+      'createDesignBaseline',
+      { projectId: client.projectId },
+    ).catch(() => undefined)
+  }
+
+  /** Explicit human approval for the current Design baseline (§4, §6.2). */
+  approveDesignBaseline(): void {
+    if (!this.isProjectMode()) {
+      this.announce('The bundled sample already includes an approved Design baseline.')
+      this.emit()
+      return
+    }
+    const client = this.requireBridge()
+    const baseline = this.state.designBaseline
+    this.pendingOperation = this.runChangeOperation<DesignBaseline>(
+      'approveDesignBaseline',
+      {
+        projectId: client.projectId,
+        authority: 'software-architect',
+        ...(baseline.revision ? { expectedBaseRevision: baseline.revision } : {}),
+      },
+    ).catch(() => undefined)
   }
 
   /**
@@ -1592,6 +2034,15 @@ export class DesignStore {
     const session = this.state.sessions[moduleId]
     if (this.isProjectMode()) {
       const action = this.validNextActionFor(moduleId)
+      // `updateModuleDesignItem` is the service's intentionally generic
+      // signal that the draft remains editable. The session's current step
+      // provides the useful, specific action a person can actually take.
+      if (action?.operation === 'updateModuleDesignItem' && design && session) {
+        // Before the first authoritative check there are no recorded gates;
+        // present "Run design checks", not a speculative local "Fix …"
+        // result. Once a gate exists its diagnostics can guide remediation.
+        return sessionPrimaryAction(session, design, design.gates.length ? this.evaluateChecks(moduleId) : undefined)
+      }
       if (action) return action.label
       if (!design || !session) return 'Create module draft'
       return sessionPrimaryAction(session, design, this.evaluateChecks(moduleId))
@@ -1619,6 +2070,21 @@ export class DesignStore {
           case 'startModuleDesign':
             this.ensureDraft(moduleId)
             return
+          case 'updateModuleDesignItem': {
+            if (!design) return
+            const session = this.ensureSession(moduleId, design)
+            const label = sessionPrimaryAction(session, design, design.gates.length ? this.evaluateChecks(moduleId) : undefined)
+            if (label === 'Run design checks') {
+              this.runChecks(moduleId)
+            } else if (label.startsWith('Answer')) {
+              this.goToStep(moduleId, 'behavior')
+            } else if (label.startsWith('Fix')) {
+              this.goToStep(moduleId, 'checks')
+            } else {
+              this.completeStep(moduleId)
+            }
+            return
+          }
           case 'approveModuleDesign':
             this.approveModule(moduleId)
             return
@@ -1626,10 +2092,9 @@ export class DesignStore {
             this.createModuleHandoff(moduleId)
             return
           default:
-            // answerModuleDesignQuestion / updateModuleDesignItem / reopenModuleDesign —
-            // no single bridge call corresponds to "the" action; direct the
-            // user to the step that handles it (the Behavior step's question
-            // form, or Run module checks) instead of guessing an edit.
+            // answerModuleDesignQuestion / reopenModuleDesign — no single
+            // bridge call corresponds to "the" action; direct the user to
+            // the step that handles it instead of guessing an edit.
             this.announce(action.label)
             return
         }
@@ -1655,9 +2120,11 @@ export class DesignStore {
       this.completeStep(moduleId, 'contracts')
     } else if (label.startsWith('Fix')) {
       this.goToStep(moduleId, 'checks')
+    } else if (label === 'Run design checks') {
+      this.runChecks(moduleId)
     } else if (label === 'Approve module') {
       this.approveModule(moduleId)
-    } else if (label === 'Create Copilot handoff') {
+    } else if (label === 'Create implementation handoff') {
       this.createCopilotHandoff(moduleId)
     } else {
       this.completeStep(moduleId)
@@ -1825,7 +2292,7 @@ export class DesignStore {
     this.emit()
   }
 
-  /** User action — records approval and, for a renameable element, applies the approved rename to the underlying record so unaffected diagrams stay identical (§9.8, §9.11). */
+  /** User action — records approval for the exact analyzed impact. Execution remains a separate action (§9.8, §9.11). */
   approveDiagramChangePlan(moduleId: string, target: DiagramElementTarget): void {
     const design = this.getDesign(moduleId)
     if (!design) return
@@ -1836,7 +2303,19 @@ export class DesignStore {
     const now = this.now()
     const history = this.state.diagramDiscussions[target.elementId] ?? []
     const lastImpactEntry = [...history].reverse().find((entry) => entry.kind === 'impactAnalysis')
-    const lastProposal = [...history].reverse().find((entry) => entry.kind === 'proposedChange')
+    const impact = lastImpactEntry?.impactRecordId ? this.state.diagramImpacts[lastImpactEntry.impactRecordId] : undefined
+    if (!impact || impact.approval) return
+    const approvedImpact: DesignImpactRecord = {
+      ...impact,
+      approval: {
+        approvedBy: 'you',
+        authority: 'module-owner',
+        approvedAt: now,
+        recordId: impact.impactId,
+        revision: impact.impactId,
+        contentHash: impact.contentHash,
+      },
+    }
 
     const approvalEntry: DiagramDiscussionEntry = {
       id: childId(target.diagramId, 'discussion', `${target.elementId}.${now}.approved`),
@@ -1848,17 +2327,89 @@ export class DesignStore {
       impactRecordId: lastImpactEntry?.impactRecordId,
       at: now,
     }
-    this.patch({ diagramDiscussions: { ...this.state.diagramDiscussions, [target.elementId]: [...history, approvalEntry] } })
-
-    if (target.isRenameable && lastProposal?.text) {
-      const base = design.status === 'approved' ? reopenModuleDesign(design).draft : design
-      const updated = updateModuleDesignItem(base, 'module.name', lastProposal.text)
-      if (updated.ok) {
-        this.touchDesign(updated.design)
-        this.recomputeProgress()
-      }
-    }
+    this.patch({
+      diagramDiscussions: { ...this.state.diagramDiscussions, [target.elementId]: [...history, approvalEntry] },
+      diagramImpacts: { ...this.state.diagramImpacts, [impact.impactId]: approvedImpact },
+    })
     this.announce(`Approved the change plan for ${target.elementLabel}.`)
+    this.commit()
+  }
+
+  private async executeDiagramChangePlanProject(target: DiagramElementTarget): Promise<void> {
+    const history = this.state.diagramDiscussions[target.elementId] ?? []
+    const impactEntry = [...history].reverse().find((entry) => entry.impactRecordId)
+    if (!impactEntry?.impactRecordId) return
+    const client = this.requireBridge()
+    const result = await this.runChangeOperation<{ impact: DesignImpactRecord; updatedDesign: ModuleDesignSpecification }>(
+      'executeChangePlan',
+      {
+        projectId: client.projectId,
+        diagramId: target.diagramId,
+        elementId: target.elementId,
+        impactId: impactEntry.impactRecordId,
+      },
+      (value) => {
+        this.patch({ diagramImpacts: { ...this.state.diagramImpacts, [value.impact.impactId]: value.impact } })
+        this.applyDesignRecord(value.updatedDesign)
+      },
+    )
+    if (!result.ok || !result.value) return
+    const now = this.now()
+    this.appendDiagramDiscussionEntry(target.elementId, {
+      id: childId(target.diagramId, 'discussion', `${target.elementId}.${now}.executed`),
+      elementId: target.elementId,
+      diagramId: target.diagramId,
+      author: result.value.impact.execution?.executedBy ?? 'unknown',
+      kind: 'executedChange',
+      text: `Executed the approved change and regenerated ${result.value.impact.execution?.regeneratedProjectionIds.length ?? 0} projections.`,
+      impactRecordId: result.value.impact.impactId,
+      at: now,
+    })
+    this.emit()
+  }
+
+  executeDiagramChangePlan(moduleId: string, target: DiagramElementTarget): void {
+    const design = this.getDesign(moduleId)
+    if (!design) return
+    if (this.isProjectMode()) {
+      this.pendingOperation = this.executeDiagramChangePlanProject(target).catch(() => undefined)
+      return
+    }
+    const history = this.state.diagramDiscussions[target.elementId] ?? []
+    const lastImpactEntry = [...history].reverse().find((entry) => entry.impactRecordId)
+    const lastProposal = [...history].reverse().find((entry) => entry.kind === 'proposedChange')
+    const impact = lastImpactEntry?.impactRecordId ? this.state.diagramImpacts[lastImpactEntry.impactRecordId] : undefined
+    if (!impact?.approval || impact.execution || !target.isRenameable || !lastProposal?.text) return
+    const base = design.status === 'approved' ? reopenModuleDesign(design).draft : design
+    const updated = updateModuleDesignItem(base, 'module.name', lastProposal.text)
+    if (!updated.ok) return
+    const now = this.now()
+    const executedImpact: DesignImpactRecord = {
+      ...impact,
+      execution: {
+        executedBy: 'you',
+        executedAt: now,
+        updatedRecordIds: [updated.design.id],
+        regeneratedProjectionIds: updated.design.diagrams.map((diagram) => diagram.diagramId),
+      },
+    }
+    const entry: DiagramDiscussionEntry = {
+      id: childId(target.diagramId, 'discussion', `${target.elementId}.${now}.executed`),
+      elementId: target.elementId,
+      diagramId: target.diagramId,
+      author: 'you',
+      kind: 'executedChange',
+      text: `Executed the approved change and regenerated ${updated.design.diagrams.length} projections.`,
+      impactRecordId: impact.impactId,
+      at: now,
+    }
+    this.touchDesign(updated.design)
+    this.patch({
+      diagramImpacts: { ...this.state.diagramImpacts, [impact.impactId]: executedImpact },
+      diagramDiscussions: { ...this.state.diagramDiscussions, [target.elementId]: [...history, entry] },
+    })
+    this.recomputeProgress()
+    this.announce(`Executed the approved change for ${target.elementLabel}.`)
     this.commit()
   }
 
@@ -1886,7 +2437,8 @@ export class DesignStore {
     void moduleId
     if (!text.trim()) return
     if (this.isProjectMode()) {
-      this.pendingOperation = this.addDiagramDiscussionProject(target, text).catch(() => undefined)
+      this.announce('Free-form agent discussion is not configured. Use Propose change for a controlled, impact-analyzed change request.')
+      this.emit()
       return
     }
     const now = this.now()
@@ -2032,7 +2584,7 @@ export class DesignStore {
         createdAt: now,
       }
       this.patch({ moduleHandoffs: { ...this.state.moduleHandoffs, [moduleId]: result } })
-      this.announce(`Cannot create a Copilot handoff: no module design exists yet for ${moduleId}.`)
+      this.announce(`Cannot create an implementation handoff: no module design exists yet for ${moduleId}.`)
       this.commit()
       return result
     }
@@ -2091,8 +2643,8 @@ export class DesignStore {
     this.patch({ moduleHandoffs: { ...this.state.moduleHandoffs, [moduleId]: result } })
     this.announce(
       result.ok
-        ? `Created a Copilot ${result.kind} handoff for ${design.module.name}.`
-        : `Copilot handoff blocked for ${design.module.name}: ${result.diagnostics[0]?.message ?? 'see diagnostics'}.`,
+        ? `Created ${result.kind === 'implementation' ? 'an implementation handoff' : 'a design handoff'} for ${design.module.name}.`
+        : `Implementation handoff blocked for ${design.module.name}: ${result.diagnostics[0]?.message ?? 'see diagnostics'}.`,
     )
     this.commit()
     return result
@@ -2183,7 +2735,7 @@ export class DesignStore {
       // packet build against a real project (§17, review finding #1).
       const result: BuildMultiModulePacketResult = {
         ok: false,
-        diagnostics: [{ code: 'CAP-DES-PKT-MULTI-UNAVAILABLE', message: 'Multi-module handoff is not available in project mode yet; use the single-module Copilot handoff instead.' }],
+        diagnostics: [{ code: 'CAP-DES-PKT-MULTI-UNAVAILABLE', message: 'Multi-module handoff is not available in project mode yet; use the single-module implementation handoff instead.' }],
       }
       this.patch({ multiModuleHandoff: { moduleIds, result } })
       this.commit()
@@ -2260,7 +2812,7 @@ export class DesignStore {
   }
 
   /** Paste-JSON import of a returned delta. JSON parsing is a local format check (not approval logic); the canonical import itself is one `importAgentDelta` bridge call in `project` mode. */
-  importReturnedDeltaText(moduleId: string, rawJson: string): { ok: boolean; error?: string } {
+  importReturnedDeltaText(moduleId: string, rawJson: string, source: 'pasted' | 'file' | 'provider' = 'pasted'): { ok: boolean; error?: string } {
     let delta: ReturnedDelta
     try {
       delta = JSON.parse(rawJson) as ReturnedDelta
@@ -2270,7 +2822,7 @@ export class DesignStore {
       return { ok: false, error: 'That is not valid JSON.' }
     }
     if (this.isProjectMode()) {
-      this.patchDeltaFlow(moduleId, { deltaSource: 'pasted', importError: undefined, inspection: undefined, approved: false, applyResult: undefined, rolledBack: false })
+      this.patchDeltaFlow(moduleId, { deltaSource: source, importError: undefined, inspection: undefined, approved: false, applyResult: undefined, rolledBack: false })
       this.commit()
       const client = this.requireBridge()
       this.pendingOperation = this.runChangeOperation<ReturnedDelta>(
@@ -2280,13 +2832,13 @@ export class DesignStore {
       ).catch(() => undefined)
       return { ok: true }
     }
-    this.patchDeltaFlow(moduleId, { delta, deltaSource: 'pasted', importError: undefined, inspection: undefined, approved: false, applyResult: undefined, rolledBack: false })
+    this.patchDeltaFlow(moduleId, { delta, deltaSource: source, importError: undefined, inspection: undefined, approved: false, applyResult: undefined, rolledBack: false })
     this.announce('Imported a returned delta.')
     this.commit()
     return { ok: true }
   }
 
-  /** Sample-only demo button (`deterministicTestProvider`) — clearly labeled in the UI as a sample, never real Copilot output; never available in `project` mode. */
+  /** Sample-only demo button (`deterministicTestProvider`) — clearly labeled in the UI as a sample, never real implementation output; never available in `project` mode. */
   async importSampleReturnedDelta(moduleId: string): Promise<{ ok: boolean; error?: string }> {
     if (this.isProjectMode()) {
       const message = 'Sample delta import is only available in sample mode.'
@@ -2317,7 +2869,7 @@ export class DesignStore {
       applyResult: undefined,
       rolledBack: false,
     })
-    this.announce('Imported a sample deterministic-test-provider delta — this is a labeled sample, not real Copilot output.')
+    this.announce('Imported a sample deterministic-test-provider delta — this is a labeled sample, not real implementation output.')
     this.commit()
     return { ok: true }
   }

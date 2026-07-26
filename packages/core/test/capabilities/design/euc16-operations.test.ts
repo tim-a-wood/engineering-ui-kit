@@ -46,6 +46,12 @@ function makeOps(...projectIds: string[]): DesignOperationsService {
         completedAt: new Date().toISOString(),
       }),
       verifyModule: (_input, _context) => ({ passed: true, evidenceRefs: ['evidence.module-check-1'] }),
+      runScenario: () => ({
+        steps: [],
+        outcome: 'passed',
+        startedAt: '2026-07-25T00:00:00.000Z',
+        completedAt: '2026-07-25T00:00:01.000Z',
+      }),
     },
   })
 }
@@ -98,6 +104,7 @@ describe('EUC-16 core operations — full happy path', () => {
   let analysisId = ''
   let questionId = ''
   let operationId = ''
+  let applicationRevision = ''
   let pricingRevision = ''
   let pricingHash = ''
   let packetId = ''
@@ -137,6 +144,7 @@ describe('EUC-16 core operations — full happy path', () => {
     expect(result.ok).toBe(true)
     expect(result.value?.analysis.status).toBe('approved')
     expect(result.value?.application).toBeDefined()
+    applicationRevision = result.value!.application!.revision
     operationId = result.value!.application!.acceptanceCases[0]!.id
       ? `op.${result.value!.application!.acceptanceCases[0]!.id}`
       : ''
@@ -146,11 +154,24 @@ describe('EUC-16 core operations — full happy path', () => {
     expect(actions[0]).toMatchObject({ operation: 'createSystemDesignDraft', enabled: true })
   })
 
+  it('records the compiled application revision in a scenario run before any separate application approval exists', () => {
+    const scenarioId = ops.getWorkflowStatus(projectId).useCaseAnalysis.approved!.useCases[0]!.scenarios[0]!.id
+    const result = ops.runScenario({ projectId, actor, idempotencyKey: key(), scenarioId })
+    expect(result.ok).toBe(true)
+    expect(result.value?.identity.applicationRevision).toBe(applicationRevision)
+    expect(ops.getScenarioCoverage(projectId)).toMatchObject({
+      passedCount: 1,
+      currentCount: 1,
+      oldCount: 0,
+    })
+  })
+
   it('creates the system design draft', () => {
     const result = ops.createSystemDesignDraft({ projectId, actor, idempotencyKey: key() })
     expect(result.ok).toBe(true)
     expect(result.value?.moduleIds).toEqual(['mod.core'])
     expect(result.value?.operationAllocations[0]?.operationId).toBe(operationId)
+    expect(result.value?.gateResult.passed).toBe(true)
   })
 
   it('splits the primary module into two modules (applySystemDesignDecision)', () => {
@@ -181,6 +202,7 @@ describe('EUC-16 core operations — full happy path', () => {
     })
     expect(result.ok).toBe(true)
     expect(new Set(result.value?.moduleIds)).toEqual(new Set(['mod.svc.pricing', 'mod.svc.audit']))
+    expect(result.value?.gateResult.passed).toBe(true)
   })
 
   it('approves the system structure', () => {
@@ -199,8 +221,19 @@ describe('EUC-16 core operations — full happy path', () => {
 
     const pricing = ops.startModuleDesign({ projectId, actor, idempotencyKey: key(), moduleId: 'mod.svc.pricing' })
     expect(pricing.ok).toBe(true)
+    expect(pricing.value?.design.schemas.map((schema) => schema.role)).toEqual(['input', 'output'])
+    expect(pricing.value?.design.verification.acceptanceCases.length).toBeGreaterThan(0)
+    expect(pricing.value?.design.verification.configuredCommands.some((command) => command.includes(': npm test --'))).toBe(true)
+    expect(pricing.value?.design.inferredFieldPaths).toContain('typeSpecific')
     const auditing = ops.startModuleDesign({ projectId, actor, idempotencyKey: key(), moduleId: 'mod.svc.audit' })
     expect(auditing.ok).toBe(true)
+
+    // The guided operation must produce a reviewable first pass without
+    // requiring hidden API-only field updates from the desktop workflow.
+    const analyzed = ops.analyzeModuleDesign({ projectId, actor, idempotencyKey: key(), moduleId: 'mod.svc.audit' })
+    expect(analyzed.ok).toBe(true)
+    expect(analyzed.value?.evaluation.diagnostics.filter((diagnostic) => diagnostic.severity === 'blocker')).toEqual([])
+    expect(analyzed.value?.design.status).toBe('readyForReview')
   })
 
   it('completes the pricing module design to readyForReview and approves it', () => {

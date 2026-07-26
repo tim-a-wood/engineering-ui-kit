@@ -10,9 +10,13 @@ import {
   resumePoint,
   sessionPrimaryAction,
 } from '../../../src/capabilities/design/moduleDesignSession.js'
-import { applyModuleDesignChecks, createModuleDesignDraft } from '../../../src/capabilities/design/moduleDesign.js'
+import {
+  applyModuleDesignChecks,
+  createModuleDesignDraft,
+  evaluateModuleDesignChecks,
+} from '../../../src/capabilities/design/moduleDesign.js'
 import { MODULE_DESIGN_STEPS } from '../../../src/capabilities/design/records.js'
-import type { ContextManifest } from '../../../src/capabilities/design/records.js'
+import type { ContextManifest, ModuleDesignStep } from '../../../src/capabilities/design/records.js'
 import type { ArchitectureSpecification } from '../../../src/capabilities/types.js'
 
 function manifestFixture(): ContextManifest {
@@ -239,7 +243,21 @@ describe('EUC-04 sessionPrimaryAction (§9.3)', () => {
     expect(label).toMatch(/^Fix \d+ design errors?$/)
   })
 
-  it('suggests approving the module once it is ready for review', () => {
+  it('runs the first checks pass before presenting preview blockers as fixes', () => {
+    const architecture = architectureFixture()
+    const draft = createModuleDesignDraft({ projectId: 'proj-1', architecture, moduleId: 'mod.domain' })
+    const evaluation = evaluateModuleDesignChecks(draft)
+    const session = {
+      ...baseSession(),
+      currentStep: 'checks' as const,
+      completedSteps: ['boundary', 'behavior', 'contracts', 'diagrams'] as ModuleDesignStep[],
+    }
+    expect(evaluation.blockerCount).toBeGreaterThan(0)
+    expect(draft.gates).toEqual([])
+    expect(sessionPrimaryAction(session, draft, evaluation)).toBe('Run design checks')
+  })
+
+  it('requires the explicit checks step before approval even when the record is already ready', () => {
     const architecture = architectureFixture()
     const draft = createModuleDesignDraft({ projectId: 'proj-1', architecture, moduleId: 'mod.domain' })
     const readyDesign = {
@@ -251,16 +269,18 @@ describe('EUC-04 sessionPrimaryAction (§9.3)', () => {
     let session = baseSession()
     session = { ...session, currentStep: 'checks', completedSteps: ['boundary', 'behavior', 'contracts', 'diagrams'] }
     const passingChecks = { gateId: 'EUC-04-MODULE-DESIGN-CHECKS' as const, passed: true, diagnostics: [], blockerCount: 0, warningCount: 0 }
+    expect(sessionPrimaryAction(session, readyDesign, passingChecks)).toBe('Run design checks')
+    session = completeStep(session, 'checks', '2026-01-01T00:03:00.000Z')
     expect(sessionPrimaryAction(session, readyDesign, passingChecks)).toBe('Approve module')
   })
 
-  it('suggests creating a Copilot handoff once the module is approved', () => {
+  it('suggests creating an implementation handoff once the module is approved', () => {
     const architecture = architectureFixture()
     const draft = createModuleDesignDraft({ projectId: 'proj-1', architecture, moduleId: 'mod.domain' })
     const approvedDesign = { ...draft, status: 'approved' as const, unresolvedItems: [] }
     let session = baseSession()
     session = { ...session, completedSteps: [...MODULE_DESIGN_STEPS] }
     const passingChecks = { gateId: 'EUC-04-MODULE-DESIGN-CHECKS' as const, passed: true, diagnostics: [], blockerCount: 0, warningCount: 0 }
-    expect(sessionPrimaryAction(session, approvedDesign, passingChecks)).toBe('Create Copilot handoff')
+    expect(sessionPrimaryAction(session, approvedDesign, passingChecks)).toBe('Create implementation handoff')
   })
 })

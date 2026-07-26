@@ -18,6 +18,7 @@ const NOW = () => '2026-07-25T00:00:00.000Z'
 
 beforeEach(() => {
   window.localStorage.clear()
+  window.history.replaceState(null, '', '/')
 })
 
 afterEach(cleanup)
@@ -30,7 +31,7 @@ describe('Design workspace default sample (§22.1)', () => {
     expect(store.getState().syntheticDataStatement).toMatch(/synthetic/i)
 
     render(<DesignWorkspaceView store={store} />)
-    expect(screen.getByText(/synthetic/i)).toBeTruthy()
+    expect(screen.getAllByText(/synthetic/i).length).toBeGreaterThan(0)
   })
 
   it('shows progress as counts, never percentages (§18.3)', () => {

@@ -1,9 +1,6 @@
 /**
- * §11.8 Implementation waves — planning information only. Waves show
- * modules, direct dependencies, allowed paths, shared resources, batch
- * eligibility, and blocking contracts/cycles. There is deliberately no
- * dispatch-all action: only a per-module `Create Copilot handoff` (default
- * one module) and the explicit multi-module selection flow.
+ * Implementation-wave overview. This is planning context, not a second
+ * handoff surface: one focused module is handed off in BuildHandoffView.
  */
 
 import { useState } from 'react'
@@ -16,154 +13,148 @@ export type WavesViewProps = {
   onCreateHandoff: (moduleId: string) => void
   onCreateMultiModuleHandoff: (moduleIds: string[], confirmations: MultiModuleConfirmations) => void
   multiModuleHandoff?: { moduleIds: string[]; result: BuildMultiModulePacketResult }
-  /** `project` mode has no bridge operation yet for a combined multi-module handoff (review finding #1, #2) — the selection UI still renders so the confirmations stay visible, but creation is disabled with an explanation. */
   mode?: DesignWorkspaceMode
+  currentDesignComplete?: boolean
 }
 
 export function WavesView(props: WavesViewProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  // §3.3 / review finding #2 — real, per-user confirmations; never hardcoded true.
   const [userConfirmedIndependence, setUserConfirmedIndependence] = useState(false)
   const [receivingAgentSupportsCombinedTask, setReceivingAgentSupportsCombinedTask] = useState(false)
   const [fixtureIsolationConfirmedByModuleId, setFixtureIsolationConfirmedByModuleId] = useState<Record<string, boolean>>({})
   const nameByModuleId = new Map(props.progress.modules.map((entry) => [entry.moduleId, entry.name]))
-  const isProjectMode = props.mode === 'project'
 
   function toggle(moduleId: string) {
-    setSelected((prev) => {
-      const next = new Set(prev)
+    setSelected((previous) => {
+      const next = new Set(previous)
       if (next.has(moduleId)) next.delete(moduleId)
       else next.add(moduleId)
       return next
     })
   }
 
-  function toggleFixtureIsolation(moduleId: string) {
-    setFixtureIsolationConfirmedByModuleId((prev) => ({ ...prev, [moduleId]: !prev[moduleId] }))
-  }
-
-  function createMultiModuleHandoff() {
-    const confirmations: MultiModuleConfirmations = {
-      userConfirmedIndependence,
-      receivingAgentSupportsCombinedTask,
-      fixtureIsolationConfirmedByModuleId,
-    }
-    props.onCreateMultiModuleHandoff([...selected], confirmations)
-  }
-
   return (
-    <section className="design-waves" aria-label="Implementation waves">
-      <p className="secondary-text">Waves are planning information only. Nothing dispatches automatically — every handoff is an explicit action below.</p>
-
-      {props.wavePlan.waves.map((wave) => (
-        <div key={wave.wave} className="design-wave" aria-label={`Wave ${wave.wave}`}>
-          <h3>Wave {wave.wave}</h3>
-          {wave.blockingCycles.length > 0 && (
-            <div className="design-wave-cycles" role="alert">
-              Blocking dependency cycles: {wave.blockingCycles.map((cycle) => cycle.join(' → ')).join('; ')}
-            </div>
-          )}
-          <table className="design-wave-table">
-            <thead>
-              <tr>
-                <th scope="col">Select</th>
-                <th scope="col">Module</th>
-                <th scope="col">Direct dependencies</th>
-                <th scope="col">Allowed paths</th>
-                <th scope="col">Shared resources</th>
-                <th scope="col">Batch eligible</th>
-                <th scope="col">Blocking contracts</th>
-                <th scope="col">Handoff</th>
-              </tr>
-            </thead>
-            <tbody>
-              {wave.modules.map((entry) => (
-                <tr key={entry.moduleId}>
-                  <td>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={selected.has(entry.moduleId)}
-                        onChange={() => toggle(entry.moduleId)}
-                        aria-label={`Select ${nameByModuleId.get(entry.moduleId) ?? entry.moduleId} for a multi-module handoff`}
-                      />
-                    </label>
-                  </td>
-                  <td>{nameByModuleId.get(entry.moduleId) ?? entry.moduleId}</td>
-                  <td>{entry.directDependencyIds.length ? entry.directDependencyIds.join(', ') : 'None'}</td>
-                  <td>{entry.allowedPaths.join(', ') || 'None recorded'}</td>
-                  <td>{entry.sharedResources.length ? entry.sharedResources.join(', ') : 'None'}</td>
-                  <td>{entry.batchEligible ? 'Yes' : 'No'}</td>
-                  <td>{entry.blockingUnapprovedContracts.length ? entry.blockingUnapprovedContracts.join(', ') : 'None'}</td>
-                  <td>
-                    <button type="button" className="btn btn-secondary" onClick={() => props.onCreateHandoff(entry.moduleId)}>
-                      Create Copilot handoff
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <section className="design-waves" aria-label="Implementation plan">
+      <div className="design-waves-heading">
+        <div>
+          <p className="overline">Build · Implementation plan</p>
+          <h2>Build one approved module at a time</h2>
+          <p>Dependency waves explain safe order. Choose the module in the focused handoff workspace below; no work is dispatched from this plan.</p>
         </div>
-      ))}
+        <span>{props.wavePlan.waves.length} wave{props.wavePlan.waves.length === 1 ? '' : 's'} · {props.progress.total} modules</span>
+      </div>
+      {props.currentDesignComplete === false && (
+        <p className="design-result-currency-warning" role="note">
+          These waves describe the last approved Design baseline. {props.progress.total - props.progress.approved} current module design{props.progress.total - props.progress.approved === 1 ? '' : 's'} still require approval and are not included.
+        </p>
+      )}
 
-      <div className="design-waves-multi-select">
-        <h3>Multi-module handoff</h3>
-        <p className="secondary-text">Select two or more independent modules above, then create one combined handoff (§3.3).</p>
+      <div className="design-wave-cards">
+        {props.wavePlan.waves.map((wave, index) => (
+          <details key={wave.wave} className="design-wave" open={index === 0}>
+            <summary>
+              <span>Wave {wave.wave}</span>
+              <b>{wave.modules.length} module{wave.modules.length === 1 ? '' : 's'}</b>
+              <small>{wave.blockingCycles.length
+                ? `${wave.blockingCycles.length} blocking cycle${wave.blockingCycles.length === 1 ? '' : 's'}`
+                : props.currentDesignComplete === false ? 'Approved baseline order' : 'Ready in dependency order'}</small>
+            </summary>
+            {wave.blockingCycles.length > 0 && (
+              <div className="design-wave-cycles" role="alert">
+                <b>Resolve dependency cycles before building this wave.</b>
+                <p>{wave.blockingCycles.map((cycle) => cycle.map((id) => nameByModuleId.get(id) ?? id).join(' → ')).join('; ')}</p>
+              </div>
+            )}
+            <ul className="design-wave-modules">
+              {wave.modules.map((entry) => (
+                <li key={entry.moduleId}>
+                  <div>
+                    <b>{nameByModuleId.get(entry.moduleId) ?? entry.moduleId}</b>
+                    <small>{entry.directDependencyIds.length
+                      ? `Needs ${entry.directDependencyIds.map((id) => nameByModuleId.get(id) ?? id).join(', ')}`
+                      : 'No direct module dependency'}</small>
+                  </div>
+                  <span className={entry.blockingUnapprovedContracts.length ? 'blocked' : 'ready'}>
+                    {entry.blockingUnapprovedContracts.length
+                      ? `${entry.blockingUnapprovedContracts.length} contract blocker${entry.blockingUnapprovedContracts.length === 1 ? '' : 's'}`
+                      : props.currentDesignComplete === false ? 'Baseline ready' : 'Ready'}
+                  </span>
+                  <details>
+                    <summary>Scope</summary>
+                    <dl className="design-definition-grid">
+                      <dt>Owned paths</dt><dd>{entry.allowedPaths.join(', ') || 'None recorded'}</dd>
+                      <dt>Shared resources</dt><dd>{entry.sharedResources.join(', ') || 'None'}</dd>
+                      <dt>Batch safe</dt><dd>{entry.batchEligible ? 'Yes' : 'No'}</dd>
+                    </dl>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          </details>
+        ))}
+      </div>
 
-        {/* §3.3 / review finding #2 — real user confirmations; an unchecked box is passed through as `false` and the core diagnostics (not a client-side guess) explain why no packet was created. */}
-        <label className="design-waves-confirm">
-          <input type="checkbox" checked={userConfirmedIndependence} onChange={(event) => setUserConfirmedIndependence(event.target.checked)} />
-          I confirm these modules are independent
-        </label>
-        <label className="design-waves-confirm">
-          <input type="checkbox" checked={receivingAgentSupportsCombinedTask} onChange={(event) => setReceivingAgentSupportsCombinedTask(event.target.checked)} />
-          The receiving agent supports this combined task
-        </label>
-
-        {selected.size > 0 && (
-          <fieldset className="design-waves-fixture-confirm">
-            <legend>Fixture isolation</legend>
-            {[...selected].map((moduleId) => {
-              const name = nameByModuleId.get(moduleId) ?? moduleId
-              return (
+      {props.mode !== 'project' && (
+        <details className="design-waves-multi-select">
+          <summary>Advanced sample: combine independent modules</summary>
+          <p className="secondary-text">This sample-only path demonstrates the extra confirmations required for a combined packet. Live projects do not advertise this unsupported path.</p>
+          <div className="design-waves-module-checks">
+            {props.wavePlan.waves.flatMap((wave) => wave.modules).map((entry) => (
+              <label key={entry.moduleId}>
+                <input type="checkbox" checked={selected.has(entry.moduleId)} onChange={() => toggle(entry.moduleId)} aria-label={`Select ${nameByModuleId.get(entry.moduleId) ?? entry.moduleId} for a multi-module handoff`} />
+                {nameByModuleId.get(entry.moduleId) ?? entry.moduleId}
+              </label>
+            ))}
+          </div>
+          <label className="design-waves-confirm">
+            <input type="checkbox" checked={userConfirmedIndependence} onChange={(event) => setUserConfirmedIndependence(event.target.checked)} />
+            I confirm these modules are independent
+          </label>
+          <label className="design-waves-confirm">
+            <input type="checkbox" checked={receivingAgentSupportsCombinedTask} onChange={(event) => setReceivingAgentSupportsCombinedTask(event.target.checked)} />
+            The receiving agent supports this combined task
+          </label>
+          {selected.size > 0 && (
+            <fieldset className="design-waves-fixture-confirm">
+              <legend>Fixture isolation</legend>
+              {[...selected].map((moduleId) => (
                 <label key={moduleId}>
                   <input
                     type="checkbox"
                     checked={fixtureIsolationConfirmedByModuleId[moduleId] ?? false}
-                    onChange={() => toggleFixtureIsolation(moduleId)}
-                    aria-label={`Fixtures and external resources are isolated: ${name}`}
+                    onChange={() => setFixtureIsolationConfirmedByModuleId((current) => ({ ...current, [moduleId]: !current[moduleId] }))}
+                    aria-label={`Fixtures and external resources are isolated: ${nameByModuleId.get(moduleId) ?? moduleId}`}
                   />
-                  Fixtures and external resources are isolated ({name})
+                  Fixtures and external resources are isolated ({nameByModuleId.get(moduleId) ?? moduleId})
                 </label>
-              )
+              ))}
+            </fieldset>
+          )}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={selected.size < 2}
+            onClick={() => props.onCreateMultiModuleHandoff([...selected], {
+              userConfirmedIndependence,
+              receivingAgentSupportsCombinedTask,
+              fixtureIsolationConfirmedByModuleId,
             })}
-          </fieldset>
-        )}
-
-        {isProjectMode && (
-          <p className="secondary-text" role="note">
-            Multi-module handoff is not available in project mode yet; use the single-module Copilot handoff instead.
-          </p>
-        )}
-
-        <button type="button" className="btn btn-primary" disabled={selected.size < 2} onClick={createMultiModuleHandoff}>
-          Create multi-module handoff ({selected.size} selected)
-        </button>
-        {props.multiModuleHandoff && (
-          <div className="design-waves-multi-result" role="status" aria-live="polite">
-            {props.multiModuleHandoff.result.ok ? (
-              <p>Created {props.multiModuleHandoff.result.packets?.length ?? 0} implementation packets.</p>
-            ) : (
-              <ul className="design-error-summary" aria-label="Multi-module handoff diagnostics">
-                {props.multiModuleHandoff.result.diagnostics.map((diagnostic, index) => (
-                  <li key={`${diagnostic.code}.${index}`}>{diagnostic.message}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-      </div>
+          >
+            Create multi-module handoff ({selected.size} selected)
+          </button>
+          {props.multiModuleHandoff && (
+            <div className="design-waves-multi-result" role="status" aria-live="polite">
+              {props.multiModuleHandoff.result.ok ? (
+                <p>Created {props.multiModuleHandoff.result.packets?.length ?? 0} implementation packets.</p>
+              ) : (
+                <ul className="design-error-summary" aria-label="Multi-module handoff diagnostics">
+                  {props.multiModuleHandoff.result.diagnostics.map((diagnostic, index) => <li key={`${diagnostic.code}.${index}`}>{diagnostic.message}</li>)}
+                </ul>
+              )}
+            </div>
+          )}
+        </details>
+      )}
     </section>
   )
 }

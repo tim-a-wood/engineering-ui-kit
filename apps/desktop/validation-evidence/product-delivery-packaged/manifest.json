@@ -1,0 +1,25 @@
+{
+  "journey": "product-delivery",
+  "packaged": true,
+  "passed": true,
+  "screenshots": [
+    "apps/desktop/validation-evidence/product-delivery-packaged/01-plan-describe.png",
+    "apps/desktop/validation-evidence/product-delivery-packaged/02-plan-approved.png",
+    "apps/desktop/validation-evidence/product-delivery-packaged/03-system-approved.png",
+    "apps/desktop/validation-evidence/product-delivery-packaged/04-module-approved.png",
+    "apps/desktop/validation-evidence/product-delivery-packaged/05-build-applied.png",
+    "apps/desktop/validation-evidence/product-delivery-packaged/06-connect-verified.png",
+    "apps/desktop/validation-evidence/product-delivery-packaged/07-verify-passed.png",
+    "apps/desktop/validation-evidence/product-delivery-packaged/08-evidence-trace.png",
+    "apps/desktop/validation-evidence/product-delivery-packaged/09-evidence-original.png",
+    "apps/desktop/validation-evidence/product-delivery-packaged/10-route-restored.png",
+    "apps/desktop/validation-evidence/product-delivery-packaged/11-restart-restored.png"
+  ],
+  "rendererErrors": [],
+  "startedAt": "2026-07-26T16:38:08.834Z",
+  "currentRoute": "#capabilities/evidence?mode=guided&module=mod.focused-core&run=run.f219692a-11d9-47ef-b561-9a421e979b57.use-case-analysis.a-release-manager-runs-a-repository-local-command-t-9edf1e3717d1.use-case.main.scenario.failure-1-never-replace-the-last-approved-result-af-d2529b694584.runScenario.b9391e1c-356e-4b18-94d0-91c917a96b0a.15&artifact=design-evidence%3A%2F%2F260c4bd5-b896-4d3c-a5f6-3b58b5034133%2F01-d729543cdec3be59.png",
+  "routeRestored": true,
+  "restartDeepLinkRestored": true,
+  "restartRestored": true,
+  "completedAt": "2026-07-26T16:38:19.350Z"
+}
