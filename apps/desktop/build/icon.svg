@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Engineering UI Kit">
+  <defs>
+    <linearGradient id="surface" x1="128" y1="96" x2="896" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#18233d"/>
+      <stop offset="1" stop-color="#08101f"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="280" y1="224" x2="744" y2="808" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f7f9ff"/>
+      <stop offset="1" stop-color="#9cb4ff"/>
+    </linearGradient>
+  </defs>
+  <rect x="32" y="32" width="960" height="960" rx="216" fill="url(#surface)"/>
+  <rect x="56" y="56" width="912" height="912" rx="192" fill="none" stroke="#30405f" stroke-width="12"/>
+  <path d="M512 206 758 340 512 474 266 340 512 206Z" fill="#16284d" stroke="url(#edge)" stroke-width="46" stroke-linejoin="round"/>
+  <path d="M266 340v292l246 150V474L266 340Z" fill="#101c35" stroke="url(#edge)" stroke-width="46" stroke-linejoin="round"/>
+  <path d="M758 340v292L512 782V474l246-134Z" fill="#0d1830" stroke="url(#edge)" stroke-width="46" stroke-linejoin="round"/>
+  <path d="M512 474v308" fill="none" stroke="#5478ff" stroke-width="48" stroke-linecap="round"/>
+  <circle cx="758" cy="632" r="28" fill="#5478ff"/>
+</svg>

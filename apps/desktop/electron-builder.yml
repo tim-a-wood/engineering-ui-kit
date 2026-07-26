@@ -45,6 +45,7 @@ extraResources:
 extraMetadata:
   main: dist/main.js
 win:
+  icon: build/icon.ico
   target:
     - nsis
     - zip
@@ -58,10 +59,12 @@ mac:
   # auto-discovery so a developer certificate cannot make otherwise identical
   # local/CI packaging nondeterministic (or fail on downloaded Electron xattrs).
   identity: null
+  icon: build/icon.icns
   target:
     - zip
   artifactName: engineering-ui-kit-${version}-mac-${arch}.${ext}
 linux:
+  icon: build/icon.png
   target:
     - AppImage
     - tar.gz
