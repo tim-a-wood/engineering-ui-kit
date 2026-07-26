@@ -143,6 +143,34 @@ test("uses direct task labels in the briefing and mockup", async () => {
   }
 });
 
+test("uses one UML 2.5.1 semantic symbology library", async () => {
+  const mockup = await readText(new URL("public/mockup.html", siteRoot));
+
+  assert.match(mockup, /const UML_SYMBOLOGY = Object\.freeze/);
+  assert.match(mockup, /standard: 'UML 2\.5\.1'/);
+  assert.match(mockup, /section: '18\.1\.4'/);
+  assert.match(mockup, /section: '11\.3\.4'/);
+  assert.match(mockup, /section: '11\.6\.4'/);
+  assert.match(mockup, /data-uml-symbol="\$\{name\}"/);
+  assert.match(mockup, /stroke-linecap="round" stroke-linejoin="round"/);
+  assert.match(mockup, /data-uml-symbol-part="port"/);
+  assert.match(mockup, /data-uml-symbol-part="required-interface"/);
+  assert.match(mockup, /data-uml-symbol-part="provided-interface"/);
+  assert.match(mockup, /umlSymbol\('assemblyConnector'\)/);
+  assert.match(mockup, /umlSymbol\('actor'\)/);
+  assert.match(mockup, /umlSymbol\('decision'\)/);
+  assert.match(mockup, /umlSymbol\('merge'\)/);
+  assert.match(mockup, /umlSymbol\('initial'\)/);
+  assert.match(mockup, /umlSymbol\('final'\)/);
+  assert.match(mockup, /route\(\[\[121,138\],\[280,97\]\], \{kind:'association'\}\)/);
+  assert.match(mockup, /route\(\[\[690,97\],\[805,138\]\], \{kind:'association'\}\)/);
+  assert.match(mockup, /route\(\[\[468,197\],\[484,197\],\[484,97\],\[502,97\]\], \{kind:'include'\}\)/);
+  assert.match(mockup, /route\(\[\[596,162\],\[596,132\]\], \{kind:'extend'\}\)/);
+  assert.doesNotMatch(mockup, /uml-stick-figure/);
+  assert.doesNotMatch(mockup, /uml-interface-symbol/);
+  assert.doesNotMatch(mockup, /<span>\?<\/span>/);
+});
+
 test("uses ASD-STE100 language in the workflow interface", async () => {
   const mockup = await readText(new URL("public/mockup.html", siteRoot));
 
