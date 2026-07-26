@@ -2131,21 +2131,26 @@
     .uml-link-label {
       display: grid;
       place-content: center;
-      padding: 3px 7px;
-      border: 1px solid rgba(148, 163, 184, .12);
-      border-radius: 4px;
-      color: #a8b3c7;
-      background: rgba(8, 15, 27, .94);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, .18);
-      font: 9px var(--mono);
-      line-height: 1.2;
+      padding: 1px 4px;
+      border: 0;
+      border-radius: 2px;
+      color: #b8c2d2;
+      background: rgba(8, 15, 27, .90);
+      box-shadow: none;
+      font: 8.75px var(--mono);
+      line-height: 1.15;
       text-align: center;
+      white-space: nowrap;
     }
     .uml-link-label strong { color: var(--secondary); font-weight: 400; }
-    .uml-link-label:hover, .uml-link-label:focus-visible {
+    .uml-stage .uml-link-label:hover,
+    .uml-stage .uml-link-label:focus-visible {
+      z-index: 6;
+      transform: none;
       color: var(--secondary);
-      border-color: rgba(84, 120, 255, .48);
-      background: #15203a;
+      border: 0;
+      background: rgba(21, 32, 58, .96);
+      box-shadow: 0 0 0 1px rgba(84, 120, 255, .48);
     }
     .uml-partition {
       position: absolute;
@@ -4061,10 +4066,153 @@
       })
     });
 
+    const UML_CONNECTORS = Object.freeze({
+      component: Object.freeze({
+        dependencyIn: Object.freeze({
+          kind: 'dependency',
+          points: Object.freeze([[126,210],[126,261],[350,261],[350,212]]),
+          label: Object.freeze({x:238,y:239})
+        }),
+        dependencyOut: Object.freeze({
+          kind: 'dependency',
+          points: Object.freeze([[570,212],[570,261],[794,261],[794,210]]),
+          label: Object.freeze({x:682,y:239})
+        })
+      }),
+      activity: Object.freeze({
+        start: Object.freeze({kind:'controlFlow',points:Object.freeze([[116,62],[116,78]])}),
+        request: Object.freeze({kind:'controlFlow',points:Object.freeze([[198,104],[708,104]])}),
+        read: Object.freeze({kind:'controlFlow',points:Object.freeze([[791,130],[791,142],[447,142],[447,150]])}),
+        validate: Object.freeze({kind:'controlFlow',points:Object.freeze([[447,206],[447,226]])}),
+        invalid: Object.freeze({
+          kind:'controlFlow',
+          points:Object.freeze([[425,248],[328,248],[328,282]]),
+          label:Object.freeze({x:376,y:228})
+        }),
+        valid: Object.freeze({
+          kind:'controlFlow',
+          points:Object.freeze([[469,248],[572,248],[572,282]]),
+          label:Object.freeze({x:521,y:228})
+        }),
+        preserve: Object.freeze({kind:'controlFlow',points:Object.freeze([[328,334],[328,366],[425,366]])}),
+        publish: Object.freeze({kind:'controlFlow',points:Object.freeze([[572,334],[572,366],[469,366]])}),
+        finish: Object.freeze({kind:'controlFlow',points:Object.freeze([[447,388],[447,402]])})
+      }),
+      state: Object.freeze({
+        create: Object.freeze({
+          kind:'transition',
+          points:Object.freeze([[54,186],[92,186]]),
+          label:Object.freeze({x:73,y:110})
+        }),
+        validate: Object.freeze({
+          kind:'transition',
+          points:Object.freeze([[252,179],[338,179]]),
+          label:Object.freeze({x:295,y:110})
+        }),
+        pass: Object.freeze({
+          kind:'transition',
+          points:Object.freeze([[512,152],[552,152],[552,94],[604,94]]),
+          label:Object.freeze({x:548,y:108})
+        }),
+        baseline: Object.freeze({
+          kind:'transition',
+          points:Object.freeze([[754,94],[766,94]]),
+          label:Object.freeze({x:760,y:22})
+        }),
+        complete: Object.freeze({kind:'transition',points:Object.freeze([[836,146],[836,188],[876,188]])}),
+        fail: Object.freeze({
+          kind:'transition',
+          points:Object.freeze([[512,204],[552,204],[552,302],[604,302]]),
+          label:Object.freeze({x:501,y:254})
+        }),
+        retry: Object.freeze({
+          kind:'transition',
+          points:Object.freeze([[604,342],[520,342],[520,388],[172,388],[172,232]]),
+          label:Object.freeze({x:346,y:370})
+        })
+      }),
+      sequence: Object.freeze({
+        lifelineActor: Object.freeze({kind:'lifeline',points:Object.freeze([[115,74],[115,420]]),width:1}),
+        lifelineBoundary: Object.freeze({kind:'lifeline',points:Object.freeze([[335,74],[335,420]]),width:1}),
+        lifelineControl: Object.freeze({kind:'lifeline',points:Object.freeze([[555,74],[555,420]]),width:1}),
+        lifelineEntity: Object.freeze({kind:'lifeline',points:Object.freeze([[775,74],[775,420]]),width:1}),
+        refresh: Object.freeze({
+          kind:'synchronousMessage',
+          points:Object.freeze([[115,102],[328,102]]),
+          emphasis:true,
+          label:Object.freeze({x:222,y:86})
+        }),
+        start: Object.freeze({
+          kind:'synchronousMessage',
+          points:Object.freeze([[342,142],[548,142]]),
+          emphasis:true,
+          label:Object.freeze({x:445,y:126})
+        }),
+        read: Object.freeze({
+          kind:'synchronousMessage',
+          points:Object.freeze([[562,182],[768,182]]),
+          label:Object.freeze({x:665,y:166})
+        }),
+        current: Object.freeze({
+          kind:'replyMessage',
+          points:Object.freeze([[768,218],[562,218]]),
+          label:Object.freeze({x:665,y:202})
+        }),
+        publish: Object.freeze({
+          kind:'synchronousMessage',
+          points:Object.freeze([[562,272],[768,272]]),
+          label:Object.freeze({x:665,y:256})
+        }),
+        preserve: Object.freeze({
+          kind:'synchronousMessage',
+          points:Object.freeze([[562,338],[768,338]]),
+          label:Object.freeze({x:665,y:322})
+        }),
+        result: Object.freeze({
+          kind:'replyMessage',
+          points:Object.freeze([[548,402],[342,402]]),
+          emphasis:true,
+          label:Object.freeze({x:445,y:386})
+        })
+      }),
+      usecase: Object.freeze({
+        primaryReadiness: Object.freeze({kind:'association',points:Object.freeze([[121,138],[280,97]])}),
+        primaryEvidence: Object.freeze({kind:'association',points:Object.freeze([[103,148],[280,197]])}),
+        primaryExport: Object.freeze({kind:'association',points:Object.freeze([[111,166],[390,307]])}),
+        reviewerEvidence: Object.freeze({kind:'association',points:Object.freeze([[690,97],[805,138]])}),
+        reviewerFinding: Object.freeze({kind:'association',points:Object.freeze([[690,197],[823,148]])}),
+        reviewerExport: Object.freeze({kind:'association',points:Object.freeze([[584,307],[814,166]])}),
+        include: Object.freeze({
+          kind:'include',
+          points:Object.freeze([[468,197],[484,197],[484,97],[502,97]]),
+          label:Object.freeze({x:441,y:147})
+        }),
+        extend: Object.freeze({
+          kind:'extend',
+          points:Object.freeze([[596,162],[596,132]]),
+          label:Object.freeze({x:641,y:147})
+        })
+      })
+    });
+
     function umlSymbol(name, className = '') {
       const symbol = UML_SYMBOLOGY.symbols[name];
       if (!symbol) return '';
       return `<svg class="uml-symbol ${className}" data-uml-symbol="${name}" viewBox="${symbol.viewBox}" aria-hidden="true" focusable="false">${symbol.body}</svg>`;
+    }
+
+    function umlConnectorLabel(config, diagramType, connectorId, width, content, height = 18) {
+      const slot = UML_CONNECTORS[diagramType]?.[connectorId]?.label;
+      if (!slot) return '';
+      return positionedUmlElement(
+        config,
+        'uml-link-label',
+        slot.x - width / 2,
+        slot.y - height / 2,
+        width,
+        height,
+        content
+      );
     }
 
     function registerUmlElement(config) {
@@ -4139,16 +4287,16 @@
             description:`A required socket on ${context.title} joins the ${requiredPort} lollipop that ${downstreamLabel} provides. Both ends use simple boundary ports.`,
             relationships:[`${context.title} requires it`, `${downstreamLabel} provides it`], traceIds:context.stories
           }, 'uml-interface-assembly', 564, 132, 138, 48, `<span>${escapeHtml(requiredPort)}</span>${umlSymbol('assemblyConnector')}`)}
-          ${positionedUmlElement({
+          ${umlConnectorLabel({
               id:`dependency-in-${context.id}`, type:'Dependency', label:`${upstreamLabel} → ${context.title}`,
               description:'A UML dependency from the consumer component to the selected component.',
               relationships:[upstreamLabel, context.title], traceIds:context.stories
-          }, 'uml-link-label', 222, 248, 136, 26, '«use»')}
-          ${positionedUmlElement({
+          }, 'component', 'dependencyIn', 54, '«use»')}
+          ${umlConnectorLabel({
               id:`dependency-out-${context.id}`, type:'Dependency', label:`${context.title} → ${downstreamLabel}`,
               description:'A UML dependency from the selected component to a support component.',
               relationships:[context.title, downstreamLabel], traceIds:context.stories
-          }, 'uml-link-label', 562, 248, 136, 26, '«use»')}`;
+          }, 'component', 'dependencyOut', 54, '«use»')}`;
       return `
         <div class="diagram-caption"><span><b>Component diagram.</b> Provided and required interfaces form explicit assembly connections.</span><span>Dashed open arrows are dependencies.</span></div>
         ${umlStage('component', 324, `UML component diagram for ${context.title}`, content, `${upstreamLabel} uses the ${providedPort} interface that ${context.title} supplies. ${context.title} requires ${requiredPort} from ${downstreamLabel}.`)}`;
@@ -4168,8 +4316,8 @@
         ${positionedUmlElement({id:`activity-read-${context.id}`,type:'Action',label:'Read source set',description:'The source adapter reads the configured source set. It does not change approved evidence.',relationships:[validate],traceIds:context.stories}, 'uml-action-node', 708, 78, 166, 52, 'Read source set')}
         ${positionedUmlElement({id:`activity-validate-${context.id}`,type:'Action',label:validate,description:`${context.title} validates the candidate data before publication.`,relationships:['Valid?'],traceIds:context.stories}, 'uml-action-node primary', 350, 150, 194, 56, escapeHtml(validate))}
         ${positionedUmlElement({id:`activity-decision-${context.id}`,type:'Decision node',label:'Validation result',description:'The validation result selects exactly one guarded flow.',relationships:['[valid]','[invalid]'],traceIds:context.stories}, 'uml-diamond-node', 425, 226, 44, 44, umlSymbol('decision'))}
-        ${positionedUmlElement({id:`activity-guard-valid-${context.id}`,type:'Guarded control flow',label:'[valid]',description:'Publication continues only when all required checks pass.',relationships:[publish],traceIds:context.stories}, 'uml-link-label', 484, 238, 64, 22, '[valid]')}
-        ${positionedUmlElement({id:`activity-guard-invalid-${context.id}`,type:'Guarded control flow',label:'[invalid]',description:'A failed candidate cannot replace the last valid snapshot.',relationships:['Keep last valid'],traceIds:context.stories}, 'uml-link-label', 284, 238, 72, 22, '[invalid]')}
+        ${umlConnectorLabel({id:`activity-guard-valid-${context.id}`,type:'Guarded control flow',label:'[valid]',description:'Publication continues only when all required checks pass.',relationships:[publish],traceIds:context.stories}, 'activity', 'valid', 56, '[valid]')}
+        ${umlConnectorLabel({id:`activity-guard-invalid-${context.id}`,type:'Guarded control flow',label:'[invalid]',description:'A failed candidate cannot replace the last valid snapshot.',relationships:['Keep last valid'],traceIds:context.stories}, 'activity', 'invalid', 64, '[invalid]')}
         ${positionedUmlElement({id:`activity-publish-${context.id}`,type:'Action',label:publish,description:`${context.title} publishes the validated result.`,relationships:['Merge'],traceIds:context.stories}, 'uml-action-node', 488, 282, 168, 52, escapeHtml(publish))}
         ${positionedUmlElement({id:`activity-preserve-${context.id}`,type:'Action',label:'Keep last valid',description:'The application records the failure. The approved snapshot stays available.',relationships:['Merge'],traceIds:context.stories}, 'uml-action-node', 244, 282, 168, 52, 'Keep last valid')}
         ${positionedUmlElement({id:`activity-merge-${context.id}`,type:'Merge node',label:'Merge',description:'The alternative flows return to a common completion path.',relationships:[publish,'Keep last valid','End'],traceIds:context.stories}, 'uml-diamond-node', 425, 344, 44, 44, umlSymbol('merge'))}
@@ -4188,12 +4336,12 @@
         ${positionedUmlElement({id:`state-baselined-${context.id}`,type:'State',label:'Baselined',description:'The application locks the published snapshot to an audit baseline.',relationships:['Final'],traceIds:context.stories}, 'uml-state-node', 766, 42, 140, 104, '<b>Baselined</b><span>entry / lock revision<br>do / retain signature</span>')}
         ${positionedUmlElement({id:`state-failed-${context.id}`,type:'State',label:'Failed',description:'The application keeps the validation evidence. The last valid snapshot stays active.',relationships:['Candidate'],traceIds:context.stories}, 'uml-state-node', 604, 250, 170, 104, '<b>Failed</b><span>entry / record findings<br>do / preserve lastValid</span>')}
         ${positionedUmlElement({id:`state-final-${context.id}`,type:'Final state',label:'Final',description:'The snapshot lifecycle is complete for this baseline.',relationships:['Baselined'],traceIds:context.stories}, 'uml-pseudo-node', 876, 176, 24, 24, umlSymbol('final'))}
-        ${positionedUmlElement({id:`transition-create-${context.id}`,type:'Transition',label:'create / stage',description:'The create operation stages source data for validation.',relationships:['Initial','Candidate'],traceIds:context.stories}, 'uml-link-label', 42, 102, 110, 24, 'create / stage')}
-        ${positionedUmlElement({id:`transition-validate-${context.id}`,type:'Transition',label:'validate [sources complete] / start',description:'Validation starts only when every required source reports a complete read.',relationships:['Candidate','Validating'],traceIds:context.stories}, 'uml-link-label', 236, 94, 162, 34, 'validate [sources complete]<br>/ start')}
-        ${positionedUmlElement({id:`transition-pass-${context.id}`,type:'Transition',label:'pass / publish',description:'A successful validation publishes the candidate snapshot.',relationships:['Validating','Published'],traceIds:context.stories}, 'uml-link-label', 488, 44, 106, 24, 'pass / publish')}
-        ${positionedUmlElement({id:`transition-baseline-${context.id}`,type:'Transition',label:'baseline / sign',description:'The application locks and signs a publication as an audit baseline.',relationships:['Published','Baselined'],traceIds:context.stories}, 'uml-link-label', 702, 8, 112, 24, 'baseline / sign')}
-        ${positionedUmlElement({id:`transition-fail-${context.id}`,type:'Transition',label:'fail / preserve lastValid',description:'The application records validation findings. It does not replace the last valid snapshot.',relationships:['Validating','Failed'],traceIds:context.stories}, 'uml-link-label', 492, 270, 108, 34, 'fail / preserve<br>lastValid')}
-        ${positionedUmlElement({id:`transition-retry-${context.id}`,type:'Transition',label:'retry / clear failure',description:'A reviewer can clear the failure and stage a corrected candidate.',relationships:['Failed','Candidate'],traceIds:context.stories}, 'uml-link-label', 282, 362, 128, 24, 'retry / clear failure')}`;
+        ${umlConnectorLabel({id:`transition-create-${context.id}`,type:'Transition',label:'create / stage',description:'The create operation stages source data for validation.',relationships:['Initial','Candidate'],traceIds:context.stories}, 'state', 'create', 92, 'create / stage')}
+        ${umlConnectorLabel({id:`transition-validate-${context.id}`,type:'Transition',label:'validate [sources complete] / start',description:'Validation starts only when every required source reports a complete read.',relationships:['Candidate','Validating'],traceIds:context.stories}, 'state', 'validate', 168, 'validate [sources complete] / start')}
+        ${umlConnectorLabel({id:`transition-pass-${context.id}`,type:'Transition',label:'pass / publish',description:'A successful validation publishes the candidate snapshot.',relationships:['Validating','Published'],traceIds:context.stories}, 'state', 'pass', 94, 'pass / publish')}
+        ${umlConnectorLabel({id:`transition-baseline-${context.id}`,type:'Transition',label:'baseline / sign',description:'The application locks and signs a publication as an audit baseline.',relationships:['Published','Baselined'],traceIds:context.stories}, 'state', 'baseline', 104, 'baseline / sign')}
+        ${umlConnectorLabel({id:`transition-fail-${context.id}`,type:'Transition',label:'fail / preserve lastValid',description:'The application records validation findings. It does not replace the last valid snapshot.',relationships:['Validating','Failed'],traceIds:context.stories}, 'state', 'fail', 132, 'fail / preserve lastValid')}
+        ${umlConnectorLabel({id:`transition-retry-${context.id}`,type:'Transition',label:'retry / clear failure',description:'A reviewer can clear the failure and stage a corrected candidate.',relationships:['Failed','Candidate'],traceIds:context.stories}, 'state', 'retry', 126, 'retry / clear failure')}`;
       return `
         <div class="diagram-caption"><span><b>State machine diagram.</b> State compartments show behavior. Transitions use trigger [guard] / effect.</span><span>The bullseye is the final state.</span></div>
         ${umlStage('state', 412, `UML state machine diagram for ${context.title}`, content, 'Initial enters Candidate. validate [sources complete] starts Validating. pass publishes the snapshot. baseline locks the publication and ends the process. fail keeps lastValid and enters Failed. retry returns to Candidate.')}`;
@@ -4213,14 +4361,14 @@
         <div class="uml-fragment" data-fragment="alt" style="left:440px;top:232px;width:382px;height:136px">
           <div class="uml-fragment-divider" style="top:68px"></div>
         </div>
-        ${positionedUmlElement({id:`message-refresh-${context.id}`,type:'Synchronous message',label:'1: refreshEvidence()',description:`${actor} requests a controlled evidence refresh.`,relationships:[actor,'Audit workspace'],traceIds:context.stories}, 'uml-link-label', 132, 90, 150, 24, '1: refreshEvidence()')}
-        ${positionedUmlElement({id:`message-start-${context.id}`,type:'Synchronous message',label:'2: refresh(project)',description:`The workspace delegates the refresh to ${context.title}.`,relationships:['Audit workspace',context.title],traceIds:context.stories}, 'uml-link-label', 352, 130, 146, 24, '2: refresh(project)')}
-        ${positionedUmlElement({id:`message-read-${context.id}`,type:'Synchronous message',label:'3: readCurrent()',description:`${context.title} reads the current approved snapshot before it prepares a replacement.`,relationships:[context.title,dependency],traceIds:context.stories}, 'uml-link-label', 574, 170, 136, 24, '3: readCurrent()')}
-        ${positionedUmlElement({id:`message-current-${context.id}`,type:'Reply message',label:'4: currentSnapshot',description:`${dependency} returns the last valid snapshot.`,relationships:[dependency,context.title],traceIds:context.stories}, 'uml-link-label', 594, 206, 126, 24, '4: currentSnapshot')}
+        ${umlConnectorLabel({id:`message-refresh-${context.id}`,type:'Synchronous message',label:'1: refreshEvidence()',description:`${actor} requests a controlled evidence refresh.`,relationships:[actor,'Audit workspace'],traceIds:context.stories}, 'sequence', 'refresh', 142, '1: refreshEvidence()')}
+        ${umlConnectorLabel({id:`message-start-${context.id}`,type:'Synchronous message',label:'2: refresh(project)',description:`The workspace delegates the refresh to ${context.title}.`,relationships:['Audit workspace',context.title],traceIds:context.stories}, 'sequence', 'start', 138, '2: refresh(project)')}
+        ${umlConnectorLabel({id:`message-read-${context.id}`,type:'Synchronous message',label:'3: readCurrent()',description:`${context.title} reads the current approved snapshot before it prepares a replacement.`,relationships:[context.title,dependency],traceIds:context.stories}, 'sequence', 'read', 126, '3: readCurrent()')}
+        ${umlConnectorLabel({id:`message-current-${context.id}`,type:'Reply message',label:'4: currentSnapshot',description:`${dependency} returns the last valid snapshot.`,relationships:[dependency,context.title],traceIds:context.stories}, 'sequence', 'current', 122, '4: currentSnapshot')}
         ${positionedUmlElement({id:`fragment-alt-${context.id}`,type:'Combined fragment',label:'alt valid or invalid candidate',description:'The combined fragment models mutually exclusive valid and invalid publication paths.',relationships:['[valid]','[invalid]'],traceIds:context.stories}, 'uml-link-label', 448, 236, 54, 20, 'alt')}
-        ${positionedUmlElement({id:`message-publish-${context.id}`,type:'Synchronous message',label:'[valid] 5: publish(candidate)',description:'A valid candidate replaces the current snapshot.',relationships:[context.title,dependency,'[valid]'],traceIds:context.stories}, 'uml-link-label', 582, 260, 180, 24, '[valid] 5: publish(candidate)')}
-        ${positionedUmlElement({id:`message-preserve-${context.id}`,type:'Synchronous message',label:'[invalid] 5a: preserveLastValid()',description:'An invalid candidate records its failure. It does not replace approved evidence.',relationships:[context.title,dependency,'[invalid]'],traceIds:context.stories}, 'uml-link-label', 566, 326, 206, 24, '[invalid] 5a: preserveLastValid()')}
-        ${positionedUmlElement({id:`message-result-${context.id}`,type:'Reply message',label:'6: refreshResult',description:`${context.title} returns the controlled refresh outcome to the workspace.`,relationships:[context.title,'Audit workspace'],traceIds:context.stories}, 'uml-link-label', 390, 390, 132, 24, '6: refreshResult')}`;
+        ${umlConnectorLabel({id:`message-publish-${context.id}`,type:'Synchronous message',label:'[valid] 5: publish(candidate)',description:'A valid candidate replaces the current snapshot.',relationships:[context.title,dependency,'[valid]'],traceIds:context.stories}, 'sequence', 'publish', 174, '[valid] 5: publish(candidate)')}
+        ${umlConnectorLabel({id:`message-preserve-${context.id}`,type:'Synchronous message',label:'[invalid] 5a: preserveLastValid()',description:'An invalid candidate records its failure. It does not replace approved evidence.',relationships:[context.title,dependency,'[invalid]'],traceIds:context.stories}, 'sequence', 'preserve', 200, '[invalid] 5a: preserveLastValid()')}
+        ${umlConnectorLabel({id:`message-result-${context.id}`,type:'Reply message',label:'6: refreshResult',description:`${context.title} returns the controlled refresh outcome to the workspace.`,relationships:[context.title,'Audit workspace'],traceIds:context.stories}, 'sequence', 'result', 124, '6: refreshResult')}`;
       return `
         <div class="diagram-caption"><span><b>Sequence diagram.</b> Time moves down. Narrow rectangles are execution specifications.</span><span>Solid lines are calls. Dashed lines are replies.</span></div>
         ${umlStage('sequence', 430, `UML sequence diagram for ${context.title}`, content, `${actor} calls refreshEvidence on the Audit workspace. The workspace calls refresh on ${context.title}. ${context.title} reads the current snapshot from ${dependency}. In the alt fragment, ${dependency} publishes a valid candidate. An invalid candidate keeps the last valid snapshot. The result returns to the workspace.`)}`;
@@ -4247,8 +4395,8 @@
         ${positionedUmlElement({id:`actor-primary-${context.id}`,type:'Actor',label:actor,description:'The engineering role that prepares and checks audit evidence.',relationships:useCases.slice(0,3).map(item => item[1]),traceIds:storyIds}, 'uml-actor-node', 24, 104, 158, 126, `${umlSymbol('actor')}<b>${escapeHtml(actor)}</b>`)}
         ${positionedUmlElement({id:`actor-reviewer-${context.id}`,type:'Actor',label:'Independent reviewer',description:'This role reviews evidence that a different person prepared.',relationships:useCases.slice(1).map(item => item[1]),traceIds:storyIds}, 'uml-actor-node', 744, 104, 158, 126, `${umlSymbol('actor')}<b>Independent reviewer</b>`)}
         ${useCaseNodes}
-        ${positionedUmlElement({id:`include-${context.id}`,type:'Include relationship',label:'Refresh evidence safely includes Examine lifecycle evidence',description:'Refresh evidence always includes evidence examination and trace resolution.',relationships:[useCases[2][0],useCases[1][0]],traceIds:storyIds}, 'uml-link-label', 426, 124, 88, 24, '«include»')}
-        ${positionedUmlElement({id:`extend-${context.id}`,type:'Extend relationship',label:'Review finding independently extends Examine lifecycle evidence',description:'Independent review is optional behavior at the review extension point.',relationships:[useCases[3][0],useCases[1][0]],traceIds:storyIds}, 'uml-link-label', 604, 132, 82, 24, '«extend»')}`;
+        ${umlConnectorLabel({id:`include-${context.id}`,type:'Include relationship',label:'Refresh evidence safely includes Examine lifecycle evidence',description:'Refresh evidence always includes evidence examination and trace resolution.',relationships:[useCases[2][0],useCases[1][0]],traceIds:storyIds}, 'usecase', 'include', 74, '«include»')}
+        ${umlConnectorLabel({id:`extend-${context.id}`,type:'Extend relationship',label:'Review finding independently extends Examine lifecycle evidence',description:'Independent review is optional behavior at the review extension point.',relationships:[useCases[3][0],useCases[1][0]],traceIds:storyIds}, 'usecase', 'extend', 68, '«extend»')}`;
       return `
         <div class="diagram-caption"><span><b>Use case diagram.</b> Actors remain outside the named system boundary.</span><span>Dashed open arrows show «include» and «extend».</span></div>
         ${umlStage('usecase', 414, `UML use case diagram for ${context.title}`, content, `${actor} uses certification readiness, lifecycle evidence, and safe evidence refresh behaviors. The independent reviewer examines evidence and reviews findings. The Refresh Evidence use case includes evidence examination. Independent review extends evidence examination.`)}`;
@@ -4271,18 +4419,22 @@
       const styles = getComputedStyle(document.documentElement);
       const lineColor = styles.getPropertyValue('--muted').trim() || '#8d99ae';
       const emphasisColor = styles.getPropertyValue('--accent-text').trim() || '#7c9cff';
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+      ctx.lineCap = 'butt';
+      ctx.lineJoin = 'miter';
+      ctx.miterLimit = 2;
 
       function arrowHead(from, to, color, open = false) {
         const angle = Math.atan2(to[1] - from[1], to[0] - from[0]);
-        const length = 8;
-        const spread = Math.PI / 7;
+        const length = 7;
+        const spread = Math.PI / 6;
         const left = [to[0] - length * Math.cos(angle - spread), to[1] - length * Math.sin(angle - spread)];
         const right = [to[0] - length * Math.cos(angle + spread), to[1] - length * Math.sin(angle + spread)];
         ctx.save();
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
+        ctx.lineWidth = 1.35;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'miter';
         ctx.beginPath();
         ctx.moveTo(left[0], left[1]);
         ctx.lineTo(to[0], to[1]);
@@ -4302,8 +4454,8 @@
         const dash = options.dash ? [6, 5] : edge.dash;
         const arrow = options.arrow === false ? 'none' : (options.open ? 'open' : edge.arrow);
         ctx.save();
-        ctx.strokeStyle = 'rgba(4, 9, 17, .92)';
-        ctx.lineWidth = width + 3;
+        ctx.strokeStyle = 'rgba(4, 9, 17, .84)';
+        ctx.lineWidth = width + 2.2;
         ctx.setLineDash(dash);
         ctx.beginPath();
         points.forEach((point, index) => index ? ctx.lineTo(point[0], point[1]) : ctx.moveTo(point[0], point[1]));
@@ -4318,46 +4470,9 @@
         ctx.restore();
       }
 
-      if (type === 'component') {
-        route([[126,210],[126,261],[350,261],[350,212]], {kind:'dependency'});
-        route([[570,212],[570,261],[794,261],[794,210]], {kind:'dependency'});
-      } else if (type === 'activity') {
-        route([[116,62],[116,78]], {kind:'controlFlow'});
-        route([[198,104],[708,104]], {kind:'controlFlow'});
-        route([[791,130],[791,142],[447,142],[447,150]], {kind:'controlFlow'});
-        route([[447,206],[447,226]], {kind:'controlFlow'});
-        route([[425,248],[328,248],[328,282]], {kind:'controlFlow'});
-        route([[469,248],[572,248],[572,282]], {kind:'controlFlow'});
-        route([[328,334],[328,366],[425,366]], {kind:'controlFlow'});
-        route([[572,334],[572,366],[469,366]], {kind:'controlFlow'});
-        route([[447,388],[447,402]], {kind:'controlFlow'});
-      } else if (type === 'state') {
-        route([[54,186],[92,186]], {kind:'transition'});
-        route([[252,179],[338,179]], {kind:'transition'});
-        route([[512,152],[552,152],[552,94],[604,94]], {kind:'transition'});
-        route([[754,94],[766,94]], {kind:'transition'});
-        route([[836,146],[836,188],[876,188]], {kind:'transition'});
-        route([[512,204],[552,204],[552,302],[604,302]], {kind:'transition'});
-        route([[604,342],[520,342],[520,388],[172,388],[172,232]], {kind:'transition'});
-      } else if (type === 'sequence') {
-        [115,335,555,775].forEach(x => route([[x,74],[x,420]], {kind:'lifeline',width:1}));
-        route([[115,102],[328,102]], {kind:'synchronousMessage',emphasis:true});
-        route([[342,142],[548,142]], {kind:'synchronousMessage',emphasis:true});
-        route([[562,182],[768,182]], {kind:'synchronousMessage'});
-        route([[768,218],[562,218]], {kind:'replyMessage'});
-        route([[562,272],[768,272]], {kind:'synchronousMessage'});
-        route([[562,338],[768,338]], {kind:'synchronousMessage'});
-        route([[548,402],[342,402]], {kind:'replyMessage',emphasis:true});
-      } else if (type === 'usecase') {
-        route([[121,138],[280,97]], {kind:'association'});
-        route([[103,148],[280,197]], {kind:'association'});
-        route([[111,166],[390,307]], {kind:'association'});
-        route([[690,97],[805,138]], {kind:'association'});
-        route([[690,197],[823,148]], {kind:'association'});
-        route([[584,307],[814,166]], {kind:'association'});
-        route([[468,197],[484,197],[484,97],[502,97]], {kind:'include'});
-        route([[596,162],[596,132]], {kind:'extend'});
-      }
+      Object.values(UML_CONNECTORS[type] || {}).forEach(connector => {
+        route(connector.points, connector);
+      });
     }
 
     function renderDetailDiagram() {
