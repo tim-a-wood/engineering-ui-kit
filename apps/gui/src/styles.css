@@ -7017,8 +7017,8 @@ code.path-wrap {
 .design-workspace {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-spacing-4);
-  width: min(100%, 100rem);
+  gap: var(--semantic-spacing-3);
+  width: min(100%, 94rem);
   margin-inline: auto;
 }
 
@@ -7032,15 +7032,27 @@ code.path-wrap {
 }
 
 .design-sample-banner {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--semantic-spacing-3);
-  min-height: 44px;
+  min-height: 40px;
   margin: 0;
-  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
-  border: 1px solid color-mix(in srgb, var(--semantic-status-info) 38%, var(--semantic-border-subtle));
-  border-radius: var(--semantic-radius-md);
-  background: var(--semantic-status-info-tint);
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3) var(--semantic-spacing-2) calc(var(--semantic-spacing-3) + 12px);
+  border: 1px solid color-mix(in srgb, var(--semantic-status-info) 24%, var(--semantic-border-subtle));
+  border-radius: var(--semantic-radius-sm);
+  background: color-mix(in srgb, var(--semantic-status-info-tint) 52%, transparent);
+}
+
+.design-sample-banner::before {
+  position: absolute;
+  left: var(--semantic-spacing-3);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--semantic-status-info);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--semantic-status-info) 12%, transparent);
+  content: '';
 }
 
 .design-sample-banner > div {
@@ -7071,11 +7083,9 @@ code.path-wrap {
   grid-template-columns: minmax(13rem, auto) minmax(0, 1fr);
   gap: var(--semantic-spacing-2) var(--semantic-spacing-5);
   align-items: center;
-  padding: var(--semantic-spacing-3) var(--semantic-spacing-4);
-  border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
-  background: color-mix(in srgb, var(--semantic-surface-panel) 94%, transparent);
-  box-shadow: var(--semantic-shadow-sm);
+  padding: var(--semantic-spacing-2) 0 var(--semantic-spacing-3);
+  border-bottom: 1px solid var(--semantic-border-subtle);
+  background: transparent;
 }
 
 .design-workspace-header-controls {
@@ -7092,31 +7102,31 @@ code.path-wrap {
   align-items: center;
   justify-content: space-between;
   gap: var(--semantic-spacing-4);
-  padding-top: var(--semantic-spacing-2);
+  padding-top: var(--semantic-spacing-1);
   border-top: 1px solid var(--semantic-border-subtle);
 }
 
 .design-projection-switch {
   display: inline-flex;
-  padding: 3px;
+  padding: 2px;
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: 999px;
-  background: var(--semantic-surface-inset);
+  border-radius: var(--semantic-radius-sm);
+  background: transparent;
 }
 
 .design-projection-switch button {
-  min-height: 30px;
-  padding: 2px var(--semantic-spacing-3);
+  min-height: 28px;
+  padding: 2px var(--semantic-spacing-2);
   border: 0;
-  border-radius: 999px;
+  border-radius: calc(var(--semantic-radius-sm) - 2px);
   background: transparent;
   color: var(--semantic-text-muted);
   cursor: pointer;
 }
 
 .design-projection-switch button.active {
-  background: var(--semantic-surface-panel-raised);
-  box-shadow: var(--semantic-shadow-sm);
+  background: var(--semantic-surface-inset);
+  box-shadow: inset 0 0 0 1px var(--semantic-border-subtle);
   color: var(--semantic-text-primary);
 }
 
@@ -7147,19 +7157,28 @@ code.path-wrap {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
-  background: color-mix(in srgb, var(--semantic-surface-panel) 88%, transparent);
-  box-shadow: var(--semantic-shadow-sm);
+  border-block: 1px solid var(--semantic-border-subtle);
+  background: transparent;
   list-style: none;
 }
 
 .design-journey-rail li {
+  position: relative;
   min-width: 0;
 }
 
 .design-journey-rail li + li {
-  border-left: 1px solid var(--semantic-border-subtle);
+  border-left: 0;
+}
+
+.design-journey-rail li + li::before {
+  position: absolute;
+  top: 24px;
+  left: -18px;
+  width: 36px;
+  height: 1px;
+  background: var(--semantic-border-subtle);
+  content: '';
 }
 
 .design-journey-rail button {
@@ -7167,8 +7186,8 @@ code.path-wrap {
   align-items: center;
   gap: var(--semantic-spacing-2);
   width: 100%;
-  min-height: 64px;
-  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  min-height: 50px;
+  padding: var(--semantic-spacing-1) var(--semantic-spacing-2);
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
@@ -7178,11 +7197,12 @@ code.path-wrap {
 }
 
 .design-journey-rail button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--semantic-surface-panel-raised) 48%, transparent);
+  background: color-mix(in srgb, var(--semantic-surface-panel-raised) 32%, transparent);
 }
 
 .design-journey-rail li.viewing button {
   border-bottom-color: var(--semantic-accent-primary);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--semantic-accent-primary-tint) 48%, transparent));
   color: var(--semantic-text-primary);
 }
 
@@ -7198,27 +7218,25 @@ code.path-wrap {
 }
 
 .design-journey-rail button small {
-  display: -webkit-box;
+  display: block;
   overflow: hidden;
   color: var(--semantic-text-muted);
-  font-size: 11px;
-  line-height: 1.15;
-  text-overflow: clip;
-  white-space: normal;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  font-size: 10.5px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .design-journey-marker {
   display: inline-grid;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   flex: 0 0 auto;
   place-items: center;
   border: 1px solid var(--semantic-border-strong);
   border-radius: 50%;
   color: var(--semantic-text-muted);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
 }
 
@@ -7238,7 +7256,7 @@ code.path-wrap {
   align-items: center;
   justify-content: space-between;
   gap: var(--semantic-spacing-4);
-  padding: 0 var(--semantic-spacing-1) var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-1) 0 var(--semantic-spacing-3);
   border-bottom: 1px solid var(--semantic-border-subtle);
 }
 
@@ -7248,14 +7266,15 @@ code.path-wrap {
 
 .design-guided-stage-heading > div {
   display: grid;
-  gap: var(--semantic-spacing-1);
+  gap: 2px;
 }
 
 .design-guided-stage-heading > span {
   flex: 0 0 auto;
-  padding: var(--semantic-spacing-1) var(--semantic-spacing-2);
-  border-radius: 999px;
-  background: var(--semantic-surface-inset);
+  padding: 3px var(--semantic-spacing-2);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  background: transparent;
   color: var(--semantic-text-secondary);
   font-size: var(--semantic-typography-size-sm);
 }
@@ -7266,6 +7285,13 @@ code.path-wrap {
 
 .design-workspace-header h1 {
   margin: 0;
+  font-size: 1.75rem;
+  letter-spacing: -.025em;
+}
+
+.design-guided-stage-heading h2 {
+  font-size: 1.35rem;
+  letter-spacing: -.015em;
 }
 
 .design-system-status {
@@ -7282,8 +7308,8 @@ code.path-wrap {
 
 .design-workspace-body {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) 260px;
-  gap: var(--semantic-spacing-3);
+  grid-template-columns: 252px minmax(0, 1fr) 228px;
+  gap: var(--semantic-spacing-2);
   align-items: start;
 }
 
@@ -7344,10 +7370,10 @@ code.path-wrap {
 .design-queue {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-spacing-3);
-  padding: var(--semantic-spacing-3);
+  gap: var(--semantic-spacing-2);
+  padding: var(--semantic-spacing-2);
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
+  border-radius: var(--semantic-radius-sm);
   background: var(--semantic-surface-panel);
 }
 
@@ -7367,10 +7393,10 @@ code.path-wrap {
   border-radius: 999px;
   background: transparent;
   color: var(--semantic-text-secondary);
-  padding: 4px var(--semantic-spacing-2);
+  padding: 2px var(--semantic-spacing-2);
   font-size: var(--semantic-typography-size-sm);
   cursor: pointer;
-  min-height: 32px;
+  min-height: 28px;
 }
 
 .design-filter-chip.active {
@@ -7411,9 +7437,9 @@ code.path-wrap {
   gap: var(--semantic-spacing-2);
   align-items: flex-start;
   text-align: left;
-  border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
-  background: var(--semantic-surface-panel-raised);
+  border: 1px solid transparent;
+  border-radius: var(--semantic-radius-sm);
+  background: transparent;
   color: var(--semantic-text-primary);
   padding: var(--semantic-spacing-2);
   cursor: pointer;
@@ -7421,8 +7447,9 @@ code.path-wrap {
 }
 
 .design-queue-row.selected .design-queue-row-button {
-  border-color: var(--semantic-border-focus);
-  box-shadow: var(--semantic-focus-ring-offset);
+  border-color: color-mix(in srgb, var(--semantic-border-focus) 55%, var(--semantic-border-subtle));
+  background: color-mix(in srgb, var(--semantic-accent-primary-tint) 52%, transparent);
+  box-shadow: inset 2px 0 var(--semantic-accent-primary);
 }
 
 .design-queue-row-order {
@@ -7489,10 +7516,10 @@ code.path-wrap {
 .design-session {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-spacing-4);
-  padding: var(--semantic-spacing-4);
+  gap: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-3);
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
+  border-radius: var(--semantic-radius-sm);
   background: var(--semantic-surface-panel);
 }
 
@@ -7525,17 +7552,19 @@ code.path-wrap {
 }
 
 .design-session-step button {
-  min-height: 44px;
+  min-height: 36px;
   padding: var(--semantic-spacing-1) var(--semantic-spacing-2);
-  border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-sm);
-  background: var(--semantic-surface-panel-raised);
+  border: 1px solid transparent;
+  border-bottom-color: var(--semantic-border-subtle);
+  border-radius: 0;
+  background: transparent;
   color: var(--semantic-text-secondary);
   cursor: pointer;
 }
 
 .design-session-step.current button {
   border-color: var(--semantic-border-focus);
+  border-width: 0 0 2px;
   color: var(--semantic-text-primary);
   font-weight: var(--semantic-typography-weight-medium);
 }
@@ -7643,9 +7672,9 @@ code.path-wrap {
   display: flex;
   flex-direction: column;
   gap: var(--semantic-spacing-2);
-  padding: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-2);
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
+  border-radius: var(--semantic-radius-sm);
   background: var(--semantic-surface-panel);
 }
 
@@ -7656,7 +7685,7 @@ code.path-wrap {
   color: var(--semantic-text-primary);
   font-weight: var(--semantic-typography-weight-medium);
   cursor: pointer;
-  min-height: 44px;
+  min-height: 36px;
 }
 
 .design-context-content h3 {
@@ -7674,10 +7703,10 @@ code.path-wrap {
 
 .design-canvas {
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
-  background: var(--semantic-surface-panel);
-  padding: var(--semantic-spacing-4);
-  box-shadow: var(--semantic-shadow-sm);
+  border-radius: var(--semantic-radius-sm);
+  background: color-mix(in srgb, var(--semantic-surface-panel) 86%, transparent);
+  padding: var(--semantic-spacing-3);
+  box-shadow: none;
 }
 
 .design-canvas-header {
@@ -7685,7 +7714,7 @@ code.path-wrap {
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--semantic-spacing-4);
-  margin-bottom: var(--semantic-spacing-3);
+  margin-bottom: var(--semantic-spacing-2);
 }
 
 .design-canvas-header > div {
@@ -7706,8 +7735,8 @@ code.path-wrap {
   flex: 0 0 auto;
   padding: 4px var(--semantic-spacing-2);
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: 999px;
-  background: var(--semantic-surface-inset);
+  border-radius: var(--semantic-radius-sm);
+  background: transparent;
   color: var(--semantic-text-muted);
   font-size: var(--semantic-typography-size-sm);
 }
@@ -7717,12 +7746,11 @@ code.path-wrap {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--semantic-spacing-3);
-  margin-bottom: var(--semantic-spacing-3);
-  padding: var(--semantic-spacing-1);
-  border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-sm);
-  background: var(--semantic-surface-inset);
+  gap: var(--semantic-spacing-2);
+  margin: 0 calc(var(--semantic-spacing-1) * -1) var(--semantic-spacing-2);
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .design-canvas-toolbar > div {
@@ -7732,8 +7760,8 @@ code.path-wrap {
 }
 
 .design-canvas-toolbar button {
-  min-height: 34px;
-  min-width: 36px;
+  min-height: 32px;
+  min-width: 32px;
   border-radius: var(--semantic-radius-sm);
   border: 1px solid transparent;
   background: transparent;
@@ -7745,7 +7773,7 @@ code.path-wrap {
   border-color: var(--semantic-border-subtle);
   background: var(--semantic-surface-panel-raised);
   color: var(--semantic-text-primary);
-  box-shadow: var(--semantic-shadow-sm);
+  box-shadow: none;
 }
 
 .design-canvas-zoom-level {
@@ -7756,15 +7784,16 @@ code.path-wrap {
 
 .design-canvas-viewport {
   position: relative;
-  min-height: 34rem;
+  min-height: 36rem;
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-sm);
   overflow: auto;
   background:
-    radial-gradient(circle at center, color-mix(in srgb, var(--semantic-border-strong) 48%, transparent) 1px, transparent 1.2px),
+    linear-gradient(color-mix(in srgb, var(--semantic-border-subtle) 18%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--semantic-border-subtle) 18%, transparent) 1px, transparent 1px),
     var(--semantic-surface-canvas);
-  background-size: 22px 22px;
-  box-shadow: inset 0 1px 2px color-mix(in srgb, black 10%, transparent);
+  background-size: 32px 32px;
+  box-shadow: inset 0 1px color-mix(in srgb, white 2%, transparent);
   touch-action: none;
 }
 
@@ -7779,60 +7808,68 @@ code.path-wrap {
 }
 
 .design-canvas-node rect {
-  fill: var(--semantic-surface-panel-raised);
-  stroke: var(--semantic-border-strong);
-  stroke-width: 1.5;
+  fill: color-mix(in srgb, var(--semantic-surface-panel-raised) 92%, var(--semantic-surface-canvas));
+  stroke: color-mix(in srgb, var(--semantic-border-strong) 82%, transparent);
+  stroke-width: 1.2;
 }
 
 .design-canvas-component-mark rect {
   fill: var(--semantic-surface-inset);
   stroke: var(--semantic-accent-primary);
-  stroke-width: 1.2;
+  stroke-width: 1.05;
 }
 
 .design-canvas-node:focus-visible rect,
 .design-canvas-node.selected rect {
   stroke: var(--semantic-border-focus);
-  stroke-width: 2.5;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--semantic-accent-primary) 22%, transparent));
 }
 
 .design-canvas-node text {
   fill: var(--semantic-text-primary);
-  font-size: 11px;
+  font-size: 10.5px;
 }
 
 .design-canvas-node-title {
-  font-weight: var(--semantic-typography-weight-medium);
+  font-weight: var(--semantic-typography-weight-semibold);
 }
 
-.design-canvas-node-meta,
+.design-canvas-node-meta {
+  fill: color-mix(in srgb, var(--semantic-accent-primary) 72%, var(--semantic-text-muted)) !important;
+  font-size: 8.5px !important;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
 .design-canvas-node-state {
   fill: var(--semantic-text-muted) !important;
+  font-size: 9px !important;
 }
 
 .design-canvas-edge polyline {
   fill: none;
   stroke: color-mix(in srgb, var(--semantic-text-secondary) 80%, var(--semantic-border-strong));
-  stroke-width: 1.65;
-  stroke-dasharray: 7 5;
+  stroke-width: 1.25;
+  stroke-dasharray: 5 4;
   stroke-linecap: square;
   stroke-linejoin: round;
 }
 
 .design-canvas-edge.muted > polyline:first-child {
-  opacity: .2;
+  opacity: .08;
 }
 
 .design-canvas-edge.contextual > polyline:first-child {
-  stroke: color-mix(in srgb, var(--semantic-accent-primary) 56%, var(--semantic-text-secondary));
-  opacity: .92;
+  stroke: color-mix(in srgb, var(--semantic-accent-primary) 46%, var(--semantic-text-secondary));
+  opacity: .78;
 }
 
 .design-canvas-edge marker path,
 #design-arrow path {
   fill: none;
   stroke: var(--semantic-text-secondary);
-  stroke-width: 1.4;
+  stroke-width: 1.2;
 }
 
 .design-canvas-edge .design-canvas-edge-hit {
@@ -7865,11 +7902,12 @@ code.path-wrap {
   float: right;
   width: max-content;
   margin: calc(-6.75rem - var(--semantic-spacing-2)) var(--semantic-spacing-2) var(--semantic-spacing-2) 0;
-  padding: 3px;
+  padding: 2px;
   border: 1px solid var(--semantic-border-strong);
   border-radius: var(--semantic-radius-sm);
-  background: color-mix(in srgb, var(--semantic-surface-panel) 94%, transparent);
-  box-shadow: var(--semantic-shadow-sm);
+  background: color-mix(in srgb, var(--semantic-surface-panel) 88%, transparent);
+  box-shadow: none;
+  opacity: .78;
   pointer-events: none;
 }
 
@@ -7880,19 +7918,19 @@ code.path-wrap {
 .design-canvas-minimap polyline {
   fill: none;
   stroke: var(--semantic-text-muted);
-  stroke-width: 3;
+  stroke-width: 2;
 }
 
 .design-canvas-minimap rect {
   fill: var(--semantic-surface-panel-raised);
   stroke: var(--semantic-accent-primary);
-  stroke-width: 2;
+  stroke-width: 1.5;
 }
 
 .design-canvas-deployable {
-  fill: color-mix(in srgb, var(--semantic-accent-primary-tint) 24%, transparent);
-  stroke: var(--semantic-border-subtle);
-  stroke-dasharray: 4 4;
+  fill: color-mix(in srgb, var(--semantic-accent-primary-tint) 12%, transparent);
+  stroke: color-mix(in srgb, var(--semantic-border-subtle) 74%, transparent);
+  stroke-dasharray: 3 5;
 }
 
 .design-canvas-deployable-label {
@@ -7905,7 +7943,7 @@ code.path-wrap {
   align-items: center;
   justify-content: space-between;
   gap: var(--semantic-spacing-3);
-  margin-top: var(--semantic-spacing-2);
+  margin-top: var(--semantic-spacing-1);
   color: var(--semantic-text-muted);
   font-size: var(--semantic-typography-size-sm);
 }
@@ -8064,19 +8102,29 @@ code.path-wrap {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--semantic-spacing-5);
+  gap: var(--semantic-spacing-4);
+  padding-block: var(--semantic-spacing-1);
 }
 
 .design-phase-heading :is(p, h2) { margin-top: 0; }
-.design-phase-heading > div > p:last-child { max-width: 68rem; color: var(--semantic-text-secondary); }
+.design-phase-heading h2 {
+  margin-bottom: var(--semantic-spacing-1);
+  font-size: clamp(1.25rem, 1.7vw, 1.65rem);
+  letter-spacing: -.018em;
+}
+.design-phase-heading > div > p:last-child {
+  max-width: 60rem;
+  margin-bottom: 0;
+  color: var(--semantic-text-secondary);
+}
 
 .design-source-chain {
   flex: 0 0 auto;
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: 999px;
-  padding: var(--semantic-spacing-1) var(--semantic-spacing-3);
-  color: var(--semantic-accent-primary);
-  background: var(--semantic-accent-primary-tint);
+  border-radius: var(--semantic-radius-sm);
+  padding: 4px var(--semantic-spacing-2);
+  color: var(--semantic-text-muted);
+  background: transparent;
   font-family: var(--semantic-typography-family-mono);
   font-size: 12px;
 }
@@ -8091,11 +8139,11 @@ code.path-wrap {
 .design-plan-create {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--semantic-spacing-4);
+  gap: var(--semantic-spacing-3);
   max-width: 72rem;
-  padding: var(--semantic-spacing-5);
+  padding: var(--semantic-spacing-4);
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-lg);
+  border-radius: var(--semantic-radius-sm);
   background: var(--semantic-surface-panel);
 }
 
@@ -8111,7 +8159,7 @@ code.path-wrap {
 .design-plan-create textarea,
 .design-connect-editor textarea {
   width: 100%;
-  min-height: 112px;
+  min-height: 96px;
   resize: vertical;
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-md);
@@ -8127,7 +8175,7 @@ code.path-wrap {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-lg);
+  border-radius: var(--semantic-radius-sm);
   overflow: hidden;
   background: var(--semantic-surface-panel);
 }
@@ -8135,18 +8183,18 @@ code.path-wrap {
 .design-plan-metrics > div {
   display: grid;
   gap: 2px;
-  padding: var(--semantic-spacing-3) var(--semantic-spacing-4);
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
   border-left: 1px solid var(--semantic-border-subtle);
 }
 
 .design-plan-metrics > div:first-child { border-left: 0; }
-.design-plan-metrics strong { font-size: 1.45rem; font-variant-numeric: tabular-nums; }
+.design-plan-metrics strong { font-size: 1.2rem; font-variant-numeric: tabular-nums; }
 .design-plan-metrics span { color: var(--semantic-text-muted); }
 
 .design-plan-layout {
   display: grid;
-  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
-  gap: var(--semantic-spacing-4);
+  grid-template-columns: minmax(230px, 272px) minmax(0, 1fr);
+  gap: var(--semantic-spacing-3);
   align-items: start;
 }
 
@@ -8158,14 +8206,14 @@ code.path-wrap {
 .design-connect-editor,
 .design-evidence-live-layout > :is(aside, article) {
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-lg);
+  border-radius: var(--semantic-radius-sm);
   background: var(--semantic-surface-panel);
 }
 
 .design-plan-index {
   display: grid;
   gap: var(--semantic-spacing-2);
-  padding: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-2);
 }
 
 .design-plan-index h3 { margin: var(--semantic-spacing-2) 0 0; }
@@ -8176,9 +8224,9 @@ code.path-wrap {
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0 var(--semantic-spacing-2);
   width: 100%;
-  min-height: 52px;
+  min-height: 48px;
   border: 1px solid transparent;
-  border-radius: var(--semantic-radius-md);
+  border-radius: var(--semantic-radius-sm);
   padding: var(--semantic-spacing-2);
   color: var(--semantic-text-primary);
   background: transparent;
@@ -8188,8 +8236,9 @@ code.path-wrap {
 
 .design-plan-index > button.selected,
 .design-evidence-live-layout aside > button.selected {
-  border-color: var(--semantic-border-focus);
-  background: var(--semantic-accent-primary-tint);
+  border-color: color-mix(in srgb, var(--semantic-border-focus) 56%, var(--semantic-border-subtle));
+  background: color-mix(in srgb, var(--semantic-accent-primary-tint) 62%, transparent);
+  box-shadow: inset 2px 0 var(--semantic-accent-primary);
 }
 
 .design-plan-index > button > span { grid-row: 1 / 3; color: var(--semantic-text-muted); font-family: var(--semantic-typography-family-mono); }
@@ -8197,8 +8246,8 @@ code.path-wrap {
 
 .design-plan-use-case-detail {
   display: grid;
-  gap: var(--semantic-spacing-5);
-  padding: var(--semantic-spacing-5);
+  gap: var(--semantic-spacing-4);
+  padding: var(--semantic-spacing-4);
 }
 
 .design-plan-use-case-detail > header {
@@ -8211,10 +8260,11 @@ code.path-wrap {
 
 .design-plan-scenario-count {
   align-self: flex-start;
-  border-radius: 999px;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
   padding: var(--semantic-spacing-1) var(--semantic-spacing-2);
   color: var(--semantic-text-secondary);
-  background: var(--semantic-surface-inset);
+  background: transparent;
 }
 
 .design-plan-flow {
@@ -8323,9 +8373,9 @@ code.path-wrap {
   gap: var(--semantic-spacing-4);
   padding: var(--semantic-spacing-3) var(--semantic-spacing-4);
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-lg);
-  background: var(--semantic-surface-panel-raised);
-  box-shadow: var(--semantic-shadow-sm);
+  border-radius: var(--semantic-radius-sm);
+  background: var(--semantic-surface-panel);
+  box-shadow: none;
 }
 
 .design-plan-footer > div { display: grid; }
@@ -8420,10 +8470,11 @@ code.path-wrap {
 .design-plan-sources {
   display: grid;
   gap: var(--semantic-spacing-3);
-  border-radius: var(--semantic-radius-lg);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
   padding: var(--semantic-spacing-4);
   background: var(--semantic-surface-panel);
-  box-shadow: inset 3px 0 0 var(--semantic-accent-primary);
+  box-shadow: inset 2px 0 0 var(--semantic-accent-primary);
 }
 
 .design-plan-sources h3,
@@ -8458,7 +8509,7 @@ code.path-wrap {
 
 .design-plan-review-section {
   display: grid;
-  gap: var(--semantic-spacing-3);
+  gap: var(--semantic-spacing-2);
   scroll-margin-bottom: 7rem;
 }
 
@@ -8470,16 +8521,22 @@ code.path-wrap {
 
 .design-reviewable-list {
   display: grid;
-  gap: var(--semantic-spacing-2);
+  gap: 0;
 }
 
 .design-reviewable-content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--semantic-spacing-2) var(--semantic-spacing-3);
-  border-radius: var(--semantic-radius-md);
-  padding: var(--semantic-spacing-3);
-  background: var(--semantic-surface-inset);
+  border-top: 1px solid var(--semantic-border-subtle);
+  border-radius: 0;
+  padding: var(--semantic-spacing-2) 0;
+  background: transparent;
+}
+
+.design-reviewable-list > .design-reviewable-content:first-child,
+.design-plan-review-section > .design-reviewable-content:first-of-type {
+  border-top: 0;
 }
 
 .design-reviewable-copy {
@@ -8559,9 +8616,10 @@ code.path-wrap {
 .design-plan-path-card {
   display: grid;
   gap: var(--semantic-spacing-2);
-  border-radius: var(--semantic-radius-md);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
   padding: var(--semantic-spacing-3);
-  background: var(--semantic-surface-inset);
+  background: color-mix(in srgb, var(--semantic-surface-inset) 58%, transparent);
 }
 
 .design-plan-footer-actions {
@@ -8604,8 +8662,9 @@ code.path-wrap {
   display: grid;
   grid-template-columns: 1fr;
   align-items: stretch;
-  gap: var(--semantic-spacing-4);
-  padding: clamp(var(--semantic-spacing-4), 2vw, var(--semantic-spacing-6));
+  gap: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-4);
+  border-radius: var(--semantic-radius-sm);
 }
 
 .design-system-gate-heading {
@@ -8624,9 +8683,10 @@ code.path-wrap {
   align-items: center;
   justify-content: space-between;
   gap: var(--semantic-spacing-4);
-  border-radius: var(--semantic-radius-md);
-  padding: var(--semantic-spacing-3) var(--semantic-spacing-4);
-  background: var(--semantic-surface-inset);
+  border-block: 1px solid var(--semantic-border-subtle);
+  border-radius: 0;
+  padding: var(--semantic-spacing-2) 0;
+  background: transparent;
 }
 
 .design-inline-gate > div,
@@ -8646,16 +8706,16 @@ code.path-wrap {
   align-content: start;
   gap: var(--semantic-spacing-2);
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-lg);
-  padding: var(--semantic-spacing-4);
-  background: var(--semantic-surface-inset);
+  border-radius: var(--semantic-radius-sm);
+  padding: var(--semantic-spacing-3);
+  background: color-mix(in srgb, var(--semantic-surface-inset) 64%, transparent);
   cursor: pointer;
 }
 
 .design-structure-options > label.selected {
-  border-color: var(--semantic-border-focus);
-  box-shadow: inset 0 0 0 1px var(--semantic-border-focus);
-  background: var(--semantic-accent-primary-tint);
+  border-color: color-mix(in srgb, var(--semantic-border-focus) 72%, var(--semantic-border-subtle));
+  box-shadow: inset 2px 0 var(--semantic-accent-primary);
+  background: color-mix(in srgb, var(--semantic-accent-primary-tint) 58%, transparent);
 }
 
 .design-structure-options input {
@@ -8686,8 +8746,9 @@ code.path-wrap {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   overflow: hidden;
-  border-radius: var(--semantic-radius-lg);
-  background: var(--semantic-surface-inset);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  background: transparent;
 }
 
 .design-structure-summary > div {
@@ -8707,6 +8768,7 @@ code.path-wrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, .7fr);
   gap: var(--semantic-spacing-4);
+  align-items: start;
 }
 
 .design-structure-rationale,
@@ -8715,9 +8777,15 @@ code.path-wrap {
   display: grid;
   align-content: start;
   gap: var(--semantic-spacing-3);
-  border-radius: var(--semantic-radius-lg);
-  padding: var(--semantic-spacing-4);
-  background: var(--semantic-surface-inset);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  padding: var(--semantic-spacing-3);
+  background: color-mix(in srgb, var(--semantic-surface-inset) 54%, transparent);
+}
+
+.design-structure-rationale {
+  align-self: start;
+  height: fit-content;
 }
 
 .design-structure-rationale h3,
@@ -8731,6 +8799,53 @@ code.path-wrap {
   align-items: end;
   justify-content: space-between;
   gap: var(--semantic-spacing-3);
+}
+
+.design-structure-approved-module {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(8rem, 0.8fr) minmax(7rem, 0.7fr);
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  background: color-mix(in srgb, var(--semantic-surface-panel) 94%, var(--semantic-accent-primary) 6%);
+}
+
+.design-structure-approved-module > div {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.72rem 0.82rem;
+}
+
+.design-structure-approved-module > div + div {
+  border-left: 1px solid var(--semantic-border-subtle);
+}
+
+.design-structure-approved-module dt {
+  color: var(--semantic-text-muted);
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.design-structure-approved-module dd {
+  margin: 0;
+  color: var(--semantic-text-primary);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.design-structure-approved-note {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-left: 2px solid var(--semantic-accent-primary);
+  border-radius: 0 var(--semantic-radius-sm) var(--semantic-radius-sm) 0;
+  background: var(--semantic-accent-primary-tint);
+  color: var(--semantic-text-secondary);
+  font-size: 0.74rem;
+  line-height: 1.45;
 }
 
 .design-structure-editor label,
@@ -9035,19 +9150,19 @@ code.path-wrap {
   grid-template-columns: repeat(4, minmax(8rem, 1fr)) minmax(11rem, auto);
   overflow: hidden;
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-lg);
+  border-radius: var(--semantic-radius-sm);
   background: var(--semantic-surface-panel);
 }
 
 .design-verify-summary > div {
   display: grid;
   gap: 2px;
-  padding: var(--semantic-spacing-3) var(--semantic-spacing-4);
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
   border-right: 1px solid var(--semantic-border-subtle);
 }
 
 .design-verify-summary strong {
-  font-size: 1.45rem;
+  font-size: 1.2rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -9066,10 +9181,10 @@ code.path-wrap {
 .design-verify-workspace {
   display: grid;
   grid-template-columns: minmax(280px, .38fr) minmax(0, 1fr);
-  min-height: 36rem;
+  min-height: 34rem;
   overflow: hidden;
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-lg);
+  border-radius: var(--semantic-radius-sm);
   background: var(--semantic-surface-panel);
 }
 
@@ -9087,9 +9202,9 @@ code.path-wrap {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--semantic-spacing-2);
-  padding: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-2);
   border-bottom: 1px solid var(--semantic-border-subtle);
-  background: color-mix(in srgb, var(--semantic-surface-panel) 96%, transparent);
+  background: color-mix(in srgb, var(--semantic-surface-panel) 92%, transparent);
   backdrop-filter: blur(10px);
 }
 
@@ -9133,11 +9248,11 @@ code.path-wrap {
   width: calc(100% - var(--semantic-spacing-3) * 2);
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 2px var(--semantic-spacing-2);
-  min-height: 64px;
+  min-height: 58px;
   margin: 2px var(--semantic-spacing-3);
   padding: var(--semantic-spacing-2);
   border: 1px solid transparent;
-  border-radius: var(--semantic-radius-md);
+  border-radius: var(--semantic-radius-sm);
   background: transparent;
   color: var(--semantic-text-primary);
   text-align: left;
@@ -9150,8 +9265,9 @@ code.path-wrap {
 }
 
 .design-verify-scenario-list > section > button.selected {
-  border-color: var(--semantic-border-focus);
-  background: var(--semantic-accent-primary-tint);
+  border-color: color-mix(in srgb, var(--semantic-border-focus) 58%, var(--semantic-border-subtle));
+  background: color-mix(in srgb, var(--semantic-accent-primary-tint) 62%, transparent);
+  box-shadow: inset 2px 0 var(--semantic-accent-primary);
 }
 
 .design-verify-scenario-list button > span {
@@ -9171,9 +9287,9 @@ code.path-wrap {
 .design-verify-scenario-detail {
   display: grid;
   align-content: start;
-  gap: var(--semantic-spacing-4);
+  gap: var(--semantic-spacing-3);
   min-width: 0;
-  padding: var(--semantic-spacing-5);
+  padding: var(--semantic-spacing-4);
 }
 
 .design-verify-scenario-detail > header {
@@ -9192,7 +9308,7 @@ code.path-wrap {
   justify-items: start;
   gap: var(--semantic-spacing-1);
   padding: var(--semantic-spacing-3);
-  border-radius: var(--semantic-radius-md);
+  border-radius: var(--semantic-radius-sm);
 }
 
 .design-verify-row-error {
@@ -9224,8 +9340,8 @@ code.path-wrap {
   align-items: start;
   padding: var(--semantic-spacing-3);
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
-  background: var(--semantic-surface-inset);
+  border-radius: var(--semantic-radius-sm);
+  background: color-mix(in srgb, var(--semantic-surface-inset) 60%, transparent);
 }
 
 .design-verify-step-comparison > li[data-outcome='failed'] {
@@ -9307,8 +9423,8 @@ code.path-wrap {
 
 .design-evidence-live-layout {
   display: grid;
-  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
-  gap: var(--semantic-spacing-4);
+  grid-template-columns: minmax(230px, 272px) minmax(0, 1fr);
+  gap: var(--semantic-spacing-3);
 }
 
 .design-evidence-live-layout > aside {
@@ -9330,7 +9446,7 @@ code.path-wrap {
 .design-evidence-live-layout > aside > header span { color: var(--semantic-text-muted); font-size: var(--semantic-typography-size-sm); }
 .design-evidence-live-layout aside > button { grid-template-columns: minmax(0, 1fr) auto; }
 .design-evidence-live-layout aside small { grid-column: 1 / -1; color: var(--semantic-text-muted); }
-.design-evidence-live-layout > article { display: grid; min-width: 0; gap: var(--semantic-spacing-4); padding: var(--semantic-spacing-4); }
+.design-evidence-live-layout > article { display: grid; min-width: 0; gap: var(--semantic-spacing-3); padding: var(--semantic-spacing-3); }
 .design-evidence-live-layout article > header { display: flex; justify-content: space-between; gap: var(--semantic-spacing-3); }
 .design-evidence-live-layout article h3 { margin: 0; }
 
@@ -9347,10 +9463,11 @@ code.path-wrap {
 
 .design-evidence-trace {
   display: grid;
-  gap: var(--semantic-spacing-3);
-  padding: var(--semantic-spacing-4);
-  border-radius: var(--semantic-radius-lg);
-  background: var(--semantic-surface-inset);
+  gap: var(--semantic-spacing-2);
+  padding: var(--semantic-spacing-3);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  background: color-mix(in srgb, var(--semantic-surface-inset) 52%, transparent);
 }
 
 .design-evidence-trace > header {
@@ -9368,7 +9485,7 @@ code.path-wrap {
 .design-evidence-trace ol {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--semantic-spacing-2);
+  gap: var(--semantic-spacing-3);
   margin: 0;
   padding: 0;
   overflow-x: auto;
@@ -9381,10 +9498,10 @@ code.path-wrap {
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--semantic-spacing-2);
   min-width: 0;
-  padding: var(--semantic-spacing-2);
-  border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
-  background: var(--semantic-surface-panel);
+  padding: var(--semantic-spacing-1);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .design-evidence-trace li > span {
@@ -9397,6 +9514,16 @@ code.path-wrap {
   background: var(--semantic-surface-inset);
 }
 
+.design-evidence-trace li > i {
+  position: absolute;
+  z-index: 0;
+  top: 12px;
+  left: calc(100% + 2px);
+  width: var(--semantic-spacing-3);
+  height: 1px;
+  background: var(--semantic-border-strong);
+}
+
 .design-evidence-trace li.available > span { color: var(--semantic-status-success); background: var(--semantic-status-success-tint); }
 .design-evidence-trace li.old > span { color: var(--semantic-status-warning); background: var(--semantic-status-warning-tint); }
 .design-evidence-trace li.missing > span { color: var(--semantic-status-danger); background: var(--semantic-status-danger-tint); }
@@ -9404,6 +9531,14 @@ code.path-wrap {
 .design-evidence-trace li > div b { color: var(--semantic-text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
 .design-evidence-trace li > div strong,
 .design-evidence-trace li > div small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.design-evidence-trace li > div strong {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.25;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 .design-evidence-trace li > div small { color: var(--semantic-text-muted); }
 
 .design-evidence-trace li > button {
@@ -9431,7 +9566,7 @@ code.path-wrap {
   grid-template-columns: 2rem minmax(12rem, 0.8fr) minmax(16rem, 1.2fr);
   gap: var(--semantic-spacing-3);
   align-items: start;
-  padding: var(--semantic-spacing-3);
+  padding: var(--semantic-spacing-3) 0;
   border-top: 1px solid var(--semantic-border-subtle);
 }
 
@@ -9650,6 +9785,11 @@ code.path-wrap {
   .design-structure-options,
   .design-structure-review-grid,
   .design-operation-allocation { grid-template-columns: 1fr; }
+  .design-structure-approved-module { grid-template-columns: 1fr; }
+  .design-structure-approved-module > div + div {
+    border-top: 1px solid var(--semantic-border-subtle);
+    border-left: 0;
+  }
   .design-system-gate-heading,
   .design-inline-gate,
   .design-structure-choice-summary,
@@ -9674,7 +9814,7 @@ code.path-wrap {
 .design-diagrams {
   display: flex;
   flex-direction: column;
-  gap: var(--semantic-spacing-3);
+  gap: var(--semantic-spacing-2);
   min-width: 0;
 }
 
@@ -9682,7 +9822,7 @@ code.path-wrap {
   position: fixed;
   z-index: 1000;
   inset: 0;
-  padding: var(--semantic-spacing-4) clamp(var(--semantic-spacing-4), 4vw, var(--semantic-spacing-6));
+  padding: var(--semantic-spacing-3) clamp(var(--semantic-spacing-3), 2vw, var(--semantic-spacing-5));
   overflow: auto;
   background: var(--semantic-surface-panel);
 }
@@ -9696,11 +9836,10 @@ code.path-wrap {
 }
 
 .design-diagram-navigation {
-  min-height: 42px;
-  padding: 3px;
-  border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
-  background: var(--semantic-surface-inset);
+  min-height: 40px;
+  padding: 0;
+  border-bottom: 1px solid var(--semantic-border-subtle);
+  background: transparent;
 }
 
 .design-diagrams-tabs {
@@ -9711,26 +9850,27 @@ code.path-wrap {
 }
 
 .design-diagrams-tab {
-  min-height: 34px;
+  min-height: 39px;
   padding: var(--semantic-spacing-1) var(--semantic-spacing-3);
   border: 1px solid transparent;
-  border-radius: var(--semantic-radius-sm);
+  border-radius: 0;
   background: transparent;
   color: var(--semantic-text-secondary);
   cursor: pointer;
 }
 
 .design-diagrams-tab.active {
-  border-color: var(--semantic-border-subtle);
-  background: var(--semantic-surface-panel-raised);
+  border-color: transparent;
+  border-bottom-color: var(--semantic-accent-primary);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--semantic-accent-primary-tint) 48%, transparent));
   color: var(--semantic-text-primary);
-  box-shadow: var(--semantic-shadow-sm);
+  box-shadow: none;
   font-weight: var(--semantic-typography-weight-medium);
 }
 
 .design-diagrams-toggle {
   margin-left: auto;
-  min-height: 34px;
+  min-height: 32px;
   padding-inline: var(--semantic-spacing-3);
   border: 1px solid transparent;
   border-radius: var(--semantic-radius-sm);
@@ -9741,19 +9881,24 @@ code.path-wrap {
 
 .design-diagrams-toggle[aria-pressed='true'] {
   border-color: var(--semantic-border-subtle);
-  background: var(--semantic-surface-panel-raised);
+  background: var(--semantic-surface-inset);
   color: var(--semantic-text-primary);
-  box-shadow: var(--semantic-shadow-sm);
+  box-shadow: none;
 }
 
 .design-diagram-view-heading {
   align-items: flex-end;
-  margin: var(--semantic-spacing-1) 0 var(--semantic-spacing-2);
+  margin: var(--semantic-spacing-1) 0;
 }
 
 .design-diagram-view-heading h3,
 .design-diagram-view-heading p {
   margin-block: 0;
+}
+
+.design-diagram-view-heading h3 {
+  font-size: 1.1rem;
+  letter-spacing: -.01em;
 }
 
 .design-diagram-selection-breadcrumb {
@@ -9778,10 +9923,10 @@ code.path-wrap {
 }
 
 .design-diagram-standard {
-  padding: 4px var(--semantic-spacing-2);
+  padding: 3px var(--semantic-spacing-2);
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: 999px;
-  background: var(--semantic-surface-inset);
+  border-radius: var(--semantic-radius-sm);
+  background: transparent;
   color: var(--semantic-text-muted);
   font-size: 11px;
   letter-spacing: .03em;
@@ -9794,15 +9939,15 @@ code.path-wrap {
   align-items: center;
   justify-content: flex-end;
   gap: 2px;
-  padding: 3px;
+  padding: 0;
   border: 1px solid var(--semantic-border-subtle);
   border-radius: var(--semantic-radius-sm);
-  background: var(--semantic-surface-inset);
+  background: transparent;
 }
 
 .design-diagram-viewport-controls button {
-  min-width: 34px;
-  min-height: 32px;
+  min-width: 32px;
+  min-height: 30px;
   padding-inline: var(--semantic-spacing-2);
   border: 1px solid transparent;
   border-radius: var(--semantic-radius-sm);
@@ -9813,9 +9958,9 @@ code.path-wrap {
 
 .design-diagram-viewport-controls button:is(:hover, :focus-visible, [aria-pressed='true']) {
   border-color: var(--semantic-border-subtle);
-  background: var(--semantic-surface-panel-raised);
+  background: var(--semantic-surface-inset);
   color: var(--semantic-text-primary);
-  box-shadow: var(--semantic-shadow-sm);
+  box-shadow: none;
 }
 
 .design-diagram-viewport-controls output {
@@ -9832,7 +9977,7 @@ code.path-wrap {
 }
 
 .design-uml-legend summary {
-  min-height: 32px;
+  min-height: 28px;
   cursor: pointer;
 }
 
@@ -9921,18 +10066,17 @@ code.path-wrap {
   position: relative;
   min-width: 0;
   border: 1px solid var(--semantic-border-subtle);
-  border-radius: var(--semantic-radius-md);
+  border-radius: var(--semantic-radius-sm);
   background:
-    radial-gradient(circle at center, color-mix(in srgb, var(--semantic-border-strong) 48%, transparent) 1px, transparent 1.2px),
+    linear-gradient(color-mix(in srgb, var(--semantic-border-subtle) 18%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--semantic-border-subtle) 18%, transparent) 1px, transparent 1px),
     var(--semantic-surface-canvas);
-  background-size: 22px 22px;
-  box-shadow:
-    inset 0 1px 2px color-mix(in srgb, black 10%, transparent),
-    var(--semantic-shadow-sm);
+  background-size: 32px 32px;
+  box-shadow: inset 0 1px color-mix(in srgb, white 2%, transparent);
 }
 
 .design-diagram-viewport {
-  min-height: 34rem;
+  min-height: 36rem;
   max-height: min(76vh, 54rem);
   overflow: auto;
   overscroll-behavior: contain;
@@ -9946,14 +10090,14 @@ code.path-wrap {
 .design-diagram-svg {
   display: block;
   min-width: 100%;
-  min-height: 34rem;
-  background: color-mix(in srgb, var(--semantic-surface-canvas) 84%, transparent);
+  min-height: 36rem;
+  background: transparent;
 }
 
 .design-diagrams.fullscreen .design-diagram-viewport {
-  height: calc(100vh - 14.5rem);
+  height: calc(100vh - 11.75rem);
   min-height: 18rem;
-  max-height: calc(100vh - 14.5rem);
+  max-height: calc(100vh - 11.75rem);
 }
 
 .design-diagrams.fullscreen .design-diagram-svg {
@@ -9965,11 +10109,12 @@ code.path-wrap {
   position: absolute;
   right: var(--semantic-spacing-2);
   bottom: var(--semantic-spacing-2);
-  padding: 3px;
+  padding: 2px;
   border: 1px solid var(--semantic-border-strong);
   border-radius: var(--semantic-radius-sm);
-  background: color-mix(in srgb, var(--semantic-surface-panel) 96%, transparent);
-  box-shadow: var(--semantic-shadow-sm);
+  background: color-mix(in srgb, var(--semantic-surface-panel) 88%, transparent);
+  box-shadow: none;
+  opacity: .78;
   pointer-events: none;
 }
 
@@ -9978,13 +10123,13 @@ code.path-wrap {
 .design-diagram-minimap polyline {
   fill: none;
   stroke: var(--semantic-text-muted);
-  stroke-width: 3;
+  stroke-width: 2;
 }
 
 .design-diagram-minimap rect {
   fill: var(--semantic-surface-panel-raised);
   stroke: var(--semantic-accent-primary);
-  stroke-width: 2;
+  stroke-width: 1.5;
 }
 
 .design-diagrams-text-alternative ul {
@@ -10021,15 +10166,15 @@ code.path-wrap {
 }
 
 .design-diagram-node rect {
-  fill: var(--semantic-surface-panel-raised);
-  stroke: var(--semantic-border-strong);
-  stroke-width: 1.5;
+  fill: color-mix(in srgb, var(--semantic-surface-panel-raised) 92%, var(--semantic-surface-canvas));
+  stroke: color-mix(in srgb, var(--semantic-border-strong) 82%, transparent);
+  stroke-width: 1.2;
 }
 
 .design-diagram-edge-visible {
   fill: none;
   stroke: color-mix(in srgb, var(--semantic-text-secondary) 82%, var(--semantic-border-strong));
-  stroke-width: 1.65;
+  stroke-width: 1.25;
   stroke-linecap: square;
   stroke-linejoin: round;
   pointer-events: none;
@@ -10039,7 +10184,7 @@ code.path-wrap {
 .design-diagram-edge-include .design-diagram-edge-visible,
 .design-diagram-edge-extend .design-diagram-edge-visible,
 .design-diagram-edge-reply .design-diagram-edge-visible {
-  stroke-dasharray: 7 5;
+  stroke-dasharray: 5 4;
 }
 
 .design-diagram-edge-provides .design-diagram-edge-visible,
@@ -10050,7 +10195,7 @@ code.path-wrap {
 .design-uml-open-arrow {
   fill: none;
   stroke: var(--semantic-text-secondary);
-  stroke-width: 1.5;
+  stroke-width: 1.25;
 }
 
 .design-uml-filled-arrow {
@@ -10061,18 +10206,19 @@ code.path-wrap {
 .design-diagram-node:focus-visible rect,
 .design-diagram-node.selected rect {
   stroke: var(--semantic-border-focus);
-  stroke-width: 2.5;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--semantic-accent-primary) 22%, transparent));
 }
 
 .design-diagram-node:focus-visible :is(circle, ellipse, path),
 .design-diagram-node.selected :is(circle, ellipse, path) {
   stroke: var(--semantic-border-focus);
-  stroke-width: 2.5;
+  stroke-width: 2;
 }
 
 .design-diagram-node text {
   fill: var(--semantic-text-primary);
-  font-size: 11.25px;
+  font-size: 10.75px;
 }
 
 .design-diagram-node-title {
@@ -10098,38 +10244,38 @@ code.path-wrap {
 .design-uml-component-mark rect {
   fill: var(--semantic-surface-inset);
   stroke: var(--semantic-accent-primary);
-  stroke-width: 1.4;
+  stroke-width: 1.15;
 }
 
 .design-uml-interface :is(line, path) {
   fill: none;
   stroke: var(--semantic-accent-primary);
-  stroke-width: 2;
+  stroke-width: 1.6;
 }
 
 .design-uml-interface circle {
   fill: var(--semantic-surface-panel);
   stroke: var(--semantic-accent-primary);
-  stroke-width: 2;
+  stroke-width: 1.6;
 }
 
 .design-uml-actor :is(circle, line) {
   fill: var(--semantic-surface-canvas);
   stroke: var(--semantic-text-primary);
-  stroke-width: 1.8;
+  stroke-width: 1.5;
 }
 
 .design-uml-use-case ellipse {
   fill: var(--semantic-surface-panel-raised);
   stroke: var(--semantic-border-strong);
-  stroke-width: 1.5;
+  stroke-width: 1.25;
 }
 
 .design-uml-boundary > rect,
 .design-uml-fragment > rect {
   fill: color-mix(in srgb, var(--semantic-surface-panel) 72%, transparent);
   stroke: var(--semantic-text-muted);
-  stroke-width: 1.4;
+  stroke-width: 1.2;
 }
 
 .design-uml-fragment > path {
@@ -10157,13 +10303,13 @@ code.path-wrap {
 .design-uml-decision path {
   fill: var(--semantic-surface-panel-raised);
   stroke: var(--semantic-border-strong);
-  stroke-width: 1.5;
+  stroke-width: 1.25;
 }
 
 .design-uml-lifeline > line {
   stroke: var(--semantic-text-muted);
-  stroke-width: 1.3;
-  stroke-dasharray: 5 5;
+  stroke-width: 1.1;
+  stroke-dasharray: 4 5;
 }
 
 .design-uml-recovery-note path {
@@ -10199,15 +10345,15 @@ code.path-wrap {
 }
 
 .design-diagram-edge-label rect {
-  fill: color-mix(in srgb, var(--semantic-surface-panel) 97%, transparent);
-  stroke: var(--semantic-border-subtle);
-  stroke-width: 1px;
+  fill: color-mix(in srgb, var(--semantic-surface-canvas) 96%, transparent);
+  stroke: color-mix(in srgb, var(--semantic-border-subtle) 66%, transparent);
+  stroke-width: .75px;
 }
 
 .design-diagram-edge-label text {
   fill: var(--semantic-text-secondary);
-  font-size: 10.5px;
-  font-weight: var(--semantic-typography-weight-medium);
+  font-size: 9.75px;
+  font-weight: var(--semantic-typography-weight-normal);
 }
 
 .design-diagram-footer {

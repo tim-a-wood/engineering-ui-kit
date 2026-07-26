@@ -500,7 +500,7 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
                   title={stage.locked ? stage.status : undefined}
                   onClick={() => openWorkspaceTab(stage.id)}
                 >
-                  <span className="design-journey-marker" aria-hidden="true">{stage.complete ? '✓' : stage.locked ? '⌁' : index + 1}</span>
+                  <span className="design-journey-marker" aria-hidden="true">{stage.complete ? '✓' : index + 1}</span>
                   <span><b>{stage.label}</b><small>{stage.status}</small></span>
                 </button>
               </li>

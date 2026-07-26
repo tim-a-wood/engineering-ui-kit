@@ -653,7 +653,7 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
           </svg>
           </div>
           <div className="design-diagram-minimap" aria-label="Diagram minimap">
-            <svg viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`} width="180" height="110" aria-hidden="true">
+            <svg viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`} width="148" height="88" aria-hidden="true">
               {layout.edges.map((edge) => <polyline key={edge.relationshipId} points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')} />)}
               {layout.nodes.map((node) => <rect key={node.elementId} x={node.x} y={node.y} width={node.width} height={node.height} rx={4} />)}
             </svg>

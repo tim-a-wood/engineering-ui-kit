@@ -179,15 +179,30 @@ export function SystemDesignGate({ store, onOpenPlan }: Props) {
                 </select></label>
               </header>
               {selectedModule && (
+                structureApproved ? (
+                  <>
+                    <dl className="design-structure-approved-module">
+                      <div><dt>Responsibility</dt><dd>{selectedModule.responsibility}</dd></div>
+                      <div><dt>Module type</dt><dd>{selectedModule.moduleType}</dd></div>
+                      <div><dt>Approved revision</dt><dd>{state.architecture.revision}</dd></div>
+                    </dl>
+                    <p className="design-structure-approved-note">This module boundary is read-only in the approved structure. Revise the structure to propose a change.</p>
+                  </>
+                ) : (
+                  <>
+                    <label>Name<input value={moduleName} onChange={(event) => setModuleName(event.target.value)} /></label>
+                    <button type="button" className="btn btn-secondary btn-compact" disabled={moduleName.trim() === selectedModule.name || !moduleName.trim()} onClick={() => store.applySystemDesignDecision({ kind: 'rename', moduleId: selectedModule.moduleId, name: moduleName.trim() })}>Apply name</button>
+                    <label>Responsibility<textarea rows={3} value={responsibility} onChange={(event) => setResponsibility(event.target.value)} /></label>
+                    <button type="button" className="btn btn-secondary btn-compact" disabled={responsibility.trim() === selectedModule.responsibility || !responsibility.trim()} onClick={() => store.applySystemDesignDecision({ kind: 'changePurpose', moduleId: selectedModule.moduleId, responsibility: responsibility.trim(), reason: 'Reviewed in the system structure editor.' })}>Apply responsibility</button>
+                    <label>Module type<select value={moduleType} onChange={(event) => setModuleType(event.target.value as (typeof MODULE_TYPES)[number])}>
+                      {MODULE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                    </select></label>
+                    <button type="button" className="btn btn-secondary btn-compact" disabled={moduleType === selectedModule.moduleType} onClick={() => store.applySystemDesignDecision({ kind: 'changeType', moduleId: selectedModule.moduleId, moduleType })}>Apply type</button>
+                  </>
+                )
+              )}
+              {selectedModule && (
                 <>
-                  <label>Name<input value={moduleName} onChange={(event) => setModuleName(event.target.value)} /></label>
-                  <button type="button" className="btn btn-secondary btn-compact" disabled={structureApproved || moduleName.trim() === selectedModule.name || !moduleName.trim()} onClick={() => store.applySystemDesignDecision({ kind: 'rename', moduleId: selectedModule.moduleId, name: moduleName.trim() })}>Apply name</button>
-                  <label>Responsibility<textarea rows={3} value={responsibility} onChange={(event) => setResponsibility(event.target.value)} /></label>
-                  <button type="button" className="btn btn-secondary btn-compact" disabled={structureApproved || responsibility.trim() === selectedModule.responsibility || !responsibility.trim()} onClick={() => store.applySystemDesignDecision({ kind: 'changePurpose', moduleId: selectedModule.moduleId, responsibility: responsibility.trim(), reason: 'Reviewed in the system structure editor.' })}>Apply responsibility</button>
-                  <label>Module type<select value={moduleType} onChange={(event) => setModuleType(event.target.value as (typeof MODULE_TYPES)[number])}>
-                    {MODULE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
-                  </select></label>
-                  <button type="button" className="btn btn-secondary btn-compact" disabled={structureApproved || moduleType === selectedModule.moduleType} onClick={() => store.applySystemDesignDecision({ kind: 'changeType', moduleId: selectedModule.moduleId, moduleType })}>Apply type</button>
                   <details>
                     <summary>Allocated operations ({allocationsForSelected.length})</summary>
                     <ul>{allocationsForSelected.map((allocation) => <li key={allocation.operationId}>{allocation.operationId}</li>)}</ul>

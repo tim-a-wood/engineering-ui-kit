@@ -24,8 +24,8 @@ import {
 import { Dialog } from '../../components'
 import { StateBadge, moduleTypeLabel } from './designShared'
 
-const NODE_WIDTH = 160
-const NODE_HEIGHT = 56
+const NODE_WIDTH = 176
+const NODE_HEIGHT = 72
 const MIN_SCALE = 0.75
 const MAX_SCALE = 3
 const ZOOM_STEP = 0.2
@@ -91,6 +91,19 @@ function humanizeIdentifier(value: string): string {
     .replace(/\s+/g, ' ')
     .trim()
   return normalized ? `${normalized[0]!.toUpperCase()}${normalized.slice(1)}` : normalized
+}
+
+function wrapSystemLabel(value: string, limit = 21): string[] {
+  const words = value.split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+  for (const word of words) {
+    const current = lines[lines.length - 1]
+    if (!current || (current.length + word.length + 1 > limit && lines.length < 2)) lines.push(word)
+    else lines[lines.length - 1] = `${current} ${word}`
+  }
+  if (lines.length > 2) lines.splice(1, lines.length - 1, lines.slice(1).join(' '))
+  if ((lines[1]?.length ?? 0) > limit + 5) lines[1] = `${lines[1]!.slice(0, limit + 2).trimEnd()}…`
+  return lines.slice(0, 2)
 }
 
 export type SystemCanvasProps = {
@@ -253,7 +266,7 @@ export function SystemCanvas(props: SystemCanvasProps) {
           <h2>Architecture canvas</h2>
           <p>Module topology, deployable boundaries, and dependency direction</p>
         </div>
-        <span>{projection.elements.length} modules · {projection.relationships.length} dependencies</span>
+        <span className="design-canvas-count">{projection.elements.length} modules · {projection.relationships.length} dependencies</span>
       </header>
       <div className="design-canvas-toolbar">
         <div role="group" aria-label="Canvas display controls">
@@ -372,6 +385,10 @@ export function SystemCanvas(props: SystemCanvasProps) {
               {visibleNodes.map((node) => {
                 const moduleId = moduleIdFromElementId(node.elementId)
                 const entry = stateByModuleId.get(moduleId)
+                const element = projection.elements.find((candidate) => candidate.id === node.elementId)
+                const moduleName = nameByModuleId.get(node.elementId) ?? moduleId
+                const titleLines = wrapSystemLabel(moduleName)
+                const moduleType = humanizeIdentifier(element?.sourceElementRef?.replace(/^module:/, '') ?? 'module')
                 const providedCount = props.architecture.operationAllocations.filter((allocation) => allocation.moduleId === moduleId).length
                 const requiredCount = props.architecture.dependencyEdges.filter((edge) => edge.fromModuleId === moduleId).length
                 const selected = moduleId === props.selectedModuleId
@@ -381,7 +398,7 @@ export function SystemCanvas(props: SystemCanvasProps) {
                     data-node-id={node.elementId}
                     tabIndex={0}
                     role="button"
-                    aria-label={`${nameByModuleId.get(node.elementId) ?? moduleId}${entry ? `, ${entry.state}` : ''}; provides ${providedCount} interfaces; requires ${requiredCount} interfaces`}
+                    aria-label={`${moduleName}${entry ? `, ${entry.state}` : ''}; ${moduleType} module; provides ${providedCount} operations; requires ${requiredCount} dependencies`}
                     aria-pressed={selected}
                     className={selected ? 'design-canvas-node selected' : 'design-canvas-node'}
                     transform={`translate(${node.x} ${node.y})`}
@@ -391,32 +408,23 @@ export function SystemCanvas(props: SystemCanvasProps) {
                     }}
                     onKeyDown={(event) => onNodeKeyDown(event, moduleId)}
                   >
+                    <title>{moduleName} · {moduleType}{entry ? ` · ${humanizeIdentifier(entry.state)}` : ''}</title>
                     <rect width={node.width} height={node.height} rx={6} />
                     <g className="design-canvas-component-mark" aria-hidden="true">
                       <rect x={node.width - 25} y={8} width={16} height={18} rx={1} />
                       <rect x={node.width - 31} y={11} width={8} height={5} rx={1} />
                       <rect x={node.width - 31} y={19} width={8} height={5} rx={1} />
                     </g>
-                    <text x={8} y={18} className="design-canvas-node-title">
-                      {nameByModuleId.get(node.elementId) ?? moduleId}
+                    <text x={10} y={18} className="design-canvas-node-title">
+                      {titleLines.map((line, index) => (
+                        <tspan key={`${line}.${index}`} x={10} dy={index === 0 ? 0 : 14}>{line}</tspan>
+                      ))}
                     </text>
-                    <text x={8} y={34} className="design-canvas-node-meta" aria-hidden="true">
-                      provides {providedCount} · requires {requiredCount}
+                    <text x={10} y={node.height - 20} className="design-canvas-node-meta" aria-hidden="true">
+                      {moduleType}
                     </text>
-                    {providedCount > 0 && (
-                      <g className="design-canvas-interface provided" aria-hidden="true">
-                        <line x1={node.width} y1={20} x2={node.width + 8} y2={20} />
-                        <circle cx={node.width + 13} cy={20} r={5} />
-                      </g>
-                    )}
-                    {requiredCount > 0 && (
-                      <g className="design-canvas-interface required" aria-hidden="true">
-                        <line x1={0} y1={34} x2={-8} y2={34} />
-                        <path d="M -8 28 A 6 6 0 0 0 -8 40" />
-                      </g>
-                    )}
                     {entry && (
-                      <text x={8} y={48} className="design-canvas-node-state" aria-hidden="true">
+                      <text x={10} y={node.height - 7} className="design-canvas-node-state" aria-hidden="true">
                         {humanizeIdentifier(entry.state)}
                       </text>
                     )}
@@ -431,7 +439,7 @@ export function SystemCanvas(props: SystemCanvasProps) {
             </defs>
           </svg>
           <div className="design-canvas-minimap" aria-label="System minimap">
-            <svg viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`} width="180" height="100" aria-hidden="true">
+            <svg viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`} width="148" height="84" aria-hidden="true">
               {layout.edges.map((edge) => <polyline key={edge.relationshipId} points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')} />)}
               {layout.nodes.map((node) => <rect key={node.elementId} x={node.x} y={node.y} width={node.width} height={node.height} rx={4} />)}
             </svg>
