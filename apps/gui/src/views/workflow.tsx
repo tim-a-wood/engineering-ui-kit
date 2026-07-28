@@ -16,6 +16,7 @@ import type {
   RunCompletionRecord,
   VerificationResult,
 } from '@engineering-ui-kit/core'
+import { withStePrompt } from '@engineering-ui-kit/core/browser'
 import type { BuildPacketResult, PrepareContextResult, TaskPacketFields } from '../bridge'
 import { Dialog, PageHeader, StatusLine, Stepper, type Status } from '../components'
 import { Markdown } from '../markdown'
@@ -28,6 +29,7 @@ import {
   COPILOT_URL,
   EXCLUDED_CATEGORIES,
   EvidenceSection,
+  FALLBACK_COPILOT_PROMPT,
   GuideLink,
   INCLUDE_ROWS,
   PACKET_SECTIONS,
@@ -39,6 +41,7 @@ import {
   draftPacketMarkdown,
   durationLabel,
   formatBytes,
+  loadProjectSteLexicon,
   type StepProps,
   TreeView,
 } from './workflowShared'
@@ -310,7 +313,7 @@ export function CreateTaskPacketView(props: StepProps & {
         setTemplateId('iterate-on-feedback')
         setStatus({
           tone: 'info',
-          text: `Iteration packet prefilled from ${fresh.length} saved feedback note${fresh.length === 1 ? '' : 's'} — Scope carries your feedback; the constraints hold the previous design steady. Adjust and export.`,
+          text: `Iteration packet uses ${fresh.length} saved feedback note${fresh.length === 1 ? '' : 's'}. The scope contains your feedback. The constraints preserve the previous design. Review and export the packet.`,
         })
       } catch { /* notes unreadable — keep the regular prefill */ }
     })()
@@ -395,7 +398,7 @@ export function CreateTaskPacketView(props: StepProps & {
       <section className="panel" aria-labelledby="template-heading">
         <div className="hstack between" style={{ flexWrap: 'wrap', gap: 8 }}>
           <div>
-            <h2 id="template-heading">Start from a template</h2>
+            <h2 id="template-heading">Select template</h2>
             <p className="panel-desc" style={{ marginBottom: 0 }}>
               {TASK_TEMPLATES.find((t) => t.id === templateId)?.summary ?? 'Prefill all sections for a repeatable task type, then tweak.'}
             </p>
@@ -525,7 +528,7 @@ export function CreateTaskPacketView(props: StepProps & {
                           className="btn btn-secondary btn-compact"
                           onClick={() => {
                             setEditing(null)
-                            setStatus({ tone: 'info', text: 'Edit cancelled. Previous value restored.' })
+                            setStatus({ tone: 'info', text: 'Edit canceled. Previous value restored.' })
                           }}
                         >
                           Cancel
@@ -556,7 +559,7 @@ export function CreateTaskPacketView(props: StepProps & {
 
       <div className="right">
         <button type="button" className="btn btn-secondary" onClick={openPreview}>
-          Preview Task Packet
+          Preview task packet
         </button>
         <button type="button" className={result ? 'btn btn-secondary' : 'btn btn-primary'} onClick={build}>
           {result ? 'Rebuild Task Packet' : 'Export Task Packet'}
@@ -579,7 +582,10 @@ export function CreateTaskPacketView(props: StepProps & {
 
 export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult | null }) {
   const [copied, setCopied] = useState(false)
-  const [status, setStatus] = useState<Status>({ tone: 'info', text: 'Drag (or copy) the files into Microsoft 365 Copilot, paste the prompt, then continue once you have ui-overlay.zip.' })
+  const [status, setStatus] = useState<Status>({
+    tone: 'info',
+    text: 'Move the files to Microsoft 365 Copilot. Paste the prompt. Continue when you have ui-overlay.zip.',
+  })
   const run = props.run
   const files = props.packet?.uploadFiles ?? (run.taskAndStandardPackPath
     ? [
@@ -597,7 +603,7 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
     try {
       return await props.bridge.getArtifactText(run.id, 'recommended-prompt.txt')
     } catch {
-      return 'Inspect all uploaded files, follow the task packet and standard pack exactly, and return only ui-overlay.zip containing changed and new files with repo-relative paths.'
+      return FALLBACK_COPILOT_PROMPT
     }
   }
 
@@ -606,7 +612,7 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
     setCopied(ok)
     setStatus(ok
       ? { tone: 'success', text: 'Recommended prompt copied to the clipboard.' }
-      : { tone: 'error', text: 'Could not copy automatically — select the prompt text below and copy manually.' })
+      : { tone: 'error', text: 'Automatic copy failed. Select the prompt below and copy it.' })
     window.setTimeout(() => setCopied(false), 2500)
   }
 
@@ -614,8 +620,8 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
     const ok = await copyText(await getPrompt())
     await props.bridge.openExternal(COPILOT_URL)
     setStatus(ok
-      ? { tone: 'success', text: 'Copilot opened — the prompt is on your clipboard; attach the files, then paste.' }
-      : { tone: 'info', text: 'Copilot opened. Copy the prompt below, attach the files, then paste.' })
+      ? { tone: 'success', text: 'Copilot opened. The prompt is on your clipboard. Attach the files. Then, paste the prompt.' }
+      : { tone: 'info', text: 'Copilot opened. Copy the prompt below. Attach the files. Then, paste the prompt.' })
   }
 
   const dragFiles = (event: { preventDefault: () => void }) => {
@@ -654,8 +660,8 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
       <GuideLink topic="upload-run" onOpenGuide={props.onOpenGuide} />
 
       <section className="panel" aria-labelledby="upload-heading">
-        <h2 id="upload-heading">Upload to Microsoft 365 Copilot (max 3 files)</h2>
-        <p className="panel-desc">You can upload a maximum of 3 files. These will be attached to your prompt in Copilot.</p>
+        <h2 id="upload-heading">Upload files</h2>
+        <p className="panel-desc">Upload no more than three files. Copilot attaches them to your prompt.</p>
         <div className="upload-set">
           {files.map((f) => (
             <div key={f.file} className="upload-file">
@@ -688,22 +694,22 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
           draggable
           onDragStart={dragFiles}
           role="button"
-          aria-label={`Drag ${files.length} upload files out to Copilot`}
-          title="Drag this straight onto the Copilot chat's attach area"
+          aria-label="Drag Copilot files"
+          title="Drop Copilot files"
         >
           <span className="drag-dots" aria-hidden="true">⣿</span>
           <span className="hstack" aria-hidden="true">{files.map((f) => <span key={f.file} className="drag-file-chip">{Icon.file(13)} {f.file}</span>)}</span>
-          <span className="drag-hint">drag onto the Copilot chat — no folder needed</span>
+          <span className="drag-hint">Drop files in Copilot</span>
         </div>
         <div className="hstack" style={{ marginTop: 'var(--semantic-spacing-3)' }}>
           <button type="button" className="btn btn-secondary btn-compact" onClick={copyFiles}>
-            {Icon.copy(14)} Copy Files
+            {Icon.copy(14)} Copy files
           </button>
           <button type="button" className="btn btn-secondary btn-compact" onClick={showFiles}>
-            {Icon.folder(15)} Show Files in Folder
+            {Icon.folder(15)} Show upload files
           </button>
           <button type="button" className="btn btn-primary btn-compact" onClick={openCopilot}>
-            {Icon.external(14)} Open Copilot (copies prompt)
+            {Icon.external(14)} Open Copilot
           </button>
         </div>
       </section>
@@ -715,7 +721,7 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
             <p className="panel-desc" style={{ marginBottom: 0 }}>In Copilot, ask it to generate a zip overlay of changed/new files only.</p>
           </div>
           <button type="button" className="btn btn-secondary" onClick={copyPrompt}>
-            {copied ? <>{Icon.check(14)} Copied</> : <>{Icon.copy(14)} Copy Recommended Prompt</>}
+            {copied ? <>{Icon.check(14)} Copied</> : <>{Icon.copy(14)} Copy prompt</>}
           </button>
         </div>
         {props.packet && <pre className="pre" style={{ marginTop: 12 }}>{props.packet.recommendedPrompt}</pre>}
@@ -730,7 +736,7 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
 
       <div className="right">
         <button type="button" className="btn btn-primary" onClick={() => props.onNavigate('apply-zip-overlay')}>
-          I have the overlay — Continue
+          Continue
         </button>
       </div>
     </>
@@ -749,11 +755,12 @@ export function ApplyZipOverlayView(props: StepProps) {
 
   const copyFixPrompt = async () => {
     if (!inspection) return
-    const ok = await copyText(buildBlockerFixPrompt(inspection))
+    const lexicon = await loadProjectSteLexicon(props.bridge, props.project.id)
+    const ok = await copyText(buildBlockerFixPrompt(inspection, lexicon))
     setFixCopied(ok)
     setStatus(ok
-      ? { tone: 'success', text: 'Fix prompt copied — start a fresh Copilot session, re-attach the two upload files, and paste.' }
-      : { tone: 'error', text: 'Could not copy automatically — select the blocker list and copy manually.' })
+      ? { tone: 'success', text: 'Fix prompt copied. Start a new Copilot session. Attach the two upload files. Then, paste the prompt.' }
+      : { tone: 'error', text: 'Automatic copy failed. Select the blocker list and copy it.' })
     window.setTimeout(() => setFixCopied(false), 2500)
   }
 
@@ -773,7 +780,7 @@ export function ApplyZipOverlayView(props: StepProps) {
           ? summary.warnings.length > 0
             ? { tone: 'info', text: `Inspection verdict: warning — ${summary.warnings.length} warnings require explicit acceptance.` }
             : { tone: 'success', text: 'Inspection verdict: pass.' }
-          : { tone: 'error', text: `Inspection verdict: blocked — ${summary.hardBlockers.length} hard blockers. This overlay can never be applied; copy the fix prompt below to get a corrected zip from Copilot.` },
+          : { tone: 'error', text: `Inspection verdict: blocked. The overlay has ${summary.hardBlockers.length} hard blockers. Copy the fix prompt to get a corrected zip from Copilot.` },
       )
     } catch (error) {
       setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
@@ -805,8 +812,8 @@ export function ApplyZipOverlayView(props: StepProps) {
   return (
     <>
       <PageHeader
-        title="Apply Zip Overlay"
-        subtitle="Inspect Copilot's zip output, review every entry, then apply it on top of your existing repo."
+        title="Apply overlay"
+        subtitle="Inspect the Copilot zip output. Review each entry. Then, apply it to the repository."
         crumbs={[
           { label: 'Copilot Handoff', onClick: () => props.onNavigate('copilot-handoff') },
           { label: props.project.name },
@@ -827,7 +834,7 @@ export function ApplyZipOverlayView(props: StepProps) {
                 </p>
               </div>
               <button type="button" className="btn btn-primary" onClick={pickAndInspect} disabled={busy}>
-                {inspection ? 'Select different zip…' : 'Select ui-overlay.zip…'}
+                {inspection ? 'Select different zip' : 'Select overlay zip'}
               </button>
             </div>
           </section>
@@ -868,7 +875,7 @@ export function ApplyZipOverlayView(props: StepProps) {
 
               {inspection.hardBlockers.length > 0 && (
                 <div className="validation-summary" role="alert" style={{ marginTop: 16 }}>
-                  <h3>{Icon.alertTriangle(14)} Hard blockers — apply refused</h3>
+                  <h3>{Icon.alertTriangle(14)} Apply blockers</h3>
                   <ul>
                     {inspection.hardBlockers.map((b, i) => (
                       <li key={i}><code>{b.ruleId}</code> {b.path ? <code>{b.path}</code> : null} — {b.message}</li>
@@ -876,15 +883,15 @@ export function ApplyZipOverlayView(props: StepProps) {
                   </ul>
                   <div className="hstack" style={{ marginTop: 12, flexWrap: 'wrap' }}>
                     <button type="button" className="btn btn-secondary btn-compact" onClick={copyFixPrompt}>
-                      {fixCopied ? <>{Icon.check(14)} Copied</> : <>{Icon.copy(14)} Copy Fix Prompt for Copilot</>}
+                      {fixCopied ? <>{Icon.check(14)} Copied</> : <>{Icon.copy(14)} Copy fix prompt</>}
                     </button>
                     <button type="button" className="tip-link" onClick={() => props.onNavigate('run-in-copilot')}>
-                      Reopen Run in Copilot to re-attach the upload files →
+                      Reopen Copilot
                     </button>
                   </div>
                   <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
-                    Paste the prompt into a fresh Copilot session together with the same two upload files;
-                    it lists every violation and asks for a corrected <code>ui-overlay.zip</code>.
+                    Paste the prompt and the same two upload files into a new Copilot session.
+                    The prompt lists each violation and requests a corrected <code>ui-overlay.zip</code>.
                   </p>
                 </div>
               )}
@@ -892,7 +899,7 @@ export function ApplyZipOverlayView(props: StepProps) {
               {inspection.warnings.length > 0 && inspection.canApply && (
                 <div className="inset" style={{ marginTop: 16, borderColor: 'var(--semantic-status-warning)' }}>
                   <p className="status-label" style={{ color: 'var(--semantic-status-warning)', marginTop: 0 }}>
-                    Warnings requiring explicit acceptance
+                    Overlay warnings
                   </p>
                   <ul style={{ margin: 0, paddingLeft: 18 }}>
                     {inspection.warnings.map((w, i) => (
@@ -901,13 +908,16 @@ export function ApplyZipOverlayView(props: StepProps) {
                       </li>
                     ))}
                   </ul>
+                  <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
+                    Review each warning before you continue.
+                  </p>
                   <label className="hstack" style={{ marginTop: 12, cursor: 'pointer' }}>
                     <input
                       type="checkbox"
                       checked={warningsAccepted}
                       onChange={(e) => setWarningsAccepted(e.target.checked)}
                     />
-                    I reviewed every warning and accept the overwrites listed above.
+                    Accept all warnings
                   </label>
                 </div>
               )}
@@ -945,11 +955,11 @@ export function ApplyZipOverlayView(props: StepProps) {
 
       <div className="right">
         <button type="button" className="btn btn-primary" onClick={apply} disabled={!canApply || busy}>
-          Apply Overlay
+          Apply overlay
         </button>
         {applied && (
           <button type="button" className="btn btn-primary" onClick={() => props.onNavigate('verify-review')}>
-            Continue to Verify & Review
+            Continue
           </button>
         )}
       </div>
@@ -1230,7 +1240,8 @@ export function VerifyReviewView(props: StepProps) {
           return `${result.commandLabel}: ${result.status} (exit ${result.exitCode ?? '—'})`
         }
       }))
-      const prompt = [
+      const lexicon = await loadProjectSteLexicon(props.bridge, props.project.id)
+      const prompt = withStePrompt([
         'Fix these failed checks without broadening the task or redesigning unrelated UI.',
         '',
         'Preserve the intended visual changes, correct the underlying code errors, and return only ui-overlay.zip with changed files using repo-relative paths.',
@@ -1240,7 +1251,19 @@ export function VerifyReviewView(props: StepProps) {
         ...logs,
         '',
         'Do not claim success. The checks will be run again locally after the overlay is applied.',
-      ].join('\n')
+      ].join('\n'), {
+        technicalTerms: [
+          'application',
+          'check',
+          'overlay',
+          'repository',
+          'source code',
+          'user interface',
+          'ZIP',
+          ...(lexicon?.technicalTerms ?? []),
+        ],
+        prohibitedAliases: lexicon?.prohibitedAliases,
+      })
       const copied = await copyText(prompt)
       setStatus(copied
         ? { tone: 'success', text: 'Fix prompt copied. Paste it into Copilot to correct the failed checks.' }
@@ -1285,19 +1308,19 @@ export function VerifyReviewView(props: StepProps) {
       <section className="review-cockpit-flat" aria-labelledby="review-cockpit-heading">
         <div className="build-primary-card-head test-primary-card-head">
           <div>
-            <h2 id="review-cockpit-heading">What changes are needed?</h2>
+            <h2 id="review-cockpit-heading">Review changes</h2>
             <p className="panel-desc">Review the applied overlay in the preview, run checks, and note anything that should go into the next handoff.</p>
           </div>
           <StepHelpButton
             step={3}
             variant="review"
-            title="What changes are needed?"
+            title="Review changes"
             description="Use this panel to test the result, capture precise feedback, and decide whether the handoff is complete."
             flow={[
               { icon: 'check', label: 'Run checks' },
-              { icon: 'prompt', label: 'Review and note' },
+              { icon: 'prompt', label: 'Record notes' },
               { icon: 'files', label: 'Save evidence' },
-              { icon: 'copilot', label: 'Approve or iterate' },
+              { icon: 'copilot', label: 'Approve handoff' },
             ]}
             items={[
               'Run the checks and inspect the application preview.',
@@ -1334,10 +1357,10 @@ export function VerifyReviewView(props: StepProps) {
               </button>
             )}
             <button type="button" className="btn btn-secondary btn-compact" onClick={generateReviewPacket}>
-              {Icon.sparkle(14)} Review Packet
+              {Icon.sparkle(14)} Create review packet
             </button>
             <button type="button" className="btn btn-secondary btn-compact" onClick={() => props.onNavigate('create-task-packet')}>
-              {Icon.doc(14)} New Task Packet
+              {Icon.doc(14)} Create task packet
             </button>
             <button
               type="button"
@@ -1345,7 +1368,7 @@ export function VerifyReviewView(props: StepProps) {
               disabled={!results || failed > 0 || completed}
               onClick={approve}
             >
-              {Icon.check(14)} {completed ? 'Handoff Complete' : 'Approve & Complete'}
+              {Icon.check(14)} {completed ? 'Approved' : 'Approve handoff'}
             </button>
           </span>
         </div>
@@ -1473,8 +1496,8 @@ export function VerifyReviewView(props: StepProps) {
             </div>
           )}
           <p className="secondary-text" style={{ marginTop: 0 }}>
-            Verification runs automatically when you arrive at this step; applying a new overlay invalidates the
-            results and triggers a fresh run.
+            Verification runs automatically when you arrive at this step. Applying a new overlay invalidates the
+            results and starts a new run.
             {lastRunAt && <span className="muted"> Last run: Today at {lastRunAt}.</span>}
           </p>
           {results && (
@@ -1540,7 +1563,7 @@ export function VerifyReviewView(props: StepProps) {
           }
         >
           <div className="field">
-            <label htmlFor="review-note">Add a general note</label>
+            <label htmlFor="review-note">General note</label>
             <textarea
               id="review-note"
               rows={3}
@@ -1549,7 +1572,7 @@ export function VerifyReviewView(props: StepProps) {
             />
             <div className="hstack">
               <button type="button" className="btn btn-secondary btn-compact" onClick={saveManualNote}>
-                {Icon.pencil(14)} Save Note
+                {Icon.pencil(14)} Save note
               </button>
             </div>
           </div>
@@ -1620,7 +1643,7 @@ export function VerifyReviewView(props: StepProps) {
             <span className="muted">{composer.route}{composer.view ? ` · ${composer.view}` : ''}</span>
           </p>
           <div className="field" style={{ margin: 0 }}>
-            <label htmlFor="component-comment">What should change?</label>
+            <label htmlFor="component-comment">Requested change</label>
             <textarea
               id="component-comment"
               rows={4}
@@ -1633,7 +1656,7 @@ export function VerifyReviewView(props: StepProps) {
 
       {reviewOpen && reviewPacket && (
         <Dialog
-          title="Generate Copilot Review Packet"
+          title="Review packet"
           onClose={() => setReviewOpen(false)}
           wide
           actions={
@@ -1643,11 +1666,11 @@ export function VerifyReviewView(props: StepProps) {
               </button>
               {reviewPacket.contactSheetPath && (
                 <button type="button" className="btn btn-secondary" onClick={() => props.bridge.showInFolder(reviewPacket.contactSheetPath!)}>
-                  Show Evidence PDF
+                  Show evidence PDF
                 </button>
               )}
               <button type="button" className="btn btn-secondary" onClick={() => props.bridge.showInFolder(reviewPacket.path)}>
-                Show in Folder
+                Show in folder
               </button>
               <button type="button" className="btn btn-primary" onClick={() => setReviewOpen(false)}>
                 Close
@@ -1662,7 +1685,7 @@ export function VerifyReviewView(props: StepProps) {
             ))}
             {reviewPacket.contactSheetPath
               ? ' — includes the before/after visual contact sheet.'
-              : ' — no visual evidence captured for this run; capture before/after screenshots to include the contact sheet.'}
+              : ' — no visual evidence was captured for this run. Capture before and after screenshots to include the contact sheet.'}
           </p>
           <div className="preview-scroll"><Markdown text={reviewPacket.text} /></div>
         </Dialog>
@@ -1816,9 +1839,9 @@ function AppPreview(props: {
                   className={`btn btn-compact ${props.picking ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => void pickComponent()}
                   disabled={props.picking}
-                  title="Click a component in the preview to comment on it (Esc cancels)"
+                  title="Select preview component"
                 >
-                  {Icon.target(14)} {props.picking ? 'Click a component…' : 'Comment'}
+                  {Icon.target(14)} {props.picking ? 'Select component' : 'Comment'}
                 </button>
               )}
               <button type="button" className="btn btn-secondary btn-compact" onClick={reload}>

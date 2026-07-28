@@ -25,6 +25,16 @@ Only these markers are used. Substitute them before upload.
 
 You are implementing a focused UI transformation for `{{PROJECT_NAME}}`.
 
+Apply the Engineering UI Kit writing profile based on ASD-STE100 Issue 9 to all
+human-facing output. This output includes interface text, diagrams, design
+documents, module descriptions, and implementation guidance.
+
+- Use American English, active voice, simple verb forms, and one action per sentence.
+- Limit instructions to 20 words and descriptions to 25 words per sentence.
+- Write names and diagram labels as `VERB + OBJECT` with no more than four words.
+- Use one technical term for one concept. Do not use contractions or semicolons.
+- Check all generated text against these rules before you return the result.
+
 Before editing anything, inspect all three uploaded inputs:
 
 1. `repo-flatfile.txt`

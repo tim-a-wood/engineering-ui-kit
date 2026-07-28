@@ -6,6 +6,10 @@
  */
 
 import type { TaskDefinition } from './types.js'
+import {
+  buildStePromptRules,
+  type SteLexicon,
+} from './capabilities/simplifiedTechnicalEnglish.js'
 
 export const REQUIRED_SECTION_ORDER = [
   '## Package Metadata',
@@ -33,11 +37,31 @@ export const REQUIRED_SECTION_ORDER = [
 export type BuildPacketOptions = {
   baselineCommit: string
   generatedAt: string
+  steLexicon?: SteLexicon
 }
 
 export function buildTaskAndStandardPack(task: TaskDefinition, options: BuildPacketOptions): string {
   const lines: string[] = []
   const push = (...items: string[]) => lines.push(...items)
+  const stePolicy = buildStePromptRules({
+    technicalTerms: [
+      'application',
+      'component',
+      'diagram',
+      'document',
+      'module',
+      'repository',
+      'source code',
+      'use case',
+      'user interface',
+      ...(options.steLexicon?.technicalTerms ?? []),
+    ],
+    prohibitedAliases: options.steLexicon?.prohibitedAliases,
+  })
+  const constraints = [
+    stePolicy,
+    ...task.constraints.filter((item) => !item.trimStart().startsWith('[EUIT-STE-001 ')),
+  ]
 
   push('# Task and Standards Pack', '')
 
@@ -71,7 +95,7 @@ export function buildTaskAndStandardPack(task: TaskDefinition, options: BuildPac
   push('')
 
   push('## Constraints', '')
-  for (const item of task.constraints) push(`- ${item}`)
+  for (const item of constraints) push(`- ${item}`)
   push('')
 
   push('## Protected Behavior', '')

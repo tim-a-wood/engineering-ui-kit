@@ -74,7 +74,7 @@
     {
       "id": "ac.adapter.readonly",
       "description": "Attempt a refresh across read-only source files and cancel mid-read.",
-      "expectedOutcome": "No source changes occur; cancellation and per-source diagnostics are explicit."
+      "expectedOutcome": "No source changes occur. Cancellation and per-source diagnostics are explicit."
     }
   ],
   "acceptanceCommands": [],

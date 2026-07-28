@@ -89,6 +89,128 @@ export type AcceptanceCase = {
   kind?: 'example' | 'failure'
 }
 
+export type UseCasePathKind = 'main' | 'alternate' | 'failure' | 'recovery'
+export type ScenarioEvidencePolicy = 'screenshot' | 'structured' | 'either' | 'not-applicable'
+export type ScenarioOutcome = 'passed' | 'failed' | 'skipped' | 'cancelled' | 'unverified'
+
+/** One stable, allocatable step in an approved use-case path. */
+export type UseCaseStepDefinition = {
+  id: string
+  order: number
+  actorId?: string
+  action: string
+  expectedResult: string
+  inputIds: string[]
+  outputIds: string[]
+  ruleIds: string[]
+  evidencePolicy: ScenarioEvidencePolicy
+}
+
+export type UseCasePathDefinition = {
+  id: string
+  name: string
+  kind: UseCasePathKind
+  trigger?: string
+  preconditions: string[]
+  steps: UseCaseStepDefinition[]
+  outcome: string
+}
+
+/**
+ * Detailed use-case analysis. `ApplicationSpecification.useCases` remains the
+ * compact compatibility index; these records are the authoritative analysis
+ * used by architecture, module design, UML, and scenario verification.
+ */
+export type UseCaseDefinition = {
+  id: string
+  name: string
+  actorIds: string[]
+  trigger: string
+  preconditions: string[]
+  mainFlow: UseCaseStepDefinition[]
+  alternatePaths: UseCasePathDefinition[]
+  failurePaths: UseCasePathDefinition[]
+  recoveryPaths: UseCasePathDefinition[]
+  ruleIds: string[]
+  inputIds: string[]
+  outputIds: string[]
+  acceptanceCaseIds: string[]
+  sourceRefs: string[]
+}
+
+/**
+ * Renderer-neutral behavior graph. Application workflows and module activities
+ * wrap this shared structure, but they remain separate approval authorities.
+ */
+export type ActivityNodeKind =
+  | 'initial'
+  | 'action'
+  | 'call-operation'
+  | 'decision'
+  | 'merge'
+  | 'fork'
+  | 'join'
+  | 'send-event'
+  | 'receive-event'
+  | 'final'
+
+export type ActivityNode = {
+  id: string
+  kind: ActivityNodeKind
+  label: string
+  description: string
+  refinesIds: string[]
+  actorId?: string
+  operationId?: string
+  eventId?: string
+}
+
+export type ActivityEdge = {
+  id: string
+  fromNodeId: string
+  toNodeId: string
+  guard?: string
+  outcome?: 'success' | 'alternate' | 'failure' | 'recovery'
+  loop?: {
+    exitCondition: string
+    maximumIterations?: number
+  }
+  traceIds: string[]
+}
+
+export type ActivityGraph = {
+  id: string
+  name: string
+  nodes: ActivityNode[]
+  edges: ActivityEdge[]
+}
+
+/** Observable application behavior that refines one approved use case. */
+export type ApplicationWorkflowDefinition = {
+  id: string
+  useCaseId: string
+  name: string
+  graph: ActivityGraph
+  pathIds: string[]
+  acceptanceCaseIds: string[]
+  sourceRefs: string[]
+}
+
+/** Executable scenario definition compiled from one approved use-case path. */
+export type ScenarioDefinition = {
+  id: string
+  useCaseId: string
+  pathId: string
+  workflowId?: string
+  workflowNodeIds?: string[]
+  name: string
+  kind: UseCasePathKind
+  stepIds: string[]
+  tags: string[]
+  requiredEvidence: ScenarioEvidencePolicy
+  testCommand?: string
+}
+
 /** CAP-CONTRACT-001 */
 export type ApplicationSpecification = {
   schemaVersion: '1.0'
@@ -102,6 +224,10 @@ export type ApplicationSpecification = {
   goals: NamedText[]
   useCases: NamedText[]
   scenarios: NamedText[]
+  /** Rich, record-driven workflow fields; optional for 1.0 workspace compatibility. */
+  useCaseDefinitions?: UseCaseDefinition[]
+  applicationWorkflows?: ApplicationWorkflowDefinition[]
+  scenarioDefinitions?: ScenarioDefinition[]
   information: NamedText[]
   rules: NamedText[]
   externalSystems: NamedText[]
@@ -128,6 +254,18 @@ export type ArchitectureModuleDefinition = {
   responsibility: string
 }
 
+/** One explicit allocation from an application workflow node to the solution. */
+export type WorkflowNodeAllocation = {
+  workflowId: string
+  nodeId: string
+  primaryModuleId: string
+  participatingModuleIds: string[]
+  entryPointId?: string
+  operationId?: string
+  outputId?: string
+  eventId?: string
+}
+
 /** CAP-CONTRACT-002 */
 export type ArchitectureSpecification = {
   schemaVersion: '1.0'
@@ -145,7 +283,15 @@ export type ArchitectureSpecification = {
   dependencyEdges: DependencyEdge[]
   operationAllocations: { operationId: string; moduleId: string }[]
   adapterAllocations: { adapterId: string; moduleId: string; portId: string }[]
-  workflowTraces: { useCaseId: string; moduleIds: string[] }[]
+  workflowTraces: {
+    useCaseId: string
+    moduleIds: string[]
+    entryPointId?: string
+    outputId?: string
+    nodeAllocations?: WorkflowNodeAllocation[]
+    /** @deprecated Read only. New approvals use nodeAllocations. */
+    stepAllocations?: { stepId: string; moduleId: string }[]
+  }[]
   proposals: NamedText[]
   unresolvedQuestions: NamedText[]
   gateResult: { gateId: string; passed: boolean; diagnostics: Diagnostic[] }
@@ -176,6 +322,352 @@ export type ModuleManifest = {
   runtimeAllocation: RuntimeAllocation
   events: string[]
   ownedPaths: string[]
+}
+
+export type DiagramKind = 'component' | 'activity' | 'state-machine' | 'sequence' | 'use-case'
+export type DiagramNodeKind =
+  | 'actor'
+  | 'component'
+  | 'port'
+  | 'provided-interface'
+  | 'required-interface'
+  | 'initial'
+  | 'final'
+  | 'action'
+  | 'call-operation'
+  | 'decision'
+  | 'merge'
+  | 'fork'
+  | 'join'
+  | 'send-event'
+  | 'receive-event'
+  | 'swimlane'
+  | 'state'
+  | 'lifeline'
+  | 'activation'
+  | 'fragment'
+  | 'system-boundary'
+  | 'use-case'
+export type DiagramEdgeKind =
+  | 'association'
+  | 'dependency'
+  | 'assembly'
+  | 'control-flow'
+  | 'transition'
+  | 'synchronous-message'
+  | 'reply-message'
+  | 'include'
+  | 'extend'
+
+export type DiagramProjectionNode = {
+  id: string
+  kind: DiagramNodeKind
+  label: string
+  description: string
+  sourceRecordId: string
+  traceIds: string[]
+  parentId?: string
+  stereotype?: string
+  details?: string[]
+}
+
+export type DiagramProjectionEdge = {
+  id: string
+  kind: DiagramEdgeKind
+  fromId: string
+  toId: string
+  label?: string
+  /** A canonical condition that the renderer places beside this connector. */
+  guard?: string
+  /** A canonical activity outcome used for semantic connector styling. */
+  outcome?: ActivityEdge['outcome']
+  /** True when the canonical activity edge repeats a bounded flow. */
+  isLoop?: boolean
+  description: string
+  sourceRecordId: string
+  traceIds: string[]
+}
+
+/** Renderer-neutral UML projection derived from canonical records. */
+export type DiagramProjection = {
+  schemaVersion: '1.0'
+  id: string
+  kind: DiagramKind
+  projectId: string
+  contextId: string
+  title: string
+  sourceRevision: string
+  /** Behavior level for the diagram. Legacy projections can omit this field. */
+  level?: 'application' | 'allocation' | 'module'
+  /** Canonical records that supplied the projection semantics. */
+  sourceRecordIds?: string[]
+  nodes: DiagramProjectionNode[]
+  edges: DiagramProjectionEdge[]
+  diagnostics: Diagnostic[]
+  textAlternative: string
+  contentHash: string
+}
+
+export type ModuleDesignState =
+  | 'draft'
+  | 'needsInput'
+  | 'readyForReview'
+  | 'approved'
+  | 'stale'
+  | 'conflict'
+  | 'superseded'
+  | 'withdrawn'
+
+export type ModuleDesignStep = 'boundary' | 'behavior' | 'contracts' | 'diagrams' | 'checks' | 'approval'
+
+export type ModuleActivityDefinition = {
+  id: string
+  name: string
+  entryOperationId?: string
+  refinesWorkflowNodeIds: string[]
+  graph: ActivityGraph
+}
+
+export type ModuleStateDefinition = {
+  id: string
+  name: string
+  parentStateId?: string
+  entryActionIds: string[]
+  exitActionIds: string[]
+}
+
+export type ModuleStateTransition = {
+  id: string
+  fromStateId: string
+  toStateId: string
+  trigger: string
+  guard?: string
+  effectActivityNodeIds: string[]
+}
+
+export type ModuleInteractionParticipant = {
+  id: string
+  label: string
+  kind: 'actor' | 'module' | 'operation' | 'external'
+}
+
+export type ModuleInteractionMessage = {
+  id: string
+  fromParticipantId: string
+  toParticipantId: string
+  label: string
+  kind: 'synchronous' | 'reply' | 'event'
+  operationId?: string
+  eventId?: string
+  guard?: string
+  refinesActivityNodeIds: string[]
+}
+
+export type ModuleInteractionFragment = {
+  id: string
+  kind: 'alt' | 'opt' | 'loop'
+  label: string
+  guard?: string
+  messageIds: string[]
+}
+
+export type ModuleInteractionDefinition = {
+  id: string
+  name: string
+  participants: ModuleInteractionParticipant[]
+  messages: ModuleInteractionMessage[]
+  fragments?: ModuleInteractionFragment[]
+}
+
+export type ModuleBehaviorSpecification = {
+  preconditions: string[]
+  postconditions: string[]
+  domainRejections: string[]
+  technicalFailures: string[]
+  sideEffects: string[]
+  idempotency: string
+  cancellation: string
+  timeouts: string
+  concurrency: string
+  retry: string
+  recovery: string
+  emittedEvents: string[]
+  consumedEvents: string[]
+  stateDefinitions?: ModuleStateDefinition[]
+  stateTransitions?: ModuleStateTransition[]
+  activityDefinitions?: ModuleActivityDefinition[]
+  interactionDefinitions?: ModuleInteractionDefinition[]
+  /** @deprecated Read only. New approvals use stateDefinitions. */
+  states: NamedText[]
+  /** @deprecated Read only. New approvals use activityDefinitions. */
+  activities: NamedText[]
+  /** @deprecated Read only. New approvals use interactionDefinitions. */
+  interactions: NamedText[]
+}
+
+export type ModuleDesignSpecification = {
+  schemaVersion: '1.0'
+  projectId: string
+  id: string
+  revision: string
+  status: ModuleDesignState
+  architecture: { id: string; revision: string; contentHash: string }
+  module: {
+    moduleId: string
+    moduleVersion: string
+    name: string
+    moduleType: ModuleType
+    owner?: string
+    responsibility: string
+    nonResponsibilities: string[]
+    ownedConcerns: string[]
+    excludedConcerns: string[]
+  }
+  trace: {
+    useCaseIds: string[]
+    workflowNodeIds?: string[]
+    scenarioStepIds: string[]
+    ruleIds: string[]
+    qualityRequirementIds: string[]
+    sourceRefs: string[]
+    designDecisionIds: string[]
+  }
+  boundary: {
+    directDependencyIds: string[]
+    directConsumerIds: string[]
+    deployableId: string
+    runtimeAllocation: RuntimeAllocation
+    runtimeLanguage: RuntimeLanguage
+    ownedPaths: string[]
+    editableSharedPaths: string[]
+  }
+  providedOperations: { operationId: string; contractVersion: string }[]
+  requiredOperations: { operationId: string; acceptedContractRange: string; reason: string }[]
+  schemas: NamedText[]
+  rules: NamedText[]
+  invariants: string[]
+  behavior: ModuleBehaviorSpecification
+  data: {
+    persistentRecords: NamedText[]
+    ownership: string[]
+    retention: string[]
+    migrationNeeds: string[]
+    confidentiality: string
+    provenanceFields: string[]
+    canonicalUnits: string[]
+  }
+  runtime: {
+    configurationRefs: string[]
+    secretRefs: string[]
+    lifecycleRegistration: string
+    health: string[]
+    telemetry: string[]
+    resourceOwnership: string[]
+    startup: string[]
+    shutdown: string[]
+    compatibilityConstraints: string[]
+  }
+  verification: {
+    examples: string[]
+    edgeCases: string[]
+    acceptanceCaseIds: string[]
+    verificationSuiteIds: string[]
+    requiredEvidence: ScenarioEvidencePolicy[]
+    testDoubles: string[]
+    fixtureNeeds: string[]
+    commands: string[]
+  }
+  diagrams: DiagramProjection[]
+  unresolvedItems: { id: string; description: string; materiality: MaterialityLevel }[]
+  gates: { gateId: string; passed: boolean; diagnostics: Diagnostic[] }[]
+  approval?: {
+    approvedAt: string
+    approvedBy?: string
+    authority?: string
+    sourceHashes: Record<string, string>
+    openNonblockingItemIds: string[]
+  }
+  contentHash: string
+}
+
+export type ContextManifest = {
+  id: string
+  targetRecordId: string
+  targetRevision: string
+  tokenOrByteLimit: number
+  totalBytes: number
+  entries: {
+    kind: 'record' | 'contract' | 'schema' | 'source' | 'pattern' | 'test'
+    ref: string
+    contentHash: string
+    bytes: number
+    priority: number
+    inclusionReason: string
+  }[]
+  omitted: { ref: string; reason: string }[]
+  contentHash: string
+}
+
+export type ModuleDesignSession = {
+  schemaVersion: '1.0'
+  id: string
+  projectId: string
+  moduleId: string
+  baseArchitectureRevision: string
+  baseModuleDesignRevision?: string
+  state: 'created' | 'drafting' | 'needsInput' | 'readyForReview' | 'completed' | 'cancelled' | 'expired'
+  currentStep: ModuleDesignStep
+  completedSteps: ModuleDesignStep[]
+  sourceManifest: ContextManifest
+  answers: { id: string; question: string; answer: string; sourceRefs: string[] }[]
+  diagnostics: Diagnostic[]
+  createdAt: string
+  updatedAt: string
+}
+
+export type ScenarioStepEvidence = {
+  kind: 'screenshot' | 'structured' | 'not-applicable'
+  artifactId?: string
+  reason?: string
+}
+
+export type ScenarioStepResult = {
+  scenarioStepId: string
+  action: string
+  expectedResult: string
+  actualResult: string
+  startedAt: string
+  completedAt: string
+  outcome: ScenarioOutcome
+  evidence: ScenarioStepEvidence[]
+}
+
+export type ScenarioRunRecord = {
+  schemaVersion: '1.0'
+  runId: string
+  projectId: string
+  scenarioId: string
+  useCaseId: string
+  kind: UseCasePathKind
+  outcome: ScenarioOutcome
+  identity: {
+    useCaseAnalysisRevision: string
+    applicationRevision: string
+    architectureRevision: string
+    moduleDesignRevisions: Record<string, string>
+    implementationRevisions: Record<string, string>
+    connectionRevision?: string
+    build: string
+    sourceRevision: string
+    environment: string
+    testDataRevision: string
+    runner: string
+  }
+  steps: ScenarioStepResult[]
+  evidenceHashes: Record<string, string>
+  startedAt: string
+  completedAt?: string
+  contentHash: string
 }
 
 /** Persisted module read model used by desktop and renderer projections. */

@@ -45,28 +45,28 @@ export function StepHelpButton({ step, variant, title, description, items, flow 
       <button
         type="button"
         className="step-help-button"
-        aria-label={`Help with step ${step}: ${title}`}
-        title={`How to complete step ${step}`}
+        aria-label="Open step help"
+        title="Open step help"
         onClick={() => setOpen(true)}
       >
         {Icon.help(15)} <span>Help</span>
       </button>
       {open && (
         <Dialog
-          title={`Step ${step}: ${title}`}
+          title={title}
           wide
           onClose={() => setOpen(false)}
-          actions={<button type="button" className="btn btn-primary" onClick={() => setOpen(false)}>Got it</button>}
+          actions={<button type="button" className="btn btn-primary" onClick={() => setOpen(false)}>Close help</button>}
         >
           <div className="step-help-overlay">
             <div className="step-help-hero">
               <span className="step-help-hero-number" aria-hidden="true">{step}</span>
               <div>
-                <span className="step-help-eyebrow">How this panel works</span>
+                <span className="step-help-eyebrow">Panel guide</span>
                 <p className="step-help-intro">{description}</p>
               </div>
             </div>
-            <div className="step-help-flow" aria-label={`Step ${step} workflow`}>
+            <div className="step-help-flow" aria-label="Show step workflow">
               {flow.map((node, index) => {
                 const icon = flowIcons[node.icon]
                 return (
@@ -86,13 +86,13 @@ export function StepHelpButton({ step, variant, title, description, items, flow 
                 )
               })}
             </div>
-            <h3 className="step-help-list-title">Do this</h3>
+            <h3 className="step-help-list-title">Complete steps</h3>
             <ol className="step-help-checklist">
               {items.map((item) => <li key={item}>{item}</li>)}
             </ol>
             <div className="step-help-success">
               <span className="step-help-success-icon" aria-hidden="true">{Icon.check(18)}</span>
-              <span><strong>You’re ready to continue</strong><small>Complete the three actions above, then move to the next panel.</small></span>
+              <span><strong>Continue workflow</strong><small>Complete the actions above. Then, go to the next panel.</small></span>
             </div>
           </div>
         </Dialog>

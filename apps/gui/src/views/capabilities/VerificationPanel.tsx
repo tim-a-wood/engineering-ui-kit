@@ -117,7 +117,7 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
         <div role="status">
           <EmptyState
             icon={Icon.listChecks(24)}
-            title="No approved modules yet"
+            title="No approved modules"
             hint="Approve at least one module, then return here to run its configured checks."
             action={projection === 'design' && onOpenModules ? (
               <button type="button" className="btn btn-primary btn-compact" onClick={onOpenModules}>

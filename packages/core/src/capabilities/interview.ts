@@ -3,12 +3,28 @@
  * Does not mutate approved records — callers persist drafts / approve explicitly.
  */
 
-import type { ApplicationSpecification, InterviewPacket, NamedText } from './types.js'
+import type {
+  ActivityEdge,
+  ActivityNode,
+  ApplicationSpecification,
+  ApplicationWorkflowDefinition,
+  InterviewPacket,
+  NamedText,
+  ScenarioDefinition,
+  UseCaseDefinition,
+  UseCasePathDefinition,
+  UseCaseStepDefinition,
+} from './types.js'
 import { validateContractRecord } from './validation.js'
 import { diagnostic, sortDiagnostics, type CapDiagnostic } from './diagnostics.js'
 import { evaluateProductGate, type GateResult } from './gates.js'
 import { buildInterviewPacket, packetContentHash } from './packets.js'
 import { canonicalHash } from './hash.js'
+import {
+  evaluateApplicationSte,
+  type SteLexicon,
+  type SteReviewDiagnostic,
+} from './simplifiedTechnicalEnglish.js'
 
 export const PRODUCT_INTERVIEW_RESPONSE_FILENAME = 'capability-interview-response.json'
 export const PRODUCT_INTERVIEW_UPLOAD_BUDGET = 3
@@ -25,6 +41,7 @@ export type InterviewFieldState = 'confirmed' | 'proposed' | 'unresolved'
 export type ProductInterviewImportResult = {
   draft: ApplicationSpecification
   diagnostics: CapDiagnostic[]
+  reviewDiagnostics: SteReviewDiagnostic[]
   gate: GateResult
   delta: FieldDelta[]
   valid: boolean
@@ -88,6 +105,93 @@ function asStringList(value: unknown): string[] {
   return value.map((item) => (typeof item === 'string' ? item : String(item ?? '')))
 }
 
+const ACTIVITY_NODE_KINDS = new Set<ActivityNode['kind']>([
+  'initial',
+  'final',
+  'action',
+  'decision',
+  'merge',
+  'fork',
+  'join',
+  'call-operation',
+  'send-event',
+  'receive-event',
+])
+
+function asActivityNodes(value: unknown): ActivityNode[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item, index) => {
+    const obj = asObject(item)
+    if (!obj || !ACTIVITY_NODE_KINDS.has(obj.kind as ActivityNode['kind'])) return []
+    return [{
+      id: typeof obj.id === 'string' && obj.id.trim() ? obj.id : `node-${index + 1}`,
+      kind: obj.kind as ActivityNode['kind'],
+      label: typeof obj.label === 'string' ? obj.label : '',
+      description: typeof obj.description === 'string' ? obj.description : '',
+      refinesIds: asStringList(obj.refinesIds),
+      ...(typeof obj.actorId === 'string' ? { actorId: obj.actorId } : {}),
+      ...(typeof obj.operationId === 'string' ? { operationId: obj.operationId } : {}),
+      ...(typeof obj.eventId === 'string' ? { eventId: obj.eventId } : {}),
+    }]
+  })
+}
+
+function asActivityEdges(value: unknown): ActivityEdge[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item, index) => {
+    const obj = asObject(item)
+    if (!obj) return []
+    const loop = asObject(obj.loop)
+    const outcome = ['success', 'alternate', 'failure', 'recovery'].includes(String(obj.outcome))
+      ? obj.outcome as ActivityEdge['outcome']
+      : undefined
+    return [{
+      id: typeof obj.id === 'string' && obj.id.trim() ? obj.id : `edge-${index + 1}`,
+      fromNodeId: typeof obj.fromNodeId === 'string' ? obj.fromNodeId : '',
+      toNodeId: typeof obj.toNodeId === 'string' ? obj.toNodeId : '',
+      traceIds: asStringList(obj.traceIds),
+      ...(typeof obj.guard === 'string' ? { guard: obj.guard } : {}),
+      ...(outcome ? { outcome } : {}),
+      ...(loop && typeof loop.exitCondition === 'string'
+        ? {
+          loop: {
+            exitCondition: loop.exitCondition,
+            ...(typeof loop.maximumIterations === 'number'
+              ? { maximumIterations: loop.maximumIterations }
+              : {}),
+          },
+        }
+        : {}),
+    }]
+  })
+}
+
+function asApplicationWorkflows(value: unknown): ApplicationWorkflowDefinition[] | undefined {
+  if (value === undefined) return undefined
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item, index) => {
+    const obj = asObject(item)
+    const graph = asObject(obj?.graph)
+    if (!obj || !graph) return []
+    return [{
+      id: typeof obj.id === 'string' && obj.id.trim() ? obj.id : `workflow-${index + 1}`,
+      useCaseId: typeof obj.useCaseId === 'string' ? obj.useCaseId : '',
+      name: typeof obj.name === 'string' ? obj.name : '',
+      graph: {
+        id: typeof graph.id === 'string' && graph.id.trim()
+          ? graph.id
+          : `workflow-${index + 1}:graph`,
+        name: typeof graph.name === 'string' ? graph.name : '',
+        nodes: asActivityNodes(graph.nodes),
+        edges: asActivityEdges(graph.edges),
+      },
+      pathIds: asStringList(obj.pathIds),
+      acceptanceCaseIds: asStringList(obj.acceptanceCaseIds),
+      sourceRefs: asStringList(obj.sourceRefs),
+    }]
+  })
+}
+
 function asAcceptanceCases(value: unknown): ApplicationSpecification['acceptanceCases'] {
   if (!Array.isArray(value)) return []
   return value
@@ -102,6 +206,95 @@ function asAcceptanceCases(value: unknown): ApplicationSpecification['acceptance
       }
     })
     .filter((item): item is ApplicationSpecification['acceptanceCases'][number] => item !== undefined)
+}
+
+function asUseCaseSteps(value: unknown): UseCaseStepDefinition[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item, index) => {
+    const obj = asObject(item)
+    if (!obj) return []
+    const evidencePolicy = ['screenshot', 'structured', 'either', 'not-applicable'].includes(String(obj.evidencePolicy))
+      ? obj.evidencePolicy as UseCaseStepDefinition['evidencePolicy']
+      : 'structured'
+    return [{
+      id: typeof obj.id === 'string' && obj.id.trim() ? obj.id : `step-${index + 1}`,
+      order: typeof obj.order === 'number' ? obj.order : index + 1,
+      ...(typeof obj.actorId === 'string' && obj.actorId.trim() ? { actorId: obj.actorId } : {}),
+      action: typeof obj.action === 'string' ? obj.action : '',
+      expectedResult: typeof obj.expectedResult === 'string' ? obj.expectedResult : '',
+      inputIds: asStringList(obj.inputIds),
+      outputIds: asStringList(obj.outputIds),
+      ruleIds: asStringList(obj.ruleIds),
+      evidencePolicy,
+    }]
+  })
+}
+
+function asUseCasePaths(value: unknown, kind: UseCasePathDefinition['kind']): UseCasePathDefinition[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item, index) => {
+    const obj = asObject(item)
+    if (!obj) return []
+    return [{
+      id: typeof obj.id === 'string' && obj.id.trim() ? obj.id : `${kind}-${index + 1}`,
+      name: typeof obj.name === 'string' ? obj.name : `${kind} path ${index + 1}`,
+      kind,
+      ...(typeof obj.trigger === 'string' ? { trigger: obj.trigger } : {}),
+      preconditions: asStringList(obj.preconditions),
+      steps: asUseCaseSteps(obj.steps),
+      outcome: typeof obj.outcome === 'string' ? obj.outcome : '',
+    }]
+  })
+}
+
+function asUseCaseDefinitions(value: unknown): UseCaseDefinition[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  return value.flatMap((item, index) => {
+    const obj = asObject(item)
+    if (!obj) return []
+    const id = typeof obj.id === 'string' && obj.id.trim() ? obj.id : `use-case-${index + 1}`
+    return [{
+      id,
+      name: typeof obj.name === 'string' ? obj.name : '',
+      actorIds: asStringList(obj.actorIds),
+      trigger: typeof obj.trigger === 'string' ? obj.trigger : '',
+      preconditions: asStringList(obj.preconditions),
+      mainFlow: asUseCaseSteps(obj.mainFlow),
+      alternatePaths: asUseCasePaths(obj.alternatePaths, 'alternate'),
+      failurePaths: asUseCasePaths(obj.failurePaths, 'failure'),
+      recoveryPaths: asUseCasePaths(obj.recoveryPaths, 'recovery'),
+      ruleIds: asStringList(obj.ruleIds),
+      inputIds: asStringList(obj.inputIds),
+      outputIds: asStringList(obj.outputIds),
+      acceptanceCaseIds: asStringList(obj.acceptanceCaseIds),
+      sourceRefs: asStringList(obj.sourceRefs),
+    }]
+  })
+}
+
+function asScenarioDefinitions(value: unknown): ScenarioDefinition[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  return value.flatMap((item, index) => {
+    const obj = asObject(item)
+    if (!obj) return []
+    const kind = ['main', 'alternate', 'failure', 'recovery'].includes(String(obj.kind))
+      ? obj.kind as ScenarioDefinition['kind']
+      : 'main'
+    const requiredEvidence = ['screenshot', 'structured', 'either', 'not-applicable'].includes(String(obj.requiredEvidence))
+      ? obj.requiredEvidence as ScenarioDefinition['requiredEvidence']
+      : 'structured'
+    return [{
+      id: typeof obj.id === 'string' && obj.id.trim() ? obj.id : `scenario-${index + 1}`,
+      useCaseId: typeof obj.useCaseId === 'string' ? obj.useCaseId : '',
+      pathId: typeof obj.pathId === 'string' ? obj.pathId : '',
+      name: typeof obj.name === 'string' ? obj.name : '',
+      kind,
+      stepIds: asStringList(obj.stepIds),
+      tags: asStringList(obj.tags),
+      requiredEvidence,
+      ...(typeof obj.testCommand === 'string' && obj.testCommand.trim() ? { testCommand: obj.testCommand } : {}),
+    }]
+  })
 }
 
 function emptyDraft(projectId: string): ApplicationSpecification {
@@ -248,6 +441,15 @@ export function coerceApplicationDraft(
     goals: asNamedList(source.goals),
     useCases: asNamedList(source.useCases),
     scenarios: asNamedList(source.scenarios),
+    ...(asUseCaseDefinitions(source.useCaseDefinitions)
+      ? { useCaseDefinitions: asUseCaseDefinitions(source.useCaseDefinitions) }
+      : {}),
+    ...(asApplicationWorkflows(source.applicationWorkflows) !== undefined
+      ? { applicationWorkflows: asApplicationWorkflows(source.applicationWorkflows) }
+      : {}),
+    ...(asScenarioDefinitions(source.scenarioDefinitions)
+      ? { scenarioDefinitions: asScenarioDefinitions(source.scenarioDefinitions) }
+      : {}),
     information: asNamedList(source.information),
     rules: asNamedList(source.rules),
     externalSystems: asNamedList(source.externalSystems),
@@ -340,6 +542,16 @@ export function diffApplicationSpecification(
       after: draft.acceptanceCases,
     })
   }
+  for (const field of ['useCaseDefinitions', 'applicationWorkflows', 'scenarioDefinitions'] as const) {
+    if (!jsonEqual(approved[field], draft[field])) {
+      deltas.push({
+        fieldPath: field,
+        change: approved[field] === undefined ? 'added' : draft[field] === undefined ? 'removed' : 'changed',
+        before: approved[field],
+        after: draft[field],
+      })
+    }
+  }
 
   for (const field of NAMED_ARRAY_FIELDS) {
     const beforeMap = new Map(approved[field].map((item) => [item.id, item]))
@@ -411,7 +623,7 @@ export function buildProductInterviewPacket(input: {
     projectId: input.projectId,
     interviewKind: 'product',
     gateId: 'CAP-GATE-001',
-    interviewBoundary: `Product definition only. Use a draft-first review: synthesize a complete proposed brief from supplied context, then ask the user to accept it or correct the important assumptions. If context is too sparse, ask one kickoff batch of at most ${budget} concise prompts that the user can answer together. Ask a second batch only when a material contradiction or approval-blocking business decision remains. Do not run a field-by-field questionnaire. Do not design architecture or implement source.`,
+    interviewBoundary: `Product definition, use-case analysis, and application workflow only. Use a draft-first review: synthesize a complete proposed brief from supplied context, then ask the user to accept it or correct the important assumptions. Each use case must identify its actors, trigger, stable ordered main-flow steps with observable expected results, alternate, failure, recovery, and parallel paths where material, acceptance-case references, and an evidence policy per step. Define each application workflow as a structured activity graph with observable actions and results, guarded decisions, explicit merges, fork and join nodes for parallel work, and bounded loops. Each executable workflow action must refine a stable use-case step. Do not allocate modules, define internal software algorithms, or add module-only decisions. If context is too sparse, ask one kickoff batch of at most ${budget} concise prompts that the user can answer together. Ask a second batch only when a material contradiction or approval-blocking business decision remains. Do not run a field-by-field questionnaire. Do not design architecture or implement source.`,
     inputContext: {
       recordIds: approved ? [approved.id] : [],
       revisions: approved ? [approved.revision] : [],
@@ -439,6 +651,7 @@ export function importProductInterviewResponse(
     projectId: string
     approved?: ApplicationSpecification
     packet?: InterviewPacket
+    lexicon?: SteLexicon
   },
 ): ProductInterviewImportResult {
   const parsed = parseRawJson(raw)
@@ -447,10 +660,17 @@ export function importProductInterviewResponse(
     projectId: options.projectId,
     previousApproved: options.approved,
   })
-  const allDiagnostics = sortDiagnostics([...parsed.diagnostics, ...diagnostics])
+  // AI output is structurally importable as a reviewable draft, but objective
+  // STE defects make the response invalid until the user or model corrects it.
+  const languageEvaluation = evaluateApplicationSte(draft, options.lexicon)
+  const allDiagnostics = sortDiagnostics([
+    ...parsed.diagnostics,
+    ...diagnostics,
+    ...languageEvaluation.diagnostics,
+  ])
   const valid = allDiagnostics.length === 0
 
-  const gate = evaluateProductGate(draft)
+  const gate = evaluateProductGate(draft, options.lexicon)
   const delta = diffApplicationSpecification(options.approved, draft)
   const fieldStates = deriveFieldStates(draft, options.packet)
 
@@ -460,6 +680,7 @@ export function importProductInterviewResponse(
   return {
     draft,
     diagnostics: allDiagnostics,
+    reviewDiagnostics: languageEvaluation.reviewDiagnostics,
     gate,
     delta,
     valid,

@@ -24,6 +24,16 @@ Only these markers are used. Substitute them before the review pass.
 
 You are reviewing implementation output for `{{PROJECT_NAME}}`.
 
+Apply the Engineering UI Kit writing profile based on ASD-STE100 Issue 9 to the
+review and all reviewed human-facing output. This output includes interface
+text, diagrams, design documents, and module descriptions.
+
+- Use American English, active voice, simple verb forms, and one action per sentence.
+- Limit instructions to 20 words and descriptions to 25 words per sentence.
+- Require names and diagram labels in `VERB + OBJECT` form with no more than four words.
+- Require one technical term for one concept. Reject contractions and semicolons.
+- Report each writing defect as a finding with a direct correction.
+
 Review only the provided changed files and evidence. Do not assume unstated repository
 changes.
 

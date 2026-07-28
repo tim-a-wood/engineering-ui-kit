@@ -12,13 +12,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { foundationHandoffGate, projectArchitecture } from '@engineering-ui-kit/core/browser'
 import type {
+  ApplicationSpecification,
   ArchitectureSpecification,
   AttentionItem,
   CapabilityModuleRecord,
   CapabilityBindingRecord,
   FoundationPlan,
   ModuleManifest,
+  ModuleDesignSession,
+  ModuleDesignSpecification,
   Project,
+  ScenarioRunRecord,
   SelectionEvidence,
   CapabilityIntegrationState,
   CapabilityRunScope,
@@ -41,6 +45,8 @@ import { NeedsAttention } from './NeedsAttention'
 import { VerificationPanel } from './VerificationPanel'
 import { IntegrationWorkspace } from './IntegrationWorkspace'
 import { ConnectionVerificationPanel } from './ConnectionVerificationPanel'
+import { ScenarioVerificationPanel } from './ScenarioVerificationPanel'
+import { WorkflowAllocationWorkspace } from './WorkflowAllocationWorkspace'
 import {
   deriveJourney,
   stageFromCapabilitiesNavigation,
@@ -82,7 +88,7 @@ const GUIDED_STAGE_STATE_LABEL = {
 /**
  * Projects the raw CAP-CONTRACT-028 read model (draft/approved per bindingId)
  * into the minimal shape `deriveJourney` needs to evaluate Build entry-point
- * completeness (CAP-ERA-001 §5.1/§12.4). Every record's own kind/exposure
+ * completeness (CAP-ERA-001 §5.1/§12.4). The kind and exposure of each record
  * ride along unchanged; nothing here decides completeness itself.
  */
 function projectInboundBindings(records: InboundBindingReadRecord[]): CapabilityInboundBindingRecord[] {
@@ -130,6 +136,13 @@ export function CapabilitiesView({
   const [architecture, setArchitecture] = useState<{ draft?: unknown; approved?: unknown }>({})
   const [attentionItems, setAttentionItems] = useState<AttentionItem[]>([])
   const [moduleRecords, setModuleRecords] = useState<CapabilityModuleRecord[]>([])
+  const [moduleDesignRecords, setModuleDesignRecords] = useState<{
+    moduleId: string
+    draft?: ModuleDesignSpecification
+    approved?: ModuleDesignSpecification
+    session?: ModuleDesignSession
+  }[] | undefined>(undefined)
+  const [scenarioRuns, setScenarioRuns] = useState<ScenarioRunRecord[]>([])
   const [capabilityRuns, setCapabilityRuns] = useState<CapabilityRunScope[]>([])
   const [bindingRecords, setBindingRecords] = useState<CapabilityBindingRecord[]>([])
   const [deployables, setDeployables] = useState<CapabilityDeployableSummary[]>([])
@@ -164,6 +177,8 @@ export function CapabilitiesView({
       architecture,
       foundation,
       modules: moduleRecords,
+      moduleDesigns: moduleDesignRecords,
+      scenarioRuns,
       capabilityRuns,
       bindings: bindingRecords,
       deployables,
@@ -171,7 +186,7 @@ export function CapabilitiesView({
       connectDisposition: selectedProject?.capabilitiesConnectDisposition,
       integration: integrationState,
     }),
-    [application, architecture, foundation, moduleRecords, capabilityRuns, bindingRecords, deployables, inboundBindingProjections, selectedProject?.capabilitiesConnectDisposition, integrationState],
+    [application, architecture, foundation, moduleRecords, moduleDesignRecords, scenarioRuns, capabilityRuns, bindingRecords, deployables, inboundBindingProjections, selectedProject?.capabilitiesConnectDisposition, integrationState],
   )
   const journey = useMemo(() => deriveJourney(journeyInput), [journeyInput])
   const effectiveAttentionItems = useMemo(() => {
@@ -189,11 +204,13 @@ export function CapabilitiesView({
 
   const fetchWorkspace = useCallback(
     async (id: string) => {
-      const [app, arch, attention, modules, runs, bindings, deployableList, inboundBindings, foundationResult, integration] = await Promise.all([
+      const [app, arch, attention, modules, moduleDesigns, scenarios, runs, bindings, deployableList, inboundBindings, foundationResult, integration] = await Promise.all([
         bridge.capabilitiesGetApplication(id),
         bridge.capabilitiesGetArchitecture(id),
         bridge.capabilitiesListNeedsAttention(id),
         bridge.capabilitiesListModules(id),
+        bridge.capabilitiesListModuleDesigns(id),
+        bridge.capabilitiesListScenarioRuns(id),
         bridge.capabilitiesListRuns(id),
         bridge.capabilitiesListBindings(id),
         bridge.capabilitiesListDeployables(id),
@@ -201,7 +218,20 @@ export function CapabilitiesView({
         bridge.capabilitiesGetFoundation(id),
         bridge.capabilitiesGetIntegrationState(id),
       ])
-      return { application: app, architecture: arch, attention, modules, runs, bindings, deployableList, inboundBindings, foundation: foundationResult, integration }
+      return {
+        application: app,
+        architecture: arch,
+        attention,
+        modules,
+        moduleDesigns: Array.isArray(moduleDesigns) ? moduleDesigns : undefined,
+        scenarios: Array.isArray(scenarios) ? scenarios : [],
+        runs,
+        bindings,
+        deployableList,
+        inboundBindings,
+        foundation: foundationResult,
+        integration,
+      }
     },
     [bridge],
   )
@@ -211,6 +241,8 @@ export function CapabilitiesView({
     setArchitecture({})
     setAttentionItems([])
     setModuleRecords([])
+    setModuleDesignRecords(undefined)
+    setScenarioRuns([])
     setCapabilityRuns([])
     setBindingRecords([])
     setDeployables([])
@@ -237,6 +269,8 @@ export function CapabilitiesView({
         setArchitecture(d.architecture)
         setAttentionItems(d.attention)
         setModuleRecords(d.modules)
+        setModuleDesignRecords(d.moduleDesigns)
+        setScenarioRuns(d.scenarios)
         setCapabilityRuns(d.runs)
         setBindingRecords(d.bindings)
         setDeployables(d.deployableList)
@@ -249,6 +283,8 @@ export function CapabilitiesView({
           architecture: d.architecture,
           foundation: d.foundation,
           modules: d.modules,
+          moduleDesigns: d.moduleDesigns,
+          scenarioRuns: d.scenarios,
           capabilityRuns: d.runs,
           bindings: d.bindings,
           deployables: d.deployableList,
@@ -268,7 +304,7 @@ export function CapabilitiesView({
       } catch (error) {
         if (gen !== loadGenRef.current || id !== activeProjectRef.current) return
         setLoadError(error instanceof Error ? error.message : String(error))
-        setLoadState('error') // never fall back to the previous project's records
+        setLoadState('error') // Never use records from the previous project.
       }
     },
     [bridge, fetchWorkspace, projects],
@@ -318,6 +354,8 @@ export function CapabilitiesView({
     setArchitecture(d.architecture)
     setAttentionItems(d.attention)
     setModuleRecords(d.modules)
+    setModuleDesignRecords(d.moduleDesigns)
+    setScenarioRuns(d.scenarios)
     setCapabilityRuns(d.runs)
     setBindingRecords(d.bindings)
     setDeployables(d.deployableList)
@@ -340,6 +378,8 @@ export function CapabilitiesView({
 
   const archSpec = (architecture.approved ?? architecture.draft) as ArchitectureSpecification | undefined
   const approvedArchSpec = architecture.approved as ArchitectureSpecification | undefined
+  const applicationSpec = (application.approved ?? application.draft) as ApplicationSpecification | undefined
+  const requireModuleDesigns = Boolean(applicationSpec?.useCaseDefinitions?.length)
 
   /** WP5A bullet (d) — blocks the module implementation/From-spec-Build handoff until an approved, non-stale foundation exists. */
   const foundationGate = useMemo(() => {
@@ -383,12 +423,15 @@ export function CapabilitiesView({
   const workspaceControls = (
     <div className="cap-workspace-controls" role="group" aria-label="Capabilities workspace controls">
       <span className="cap-workspace-label">Project workspace</span>
-      <label className="cap-project-select">
-        <span className="sr-only">Capabilities project</span>
+      <div className="cap-project-select">
+        <label className="sr-only" htmlFor="cap-project-select">Capabilities project</label>
         <select
+          id="cap-project-select"
           ref={projectSelectRef}
           value={projectId}
-          onChange={(e) => void selectProject(e.target.value)}
+          onChange={function changeProject(e) {
+            void selectProject(e.target.value)
+          }}
           aria-label="Capabilities project"
         >
           <option value="">Select a project…</option>
@@ -398,34 +441,36 @@ export function CapabilitiesView({
             </option>
           ))}
         </select>
-      </label>
+      </div>
       <div className="segmented" role="group" aria-label="View mode">
         <button
           type="button"
           className={projection === 'guided' ? 'segment active' : 'segment'}
           aria-pressed={projection === 'guided'}
-          onClick={() => switchProjection('guided')}
+          onClick={switchProjection.bind(null, 'guided')}
         >
-          Guided
+          View guided
         </button>
         <button
           type="button"
           className={projection === 'design' ? 'segment active' : 'segment'}
           aria-pressed={projection === 'design'}
-          onClick={() => switchProjection('design')}
+          onClick={switchProjection.bind(null, 'design')}
         >
-          Design
+          View design
         </button>
       </div>
       {projectId && projection === 'guided' && attentionCount > 0 && (
         <button
           type="button"
           className={guidedPanel === 'attention' ? 'btn btn-secondary btn-compact active' : 'btn btn-secondary btn-compact'}
-          aria-label={`Needs attention, ${attentionCount} item${attentionCount === 1 ? '' : 's'}`}
+          aria-label="Review issues"
           aria-pressed={guidedPanel === 'attention'}
-          onClick={() => setGuidedPanel(guidedPanel === 'attention' ? 'journey' : 'attention')}
+          onClick={function reviewIssues() {
+            setGuidedPanel(guidedPanel === 'attention' ? 'journey' : 'attention')
+          }}
         >
-          {Icon.alertTriangle(14)} <span className="cap-header-action-label">Needs attention</span>
+          {Icon.alertTriangle(14)} <span className="cap-header-action-label">Review issues</span>
           <span className="badge">{attentionCount}</span>
         </button>
       )}
@@ -433,20 +478,24 @@ export function CapabilitiesView({
         <button
           type="button"
           className={guidedPanel === 'changes' ? 'btn btn-secondary btn-compact active' : 'btn btn-secondary btn-compact'}
-          aria-label="Changes"
+          aria-label="Review changes"
           aria-pressed={guidedPanel === 'changes'}
-          onClick={() => setGuidedPanel(guidedPanel === 'changes' ? 'journey' : 'changes')}
+          onClick={function reviewChanges() {
+            setGuidedPanel(guidedPanel === 'changes' ? 'journey' : 'changes')
+          }}
         >
-          {Icon.layers(14)} <span className="cap-header-action-label">Changes</span>
+          {Icon.layers(14)} <span className="cap-header-action-label">Review changes</span>
         </button>
       )}
       <button
         type="button"
         className="btn btn-ghost btn-compact"
-        aria-label={projection === 'guided' ? 'Stage guide' : 'Capability guide'}
-        onClick={() => onOpenGuide?.(projection === 'guided' ? stageToGuideTopic(viewing) : 'capabilities-overview')}
+          aria-label={projection === 'guided' ? 'Open stage guide' : 'Open capability guide'}
+          onClick={function openGuide() {
+            onOpenGuide?.(projection === 'guided' ? stageToGuideTopic(viewing) : 'capabilities-overview')
+          }}
       >
-        {Icon.help(14)} <span className="cap-header-action-label">{projection === 'guided' ? 'Stage guide' : 'Capability guide'}</span>
+        {Icon.help(14)} <span className="cap-header-action-label">{projection === 'guided' ? 'Open stage guide' : 'Open capability guide'}</span>
       </button>
     </div>
   )
@@ -463,8 +512,8 @@ export function CapabilitiesView({
             : 'Inspect the contracts, modules, connections, and verification behind the same records.'
         }
         actions={projectId && onOpenBuildTest ? (
-          <button type="button" className="btn btn-secondary btn-compact" onClick={() => onOpenBuildTest(projectId)}>
-            {Icon.home(14)} Open Build &amp; Test
+          <button type="button" className="btn btn-secondary btn-compact" onClick={onOpenBuildTest.bind(null, projectId)}>
+            {Icon.home(14)} Open build tests
           </button>
         ) : undefined}
       />
@@ -474,7 +523,7 @@ export function CapabilitiesView({
       {!projectId ? (
         <EmptyState
           icon={Icon.folderBig(24)}
-          title="Select a project to begin"
+          title="Select a project"
           hint={
             hasProjects
               ? 'Capabilities works per project. Choose one to start or resume its journey.'
@@ -485,12 +534,14 @@ export function CapabilitiesView({
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => projectSelectRef.current?.focus()}
+                onClick={function selectProjectControl() {
+                  projectSelectRef.current?.focus()
+                }}
               >
-                Select a project
+                Select project
               </button>
             ) : (
-              <button type="button" className="btn btn-primary" onClick={() => onNavigateToProjects?.()}>
+              <button type="button" className="btn btn-primary" onClick={onNavigateToProjects}>
                 Go to Projects
               </button>
             )
@@ -524,6 +575,7 @@ export function CapabilitiesView({
           attentionItems={effectiveAttentionItems}
           architectureProjection={architectureProjection}
           archSpec={archSpec}
+          applicationSpec={applicationSpec}
           selectionEvidence={selectionEvidence}
           bindingRecords={bindingRecords}
           inboundBindingRecords={inboundBindingRecords}
@@ -539,6 +591,7 @@ export function CapabilitiesView({
           onStartUiBuild={onStartUiBuild}
           approvedFoundation={foundation.approved}
           foundationGate={foundationGate}
+          requireModuleDesigns={requireModuleDesigns}
           integrationState={integrationState}
         />
       ) : (
@@ -586,6 +639,7 @@ export function GuidedBody(props: {
   attentionItems: AttentionItem[]
   architectureProjection: ReturnType<typeof projectArchitecture> | undefined
   archSpec: ArchitectureSpecification | undefined
+  applicationSpec: ApplicationSpecification | undefined
   selectionEvidence: SelectionEvidence | undefined
   bindingRecords: CapabilityBindingRecord[]
   deployables: CapabilityDeployableSummary[]
@@ -601,6 +655,7 @@ export function GuidedBody(props: {
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
   approvedFoundation?: FoundationPlan
   foundationGate?: { enabled: boolean; reason?: string }
+  requireModuleDesigns: boolean
   integrationState: CapabilityIntegrationState
 }) {
   const stage = stageById(props.journey, props.viewing)
@@ -697,7 +752,7 @@ function StageCompletion(props: {
   if (!next || next.state === 'locked') return null
   return (
     <div className="cap-stage-outcome" role="status">
-      <button type="button" className="btn btn-primary btn-compact cap-stage-next" onClick={() => props.onView(next.id)}>
+      <button type="button" className="btn btn-primary btn-compact cap-stage-next" onClick={props.onView.bind(null, next.id)}>
         Continue to {STAGE_LABELS[next.id]} {Icon.arrowRight(14)}
       </button>
     </div>
@@ -713,6 +768,7 @@ function GuidedStage(props: {
   moduleRecords: CapabilityModuleRecord[]
   architectureProjection: ReturnType<typeof projectArchitecture> | undefined
   archSpec: ArchitectureSpecification | undefined
+  applicationSpec: ApplicationSpecification | undefined
   selectionEvidence: SelectionEvidence | undefined
   bindingRecords: CapabilityBindingRecord[]
   deployables: CapabilityDeployableSummary[]
@@ -726,6 +782,7 @@ function GuidedStage(props: {
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
   approvedFoundation?: FoundationPlan
   foundationGate?: { enabled: boolean; reason?: string }
+  requireModuleDesigns: boolean
   integrationState: CapabilityIntegrationState
 }) {
   const { bridge, projectId, stage } = props
@@ -764,8 +821,20 @@ function GuidedStage(props: {
             onChanged={props.onChanged}
           />
           {props.architectureProjection && (
-            <ArchitectureView projection={props.architectureProjection} mode="guided" />
+            <ArchitectureView projection={props.architectureProjection} mode="guided" architecture={props.archSpec} />
           )}
+          {props.applicationSpec && props.archSpec ? (
+            <WorkflowAllocationWorkspace
+              application={props.applicationSpec}
+              architecture={props.archSpec}
+              approved={props.archSpec.status === 'approved'}
+              onOpenModule={() => props.onView('build')}
+              onSave={async (next) => {
+                await bridge.capabilitiesSaveArchitectureDraft(projectId, next)
+                props.onChanged()
+              }}
+            />
+          ) : null}
         </>
       )
     case 'build':
@@ -779,6 +848,7 @@ function GuidedStage(props: {
           onStartUiBuild={props.onStartUiBuild}
           approvedFoundation={props.approvedFoundation}
           foundationGate={props.foundationGate}
+          requireModuleDesigns={props.requireModuleDesigns}
           integrationState={props.integrationState}
           project={props.project}
           deployables={props.deployables}
@@ -795,6 +865,12 @@ function GuidedStage(props: {
     case 'verify':
       return (
         <>
+          <ScenarioVerificationPanel
+            bridge={bridge}
+            projectId={projectId}
+            projection="guided"
+            onChanged={props.onChanged}
+          />
           <ConnectionVerificationPanel
             bridge={bridge}
             projectId={projectId}
@@ -825,8 +901,8 @@ function StageBlocker(props: {
     <div className="panel-raised cap-blocker" role="status">
       <span className="cap-blocker-icon" aria-hidden="true">{Icon.info(18)}</span>
       <p>{props.reason}</p>
-      <button type="button" className="btn btn-secondary btn-compact" onClick={() => props.onOpenGuide?.(props.helpTopic)}>
-        Show me how
+      <button type="button" className="btn btn-secondary btn-compact" onClick={props.onOpenGuide?.bind(null, props.helpTopic)}>
+        Open guide
       </button>
     </div>
   )
@@ -889,7 +965,19 @@ export function DesignBody(props: {
               projection="design"
               onChanged={props.onChanged}
             />
-            {props.architectureProjection && <ArchitectureView projection={props.architectureProjection} mode="design" />}
+            {props.architectureProjection && <ArchitectureView projection={props.architectureProjection} mode="design" architecture={props.archSpec} />}
+            {((props.application.approved ?? props.application.draft) as ApplicationSpecification | undefined) && props.archSpec ? (
+              <WorkflowAllocationWorkspace
+                application={(props.application.approved ?? props.application.draft) as ApplicationSpecification}
+                architecture={props.archSpec}
+                approved={Boolean(props.architecture.approved && !props.architecture.draft)}
+                onOpenModule={() => props.onSection('modules')}
+                onSave={async (next) => {
+                  await bridge.capabilitiesSaveArchitectureDraft(projectId, next)
+                  props.onChanged()
+                }}
+              />
+            ) : null}
           </>
         )}
         {props.section === 'attention' && (
@@ -911,6 +999,11 @@ export function DesignBody(props: {
               onOpenArchitecture={() => props.onSection('architecture')}
               approvedFoundation={props.approvedFoundation}
               foundationGate={props.foundationGate}
+              requireModuleDesigns={Boolean(
+                ((props.application.approved ?? props.application.draft) as ApplicationSpecification | undefined)
+                  ?.useCaseDefinitions?.length,
+              )}
+              onOpenImpact={() => props.onSection('attention')}
             />
             <GuidedConnect
               bridge={bridge}
@@ -943,6 +1036,12 @@ export function DesignBody(props: {
         )}
         {props.section === 'verification' && (
           <>
+            <ScenarioVerificationPanel
+              bridge={bridge}
+              projectId={projectId}
+              projection="design"
+              onChanged={props.onChanged}
+            />
             <ConnectionVerificationPanel
               bridge={bridge}
               projectId={projectId}

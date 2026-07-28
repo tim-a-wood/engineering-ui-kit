@@ -1,0 +1,4224 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "id": "module-design:mod.assurance-workflow",
+  "revision": "1.1.0",
+  "status": "approved",
+  "architecture": {
+    "id": "arch.do178c-audit-hub",
+    "revision": "4",
+    "contentHash": "9e85b23877737297bba216dd45275f490a1a042c2e11a3bdd97fc218762756c2"
+  },
+  "module": {
+    "moduleId": "mod.assurance-workflow",
+    "moduleVersion": "1.0.0",
+    "name": "Assurance Workflow",
+    "moduleType": "domain",
+    "responsibility": "Own audit finding workflows, review records, and reproducible audit packages. Keep immutable history. Do not change authoritative lifecycle evidence.",
+    "nonResponsibilities": [
+      "authoritative-artifact-editing",
+      "evidence-parsing",
+      "graph-storage",
+      "user-interface-rendering",
+      "licensed-objective-text"
+    ],
+    "ownedConcerns": [
+      "Module behavior"
+    ],
+    "excludedConcerns": [
+      "authoritative-artifact-editing",
+      "evidence-parsing",
+      "graph-storage",
+      "user-interface-rendering",
+      "licensed-objective-text"
+    ]
+  },
+  "trace": {
+    "useCaseIds": [
+      "uc-findings",
+      "uc-reviews",
+      "uc-package"
+    ],
+    "workflowNodeIds": [
+      "finding:assign",
+      "finding:correct",
+      "finding:return",
+      "finding:update",
+      "finding:close",
+      "review:independence",
+      "review:request-change",
+      "review:record",
+      "package:remove",
+      "package:watermark",
+      "package:retry"
+    ],
+    "scenarioStepIds": [
+      "uc-findings:step:assign",
+      "uc-findings:step:correct",
+      "uc-findings:step:return",
+      "uc-findings:step:update",
+      "uc-findings:step:close",
+      "uc-reviews:step:independence",
+      "uc-reviews:step:change",
+      "uc-reviews:step:decide",
+      "uc-package:step:remove",
+      "uc-package:step:watermark",
+      "uc-package:step:retry"
+    ],
+    "ruleIds": [
+      "rule-authority",
+      "rule-local-workflow",
+      "rule-snapshot",
+      "rule-publish",
+      "rule-fallback",
+      "rule-finding",
+      "rule-stale",
+      "rule-phases",
+      "rule-shared-anatomy",
+      "rule-shared-actions",
+      "rule-sample-default",
+      "rule-sample-real",
+      "rule-sample-badge",
+      "rule-sample-overlay",
+      "rule-sample-export",
+      "rule-sample-portable",
+      "rule-same-ui",
+      "rule-objectives",
+      "rule-claims",
+      "rule-llr",
+      "rule-coverage",
+      "rule-compare",
+      "rule-security",
+      "rule-performance",
+      "rule-determinism"
+    ],
+    "qualityRequirementIds": [],
+    "sourceRefs": [
+      "source-1",
+      "source-2",
+      "source-3"
+    ],
+    "designDecisionIds": []
+  },
+  "boundary": {
+    "directDependencyIds": [
+      "mod.evidence-graph",
+      "mod.evidence-store",
+      "mod.external-adapters"
+    ],
+    "directConsumerIds": [
+      "mod.audit-experience",
+      "mod.lifecycle-explorer",
+      "mod.ingestion-publication"
+    ],
+    "deployableId": "unassigned",
+    "runtimeAllocation": "local-embedded",
+    "runtimeLanguage": "typescript",
+    "ownedPaths": [
+      "src/modules/assurance-workflow/"
+    ],
+    "editableSharedPaths": []
+  },
+  "providedOperations": [
+    {
+      "operationId": "op.manage-finding",
+      "contractVersion": "1.0.0"
+    },
+    {
+      "operationId": "op.record-review",
+      "contractVersion": "1.0.0"
+    },
+    {
+      "operationId": "op.build-audit-package",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [
+    {
+      "operationId": "op.query-dossier",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Resolve evidence linked to findings and reviews."
+    },
+    {
+      "operationId": "op-traverse-evidence-chain",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Include trace chains and impacts."
+    },
+    {
+      "operationId": "op.persist-evidence-state",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Persist assurance overlays and package records."
+    }
+  ],
+  "schemas": [
+    {
+      "id": "op.manage-finding.input",
+      "text": "op.manage-finding.input"
+    },
+    {
+      "id": "op.manage-finding.output",
+      "text": "op.manage-finding.output"
+    },
+    {
+      "id": "op.record-review.input",
+      "text": "op.record-review.input"
+    },
+    {
+      "id": "op.record-review.output",
+      "text": "op.record-review.output"
+    },
+    {
+      "id": "op.build-audit-package.input",
+      "text": "op.build-audit-package.input"
+    },
+    {
+      "id": "op.build-audit-package.output",
+      "text": "op.build-audit-package.output"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule-authority",
+      "text": "Connected engineering artifacts remain authoritative. The hub must not write changes to lifecycle files."
+    },
+    {
+      "id": "rule-local-workflow",
+      "text": "Only hub-local findings, reviews, dispositions, package selections, annotations, and sample sandbox state are editable, and every change is auditable."
+    },
+    {
+      "id": "rule-snapshot",
+      "text": "Each published snapshot is immutable and identifies exact source revisions, extraction context, and hashes."
+    },
+    {
+      "id": "rule-publish",
+      "text": "An extraction or indexing failure prevents candidate publication. An evidence gap stays visible and does not prevent a reliable snapshot."
+    },
+    {
+      "id": "rule-fallback",
+      "text": "A failed or partial refresh never replaces the last valid published snapshot."
+    },
+    {
+      "id": "rule-finding",
+      "text": "The hub calculates deterministic findings for each snapshot. Human findings keep attribution, history, disposition, and closure evidence."
+    },
+    {
+      "id": "rule-stale",
+      "text": "Evidence is stale when its source revision or dependency hash differs from the selected snapshot. Evidence is also stale after an unreviewed dependency change."
+    },
+    {
+      "id": "rule-phases",
+      "text": "The Evidence Explorer navigation is Overview, Planning, Requirements, Design, Implementation, Verification, Configuration Management, Quality Assurance, and Certification."
+    },
+    {
+      "id": "rule-shared-anatomy",
+      "text": "Every lifecycle area uses a consistent phase header, tailored subnavigation, working evidence table or visualization, evidence inspector, findings drawer, and baseline-compare mode."
+    },
+    {
+      "id": "rule-shared-actions",
+      "text": "Each evidence item provides its dossier, traces, source location, baseline comparison, source data, findings, reviews, and package controls."
+    },
+    {
+      "id": "rule-sample-default",
+      "text": "If zero real projects exist, the sample opens automatically with no picker blocker or blank dashboard."
+    },
+    {
+      "id": "rule-sample-real",
+      "text": "After a real project exists, the last real project opens by default and the sample remains selectable under Examples."
+    },
+    {
+      "id": "rule-sample-badge",
+      "text": "The sample always displays a Sample Data badge and a Connect a real project action."
+    },
+    {
+      "id": "rule-sample-overlay",
+      "text": "Bundled sample evidence is immutable. A resettable sandbox stores sample findings, reviews, dispositions, packages, and preferences."
+    },
+    {
+      "id": "rule-sample-export",
+      "text": "Every sample export is marked Synthetic sample — not certification evidence in both visible output and manifest metadata."
+    },
+    {
+      "id": "rule-sample-portable",
+      "text": "The sample uses a normalized extraction snapshot for synthetic artifacts. It must not disguise text or JSON as proprietary binary files."
+    },
+    {
+      "id": "rule-same-ui",
+      "text": "Sample projects and real projects use the same APIs, domain model, routes, and components. The product has no demo-only interface."
+    },
+    {
+      "id": "rule-objectives",
+      "text": "Do not bundle copyrighted DO-178C or DO-331 objective text. Use configurable identifiers and licensed profiles."
+    },
+    {
+      "id": "rule-claims",
+      "text": "The application may report evidence status against the configured profile but must not claim certification, regulatory approval, or compliance."
+    },
+    {
+      "id": "rule-llr",
+      "text": "Requirement classifications and allocation rules prevent ambiguous duplication between higher-level and low-level requirement views."
+    },
+    {
+      "id": "rule-coverage",
+      "text": "The hub imports coverage from authoritative results. The hub does not calculate coverage."
+    },
+    {
+      "id": "rule-compare",
+      "text": "Baseline comparison reports added, removed, changed, and stale evidence without performing semantic merge or conflict resolution."
+    },
+    {
+      "id": "rule-security",
+      "text": "Credentials and secrets are never stored in project configuration, snapshots, logs, packages, or displayed evidence."
+    },
+    {
+      "id": "rule-performance",
+      "text": "Normal browsing, filtering, search, trace navigation, dossier opening, and phase switching should usually respond within two seconds at accepted scale."
+    },
+    {
+      "id": "rule-determinism",
+      "text": "The bundled sample has deterministic identifiers, dates, people, revisions, hashes, relationships, counts, and reset behavior."
+    }
+  ],
+  "invariants": [],
+  "behavior": {
+    "preconditions": [
+      "The selected snapshot is published and immutable."
+    ],
+    "postconditions": [
+      "Each assurance decision is append-only and traceable."
+    ],
+    "domainRejections": [
+      "Closure evidence is incomplete.",
+      "Reviewer independence is not established."
+    ],
+    "technicalFailures": [
+      "The evidence store is not available.",
+      "The package export failed."
+    ],
+    "sideEffects": [],
+    "idempotency": "Not defined",
+    "cancellation": "Not defined",
+    "timeouts": "Not defined",
+    "concurrency": "Not defined",
+    "retry": "Retry a failed write three times.",
+    "recovery": "Keep the last valid record and resume the operation.",
+    "emittedEvents": [
+      "finding.assigned",
+      "finding.closed",
+      "review.recorded",
+      "audit-package.exported"
+    ],
+    "consumedEvents": [
+      "finding.change-requested",
+      "review.requested",
+      "audit-package.requested"
+    ],
+    "stateDefinitions": [
+      {
+        "id": "open",
+        "name": "Open",
+        "entryActionIds": [
+          "mf:load"
+        ],
+        "exitActionIds": []
+      },
+      {
+        "id": "assigned",
+        "name": "Assigned",
+        "entryActionIds": [
+          "mf:assigned"
+        ],
+        "exitActionIds": []
+      },
+      {
+        "id": "correcting",
+        "name": "Correcting",
+        "entryActionIds": [
+          "mf:persist"
+        ],
+        "exitActionIds": []
+      },
+      {
+        "id": "ready",
+        "name": "Ready",
+        "entryActionIds": [
+          "mf:verify"
+        ],
+        "exitActionIds": []
+      },
+      {
+        "id": "closed",
+        "name": "Closed",
+        "entryActionIds": [
+          "mf:append-close"
+        ],
+        "exitActionIds": []
+      }
+    ],
+    "stateTransitions": [
+      {
+        "id": "assign",
+        "fromStateId": "open",
+        "toStateId": "assigned",
+        "trigger": "Assign owner",
+        "effectActivityNodeIds": [
+          "mf:assigned"
+        ]
+      },
+      {
+        "id": "correct",
+        "fromStateId": "assigned",
+        "toStateId": "correcting",
+        "trigger": "Record correction",
+        "effectActivityNodeIds": [
+          "mf:persist"
+        ]
+      },
+      {
+        "id": "submit",
+        "fromStateId": "correcting",
+        "toStateId": "ready",
+        "trigger": "Request closure",
+        "guard": "The evidence is complete.",
+        "effectActivityNodeIds": [
+          "mf:verify"
+        ]
+      },
+      {
+        "id": "return",
+        "fromStateId": "ready",
+        "toStateId": "correcting",
+        "trigger": "Return finding",
+        "guard": "A closure rule fails.",
+        "effectActivityNodeIds": [
+          "mf:keep-open"
+        ]
+      },
+      {
+        "id": "close",
+        "fromStateId": "ready",
+        "toStateId": "closed",
+        "trigger": "Approve closure",
+        "guard": "All closure rules pass.",
+        "effectActivityNodeIds": [
+          "mf:append-close"
+        ]
+      },
+      {
+        "id": "reopen",
+        "fromStateId": "closed",
+        "toStateId": "open",
+        "trigger": "Reopen finding",
+        "guard": "New evidence invalidates closure.",
+        "effectActivityNodeIds": [
+          "mf:load"
+        ]
+      }
+    ],
+    "activityDefinitions": [
+      {
+        "id": "activity:assurance:manage-finding",
+        "name": "Manage audit finding",
+        "entryOperationId": "op.manage-finding",
+        "refinesWorkflowNodeIds": [
+          "finding:assign",
+          "finding:correct",
+          "finding:return",
+          "finding:update",
+          "finding:close"
+        ],
+        "graph": {
+          "id": "activity:assurance:manage-finding:graph",
+          "name": "Manage audit finding",
+          "nodes": [
+            {
+              "id": "mf:start",
+              "kind": "initial",
+              "label": "Initial",
+              "description": "The module activity starts.",
+              "refinesIds": []
+            },
+            {
+              "id": "mf:receive",
+              "kind": "receive-event",
+              "label": "Receive finding change",
+              "description": "The module receives a finding change.",
+              "refinesIds": [
+                "finding:assign"
+              ],
+              "eventId": "finding.change-requested"
+            },
+            {
+              "id": "mf:load",
+              "kind": "action",
+              "label": "Load finding history",
+              "description": "The module loads the immutable finding history.",
+              "refinesIds": [
+                "finding:assign"
+              ]
+            },
+            {
+              "id": "mf:query",
+              "kind": "call-operation",
+              "label": "Query evidence dossier",
+              "description": "The module queries the linked evidence.",
+              "refinesIds": [
+                "finding:correct"
+              ],
+              "operationId": "op.query-dossier"
+            },
+            {
+              "id": "mf:current",
+              "kind": "decision",
+              "label": "Evidence current",
+              "description": "The module checks the evidence revision.",
+              "refinesIds": []
+            },
+            {
+              "id": "mf:reject",
+              "kind": "action",
+              "label": "Reject stale change",
+              "description": "The module rejects a stale change.",
+              "refinesIds": [
+                "finding:return"
+              ]
+            },
+            {
+              "id": "mf:fork",
+              "kind": "fork",
+              "label": "Persist and notify",
+              "description": "The module starts the write and notification work.",
+              "refinesIds": []
+            },
+            {
+              "id": "mf:persist",
+              "kind": "call-operation",
+              "label": "Persist finding change",
+              "description": "The module appends the finding change.",
+              "refinesIds": [
+                "finding:update"
+              ],
+              "operationId": "op.persist-evidence-state"
+            },
+            {
+              "id": "mf:assigned",
+              "kind": "send-event",
+              "label": "Send finding assignment",
+              "description": "The module sends the assignment event.",
+              "refinesIds": [
+                "finding:assign"
+              ],
+              "eventId": "finding.assigned"
+            },
+            {
+              "id": "mf:join",
+              "kind": "join",
+              "label": "Change recorded",
+              "description": "The module waits for both branches.",
+              "refinesIds": []
+            },
+            {
+              "id": "mf:closure",
+              "kind": "decision",
+              "label": "Closure requested",
+              "description": "The module checks the requested state.",
+              "refinesIds": []
+            },
+            {
+              "id": "mf:verify",
+              "kind": "call-operation",
+              "label": "Verify evidence chain",
+              "description": "The module verifies the evidence chain.",
+              "refinesIds": [
+                "finding:close"
+              ],
+              "operationId": "op-traverse-evidence-chain"
+            },
+            {
+              "id": "mf:allowed",
+              "kind": "decision",
+              "label": "Closure allowed",
+              "description": "The module checks the closure rules.",
+              "refinesIds": []
+            },
+            {
+              "id": "mf:keep-open",
+              "kind": "action",
+              "label": "Keep finding open",
+              "description": "The module records the rejection reason.",
+              "refinesIds": [
+                "finding:return"
+              ]
+            },
+            {
+              "id": "mf:append-close",
+              "kind": "action",
+              "label": "Append closure decision",
+              "description": "The module appends the closure decision.",
+              "refinesIds": [
+                "finding:close"
+              ]
+            },
+            {
+              "id": "mf:closed",
+              "kind": "send-event",
+              "label": "Send finding closure",
+              "description": "The module sends the closure event.",
+              "refinesIds": [
+                "finding:close"
+              ],
+              "eventId": "finding.closed"
+            },
+            {
+              "id": "mf:end",
+              "kind": "final",
+              "label": "Final",
+              "description": "The module activity ends.",
+              "refinesIds": []
+            },
+            {
+              "id": "mf:rejected",
+              "kind": "final",
+              "label": "Rejected",
+              "description": "The module rejects the stale request.",
+              "refinesIds": []
+            }
+          ],
+          "edges": [
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:start-receive",
+              "fromNodeId": "mf:start",
+              "toNodeId": "mf:receive",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:receive-load",
+              "fromNodeId": "mf:receive",
+              "toNodeId": "mf:load",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:load-query",
+              "fromNodeId": "mf:load",
+              "toNodeId": "mf:query",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:query-current",
+              "fromNodeId": "mf:query",
+              "toNodeId": "mf:current",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:current-fork",
+              "fromNodeId": "mf:current",
+              "toNodeId": "mf:fork",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ],
+              "guard": "The evidence revision is current.",
+              "outcome": "success"
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:current-reject",
+              "fromNodeId": "mf:current",
+              "toNodeId": "mf:reject",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ],
+              "guard": "The evidence revision is stale.",
+              "outcome": "failure"
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:reject-end",
+              "fromNodeId": "mf:reject",
+              "toNodeId": "mf:rejected",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ],
+              "outcome": "failure"
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:fork-persist",
+              "fromNodeId": "mf:fork",
+              "toNodeId": "mf:persist",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:fork-assigned",
+              "fromNodeId": "mf:fork",
+              "toNodeId": "mf:assigned",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:persist-join",
+              "fromNodeId": "mf:persist",
+              "toNodeId": "mf:join",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:assigned-join",
+              "fromNodeId": "mf:assigned",
+              "toNodeId": "mf:join",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:join-closure",
+              "fromNodeId": "mf:join",
+              "toNodeId": "mf:closure",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:closure-verify",
+              "fromNodeId": "mf:closure",
+              "toNodeId": "mf:verify",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ],
+              "guard": "The change requests closure.",
+              "outcome": "success"
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:closure-end",
+              "fromNodeId": "mf:closure",
+              "toNodeId": "mf:end",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ],
+              "guard": "The finding stays open.",
+              "outcome": "alternate"
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:verify-allowed",
+              "fromNodeId": "mf:verify",
+              "toNodeId": "mf:allowed",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:allowed-close",
+              "fromNodeId": "mf:allowed",
+              "toNodeId": "mf:append-close",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ],
+              "guard": "All closure rules pass.",
+              "outcome": "success"
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:allowed-open",
+              "fromNodeId": "mf:allowed",
+              "toNodeId": "mf:keep-open",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ],
+              "guard": "A closure rule fails.",
+              "outcome": "failure"
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:open-end",
+              "fromNodeId": "mf:keep-open",
+              "toNodeId": "mf:end",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ],
+              "outcome": "recovery"
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:close-event",
+              "fromNodeId": "mf:append-close",
+              "toNodeId": "mf:closed",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:manage-finding:graph:edge:event-end",
+              "fromNodeId": "mf:closed",
+              "toNodeId": "mf:end",
+              "traceIds": [
+                "activity:assurance:manage-finding:graph"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "activity:assurance:record-review",
+        "name": "Record assurance review",
+        "entryOperationId": "op.record-review",
+        "refinesWorkflowNodeIds": [
+          "review:independence",
+          "review:request-change",
+          "review:record"
+        ],
+        "graph": {
+          "id": "activity:assurance:record-review:graph",
+          "name": "Record assurance review",
+          "nodes": [
+            {
+              "id": "rr:start",
+              "kind": "initial",
+              "label": "Initial",
+              "description": "The module activity starts.",
+              "refinesIds": []
+            },
+            {
+              "id": "rr:receive",
+              "kind": "receive-event",
+              "label": "Receive review request",
+              "description": "The module receives the review request.",
+              "refinesIds": [
+                "review:record"
+              ],
+              "eventId": "review.requested"
+            },
+            {
+              "id": "rr:query",
+              "kind": "call-operation",
+              "label": "Query review evidence",
+              "description": "The module queries the selected evidence.",
+              "refinesIds": [
+                "review:independence"
+              ],
+              "operationId": "op.query-dossier"
+            },
+            {
+              "id": "rr:fork",
+              "kind": "fork",
+              "label": "Check review evidence",
+              "description": "The module starts two independent checks.",
+              "refinesIds": []
+            },
+            {
+              "id": "rr:independence",
+              "kind": "action",
+              "label": "Check reviewer independence",
+              "description": "The module checks reviewer independence.",
+              "refinesIds": [
+                "review:independence"
+              ]
+            },
+            {
+              "id": "rr:history",
+              "kind": "action",
+              "label": "Check review history",
+              "description": "The module checks prior review decisions.",
+              "refinesIds": [
+                "review:record"
+              ]
+            },
+            {
+              "id": "rr:join",
+              "kind": "join",
+              "label": "Review checks complete",
+              "description": "The module waits for both checks.",
+              "refinesIds": []
+            },
+            {
+              "id": "rr:valid",
+              "kind": "decision",
+              "label": "Review valid",
+              "description": "The module checks the review rules.",
+              "refinesIds": []
+            },
+            {
+              "id": "rr:reject",
+              "kind": "action",
+              "label": "Request review change",
+              "description": "The module records a required change.",
+              "refinesIds": [
+                "review:request-change"
+              ]
+            },
+            {
+              "id": "rr:decision",
+              "kind": "action",
+              "label": "Append review decision",
+              "description": "The module appends the review decision.",
+              "refinesIds": [
+                "review:record"
+              ]
+            },
+            {
+              "id": "rr:persist",
+              "kind": "call-operation",
+              "label": "Persist review record",
+              "description": "The module stores the review record.",
+              "refinesIds": [
+                "review:record"
+              ],
+              "operationId": "op.persist-evidence-state"
+            },
+            {
+              "id": "rr:event",
+              "kind": "send-event",
+              "label": "Send review result",
+              "description": "The module sends the review event.",
+              "refinesIds": [
+                "review:record"
+              ],
+              "eventId": "review.recorded"
+            },
+            {
+              "id": "rr:end",
+              "kind": "final",
+              "label": "Final",
+              "description": "The module activity ends.",
+              "refinesIds": []
+            },
+            {
+              "id": "rr:rejected",
+              "kind": "final",
+              "label": "Rejected",
+              "description": "The module rejects the review request.",
+              "refinesIds": []
+            }
+          ],
+          "edges": [
+            {
+              "id": "activity:assurance:record-review:graph:edge:start-receive",
+              "fromNodeId": "rr:start",
+              "toNodeId": "rr:receive",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:receive-query",
+              "fromNodeId": "rr:receive",
+              "toNodeId": "rr:query",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:query-fork",
+              "fromNodeId": "rr:query",
+              "toNodeId": "rr:fork",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:fork-independence",
+              "fromNodeId": "rr:fork",
+              "toNodeId": "rr:independence",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:fork-history",
+              "fromNodeId": "rr:fork",
+              "toNodeId": "rr:history",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:independence-join",
+              "fromNodeId": "rr:independence",
+              "toNodeId": "rr:join",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:history-join",
+              "fromNodeId": "rr:history",
+              "toNodeId": "rr:join",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:join-valid",
+              "fromNodeId": "rr:join",
+              "toNodeId": "rr:valid",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:valid-decision",
+              "fromNodeId": "rr:valid",
+              "toNodeId": "rr:decision",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ],
+              "guard": "All review rules pass.",
+              "outcome": "success"
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:valid-reject",
+              "fromNodeId": "rr:valid",
+              "toNodeId": "rr:reject",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ],
+              "guard": "A review rule fails.",
+              "outcome": "alternate"
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:reject-end",
+              "fromNodeId": "rr:reject",
+              "toNodeId": "rr:rejected",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ],
+              "outcome": "failure"
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:decision-persist",
+              "fromNodeId": "rr:decision",
+              "toNodeId": "rr:persist",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:persist-event",
+              "fromNodeId": "rr:persist",
+              "toNodeId": "rr:event",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:record-review:graph:edge:event-end",
+              "fromNodeId": "rr:event",
+              "toNodeId": "rr:end",
+              "traceIds": [
+                "activity:assurance:record-review:graph"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "activity:assurance:build-package",
+        "name": "Build audit package",
+        "entryOperationId": "op.build-audit-package",
+        "refinesWorkflowNodeIds": [
+          "package:remove",
+          "package:watermark",
+          "package:retry"
+        ],
+        "graph": {
+          "id": "activity:assurance:build-package:graph",
+          "name": "Build audit package",
+          "nodes": [
+            {
+              "id": "bp:start",
+              "kind": "initial",
+              "label": "Initial",
+              "description": "The module activity starts.",
+              "refinesIds": []
+            },
+            {
+              "id": "bp:receive",
+              "kind": "receive-event",
+              "label": "Receive package request",
+              "description": "The module receives the package request.",
+              "refinesIds": [
+                "package:watermark"
+              ],
+              "eventId": "audit-package.requested"
+            },
+            {
+              "id": "bp:query",
+              "kind": "call-operation",
+              "label": "Query package evidence",
+              "description": "The module queries selected evidence.",
+              "refinesIds": [
+                "package:remove"
+              ],
+              "operationId": "op.query-dossier"
+            },
+            {
+              "id": "bp:validate",
+              "kind": "action",
+              "label": "Validate package items",
+              "description": "The module validates each package item.",
+              "refinesIds": [
+                "package:remove"
+              ]
+            },
+            {
+              "id": "bp:valid",
+              "kind": "decision",
+              "label": "Items valid",
+              "description": "The module checks package integrity.",
+              "refinesIds": []
+            },
+            {
+              "id": "bp:remove",
+              "kind": "action",
+              "label": "Remove invalid item",
+              "description": "The module removes one invalid item.",
+              "refinesIds": [
+                "package:remove"
+              ]
+            },
+            {
+              "id": "bp:merge",
+              "kind": "merge",
+              "label": "Validated selection",
+              "description": "The module combines validated selections.",
+              "refinesIds": []
+            },
+            {
+              "id": "bp:manifest",
+              "kind": "action",
+              "label": "Build package manifest",
+              "description": "The module creates the deterministic manifest.",
+              "refinesIds": [
+                "package:watermark"
+              ]
+            },
+            {
+              "id": "bp:watermark",
+              "kind": "action",
+              "label": "Apply sample watermark",
+              "description": "The module applies the sample watermark.",
+              "refinesIds": [
+                "package:watermark"
+              ]
+            },
+            {
+              "id": "bp:persist",
+              "kind": "call-operation",
+              "label": "Persist package record",
+              "description": "The module stores the package manifest.",
+              "refinesIds": [
+                "package:watermark"
+              ],
+              "operationId": "op.persist-evidence-state"
+            },
+            {
+              "id": "bp:write",
+              "kind": "action",
+              "label": "Request local export",
+              "description": "The module requests the local export.",
+              "refinesIds": [
+                "package:retry"
+              ]
+            },
+            {
+              "id": "bp:written",
+              "kind": "decision",
+              "label": "Export written",
+              "description": "The module checks the export result.",
+              "refinesIds": []
+            },
+            {
+              "id": "bp:retain",
+              "kind": "action",
+              "label": "Retain valid package",
+              "description": "The module keeps the last valid package.",
+              "refinesIds": [
+                "package:retry"
+              ]
+            },
+            {
+              "id": "bp:retry",
+              "kind": "action",
+              "label": "Retry local export",
+              "description": "The module retries the local export.",
+              "refinesIds": [
+                "package:retry"
+              ]
+            },
+            {
+              "id": "bp:event",
+              "kind": "send-event",
+              "label": "Send package export",
+              "description": "The module sends the export event.",
+              "refinesIds": [
+                "package:watermark"
+              ],
+              "eventId": "audit-package.exported"
+            },
+            {
+              "id": "bp:end",
+              "kind": "final",
+              "label": "Final",
+              "description": "The module activity ends.",
+              "refinesIds": []
+            }
+          ],
+          "edges": [
+            {
+              "id": "activity:assurance:build-package:graph:edge:start-receive",
+              "fromNodeId": "bp:start",
+              "toNodeId": "bp:receive",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:receive-query",
+              "fromNodeId": "bp:receive",
+              "toNodeId": "bp:query",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:query-validate",
+              "fromNodeId": "bp:query",
+              "toNodeId": "bp:validate",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:validate-valid",
+              "fromNodeId": "bp:validate",
+              "toNodeId": "bp:valid",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:valid-merge",
+              "fromNodeId": "bp:valid",
+              "toNodeId": "bp:merge",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ],
+              "guard": "All package items are valid.",
+              "outcome": "success"
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:valid-remove",
+              "fromNodeId": "bp:valid",
+              "toNodeId": "bp:remove",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ],
+              "guard": "A package item is invalid.",
+              "outcome": "alternate"
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:remove-merge",
+              "fromNodeId": "bp:remove",
+              "toNodeId": "bp:merge",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:merge-manifest",
+              "fromNodeId": "bp:merge",
+              "toNodeId": "bp:manifest",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:manifest-watermark",
+              "fromNodeId": "bp:manifest",
+              "toNodeId": "bp:watermark",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:watermark-persist",
+              "fromNodeId": "bp:watermark",
+              "toNodeId": "bp:persist",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:persist-write",
+              "fromNodeId": "bp:persist",
+              "toNodeId": "bp:write",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:write-result",
+              "fromNodeId": "bp:write",
+              "toNodeId": "bp:written",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ]
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:written-event",
+              "fromNodeId": "bp:written",
+              "toNodeId": "bp:event",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ],
+              "guard": "The local export is complete.",
+              "outcome": "success"
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:written-retain",
+              "fromNodeId": "bp:written",
+              "toNodeId": "bp:retain",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ],
+              "guard": "The local export failed.",
+              "outcome": "failure"
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:retain-retry",
+              "fromNodeId": "bp:retain",
+              "toNodeId": "bp:retry",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ],
+              "outcome": "recovery"
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:retry-write",
+              "fromNodeId": "bp:retry",
+              "toNodeId": "bp:write",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ],
+              "outcome": "recovery",
+              "loop": {
+                "exitCondition": "The local export is complete.",
+                "maximumIterations": 3
+              }
+            },
+            {
+              "id": "activity:assurance:build-package:graph:edge:event-end",
+              "fromNodeId": "bp:event",
+              "toNodeId": "bp:end",
+              "traceIds": [
+                "activity:assurance:build-package:graph"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "interactionDefinitions": [
+      {
+        "id": "interaction:assurance:finding",
+        "name": "Change audit finding",
+        "participants": [
+          {
+            "id": "ui",
+            "label": "Audit Hub",
+            "kind": "module"
+          },
+          {
+            "id": "workflow",
+            "label": "Assurance Workflow",
+            "kind": "module"
+          },
+          {
+            "id": "graph",
+            "label": "Evidence Graph",
+            "kind": "module"
+          },
+          {
+            "id": "store",
+            "label": "Evidence Store",
+            "kind": "module"
+          }
+        ],
+        "messages": [
+          {
+            "id": "submit",
+            "fromParticipantId": "ui",
+            "toParticipantId": "workflow",
+            "label": "Submit finding change",
+            "kind": "synchronous",
+            "operationId": "op.manage-finding",
+            "refinesActivityNodeIds": [
+              "mf:receive"
+            ]
+          },
+          {
+            "id": "query",
+            "fromParticipantId": "workflow",
+            "toParticipantId": "graph",
+            "label": "Query evidence dossier",
+            "kind": "synchronous",
+            "operationId": "op.query-dossier",
+            "refinesActivityNodeIds": [
+              "mf:query"
+            ]
+          },
+          {
+            "id": "query-reply",
+            "fromParticipantId": "graph",
+            "toParticipantId": "workflow",
+            "label": "Return evidence dossier",
+            "kind": "reply",
+            "operationId": "op.query-dossier",
+            "refinesActivityNodeIds": [
+              "mf:query"
+            ]
+          },
+          {
+            "id": "persist",
+            "fromParticipantId": "workflow",
+            "toParticipantId": "store",
+            "label": "Persist finding change",
+            "kind": "synchronous",
+            "operationId": "op.persist-evidence-state",
+            "guard": "The evidence revision is current.",
+            "refinesActivityNodeIds": [
+              "mf:persist"
+            ]
+          },
+          {
+            "id": "persist-reply",
+            "fromParticipantId": "store",
+            "toParticipantId": "workflow",
+            "label": "Return stored revision",
+            "kind": "reply",
+            "operationId": "op.persist-evidence-state",
+            "refinesActivityNodeIds": [
+              "mf:persist"
+            ]
+          },
+          {
+            "id": "result",
+            "fromParticipantId": "workflow",
+            "toParticipantId": "ui",
+            "label": "Return finding result",
+            "kind": "reply",
+            "operationId": "op.manage-finding",
+            "refinesActivityNodeIds": [
+              "mf:end"
+            ]
+          }
+        ],
+        "fragments": [
+          {
+            "id": "current-evidence",
+            "kind": "alt",
+            "label": "Current evidence result",
+            "guard": "The evidence revision is current or stale.",
+            "messageIds": [
+              "persist",
+              "persist-reply"
+            ]
+          }
+        ]
+      }
+    ],
+    "states": [],
+    "activities": [],
+    "interactions": []
+  },
+  "data": {
+    "persistentRecords": [],
+    "ownership": [],
+    "retention": [],
+    "migrationNeeds": [],
+    "confidentiality": "Not classified",
+    "provenanceFields": [],
+    "canonicalUnits": []
+  },
+  "runtime": {
+    "configurationRefs": [],
+    "secretRefs": [],
+    "lifecycleRegistration": "Not defined",
+    "health": [],
+    "telemetry": [],
+    "resourceOwnership": [],
+    "startup": [],
+    "shutdown": [],
+    "compatibilityConstraints": []
+  },
+  "verification": {
+    "examples": [],
+    "edgeCases": [],
+    "acceptanceCaseIds": [
+      "ac-7",
+      "ac-2",
+      "ac-9"
+    ],
+    "verificationSuiteIds": [
+      "acceptance:mod.assurance-workflow"
+    ],
+    "requiredEvidence": [
+      "screenshot",
+      "structured"
+    ],
+    "testDoubles": [],
+    "fixtureNeeds": [],
+    "commands": []
+  },
+  "diagrams": [
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:component:mod.assurance-workflow",
+      "kind": "component",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.assurance-workflow"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.assurance-workflow",
+      "title": "Assurance Workflow component diagram",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "component:mod.audit-experience",
+          "kind": "component",
+          "label": "Audit Hub Experience",
+          "stereotype": "component",
+          "description": "Own the responsive Audit Hub front end. Provide workspace selection, lifecycle views, search, dossiers, traces, baseline comparison, findings, reviews, packages, sample reset, and refresh status.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package",
+            "uc-reset"
+          ]
+        },
+        {
+          "id": "component:mod.lifecycle-explorer",
+          "kind": "component",
+          "label": "Lifecycle Explorer",
+          "stereotype": "component",
+          "description": "Own the lifecycle phase model and shared view structure. Provide phase views, readiness summaries, evidence projections, comparison projections, and approved lifecycle areas.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-gaps",
+            "uc-compare"
+          ]
+        },
+        {
+          "id": "component:mod.ingestion-publication",
+          "kind": "component",
+          "label": "Evidence publication",
+          "stereotype": "component",
+          "description": "Own scanning, artifact classification, extractor orchestration, normalization, diagnostics, deterministic check execution, refresh progress, reliability gates, and atomic publication while preserving the last valid snapshot.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh"
+          ]
+        },
+        {
+          "id": "component:mod.assurance-workflow",
+          "kind": "component",
+          "label": "Assurance Workflow",
+          "stereotype": "component",
+          "description": "Own deterministic and human findings, review and independence records, assignment, disposition, corrective action, reverification, closure history, configurable objective mappings, audit-package membership, manifests, and watermark policy.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "component:mod.evidence-graph",
+          "kind": "component",
+          "label": "Evidence Graph",
+          "stereotype": "component",
+          "description": "Own normalized lifecycle artifact metadata, typed relationships, requirement-to-result chains, provenance and hashes, dossiers, cross-phase search, staleness evaluation, change impact, and trace traversal.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "component:mod.evidence-store",
+          "kind": "component",
+          "label": "Evidence Store",
+          "stereotype": "component",
+          "description": "Persist project metadata, immutable snapshots, normalized evidence, graph relationships, reviews, findings, history, overlay state, and package manifests. Provide search, phase, and comparison queries.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package",
+            "uc-reset"
+          ]
+        },
+        {
+          "id": "component:mod.external-adapters",
+          "kind": "component",
+          "label": "External Adapters",
+          "stereotype": "component",
+          "description": "Provide explicit Git, workspace-filesystem, normalized-extract, optional MATLAB-tooling, source-link, and local-package-export boundaries without leaking credentials or proprietary formats into domain modules.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "provided:mod.assurance-workflow:op.manage-finding",
+          "kind": "provided-interface",
+          "label": "Manage finding",
+          "description": "Assurance Workflow provides this operation.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.assurance-workflow"
+        },
+        {
+          "id": "provided:mod.assurance-workflow:op.record-review",
+          "kind": "provided-interface",
+          "label": "Record review",
+          "description": "Assurance Workflow provides this operation.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.assurance-workflow"
+        },
+        {
+          "id": "provided:mod.assurance-workflow:op.build-audit-package",
+          "kind": "provided-interface",
+          "label": "Build audit package",
+          "description": "Assurance Workflow provides this operation.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.assurance-workflow"
+        },
+        {
+          "id": "required:mod.assurance-workflow:op.query-dossier",
+          "kind": "required-interface",
+          "label": "Query dossier",
+          "description": "Assurance Workflow requires this operation.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.assurance-workflow"
+        },
+        {
+          "id": "required:mod.assurance-workflow:op-traverse-evidence-chain",
+          "kind": "required-interface",
+          "label": "Traverse evidence chain",
+          "description": "Assurance Workflow requires this operation.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.assurance-workflow"
+        },
+        {
+          "id": "required:mod.assurance-workflow:op.persist-evidence-state",
+          "kind": "required-interface",
+          "label": "Persist evidence state",
+          "description": "Assurance Workflow requires this operation.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.assurance-workflow"
+        },
+        {
+          "id": "required:mod.audit-experience:op.build-audit-package:for:mod.assurance-workflow",
+          "kind": "required-interface",
+          "label": "Build audit package",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.lifecycle-explorer:op.record-review:for:mod.assurance-workflow",
+          "kind": "required-interface",
+          "label": "Record review",
+          "description": "Lifecycle Explorer requires this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.lifecycle-explorer"
+        },
+        {
+          "id": "provided:mod.evidence-graph:op.query-dossier:for:mod.assurance-workflow",
+          "kind": "provided-interface",
+          "label": "Query dossier",
+          "description": "Evidence Graph provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-graph"
+        },
+        {
+          "id": "provided:mod.evidence-graph:op-traverse-evidence-chain:for:mod.assurance-workflow",
+          "kind": "provided-interface",
+          "label": "Traverse evidence chain",
+          "description": "Evidence Graph provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-graph"
+        },
+        {
+          "id": "provided:mod.evidence-store:op.persist-evidence-state:for:mod.assurance-workflow",
+          "kind": "provided-interface",
+          "label": "Persist evidence state",
+          "description": "Evidence Store provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-store"
+        },
+        {
+          "id": "required:mod.ingestion-publication:op.manage-finding:for:mod.assurance-workflow",
+          "kind": "required-interface",
+          "label": "Manage finding",
+          "description": "Evidence publication requires this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.ingestion-publication"
+        }
+      ],
+      "edges": [
+        {
+          "id": "assembly:mod.audit-experience:mod.assurance-workflow:op.build-audit-package",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.build-audit-package:for:mod.assurance-workflow",
+          "toId": "provided:mod.assurance-workflow:op.build-audit-package",
+          "label": "Build audit package",
+          "description": "Findings, reviews, objective mappings, audit packages, and closure actions are exposed as user workflows.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.lifecycle-explorer:mod.assurance-workflow:op.record-review",
+          "kind": "assembly",
+          "fromId": "required:mod.lifecycle-explorer:op.record-review:for:mod.assurance-workflow",
+          "toId": "provided:mod.assurance-workflow:op.record-review",
+          "label": "Record review",
+          "description": "Every lifecycle area presents contextual reviews, findings, objective mappings, and package membership.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-gaps",
+            "uc-compare"
+          ]
+        },
+        {
+          "id": "assembly:mod.assurance-workflow:mod.evidence-graph:op.query-dossier",
+          "kind": "assembly",
+          "fromId": "required:mod.assurance-workflow:op.query-dossier",
+          "toId": "provided:mod.evidence-graph:op.query-dossier:for:mod.assurance-workflow",
+          "label": "Query dossier",
+          "description": "Findings, reviews, objectives, and package items must reference canonical evidence identities and revisions.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.assurance-workflow:mod.evidence-graph:op-traverse-evidence-chain",
+          "kind": "assembly",
+          "fromId": "required:mod.assurance-workflow:op-traverse-evidence-chain",
+          "toId": "provided:mod.evidence-graph:op-traverse-evidence-chain:for:mod.assurance-workflow",
+          "label": "Traverse evidence chain",
+          "description": "Findings, reviews, objectives, and package items must reference canonical evidence identities and revisions.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.assurance-workflow:mod.evidence-store:op.persist-evidence-state",
+          "kind": "assembly",
+          "fromId": "required:mod.assurance-workflow:op.persist-evidence-state",
+          "toId": "provided:mod.evidence-store:op.persist-evidence-state:for:mod.assurance-workflow",
+          "label": "Persist evidence state",
+          "description": "Workflow state, immutable histories, review records, mappings, and package manifests require durable storage.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "dependency:mod.assurance-workflow:mod.external-adapters",
+          "kind": "dependency",
+          "fromId": "component:mod.assurance-workflow",
+          "toId": "component:mod.external-adapters",
+          "label": "«use»",
+          "description": "Audit package export writes only deterministic local artifacts through a dedicated outbound port.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.ingestion-publication:mod.assurance-workflow:op.manage-finding",
+          "kind": "assembly",
+          "fromId": "required:mod.ingestion-publication:op.manage-finding:for:mod.assurance-workflow",
+          "toId": "provided:mod.assurance-workflow:op.manage-finding",
+          "label": "Manage finding",
+          "description": "Deterministic rule results become snapshot-scoped findings while preserving human workflow history.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Assurance Workflow with 3 direct consumers and 3 direct dependencies.",
+      "contentHash": "50d296192d6cbbadd151779bf94c0ca51f25a344f43ab9065d1bc2d7351005b1"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-activity:mod.assurance-workflow:activity:assurance:manage-finding",
+      "kind": "activity",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.assurance-workflow",
+        "activity:assurance:manage-finding"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.assurance-workflow",
+      "title": "Manage audit finding module activity",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:start",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module activity starts.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:start",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:receive",
+          "kind": "receive-event",
+          "label": "Receive finding change",
+          "description": "The module receives a finding change.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:receive",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close",
+            "finding:assign"
+          ],
+          "stereotype": "event",
+          "details": [
+            "Event: finding.change-requested",
+            "Refines: finding:assign"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:load",
+          "kind": "action",
+          "label": "Load finding history",
+          "description": "The module loads the immutable finding history.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:load",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close",
+            "finding:assign"
+          ],
+          "details": [
+            "Refines: finding:assign"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:query",
+          "kind": "call-operation",
+          "label": "Query evidence dossier",
+          "description": "The module queries the linked evidence.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:query",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close",
+            "finding:correct"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.query-dossier",
+            "Refines: finding:correct"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:current",
+          "kind": "decision",
+          "label": "Evidence current",
+          "description": "The module checks the evidence revision.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:current",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:reject",
+          "kind": "action",
+          "label": "Reject stale change",
+          "description": "The module rejects a stale change.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:reject",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close",
+            "finding:return"
+          ],
+          "details": [
+            "Refines: finding:return"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:fork",
+          "kind": "fork",
+          "label": "Persist and notify",
+          "description": "The module starts the write and notification work.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:fork",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:persist",
+          "kind": "call-operation",
+          "label": "Persist finding change",
+          "description": "The module appends the finding change.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:persist",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close",
+            "finding:update"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.persist-evidence-state",
+            "Refines: finding:update"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:assigned",
+          "kind": "send-event",
+          "label": "Send finding assignment",
+          "description": "The module sends the assignment event.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:assigned",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close",
+            "finding:assign"
+          ],
+          "stereotype": "event",
+          "details": [
+            "Event: finding.assigned",
+            "Refines: finding:assign"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:join",
+          "kind": "join",
+          "label": "Change recorded",
+          "description": "The module waits for both branches.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:join",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:closure",
+          "kind": "decision",
+          "label": "Closure requested",
+          "description": "The module checks the requested state.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:closure",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:verify",
+          "kind": "call-operation",
+          "label": "Verify evidence chain",
+          "description": "The module verifies the evidence chain.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:verify",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close",
+            "finding:close"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op-traverse-evidence-chain",
+            "Refines: finding:close"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:allowed",
+          "kind": "decision",
+          "label": "Closure allowed",
+          "description": "The module checks the closure rules.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:allowed",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:keep-open",
+          "kind": "action",
+          "label": "Keep finding open",
+          "description": "The module records the rejection reason.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:keep-open",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close",
+            "finding:return"
+          ],
+          "details": [
+            "Refines: finding:return"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:append-close",
+          "kind": "action",
+          "label": "Append closure decision",
+          "description": "The module appends the closure decision.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:append-close",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close",
+            "finding:close"
+          ],
+          "details": [
+            "Refines: finding:close"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:closed",
+          "kind": "send-event",
+          "label": "Send finding closure",
+          "description": "The module sends the closure event.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:closed",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close",
+            "finding:close"
+          ],
+          "stereotype": "event",
+          "details": [
+            "Event: finding.closed",
+            "Refines: finding:close"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:end",
+          "kind": "final",
+          "label": "Final",
+          "description": "The module activity ends.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:end",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:node:mf:rejected",
+          "kind": "final",
+          "label": "Rejected",
+          "description": "The module rejects the stale request.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "mf:rejected",
+            "finding:assign",
+            "finding:correct",
+            "finding:return",
+            "finding:update",
+            "finding:close"
+          ],
+          "details": []
+        }
+      ],
+      "edges": [
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:start-receive",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:start",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:receive",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:start-receive",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:receive-load",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:receive",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:load",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:receive-load",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:load-query",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:load",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:query",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:load-query",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:query-current",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:query",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:current",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:query-current",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:current-fork",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:current",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:fork",
+          "label": "Success",
+          "guard": "The evidence revision is current.",
+          "outcome": "success",
+          "isLoop": false,
+          "description": "The evidence revision is current.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:current-fork",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:current-reject",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:current",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:reject",
+          "label": "Failure",
+          "guard": "The evidence revision is stale.",
+          "outcome": "failure",
+          "isLoop": false,
+          "description": "The evidence revision is stale.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:current-reject",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:reject-end",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:reject",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:rejected",
+          "label": "Failure",
+          "outcome": "failure",
+          "isLoop": false,
+          "description": "Continue on the failure path.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:reject-end",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:fork-persist",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:fork",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:persist",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:fork-persist",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:fork-assigned",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:fork",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:assigned",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:fork-assigned",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:persist-join",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:persist",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:join",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:persist-join",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:assigned-join",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:assigned",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:join",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:assigned-join",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:join-closure",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:join",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:closure",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:join-closure",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:closure-verify",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:closure",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:verify",
+          "label": "Success",
+          "guard": "The change requests closure.",
+          "outcome": "success",
+          "isLoop": false,
+          "description": "The change requests closure.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:closure-verify",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:closure-end",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:closure",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:end",
+          "label": "Alternate",
+          "guard": "The finding stays open.",
+          "outcome": "alternate",
+          "isLoop": false,
+          "description": "The finding stays open.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:closure-end",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:verify-allowed",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:verify",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:allowed",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:verify-allowed",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:allowed-close",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:allowed",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:append-close",
+          "label": "Success",
+          "guard": "All closure rules pass.",
+          "outcome": "success",
+          "isLoop": false,
+          "description": "All closure rules pass.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:allowed-close",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:allowed-open",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:allowed",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:keep-open",
+          "label": "Failure",
+          "guard": "A closure rule fails.",
+          "outcome": "failure",
+          "isLoop": false,
+          "description": "A closure rule fails.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:allowed-open",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:open-end",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:keep-open",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:end",
+          "label": "Recovery",
+          "outcome": "recovery",
+          "isLoop": false,
+          "description": "Continue on the recovery path.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:open-end",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:close-event",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:append-close",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:closed",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:close-event",
+            "activity:assurance:manage-finding:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:manage-finding:edge:activity:assurance:manage-finding:graph:edge:event-end",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:manage-finding:node:mf:closed",
+          "toId": "module-activity:activity:assurance:manage-finding:node:mf:end",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:manage-finding",
+            "activity:assurance:manage-finding:graph:edge:event-end",
+            "activity:assurance:manage-finding:graph"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Manage audit finding has 18 behavior nodes and 20 control flows.",
+      "contentHash": "6390ce949b04160e8130cd512e11a54ad0943e33b87728e1becaf8bc970ecc48"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-activity:mod.assurance-workflow:activity:assurance:record-review",
+      "kind": "activity",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.assurance-workflow",
+        "activity:assurance:record-review"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.assurance-workflow",
+      "title": "Record assurance review module activity",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:start",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module activity starts.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:start",
+            "review:independence",
+            "review:request-change",
+            "review:record"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:receive",
+          "kind": "receive-event",
+          "label": "Receive review request",
+          "description": "The module receives the review request.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:receive",
+            "review:independence",
+            "review:request-change",
+            "review:record",
+            "review:record"
+          ],
+          "stereotype": "event",
+          "details": [
+            "Event: review.requested",
+            "Refines: review:record"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:query",
+          "kind": "call-operation",
+          "label": "Query review evidence",
+          "description": "The module queries the selected evidence.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:query",
+            "review:independence",
+            "review:request-change",
+            "review:record",
+            "review:independence"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.query-dossier",
+            "Refines: review:independence"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:fork",
+          "kind": "fork",
+          "label": "Check review evidence",
+          "description": "The module starts two independent checks.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:fork",
+            "review:independence",
+            "review:request-change",
+            "review:record"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:independence",
+          "kind": "action",
+          "label": "Check reviewer independence",
+          "description": "The module checks reviewer independence.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:independence",
+            "review:independence",
+            "review:request-change",
+            "review:record",
+            "review:independence"
+          ],
+          "details": [
+            "Refines: review:independence"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:history",
+          "kind": "action",
+          "label": "Check review history",
+          "description": "The module checks prior review decisions.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:history",
+            "review:independence",
+            "review:request-change",
+            "review:record",
+            "review:record"
+          ],
+          "details": [
+            "Refines: review:record"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:join",
+          "kind": "join",
+          "label": "Review checks complete",
+          "description": "The module waits for both checks.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:join",
+            "review:independence",
+            "review:request-change",
+            "review:record"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:valid",
+          "kind": "decision",
+          "label": "Review valid",
+          "description": "The module checks the review rules.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:valid",
+            "review:independence",
+            "review:request-change",
+            "review:record"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:reject",
+          "kind": "action",
+          "label": "Request review change",
+          "description": "The module records a required change.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:reject",
+            "review:independence",
+            "review:request-change",
+            "review:record",
+            "review:request-change"
+          ],
+          "details": [
+            "Refines: review:request-change"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:decision",
+          "kind": "action",
+          "label": "Append review decision",
+          "description": "The module appends the review decision.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:decision",
+            "review:independence",
+            "review:request-change",
+            "review:record",
+            "review:record"
+          ],
+          "details": [
+            "Refines: review:record"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:persist",
+          "kind": "call-operation",
+          "label": "Persist review record",
+          "description": "The module stores the review record.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:persist",
+            "review:independence",
+            "review:request-change",
+            "review:record",
+            "review:record"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.persist-evidence-state",
+            "Refines: review:record"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:event",
+          "kind": "send-event",
+          "label": "Send review result",
+          "description": "The module sends the review event.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:event",
+            "review:independence",
+            "review:request-change",
+            "review:record",
+            "review:record"
+          ],
+          "stereotype": "event",
+          "details": [
+            "Event: review.recorded",
+            "Refines: review:record"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:end",
+          "kind": "final",
+          "label": "Final",
+          "description": "The module activity ends.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:end",
+            "review:independence",
+            "review:request-change",
+            "review:record"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:node:rr:rejected",
+          "kind": "final",
+          "label": "Rejected",
+          "description": "The module rejects the review request.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "rr:rejected",
+            "review:independence",
+            "review:request-change",
+            "review:record"
+          ],
+          "details": []
+        }
+      ],
+      "edges": [
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:start-receive",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:start",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:receive",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:start-receive",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:receive-query",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:receive",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:query",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:receive-query",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:query-fork",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:query",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:fork",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:query-fork",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:fork-independence",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:fork",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:independence",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:fork-independence",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:fork-history",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:fork",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:history",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:fork-history",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:independence-join",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:independence",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:join",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:independence-join",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:history-join",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:history",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:join",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:history-join",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:join-valid",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:join",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:valid",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:join-valid",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:valid-decision",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:valid",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:decision",
+          "label": "Success",
+          "guard": "All review rules pass.",
+          "outcome": "success",
+          "isLoop": false,
+          "description": "All review rules pass.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:valid-decision",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:valid-reject",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:valid",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:reject",
+          "label": "Alternate",
+          "guard": "A review rule fails.",
+          "outcome": "alternate",
+          "isLoop": false,
+          "description": "A review rule fails.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:valid-reject",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:reject-end",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:reject",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:rejected",
+          "label": "Failure",
+          "outcome": "failure",
+          "isLoop": false,
+          "description": "Continue on the failure path.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:reject-end",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:decision-persist",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:decision",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:persist",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:decision-persist",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:persist-event",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:persist",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:event",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:persist-event",
+            "activity:assurance:record-review:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:record-review:edge:activity:assurance:record-review:graph:edge:event-end",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:record-review:node:rr:event",
+          "toId": "module-activity:activity:assurance:record-review:node:rr:end",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:record-review",
+            "activity:assurance:record-review:graph:edge:event-end",
+            "activity:assurance:record-review:graph"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Record assurance review has 14 behavior nodes and 14 control flows.",
+      "contentHash": "60cd39f4f974f4a9e4c7e351994b52a0bd9bc84bacf4c34cc701966f487ba5c9"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-activity:mod.assurance-workflow:activity:assurance:build-package",
+      "kind": "activity",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.assurance-workflow",
+        "activity:assurance:build-package"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.assurance-workflow",
+      "title": "Build audit package module activity",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:start",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module activity starts.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:start",
+            "package:remove",
+            "package:watermark",
+            "package:retry"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:receive",
+          "kind": "receive-event",
+          "label": "Receive package request",
+          "description": "The module receives the package request.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:receive",
+            "package:remove",
+            "package:watermark",
+            "package:retry",
+            "package:watermark"
+          ],
+          "stereotype": "event",
+          "details": [
+            "Event: audit-package.requested",
+            "Refines: package:watermark"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:query",
+          "kind": "call-operation",
+          "label": "Query package evidence",
+          "description": "The module queries selected evidence.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:query",
+            "package:remove",
+            "package:watermark",
+            "package:retry",
+            "package:remove"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.query-dossier",
+            "Refines: package:remove"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:validate",
+          "kind": "action",
+          "label": "Validate package items",
+          "description": "The module validates each package item.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:validate",
+            "package:remove",
+            "package:watermark",
+            "package:retry",
+            "package:remove"
+          ],
+          "details": [
+            "Refines: package:remove"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:valid",
+          "kind": "decision",
+          "label": "Items valid",
+          "description": "The module checks package integrity.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:valid",
+            "package:remove",
+            "package:watermark",
+            "package:retry"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:remove",
+          "kind": "action",
+          "label": "Remove invalid item",
+          "description": "The module removes one invalid item.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:remove",
+            "package:remove",
+            "package:watermark",
+            "package:retry",
+            "package:remove"
+          ],
+          "details": [
+            "Refines: package:remove"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:merge",
+          "kind": "merge",
+          "label": "Validated selection",
+          "description": "The module combines validated selections.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:merge",
+            "package:remove",
+            "package:watermark",
+            "package:retry"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:manifest",
+          "kind": "action",
+          "label": "Build package manifest",
+          "description": "The module creates the deterministic manifest.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:manifest",
+            "package:remove",
+            "package:watermark",
+            "package:retry",
+            "package:watermark"
+          ],
+          "details": [
+            "Refines: package:watermark"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:watermark",
+          "kind": "action",
+          "label": "Apply sample watermark",
+          "description": "The module applies the sample watermark.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:watermark",
+            "package:remove",
+            "package:watermark",
+            "package:retry",
+            "package:watermark"
+          ],
+          "details": [
+            "Refines: package:watermark"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:persist",
+          "kind": "call-operation",
+          "label": "Persist package record",
+          "description": "The module stores the package manifest.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:persist",
+            "package:remove",
+            "package:watermark",
+            "package:retry",
+            "package:watermark"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.persist-evidence-state",
+            "Refines: package:watermark"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:write",
+          "kind": "action",
+          "label": "Request local export",
+          "description": "The module requests the local export.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:write",
+            "package:remove",
+            "package:watermark",
+            "package:retry",
+            "package:retry"
+          ],
+          "details": [
+            "Refines: package:retry"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:written",
+          "kind": "decision",
+          "label": "Export written",
+          "description": "The module checks the export result.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:written",
+            "package:remove",
+            "package:watermark",
+            "package:retry"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:retain",
+          "kind": "action",
+          "label": "Retain valid package",
+          "description": "The module keeps the last valid package.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:retain",
+            "package:remove",
+            "package:watermark",
+            "package:retry",
+            "package:retry"
+          ],
+          "details": [
+            "Refines: package:retry"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:retry",
+          "kind": "action",
+          "label": "Retry local export",
+          "description": "The module retries the local export.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:retry",
+            "package:remove",
+            "package:watermark",
+            "package:retry",
+            "package:retry"
+          ],
+          "details": [
+            "Refines: package:retry"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:event",
+          "kind": "send-event",
+          "label": "Send package export",
+          "description": "The module sends the export event.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:event",
+            "package:remove",
+            "package:watermark",
+            "package:retry",
+            "package:watermark"
+          ],
+          "stereotype": "event",
+          "details": [
+            "Event: audit-package.exported",
+            "Refines: package:watermark"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:node:bp:end",
+          "kind": "final",
+          "label": "Final",
+          "description": "The module activity ends.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "bp:end",
+            "package:remove",
+            "package:watermark",
+            "package:retry"
+          ],
+          "details": []
+        }
+      ],
+      "edges": [
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:start-receive",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:start",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:receive",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:start-receive",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:receive-query",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:receive",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:query",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:receive-query",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:query-validate",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:query",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:validate",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:query-validate",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:validate-valid",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:validate",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:valid",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:validate-valid",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:valid-merge",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:valid",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:merge",
+          "label": "Success",
+          "guard": "All package items are valid.",
+          "outcome": "success",
+          "isLoop": false,
+          "description": "All package items are valid.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:valid-merge",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:valid-remove",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:valid",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:remove",
+          "label": "Alternate",
+          "guard": "A package item is invalid.",
+          "outcome": "alternate",
+          "isLoop": false,
+          "description": "A package item is invalid.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:valid-remove",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:remove-merge",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:remove",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:merge",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:remove-merge",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:merge-manifest",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:merge",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:manifest",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:merge-manifest",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:manifest-watermark",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:manifest",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:watermark",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:manifest-watermark",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:watermark-persist",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:watermark",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:persist",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:watermark-persist",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:persist-write",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:persist",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:write",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:persist-write",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:write-result",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:write",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:written",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:write-result",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:written-event",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:written",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:event",
+          "label": "Success",
+          "guard": "The local export is complete.",
+          "outcome": "success",
+          "isLoop": false,
+          "description": "The local export is complete.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:written-event",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:written-retain",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:written",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:retain",
+          "label": "Failure",
+          "guard": "The local export failed.",
+          "outcome": "failure",
+          "isLoop": false,
+          "description": "The local export failed.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:written-retain",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:retain-retry",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:retain",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:retry",
+          "label": "Recovery",
+          "outcome": "recovery",
+          "isLoop": false,
+          "description": "Continue on the recovery path.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:retain-retry",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:retry-write",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:retry",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:write",
+          "label": "Repeat",
+          "outcome": "recovery",
+          "isLoop": true,
+          "description": "Repeat this flow until The local export is complete.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:retry-write",
+            "activity:assurance:build-package:graph"
+          ]
+        },
+        {
+          "id": "module-activity:activity:assurance:build-package:edge:activity:assurance:build-package:graph:edge:event-end",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:assurance:build-package:node:bp:event",
+          "toId": "module-activity:activity:assurance:build-package:node:bp:end",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "activity:assurance:build-package",
+            "activity:assurance:build-package:graph:edge:event-end",
+            "activity:assurance:build-package:graph"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Build audit package has 16 behavior nodes and 17 control flows.",
+      "contentHash": "563883dc6c5a90fb184fed38cbd546bebd77843730dd728214016a7aae98ba35"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-state:mod.assurance-workflow",
+      "kind": "state-machine",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.assurance-workflow"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.assurance-workflow",
+      "title": "Assurance Workflow state behavior",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-state:mod.assurance-workflow:initial",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module state machine starts.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "mod.assurance-workflow"
+          ]
+        },
+        {
+          "id": "module-state:mod.assurance-workflow:open",
+          "kind": "state",
+          "label": "Open",
+          "description": "Open",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "open",
+            "mf:load"
+          ],
+          "details": [
+            "Entry actions: mf:load"
+          ]
+        },
+        {
+          "id": "module-state:mod.assurance-workflow:assigned",
+          "kind": "state",
+          "label": "Assigned",
+          "description": "Assigned",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "assigned",
+            "mf:assigned"
+          ],
+          "details": [
+            "Entry actions: mf:assigned"
+          ]
+        },
+        {
+          "id": "module-state:mod.assurance-workflow:correcting",
+          "kind": "state",
+          "label": "Correcting",
+          "description": "Correcting",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "correcting",
+            "mf:persist"
+          ],
+          "details": [
+            "Entry actions: mf:persist"
+          ]
+        },
+        {
+          "id": "module-state:mod.assurance-workflow:ready",
+          "kind": "state",
+          "label": "Ready",
+          "description": "Ready",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "ready",
+            "mf:verify"
+          ],
+          "details": [
+            "Entry actions: mf:verify"
+          ]
+        },
+        {
+          "id": "module-state:mod.assurance-workflow:closed",
+          "kind": "state",
+          "label": "Closed",
+          "description": "Closed",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "closed",
+            "mf:append-close"
+          ],
+          "details": [
+            "Entry actions: mf:append-close"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "module-state:mod.assurance-workflow:initialize",
+          "kind": "transition",
+          "fromId": "module-state:mod.assurance-workflow:initial",
+          "toId": "module-state:mod.assurance-workflow:open",
+          "label": "Initialize",
+          "description": "Initialize the module state.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "open"
+          ]
+        },
+        {
+          "id": "module-state:mod.assurance-workflow:transition:assign",
+          "kind": "transition",
+          "fromId": "module-state:mod.assurance-workflow:open",
+          "toId": "module-state:mod.assurance-workflow:assigned",
+          "label": "Assign owner",
+          "description": "Run mf:assigned.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "assign",
+            "mf:assigned"
+          ]
+        },
+        {
+          "id": "module-state:mod.assurance-workflow:transition:correct",
+          "kind": "transition",
+          "fromId": "module-state:mod.assurance-workflow:assigned",
+          "toId": "module-state:mod.assurance-workflow:correcting",
+          "label": "Record correction",
+          "description": "Run mf:persist.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "correct",
+            "mf:persist"
+          ]
+        },
+        {
+          "id": "module-state:mod.assurance-workflow:transition:submit",
+          "kind": "transition",
+          "fromId": "module-state:mod.assurance-workflow:correcting",
+          "toId": "module-state:mod.assurance-workflow:ready",
+          "label": "Request closure",
+          "guard": "The evidence is complete.",
+          "description": "The evidence is complete. Run mf:verify.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "submit",
+            "mf:verify"
+          ]
+        },
+        {
+          "id": "module-state:mod.assurance-workflow:transition:return",
+          "kind": "transition",
+          "fromId": "module-state:mod.assurance-workflow:ready",
+          "toId": "module-state:mod.assurance-workflow:correcting",
+          "label": "Return finding",
+          "guard": "A closure rule fails.",
+          "description": "A closure rule fails. Run mf:keep-open.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "return",
+            "mf:keep-open"
+          ]
+        },
+        {
+          "id": "module-state:mod.assurance-workflow:transition:close",
+          "kind": "transition",
+          "fromId": "module-state:mod.assurance-workflow:ready",
+          "toId": "module-state:mod.assurance-workflow:closed",
+          "label": "Approve closure",
+          "guard": "All closure rules pass.",
+          "description": "All closure rules pass. Run mf:append-close.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "close",
+            "mf:append-close"
+          ]
+        },
+        {
+          "id": "module-state:mod.assurance-workflow:transition:reopen",
+          "kind": "transition",
+          "fromId": "module-state:mod.assurance-workflow:closed",
+          "toId": "module-state:mod.assurance-workflow:open",
+          "label": "Reopen finding",
+          "guard": "New evidence invalidates closure.",
+          "description": "New evidence invalidates closure. Run mf:load.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "reopen",
+            "mf:load"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Assurance Workflow has 5 states and 6 transitions.",
+      "contentHash": "c914064e704d8bc75962bdc273cecafd68f4da15fd80d239f960464c973db156"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-sequence:mod.assurance-workflow:interaction:assurance:finding",
+      "kind": "sequence",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.assurance-workflow",
+        "interaction:assurance:finding"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.assurance-workflow",
+      "title": "Change audit finding internal sequence",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-sequence:interaction:assurance:finding:participant:ui",
+          "kind": "lifeline",
+          "label": "Audit Hub",
+          "description": "Audit Hub is an internal interaction participant.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "interaction:assurance:finding",
+            "ui"
+          ],
+          "stereotype": "module"
+        },
+        {
+          "id": "module-sequence:interaction:assurance:finding:participant:workflow",
+          "kind": "lifeline",
+          "label": "Assurance Workflow",
+          "description": "Assurance Workflow is an internal interaction participant.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "interaction:assurance:finding",
+            "workflow"
+          ],
+          "stereotype": "module"
+        },
+        {
+          "id": "module-sequence:interaction:assurance:finding:participant:graph",
+          "kind": "lifeline",
+          "label": "Evidence Graph",
+          "description": "Evidence Graph is an internal interaction participant.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "interaction:assurance:finding",
+            "graph"
+          ],
+          "stereotype": "module"
+        },
+        {
+          "id": "module-sequence:interaction:assurance:finding:participant:store",
+          "kind": "lifeline",
+          "label": "Evidence Store",
+          "description": "Evidence Store is an internal interaction participant.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "interaction:assurance:finding",
+            "store"
+          ],
+          "stereotype": "module"
+        },
+        {
+          "id": "module-sequence:interaction:assurance:finding:fragment:current-evidence",
+          "kind": "fragment",
+          "label": "alt",
+          "description": "Current evidence result: The evidence revision is current or stale.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "current-evidence",
+            "persist",
+            "persist-reply"
+          ],
+          "stereotype": "alt",
+          "details": [
+            "Current evidence result",
+            "Guard: The evidence revision is current or stale."
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "module-sequence:interaction:assurance:finding:message:submit",
+          "kind": "synchronous-message",
+          "fromId": "module-sequence:interaction:assurance:finding:participant:ui",
+          "toId": "module-sequence:interaction:assurance:finding:participant:workflow",
+          "label": "Submit finding change",
+          "description": "Call the declared operation.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "interaction:assurance:finding",
+            "submit",
+            "mf:receive"
+          ]
+        },
+        {
+          "id": "module-sequence:interaction:assurance:finding:message:query",
+          "kind": "synchronous-message",
+          "fromId": "module-sequence:interaction:assurance:finding:participant:workflow",
+          "toId": "module-sequence:interaction:assurance:finding:participant:graph",
+          "label": "Query evidence dossier",
+          "description": "Call the declared operation.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "interaction:assurance:finding",
+            "query",
+            "mf:query"
+          ]
+        },
+        {
+          "id": "module-sequence:interaction:assurance:finding:message:query-reply",
+          "kind": "reply-message",
+          "fromId": "module-sequence:interaction:assurance:finding:participant:graph",
+          "toId": "module-sequence:interaction:assurance:finding:participant:workflow",
+          "label": "Return evidence dossier",
+          "description": "Return the operation result.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "interaction:assurance:finding",
+            "query-reply",
+            "mf:query"
+          ]
+        },
+        {
+          "id": "module-sequence:interaction:assurance:finding:message:persist",
+          "kind": "synchronous-message",
+          "fromId": "module-sequence:interaction:assurance:finding:participant:workflow",
+          "toId": "module-sequence:interaction:assurance:finding:participant:store",
+          "label": "Persist finding change",
+          "guard": "The evidence revision is current.",
+          "description": "The evidence revision is current. Call the declared operation.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "interaction:assurance:finding",
+            "persist",
+            "mf:persist"
+          ]
+        },
+        {
+          "id": "module-sequence:interaction:assurance:finding:message:persist-reply",
+          "kind": "reply-message",
+          "fromId": "module-sequence:interaction:assurance:finding:participant:store",
+          "toId": "module-sequence:interaction:assurance:finding:participant:workflow",
+          "label": "Return stored revision",
+          "description": "Return the operation result.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "interaction:assurance:finding",
+            "persist-reply",
+            "mf:persist"
+          ]
+        },
+        {
+          "id": "module-sequence:interaction:assurance:finding:message:result",
+          "kind": "reply-message",
+          "fromId": "module-sequence:interaction:assurance:finding:participant:workflow",
+          "toId": "module-sequence:interaction:assurance:finding:participant:ui",
+          "label": "Return finding result",
+          "description": "Return the operation result.",
+          "sourceRecordId": "module-design:mod.assurance-workflow",
+          "traceIds": [
+            "module-design:mod.assurance-workflow",
+            "interaction:assurance:finding",
+            "result",
+            "mf:end"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Change audit finding has 5 participants and 6 messages.",
+      "contentHash": "236925f93a344de77473389c3f0e698e2ac1bbb19990d67595572e44f31255a6"
+    }
+  ],
+  "unresolvedItems": [],
+  "gates": [
+    {
+      "gateId": "CAP-GATE-MODULE-DESIGN",
+      "passed": true,
+      "diagnostics": []
+    }
+  ],
+  "contentHash": "b1624b4e2d904952be0641fa6aa799c2a0d0cb29411fc50517db353f2bc0ad88",
+  "approval": {
+    "approvedAt": "2026-07-28T00:00:00.000Z",
+    "approvedBy": "DO-178C sample fixture"
+  }
+}

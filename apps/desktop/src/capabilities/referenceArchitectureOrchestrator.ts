@@ -16,9 +16,11 @@ import {
   CapabilityWorkspace,
   applyGenerationPlan,
   assembleGenerationPlan,
+  assertSteProfile,
   buildOwnershipManifest,
   canonicalHash,
   canonicalRecordHash,
+  evaluateModuleImplementationSte,
   generatedContentHash,
   planExistingRepoMigration,
   probeFreePort,
@@ -658,6 +660,7 @@ export class ReferenceArchitectureOrchestrator {
       // foundation must not keep generating routes or clients for a retired
       // host.
     const composition = this.integration.getCompositionManifest(projectId, deployableId)
+    const steLexicon = this.capabilities.getSteLexicon(projectId)
     const specifications: ModuleImplementationSpecification[] = manifests.map((manifest) => {
       const interview = interviews.find((candidate) => candidate.moduleId === manifest.moduleId)
       const existing = this.integration.getModuleSpecification(projectId, manifest.moduleId)
@@ -674,7 +677,14 @@ export class ReferenceArchitectureOrchestrator {
             deployableId,
             runtimeLanguage: deployable.runtimeLanguage,
           })
-      if (!current) this.integration.saveModuleSpecification(specification)
+      if (current) {
+        assertSteProfile(
+          `module implementation specification ${specification.moduleId}`,
+          evaluateModuleImplementationSte(specification, steLexicon),
+        )
+      } else {
+        this.integration.saveModuleSpecification(specification, steLexicon)
+      }
       return specification
     })
     const schemaResult = convertSchemas(interviews)

@@ -324,6 +324,24 @@
         "additionalProperties": false
       }
     },
+    "useCaseDefinitions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "applicationWorkflows": {
+      "type": "array",
+      "items": {
+        "$ref": "application-workflow.schema.json"
+      }
+    },
+    "scenarioDefinitions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
     "approvedAt": {
       "type": "string"
     },

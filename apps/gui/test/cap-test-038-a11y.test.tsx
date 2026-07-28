@@ -211,7 +211,7 @@ describe('CAP-TEST-038 Capabilities accessibility', () => {
       },
     ]
     const attentionHtml = renderToStaticMarkup(<NeedsAttention items={items} projection="design" />)
-    expect(attentionHtml).toContain('aria-label="Attention items in dependency order"')
+    expect(attentionHtml).toContain('aria-label="Review issues"')
     expect(attentionHtml).toContain('aria-label="state needs-review"')
   })
 
@@ -224,7 +224,7 @@ describe('CAP-TEST-038 Capabilities accessibility', () => {
     expect(html).toContain('aria-keyshortcuts=')
     expect(html).toContain('aria-label="Architecture responsibility lanes"')
     expect(html).toContain('aria-label="Port dependency routes"')
-    expect(html).toContain('aria-label="Module A, Module, Draft. Open details"')
+    expect(html).toContain('aria-label="Open Module A"')
     expect(html).toContain('role="status"')
     expect(html).toMatch(/<button[^>]*type="button"[^>]*>[\s\S]*Module A/)
   })

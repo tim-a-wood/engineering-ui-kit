@@ -55,7 +55,7 @@ describe('CAP-TEST-030 GUI binding editor', () => {
   it('shows an empty operation list when no approved modules exist', () => {
     const bridge = installMockBridge()
     const html = renderToStaticMarkup(<BindingEditor bridge={bridge} projectId="p1" records={[]} />)
-    expect(html).toContain('No approved operations available')
+    expect(html).toContain('No approved operations')
   })
 
   it('reloads persisted binding drafts through the named bridge', async () => {

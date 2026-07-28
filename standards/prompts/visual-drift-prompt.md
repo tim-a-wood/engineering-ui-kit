@@ -29,6 +29,15 @@ Only these markers are used. Substitute them before the review pass.
 
 You are reviewing visual compliance for `{{PROJECT_NAME}}`, screen `{{SCREEN_NAME}}`.
 
+Apply the Engineering UI Kit writing profile based on ASD-STE100 Issue 9 to the review and
+to all reviewed user-interface text and diagram labels.
+
+- Use American English, active voice, simple verb forms, and one action per sentence.
+- Limit instructions to 20 words and descriptions to 25 words per sentence.
+- Require names and diagram labels in `VERB + OBJECT` form with no more than four words.
+- Require one technical term for one concept. Reject contractions and semicolons.
+- Report each writing defect as a finding with a direct correction.
+
 Compare `{{SCREENSHOT_EVIDENCE}}` with `{{PRIMARY_VISUAL_REFERENCE}}` and the standards identified by `{{APPLICABLE_STANDARD_IDS}}`. Treat the mockup as app-specific visual calibration, not as an exhaustive component catalog or pixel contract.
 
 Evaluate and report each of the following, citing the rule ID that controls the finding:

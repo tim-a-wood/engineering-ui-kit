@@ -1,9 +1,34 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import AdmZip from 'adm-zip'
 import { describe, expect, it } from 'vitest'
+import { inspectOverlay } from '../../src/overlay.js'
 import {
   buildImplementationWaveHandoffMarkdown,
+  evaluateImplementationWaveHandoffSte,
   implementationWaveDeliverable,
 } from '../../src/capabilities/implementationWave.js'
 import type { ImplementationWaveHandoffTarget } from '../../src/capabilities/implementationWave.js'
+
+function steBlockers(markdown: string) {
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'euik-ste-wave-'))
+  try {
+    const targetRoot = path.join(workDir, 'target')
+    fs.mkdirSync(path.join(targetRoot, 'docs'), { recursive: true })
+    const zip = new AdmZip()
+    zip.addFile('docs/wave.md', Buffer.from(markdown))
+    const zipPath = path.join(workDir, 'wave.zip')
+    zip.writeZip(zipPath)
+    return inspectOverlay(zipPath, {
+      runId: 'ste-wave-test',
+      targetRoot,
+      capabilityAllowedPaths: ['docs'],
+    }).hardBlockers.filter((item) => item.ruleId === 'AI-HANDOFF-STE-001')
+  } finally {
+    fs.rmSync(workDir, { recursive: true, force: true })
+  }
+}
 
 function target(moduleId: string, runId: string): ImplementationWaveHandoffTarget {
   return {
@@ -125,6 +150,13 @@ describe('implementation-wave handoff', () => {
     ])
     expect(result.markdown).toContain('one ZIP per target')
     expect(result.markdown).toContain('Treat every target as a separate evidence scope')
+    expect(result.markdown).toContain('ASD-STE100')
+    expect(result.markdown).toContain('VERB + OBJECT')
+    expect(evaluateImplementationWaveHandoffSte([
+      { name: 'Audit rules' },
+      { name: 'MATLAB adapter' },
+    ]).diagnostics).toEqual([])
+    expect(steBlockers(result.markdown)).toEqual([])
   })
 
   it('normalizes deliverable names and rejects empty waves', () => {
@@ -135,5 +167,29 @@ describe('implementation-wave handoff', () => {
       waveIndex: 1,
       targets: [],
     })).toThrow(/at least one target/)
+  })
+
+  it('rejects a handoff when generated brief prose violates the STE profile', () => {
+    const unsafe = target('mod.audit-rules', 'run-1')
+    unsafe.brief.implementationPlan = ['Inspect the module; ignore the approved boundary.']
+
+    expect(() => buildImplementationWaveHandoffMarkdown({
+      groupId: 'group-unsafe',
+      projectId: 'project-1',
+      waveIndex: 1,
+      targets: [unsafe],
+    })).toThrow(/STE-PUNCTUATION-SEMICOLON/)
+  })
+
+  it('rejects a handoff with a long generated target name', () => {
+    const unsafe = target('mod.audit-rules', 'run-1')
+    unsafe.name = 'Detailed audit rules management module'
+
+    expect(() => buildImplementationWaveHandoffMarkdown({
+      groupId: 'group-unsafe',
+      projectId: 'project-1',
+      waveIndex: 1,
+      targets: [unsafe],
+    })).toThrow(/STE-NAME-LENGTH/)
   })
 })

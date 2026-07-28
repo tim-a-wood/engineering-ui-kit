@@ -3,7 +3,7 @@
  * Attaches to a Document or mock host; no React fiber inspection.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import type { SelectionEvidence } from '@engineering-ui-kit/core'
 import {
   attachPreviewPicker,
@@ -121,6 +121,19 @@ export function PreviewBindingPicker({
     onEvidenceReady?.(confirmed)
   }
 
+  function changeProposedTarget(event: ChangeEvent<HTMLInputElement>) {
+    setProposedTarget(event.target.value)
+  }
+
+  function confirmProposedTarget(event: ChangeEvent<HTMLInputElement>) {
+    if (!pending) return
+    setPending({
+      ...pending,
+      sourceTargetConfirmed: event.target.checked,
+      proposedSourceTarget: proposedTarget.trim() || pending.selector,
+    })
+  }
+
   return (
     <div className="preview-binding-picker" aria-label="Preview binding picker">
       <div className="hstack" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -128,7 +141,7 @@ export function PreviewBindingPicker({
           type="button"
           className={picking ? 'btn btn-primary' : 'btn btn-secondary'}
           disabled={disabled || picking}
-          onClick={() => void startPick()}
+          onClick={startPick}
         >
           {picking ? 'Click an element…' : 'Select preview element'}
         </button>
@@ -157,7 +170,7 @@ export function PreviewBindingPicker({
             <input
               type="text"
               value={proposedTarget}
-              onChange={(e) => setProposedTarget(e.target.value)}
+              onChange={changeProposedTarget}
               aria-label="Proposed source target"
             />
           </label>
@@ -165,16 +178,10 @@ export function PreviewBindingPicker({
             <input
               type="checkbox"
               checked={pending.sourceTargetConfirmed === true}
-              onChange={(e) => {
-                setPending({
-                  ...pending,
-                  sourceTargetConfirmed: e.target.checked,
-                  proposedSourceTarget: proposedTarget.trim() || pending.selector,
-                })
-              }}
-              aria-label="Confirm proposed source target"
+              onChange={confirmProposedTarget}
+              aria-label="Confirm source target"
             />
-            I confirm this source target
+            Confirm source target
           </label>
           <button
             type="button"

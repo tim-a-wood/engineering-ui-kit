@@ -15,7 +15,7 @@ export function BuildTaskPanel(props: BuildTaskPanelProps) {
 
   return (
     <section className="panel" aria-labelledby="build-task-heading">
-      <h2 id="build-task-heading">What should Copilot build?</h2>
+      <h2 id="build-task-heading">Define build task</h2>
       <p className="panel-desc">Start from a template or describe the outcome directly.</p>
 
       <div className="build-task-row">
@@ -111,7 +111,7 @@ export function BuildTaskPanel(props: BuildTaskPanelProps) {
         setStatus={props.setStatus}
       />
 
-      <div className="build-section-caps" role="group" aria-label="Additional task sections">
+      <div className="build-section-caps" role="group" aria-label="Edit task sections">
         {PACKET_SECTIONS.filter((s) => s.key !== 'goal').map((section) => {
           const value = props.fields[section.key]
           const isEmpty = !value.trim()
@@ -167,7 +167,7 @@ export function BuildTaskPanel(props: BuildTaskPanelProps) {
                         className="btn btn-secondary btn-compact"
                         onClick={() => {
                           props.setEditing(null)
-                          props.setStatus({ tone: 'info', text: 'Edit cancelled. Previous value restored.' })
+                          props.setStatus({ tone: 'info', text: 'Edit canceled. Previous value restored.' })
                         }}
                       >
                         Cancel
@@ -232,7 +232,7 @@ function GoalSection(props: {
   return (
     <div className="field" style={{ marginTop: 4 }}>
       <div className="hstack between">
-        <label htmlFor="build-goal">Requirements / Goal <span className="req-tag">Required</span></label>
+        <label htmlFor="build-goal">Task goal <span className="req-tag">Required</span></label>
         {!isEditing && (
           <button
             type="button"
@@ -271,7 +271,7 @@ function GoalSection(props: {
               className="btn btn-secondary btn-compact"
               onClick={() => {
                 props.setEditing(null)
-                props.setStatus({ tone: 'info', text: 'Edit cancelled. Previous value restored.' })
+                props.setStatus({ tone: 'info', text: 'Edit canceled. Previous value restored.' })
               }}
             >
               Cancel

@@ -25,7 +25,7 @@ export function NeedsAttention({ items, projection, onNextAction }: Props) {
   const guided = projection === 'guided'
   return (
     <section role="region" aria-label="Needs attention" className="capabilities-attention">
-      <ol className="capabilities-attention-list" aria-label="Attention items in dependency order">
+      <ol className="capabilities-attention-list" aria-label="Review issues">
         {items.map((item) => (
           <li key={item.moduleId} className="panel cap-attention-item">
             <div className="cap-attention-head">

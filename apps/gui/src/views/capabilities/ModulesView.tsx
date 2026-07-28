@@ -19,11 +19,14 @@ import type {
   ImplementationWavePlan,
   InterviewPacket,
   ModuleManifest,
+  ModuleDesignSpecification,
   OverlayInspectionSummary,
+  SteLexicon,
 } from '@engineering-ui-kit/core'
 import {
   applicableDetailsFor,
   buildModuleInterviewPacket,
+  evaluateModuleSte,
   inferModuleType,
   importModuleInterviewResponse,
   normalizeWorkLifecycleState,
@@ -43,6 +46,7 @@ import { InterviewImport, type InterviewImportResult } from './InterviewImport'
 import { CapabilityHandoffCard } from './CapabilityHandoffCard'
 import { humanizeIdentifier, moduleTypeLabel, presentDiagnosticsForGuided } from './capabilityPresentation'
 import { deploymentContextFor } from './moduleBuildTask'
+import { ModuleDesignWorkspace } from './ModuleDesignWorkspace'
 
 type Props = {
   bridge: EuikBridge
@@ -59,10 +63,13 @@ type Props = {
   progressive?: boolean
   onOpenArchitecture?: () => void
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
-  /** WP5A (CAP-TEST-070/WP5B backing) — the project's approved foundation plan, if any, for From-spec deployment enrichment. */
+  /** WP5A (CAP-TEST-070/WP5B backing) — the project-approved foundation plan, if any, for From-spec deployment enrichment. */
   approvedFoundation?: FoundationPlan
   /** WP5A bullet (d) — blocks the implementation handoff (agent build / implementation packet) until an approved, non-stale foundation exists. Defaults to enabled for callers that predate foundation planning. */
   foundationGate?: { enabled: boolean; reason?: string }
+  /** Rich use-case workspaces require an approved current module design before handoff. */
+  requireModuleDesigns?: boolean
+  onOpenImpact?: () => void
 }
 
 
@@ -93,6 +100,8 @@ export function ModulesView({
   onStartUiBuild,
   approvedFoundation,
   foundationGate = { enabled: true },
+  requireModuleDesigns = false,
+  onOpenImpact,
 }: Props) {
   const guided = projection === 'guided'
   const [architecture, setArchitecture] = useState<ArchitectureSpecification | undefined>()
@@ -103,10 +112,34 @@ export function ModulesView({
   const [waveExport, setWaveExport] = useState<ImplementationWaveExportResult>()
   const [batchBusy, setBatchBusy] = useState(false)
   const [batchMessage, setBatchMessage] = useState('')
+  const [moduleDesigns, setModuleDesigns] = useState<{
+    moduleId: string
+    draft?: ModuleDesignSpecification
+    approved?: ModuleDesignSpecification
+  }[]>([])
+  const [moduleDesignBridgeAvailable, setModuleDesignBridgeAvailable] = useState(false)
+  const [steLexicon, setSteLexicon] = useState<SteLexicon | undefined>()
+  const moduleDesignGateActive = requireModuleDesigns
   const approvedIds = records.filter((r) => Boolean(r.approved)).map((r) => r.moduleId)
   const moduleIds = architecture?.moduleIds ?? []
   const selectedModuleId = externalSelectedModuleId ?? internalSelected
   const unapprovedIds = moduleIds.filter((moduleId) => !approvedIds.includes(moduleId))
+  const approvedDesignIds = new Set(moduleDesigns
+    .filter((record) => Boolean(
+      record.approved
+      && architecture
+      && record.approved.architecture.contentHash === architecture.contentHash,
+    ))
+    .map((record) => record.moduleId))
+
+  async function refreshAfterModuleDesign() {
+    const records = await bridge.capabilitiesListModuleDesigns(projectId)
+    if (Array.isArray(records)) {
+      setModuleDesigns(records)
+      setModuleDesignBridgeAvailable(true)
+    }
+    await onChanged()
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -114,9 +147,11 @@ export function ModulesView({
       if (!projectId) return
       try {
         await bridge.capabilitiesEnsureInitialized(projectId)
+        const configuredLexicon = await bridge.capabilitiesGetSteLexicon(projectId) as SteLexicon | undefined
         const arch = await bridge.capabilitiesGetArchitecture(projectId)
         if (cancelled) return
         const approved = asArch(arch.approved) ?? asArch(arch.draft)
+        setSteLexicon(configuredLexicon)
         setArchitecture(approved)
         if (!externalSelectedModuleId && approved?.moduleIds[0]) setInternalSelected(approved.moduleIds[0])
       } catch {
@@ -127,6 +162,28 @@ export function ModulesView({
       cancelled = true
     }
   }, [bridge, projectId, externalSelectedModuleId])
+
+  useEffect(() => {
+    let cancelled = false
+    void bridge.capabilitiesListModuleDesigns(projectId)
+      .then((records) => {
+        if (cancelled) return
+        if (Array.isArray(records)) {
+          setModuleDesigns(records)
+          setModuleDesignBridgeAvailable(true)
+        } else {
+          setModuleDesigns([])
+          setModuleDesignBridgeAvailable(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setModuleDesigns([])
+          setModuleDesignBridgeAvailable(false)
+        }
+      })
+    return () => { cancelled = true }
+  }, [bridge, projectId, records.map((record) => `${record.moduleId}:${record.approved?.moduleVersion ?? ''}`).join('|')])
 
   useEffect(() => {
     if (!projectId || !architectureApproved) {
@@ -240,7 +297,7 @@ export function ModulesView({
         <div role="status">
           <EmptyState
             icon={Icon.box(24)}
-            title="Approve the architecture first"
+            title="Approve architecture"
             hint="Modules become available after the application structure and dependencies are approved."
             action={onOpenArchitecture ? (
               <button type="button" className="btn btn-primary btn-compact" onClick={onOpenArchitecture}>
@@ -291,7 +348,7 @@ export function ModulesView({
           <div className="cap-batch-planner-head">
             <div>
               <p className="capabilities-eyebrow">Fast path</p>
-              <h3>Review modules as one architecture</h3>
+              <h3>Review modules</h3>
               <p>
                 Generate every allocated module together, review shared assumptions once, and
                 use focused interviews only where the architecture leaves an exception.
@@ -358,7 +415,7 @@ export function ModulesView({
               {selectedProposalIds.length > 0 ? (
                 <div className="cap-batch-approval">
                   <p>
-                    This explicitly approves {selectedProposalIds.length} selected proposal(s);
+                    This approves {selectedProposalIds.length} selected proposal(s).
                     existing approved modules are never replaced.
                   </p>
                   <button
@@ -380,7 +437,7 @@ export function ModulesView({
             <div className="cap-wave-plan" aria-label="Implementation waves">
               <div>
                 <h4>Implementation waves</h4>
-                <p>Independent modules share a wave; dependencies are completed first.</p>
+                <p>Independent modules share a wave. Complete dependencies first.</p>
               </div>
               {wavePlan.waves.map((wave) => (
                 <div className="cap-wave" key={wave.index}>
@@ -398,8 +455,15 @@ export function ModulesView({
                     <button
                       type="button"
                       className="cap-wave-export"
-                      disabled={batchBusy || !foundationGate.enabled}
-                      title={!foundationGate.enabled ? foundationGate.reason ?? 'Approve the foundation first.' : undefined}
+                      disabled={batchBusy || !foundationGate.enabled || (
+                        moduleDesignGateActive
+                        && wave.targets.some((target) => !approvedDesignIds.has(target.moduleId))
+                      )}
+                      title={!foundationGate.enabled
+                        ? foundationGate.reason ?? 'Approve the foundation first.'
+                        : moduleDesignGateActive && wave.targets.some((target) => !approvedDesignIds.has(target.moduleId))
+                          ? 'Approve every module design in this wave first.'
+                          : undefined}
                       onClick={() => void exportImplementationWave(
                         wave.index,
                         wave.targets.filter((target) => target.batchEligible).map((target) => target.moduleId),
@@ -456,13 +520,27 @@ export function ModulesView({
         architecture={architecture}
         record={records.find((record) => record.moduleId === selectedModuleId)}
         isApproved={approvedIds.includes(selectedModuleId)}
+        moduleDesignApproved={!moduleDesignGateActive || approvedDesignIds.has(selectedModuleId)}
         projection={projection}
         progressive={progressive}
         onChanged={onChanged}
         onStartUiBuild={onStartUiBuild}
         approvedFoundation={approvedFoundation}
         foundationGate={foundationGate}
+        steLexicon={steLexicon}
       />
+      {moduleDesignGateActive && moduleDesignBridgeAvailable ? (
+        <ModuleDesignWorkspace
+          key={`${projectId}:${selectedModuleId}:design`}
+          bridge={bridge}
+          projectId={projectId}
+          moduleId={selectedModuleId}
+          moduleApproved={approvedIds.includes(selectedModuleId)}
+          projection={projection}
+          onChanged={refreshAfterModuleDesign}
+          onOpenImpact={onOpenImpact}
+        />
+      ) : null}
     </section>
   )
 }
@@ -476,17 +554,33 @@ function ModuleWorkspace(props: {
   architecture: ArchitectureSpecification | undefined
   record?: CapabilityModuleRecord
   isApproved: boolean
+  moduleDesignApproved: boolean
   projection: 'guided' | 'design'
   progressive: boolean
   onChanged: () => Promise<void>
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
   approvedFoundation?: FoundationPlan
   foundationGate: { enabled: boolean; reason?: string }
+  steLexicon?: SteLexicon
 }) {
-  const { bridge, projectId, moduleId, architecture, record, isApproved, projection, progressive, foundationGate } = props
+  const {
+    bridge,
+    projectId,
+    moduleId,
+    architecture,
+    record,
+    isApproved,
+    moduleDesignApproved,
+    projection,
+    progressive,
+    foundationGate,
+    steLexicon,
+  } = props
   const guided = projection === 'guided'
-  const handoffBlocked = !foundationGate.enabled
-  const foundationPrerequisiteMessage = `Foundation must be approved first.${foundationGate.reason ? ` ${foundationGate.reason}` : ''}`
+  const handoffBlocked = !foundationGate.enabled || !moduleDesignApproved
+  const foundationPrerequisiteMessage = !moduleDesignApproved
+    ? 'Module design must be completed and approved before implementation.'
+    : `Foundation must be approved first.${foundationGate.reason ? ` ${foundationGate.reason}` : ''}`
   const architectureModule = architecture?.moduleDefinitions?.find((definition) => definition.moduleId === moduleId)
   const selectedType = architectureModule?.moduleType ?? inferModuleType(moduleId, architectureModule?.name)
   const [packet, setPacket] = useState<InterviewPacket | undefined>()
@@ -494,6 +588,10 @@ function ModuleWorkspace(props: {
   const [draft, setDraft] = useState<ModuleManifest | undefined>(record?.draft)
   const [response, setResponse] = useState<ModuleInterviewResponse | undefined>()
   const [diagnostics, setDiagnostics] = useState<CapDiagnostic[]>([])
+  const [reviewDiagnostics, setReviewDiagnostics] = useState<CapDiagnostic[]>(() => {
+    const existingManifest = record?.draft ?? record?.approved
+    return existingManifest ? evaluateModuleSte(existingManifest, steLexicon).reviewDiagnostics : []
+  })
   const [gatePassed, setGatePassed] = useState<boolean | undefined>()
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
@@ -513,6 +611,12 @@ function ModuleWorkspace(props: {
     mounted.current = true
     return () => { mounted.current = false }
   }, [])
+  useEffect(() => {
+    const existingManifest = record?.draft ?? record?.approved
+    setReviewDiagnostics(
+      existingManifest ? evaluateModuleSte(existingManifest, steLexicon).reviewDiagnostics : [],
+    )
+  }, [record?.draft, record?.approved, steLexicon])
 
   // Resume any persisted implementation run for this module (lifecycle survives remount/reload).
   useEffect(() => {
@@ -576,7 +680,7 @@ function ModuleWorkspace(props: {
     setMessage('')
     try {
       const parsed = result.parsed ?? JSON.parse(result.rawText)
-      const imported = importModuleInterviewResponse(parsed)
+      const imported = importModuleInterviewResponse(parsed, steLexicon)
       // Guard: never accept a response for a different module.
       if (imported.manifest && imported.manifest.moduleId !== moduleId) {
         setMessage(guided
@@ -588,6 +692,7 @@ function ModuleWorkspace(props: {
       setResponse(imported.response)
       setDraft(imported.manifest)
       setDiagnostics(imported.diagnostics)
+      setReviewDiagnostics(imported.reviewDiagnostics ?? [])
       setGatePassed(imported.ok)
       if (imported.manifest) {
         await bridge.capabilitiesSaveModuleDraft(projectId, imported.manifest, imported.response)
@@ -749,7 +854,7 @@ function ModuleWorkspace(props: {
       if (!mounted.current) return
       setApplied(true)
       setPersistedLifecycleState('applied')
-      setMessage(`Applied ${result.files.length} file(s); verification is now required.`)
+      setMessage(`Applied ${result.files.length} file(s). Verification is now required.`)
       await props.onChanged()
     } catch (error) {
       if (mounted.current) setMessage(error instanceof Error ? error.message : String(error))
@@ -808,16 +913,16 @@ function ModuleWorkspace(props: {
             : applied ? 'verify'
               : 'inspect'
   const BUILD_STEP_LABEL: Record<BuildStep, string> = {
-    interview: 'Generate the module draft', import: 'Import the response', approve: 'Review and approve',
-    handoff: 'Create the implementation handoff', inspect: 'Select and inspect the overlay',
-    accept: 'Review and accept warnings', apply: 'Apply the reviewed overlay', verify: 'Ready for verification',
+    interview: 'Generate module draft', import: 'Import response', approve: 'Approve module',
+    handoff: 'Create implementation handoff', inspect: 'Inspect overlay',
+    accept: 'Accept warnings', apply: 'Apply reviewed overlay', verify: 'Verify module',
   }
 
   const overlayInspection = inspection ? (
     <div aria-label="Capability overlay inspection" className="cap-overlay-inspect">
       {inspection.hardBlockers.length ? <ul className="cap-issue-list">{inspection.hardBlockers.map((item, index) => <li key={`${item.ruleId}-${index}`}>{guided ? item.message : `${item.ruleId}: ${item.message}`} <span className="badge">cannot apply</span></li>)}</ul> : null}
       {inspection.warnings.length ? <ul>{inspection.warnings.map((item, index) => <li key={`${item.ruleId}-${index}`}>Warning: {guided ? item.message : `${item.ruleId}: ${item.message}`}</li>)}</ul> : <p className="capabilities-note">No overlay warnings.</p>}
-      {inspection.warnings.length ? <label className="cap-accept-warnings"><input type="checkbox" checked={warningsAccepted} onChange={(e) => setWarningsAccepted(e.target.checked)} /> I reviewed and accept every overlay warning</label> : null}
+      {inspection.warnings.length ? <label className="cap-accept-warnings"><input type="checkbox" checked={warningsAccepted} onChange={(e) => setWarningsAccepted(e.target.checked)} /> Accept overlay warnings</label> : null}
     </div>
   ) : null
 
@@ -834,7 +939,7 @@ function ModuleWorkspace(props: {
       {buildStep === 'import' && (
         <>
           {interviewExport ? <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={interviewExport} projection="guided" /> : null}
-          <InterviewImport label="Import module interview response" onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
+          <InterviewImport label="Import module response" onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
         </>
       )}
       {buildStep === 'approve' && (
@@ -869,7 +974,7 @@ function ModuleWorkspace(props: {
       {buildStep === 'inspect' && (
         <>
           {implementationExport ? <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={implementationExport} projection="guided" /> : null}
-          <button type="button" className="btn btn-primary btn-compact" onClick={() => void selectAndInspectOverlay()} disabled={busy || !implementationRunId}>Select and inspect overlay</button>
+          <button type="button" className="btn btn-primary btn-compact" onClick={selectAndInspectOverlay} disabled={busy || !implementationRunId}>Inspect overlay</button>
         </>
       )}
       {buildStep === 'accept' && overlayInspection}
@@ -904,6 +1009,21 @@ function ModuleWorkspace(props: {
         ))}
       </ul>
     )
+  ) : null
+  const reviewDiagnosticsBlock = reviewDiagnostics.length > 0 ? (
+    <details className="cap-issues cap-ste-review" aria-label="Writing review items">
+      <summary>Writing review ({reviewDiagnostics.length})</summary>
+      <p className="capabilities-note">
+        Review these items before publication.
+      </p>
+      <ul className="cap-issue-list">
+        {reviewDiagnostics.map((item, index) => (
+          <li key={`${item.code}-${item.fieldPath ?? index}`}>
+            {item.message}{item.fieldPath ? ` (${item.fieldPath})` : ''}
+          </li>
+        ))}
+      </ul>
+    </details>
   ) : null
 
   const interviewOutcome = draft ?? record?.draft ?? record?.approved
@@ -1025,6 +1145,7 @@ function ModuleWorkspace(props: {
             </div>
             {progressiveNextAction}
             {diagnosticsBlock ? <div className="cap-build-action-diagnostics">{diagnosticsBlock}</div> : null}
+            {reviewDiagnosticsBlock}
           </section>
           {interviewOutcomePanel}
         </div>
@@ -1045,7 +1166,7 @@ function ModuleWorkspace(props: {
             <details open><summary>Interview packet {packet.packetId}</summary><pre className="capabilities-pre">{JSON.stringify(packet, null, 2)}</pre></details>
           ) : null}
 
-          <InterviewImport label="Import module interview response" onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
+          <InterviewImport label="Import module response" onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
 
           <section aria-label="Module implementation lifecycle">
             <h3>Implementation lifecycle</h3>
@@ -1056,7 +1177,7 @@ function ModuleWorkspace(props: {
             ) : null}
             <div className="capabilities-toolbar" role="group" aria-label="Implementation actions">
               <button type="button" className="btn btn-primary btn-compact" disabled={busy || !isApproved || handoffBlocked} onClick={() => void exportImplementation()}>Export implementation packet</button>
-              <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !implementationRunId} onClick={() => void selectAndInspectOverlay()}>Select and inspect overlay</button>
+              <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !implementationRunId} onClick={selectAndInspectOverlay}>Inspect overlay</button>
               <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !inspection?.canApply || (inspection.warnings.length > 0 && !warningsAccepted)} onClick={() => void applyInspectedOverlay()}>Apply reviewed overlay</button>
               <button type="button" className="btn btn-secondary btn-compact" disabled={busy || !isApproved} onClick={() => void verifyApprovedModule()}>Verify module</button>
             </div>
@@ -1075,6 +1196,7 @@ function ModuleWorkspace(props: {
       )}
 
       {!progressive ? diagnosticsBlock : null}
+      {!progressive ? reviewDiagnosticsBlock : null}
 
       {draft && projection === 'design' ? (
         <details><summary>Manifest draft {draft.moduleId}</summary><pre className="capabilities-pre">{JSON.stringify(draft, null, 2)}</pre></details>
@@ -1086,7 +1208,7 @@ function ModuleWorkspace(props: {
 
       {frontendBrief && frontendFields ? (
         <Dialog
-          title="Review compiled frontend brief"
+          title="Review frontend brief"
           wide
           onClose={() => {
             setFrontendBrief(undefined)
@@ -1110,7 +1232,7 @@ function ModuleWorkspace(props: {
                 disabled={busy || frontendBrief.gaps.some((gap) => gap.severity === 'blocking')}
                 onClick={() => void openCompiledFrontendBuild()}
               >
-                Open Build with this brief
+                Open build brief
               </button>
             </>
           )}

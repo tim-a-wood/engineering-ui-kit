@@ -12,7 +12,7 @@
   "editablePaths": [
     "src/modules/audit-experience/"
   ],
-  "responsibility": "Own the complete responsive, accessible Audit Hub front end and orchestrate workspace selection, Overview, all nine lifecycle areas and their phase-specific subviews, global search, dossiers, trace navigation, baseline comparison, findings, reviews, packages, sample reset, and refresh status through approved capability contracts.",
+  "responsibility": "Own the responsive Audit Hub front end. Orchestrate workspace selection, all lifecycle areas, search, dossiers, traces, baseline comparison, assurance workflows, sample reset, and refresh status through approved contracts.",
   "nonResponsibilities": [
     "authoritative-artifact-mutation",
     "evidence-persistence",

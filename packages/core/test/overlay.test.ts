@@ -196,6 +196,289 @@ describe('inspectOverlay warnings', () => {
   })
 })
 
+describe('inspectOverlay STE gate', () => {
+  it('blocks non-STE headings and prose in generated Markdown', () => {
+    const zipPath = makeZip({
+      'docs/audit-guide.md': [
+        '# Review and approve all audit findings',
+        '',
+        "The reviewer can't approve evidence; the package remains open.",
+        '',
+      ].join('\n'),
+    })
+
+    const summary = inspectOverlay(zipPath, baseOptions())
+    const blockers = summary.hardBlockers.filter((item) => item.ruleId === 'AI-HANDOFF-STE-001')
+
+    expect(summary.canApply).toBe(false)
+    expect(blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        path: 'docs/audit-guide.md',
+        message: expect.stringContaining('line 1, Markdown heading: STE-NAME-LENGTH'),
+      }),
+      expect.objectContaining({
+        path: 'docs/audit-guide.md',
+        message: expect.stringContaining('line 3, Markdown paragraph: STE-WORD-CONTRACTION'),
+      }),
+      expect.objectContaining({
+        path: 'docs/audit-guide.md',
+        message: expect.stringContaining('line 3, Markdown paragraph: STE-PUNCTUATION-SEMICOLON'),
+      }),
+    ]))
+  })
+
+  it.each([
+    ['html', '<button type="button">Review and approve every finding</button>'],
+    ['jsx', 'export const View = () => <button>Review and approve every finding</button>'],
+    ['tsx', 'export const View = () => <button>Review and approve every finding</button>'],
+    ['vue', '<template><button>Review and approve every finding</button></template>'],
+    ['svelte', '<button>Review and approve every finding</button>'],
+  ])('blocks a non-STE visible action label in generated %s', (extension, content) => {
+    const zipPath = makeZip({ [`src/View.${extension}`]: content })
+    const summary = inspectOverlay(zipPath, baseOptions())
+
+    expect(summary.canApply).toBe(false)
+    expect(summary.hardBlockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        ruleId: 'AI-HANDOFF-STE-001',
+        path: `src/View.${extension}`,
+        message: expect.stringMatching(/line 1, element <button>: STE-LABEL-(?:LENGTH|ONE-ACTION)/),
+      }),
+    ]))
+  })
+
+  it('accepts concise labels and clear document text', () => {
+    const zipPath = makeZip({
+      'docs/audit-guide.md': '# Audit Guide\n\nThe audit record is ready.\n',
+      'src/View.tsx': [
+        'export const View = () => (',
+        '  <main>',
+        '    <h1>Audit Workspace</h1>',
+        '    <p>The audit record is ready.</p>',
+        '    <button type="button">Close audit finding</button>',
+        '  </main>',
+        ')',
+      ].join('\n'),
+    })
+
+    const summary = inspectOverlay(zipPath, baseOptions())
+
+    expect(summary.canApply).toBe(true)
+    expect(summary.hardBlockers.some((item) => item.ruleId === 'AI-HANDOFF-STE-001')).toBe(false)
+  })
+
+  it('does not inspect code-only strings, comments, or fenced examples', () => {
+    const zipPath = makeZip({
+      'src/copy.tsx': [
+        "const internalDraft = \"Review and approve every finding; you can't continue.\"",
+        'const markupExample = "<button>Review and approve every finding</button>"',
+        '// <button>Review and approve every finding</button>',
+        'export const copy = () => internalDraft',
+      ].join('\n'),
+      'docs/example.md': [
+        '# Code Example',
+        '',
+        '```tsx',
+        '<button>Review and approve every finding</button>',
+        '```',
+        '',
+        'Use the example for a test.',
+      ].join('\n'),
+    })
+
+    const summary = inspectOverlay(zipPath, baseOptions())
+
+    expect(summary.canApply).toBe(true)
+    expect(summary.hardBlockers.some((item) => item.ruleId === 'AI-HANDOFF-STE-001')).toBe(false)
+  })
+
+  it('blocks non-STE copy stored in UI variables and message calls', () => {
+    const zipPath = makeZip({
+      'src/copy.ts': [
+        "export const buttonLabel = 'Review and approve every finding'",
+        "export const message = \"The reviewer can't continue; the package is open.\"",
+        "setMessage('The organisation cannot analyse this record.')",
+      ].join('\n'),
+    })
+
+    const summary = inspectOverlay(zipPath, baseOptions())
+    const blockers = summary.hardBlockers.filter((item) => item.ruleId === 'AI-HANDOFF-STE-001')
+
+    expect(summary.canApply).toBe(false)
+    expect(blockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        message: expect.stringContaining('buttonLabel UI string: STE-LABEL-ONE-ACTION'),
+      }),
+      expect.objectContaining({
+        message: expect.stringContaining('message UI string: STE-WORD-CONTRACTION'),
+      }),
+      expect.objectContaining({
+        message: expect.stringContaining('message UI string: STE-PUNCTUATION-SEMICOLON'),
+      }),
+      expect.objectContaining({
+        message: expect.stringContaining('setMessage UI message: STE-SPELLING-AMERICAN'),
+      }),
+    ]))
+  })
+
+  it('accepts concise UI variables and continues to ignore ordinary code strings', () => {
+    const zipPath = makeZip({
+      'src/copy.ts': [
+        "export const buttonLabel = 'Close audit finding'",
+        "export const message = 'The audit package is ready.'",
+        "const sql = 'SELECT record_id FROM audit_record;'",
+        "const sourceExample = \"The app can't continue;\"",
+      ].join('\n'),
+    })
+
+    const summary = inspectOverlay(zipPath, baseOptions())
+
+    expect(summary.canApply).toBe(true)
+    expect(summary.hardBlockers.some((item) => item.ruleId === 'AI-HANDOFF-STE-001')).toBe(false)
+  })
+
+  it('blocks a compound label used through a JSX expression', () => {
+    const zipPath = makeZip({
+      'src/View.tsx': [
+        "const label = 'Review and approve'",
+        'export const View = () => <button>{label}</button>',
+      ].join('\n'),
+    })
+
+    const summary = inspectOverlay(zipPath, baseOptions())
+
+    expect(summary.canApply).toBe(false)
+    expect(summary.hardBlockers).toContainEqual(expect.objectContaining({
+      ruleId: 'AI-HANDOFF-STE-001',
+      path: 'src/View.tsx',
+      message: expect.stringContaining('text for <button>: STE-LABEL-ONE-ACTION'),
+    }))
+  })
+
+  it.each([
+    [
+      'a generic variable in a button',
+      [
+        'const bad = "Review and approve the record; you can’t continue"',
+        'export const View = () => <button>{bad}</button>',
+      ].join('\n'),
+    ],
+    [
+      'an action text variable in a component property',
+      [
+        "const primaryActionText = 'Review and approve'",
+        'export const View = () => <Button text={primaryActionText} />',
+      ].join('\n'),
+    ],
+    [
+      'a literal component text property',
+      'export const View = () => <Button text="Review and approve" />',
+    ],
+    [
+      'a literal action-label property',
+      'export const View = () => <Widget primaryActionLabel="Review and approve" />',
+    ],
+    [
+      'a conditional button expression',
+      "export const View = ({ ready }) => <button>{ready ? 'Review and approve' : 'Close record'}</button>",
+    ],
+    [
+      'a createElement variable child',
+      [
+        "const text = 'Review and approve'",
+        "export const View = () => React.createElement('button', {}, text)",
+      ].join('\n'),
+    ],
+  ])('blocks non-STE copy from %s', (_caseName, content) => {
+    const zipPath = makeZip({ 'src/View.tsx': content })
+    const summary = inspectOverlay(zipPath, baseOptions())
+
+    expect(summary.canApply).toBe(false)
+    expect(summary.hardBlockers).toContainEqual(expect.objectContaining({
+      ruleId: 'AI-HANDOFF-STE-001',
+      path: 'src/View.tsx',
+      message: expect.stringMatching(/STE-(?:LABEL-ONE-ACTION|PUNCTUATION-SEMICOLON|WORD-CONTRACTION)/),
+    }))
+  })
+
+  it('blocks visible createElement text in JavaScript', () => {
+    const zipPath = makeZip({
+      'src/View.js': "export const View = () => React.createElement('button', {}, 'Review and approve')",
+    })
+
+    const summary = inspectOverlay(zipPath, baseOptions())
+
+    expect(summary.canApply).toBe(false)
+    expect(summary.hardBlockers).toContainEqual(expect.objectContaining({
+      ruleId: 'AI-HANDOFF-STE-001',
+      path: 'src/View.js',
+      message: expect.stringContaining('createElement <button>: STE-LABEL-ONE-ACTION'),
+    }))
+  })
+
+  it('checks Setext headings and decoded semicolon entities', () => {
+    const zipPath = makeZip({
+      'docs/guide.md': 'Review and approve findings\n===========================\n',
+      'src/View.html': '<p>The reviewer cannot continue&semi; the package is open.</p>',
+    })
+
+    const summary = inspectOverlay(zipPath, baseOptions())
+
+    expect(summary.canApply).toBe(false)
+    expect(summary.hardBlockers).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        path: 'docs/guide.md',
+        message: expect.stringContaining('Markdown heading: STE-NAME-LENGTH'),
+      }),
+      expect.objectContaining({
+        path: 'src/View.html',
+        message: expect.stringContaining('STE-PUNCTUATION-SEMICOLON'),
+      }),
+    ]))
+  })
+
+  it('requires review acceptance for contextual STE findings', () => {
+    const zipPath = makeZip({
+      'src/View.html': '<button>Evidence package</button>',
+    })
+
+    const summary = inspectOverlay(zipPath, baseOptions())
+
+    expect(summary.canApply).toBe(true)
+    expect(summary.warnings).toContainEqual(expect.objectContaining({
+      ruleId: 'AI-HANDOFF-STE-REVIEW-001',
+      path: 'src/View.html',
+      message: expect.stringContaining('STE-REVIEW-ACTION-FORM'),
+    }))
+    expect(() => applyOverlay(zipPath, summary, {
+      runId: 'test-run',
+      targetRoot,
+      acceptWarnings: false,
+    })).toThrow(/not explicitly accepted/)
+  })
+
+  it('applies a configured project vocabulary to generated UI text', () => {
+    const zipPath = makeZip({
+      'src/View.html': '<p>Use forbiddenword.</p>',
+    })
+
+    const summary = inspectOverlay(zipPath, {
+      ...baseOptions(),
+      steLexicon: {
+        generalWords: ['use'],
+        technicalTerms: [],
+      },
+    })
+
+    expect(summary.canApply).toBe(false)
+    expect(summary.hardBlockers).toContainEqual(expect.objectContaining({
+      ruleId: 'AI-HANDOFF-STE-001',
+      path: 'src/View.html',
+      message: expect.stringContaining('STE-LEXICON-UNKNOWN'),
+    }))
+  })
+})
+
 describe('applyOverlay', () => {
   it('refuses to apply blocked overlays', () => {
     const zipPath = makeZip({ '.env': 'SECRET=1' })

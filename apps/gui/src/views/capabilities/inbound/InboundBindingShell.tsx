@@ -5,8 +5,9 @@
  * fields are passed as `children`.
  */
 
-import { useState } from 'react'
-import type { ExposureLevel, InboundBinding } from '@engineering-ui-kit/core'
+import { useEffect, useState, type ChangeEvent } from 'react'
+import type { ExposureLevel, InboundBinding, SteLexicon } from '@engineering-ui-kit/core'
+import { evaluateInboundBindingSte } from '@engineering-ui-kit/core/browser'
 import type { EuikBridge } from '../../../bridge'
 import { StatusLine, type Status } from '../../../components'
 import { humanizeIdentifier } from '../capabilityPresentation'
@@ -30,8 +31,27 @@ export function InboundBindingShell<T extends InboundBinding>(props: Props<T>) {
   const [status, setStatus] = useState<Status | null>(null)
   const [attempted, setAttempted] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [steLexicon, setSteLexicon] = useState<SteLexicon | undefined>()
 
-  const issues = validateInboundBindingDraft(binding)
+  useEffect(() => {
+    let active = true
+    void bridge.capabilitiesGetSteLexicon(projectId)
+      .then((value) => {
+        if (active) setSteLexicon(value as SteLexicon | undefined)
+      })
+      .catch(() => {
+        if (active) setSteLexicon(undefined)
+      })
+    return () => {
+      active = false
+    }
+  }, [bridge, projectId])
+
+  const steEvaluation = evaluateInboundBindingSte(binding, steLexicon)
+  const issues = [
+    ...validateInboundBindingDraft(binding),
+    ...steEvaluation.diagnostics.map((item) => item.message),
+  ]
 
   function update<K extends keyof T>(key: K, value: T[K]) {
     setBinding((prev) => ({ ...prev, [key]: value }))
@@ -74,17 +94,20 @@ export function InboundBindingShell<T extends InboundBinding>(props: Props<T>) {
     }
   }
 
+  function selectCapability(event: ChangeEvent<HTMLSelectElement>) {
+    const [id, version] = event.target.value.split('@')
+    setBinding((prev) => ({ ...prev, operationId: id ?? '', operationVersion: version ?? '' }))
+  }
+
   return (
     <div className="cap-inbound-editor" aria-label="Entry point editor">
-      <label className="cap-connect-field">
-        Capability
+      <div className="cap-connect-field">
+        <label htmlFor={`cap-inbound-operation-${binding.bindingId}`}>Capability</label>
         <select
+          id={`cap-inbound-operation-${binding.bindingId}`}
           aria-label="Capability"
           value={binding.operationId ? `${binding.operationId}@${binding.operationVersion}` : ''}
-          onChange={(e) => {
-            const [id, version] = e.target.value.split('@')
-            setBinding((prev) => ({ ...prev, operationId: id ?? '', operationVersion: version ?? '' }))
-          }}
+          onChange={selectCapability}
         >
           <option value="">Select a capability…</option>
           {operations.map((op) => (
@@ -93,7 +116,7 @@ export function InboundBindingShell<T extends InboundBinding>(props: Props<T>) {
             </option>
           ))}
         </select>
-      </label>
+      </div>
 
       {props.children}
 
@@ -103,10 +126,10 @@ export function InboundBindingShell<T extends InboundBinding>(props: Props<T>) {
       />
 
       <div className="capabilities-toolbar" role="group" aria-label="Entry point actions">
-        <button type="button" className="btn btn-secondary btn-compact" disabled={busy} onClick={() => void saveDraft()}>
+        <button type="button" className="btn btn-secondary btn-compact" disabled={busy} onClick={saveDraft}>
           Save draft
         </button>
-        <button type="button" className="btn btn-primary btn-compact" disabled={busy} onClick={() => void approve()}>
+        <button type="button" className="btn btn-primary btn-compact" disabled={busy} onClick={approve}>
           Approve entry point
         </button>
       </div>
@@ -115,7 +138,7 @@ export function InboundBindingShell<T extends InboundBinding>(props: Props<T>) {
 
       {attempted && issues.length > 0 && (
         <section aria-label="Open issues" className="cap-issues">
-          <h3>To finish this entry point</h3>
+          <h3>Resolve entry issues</h3>
           <ul className="cap-issue-list">
             {issues.map((issue, i) => (
               <li key={i}>{issue}</li>

@@ -6,7 +6,7 @@
   "refines": {
     "architectureId": "arch.do178c-audit-hub",
     "architectureRevision": "4",
-    "architectureHash": "b74ed12d692384ee074aa4a6a9b09e233dc9babf264a91bf6d4b9e314368f86d",
+    "architectureHash": "9e85b23877737297bba216dd45275f490a1a042c2e11a3bdd97fc218762756c2",
     "groupingModuleId": "mod.external-adapters"
   },
   "boundaryRule": "Application and domain code own ports. Each concrete adapter is specific to one external actor or one independently failing integration responsibility. An adapter may implement multiple cohesive ports when one external system supplies them.",

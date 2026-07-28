@@ -1,4 +1,9 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import AdmZip from 'adm-zip'
 import { describe, expect, it } from 'vitest'
+import { inspectOverlay } from '../../src/overlay.js'
 import { resolveProjectRelativePath } from '../../src/capabilities/filesystem.js'
 import { calculateImpact, classifyImpact, nextActionableTarget } from '../../src/capabilities/impact.js'
 import {
@@ -6,8 +11,10 @@ import {
   buildDeltaPacket,
   buildImplementationPacket,
   buildInterviewPacket,
+  evaluateCapabilityHandoffShellSte,
 } from '../../src/capabilities/packets.js'
 import type { ModuleManifest } from '../../src/capabilities/types.js'
+import { STE_PROMPT_MARKER, withStePrompt } from '../../src/capabilities/simplifiedTechnicalEnglish.js'
 
 const policy = {
   roots: {
@@ -18,6 +25,27 @@ const policy = {
     artifacts: 'artifacts',
   },
 } as const
+
+function expectSteSafeMarkdown(markdown: string): void {
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'euik-ste-handoff-'))
+  try {
+    const targetRoot = path.join(workDir, 'target')
+    fs.mkdirSync(path.join(targetRoot, 'docs'), { recursive: true })
+    const zip = new AdmZip()
+    zip.addFile('docs/handoff.md', Buffer.from(markdown))
+    const zipPath = path.join(workDir, 'handoff.zip')
+    zip.writeZip(zipPath)
+    const inspection = inspectOverlay(zipPath, {
+      runId: 'ste-handoff-test',
+      targetRoot,
+      capabilityAllowedPaths: ['docs'],
+    })
+    expect(inspection.hardBlockers.filter((item) =>
+      item.ruleId === 'AI-HANDOFF-STE-001')).toEqual([])
+  } finally {
+    fs.rmSync(workDir, { recursive: true, force: true })
+  }
+}
 
 describe('CAP-TEST-025 filesystem policy (core)', () => {
   it('accepts project-relative paths and rejects traversal/absolute escapes', () => {
@@ -157,13 +185,18 @@ describe('CAP-TEST-014 implementation packet', () => {
         value: { moduleManifest: { moduleId: 'mod.domain' } },
       },
     })
-    expect(handoff).toContain('Return exactly one file named ui-overlay.zip')
+    expect(handoff).toContain('Return exactly one file named `ui-overlay.zip`')
     expect(handoff).toContain('changed and new implementation files')
-    expect(handoff).toContain('Supporting context (input only): module-implementation-brief.json')
+    expect(handoff).toContain('## Supporting context')
+    expect(handoff).toContain('File: `module-implementation-brief.json`')
     expect(handoff).toContain('Do not return, rewrite, or wrap this record as the result')
     expect(handoff).toContain('module-implementation-brief.json')
+    expect(handoff).toContain('ASD-STE100')
+    expect(handoff).toContain('VERB + OBJECT')
     expect(handoff).not.toContain('Return only the requested output named module-manifest.json')
     expect(handoff).not.toContain('Use exactly the top-level shape shown')
+    expect(evaluateCapabilityHandoffShellSte('implementation').diagnostics).toEqual([])
+    expectSteSafeMarkdown(handoff)
   })
 
   it('retains the JSON response contract for interview handoffs only', () => {
@@ -187,10 +220,42 @@ describe('CAP-TEST-014 implementation packet', () => {
         value: { moduleManifest: { moduleId: 'Replace with the module id' } },
       },
     })
-    expect(handoff).toContain(`return only the JSON file named ${packet.outputFileName}`)
-    expect(handoff).toContain(`Required response template: ${packet.outputFileName}`)
-    expect(handoff).toContain('Use exactly the top-level shape shown')
-    expect(handoff).not.toContain('Return exactly one file named ui-overlay.zip')
+    expect(handoff).toContain(`Return only the JSON file named \`${packet.outputFileName}\``)
+    expect(handoff).toContain('## Response template')
+    expect(handoff).toContain(`File: \`${packet.outputFileName}\``)
+    expect(handoff).toContain('Use the top-level shape in the response template')
+    expect(handoff).toContain('ASD-STE100')
+    expect(handoff).not.toContain('Return exactly one file named `ui-overlay.zip`')
+    expect(evaluateCapabilityHandoffShellSte('interview').diagnostics).toEqual([])
+    expectSteSafeMarkdown(handoff)
+  })
+
+  it('uses one prompt policy with the project preferred-term map', () => {
+    const packet = buildInterviewPacket({
+      packetId: 'interview-lexicon',
+      projectId: 'proj',
+      interviewKind: 'module',
+      gateId: 'gate.module',
+      inputContext: {
+        recordIds: ['mod.domain'], revisions: ['1'], hashes: ['hash'], facts: [], glossary: [],
+      },
+      interviewBoundary: 'mod.domain',
+      stateLabels: { confirmed: [], proposed: [], unresolved: [] },
+    })
+    const priorPrompt = withStePrompt('Interview the user.')
+    const handoff = buildCapabilityHandoffMarkdown({
+      kind: 'interview',
+      packet,
+      recommendedPrompt: priorPrompt,
+      steLexicon: {
+        technicalTerms: ['audit finding'],
+        prohibitedAliases: { defect: 'audit finding' },
+      },
+    })
+
+    expect(handoff.match(new RegExp(STE_PROMPT_MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'))).toHaveLength(1)
+    expect(handoff).toContain('"defect":"audit finding"')
+    expect(handoff).toContain('"audit finding"')
   })
 
   it('treats a delta packet as input and still requests an implementation overlay', () => {
@@ -219,8 +284,9 @@ describe('CAP-TEST-014 implementation packet', () => {
       packet: delta,
       recommendedPrompt: 'Apply the approved delta as source code and tests.',
     })
-    expect(handoff).toContain('Return exactly one file named ui-overlay.zip')
+    expect(handoff).toContain('Return exactly one file named `ui-overlay.zip`')
     expect(handoff).toContain('delta-packet.json')
-    expect(handoff).not.toContain('Required response template: delta-packet.json')
+    expect(handoff).not.toContain('## Response template')
+    expectSteSafeMarkdown(handoff)
   })
 })

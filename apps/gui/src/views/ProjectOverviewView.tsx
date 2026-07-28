@@ -308,12 +308,12 @@ export function ProjectOverviewContent(props: {
         {activeHistory.length === 0 ? (
           <EmptyState
             icon={Icon.folderBig(24)}
-            title="No substantive work yet"
+            title="No project work"
             hint="Start with the next best action above."
           />
         ) : (
           <table className="data-table">
-            <caption className="sr-only">Unified project run history</caption>
+            <caption className="sr-only">Project history</caption>
             <thead>
               <tr><th scope="col">Work</th><th scope="col">Target</th><th scope="col">Maturity</th><th scope="col">Condition</th><th scope="col">Updated</th></tr>
             </thead>

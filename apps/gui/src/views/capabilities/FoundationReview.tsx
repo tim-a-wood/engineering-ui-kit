@@ -256,7 +256,7 @@ function DeploymentDetails(props: {
         ) : <p className="capabilities-note">No responsibilities are assigned yet.</p>}
       </section>
       <section className="cap-deployment-detail-section" aria-label="Deployment interactions">
-        <h3>How it works with other parts</h3>
+        <h3>Part interactions</h3>
         {relatedConnections.length ? (
           <ul className="cap-deployment-detail-connections">
             {relatedConnections.map((connection) => {
@@ -293,7 +293,7 @@ function DeploymentDiagram(props: {
         className="cap-deployment-topology"
         viewBox={`0 0 ${width} ${height}`}
         role="group"
-        aria-label="Deployment diagram showing application parts and how they interact"
+        aria-label="View deployment map"
       >
         <defs>
           <marker id={markerId} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -341,7 +341,7 @@ function DeploymentDiagram(props: {
               <button
                 type="button"
                 className={`cap-deployment-node kind-${deployable.kind}`}
-                onClick={() => props.onOpen(deployable.deployableId)}
+                onClick={props.onOpen.bind(null, deployable.deployableId)}
                 aria-label={`${presentation.label}. Open deployment details`}
               >
                 <span className="cap-deployment-node-icon" aria-hidden="true">{presentation.label.charAt(0)}</span>
@@ -454,9 +454,9 @@ export function FoundationReview({
 
   return (
     <section className="capabilities-foundation-review" role="region" aria-label="Application structure">
-      <h3>How the application runs</h3>
+      <h3>Application runtime</h3>
       <p className="lede">
-        Review the main parts of the application and what each one is responsible for. Technical implementation details are available separately.
+        Review the main application parts and their responsibilities. View technical details separately.
       </p>
 
       {!plan ? (
@@ -465,7 +465,9 @@ export function FoundationReview({
           <button
             type="button"
             className="btn btn-primary btn-compact"
-            onClick={() => void proposeInitial()}
+            onClick={function proposeStructure() {
+              void proposeInitial()
+            }}
             disabled={busy || !projectId}
           >
             Propose application structure
@@ -510,10 +512,10 @@ export function FoundationReview({
                   <button
                     type="button"
                     className="btn btn-secondary btn-compact"
-                    onClick={() => void answerAmbiguity(ambiguity.id)}
+                    onClick={answerAmbiguity.bind(null, ambiguity.id)}
                     disabled={busy || !selectedChoices[ambiguity.id]}
                   >
-                    Answer
+                    Save answer
                   </button>
                 </div>
               ))}
@@ -524,14 +526,14 @@ export function FoundationReview({
             <button
               type="button"
               className="btn btn-secondary btn-compact"
-              onClick={() => setTechnicalOpen(true)}
+              onClick={setTechnicalOpen.bind(null, true)}
             >
-              Technical specification
+              View specifications
             </button>
             <button
               type="button"
               className="btn btn-secondary btn-compact"
-              onClick={() => void proposeInitial(plan.resolvedAnswers)}
+              onClick={proposeInitial.bind(null, plan.resolvedAnswers)}
               disabled={busy || !projectId}
             >
               Refresh application structure
@@ -540,7 +542,7 @@ export function FoundationReview({
               <button
                 type="button"
                 className="btn btn-primary btn-compact"
-                onClick={() => void approve()}
+                onClick={approve}
                 disabled={busy || plan.readiness.status !== 'ready'}
               >
                 Approve application structure

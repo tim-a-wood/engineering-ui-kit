@@ -255,6 +255,7 @@ function compileFrontend(
     modules: approvedModules(caps, projectId, architecture),
     bindings: activeBindings(caps, projectId),
     targetModuleIds,
+    steLexicon: caps.getSteLexicon(projectId),
   })
 }
 
@@ -475,6 +476,7 @@ export async function executeMachineOperation(
           manifest,
           interview: caps.getApprovedModuleInterview(projectId, moduleId),
           architecture,
+          steLexicon: caps.getSteLexicon(projectId),
           repository: discoverRepositoryImplementationContext({
             repoRoot: project.repoPath,
             allowedPaths: manifest.ownedPaths,

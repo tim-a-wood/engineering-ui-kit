@@ -4,7 +4,22 @@
  * The packet builder merges these defaults with per-run user fields.
  */
 
-import type { TaskDefinition } from '@engineering-ui-kit/core'
+import {
+  buildStePromptRules,
+  withStePrompt,
+  type SteLexicon,
+  type TaskDefinition,
+} from '@engineering-ui-kit/core'
+
+function steVocabulary(
+  technicalTerms: readonly string[],
+  lexicon?: SteLexicon,
+): Parameters<typeof buildStePromptRules>[0] {
+  return {
+    technicalTerms: [...technicalTerms, ...(lexicon?.technicalTerms ?? [])],
+    prohibitedAliases: lexicon?.prohibitedAliases,
+  }
+}
 
 export const STANDARD_TOKEN_ROWS: TaskDefinition['tokenRows'] = [
   { path: 'semantic.surface.canvas', value: '#07111f', requiredUse: 'Root app canvas background' },
@@ -150,6 +165,19 @@ export const STANDARD_ACCESSIBILITY_REQUIREMENTS = [
 ]
 
 export const STANDARD_CONSTRAINTS = [
+  buildStePromptRules({
+    technicalTerms: [
+      'application',
+      'component',
+      'diagram',
+      'document',
+      'module',
+      'repository',
+      'source code',
+      'use case',
+      'user interface',
+    ],
+  }),
   'Use semantic CSS custom properties traceable to the supplied token table.',
   'Dark-first only; do not implement light mode.',
   'No raw color scattering outside the supplied CSS variable definitions.',
@@ -279,8 +307,9 @@ export function buildRecommendedPrompt(input: {
   taskTitle: string
   goal: string
   uploadFiles: string[]
+  steLexicon?: SteLexicon
 }): string {
-  return [
+  return withStePrompt([
     `You are implementing a focused UI transformation for \`${input.targetApplication}\`.`,
     '',
     'Before editing anything, inspect all uploaded inputs:',
@@ -301,7 +330,15 @@ export function buildRecommendedPrompt(input: {
     '- Do not return a full repository, `.git` content, dependencies, build output, or secrets.',
     '- If requirements are missing or conflicting, report limitations instead of inventing them.',
     '- Do not claim success. Local verification remains mandatory.',
-  ].join('\n')
+  ].join('\n'), steVocabulary([
+      'application',
+      'component',
+      'repository',
+      'source code',
+      'task pack',
+      'user interface',
+      'ZIP',
+    ], input.steLexicon))
 }
 
 /** Build `task-packet.md` (PRD §22.4) for the text-only three-file upload set. */
@@ -316,9 +353,24 @@ export function buildTaskPacketMarkdown(input: {
   acceptanceCriteria: string[]
   references: string[]
   generatedAt: string
+  steLexicon?: SteLexicon
   /** Saved reviewer notes from the previous iteration of this run, if any. */
   reviewerFeedback?: string
 }): string {
+  const stePolicy = buildStePromptRules(steVocabulary([
+      'application',
+      'component',
+      'diagram',
+      'document',
+      'repository',
+      'source code',
+      'use case',
+      'user interface',
+    ], input.steLexicon))
+  const constraints = [
+    stePolicy,
+    ...input.constraints.filter((item) => !item.trimStart().startsWith('[EUIT-STE-001 ')),
+  ]
   const lines: string[] = [
     '# Task Packet',
     '',
@@ -339,7 +391,7 @@ export function buildTaskPacketMarkdown(input: {
     '',
     '## Constraints',
     '',
-    ...input.constraints.map((s) => `- ${s}`),
+    ...constraints.map((s) => `- ${s}`),
     '',
     '## Acceptance Criteria',
     '',
@@ -379,7 +431,11 @@ export function buildTaskPacketMarkdown(input: {
 }
 
 /** Build `standard-pack.md` (PRD §22.3) for the text-only three-file upload set. */
-export function buildStandardPackMarkdown(input: { standardsVersion: string; generatedAt: string }): string {
+export function buildStandardPackMarkdown(input: {
+  standardsVersion: string
+  generatedAt: string
+  steLexicon?: SteLexicon
+}): string {
   const lines: string[] = [
     '# Standard Pack',
     '',
@@ -387,6 +443,20 @@ export function buildStandardPackMarkdown(input: { standardsVersion: string; gen
     `- standardsVersion: \`${input.standardsVersion}\``,
     `- themePosture: \`dark-first\``,
     `- generatedAt: \`${input.generatedAt}\``,
+    '',
+    '## Writing Policy',
+    '',
+    buildStePromptRules(steVocabulary([
+      'application',
+      'component',
+      'diagram',
+      'document',
+      'module',
+      'repository',
+      'source code',
+      'use case',
+      'user interface',
+    ], input.steLexicon)),
     '',
     '## Applicable Rule IDs',
     '',
@@ -432,6 +502,7 @@ export function buildReviewPacketMarkdown(input: {
   feedback: string
   verificationSummary: string
   generatedAt: string
+  steLexicon?: SteLexicon
 }): string {
   return [
     '# Copilot Review Packet',
@@ -440,6 +511,18 @@ export function buildReviewPacketMarkdown(input: {
     `- targetApplication: \`${input.targetApplication}\``,
     `- task: ${input.taskTitle}`,
     `- generatedAt: \`${input.generatedAt}\``,
+    '',
+    '## Writing Policy',
+    '',
+    buildStePromptRules(steVocabulary([
+        'application',
+        'component',
+        'overlay',
+        'repository',
+        'review packet',
+        'source code',
+        'user interface',
+      ], input.steLexicon)),
     '',
     '## Review Request',
     '',

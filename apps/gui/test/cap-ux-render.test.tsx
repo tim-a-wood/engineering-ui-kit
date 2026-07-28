@@ -105,7 +105,7 @@ describe('Guided vs Design disclosure', () => {
       />,
     )
     expect(html).not.toContain('aria-label="Binding editor"')
-    expect(html).toContain('Show me how')
+    expect(html).toContain('Open guide')
   })
 
   it('keeps Plan and Design as separate steps with an explicit transition', () => {
@@ -191,9 +191,9 @@ describe('Build entry points (multi-host InboundBinding)', () => {
   )
 
   it('offers design-derived suggestions and every host kind when a UI deployable exists', () => {
-    expect(withUi).toContain('Configure application entry points')
+    expect(withUi).toContain('Configure entry points')
     expect(withUi).toContain('Suggested')
-    expect(withUi).toContain('Existing or new UI')
+    expect(withUi).toContain('User interface')
     expect(withUi).toContain('HTTP endpoint')
     expect(withUi).toContain('Command line')
     expect(withUi).toContain('Scheduled or background')
@@ -202,7 +202,7 @@ describe('Build entry points (multi-host InboundBinding)', () => {
   })
 
   it('hides the UI trigger choice entirely when the app has no UI deployable', () => {
-    expect(noUi).not.toContain('Existing or new UI')
+    expect(noUi).not.toContain('User interface')
     expect(noUi).toContain('HTTP endpoint')
     expect(noUi).toContain('Command line')
     expect(noUi).toContain('Scheduled or background')
@@ -241,9 +241,9 @@ describe('Build entry points (multi-host InboundBinding)', () => {
     expect(html).toContain('Place Order')
     expect(html).toContain('Approved')
     expect(html).toContain('Protected')
-    expect(html).toContain('Add another entry point')
-    expect(html).toContain('>Edit</button>')
-    expect(html).toContain('>Remove</button>')
+    expect(html).toContain('Add entry point')
+    expect(html).toContain('>Edit entry point</button>')
+    expect(html).toContain('>Remove entry point</button>')
     expect(html).not.toContain('binding.http.1')
   })
 })
@@ -271,7 +271,7 @@ describe('Guided Build (two-region, single next action)', () => {
   })
   it('renders all four Build sections in the required forward order', () => {
     const modules = html.indexOf('Build modules')
-    const entryPoints = html.indexOf('Configure application entry points')
+    const entryPoints = html.indexOf('Configure entry points')
     const setup = html.indexOf('Prepare the shared application setup')
     const readiness = html.indexOf('Confirm Build readiness')
     expect(modules).toBeGreaterThan(-1)
@@ -301,7 +301,7 @@ describe('CapabilityHandoffCard', () => {
     expect(html).toContain('Show file')
     expect(html).toContain('everything is included')
     expect(html).toContain('draggable="true"')
-    expect(html).toContain('Drag product-interview.md out to Copilot')
+    expect(html).toContain('aria-label="Drag handoff"')
     expect(html).not.toContain('Copy prompt')
     expect(html).not.toContain('cap-handoff-num')
     expect(html).not.toContain('/Users/tim/app')

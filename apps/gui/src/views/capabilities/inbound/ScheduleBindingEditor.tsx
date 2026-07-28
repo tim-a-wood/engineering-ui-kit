@@ -57,7 +57,7 @@ export function ScheduleBindingEditor({ bridge, projectId, operations, initial, 
           />
         </label>
         <label className="cap-connect-field">
-          If a run is already in progress
+          Overlap policy
           <select
             aria-label="Overlap policy"
             value={binding.overlapPolicy}
@@ -69,7 +69,7 @@ export function ScheduleBindingEditor({ bridge, projectId, operations, initial, 
           </select>
         </label>
         <label className="cap-connect-field">
-          If a run is missed
+          Misfire policy
           <select
             aria-label="Misfire policy"
             value={binding.misfirePolicy}

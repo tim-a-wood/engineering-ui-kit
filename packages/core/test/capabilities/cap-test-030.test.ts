@@ -44,6 +44,19 @@ describe('CAP-TEST-030 binding mapping and connection packet', () => {
     expect(diagnostics.some((d) => d.code === 'CAP-BIND-001')).toBe(true)
   })
 
+  it('blocks non-STE behavior text before approval', () => {
+    const binding = loadValidBinding()
+    binding.loadingBehavior = 'Show the spinner; disable the form.'
+
+    const gate = evaluateBindingApprovalGate(binding)
+
+    expect(gate.passed).toBe(false)
+    expect(gate.diagnostics).toContainEqual(expect.objectContaining({
+      code: 'STE-PUNCTUATION-SEMICOLON',
+      fieldPath: 'loadingBehavior',
+    }))
+  })
+
   it('blocks approval until mapping ambiguity is resolved by the user', () => {
     const binding = loadValidBinding()
     binding.inputMappings = [

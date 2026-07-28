@@ -186,7 +186,7 @@ export const CapabilityPreview = forwardRef<CapabilityPreviewHandle, Props>(
                   <div className="cap-preview-recovery-actions" role="group" aria-label="Preview recovery actions">
                     {setupRequired ? (
                       <button type="button" className="btn btn-primary btn-compact" onClick={() => void installAndRetry()}>
-                        Install dependencies and retry
+                        Install dependencies
                       </button>
                     ) : null}
                     <button type="button" className="btn btn-secondary btn-compact" onClick={() => void start()}>

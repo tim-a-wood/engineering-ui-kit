@@ -593,9 +593,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       acceptanceCriteria: fields.acceptanceCriteria.split('\n').filter(Boolean),
       references: fields.references.split('\n').filter(Boolean),
       generatedAt,
+      steLexicon: capabilityWorkspace.getSteLexicon(run.projectId),
       ...(reviewerFeedback ? { reviewerFeedback } : {}),
     })
-    const standardPackText = buildStandardPackMarkdown({ standardsVersion: '0.5.0', generatedAt })
+    const standardPackText = buildStandardPackMarkdown({
+      standardsVersion: '0.5.0',
+      generatedAt,
+      steLexicon: capabilityWorkspace.getSteLexicon(run.projectId),
+    })
 
     const taskPacketPath = path.join(runDir, 'task-packet.md')
     const standardPackPath = path.join(runDir, 'standard-pack.md')
@@ -615,6 +620,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       taskTitle: fields.taskTitle,
       goal: fields.goal,
       uploadFiles: manifest.map((m) => m.file),
+      steLexicon: capabilityWorkspace.getSteLexicon(run.projectId),
     })
     // Persisted so Open-Copilot can auto-copy the prompt on a revisit of this step.
     fs.writeFileSync(path.join(runDir, 'recommended-prompt.txt'), recommendedPrompt)
@@ -708,6 +714,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       feedback,
       verificationSummary: verification,
       generatedAt,
+      steLexicon: capabilityWorkspace.getSteLexicon(run.projectId),
     })
     const reviewPath = path.join(runDir, 'review-packet.md')
     fs.writeFileSync(reviewPath, text)
@@ -889,7 +896,11 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     if (!zipPath.toLowerCase().endsWith('.zip') || !fs.existsSync(zipPath)) {
       throw new Error('select an existing .zip overlay file')
     }
-    const summary = inspectOverlay(zipPath, { runId, targetRoot: project.repoPath })
+    const summary = inspectOverlay(zipPath, {
+      runId,
+      targetRoot: project.repoPath,
+      steLexicon: capabilityWorkspace.getSteLexicon(run.projectId),
+    })
     const summaryPath = workspace.saveRunArtifact(runId, 'overlay-inspection-summary.json', summary)
     workspace.updateRun(runId, {
       currentStep: 'apply-zip-overlay',

@@ -261,7 +261,7 @@ describe('CAP-TEST-038b Capabilities accessibility (behavioral)', () => {
     expect(html).toContain('Blocked')
     expect(html).toMatch(/[✓!]/)
     expect(html).toContain('role="note"')
-    expect(html).toContain('How the parts work together')
+    expect(html).toContain('Part interactions')
     // Diagram is a single tab stop with roving -1 children (focus entry semantics).
     expect(html).toContain('aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Enter"')
     expect(html).toMatch(/role="application"[^>]*tabindex="0"|tabindex="0"[^>]*role="application"/i)

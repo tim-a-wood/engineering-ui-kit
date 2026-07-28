@@ -1,0 +1,669 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "id": "module-design:mod.external-adapters",
+  "revision": "1.1.0",
+  "status": "approved",
+  "architecture": {
+    "id": "arch.do178c-audit-hub",
+    "revision": "4",
+    "contentHash": "9e85b23877737297bba216dd45275f490a1a042c2e11a3bdd97fc218762756c2"
+  },
+  "module": {
+    "moduleId": "mod.external-adapters",
+    "moduleVersion": "1.0.0",
+    "name": "External Adapters",
+    "moduleType": "connection",
+    "responsibility": "Provide technology-specific, read-only access to configured lifecycle artifact formats and translate them into normalized evidence records, typed relationships, hashes, provenance, and structured diagnostics.",
+    "nonResponsibilities": [
+      "snapshot-publication",
+      "lifecycle-interpretation",
+      "finding-workflow",
+      "UI-rendering",
+      "source-artifact-mutation"
+    ],
+    "ownedConcerns": [
+      "Module behavior"
+    ],
+    "excludedConcerns": [
+      "snapshot-publication",
+      "lifecycle-interpretation",
+      "finding-workflow",
+      "UI-rendering",
+      "source-artifact-mutation"
+    ]
+  },
+  "trace": {
+    "useCaseIds": [
+      "uc-package"
+    ],
+    "workflowNodeIds": [
+      "package:export"
+    ],
+    "scenarioStepIds": [
+      "uc-package:step:export"
+    ],
+    "ruleIds": [
+      "rule-authority",
+      "rule-local-workflow",
+      "rule-snapshot",
+      "rule-publish",
+      "rule-fallback",
+      "rule-finding",
+      "rule-stale",
+      "rule-phases",
+      "rule-shared-anatomy",
+      "rule-shared-actions",
+      "rule-sample-default",
+      "rule-sample-real",
+      "rule-sample-badge",
+      "rule-sample-overlay",
+      "rule-sample-export",
+      "rule-sample-portable",
+      "rule-same-ui",
+      "rule-objectives",
+      "rule-claims",
+      "rule-llr",
+      "rule-coverage",
+      "rule-compare",
+      "rule-security",
+      "rule-performance",
+      "rule-determinism"
+    ],
+    "qualityRequirementIds": [],
+    "sourceRefs": [
+      "source-1",
+      "source-2",
+      "source-3"
+    ],
+    "designDecisionIds": []
+  },
+  "boundary": {
+    "directDependencyIds": [],
+    "directConsumerIds": [
+      "mod.workspace-snapshots",
+      "mod.assurance-workflow",
+      "mod.ingestion-publication"
+    ],
+    "deployableId": "unassigned",
+    "runtimeAllocation": "local-embedded",
+    "runtimeLanguage": "typescript",
+    "ownedPaths": [
+      "src/modules/external-adapters/"
+    ],
+    "editableSharedPaths": []
+  },
+  "providedOperations": [
+    {
+      "operationId": "op.access-external-artifacts",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [],
+  "schemas": [
+    {
+      "id": "op.access-external-artifacts.input",
+      "text": "op.access-external-artifacts.input"
+    },
+    {
+      "id": "op.access-external-artifacts.output",
+      "text": "op.access-external-artifacts.output"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule-authority",
+      "text": "Connected engineering artifacts remain authoritative. The hub must not write changes to lifecycle files."
+    },
+    {
+      "id": "rule-local-workflow",
+      "text": "Only hub-local findings, reviews, dispositions, package selections, annotations, and sample sandbox state are editable, and every change is auditable."
+    },
+    {
+      "id": "rule-snapshot",
+      "text": "Each published snapshot is immutable and identifies exact source revisions, extraction context, and hashes."
+    },
+    {
+      "id": "rule-publish",
+      "text": "An extraction or indexing failure prevents candidate publication. An evidence gap stays visible and does not prevent a reliable snapshot."
+    },
+    {
+      "id": "rule-fallback",
+      "text": "A failed or partial refresh never replaces the last valid published snapshot."
+    },
+    {
+      "id": "rule-finding",
+      "text": "The hub calculates deterministic findings for each snapshot. Human findings keep attribution, history, disposition, and closure evidence."
+    },
+    {
+      "id": "rule-stale",
+      "text": "Evidence is stale when its source revision or dependency hash differs from the selected snapshot. Evidence is also stale after an unreviewed dependency change."
+    },
+    {
+      "id": "rule-phases",
+      "text": "The Evidence Explorer navigation is Overview, Planning, Requirements, Design, Implementation, Verification, Configuration Management, Quality Assurance, and Certification."
+    },
+    {
+      "id": "rule-shared-anatomy",
+      "text": "Every lifecycle area uses a consistent phase header, tailored subnavigation, working evidence table or visualization, evidence inspector, findings drawer, and baseline-compare mode."
+    },
+    {
+      "id": "rule-shared-actions",
+      "text": "Each evidence item provides its dossier, traces, source location, baseline comparison, source data, findings, reviews, and package controls."
+    },
+    {
+      "id": "rule-sample-default",
+      "text": "If zero real projects exist, the sample opens automatically with no picker blocker or blank dashboard."
+    },
+    {
+      "id": "rule-sample-real",
+      "text": "After a real project exists, the last real project opens by default and the sample remains selectable under Examples."
+    },
+    {
+      "id": "rule-sample-badge",
+      "text": "The sample always displays a Sample Data badge and a Connect a real project action."
+    },
+    {
+      "id": "rule-sample-overlay",
+      "text": "Bundled sample evidence is immutable. A resettable sandbox stores sample findings, reviews, dispositions, packages, and preferences."
+    },
+    {
+      "id": "rule-sample-export",
+      "text": "Every sample export is marked Synthetic sample — not certification evidence in both visible output and manifest metadata."
+    },
+    {
+      "id": "rule-sample-portable",
+      "text": "The sample uses a normalized extraction snapshot for synthetic artifacts. It must not disguise text or JSON as proprietary binary files."
+    },
+    {
+      "id": "rule-same-ui",
+      "text": "Sample projects and real projects use the same APIs, domain model, routes, and components. The product has no demo-only interface."
+    },
+    {
+      "id": "rule-objectives",
+      "text": "Do not bundle copyrighted DO-178C or DO-331 objective text. Use configurable identifiers and licensed profiles."
+    },
+    {
+      "id": "rule-claims",
+      "text": "The application may report evidence status against the configured profile but must not claim certification, regulatory approval, or compliance."
+    },
+    {
+      "id": "rule-llr",
+      "text": "Requirement classifications and allocation rules prevent ambiguous duplication between higher-level and low-level requirement views."
+    },
+    {
+      "id": "rule-coverage",
+      "text": "The hub imports coverage from authoritative results. The hub does not calculate coverage."
+    },
+    {
+      "id": "rule-compare",
+      "text": "Baseline comparison reports added, removed, changed, and stale evidence without performing semantic merge or conflict resolution."
+    },
+    {
+      "id": "rule-security",
+      "text": "Credentials and secrets are never stored in project configuration, snapshots, logs, packages, or displayed evidence."
+    },
+    {
+      "id": "rule-performance",
+      "text": "Normal browsing, filtering, search, trace navigation, dossier opening, and phase switching should usually respond within two seconds at accepted scale."
+    },
+    {
+      "id": "rule-determinism",
+      "text": "The bundled sample has deterministic identifiers, dates, people, revisions, hashes, relationships, counts, and reset behavior."
+    }
+  ],
+  "invariants": [],
+  "behavior": {
+    "preconditions": [
+      "The application request is valid."
+    ],
+    "postconditions": [
+      "The module returns an observable result."
+    ],
+    "domainRejections": [],
+    "technicalFailures": [],
+    "sideEffects": [],
+    "idempotency": "Not defined",
+    "cancellation": "Not defined",
+    "timeouts": "Not defined",
+    "concurrency": "Not defined",
+    "retry": "Retry only a declared technical failure.",
+    "recovery": "Keep the last valid module state.",
+    "emittedEvents": [],
+    "consumedEvents": [],
+    "stateDefinitions": [],
+    "stateTransitions": [],
+    "activityDefinitions": [
+      {
+        "id": "activity:mod.external-adapters:allocated-actions",
+        "name": "Perform allocated actions",
+        "refinesWorkflowNodeIds": [
+          "package:export"
+        ],
+        "graph": {
+          "id": "activity:mod.external-adapters:allocated-actions:graph",
+          "name": "Perform allocated actions",
+          "nodes": [
+            {
+              "id": "module:mod.external-adapters:initial",
+              "kind": "initial",
+              "label": "Initial",
+              "description": "The module activity starts.",
+              "refinesIds": []
+            },
+            {
+              "id": "module:mod.external-adapters:refine:package:export",
+              "kind": "call-operation",
+              "label": "Export audit package",
+              "description": "The module performs the allocated export audit package action.",
+              "refinesIds": [
+                "package:export"
+              ],
+              "operationId": "op.access-external-artifacts"
+            },
+            {
+              "id": "module:mod.external-adapters:final",
+              "kind": "final",
+              "label": "Final",
+              "description": "The module activity ends.",
+              "refinesIds": []
+            }
+          ],
+          "edges": [
+            {
+              "id": "activity:mod.external-adapters:edge:1",
+              "fromNodeId": "module:mod.external-adapters:initial",
+              "toNodeId": "module:mod.external-adapters:refine:package:export",
+              "traceIds": [
+                "workflow:uc-package",
+                "package:export"
+              ]
+            },
+            {
+              "id": "activity:mod.external-adapters:edge:2",
+              "fromNodeId": "module:mod.external-adapters:refine:package:export",
+              "toNodeId": "module:mod.external-adapters:final",
+              "traceIds": [
+                "workflow:uc-package",
+                "package:export"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "interactionDefinitions": [],
+    "states": [],
+    "activities": [],
+    "interactions": []
+  },
+  "data": {
+    "persistentRecords": [],
+    "ownership": [],
+    "retention": [],
+    "migrationNeeds": [],
+    "confidentiality": "Not classified",
+    "provenanceFields": [],
+    "canonicalUnits": []
+  },
+  "runtime": {
+    "configurationRefs": [],
+    "secretRefs": [],
+    "lifecycleRegistration": "Not defined",
+    "health": [],
+    "telemetry": [],
+    "resourceOwnership": [],
+    "startup": [],
+    "shutdown": [],
+    "compatibilityConstraints": []
+  },
+  "verification": {
+    "examples": [],
+    "edgeCases": [],
+    "acceptanceCaseIds": [
+      "ac-9"
+    ],
+    "verificationSuiteIds": [
+      "acceptance:mod.external-adapters"
+    ],
+    "requiredEvidence": [
+      "structured"
+    ],
+    "testDoubles": [],
+    "fixtureNeeds": [],
+    "commands": []
+  },
+  "diagrams": [
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:component:mod.external-adapters",
+      "kind": "component",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.external-adapters"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.external-adapters",
+      "title": "External Adapters component diagram",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "component:mod.workspace-snapshots",
+          "kind": "component",
+          "label": "Workspace snapshots",
+          "stereotype": "component",
+          "description": "Own project configuration, objective-profile references, repository definitions, real-versus-sample selection, last-real-project preference, exact revision sets, immutable snapshot identity, baselines, and publication state.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-compare",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "component:mod.assurance-workflow",
+          "kind": "component",
+          "label": "Assurance Workflow",
+          "stereotype": "component",
+          "description": "Own deterministic and human findings, review and independence records, assignment, disposition, corrective action, reverification, closure history, configurable objective mappings, audit-package membership, manifests, and watermark policy.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "component:mod.ingestion-publication",
+          "kind": "component",
+          "label": "Evidence publication",
+          "stereotype": "component",
+          "description": "Own scanning, artifact classification, extractor orchestration, normalization, diagnostics, deterministic check execution, refresh progress, reliability gates, and atomic publication while preserving the last valid snapshot.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh"
+          ]
+        },
+        {
+          "id": "component:mod.external-adapters",
+          "kind": "component",
+          "label": "External Adapters",
+          "stereotype": "component",
+          "description": "Provide explicit Git, workspace-filesystem, normalized-extract, optional MATLAB-tooling, source-link, and local-package-export boundaries without leaking credentials or proprietary formats into domain modules.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "provided:mod.external-adapters:op.access-external-artifacts",
+          "kind": "provided-interface",
+          "label": "Access external artifacts",
+          "description": "External Adapters provides this operation.",
+          "sourceRecordId": "module-design:mod.external-adapters",
+          "traceIds": [
+            "uc-package"
+          ],
+          "parentId": "component:mod.external-adapters"
+        },
+        {
+          "id": "required:mod.assurance-workflow:op.access-external-artifacts:for:mod.external-adapters",
+          "kind": "required-interface",
+          "label": "Access external artifacts",
+          "description": "Assurance Workflow requires this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-package"
+          ],
+          "parentId": "component:mod.assurance-workflow"
+        }
+      ],
+      "edges": [
+        {
+          "id": "dependency:mod.workspace-snapshots:mod.external-adapters",
+          "kind": "dependency",
+          "fromId": "component:mod.workspace-snapshots",
+          "toId": "component:mod.external-adapters",
+          "label": "«use»",
+          "description": "Real-project revision resolution and source navigation require Git and workspace boundaries.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.assurance-workflow:mod.external-adapters:op.access-external-artifacts",
+          "kind": "assembly",
+          "fromId": "required:mod.assurance-workflow:op.access-external-artifacts:for:mod.external-adapters",
+          "toId": "provided:mod.external-adapters:op.access-external-artifacts",
+          "label": "Access external artifacts",
+          "description": "Audit package export writes only deterministic local artifacts through a dedicated outbound port.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "dependency:mod.ingestion-publication:mod.external-adapters",
+          "kind": "dependency",
+          "fromId": "component:mod.ingestion-publication",
+          "toId": "component:mod.external-adapters",
+          "label": "«use»",
+          "description": "Real refreshes need Git, filesystem, normalized-extract, and optional licensed MATLAB integration ports.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "External Adapters with 3 direct consumers and 0 direct dependencies.",
+      "contentHash": "009f6bf235d78f6787dcc0506218ac66b8b6f34b01a5be7827f65c936a3e2181"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-activity:mod.external-adapters:activity:mod.external-adapters:allocated-actions",
+      "kind": "activity",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.external-adapters",
+        "activity:mod.external-adapters:allocated-actions"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.external-adapters",
+      "title": "Perform allocated actions module activity",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-activity:activity:mod.external-adapters:allocated-actions:node:module:mod.external-adapters:initial",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module activity starts.",
+          "sourceRecordId": "module-design:mod.external-adapters",
+          "traceIds": [
+            "module-design:mod.external-adapters",
+            "mod.external-adapters",
+            "activity:mod.external-adapters:allocated-actions",
+            "module:mod.external-adapters:initial",
+            "package:export"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:mod.external-adapters:allocated-actions:node:module:mod.external-adapters:refine:package:export",
+          "kind": "call-operation",
+          "label": "Export audit package",
+          "description": "The module performs the allocated export audit package action.",
+          "sourceRecordId": "module-design:mod.external-adapters",
+          "traceIds": [
+            "module-design:mod.external-adapters",
+            "mod.external-adapters",
+            "activity:mod.external-adapters:allocated-actions",
+            "module:mod.external-adapters:refine:package:export",
+            "package:export",
+            "package:export"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.access-external-artifacts",
+            "Refines: package:export"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.external-adapters:allocated-actions:node:module:mod.external-adapters:final",
+          "kind": "final",
+          "label": "Final",
+          "description": "The module activity ends.",
+          "sourceRecordId": "module-design:mod.external-adapters",
+          "traceIds": [
+            "module-design:mod.external-adapters",
+            "mod.external-adapters",
+            "activity:mod.external-adapters:allocated-actions",
+            "module:mod.external-adapters:final",
+            "package:export"
+          ],
+          "details": []
+        }
+      ],
+      "edges": [
+        {
+          "id": "module-activity:activity:mod.external-adapters:allocated-actions:edge:activity:mod.external-adapters:edge:1",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.external-adapters:allocated-actions:node:module:mod.external-adapters:initial",
+          "toId": "module-activity:activity:mod.external-adapters:allocated-actions:node:module:mod.external-adapters:refine:package:export",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.external-adapters",
+          "traceIds": [
+            "module-design:mod.external-adapters",
+            "activity:mod.external-adapters:allocated-actions",
+            "activity:mod.external-adapters:edge:1",
+            "workflow:uc-package",
+            "package:export"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.external-adapters:allocated-actions:edge:activity:mod.external-adapters:edge:2",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.external-adapters:allocated-actions:node:module:mod.external-adapters:refine:package:export",
+          "toId": "module-activity:activity:mod.external-adapters:allocated-actions:node:module:mod.external-adapters:final",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.external-adapters",
+          "traceIds": [
+            "module-design:mod.external-adapters",
+            "activity:mod.external-adapters:allocated-actions",
+            "activity:mod.external-adapters:edge:2",
+            "workflow:uc-package",
+            "package:export"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Perform allocated actions has 3 behavior nodes and 2 control flows.",
+      "contentHash": "3162db4541ae036a9e921010395425d9d3e36d82446e6feb50087962dde80409"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-state:mod.external-adapters",
+      "kind": "state-machine",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.external-adapters"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.external-adapters",
+      "title": "External Adapters state behavior",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-state:mod.external-adapters:initial",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module state machine starts.",
+          "sourceRecordId": "module-design:mod.external-adapters",
+          "traceIds": [
+            "module-design:mod.external-adapters",
+            "mod.external-adapters"
+          ]
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "id": "CAP-UML-STATE-NOT-APPLICABLE",
+          "code": "CAP-UML-STATE-NOT-APPLICABLE",
+          "message": "This module has no structured state behavior."
+        }
+      ],
+      "textAlternative": "External Adapters has no structured state behavior.",
+      "contentHash": "f81a024b7c0e5a3951a6450ee2edbfcbf013c2e58e68907a3843dff67bf42407"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-sequence:mod.external-adapters:empty",
+      "kind": "sequence",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.external-adapters"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.external-adapters",
+      "title": "External Adapters internal sequence",
+      "sourceRevision": "1.1.0",
+      "nodes": [],
+      "edges": [],
+      "diagnostics": [
+        {
+          "id": "CAP-UML-INTERNAL-SEQUENCE-NOT-APPLICABLE",
+          "code": "CAP-UML-INTERNAL-SEQUENCE-NOT-APPLICABLE",
+          "message": "This module has no structured internal interaction."
+        }
+      ],
+      "textAlternative": "External Adapters has no structured internal interaction.",
+      "contentHash": "00449f7333979e91f391ad4485092e0d19e46728ed1677a9418d59d005429c6d"
+    }
+  ],
+  "unresolvedItems": [],
+  "gates": [
+    {
+      "gateId": "CAP-GATE-MODULE-DESIGN",
+      "passed": true,
+      "diagnostics": []
+    }
+  ],
+  "contentHash": "2ec318aba0d7562cbdde8f71d58549b6ff640b2671fad58611717434b7f52c2f",
+  "approval": {
+    "approvedAt": "2026-07-28T00:00:00.000Z",
+    "approvedBy": "DO-178C sample fixture"
+  }
+}

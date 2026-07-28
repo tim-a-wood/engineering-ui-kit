@@ -5,7 +5,12 @@
 import { useState } from 'react'
 import { Icon } from '../../icons'
 import { StatusLine } from '../../components'
-import { COPILOT_URL, copyText, formatBytes } from '../workflowShared'
+import {
+  COPILOT_URL,
+  FALLBACK_COPILOT_PROMPT,
+  copyText,
+  formatBytes,
+} from '../workflowShared'
 import type { BuildWorkspaceProps } from './buildTypes'
 
 export function CopilotWorkspace(props: BuildWorkspaceProps) {
@@ -27,7 +32,7 @@ export function CopilotWorkspace(props: BuildWorkspaceProps) {
     try {
       return await props.bridge.getArtifactText(run.id, 'recommended-prompt.txt')
     } catch {
-      return 'Inspect all uploaded files, follow the task packet and standard pack exactly, and return only ui-overlay.zip containing changed and new files with repo-relative paths.'
+      return FALLBACK_COPILOT_PROMPT
     }
   }
 
@@ -36,7 +41,7 @@ export function CopilotWorkspace(props: BuildWorkspaceProps) {
     setCopied(ok)
     props.setStatus(ok
       ? { tone: 'success', text: 'Recommended prompt copied to the clipboard.' }
-      : { tone: 'error', text: 'Could not copy automatically — select the prompt text below and copy manually.' })
+      : { tone: 'error', text: 'Automatic copy failed. Select the prompt below and copy it.' })
     window.setTimeout(() => setCopied(false), 2500)
   }
 
@@ -44,8 +49,8 @@ export function CopilotWorkspace(props: BuildWorkspaceProps) {
     const ok = await copyText(await getPrompt())
     await props.bridge.openExternal(COPILOT_URL)
     props.setStatus(ok
-      ? { tone: 'success', text: 'Copilot opened — the prompt is on your clipboard; attach the files, then paste.' }
-      : { tone: 'info', text: 'Copilot opened. Copy the prompt below, attach the files, then paste.' })
+      ? { tone: 'success', text: 'Copilot opened. The prompt is on your clipboard. Attach the files. Then, paste the prompt.' }
+      : { tone: 'info', text: 'Copilot opened. Copy the prompt below. Attach the files. Then, paste the prompt.' })
   }
 
   const dragFiles = (event: { preventDefault: () => void }) => {
@@ -58,7 +63,7 @@ export function CopilotWorkspace(props: BuildWorkspaceProps) {
   const copyFiles = async () => {
     try {
       const result = await props.bridge.copyUploadSet(run.id)
-      props.setStatus({ tone: 'success', text: `${result.files} file${result.files === 1 ? '' : 's'} on the clipboard — paste (Ctrl/Cmd+V) into the Copilot chat.` })
+      props.setStatus({ tone: 'success', text: `${result.files} file${result.files === 1 ? '' : 's'} on the clipboard. Paste the files into Copilot.` })
     } catch (error) {
       props.setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
     }
@@ -84,8 +89,8 @@ export function CopilotWorkspace(props: BuildWorkspaceProps) {
 
       <div className="workspace-split">
       <section className="workspace-primary-card" aria-labelledby="upload-heading">
-        <h3 id="upload-heading">Upload (max 3 files)</h3>
-        <p className="panel-desc">You can upload a maximum of 3 files. These will be attached to your prompt in Copilot.</p>
+        <h3 id="upload-heading">Upload files</h3>
+        <p className="panel-desc">Upload no more than three files. Copilot attaches them to your prompt.</p>
         <div className="upload-set">
           {files.map((f) => (
             <div key={f.file} className="upload-file">
@@ -117,18 +122,18 @@ export function CopilotWorkspace(props: BuildWorkspaceProps) {
           onDragStart={dragFiles}
           role="button"
           aria-label={`Drag ${files.length} upload files out to Copilot`}
-          title="Drag this straight onto the Copilot chat's attach area"
+          title="Drop Copilot files"
         >
           <span className="drag-dots" aria-hidden="true">⣿</span>
           <span className="hstack" aria-hidden="true">{files.map((f) => <span key={f.file} className="drag-file-chip">{Icon.file(13)} {f.file}</span>)}</span>
-          <span className="drag-hint">drag onto the Copilot chat — no folder needed</span>
+          <span className="drag-hint">Drop files in Copilot</span>
         </div>
         <div className="hstack" style={{ marginTop: 'var(--semantic-spacing-3)', flexWrap: 'wrap' }}>
           <button type="button" className="btn btn-secondary btn-compact" onClick={copyFiles}>
-            {Icon.copy(14)} Copy Files
+            {Icon.copy(14)} Copy files
           </button>
           <button type="button" className="btn btn-secondary btn-compact" onClick={showFiles}>
-            {Icon.folder(15)} Show Files in Folder
+            {Icon.folder(15)} Show upload files
           </button>
         </div>
       </section>
@@ -140,7 +145,7 @@ export function CopilotWorkspace(props: BuildWorkspaceProps) {
             <p className="panel-desc" style={{ marginBottom: 0 }}>Ask Copilot to generate a zip overlay of changed/new files only.</p>
           </div>
           <button type="button" className="btn btn-secondary btn-compact" onClick={copyPrompt}>
-            {copied ? <>{Icon.check(14)} Copied</> : <>{Icon.copy(14)} Copy Recommended Prompt</>}
+            {copied ? <>{Icon.check(14)} Copied</> : <>{Icon.copy(14)} Copy prompt</>}
           </button>
         </div>
         {props.packet && <pre className="pre path-wrap workspace-prompt">{props.packet.recommendedPrompt}</pre>}
@@ -154,7 +159,7 @@ export function CopilotWorkspace(props: BuildWorkspaceProps) {
 
         <div className="workspace-actions workspace-actions-stack" style={{ marginTop: 12 }}>
           <button type="button" className="btn btn-primary" onClick={() => props.setWorkspace('overlay')}>
-            I have the overlay →
+            Continue
           </button>
           <span className="muted" style={{ fontSize: 12 }}>Continue after Copilot returns ui-overlay.zip</span>
         </div>

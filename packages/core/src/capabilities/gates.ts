@@ -9,6 +9,14 @@ import type {
 } from './types.js'
 import { diagnostic, sortDiagnostics, type CapDiagnostic } from './diagnostics.js'
 import { detectCycles, type CapabilityGraph } from './graph.js'
+import { evaluateUseCaseAnalysis } from './useCaseAnalysis.js'
+import { evaluateApplicationWorkflows } from './applicationWorkflow.js'
+import {
+  evaluateApplicationSte,
+  evaluateArchitectureSte,
+  evaluateModuleSte,
+  type SteLexicon,
+} from './simplifiedTechnicalEnglish.js'
 
 export type GateResult = {
   gateId: string
@@ -16,36 +24,46 @@ export type GateResult = {
   diagnostics: CapDiagnostic[]
 }
 
-export function evaluateProductGate(spec: ApplicationSpecification): GateResult {
+export function evaluateProductGate(
+  spec: ApplicationSpecification,
+  lexicon?: SteLexicon,
+): GateResult {
   const diagnostics: CapDiagnostic[] = []
-  if (!spec.actors.length) {
+  diagnostics.push(...evaluateApplicationSte(spec, lexicon).diagnostics)
+  if (!(spec.actors ?? []).length) {
     diagnostics.push(diagnostic('CAP-GATE-001-ACTOR', 'at least one actor is required', { ruleId: 'CAP-GATE-001' }))
   }
-  if (!spec.outcomes.length) {
+  if (!(spec.outcomes ?? []).length) {
     diagnostics.push(diagnostic('CAP-GATE-001-OUTCOME', 'at least one outcome is required', { ruleId: 'CAP-GATE-001' }))
   }
-  if (!spec.useCases.length && !spec.scenarios.length) {
+  if (!(spec.useCases ?? []).length && !(spec.scenarios ?? []).length) {
     diagnostics.push(
       diagnostic('CAP-GATE-001-WORKFLOW', 'at least one use case or scenario is required', {
         ruleId: 'CAP-GATE-001',
       }),
     )
   }
-  if (!spec.scope.inScope.length) {
+  if (!(spec.scope?.inScope ?? []).length) {
     diagnostics.push(diagnostic('CAP-GATE-001-SCOPE', 'in-scope items are required', { ruleId: 'CAP-GATE-001' }))
   }
-  if (!spec.acceptanceCases.length) {
+  if (!(spec.acceptanceCases ?? []).length) {
     diagnostics.push(
       diagnostic('CAP-GATE-001-ACCEPTANCE', 'acceptance cases are required', { ruleId: 'CAP-GATE-001' }),
     )
   }
-  if (spec.unresolvedQuestions.length) {
+  if ((spec.unresolvedQuestions ?? []).length) {
     diagnostics.push(
       diagnostic('CAP-GATE-001-UNRESOLVED', 'unresolved questions block product approval', {
         ruleId: 'CAP-GATE-001',
-        relatedIds: spec.unresolvedQuestions.map((q) => q.id),
+        relatedIds: (spec.unresolvedQuestions ?? []).map((q) => q.id),
       }),
     )
+  }
+  if (spec.useCaseDefinitions?.length || spec.scenarioDefinitions?.length) {
+    diagnostics.push(...evaluateUseCaseAnalysis(spec, { includeSte: false }).diagnostics)
+  }
+  if (spec.useCaseDefinitions?.length || spec.applicationWorkflows?.length) {
+    diagnostics.push(...evaluateApplicationWorkflows(spec).diagnostics)
   }
   const sorted = sortDiagnostics(diagnostics)
   return { gateId: 'CAP-GATE-001', passed: sorted.length === 0, diagnostics: sorted }
@@ -55,8 +73,10 @@ export function evaluateArchitectureGate(
   arch: ArchitectureSpecification,
   manifests: ModuleManifest[] = [],
   graph?: CapabilityGraph,
+  lexicon?: SteLexicon,
 ): GateResult {
   const diagnostics: CapDiagnostic[] = []
+  diagnostics.push(...evaluateArchitectureSte(arch, lexicon).diagnostics)
   const moduleIds = arch.moduleIds ?? []
   const dependencyEdges = arch.dependencyEdges ?? []
   const workflowTraces = arch.workflowTraces ?? []
@@ -117,6 +137,7 @@ export function evaluateArchitectureGate(
     }
   }
   for (const manifest of manifests) {
+    diagnostics.push(...evaluateModuleSte(manifest, lexicon).diagnostics)
     if (
       typeof manifest.responsibility !== 'string'
       || !manifest.responsibility.trim()
@@ -159,33 +180,35 @@ export function evaluateModuleGate(
     acceptanceCases?: unknown[]
     rules?: unknown[]
   },
+  lexicon?: SteLexicon,
 ): GateResult {
   const diagnostics: CapDiagnostic[] = []
-  if (!manifest.responsibility.trim()) {
+  diagnostics.push(...evaluateModuleSte(manifest, lexicon).diagnostics)
+  if (!(manifest.responsibility ?? '').trim()) {
     diagnostics.push(
       diagnostic('CAP-GATE-003-PURPOSE', 'module responsibility is required', {
         ruleId: 'CAP-GATE-003',
       }),
     )
   }
-  if (!manifest.providedOperations.length) {
+  if (!(manifest.providedOperations ?? []).length) {
     diagnostics.push(
       diagnostic('CAP-GATE-003-CONTRACTS', 'module must provide at least one operation', {
         ruleId: 'CAP-GATE-003',
       }),
     )
   }
-  if (!manifest.ownedConcerns.length) {
+  if (!(manifest.ownedConcerns ?? []).length) {
     diagnostics.push(
       diagnostic('CAP-GATE-003-OWNED', 'owned concerns are required', { ruleId: 'CAP-GATE-003' }),
     )
   }
-  if (!manifest.excludedConcerns.length) {
+  if (!(manifest.excludedConcerns ?? []).length) {
     diagnostics.push(
       diagnostic('CAP-GATE-003-EXCLUDED', 'excluded concerns are required', { ruleId: 'CAP-GATE-003' }),
     )
   }
-  if (!manifest.verificationSuiteIds.length) {
+  if (!(manifest.verificationSuiteIds ?? []).length) {
     diagnostics.push(
       diagnostic('CAP-GATE-003-TESTS', 'verification suites are required', { ruleId: 'CAP-GATE-003' }),
     )

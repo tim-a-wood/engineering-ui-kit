@@ -12,7 +12,7 @@
   "editablePaths": [
     "src/modules/evidence-store/"
   ],
-  "responsibility": "Persist immutable canonical evidence snapshots and append-only hub overlays locally, support atomic staging and publication, enforce optimistic revisions, and retrieve deterministic workspace state without owning lifecycle interpretation.",
+  "responsibility": "Persist immutable evidence snapshots and append-only hub overlays. Support atomic publication, optimistic revisions, and deterministic workspace retrieval. Do not own lifecycle interpretation.",
   "nonResponsibilities": [
     "source-adapters",
     "evidence-normalization",
@@ -74,7 +74,7 @@
     {
       "id": "ac.store.revision",
       "description": "Append two updates using the same expected overlay revision.",
-      "expectedOutcome": "One succeeds and one is rejected with the current revision; history remains consistent."
+      "expectedOutcome": "One succeeds and one is rejected with the current revision. History remains consistent."
     }
   ],
   "acceptanceCommands": [],

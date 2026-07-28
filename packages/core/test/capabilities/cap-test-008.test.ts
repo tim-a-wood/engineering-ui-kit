@@ -31,7 +31,7 @@ const product: ApplicationSpecification = {
   goals: [{ id: 'g1', text: 'track stock' }],
   useCases: [{ id: 'u1', text: 'receive stock' }],
   scenarios: [{ id: 's1', text: 'happy path' }],
-  information: [],
+  information: [{ id: 'info.inventory-record', text: 'Inventory record' }],
   rules: [],
   externalSystems: [],
   constraints: [],
@@ -109,6 +109,10 @@ describe('CAP-TEST-008 architecture proposal gate', () => {
     expect(packet.inputContext.facts).toContain('actor:a1:operator')
     expect(packet.inputContext.facts).toContain('inScope:inventory')
     expect(packet.inputContext.facts.some((fact) => fact.startsWith('acceptanceCase:ac1:'))).toBe(true)
+    expect(packet.inputContext.glossary).toContainEqual({
+      id: 'info.inventory-record',
+      text: 'Inventory record',
+    })
   })
 
   it('passes only a need-traced minimal acyclic proposal', () => {
@@ -248,6 +252,102 @@ describe('CAP-TEST-008 architecture proposal gate', () => {
     expect(imported.ok).toBe(false)
     expect(imported.draft).toBeDefined()
     expect(imported.diagnostics.map((diagnostic) => diagnostic.code)).toContain('CAP-GATE-002-RESP')
+  })
+
+  it('rejects non-STE prose in a supplied module manifest', () => {
+    const proposal = minimalProposal()
+    proposal.manifests = [{
+      ...domainManifest(),
+      responsibility: "The module can't analyze records; the user waits.",
+    }]
+
+    const imported = importArchitectureProposal(product, proposal)
+
+    expect(imported.ok).toBe(false)
+    expect(imported.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: 'STE-WORD-CONTRACTION',
+        fieldPath: 'modules.mod.domain.responsibility',
+      }),
+      expect.objectContaining({
+        code: 'STE-PUNCTUATION-SEMICOLON',
+        fieldPath: 'modules.mod.domain.responsibility',
+      }),
+    ]))
+  })
+
+  it('rejects malformed manifest values instead of silently using defaults', () => {
+    const proposal = minimalProposal() as unknown as Record<string, unknown>
+    proposal.manifests = [{
+      ...domainManifest(),
+      moduleType: 'mystery',
+      runtimeAllocation: 'cloud',
+      configurationSchemaRef: 42,
+      providedOperations: {},
+    }]
+
+    const imported = importArchitectureProposal(product, proposal)
+
+    expect(imported.ok).toBe(false)
+    expect(imported.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'CAP-ARCH-IMPORT-MODULE-TYPE' }),
+      expect.objectContaining({ code: 'CAP-ARCH-IMPORT-RUNTIME' }),
+      expect.objectContaining({ code: 'CAP-ARCH-IMPORT-CONFIGURATION' }),
+      expect.objectContaining({
+        code: 'CAP-ARCH-IMPORT-LIST',
+        fieldPath: 'manifests.0.providedOperations',
+      }),
+    ]))
+  })
+
+  it('rejects malformed nested AI records without throwing', () => {
+    const raw = {
+      ...minimalProposal(),
+      architecture: {
+        ...baseArch(),
+        dependencyEdges: [null],
+      },
+    }
+
+    expect(() => importArchitectureProposal(product, raw)).not.toThrow()
+    const imported = importArchitectureProposal(product, raw)
+    expect(imported.ok).toBe(false)
+    expect(imported.draft?.dependencyEdges).toEqual([])
+    expect(imported.diagnostics.length).toBeGreaterThan(0)
+  })
+
+  it.each([
+    {
+      label: 'empty dependency edge',
+      patch: { dependencyEdges: [{}] },
+      outside: {},
+    },
+    {
+      label: 'non-text dependency IDs',
+      patch: { dependencyEdges: [{ fromModuleId: 7, toModuleId: null, reason: 'Uses data.' }] },
+      outside: {},
+    },
+    {
+      label: 'non-list need IDs',
+      patch: {},
+      outside: { moduleNeedTraces: [{ moduleId: 'mod.domain', needIds: 7 }] },
+    },
+  ])('rejects $label without throwing', ({ patch, outside }) => {
+    const raw = {
+      ...minimalProposal(),
+      ...outside,
+      architecture: {
+        ...baseArch(),
+        ...patch,
+      },
+    }
+
+    expect(() => importArchitectureProposal(product, raw)).not.toThrow()
+    const imported = importArchitectureProposal(product, raw)
+    expect(imported.ok).toBe(false)
+    expect(imported.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: expect.stringMatching(/^CAP-(?:ARCH|VAL)/) }),
+    ]))
   })
 
   it('imports response and approves only when gate passes', () => {

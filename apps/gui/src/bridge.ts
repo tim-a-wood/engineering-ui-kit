@@ -42,6 +42,12 @@ import type {
   GenerationApplyRecord,
   GenerationPlan,
   ConnectionVerificationRecord,
+  ArtifactReference,
+  ModuleDesignSession,
+  ModuleDesignSpecification,
+  ScenarioOutcome,
+  ScenarioRunRecord,
+  ScenarioStepEvidence,
 } from '@engineering-ui-kit/core'
 import { installMockBridge } from './mockBridge'
 
@@ -203,6 +209,17 @@ export type EuikBridge = {
   openPath(path: string): Promise<void>
   showInFolder(path: string): Promise<void>
   capabilitiesEnsureInitialized(projectId: string): Promise<{ schemaVersion: string; initializedAt: string }>
+  capabilitiesGetSteLexicon(projectId: string): Promise<unknown | undefined>
+  capabilitiesSaveSteLexicon(
+    projectId: string,
+    lexicon: {
+      generalWords?: string[]
+      technicalTerms?: string[]
+      prohibitedAliases?: Record<string, string>
+    },
+    source: string,
+    reviewedAt?: string,
+  ): Promise<unknown>
   capabilitiesGetApplication(projectId: string): Promise<{ draft?: unknown; approved?: unknown }>
   capabilitiesSaveApplicationDraft(projectId: string, draft: unknown): Promise<{ ok: true }>
   capabilitiesApproveApplication(projectId: string, draft: unknown): Promise<{ ok: boolean; gate?: unknown; approved?: unknown }>
@@ -247,6 +264,85 @@ export type EuikBridge = {
     targetModuleIds?: string[]
   }): Promise<FrontendBrief>
   capabilitiesListModules(projectId: string): Promise<CapabilityModuleRecord[]>
+  capabilitiesListModuleDesigns(projectId: string): Promise<{
+    moduleId: string
+    draft?: ModuleDesignSpecification
+    approved?: ModuleDesignSpecification
+    session?: ModuleDesignSession
+  }[]>
+  capabilitiesCreateModuleDesignDraft(input: {
+    projectId: string
+    moduleId: string
+  }): Promise<{ design: ModuleDesignSpecification; session: ModuleDesignSession }>
+  capabilitiesSaveModuleDesignDraft(
+    projectId: string,
+    draft: ModuleDesignSpecification,
+  ): Promise<{ ok: true; design: ModuleDesignSpecification; diagnostics: unknown[] }>
+  capabilitiesApproveModuleDesign(input: {
+    projectId: string
+    draft: ModuleDesignSpecification
+    approvedBy?: string
+    explicit: boolean
+  }): Promise<{
+    ok: boolean
+    design?: ModuleDesignSpecification
+    approved?: ModuleDesignSpecification
+    diagnostics: unknown[]
+  }>
+  capabilitiesSaveModuleDesignSession(
+    projectId: string,
+    session: ModuleDesignSession,
+  ): Promise<{ ok: true }>
+  capabilitiesListScenarioRuns(projectId: string): Promise<ScenarioRunRecord[]>
+  capabilitiesCreateScenarioRun(input: {
+    projectId: string
+    scenarioId: string
+    build: string
+    sourceRevision: string
+    environment: string
+    testDataRevision: string
+    runner: string
+    implementationRevisions?: Record<string, string>
+    connectionRevision?: string
+  }): Promise<ScenarioRunRecord>
+  capabilitiesRunScenarioCommand(input: {
+    projectId: string
+    runId: string
+    explicit: boolean
+  }): Promise<{
+    record: ScenarioRunRecord
+    diagnostics: unknown[]
+    command: VerificationResult
+    evidence: ArtifactReference
+  }>
+  capabilitiesRecordScenarioStep(input: {
+    projectId: string
+    runId: string
+    scenarioStepId: string
+    actualResult: string
+    outcome: Exclude<ScenarioOutcome, 'unverified'>
+    evidence: ScenarioStepEvidence[]
+    startedAt: string
+    completedAt: string
+  }): Promise<ScenarioRunRecord>
+  capabilitiesFinalizeScenarioRun(input: {
+    projectId: string
+    runId: string
+  }): Promise<{ record: ScenarioRunRecord; diagnostics: unknown[] }>
+  capabilitiesSaveScenarioEvidence(input: {
+    projectId: string
+    runId: string
+    artifactId: string
+    mediaType: string
+    base64: string
+    producingOperationId?: string
+    provenanceSource: string
+  }): Promise<ArtifactReference>
+  capabilitiesGetScenarioEvidence(input: {
+    projectId: string
+    runId: string
+    artifactId: string
+  }): Promise<{ reference: ArtifactReference; base64: string } | undefined>
   capabilitiesListBindings(projectId: string): Promise<CapabilityBindingRecord[]>
   capabilitiesListRuns(projectId: string): Promise<CapabilityRunScope[]>
   capabilitiesCreateRun(run: unknown): Promise<unknown>

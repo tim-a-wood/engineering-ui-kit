@@ -4,10 +4,14 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { StatusLine } from '../../components'
-import { COPILOT_URL, copyText, downloadText, formatBytes } from '../workflowShared'
+import {
+  COPILOT_URL,
+  FALLBACK_COPILOT_PROMPT,
+  copyText,
+  downloadText,
+  formatBytes,
+} from '../workflowShared'
 import type { BuildWorkspaceProps } from './buildTypes'
-
-const FALLBACK_PROMPT = 'Inspect all uploaded files, follow the task packet and standard pack exactly, and return only ui-overlay.zip containing changed and new files with repo-relative paths.'
 
 function promptInline(text: string): ReactNode {
   return text.split(/(`[^`]+`)/g).map((part, index) => (
@@ -74,7 +78,7 @@ export function HandoffWorkspace(props: BuildWorkspaceProps) {
       : 'Not generated yet'
 
   const packetDetail = props.packetStale || props.contextStale
-    ? 'Stale — generate again from What are you building?'
+    ? 'Stale. Generate the handoff again.'
     : hasPacket
       ? 'Ready to transfer'
       : 'Not generated yet'
@@ -83,7 +87,7 @@ export function HandoffWorkspace(props: BuildWorkspaceProps) {
     ? 'Ready to drag or copy to Copilot'
     : hasPacket
       ? 'Awaiting fresh packet'
-      : 'Requires Generate in What are you building?'
+      : 'Generate the handoff first'
 
   useEffect(() => {
     if (!uploadReady) {
@@ -97,7 +101,7 @@ export function HandoffWorkspace(props: BuildWorkspaceProps) {
     let cancelled = false
     void props.bridge.getArtifactText(run.id, 'recommended-prompt.txt')
       .then((text) => { if (!cancelled) setPromptText(text) })
-      .catch(() => { if (!cancelled) setPromptText(FALLBACK_PROMPT) })
+      .catch(() => { if (!cancelled) setPromptText(FALLBACK_COPILOT_PROMPT) })
     return () => { cancelled = true }
   }, [uploadReady, props.packet?.recommendedPrompt, props.bridge, run.id])
 
@@ -107,13 +111,13 @@ export function HandoffWorkspace(props: BuildWorkspaceProps) {
       try {
         return await props.bridge.getArtifactText(run.id, 'recommended-prompt.txt')
       } catch {
-        return FALLBACK_PROMPT
+        return FALLBACK_COPILOT_PROMPT
       }
     })()
     const ok = await copyText(text)
     props.setStatus(ok
       ? { tone: 'success', text: 'Recommended prompt copied to the clipboard.' }
-      : { tone: 'error', text: 'Could not copy automatically — select the prompt text and copy manually.' })
+      : { tone: 'error', text: 'Automatic copy failed. Select the prompt and copy it.' })
   }
 
   const copyPacket = async () => {
@@ -141,7 +145,7 @@ export function HandoffWorkspace(props: BuildWorkspaceProps) {
   const copyFiles = async () => {
     try {
       const result = await props.bridge.copyUploadSet(run.id)
-      props.setStatus({ tone: 'success', text: `${result.files} file${result.files === 1 ? '' : 's'} on the clipboard — paste (Ctrl/Cmd+V) into the Copilot chat.` })
+      props.setStatus({ tone: 'success', text: `${result.files} file${result.files === 1 ? '' : 's'} on the clipboard. Paste the files into Copilot.` })
     } catch (error) {
       props.setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
     }
@@ -171,19 +175,19 @@ export function HandoffWorkspace(props: BuildWorkspaceProps) {
   }
 
   const openCopilot = async () => {
-    const text = promptText || FALLBACK_PROMPT
+    const text = promptText || FALLBACK_COPILOT_PROMPT
     const ok = await copyText(text)
     await props.bridge.openExternal(COPILOT_URL)
     props.setStatus(ok
-      ? { tone: 'success', text: 'Copilot opened — the prompt is on your clipboard; attach the files, then paste.' }
-      : { tone: 'info', text: 'Copilot opened. Copy the prompt below, attach the files, then paste.' })
+      ? { tone: 'success', text: 'Copilot opened. The prompt is on your clipboard. Attach the files. Then, paste the prompt.' }
+      : { tone: 'info', text: 'Copilot opened. Copy the prompt below. Attach the files. Then, paste the prompt.' })
     props.setWorkspace('copilot')
   }
 
   return (
     <div className="workspace-panel">
       <div className="handoff-help handoff-help-single" aria-label="Attach handoff files">
-        <div><span className="handoff-help-number">1</span><p><strong>Attach the files</strong><small>Drag the bundle below into Copilot, or copy and paste the files.</small></p></div>
+        <div><span className="handoff-help-number">1</span><p><strong>Attach the files</strong><small>Drag the bundle into Copilot. You can also copy the files and paste them.</small></p></div>
       </div>
 
       {uploadReady ? (
@@ -194,24 +198,24 @@ export function HandoffWorkspace(props: BuildWorkspaceProps) {
               draggable
               onDragStart={dragFiles}
               role="button"
-              aria-label={`Drag ${files.length} prepared files to Copilot`}
+              aria-label="Drag handoff files"
             >
               <span className="drag-dots" aria-hidden="true">⣿</span>
               <span className="hstack" aria-hidden="true">
                 {files.map((file) => <span key={file.file} className="drag-file-chip">{file.file}</span>)}
               </span>
-              <span className="drag-hint">drag all {files.length} files into Copilot</span>
+              <span className="drag-hint">Drag files to Copilot</span>
             </div>
             <div className="handoff-transfer-actions">
               <button type="button" className="btn btn-primary handoff-open-copilot" onClick={openCopilot}>
-                Open in Copilot →
+                Open Copilot
               </button>
               <button type="button" className="btn btn-secondary" onClick={copyFiles}>Copy files</button>
               <button type="button" className="btn btn-secondary" onClick={openPacket}>Open packet</button>
             </div>
           </div>
 
-          <div className="handoff-help handoff-help-single" aria-label="Paste the recommended prompt">
+          <div className="handoff-help handoff-help-single" aria-label="Paste recommended prompt">
             <div><span className="handoff-help-number">2</span><p><strong>Paste the prompt</strong><small>Copy the recommended prompt below, then paste it into Copilot after attaching the files.</small></p></div>
           </div>
           <div className="handoff-prompt-row">
@@ -228,12 +232,12 @@ export function HandoffWorkspace(props: BuildWorkspaceProps) {
         </div>
       ) : (
         <p className="workspace-hint muted">
-          Use Generate in What are you building? to prepare the handoff files, then return here to send them to Copilot.
+          Select Generate to prepare the handoff. Then, send the files to Copilot.
         </p>
       )}
 
       <details className="build-supplementary">
-        <summary>Handoff details and utilities</summary>
+        <summary>Show handoff details</summary>
         <ul className="readiness-list" aria-label="Handoff readiness">
           <li className="readiness-row">
             <span className={`readiness-tick ${contextReady ? 'ready' : props.contextStale ? 'stale' : 'missing'}`} aria-hidden="true">{contextReady ? '✓' : '·'}</span>
@@ -242,7 +246,7 @@ export function HandoffWorkspace(props: BuildWorkspaceProps) {
           </li>
           <li className="readiness-row">
             <span className={`readiness-tick ${packetReady ? 'ready' : props.packetStale || props.contextStale ? 'stale' : 'missing'}`} aria-hidden="true">{packetReady ? '✓' : '·'}</span>
-            <div><strong>Task + standards packet</strong><small>{packetDetail}</small></div>
+            <div><strong>Combined task packet</strong><small>{packetDetail}</small></div>
             <span className="readiness-meta mono">MD</span>
           </li>
           <li className="readiness-row">
@@ -255,10 +259,10 @@ export function HandoffWorkspace(props: BuildWorkspaceProps) {
           {packetReady && (
             <>
               <button type="button" className="tip-link" onClick={copyPacket}>Copy packet</button>
-              <button type="button" className="tip-link" onClick={downloadPacket}>Download</button>
+              <button type="button" className="tip-link" onClick={downloadPacket}>Download packet</button>
             </>
           )}
-          {uploadReady && <button type="button" className="tip-link" onClick={showFiles}>Show handoff files in folder</button>}
+          {uploadReady && <button type="button" className="tip-link" onClick={showFiles}>Show handoff files</button>}
         </div>
       </details>
 

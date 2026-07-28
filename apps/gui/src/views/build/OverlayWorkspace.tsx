@@ -5,7 +5,14 @@
 import { useState } from 'react'
 import { Icon } from '../../icons'
 import { StatusLine } from '../../components'
-import { buildBlockerFixPrompt, buildTree, copyText, formatBytes, TreeView } from '../workflowShared'
+import {
+  buildBlockerFixPrompt,
+  buildTree,
+  copyText,
+  formatBytes,
+  loadProjectSteLexicon,
+  TreeView,
+} from '../workflowShared'
 import type { BuildWorkspaceProps } from './buildTypes'
 
 export function OverlayWorkspace(props: BuildWorkspaceProps) {
@@ -20,18 +27,19 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
 
   const copyFixPrompt = async () => {
     if (!inspection) return
-    const ok = await copyText(buildBlockerFixPrompt(inspection))
+    const lexicon = await loadProjectSteLexicon(props.bridge, props.project.id)
+    const ok = await copyText(buildBlockerFixPrompt(inspection, lexicon))
     setFixCopied(ok)
     props.setStatus(ok
-      ? { tone: 'success', text: 'Fix prompt copied — start a fresh Copilot session, re-attach the two upload files, and paste.' }
-      : { tone: 'error', text: 'Could not copy automatically — select the blocker list and copy manually.' })
+      ? { tone: 'success', text: 'Fix prompt copied. Start a new Copilot session. Attach the two upload files. Then, paste the prompt.' }
+      : { tone: 'error', text: 'Automatic copy failed. Select the blocker list and copy it.' })
     window.setTimeout(() => setFixCopied(false), 2500)
   }
 
   return (
     <div className="workspace-panel">
-      <div className="handoff-help handoff-help-single" aria-label="How to apply the Copilot result">
-        <div><span className="handoff-help-number">3</span><p><strong>Return with the result</strong><small>Download ui-overlay.zip and drop it into the apply area below.</small></p></div>
+      <div className="handoff-help handoff-help-single" aria-label="Apply Copilot result">
+        <div><span className="handoff-help-number">3</span><p><strong>Return with result</strong><small>Download ui-overlay.zip and drop it into the apply area below.</small></p></div>
       </div>
 
       <section aria-labelledby="overlay-source-heading">
@@ -43,7 +51,7 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
             </p>
           </div>
           <button type="button" className="btn btn-primary btn-compact" onClick={props.onPickAndInspect} disabled={props.overlayBusy}>
-            {inspection ? 'Select different zip…' : 'Select ui-overlay.zip…'}
+            {inspection ? 'Select different zip' : 'Select overlay zip'}
           </button>
         </div>
         <div
@@ -61,7 +69,7 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
         >
           <span className="file-drop-icon" aria-hidden="true">⇩</span>
           <strong>Drop ui-overlay.zip here</strong>
-          <small>or click to browse; the zip is checked before changes can be applied</small>
+          <small>Click to browse. The application checks the zip before it applies changes.</small>
         </div>
       </section>
 
@@ -101,7 +109,7 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
 
           {inspection.hardBlockers.length > 0 && (
             <div className="validation-summary" role="alert" style={{ marginTop: 16 }}>
-              <h3>{Icon.alertTriangle(14)} Hard blockers — apply refused</h3>
+              <h3>{Icon.alertTriangle(14)} Apply blockers</h3>
               <ul>
                 {inspection.hardBlockers.map((b, i) => (
                   <li key={i}><code>{b.ruleId}</code> {b.path ? <code className="path-wrap">{b.path}</code> : null} — {b.message}</li>
@@ -109,15 +117,15 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
               </ul>
               <div className="hstack" style={{ marginTop: 12, flexWrap: 'wrap' }}>
                 <button type="button" className="btn btn-secondary btn-compact" onClick={copyFixPrompt}>
-                  {fixCopied ? <>{Icon.check(14)} Copied</> : <>{Icon.copy(14)} Copy Fix Prompt for Copilot</>}
+                  {fixCopied ? <>{Icon.check(14)} Copied</> : <>{Icon.copy(14)} Copy fix prompt</>}
                 </button>
                 <button type="button" className="tip-link" onClick={() => props.setWorkspace('copilot')}>
-                  Reopen Copilot to re-attach the upload files →
+                  Reopen Copilot
                 </button>
               </div>
               <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
-                Paste the prompt into a fresh Copilot session together with the same two upload files;
-                it lists every violation and asks for a corrected <code>ui-overlay.zip</code>.
+                Paste the prompt and the same two upload files into a new Copilot session.
+                The prompt lists each violation and requests a corrected <code>ui-overlay.zip</code>.
               </p>
             </div>
           )}
@@ -125,7 +133,7 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
           {inspection.warnings.length > 0 && inspection.canApply && (
             <div className="inset" style={{ marginTop: 16, borderColor: 'var(--semantic-status-warning)' }}>
               <p className="status-label" style={{ color: 'var(--semantic-status-warning)', marginTop: 0 }}>
-                Warnings requiring explicit acceptance
+                Overlay warnings
               </p>
               <ul style={{ margin: 0, paddingLeft: 18 }}>
                 {inspection.warnings.map((w, i) => (
@@ -134,13 +142,16 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
                   </li>
                 ))}
               </ul>
+              <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
+                Review each warning before you continue.
+              </p>
               <label className="hstack" style={{ marginTop: 12, cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={props.warningsAccepted}
                   onChange={(e) => props.setWarningsAccepted(e.target.checked)}
                 />
-                I reviewed every warning and accept the overwrites listed above.
+                Accept all warnings
               </label>
             </div>
           )}

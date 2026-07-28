@@ -15,6 +15,7 @@ It does not automate packet generation, submit work to Copilot, or apply overlay
 
 ## Controlling Decisions
 
+- Every handoff enforces the Engineering UI Kit writing profile based on ASD-STE100 Issue 9.
 - Every Copilot handoff stays within a strict three-file input budget.
 - Copilot output is expected to be `ui-overlay.zip` containing changed and new files
   only.

@@ -1,0 +1,870 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "id": "module-design:mod.workspace-snapshots",
+  "revision": "1.1.0",
+  "status": "approved",
+  "architecture": {
+    "id": "arch.do178c-audit-hub",
+    "revision": "4",
+    "contentHash": "9e85b23877737297bba216dd45275f490a1a042c2e11a3bdd97fc218762756c2"
+  },
+  "module": {
+    "moduleId": "mod.workspace-snapshots",
+    "moduleVersion": "1.0.0",
+    "name": "Workspace snapshots",
+    "moduleType": "domain",
+    "responsibility": "Own project configuration, objective-profile references, repository definitions, real-versus-sample selection, last-real-project preference, exact revision sets, immutable snapshot identity, baselines, refresh history, and publication state.",
+    "nonResponsibilities": [
+      "artifact-content",
+      "phase-projections",
+      "finding-lifecycle",
+      "artifact-extraction",
+      "source-file-writes"
+    ],
+    "ownedConcerns": [
+      "Module behavior"
+    ],
+    "excludedConcerns": [
+      "artifact-content",
+      "phase-projections",
+      "finding-lifecycle",
+      "artifact-extraction",
+      "source-file-writes"
+    ]
+  },
+  "trace": {
+    "useCaseIds": [
+      "uc-package"
+    ],
+    "workflowNodeIds": [
+      "package:baseline"
+    ],
+    "scenarioStepIds": [
+      "uc-package:step:baseline"
+    ],
+    "ruleIds": [
+      "rule-authority",
+      "rule-local-workflow",
+      "rule-snapshot",
+      "rule-publish",
+      "rule-fallback",
+      "rule-finding",
+      "rule-stale",
+      "rule-phases",
+      "rule-shared-anatomy",
+      "rule-shared-actions",
+      "rule-sample-default",
+      "rule-sample-real",
+      "rule-sample-badge",
+      "rule-sample-overlay",
+      "rule-sample-export",
+      "rule-sample-portable",
+      "rule-same-ui",
+      "rule-objectives",
+      "rule-claims",
+      "rule-llr",
+      "rule-coverage",
+      "rule-compare",
+      "rule-security",
+      "rule-performance",
+      "rule-determinism"
+    ],
+    "qualityRequirementIds": [],
+    "sourceRefs": [
+      "source-1",
+      "source-2",
+      "source-3"
+    ],
+    "designDecisionIds": []
+  },
+  "boundary": {
+    "directDependencyIds": [
+      "mod.sample-workspace",
+      "mod.evidence-store",
+      "mod.external-adapters"
+    ],
+    "directConsumerIds": [
+      "mod.audit-experience",
+      "mod.lifecycle-explorer",
+      "mod.ingestion-publication"
+    ],
+    "deployableId": "unassigned",
+    "runtimeAllocation": "local-embedded",
+    "runtimeLanguage": "typescript",
+    "ownedPaths": [
+      "src/modules/workspace-snapshots/"
+    ],
+    "editableSharedPaths": []
+  },
+  "providedOperations": [
+    {
+      "operationId": "op.select-workspace-baseline",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [
+    {
+      "operationId": "op.open-sample",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Resolve the bundled sample workspace."
+    },
+    {
+      "operationId": "op.persist-evidence-state",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Persist selection and snapshot metadata."
+    },
+    {
+      "operationId": "op.access-external-artifacts",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Resolve real-project revisions and source locations."
+    }
+  ],
+  "schemas": [
+    {
+      "id": "op.select-workspace-baseline.input",
+      "text": "op.select-workspace-baseline.input"
+    },
+    {
+      "id": "op.select-workspace-baseline.output",
+      "text": "op.select-workspace-baseline.output"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule-authority",
+      "text": "Connected engineering artifacts remain authoritative. The hub must not write changes to lifecycle files."
+    },
+    {
+      "id": "rule-local-workflow",
+      "text": "Only hub-local findings, reviews, dispositions, package selections, annotations, and sample sandbox state are editable, and every change is auditable."
+    },
+    {
+      "id": "rule-snapshot",
+      "text": "Each published snapshot is immutable and identifies exact source revisions, extraction context, and hashes."
+    },
+    {
+      "id": "rule-publish",
+      "text": "An extraction or indexing failure prevents candidate publication. An evidence gap stays visible and does not prevent a reliable snapshot."
+    },
+    {
+      "id": "rule-fallback",
+      "text": "A failed or partial refresh never replaces the last valid published snapshot."
+    },
+    {
+      "id": "rule-finding",
+      "text": "The hub calculates deterministic findings for each snapshot. Human findings keep attribution, history, disposition, and closure evidence."
+    },
+    {
+      "id": "rule-stale",
+      "text": "Evidence is stale when its source revision or dependency hash differs from the selected snapshot. Evidence is also stale after an unreviewed dependency change."
+    },
+    {
+      "id": "rule-phases",
+      "text": "The Evidence Explorer navigation is Overview, Planning, Requirements, Design, Implementation, Verification, Configuration Management, Quality Assurance, and Certification."
+    },
+    {
+      "id": "rule-shared-anatomy",
+      "text": "Every lifecycle area uses a consistent phase header, tailored subnavigation, working evidence table or visualization, evidence inspector, findings drawer, and baseline-compare mode."
+    },
+    {
+      "id": "rule-shared-actions",
+      "text": "Each evidence item provides its dossier, traces, source location, baseline comparison, source data, findings, reviews, and package controls."
+    },
+    {
+      "id": "rule-sample-default",
+      "text": "If zero real projects exist, the sample opens automatically with no picker blocker or blank dashboard."
+    },
+    {
+      "id": "rule-sample-real",
+      "text": "After a real project exists, the last real project opens by default and the sample remains selectable under Examples."
+    },
+    {
+      "id": "rule-sample-badge",
+      "text": "The sample always displays a Sample Data badge and a Connect a real project action."
+    },
+    {
+      "id": "rule-sample-overlay",
+      "text": "Bundled sample evidence is immutable. A resettable sandbox stores sample findings, reviews, dispositions, packages, and preferences."
+    },
+    {
+      "id": "rule-sample-export",
+      "text": "Every sample export is marked Synthetic sample — not certification evidence in both visible output and manifest metadata."
+    },
+    {
+      "id": "rule-sample-portable",
+      "text": "The sample uses a normalized extraction snapshot for synthetic artifacts. It must not disguise text or JSON as proprietary binary files."
+    },
+    {
+      "id": "rule-same-ui",
+      "text": "Sample projects and real projects use the same APIs, domain model, routes, and components. The product has no demo-only interface."
+    },
+    {
+      "id": "rule-objectives",
+      "text": "Do not bundle copyrighted DO-178C or DO-331 objective text. Use configurable identifiers and licensed profiles."
+    },
+    {
+      "id": "rule-claims",
+      "text": "The application may report evidence status against the configured profile but must not claim certification, regulatory approval, or compliance."
+    },
+    {
+      "id": "rule-llr",
+      "text": "Requirement classifications and allocation rules prevent ambiguous duplication between higher-level and low-level requirement views."
+    },
+    {
+      "id": "rule-coverage",
+      "text": "The hub imports coverage from authoritative results. The hub does not calculate coverage."
+    },
+    {
+      "id": "rule-compare",
+      "text": "Baseline comparison reports added, removed, changed, and stale evidence without performing semantic merge or conflict resolution."
+    },
+    {
+      "id": "rule-security",
+      "text": "Credentials and secrets are never stored in project configuration, snapshots, logs, packages, or displayed evidence."
+    },
+    {
+      "id": "rule-performance",
+      "text": "Normal browsing, filtering, search, trace navigation, dossier opening, and phase switching should usually respond within two seconds at accepted scale."
+    },
+    {
+      "id": "rule-determinism",
+      "text": "The bundled sample has deterministic identifiers, dates, people, revisions, hashes, relationships, counts, and reset behavior."
+    }
+  ],
+  "invariants": [],
+  "behavior": {
+    "preconditions": [
+      "The application request is valid."
+    ],
+    "postconditions": [
+      "The module returns an observable result."
+    ],
+    "domainRejections": [],
+    "technicalFailures": [],
+    "sideEffects": [],
+    "idempotency": "Not defined",
+    "cancellation": "Not defined",
+    "timeouts": "Not defined",
+    "concurrency": "Not defined",
+    "retry": "Retry only a declared technical failure.",
+    "recovery": "Keep the last valid module state.",
+    "emittedEvents": [],
+    "consumedEvents": [],
+    "stateDefinitions": [],
+    "stateTransitions": [],
+    "activityDefinitions": [
+      {
+        "id": "activity:mod.workspace-snapshots:allocated-actions",
+        "name": "Perform allocated actions",
+        "refinesWorkflowNodeIds": [
+          "package:baseline"
+        ],
+        "graph": {
+          "id": "activity:mod.workspace-snapshots:allocated-actions:graph",
+          "name": "Perform allocated actions",
+          "nodes": [
+            {
+              "id": "module:mod.workspace-snapshots:initial",
+              "kind": "initial",
+              "label": "Initial",
+              "description": "The module activity starts.",
+              "refinesIds": []
+            },
+            {
+              "id": "module:mod.workspace-snapshots:refine:package:baseline",
+              "kind": "call-operation",
+              "label": "Record baseline metadata",
+              "description": "The module performs the allocated record baseline metadata action.",
+              "refinesIds": [
+                "package:baseline"
+              ],
+              "operationId": "op.select-workspace-baseline"
+            },
+            {
+              "id": "module:mod.workspace-snapshots:final",
+              "kind": "final",
+              "label": "Final",
+              "description": "The module activity ends.",
+              "refinesIds": []
+            }
+          ],
+          "edges": [
+            {
+              "id": "activity:mod.workspace-snapshots:edge:1",
+              "fromNodeId": "module:mod.workspace-snapshots:initial",
+              "toNodeId": "module:mod.workspace-snapshots:refine:package:baseline",
+              "traceIds": [
+                "workflow:uc-package",
+                "package:baseline"
+              ]
+            },
+            {
+              "id": "activity:mod.workspace-snapshots:edge:2",
+              "fromNodeId": "module:mod.workspace-snapshots:refine:package:baseline",
+              "toNodeId": "module:mod.workspace-snapshots:final",
+              "traceIds": [
+                "workflow:uc-package",
+                "package:baseline"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "interactionDefinitions": [],
+    "states": [],
+    "activities": [],
+    "interactions": []
+  },
+  "data": {
+    "persistentRecords": [],
+    "ownership": [],
+    "retention": [],
+    "migrationNeeds": [],
+    "confidentiality": "Not classified",
+    "provenanceFields": [],
+    "canonicalUnits": []
+  },
+  "runtime": {
+    "configurationRefs": [],
+    "secretRefs": [],
+    "lifecycleRegistration": "Not defined",
+    "health": [],
+    "telemetry": [],
+    "resourceOwnership": [],
+    "startup": [],
+    "shutdown": [],
+    "compatibilityConstraints": []
+  },
+  "verification": {
+    "examples": [],
+    "edgeCases": [],
+    "acceptanceCaseIds": [
+      "ac-9"
+    ],
+    "verificationSuiteIds": [
+      "acceptance:mod.workspace-snapshots"
+    ],
+    "requiredEvidence": [
+      "structured"
+    ],
+    "testDoubles": [],
+    "fixtureNeeds": [],
+    "commands": []
+  },
+  "diagrams": [
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:component:mod.workspace-snapshots",
+      "kind": "component",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.workspace-snapshots"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.workspace-snapshots",
+      "title": "Workspace snapshots component diagram",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "component:mod.audit-experience",
+          "kind": "component",
+          "label": "Audit Hub Experience",
+          "stereotype": "component",
+          "description": "Own the responsive Audit Hub front end. Provide workspace selection, lifecycle views, search, dossiers, traces, baseline comparison, findings, reviews, packages, sample reset, and refresh status.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package",
+            "uc-reset"
+          ]
+        },
+        {
+          "id": "component:mod.lifecycle-explorer",
+          "kind": "component",
+          "label": "Lifecycle Explorer",
+          "stereotype": "component",
+          "description": "Own the lifecycle phase model and shared view structure. Provide phase views, readiness summaries, evidence projections, comparison projections, and approved lifecycle areas.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-gaps",
+            "uc-compare"
+          ]
+        },
+        {
+          "id": "component:mod.ingestion-publication",
+          "kind": "component",
+          "label": "Evidence publication",
+          "stereotype": "component",
+          "description": "Own scanning, artifact classification, extractor orchestration, normalization, diagnostics, deterministic check execution, refresh progress, reliability gates, and atomic publication while preserving the last valid snapshot.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh"
+          ]
+        },
+        {
+          "id": "component:mod.workspace-snapshots",
+          "kind": "component",
+          "label": "Workspace snapshots",
+          "stereotype": "component",
+          "description": "Own project configuration, objective-profile references, repository definitions, real-versus-sample selection, last-real-project preference, exact revision sets, immutable snapshot identity, baselines, and publication state.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-compare",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "component:mod.sample-workspace",
+          "kind": "component",
+          "label": "Deterministic Sample Workspace",
+          "stereotype": "component",
+          "description": "Own the bundled AeroNav snapshot and the 2.3.0 and 2.4.0 baselines. Provide complete chains, incomplete chains, twelve findings, deterministic identities, reset defaults, and offline fallback.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-sample",
+            "uc-reset"
+          ]
+        },
+        {
+          "id": "component:mod.evidence-store",
+          "kind": "component",
+          "label": "Evidence Store",
+          "stereotype": "component",
+          "description": "Persist project metadata, immutable snapshots, normalized evidence, graph relationships, reviews, findings, history, overlay state, and package manifests. Provide search, phase, and comparison queries.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package",
+            "uc-reset"
+          ]
+        },
+        {
+          "id": "component:mod.external-adapters",
+          "kind": "component",
+          "label": "External Adapters",
+          "stereotype": "component",
+          "description": "Provide explicit Git, workspace-filesystem, normalized-extract, optional MATLAB-tooling, source-link, and local-package-export boundaries without leaking credentials or proprietary formats into domain modules.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "provided:mod.workspace-snapshots:op.select-workspace-baseline",
+          "kind": "provided-interface",
+          "label": "Select workspace baseline",
+          "description": "Workspace snapshots provides this operation.",
+          "sourceRecordId": "module-design:mod.workspace-snapshots",
+          "traceIds": [
+            "uc-package"
+          ],
+          "parentId": "component:mod.workspace-snapshots"
+        },
+        {
+          "id": "required:mod.workspace-snapshots:op.open-sample",
+          "kind": "required-interface",
+          "label": "Open sample",
+          "description": "Workspace snapshots requires this operation.",
+          "sourceRecordId": "module-design:mod.workspace-snapshots",
+          "traceIds": [
+            "uc-package"
+          ],
+          "parentId": "component:mod.workspace-snapshots"
+        },
+        {
+          "id": "required:mod.workspace-snapshots:op.persist-evidence-state",
+          "kind": "required-interface",
+          "label": "Persist evidence state",
+          "description": "Workspace snapshots requires this operation.",
+          "sourceRecordId": "module-design:mod.workspace-snapshots",
+          "traceIds": [
+            "uc-package"
+          ],
+          "parentId": "component:mod.workspace-snapshots"
+        },
+        {
+          "id": "required:mod.workspace-snapshots:op.access-external-artifacts",
+          "kind": "required-interface",
+          "label": "Access external artifacts",
+          "description": "Workspace snapshots requires this operation.",
+          "sourceRecordId": "module-design:mod.workspace-snapshots",
+          "traceIds": [
+            "uc-package"
+          ],
+          "parentId": "component:mod.workspace-snapshots"
+        },
+        {
+          "id": "required:mod.audit-experience:op.select-workspace-baseline:for:mod.workspace-snapshots",
+          "kind": "required-interface",
+          "label": "Select workspace baseline",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "provided:mod.sample-workspace:op.open-sample:for:mod.workspace-snapshots",
+          "kind": "provided-interface",
+          "label": "Open sample",
+          "description": "Deterministic Sample Workspace provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-package"
+          ],
+          "parentId": "component:mod.sample-workspace"
+        },
+        {
+          "id": "provided:mod.evidence-store:op.persist-evidence-state:for:mod.workspace-snapshots",
+          "kind": "provided-interface",
+          "label": "Persist evidence state",
+          "description": "Evidence Store provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-store"
+        },
+        {
+          "id": "provided:mod.external-adapters:op.access-external-artifacts:for:mod.workspace-snapshots",
+          "kind": "provided-interface",
+          "label": "Access external artifacts",
+          "description": "External Adapters provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-package"
+          ],
+          "parentId": "component:mod.external-adapters"
+        }
+      ],
+      "edges": [
+        {
+          "id": "assembly:mod.audit-experience:mod.workspace-snapshots:op.select-workspace-baseline",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.select-workspace-baseline:for:mod.workspace-snapshots",
+          "toId": "provided:mod.workspace-snapshots:op.select-workspace-baseline",
+          "label": "Select workspace baseline",
+          "description": "The front end requires current workspace, baseline, revision, sample-state, and refresh-publication context.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-compare",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.workspace-snapshots:mod.sample-workspace:op.open-sample",
+          "kind": "assembly",
+          "fromId": "required:mod.workspace-snapshots:op.open-sample",
+          "toId": "provided:mod.sample-workspace:op.open-sample:for:mod.workspace-snapshots",
+          "label": "Open sample",
+          "description": "Workspace selection resolves the built-in sample only when no real project is configured and retains it under Examples afterward.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-sample"
+          ]
+        },
+        {
+          "id": "assembly:mod.workspace-snapshots:mod.evidence-store:op.persist-evidence-state",
+          "kind": "assembly",
+          "fromId": "required:mod.workspace-snapshots:op.persist-evidence-state",
+          "toId": "provided:mod.evidence-store:op.persist-evidence-state:for:mod.workspace-snapshots",
+          "label": "Persist evidence state",
+          "description": "Project definitions, exact revision sets, baselines, snapshot identities, selection history, and publication state require persistence.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-compare",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.workspace-snapshots:mod.external-adapters:op.access-external-artifacts",
+          "kind": "assembly",
+          "fromId": "required:mod.workspace-snapshots:op.access-external-artifacts",
+          "toId": "provided:mod.external-adapters:op.access-external-artifacts:for:mod.workspace-snapshots",
+          "label": "Access external artifacts",
+          "description": "Real-project revision resolution and source navigation require Git and workspace boundaries.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "dependency:mod.lifecycle-explorer:mod.workspace-snapshots",
+          "kind": "dependency",
+          "fromId": "component:mod.lifecycle-explorer",
+          "toId": "component:mod.workspace-snapshots",
+          "label": "«use»",
+          "description": "Each lifecycle projection is scoped to the selected project, snapshot, baseline, and comparison target.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-compare"
+          ]
+        },
+        {
+          "id": "dependency:mod.ingestion-publication:mod.workspace-snapshots",
+          "kind": "dependency",
+          "fromId": "component:mod.ingestion-publication",
+          "toId": "component:mod.workspace-snapshots",
+          "label": "«use»",
+          "description": "A refresh must validate configuration and freeze an exact multi-repository revision set before extraction.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Workspace snapshots with 3 direct consumers and 3 direct dependencies.",
+      "contentHash": "79ff164f5146d82b52717362415531b59dae0aaee3441d6dd92cfe3c6b663fbf"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-activity:mod.workspace-snapshots:activity:mod.workspace-snapshots:allocated-actions",
+      "kind": "activity",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.workspace-snapshots",
+        "activity:mod.workspace-snapshots:allocated-actions"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.workspace-snapshots",
+      "title": "Perform allocated actions module activity",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-activity:activity:mod.workspace-snapshots:allocated-actions:node:module:mod.workspace-snapshots:initial",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module activity starts.",
+          "sourceRecordId": "module-design:mod.workspace-snapshots",
+          "traceIds": [
+            "module-design:mod.workspace-snapshots",
+            "mod.workspace-snapshots",
+            "activity:mod.workspace-snapshots:allocated-actions",
+            "module:mod.workspace-snapshots:initial",
+            "package:baseline"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:mod.workspace-snapshots:allocated-actions:node:module:mod.workspace-snapshots:refine:package:baseline",
+          "kind": "call-operation",
+          "label": "Record baseline metadata",
+          "description": "The module performs the allocated record baseline metadata action.",
+          "sourceRecordId": "module-design:mod.workspace-snapshots",
+          "traceIds": [
+            "module-design:mod.workspace-snapshots",
+            "mod.workspace-snapshots",
+            "activity:mod.workspace-snapshots:allocated-actions",
+            "module:mod.workspace-snapshots:refine:package:baseline",
+            "package:baseline",
+            "package:baseline"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.select-workspace-baseline",
+            "Refines: package:baseline"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.workspace-snapshots:allocated-actions:node:module:mod.workspace-snapshots:final",
+          "kind": "final",
+          "label": "Final",
+          "description": "The module activity ends.",
+          "sourceRecordId": "module-design:mod.workspace-snapshots",
+          "traceIds": [
+            "module-design:mod.workspace-snapshots",
+            "mod.workspace-snapshots",
+            "activity:mod.workspace-snapshots:allocated-actions",
+            "module:mod.workspace-snapshots:final",
+            "package:baseline"
+          ],
+          "details": []
+        }
+      ],
+      "edges": [
+        {
+          "id": "module-activity:activity:mod.workspace-snapshots:allocated-actions:edge:activity:mod.workspace-snapshots:edge:1",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.workspace-snapshots:allocated-actions:node:module:mod.workspace-snapshots:initial",
+          "toId": "module-activity:activity:mod.workspace-snapshots:allocated-actions:node:module:mod.workspace-snapshots:refine:package:baseline",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.workspace-snapshots",
+          "traceIds": [
+            "module-design:mod.workspace-snapshots",
+            "activity:mod.workspace-snapshots:allocated-actions",
+            "activity:mod.workspace-snapshots:edge:1",
+            "workflow:uc-package",
+            "package:baseline"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.workspace-snapshots:allocated-actions:edge:activity:mod.workspace-snapshots:edge:2",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.workspace-snapshots:allocated-actions:node:module:mod.workspace-snapshots:refine:package:baseline",
+          "toId": "module-activity:activity:mod.workspace-snapshots:allocated-actions:node:module:mod.workspace-snapshots:final",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.workspace-snapshots",
+          "traceIds": [
+            "module-design:mod.workspace-snapshots",
+            "activity:mod.workspace-snapshots:allocated-actions",
+            "activity:mod.workspace-snapshots:edge:2",
+            "workflow:uc-package",
+            "package:baseline"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Perform allocated actions has 3 behavior nodes and 2 control flows.",
+      "contentHash": "d86893af568bda6837fccdf744e29dcee21bd8c91c78c3a9a3f92b6066990950"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-state:mod.workspace-snapshots",
+      "kind": "state-machine",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.workspace-snapshots"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.workspace-snapshots",
+      "title": "Workspace snapshots state behavior",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-state:mod.workspace-snapshots:initial",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module state machine starts.",
+          "sourceRecordId": "module-design:mod.workspace-snapshots",
+          "traceIds": [
+            "module-design:mod.workspace-snapshots",
+            "mod.workspace-snapshots"
+          ]
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "id": "CAP-UML-STATE-NOT-APPLICABLE",
+          "code": "CAP-UML-STATE-NOT-APPLICABLE",
+          "message": "This module has no structured state behavior."
+        }
+      ],
+      "textAlternative": "Workspace snapshots has no structured state behavior.",
+      "contentHash": "d8beb823476bbf87b5ab64de468d847a83a40e3aa1690de584aeab8cf44c0c0c"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-sequence:mod.workspace-snapshots:empty",
+      "kind": "sequence",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.workspace-snapshots"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.workspace-snapshots",
+      "title": "Workspace snapshots internal sequence",
+      "sourceRevision": "1.1.0",
+      "nodes": [],
+      "edges": [],
+      "diagnostics": [
+        {
+          "id": "CAP-UML-INTERNAL-SEQUENCE-NOT-APPLICABLE",
+          "code": "CAP-UML-INTERNAL-SEQUENCE-NOT-APPLICABLE",
+          "message": "This module has no structured internal interaction."
+        }
+      ],
+      "textAlternative": "Workspace snapshots has no structured internal interaction.",
+      "contentHash": "78c72b2ff83656a8221e620e791404bceaef6ecb4c4f3d2d33a8b58d7a7dcf54"
+    }
+  ],
+  "unresolvedItems": [],
+  "gates": [
+    {
+      "gateId": "CAP-GATE-MODULE-DESIGN",
+      "passed": true,
+      "diagnostics": []
+    }
+  ],
+  "contentHash": "ea48649fdaa0df20aa4fef7686b55af5347e4e2fb75048f603817803fa6fe65e",
+  "approval": {
+    "approvedAt": "2026-07-28T00:00:00.000Z",
+    "approvedBy": "DO-178C sample fixture"
+  }
+}

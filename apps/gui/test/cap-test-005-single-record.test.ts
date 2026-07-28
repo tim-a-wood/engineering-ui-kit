@@ -9,15 +9,29 @@ import { installMockBridge } from '../src/mockBridge'
 
 const draft = {
   schemaVersion: '1.0' as const,
+  projectId: 'p1',
   id: 'app.demo',
   revision: '3',
-  name: 'Demo application',
-  purpose: 'demo',
-  outcomes: [],
-  userRoles: [],
-  domainTerms: [],
+  status: 'draft' as const,
+  purpose: 'Manage demo records.',
+  outcomes: ['Demo records are available.'],
+  actors: [{ id: 'actor.user', text: 'User' }],
+  goals: [],
+  useCases: [{ id: 'usecase.review', text: 'Review demo records' }],
+  scenarios: [],
+  information: [],
+  rules: [],
+  externalSystems: [],
   constraints: [],
-  successMeasures: [],
+  scope: { inScope: ['Demo records'], outOfScope: [] },
+  acceptanceCases: [{
+    id: 'accept.review',
+    description: 'The user reviews a record.',
+    expectedOutcome: 'The record is available.',
+  }],
+  sources: [],
+  unresolvedQuestions: [],
+  contentHash: 'demo-hash',
 }
 
 describe('CAP-TEST-005 single canonical record set', () => {

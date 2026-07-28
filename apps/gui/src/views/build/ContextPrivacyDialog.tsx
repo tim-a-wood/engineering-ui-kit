@@ -20,7 +20,7 @@ export function ContextPrivacyDialog(props: {
 
   return (
     <Dialog
-      title="Context & privacy"
+      title="Context privacy"
       onClose={props.onClose}
       wide
       actions={
@@ -113,7 +113,7 @@ export function ContextPrivacyDialog(props: {
             </div>
             <div className="stat-chip stat-text">
               <strong>{result.inventory.detectedFrameworks.join(', ') || 'none detected'} · {result.inventory.detectedPackageManager}</strong>
-              <span>Frameworks · pkg manager</span>
+              <span>Project tools</span>
             </div>
           </div>
           <p className="mono muted path-wrap" style={{ margin: 'var(--semantic-spacing-3) 0 0' }}>{result.flatfilePath}</p>

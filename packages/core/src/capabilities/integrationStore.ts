@@ -17,6 +17,11 @@ import type {
   PersistedGenerationBundle,
 } from './integrationState.js'
 import { CapabilityWorkspace } from './persistence.js'
+import {
+  assertSteProfile,
+  evaluateModuleImplementationSte,
+  type SteLexicon,
+} from './simplifiedTechnicalEnglish.js'
 
 type IntegrationIndex = {
   schemaVersion: '1.0'
@@ -138,7 +143,15 @@ export class CapabilityIntegrationStore {
     )
   }
 
-  saveModuleSpecification(specification: ModuleImplementationSpecification): void {
+  saveModuleSpecification(
+    specification: ModuleImplementationSpecification,
+    steLexicon?: SteLexicon,
+  ): void {
+    const effectiveLexicon = steLexicon ?? this.workspace.getSteLexicon(specification.projectId)
+    assertSteProfile(
+      `module implementation specification ${specification.moduleId}`,
+      evaluateModuleImplementationSte(specification, effectiveLexicon),
+    )
     this.workspace.ensureInitialized(specification.projectId)
     atomicWriteJson(
       path.join(this.root(specification.projectId), 'module-specifications', `${safeId(specification.moduleId, 'moduleId')}.json`),

@@ -1,11 +1,21 @@
 import type { TaskIntentProfile } from '../packetLint.js'
+import {
+  assertSteProfile,
+  checkSteEntries,
+  type SteCheckResult,
+  type SteLexicon,
+  type SteTextClass,
+  type SteTextEntry,
+} from './simplifiedTechnicalEnglish.js'
 import type {
   ApplicationSpecification,
   ArchitectureSpecification,
   FrontendBinding,
   InboundBinding,
   ModuleManifest,
+  ModuleDesignSpecification,
 } from './types.js'
+import { allUseCasePaths, materializeUseCaseDefinitions } from './useCaseAnalysis.js'
 
 export type FrontendBriefFields = {
   taskTitle: string
@@ -33,6 +43,7 @@ export type FrontendBrief = {
     architectureRevision: string
     architectureHash: string
     moduleVersions: Record<string, string>
+    moduleDesignRevisions?: Record<string, string>
     bindingVersions: Record<string, string>
   }
   coverage: {
@@ -56,6 +67,65 @@ function numbered(values: string[], fallback: string): string {
 
 function unique(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))].sort((left, right) => left.localeCompare(right))
+}
+
+function markdownSteEntries(
+  value: string,
+  fieldPath: string,
+  textClass: SteTextClass,
+): SteTextEntry[] {
+  let inCodeFence = false
+  return value.split('\n').flatMap((line, index) => {
+    const trimmed = line.trim()
+    if (trimmed.startsWith('```')) {
+      inCodeFence = !inCodeFence
+      return []
+    }
+    if (!trimmed || inCodeFence) return []
+    const heading = trimmed.match(/^#{1,6}\s+(.+)$/)
+    if (heading) {
+      return [{
+        text: heading[1]!,
+        textClass: 'heading' as const,
+        fieldPath: `${fieldPath}.line${index + 1}`,
+      }]
+    }
+    const text = trimmed
+      .replace(/^[-*]\s+/, '')
+      .replace(/^\d+\.\s+/, '')
+    return [{
+      text,
+      textClass,
+      fieldPath: `${fieldPath}.line${index + 1}`,
+    }]
+  })
+}
+
+/** Check all compiler-produced, human-facing frontend brief text. */
+export function evaluateFrontendBriefSte(
+  brief: FrontendBrief,
+  lexicon?: SteLexicon,
+): SteCheckResult {
+  return checkSteEntries([
+    {
+      text: brief.fields.taskTitle,
+      textClass: 'action-label',
+      fieldPath: 'fields.taskTitle',
+    },
+    ...markdownSteEntries(brief.fields.goal, 'fields.goal', 'description'),
+    ...markdownSteEntries(brief.fields.scope, 'fields.scope', 'instruction'),
+    ...markdownSteEntries(brief.fields.constraints, 'fields.constraints', 'instruction'),
+    ...markdownSteEntries(
+      brief.fields.acceptanceCriteria,
+      'fields.acceptanceCriteria',
+      'instruction',
+    ),
+    ...brief.gaps.map((gap, index) => ({
+      text: gap.message,
+      textClass: 'description' as const,
+      fieldPath: `gaps.${index}.message`,
+    })),
+  ], { lexicon })
 }
 
 function bindingRoute(binding: FrontendBinding | InboundBinding): string | undefined {
@@ -98,8 +168,10 @@ export function compileFrontendBrief(input: {
   architecture: ArchitectureSpecification
   application?: ApplicationSpecification
   modules: ModuleManifest[]
+  moduleDesigns?: ModuleDesignSpecification[]
   bindings?: (FrontendBinding | InboundBinding)[]
   targetModuleIds?: string[]
+  steLexicon?: SteLexicon
   generatedAt?: string
 }): FrontendBrief {
   const explicitTargets = new Set(input.targetModuleIds ?? [])
@@ -121,6 +193,12 @@ export function compileFrontendBrief(input: {
   const useCases = input.application?.useCases ?? []
   const workflowTraces = input.architecture.workflowTraces
     .filter((trace) => selectedModules.some((module) => trace.moduleIds.includes(module.moduleId)))
+  const tracedUseCaseIds = new Set(workflowTraces.map((trace) => trace.useCaseId))
+  const detailedUseCases = input.application
+    ? materializeUseCaseDefinitions(input.application).filter((useCase) => tracedUseCaseIds.has(useCase.id))
+    : []
+  const selectedDesigns = (input.moduleDesigns ?? [])
+    .filter((design) => selectedModules.some((module) => module.moduleId === design.module.moduleId))
   const definitionById = new Map(
     (input.architecture.moduleDefinitions ?? []).map((definition) => [definition.moduleId, definition]),
   )
@@ -144,6 +222,20 @@ export function compileFrontendBrief(input: {
     input.architecture.dependencyEdges
       .filter((edge) => edge.fromModuleId === module.moduleId)
       .map((edge) => `${module.name} → ${moduleName(edge.toModuleId)}: ${edge.reason}`))
+  const detailedPathLines = detailedUseCases.flatMap((useCase) =>
+    allUseCasePaths(useCase).flatMap((path) => [
+      `${useCase.id}/${path.kind}`,
+      ...path.steps.flatMap((step) => [
+        step.action,
+        step.expectedResult,
+      ]),
+    ]))
+  const workflowTraceLines = workflowTraces.flatMap((trace) => [
+    `${trace.useCaseId}: ${trace.moduleIds.map(moduleName).join(' → ')}`,
+    ...(trace.stepAllocations ?? []).map(
+      (allocation) => `${allocation.stepId}: ${moduleName(allocation.moduleId)}`,
+    ),
+  ])
   const ownedPaths = unique(selectedModules.flatMap((module) => module.ownedPaths))
   const acceptanceCases = input.application?.acceptanceCases ?? []
   const gaps: FrontendBriefGap[] = []
@@ -151,7 +243,7 @@ export function compileFrontendBrief(input: {
     gaps.push({
       code: 'FRONTEND-BRIEF-APPLICATION',
       severity: 'warning',
-      message: 'No approved product definition is available; the brief is based on architecture and modules.',
+      message: 'No approved product definition is available. The brief uses the architecture and modules.',
       relatedIds: [input.architecture.id],
     })
   }
@@ -167,26 +259,39 @@ export function compileFrontendBrief(input: {
     gaps.push({
       code: 'FRONTEND-BRIEF-BINDING',
       severity: 'warning',
-      message: 'No approved UI binding is available; interaction targets remain implementation choices.',
+      message: 'No approved UI binding is available. Interaction targets remain implementation choices.',
       relatedIds: [...selectedOperationIds],
     })
   }
+  if (input.moduleDesigns !== undefined) {
+    const missingDesignIds = selectedModules
+      .filter((module) => !selectedDesigns.some((design) => design.module.moduleId === module.moduleId && design.status === 'approved'))
+      .map((module) => module.moduleId)
+    if (missingDesignIds.length) {
+      gaps.push({
+        code: 'FRONTEND-BRIEF-MODULE-DESIGN',
+        severity: 'blocking',
+        message: 'Every selected frontend module requires an approved module design.',
+        relatedIds: missingDesignIds,
+      })
+    }
+  }
   const productName = selectedModules.length === 1
     ? selectedModules[0]!.name
-    : input.application?.purpose || 'approved capability experience'
+    : 'Capability UI'
   const fields: FrontendBriefFields = {
-    taskTitle: `Build frontend from approved capabilities: ${productName}`,
+    taskTitle: `Build ${productName}`,
     goal: [
-      `# Frontend brief — ${productName}`,
+      `# ${productName}`,
       `## Product purpose\n${input.application?.purpose || selectedModules.map((module) => module.responsibility).join(' ')}`,
       `## Outcomes\n${bullets(input.application?.outcomes ?? [], 'Deliver the observable outcomes defined by the selected capability modules.')}`,
       `## Users and goals\nActors:\n${bullets((input.application?.actors ?? []).map((item) => item.text), 'Use the actors implied by the approved workflows.')}\n\nGoals:\n${bullets((input.application?.goals ?? []).map((item) => item.text), 'Support the selected modules’ approved responsibilities.')}`,
-      `## Journeys\n${bullets(useCases.map((item) => `${item.id}: ${item.text}`), 'Use the approved workflow traces as the primary journeys.')}\n\nWorkflow traces:\n${bullets(workflowTraces.map((trace) => `${trace.useCaseId}: ${trace.moduleIds.map(moduleName).join(' → ')}`), 'No selected workflow trace is recorded.')}`,
+      `## Journeys\n${bullets(useCases.map((item) => `${item.id}: ${item.text}`), 'Use the approved workflow traces as the primary journeys.')}\n\nDetailed paths:\n${bullets(detailedPathLines, 'No detailed use-case paths are recorded.')}\n\nWorkflow traces:\n${bullets(workflowTraceLines, 'No selected workflow trace is recorded.')}`,
       `## Capability modules\n${bullets(moduleLines, 'No frontend module selected.')}`,
       `## Operation map\nProvided operations:\n${bullets(provided, 'No provided operation recorded.')}\n\nRequired operations:\n${bullets(required, 'No required operation recorded.')}`,
-      `## Bound interactions\n${bullets(bindingLines, 'No UI binding recorded; choose repository-consistent interaction targets and keep them replaceable.')}`,
+      `## Bound interactions\n${bullets(bindingLines, 'No UI binding is recorded. Use replaceable interaction targets that match the repository.')}`,
       `## Required interaction behavior\n${bullets(behaviorLines, 'Define intentional loading, validation, rejection, failure, cancellation, retry, and duplicate-action behavior for every operation.')}`,
-      '## Experience quality\n- Make the main journey immediately legible and keep the next meaningful action obvious.\n- Provide intentional initial, loading, ready, empty, partial, validation, rejection, technical-failure, cancelled, retrying, and success states where applicable.\n- Preserve user input after recoverable failures and prevent accidental duplicate submissions.\n- Use progressive disclosure for dense engineering detail; keep routine actions quick and satisfying.\n- Build responsive, keyboard-complete, screen-reader-friendly interactions with visible focus and non-color status cues.',
+      '## Experience quality\n- Make the main journey clear. Make the next action clear.\n- Provide the necessary initial, loading, ready, empty, partial, validation, rejection, technical-failure, canceled, retrying, and success states.\n- Preserve user input after recoverable failures. Prevent duplicate submissions.\n- Use progressive disclosure for dense engineering detail. Keep routine actions quick.\n- Build responsive and keyboard-complete interactions. Provide visible focus, screen-reader support, and text status cues.',
     ].join('\n\n'),
     scope: [
       'Implement the selected frontend modules, views, reusable presentation components, state models, adapters, and focused tests.',
@@ -195,8 +300,8 @@ export function compileFrontendBrief(input: {
       `Approved paths:\n${bullets(ownedPaths, 'Use repository-consistent frontend paths and avoid unrelated modules.')}`,
     ].join('\n\n'),
     constraints: [
-      '- Preserve the approved ports-and-adapters boundaries; keep domain rules and external-system details outside presentation code.',
-      '- Reuse existing backend, network, persistence, and filesystem boundaries; do not replace or duplicate them in the frontend.',
+      '- Preserve the approved ports-and-adapters boundaries. Keep domain rules and external-system details outside presentation code.',
+      '- Reuse existing backend, network, persistence, and filesystem boundaries. Do not duplicate them in the frontend.',
       '- Use the repository’s established framework, design tokens, components, accessibility patterns, and dependencies.',
       '- Do not invent product scope, operations, domain rules, or external-system behavior.',
       `- Preserve these architecture dependencies:\n${bullets(dependencyLines, 'No selected module dependency is recorded.')}`,
@@ -216,6 +321,7 @@ export function compileFrontendBrief(input: {
       `Architecture: ${input.architecture.id} revision ${input.architecture.revision} (${input.architecture.contentHash})`,
       ...(input.application ? [`Application: ${input.application.id} revision ${input.application.revision} (${input.application.contentHash})`] : []),
       ...selectedModules.map((module) => `Module: ${module.moduleId} @ ${module.moduleVersion}`),
+      ...selectedDesigns.map((design) => `Module design: ${design.module.moduleId} @ ${design.revision} (${design.contentHash})`),
       ...relevantBindings.map((binding) => `Binding: ${binding.bindingId} @ ${binding.version} → ${binding.operationId} @ ${binding.operationVersion}`),
     ].join('\n'),
     intentProfile: {
@@ -226,7 +332,7 @@ export function compileFrontendBrief(input: {
       filesystem: 'preserve',
     },
   }
-  return {
+  const brief: FrontendBrief = {
     schemaVersion: '1.0',
     projectId: input.projectId,
     generatedAt: input.generatedAt ?? new Date().toISOString(),
@@ -235,6 +341,9 @@ export function compileFrontendBrief(input: {
       architectureRevision: input.architecture.revision,
       architectureHash: input.architecture.contentHash,
       moduleVersions: Object.fromEntries(selectedModules.map((module) => [module.moduleId, module.moduleVersion])),
+      ...(input.moduleDesigns !== undefined
+        ? { moduleDesignRevisions: Object.fromEntries(selectedDesigns.map((design) => [design.module.moduleId, design.revision])) }
+        : {}),
       bindingVersions: Object.fromEntries(relevantBindings.map((binding) => [binding.bindingId, binding.version])),
     },
     coverage: {
@@ -250,4 +359,6 @@ export function compileFrontendBrief(input: {
     fields,
     gaps,
   }
+  assertSteProfile('Frontend brief', evaluateFrontendBriefSte(brief, input.steLexicon))
+  return brief
 }

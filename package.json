@@ -11,6 +11,7 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "visual:behavior": "node scripts/behavior-model-visual.mjs",
     "visual:capabilities": "node scripts/capabilities-ux-visual.mjs"
   },
   "devDependencies": {

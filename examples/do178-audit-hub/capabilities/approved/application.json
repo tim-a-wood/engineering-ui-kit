@@ -4,7 +4,7 @@
   "id": "app.do178c-audit-hub",
   "revision": "2",
   "status": "approved",
-  "purpose": "Provide a reusable internal DO-178C/DO-331 Audit Hub that indexes authoritative lifecycle artifacts into immutable evidence snapshots, exposes phase-oriented evidence exploration and traceability, supports auditable findings and review workflows without changing source artifacts, and opens a rich synthetic sample workspace whenever no real project is configured.",
+  "purpose": "Provide a reusable DO-178C and DO-331 audit hub. Index authoritative lifecycle artifacts in immutable evidence snapshots. Support evidence review without a source change. Open a synthetic sample when no real project exists.",
   "outcomes": [
     "Let engineers and auditors reconstruct a complete requirement-to-result evidence chain in under two minutes.",
     "Expose missing, stale, inconsistent, failed, or unreviewed evidence before formal lifecycle reviews and audits.",
@@ -16,31 +16,31 @@
   "actors": [
     {
       "id": "actor-vv",
-      "text": "Verification and validation engineer"
+      "text": "Verification engineer"
     },
     {
       "id": "actor-software",
-      "text": "Software or model-based development engineer"
+      "text": "Software engineer"
     },
     {
       "id": "actor-qa",
-      "text": "Software quality assurance engineer"
+      "text": "Quality engineer"
     },
     {
       "id": "actor-cm",
-      "text": "Configuration management engineer"
+      "text": "Configuration engineer"
     },
     {
       "id": "actor-lead",
-      "text": "Certification lead or authorized representative"
+      "text": "Certification lead"
     },
     {
       "id": "actor-auditor",
-      "text": "Internal or external auditor with approved access"
+      "text": "Authorized auditor"
     },
     {
       "id": "actor-admin",
-      "text": "Project evidence administrator"
+      "text": "Evidence administrator"
     }
   ],
   "goals": [
@@ -80,87 +80,87 @@
   "useCases": [
     {
       "id": "uc-workspace",
-      "text": "Create, select, and inspect a project workspace, objective profile, contributing repositories, artifact locations, extraction health, exact revision set, and current baseline."
+      "text": "Inspect project workspace"
     },
     {
       "id": "uc-sample",
-      "text": "When no real project is configured, automatically open the built-in AeroNav Flight Guidance Computer — Lateral Guidance sample at baseline 2.4.0 with a persistent Sample Data badge and a prominent Connect a real project action."
+      "text": "Open sample workspace"
     },
     {
       "id": "uc-overview",
-      "text": "Open an overview showing lifecycle readiness, evidence inventory, changes since baseline 2.3.0, open findings, ingestion health, and cross-phase evidence flow."
+      "text": "Inspect lifecycle overview"
     },
     {
       "id": "uc-planning",
-      "text": "Use the Evidence Explorer Planning area to inspect plans, standards, objective-profile applicability, approvals, deviations, reviews, and findings."
+      "text": "Inspect planning evidence"
     },
     {
       "id": "uc-requirements",
-      "text": "Use the Requirements area to inspect system and software requirement sets, hierarchy, derived requirements, quality checks, bidirectional traces, reviews, and findings."
+      "text": "Inspect requirement evidence"
     },
     {
       "id": "uc-design",
-      "text": "Use the Design area to inspect architecture, Simulink and Stateflow model structure, interfaces, data dictionaries, design analyses, model reviews, traces, and findings."
+      "text": "Inspect design evidence"
     },
     {
       "id": "uc-implementation",
-      "text": "Use the Implementation area to inspect C and H source inventory, functions, generated-versus-handwritten code, interfaces, build metadata, standards evidence, reviews, traces, and findings without providing a full IDE."
+      "text": "Inspect implementation evidence"
     },
     {
       "id": "uc-verification",
-      "text": "Use the Verification area to inspect verification matrices, test definitions, executions, result sets, model and code coverage, analyses, review evidence, failures, and findings."
+      "text": "Inspect verification evidence"
     },
     {
       "id": "uc-cm",
-      "text": "Use the Configuration Management area to inspect baselines, change records, problem reports, build and release records, configuration status accounting, integrity checks, and findings."
+      "text": "Inspect configuration evidence"
     },
     {
       "id": "uc-qa",
-      "text": "Use the Quality Assurance area to inspect process audits, conformance records, independence evidence, deviations, corrective actions, reviews, and findings."
+      "text": "Inspect assurance evidence"
     },
     {
       "id": "uc-certification",
-      "text": "Use the Certification area to inspect objective cross-references, audit packages, authority questions, open items, accomplishment-summary evidence, and findings without reproducing licensed standard text."
+      "text": "Inspect certification evidence"
     },
     {
       "id": "uc-dossier",
-      "text": "Open an evidence dossier from any table, graph, metric, change, or finding and inspect metadata, authoritative-source provenance and hash, incoming and outgoing traces, reviews, findings, history, and package membership."
+      "text": "Inspect evidence dossier"
     },
     {
       "id": "uc-chain",
-      "text": "Trace a complete representative chain from SYS-LAT-014 through SWR-HLR-LAT-021, SWR-LLR-LAT-044, LateralGuidance/BankAngleLimiter, lateral_guidance.c::limit_bank_command, TC-LAT-BOUNDARY-008, RequirementsResults_2_4_0, and VR-RESULT-2026-041."
+      "text": "Trace evidence chain"
     },
     {
       "id": "uc-gaps",
-      "text": "Detect and navigate an intentionally incomplete evidence chain, broken links, orphaned items, stale hashes, obsolete baseline references, missing reviews, failed tests, unverified problem reports, and coverage gaps."
+      "text": "Find evidence gaps"
     },
     {
       "id": "uc-search",
-      "text": "Search and filter across IDs, titles, artifact types, lifecycle areas, repositories, revisions, owners, statuses, severities, review state, and source files, then pivot into traces or dossiers."
+      "text": "Search evidence"
     },
     {
       "id": "uc-compare",
-      "text": "Compare baselines 2.3.0 and 2.4.0 to show added, removed, changed, and stale artifacts, relationships, results, reviews, coverage, findings, and impacted downstream evidence."
+      "text": "Compare evidence baselines"
     },
     {
       "id": "uc-findings",
-      "text": "Create a hub-local finding from evidence, assign an owner and due date, record disposition and corrective action, attach review evidence, mark ready for closure, reverify, and close it with a tamper-evident history."
+      "text": "Close audit finding"
     },
     {
       "id": "uc-reviews",
-      "text": "Inspect review evidence and independence, record hub-local review decisions and comments, and relate them to artifacts and findings without changing authoritative source files."
+      "text": "Record assurance review"
     },
     {
       "id": "uc-refresh",
-      "text": "Run or inspect a refresh that scans and classifies supported artifacts, records extraction diagnostics, normalizes evidence, evaluates deterministic rules, and publishes a new immutable snapshot only when processing is reliable."
+      "text": "Refresh evidence snapshot"
     },
     {
       "id": "uc-package",
-      "text": "Create and export a deterministic audit package containing a manifest, selected dossiers, trace matrices, review evidence, findings, baseline metadata, hashes, and a synthetic-sample watermark when applicable."
+      "text": "Build audit package"
     },
     {
       "id": "uc-reset",
-      "text": "Edit findings, reviews, package selections, dispositions, and display preferences in a sandbox overlay for the sample workspace, then reset all sample changes to the bundled deterministic state."
+      "text": "Reset sample workspace"
     }
   ],
   "scenarios": [
@@ -186,11 +186,11 @@
     },
     {
       "id": "sc-6",
-      "text": "A refresh encounters a corrupt or unsupported artifact; explicit diagnostics are shown and the last valid snapshot remains current."
+      "text": "A refresh finds a corrupt or unsupported artifact. The application shows clear diagnostics and keeps the last valid snapshot."
     },
     {
       "id": "sc-7",
-      "text": "A project administrator connects a real project; later launches open the last real project by default while the sample remains available under Examples."
+      "text": "A project administrator connects a real project. The next launch opens that project. The sample stays available under Examples."
     },
     {
       "id": "sc-8",
@@ -256,21 +256,21 @@
     },
     {
       "id": "info-sample",
-      "text": "Synthetic AeroNav Flight Guidance Computer — Lateral Guidance dataset with components Mode Manager, Lateral Guidance, and Command Monitor; baselines 2.3.0 and 2.4.0; deterministic people, dates, identifiers, hashes, and relationships"
+      "text": "The synthetic AeroNav dataset contains Mode Manager, Lateral Guidance, and Command Monitor. It has two baselines and deterministic source data."
     },
     {
       "id": "info-sample-scale",
-      "text": "Sample inventory: 10 plans and standards, 18 system requirements, 36 HLRs, 54 LLRs, 6 derived requirements, 7 models or harnesses, 2 data dictionaries, about 140 model elements, 24 C/H files, about 105 functions, 64 tests, about 225 iterations, 6 result sets, about 45 reviews, about 18 change or problem records, 12 findings, and 2 baselines"
+      "text": "The sample has 10 plans, 18 system requirements, 36 HLRs, 54 LLRs, and 6 derived requirements. It has 7 models, 2 data dictionaries, 24 code files, 64 tests, 6 result sets, 45 reviews, 12 findings, and 2 baselines."
     },
     {
       "id": "info-sample-findings",
-      "text": "Twelve sample findings covering derived-requirement feedback, a broken LLR-to-model link, stale data-dictionary review, missing code trace, robustness-test failure, stale result hash, decision-coverage gap, missing independence evidence, obsolete configuration-index reference, unreverified problem report, approved standards deviation, and a finding ready for closure"
+      "text": "Sample findings cover requirement feedback, broken links, stale reviews, test failures, coverage gaps, missing independence, obsolete references, and open problem reports. They also include an approved deviation and a finding that is ready for closure."
     }
   ],
   "rules": [
     {
       "id": "rule-authority",
-      "text": "Connected engineering artifacts remain authoritative; the hub must not write changes back to requirements, trace, model, dictionary, source, test, result, spreadsheet, review, configuration, quality, or certification files."
+      "text": "Connected engineering artifacts remain authoritative. The hub must not write changes to lifecycle files."
     },
     {
       "id": "rule-local-workflow",
@@ -282,7 +282,7 @@
     },
     {
       "id": "rule-publish",
-      "text": "Required extraction and indexing failures prevent candidate publication; evidence gaps remain visible findings and do not by themselves suppress a reliable snapshot."
+      "text": "An extraction or indexing failure prevents candidate publication. An evidence gap stays visible and does not prevent a reliable snapshot."
     },
     {
       "id": "rule-fallback",
@@ -290,11 +290,11 @@
     },
     {
       "id": "rule-finding",
-      "text": "Deterministic findings are recalculated per snapshot; human findings retain attribution, history, disposition, and closure evidence."
+      "text": "The hub calculates deterministic findings for each snapshot. Human findings keep attribution, history, disposition, and closure evidence."
     },
     {
       "id": "rule-stale",
-      "text": "Evidence is stale when its recorded source revision or dependency hash differs from the selected snapshot, or when a dependency changed without required downstream regeneration or review."
+      "text": "Evidence is stale when its source revision or dependency hash differs from the selected snapshot. Evidence is also stale after an unreviewed dependency change."
     },
     {
       "id": "rule-phases",
@@ -306,7 +306,7 @@
     },
     {
       "id": "rule-shared-actions",
-      "text": "Every applicable evidence item supports opening its dossier, following traces, opening a source location, comparing baselines, inspecting provenance and hash, reviewing related findings and reviews, creating a hub-local finding, and adding it to a package."
+      "text": "Each evidence item provides its dossier, traces, source location, baseline comparison, source data, findings, reviews, and package controls."
     },
     {
       "id": "rule-sample-default",
@@ -322,7 +322,7 @@
     },
     {
       "id": "rule-sample-overlay",
-      "text": "Bundled sample evidence is immutable; sample findings, reviews, dispositions, packages, and preferences are stored in a resettable sandbox overlay."
+      "text": "Bundled sample evidence is immutable. A resettable sandbox stores sample findings, reviews, dispositions, packages, and preferences."
     },
     {
       "id": "rule-sample-export",
@@ -330,15 +330,15 @@
     },
     {
       "id": "rule-sample-portable",
-      "text": "The sample uses a normalized extraction snapshot representing synthetic proprietary-format artifacts; it must not disguise text or JSON as .slreqx, .slmx, .slx, .sldd, or .mldatx binaries."
+      "text": "The sample uses a normalized extraction snapshot for synthetic artifacts. It must not disguise text or JSON as proprietary binary files."
     },
     {
       "id": "rule-same-ui",
-      "text": "Sample and real projects use the same canonical APIs, domain model, routes, and components; there is no demo-only parallel interface."
+      "text": "Sample projects and real projects use the same APIs, domain model, routes, and components. The product has no demo-only interface."
     },
     {
       "id": "rule-objectives",
-      "text": "Do not bundle or reproduce copyrighted DO-178C or DO-331 objective text; use configurable identifiers and organization-provided licensed profiles."
+      "text": "Do not bundle copyrighted DO-178C or DO-331 objective text. Use configurable identifiers and licensed profiles."
     },
     {
       "id": "rule-claims",
@@ -350,7 +350,7 @@
     },
     {
       "id": "rule-coverage",
-      "text": "Coverage is imported from authoritative results; the hub does not calculate coverage."
+      "text": "The hub imports coverage from authoritative results. The hub does not calculate coverage."
     },
     {
       "id": "rule-compare",
@@ -372,7 +372,7 @@
   "externalSystems": [
     {
       "id": "ext-files",
-      "text": "Configured local or company-controlled Git workspaces and file stores containing plans, .slreqx, .slmx, .slx, .sldd, .m, .c, .h, .mldatx, .xlsx, coverage, review, CM, QA, and certification evidence"
+      "text": "Configured Git workspaces and file stores contain lifecycle evidence. The evidence can include plans, models, code, tests, results, reviews, configuration records, and certification records."
     },
     {
       "id": "ext-git",
@@ -402,11 +402,11 @@
     },
     {
       "id": "con-scale",
-      "text": "A real project may aggregate up to 5 repositories and approximately 1,000 requirements, 250,000 model or code elements, 5,000 tests, 1,000,000 trace links, and 2,000 retained snapshots."
+      "text": "A real project can use 5 repositories, 1,000 requirements, 250,000 elements, 5,000 tests, 1,000,000 links, and 2,000 snapshots."
     },
     {
       "id": "con-access",
-      "text": "The surrounding company environment controls access; the first release does not implement application-level identity or authorization."
+      "text": "The company environment controls access. The first release does not provide application identity or authorization."
     },
     {
       "id": "con-ui",
@@ -517,17 +517,17 @@
     {
       "id": "ac-10",
       "description": "Inspect representative artifact inventory.",
-      "expectedOutcome": "The sample visibly represents plans, .slreqx, .slmx, .slx, .sldd, .m, .c, .h, .mldatx, .xlsx, coverage, review, CM, QA, and certification records as normalized synthetic evidence, without counterfeit binary files."
+      "expectedOutcome": "The sample contains normalized synthetic lifecycle evidence for each supported artifact type. It does not contain counterfeit binary files."
     },
     {
       "id": "ac-11",
       "description": "Connect or select a real project after using the sample.",
-      "expectedOutcome": "The same routes and components render real normalized evidence; future launches prefer the last real project while Sample remains under Examples."
+      "expectedOutcome": "The same routes and components show real normalized evidence. The next launch opens the last real project. Sample stays under Examples."
     },
     {
       "id": "ac-12",
       "description": "Attempt to mutate an authoritative evidence artifact.",
-      "expectedOutcome": "No such control exists; only hub-local workflow records and sample overlay state can change."
+      "expectedOutcome": "No such control exists. Only hub-local workflow records and sample overlay state can change."
     },
     {
       "id": "ac-13",
@@ -560,6 +560,2017 @@
     }
   ],
   "unresolvedQuestions": [],
-  "contentHash": "21a8b8d730c7c15ab56d62abdc98f82759963007cfeece39080e66daf7f583f8",
-  "approvedAt": "2026-07-22T22:54:47.714Z"
+  "contentHash": "06b865ddcee646df0e509d18bc16ac32a55caecfbc4d1130f8e693e9aaed39b9",
+  "approvedAt": "2026-07-22T22:54:47.714Z",
+  "useCaseDefinitions": [
+    {
+      "id": "uc-findings",
+      "name": "Close audit finding",
+      "actorIds": [
+        "actor-vv",
+        "actor-qa",
+        "actor-lead"
+      ],
+      "trigger": "A reviewer opens an audit finding that is ready for work.",
+      "preconditions": [
+        "The selected snapshot contains evidence for an open finding."
+      ],
+      "mainFlow": [
+        {
+          "id": "uc-findings:step:open",
+          "order": 1,
+          "actorId": "actor-vv",
+          "action": "Inspect finding evidence",
+          "expectedResult": "The view shows the evidence revision and history.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "screenshot"
+        },
+        {
+          "id": "uc-findings:step:assign",
+          "order": 2,
+          "actorId": "actor-qa",
+          "action": "Assign finding owner",
+          "expectedResult": "The finding records the owner and due date.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        },
+        {
+          "id": "uc-findings:step:correct",
+          "order": 3,
+          "actorId": "actor-vv",
+          "action": "Record corrective action",
+          "expectedResult": "The finding records the corrective action.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        },
+        {
+          "id": "uc-findings:step:reverify",
+          "order": 4,
+          "actorId": "actor-lead",
+          "action": "Verify corrective action",
+          "expectedResult": "The finding records the verification result.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        },
+        {
+          "id": "uc-findings:step:close",
+          "order": 5,
+          "actorId": "actor-lead",
+          "action": "Close audit finding",
+          "expectedResult": "The finding closes with immutable history.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        }
+      ],
+      "alternatePaths": [
+        {
+          "id": "uc-findings:path:return",
+          "name": "Return audit finding",
+          "kind": "alternate",
+          "preconditions": [],
+          "steps": [
+            {
+              "id": "uc-findings:step:return",
+              "order": 1,
+              "actorId": "actor-qa",
+              "action": "Return finding",
+              "expectedResult": "The finding returns with the missing closure evidence.",
+              "inputIds": [],
+              "outputIds": [],
+              "ruleIds": [
+                "rule-authority",
+                "rule-local-workflow",
+                "rule-snapshot",
+                "rule-publish",
+                "rule-fallback",
+                "rule-finding",
+                "rule-stale",
+                "rule-phases",
+                "rule-shared-anatomy",
+                "rule-shared-actions",
+                "rule-sample-default",
+                "rule-sample-real",
+                "rule-sample-badge",
+                "rule-sample-overlay",
+                "rule-sample-export",
+                "rule-sample-portable",
+                "rule-same-ui",
+                "rule-objectives",
+                "rule-claims",
+                "rule-llr",
+                "rule-coverage",
+                "rule-compare",
+                "rule-security",
+                "rule-performance",
+                "rule-determinism"
+              ],
+              "evidencePolicy": "structured"
+            }
+          ],
+          "outcome": "The finding returns for more work."
+        }
+      ],
+      "failurePaths": [],
+      "recoveryPaths": [
+        {
+          "id": "uc-findings:path:update",
+          "name": "Update corrective action",
+          "kind": "recovery",
+          "preconditions": [],
+          "steps": [
+            {
+              "id": "uc-findings:step:update",
+              "order": 1,
+              "actorId": "actor-vv",
+              "action": "Update corrective action",
+              "expectedResult": "The finding records the revised corrective action.",
+              "inputIds": [],
+              "outputIds": [],
+              "ruleIds": [
+                "rule-authority",
+                "rule-local-workflow",
+                "rule-snapshot",
+                "rule-publish",
+                "rule-fallback",
+                "rule-finding",
+                "rule-stale",
+                "rule-phases",
+                "rule-shared-anatomy",
+                "rule-shared-actions",
+                "rule-sample-default",
+                "rule-sample-real",
+                "rule-sample-badge",
+                "rule-sample-overlay",
+                "rule-sample-export",
+                "rule-sample-portable",
+                "rule-same-ui",
+                "rule-objectives",
+                "rule-claims",
+                "rule-llr",
+                "rule-coverage",
+                "rule-compare",
+                "rule-security",
+                "rule-performance",
+                "rule-determinism"
+              ],
+              "evidencePolicy": "structured"
+            }
+          ],
+          "outcome": "The finding returns to closure review."
+        }
+      ],
+      "ruleIds": [
+        "rule-authority",
+        "rule-local-workflow",
+        "rule-snapshot",
+        "rule-publish",
+        "rule-fallback",
+        "rule-finding",
+        "rule-stale",
+        "rule-phases",
+        "rule-shared-anatomy",
+        "rule-shared-actions",
+        "rule-sample-default",
+        "rule-sample-real",
+        "rule-sample-badge",
+        "rule-sample-overlay",
+        "rule-sample-export",
+        "rule-sample-portable",
+        "rule-same-ui",
+        "rule-objectives",
+        "rule-claims",
+        "rule-llr",
+        "rule-coverage",
+        "rule-compare",
+        "rule-security",
+        "rule-performance",
+        "rule-determinism"
+      ],
+      "inputIds": [],
+      "outputIds": [],
+      "acceptanceCaseIds": [
+        "ac-7"
+      ],
+      "sourceRefs": [
+        "source-1",
+        "source-2",
+        "source-3"
+      ]
+    },
+    {
+      "id": "uc-reviews",
+      "name": "Record assurance review",
+      "actorIds": [
+        "actor-qa",
+        "actor-vv",
+        "actor-auditor"
+      ],
+      "trigger": "A reviewer starts an assurance review for the selected snapshot.",
+      "preconditions": [
+        "The reviewer has approved access to the selected snapshot."
+      ],
+      "mainFlow": [
+        {
+          "id": "uc-reviews:step:scope",
+          "order": 1,
+          "actorId": "actor-qa",
+          "action": "Select review evidence",
+          "expectedResult": "The review uses exact evidence revisions.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        },
+        {
+          "id": "uc-reviews:step:independence",
+          "order": 2,
+          "actorId": "actor-auditor",
+          "action": "Confirm reviewer independence",
+          "expectedResult": "The review records independence evidence.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        },
+        {
+          "id": "uc-reviews:step:inspect",
+          "order": 3,
+          "actorId": "actor-vv",
+          "action": "Inspect review history",
+          "expectedResult": "The view shows related traces and prior decisions.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "screenshot"
+        },
+        {
+          "id": "uc-reviews:step:decide",
+          "order": 4,
+          "actorId": "actor-auditor",
+          "action": "Record review decision",
+          "expectedResult": "The review appends the decision and comments.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        }
+      ],
+      "alternatePaths": [
+        {
+          "id": "uc-reviews:path:change",
+          "name": "Request review change",
+          "kind": "alternate",
+          "preconditions": [],
+          "steps": [
+            {
+              "id": "uc-reviews:step:change",
+              "order": 1,
+              "actorId": "actor-auditor",
+              "action": "Request review change",
+              "expectedResult": "The review records the required change.",
+              "inputIds": [],
+              "outputIds": [],
+              "ruleIds": [
+                "rule-authority",
+                "rule-local-workflow",
+                "rule-snapshot",
+                "rule-publish",
+                "rule-fallback",
+                "rule-finding",
+                "rule-stale",
+                "rule-phases",
+                "rule-shared-anatomy",
+                "rule-shared-actions",
+                "rule-sample-default",
+                "rule-sample-real",
+                "rule-sample-badge",
+                "rule-sample-overlay",
+                "rule-sample-export",
+                "rule-sample-portable",
+                "rule-same-ui",
+                "rule-objectives",
+                "rule-claims",
+                "rule-llr",
+                "rule-coverage",
+                "rule-compare",
+                "rule-security",
+                "rule-performance",
+                "rule-determinism"
+              ],
+              "evidencePolicy": "structured"
+            }
+          ],
+          "outcome": "The review records a required change."
+        }
+      ],
+      "failurePaths": [],
+      "recoveryPaths": [],
+      "ruleIds": [
+        "rule-authority",
+        "rule-local-workflow",
+        "rule-snapshot",
+        "rule-publish",
+        "rule-fallback",
+        "rule-finding",
+        "rule-stale",
+        "rule-phases",
+        "rule-shared-anatomy",
+        "rule-shared-actions",
+        "rule-sample-default",
+        "rule-sample-real",
+        "rule-sample-badge",
+        "rule-sample-overlay",
+        "rule-sample-export",
+        "rule-sample-portable",
+        "rule-same-ui",
+        "rule-objectives",
+        "rule-claims",
+        "rule-llr",
+        "rule-coverage",
+        "rule-compare",
+        "rule-security",
+        "rule-performance",
+        "rule-determinism"
+      ],
+      "inputIds": [],
+      "outputIds": [],
+      "acceptanceCaseIds": [
+        "ac-2"
+      ],
+      "sourceRefs": [
+        "source-1",
+        "source-2",
+        "source-3"
+      ]
+    },
+    {
+      "id": "uc-package",
+      "name": "Build audit package",
+      "actorIds": [
+        "actor-lead",
+        "actor-auditor",
+        "actor-cm"
+      ],
+      "trigger": "A certification lead starts an audit package export.",
+      "preconditions": [
+        "A published snapshot and package selection exist."
+      ],
+      "mainFlow": [
+        {
+          "id": "uc-package:step:select",
+          "order": 1,
+          "actorId": "actor-lead",
+          "action": "Select package evidence",
+          "expectedResult": "The selection includes required assurance evidence.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        },
+        {
+          "id": "uc-package:step:baseline",
+          "order": 2,
+          "actorId": "actor-cm",
+          "action": "Record baseline metadata",
+          "expectedResult": "The manifest records exact source revisions.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        },
+        {
+          "id": "uc-package:step:verify",
+          "order": 3,
+          "actorId": "actor-auditor",
+          "action": "Check package integrity",
+          "expectedResult": "Each package item passes its integrity checks.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        },
+        {
+          "id": "uc-package:step:watermark",
+          "order": 4,
+          "action": "Mark synthetic sample",
+          "expectedResult": "The watermark identifies sample evidence.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        },
+        {
+          "id": "uc-package:step:export",
+          "order": 5,
+          "actorId": "actor-lead",
+          "action": "Export audit package",
+          "expectedResult": "The adapter writes a reproducible package.",
+          "inputIds": [],
+          "outputIds": [],
+          "ruleIds": [
+            "rule-authority",
+            "rule-local-workflow",
+            "rule-snapshot",
+            "rule-publish",
+            "rule-fallback",
+            "rule-finding",
+            "rule-stale",
+            "rule-phases",
+            "rule-shared-anatomy",
+            "rule-shared-actions",
+            "rule-sample-default",
+            "rule-sample-real",
+            "rule-sample-badge",
+            "rule-sample-overlay",
+            "rule-sample-export",
+            "rule-sample-portable",
+            "rule-same-ui",
+            "rule-objectives",
+            "rule-claims",
+            "rule-llr",
+            "rule-coverage",
+            "rule-compare",
+            "rule-security",
+            "rule-performance",
+            "rule-determinism"
+          ],
+          "evidencePolicy": "structured"
+        }
+      ],
+      "alternatePaths": [
+        {
+          "id": "uc-package:path:remove",
+          "name": "Remove invalid item",
+          "kind": "alternate",
+          "preconditions": [],
+          "steps": [
+            {
+              "id": "uc-package:step:remove",
+              "order": 1,
+              "actorId": "actor-lead",
+              "action": "Remove invalid item",
+              "expectedResult": "The invalid item leaves the package selection.",
+              "inputIds": [],
+              "outputIds": [],
+              "ruleIds": [
+                "rule-authority",
+                "rule-local-workflow",
+                "rule-snapshot",
+                "rule-publish",
+                "rule-fallback",
+                "rule-finding",
+                "rule-stale",
+                "rule-phases",
+                "rule-shared-anatomy",
+                "rule-shared-actions",
+                "rule-sample-default",
+                "rule-sample-real",
+                "rule-sample-badge",
+                "rule-sample-overlay",
+                "rule-sample-export",
+                "rule-sample-portable",
+                "rule-same-ui",
+                "rule-objectives",
+                "rule-claims",
+                "rule-llr",
+                "rule-coverage",
+                "rule-compare",
+                "rule-security",
+                "rule-performance",
+                "rule-determinism"
+              ],
+              "evidencePolicy": "structured"
+            }
+          ],
+          "outcome": "The package selection excludes the invalid item."
+        }
+      ],
+      "failurePaths": [
+        {
+          "id": "uc-package:path:failure",
+          "name": "Retain last package",
+          "kind": "failure",
+          "preconditions": [],
+          "steps": [
+            {
+              "id": "uc-package:step:retain",
+              "order": 1,
+              "actorId": "actor-cm",
+              "action": "Retain last package",
+              "expectedResult": "The last valid package remains available.",
+              "inputIds": [],
+              "outputIds": [],
+              "ruleIds": [
+                "rule-authority",
+                "rule-local-workflow",
+                "rule-snapshot",
+                "rule-publish",
+                "rule-fallback",
+                "rule-finding",
+                "rule-stale",
+                "rule-phases",
+                "rule-shared-anatomy",
+                "rule-shared-actions",
+                "rule-sample-default",
+                "rule-sample-real",
+                "rule-sample-badge",
+                "rule-sample-overlay",
+                "rule-sample-export",
+                "rule-sample-portable",
+                "rule-same-ui",
+                "rule-objectives",
+                "rule-claims",
+                "rule-llr",
+                "rule-coverage",
+                "rule-compare",
+                "rule-security",
+                "rule-performance",
+                "rule-determinism"
+              ],
+              "evidencePolicy": "structured"
+            }
+          ],
+          "outcome": "The last valid package remains available."
+        }
+      ],
+      "recoveryPaths": [
+        {
+          "id": "uc-package:path:retry",
+          "name": "Retry package export",
+          "kind": "recovery",
+          "preconditions": [],
+          "steps": [
+            {
+              "id": "uc-package:step:retry",
+              "order": 1,
+              "actorId": "actor-lead",
+              "action": "Retry package export",
+              "expectedResult": "The hub starts another local export.",
+              "inputIds": [],
+              "outputIds": [],
+              "ruleIds": [
+                "rule-authority",
+                "rule-local-workflow",
+                "rule-snapshot",
+                "rule-publish",
+                "rule-fallback",
+                "rule-finding",
+                "rule-stale",
+                "rule-phases",
+                "rule-shared-anatomy",
+                "rule-shared-actions",
+                "rule-sample-default",
+                "rule-sample-real",
+                "rule-sample-badge",
+                "rule-sample-overlay",
+                "rule-sample-export",
+                "rule-sample-portable",
+                "rule-same-ui",
+                "rule-objectives",
+                "rule-claims",
+                "rule-llr",
+                "rule-coverage",
+                "rule-compare",
+                "rule-security",
+                "rule-performance",
+                "rule-determinism"
+              ],
+              "evidencePolicy": "structured"
+            }
+          ],
+          "outcome": "The hub retries the package export."
+        }
+      ],
+      "ruleIds": [
+        "rule-authority",
+        "rule-local-workflow",
+        "rule-snapshot",
+        "rule-publish",
+        "rule-fallback",
+        "rule-finding",
+        "rule-stale",
+        "rule-phases",
+        "rule-shared-anatomy",
+        "rule-shared-actions",
+        "rule-sample-default",
+        "rule-sample-real",
+        "rule-sample-badge",
+        "rule-sample-overlay",
+        "rule-sample-export",
+        "rule-sample-portable",
+        "rule-same-ui",
+        "rule-objectives",
+        "rule-claims",
+        "rule-llr",
+        "rule-coverage",
+        "rule-compare",
+        "rule-security",
+        "rule-performance",
+        "rule-determinism"
+      ],
+      "inputIds": [],
+      "outputIds": [],
+      "acceptanceCaseIds": [
+        "ac-9"
+      ],
+      "sourceRefs": [
+        "source-1",
+        "source-2",
+        "source-3"
+      ]
+    }
+  ],
+  "applicationWorkflows": [
+    {
+      "id": "workflow:uc-findings",
+      "useCaseId": "uc-findings",
+      "name": "Close audit finding",
+      "graph": {
+        "id": "workflow:uc-findings:graph",
+        "name": "Close audit finding",
+        "nodes": [
+          {
+            "id": "finding:start",
+            "kind": "initial",
+            "label": "Initial",
+            "description": "The finding workflow starts.",
+            "refinesIds": []
+          },
+          {
+            "id": "finding:inspect",
+            "kind": "action",
+            "label": "Inspect finding evidence",
+            "description": "The user sees the exact evidence revision and history.",
+            "refinesIds": [
+              "uc-findings:step:open"
+            ],
+            "actorId": "actor-vv"
+          },
+          {
+            "id": "finding:assign",
+            "kind": "action",
+            "label": "Assign finding owner",
+            "description": "The finding records the owner and due date.",
+            "refinesIds": [
+              "uc-findings:step:assign"
+            ],
+            "actorId": "actor-qa"
+          },
+          {
+            "id": "finding:correct",
+            "kind": "action",
+            "label": "Record corrective action",
+            "description": "The finding records the corrective action.",
+            "refinesIds": [
+              "uc-findings:step:correct"
+            ],
+            "actorId": "actor-vv"
+          },
+          {
+            "id": "finding:review-merge",
+            "kind": "merge",
+            "label": "Review request",
+            "description": "The workflow combines new and revised closure requests.",
+            "refinesIds": []
+          },
+          {
+            "id": "finding:ready",
+            "kind": "decision",
+            "label": "Closure evidence ready",
+            "description": "The workflow checks the closure evidence.",
+            "refinesIds": []
+          },
+          {
+            "id": "finding:return",
+            "kind": "action",
+            "label": "Return finding",
+            "description": "The finding returns to corrective action.",
+            "refinesIds": [
+              "uc-findings:step:return"
+            ],
+            "actorId": "actor-qa"
+          },
+          {
+            "id": "finding:reverify",
+            "kind": "action",
+            "label": "Verify corrective action",
+            "description": "The lead records the verification result.",
+            "refinesIds": [
+              "uc-findings:step:reverify"
+            ],
+            "actorId": "actor-lead"
+          },
+          {
+            "id": "finding:closure",
+            "kind": "decision",
+            "label": "Closure approved",
+            "description": "The workflow checks the closure decision.",
+            "refinesIds": []
+          },
+          {
+            "id": "finding:update",
+            "kind": "action",
+            "label": "Update corrective action",
+            "description": "The engineer updates the corrective action.",
+            "refinesIds": [
+              "uc-findings:step:update"
+            ],
+            "actorId": "actor-vv"
+          },
+          {
+            "id": "finding:close",
+            "kind": "action",
+            "label": "Close audit finding",
+            "description": "The finding closes with immutable history.",
+            "refinesIds": [
+              "uc-findings:step:close"
+            ],
+            "actorId": "actor-lead"
+          },
+          {
+            "id": "finding:end",
+            "kind": "final",
+            "label": "Final",
+            "description": "The finding workflow ends.",
+            "refinesIds": []
+          }
+        ],
+        "edges": [
+          {
+            "id": "workflow:uc-findings:graph:edge:start-inspect",
+            "fromNodeId": "finding:start",
+            "toNodeId": "finding:inspect",
+            "traceIds": [
+              "uc-findings:main",
+              "uc-findings:path:return",
+              "uc-findings:path:update"
+            ]
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:inspect-assign",
+            "fromNodeId": "finding:inspect",
+            "toNodeId": "finding:assign",
+            "traceIds": [
+              "uc-findings:main",
+              "uc-findings:path:return",
+              "uc-findings:path:update"
+            ]
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:assign-correct",
+            "fromNodeId": "finding:assign",
+            "toNodeId": "finding:correct",
+            "traceIds": [
+              "uc-findings:main",
+              "uc-findings:path:return",
+              "uc-findings:path:update"
+            ]
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:correct-merge",
+            "fromNodeId": "finding:correct",
+            "toNodeId": "finding:review-merge",
+            "traceIds": [
+              "uc-findings:main",
+              "uc-findings:path:return",
+              "uc-findings:path:update"
+            ]
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:merge-ready",
+            "fromNodeId": "finding:review-merge",
+            "toNodeId": "finding:ready",
+            "traceIds": [
+              "uc-findings:main",
+              "uc-findings:path:return",
+              "uc-findings:path:update"
+            ]
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:ready-reverify",
+            "fromNodeId": "finding:ready",
+            "toNodeId": "finding:reverify",
+            "traceIds": [
+              "uc-findings:main"
+            ],
+            "guard": "The closure evidence is complete.",
+            "outcome": "success"
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:ready-return",
+            "fromNodeId": "finding:ready",
+            "toNodeId": "finding:return",
+            "traceIds": [
+              "uc-findings:path:return"
+            ],
+            "guard": "The closure evidence is incomplete.",
+            "outcome": "alternate"
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:return-merge",
+            "fromNodeId": "finding:return",
+            "toNodeId": "finding:review-merge",
+            "traceIds": [
+              "uc-findings:path:return"
+            ],
+            "outcome": "recovery",
+            "loop": {
+              "exitCondition": "The closure evidence is complete.",
+              "maximumIterations": 3
+            }
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:reverify-closure",
+            "fromNodeId": "finding:reverify",
+            "toNodeId": "finding:closure",
+            "traceIds": [
+              "uc-findings:main",
+              "uc-findings:path:update"
+            ]
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:closure-close",
+            "fromNodeId": "finding:closure",
+            "toNodeId": "finding:close",
+            "traceIds": [
+              "uc-findings:main"
+            ],
+            "guard": "The closure decision is approved.",
+            "outcome": "success"
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:closure-update",
+            "fromNodeId": "finding:closure",
+            "toNodeId": "finding:update",
+            "traceIds": [
+              "uc-findings:path:update"
+            ],
+            "guard": "The closure decision needs changes.",
+            "outcome": "alternate"
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:update-merge",
+            "fromNodeId": "finding:update",
+            "toNodeId": "finding:review-merge",
+            "traceIds": [
+              "uc-findings:path:update"
+            ],
+            "outcome": "recovery",
+            "loop": {
+              "exitCondition": "The closure decision is approved.",
+              "maximumIterations": 2
+            }
+          },
+          {
+            "id": "workflow:uc-findings:graph:edge:close-end",
+            "fromNodeId": "finding:close",
+            "toNodeId": "finding:end",
+            "traceIds": [
+              "uc-findings:main"
+            ]
+          }
+        ]
+      },
+      "pathIds": [
+        "uc-findings:main",
+        "uc-findings:path:return",
+        "uc-findings:path:update"
+      ],
+      "acceptanceCaseIds": [
+        "ac-7"
+      ],
+      "sourceRefs": [
+        "source-1",
+        "source-2",
+        "source-3"
+      ]
+    },
+    {
+      "id": "workflow:uc-reviews",
+      "useCaseId": "uc-reviews",
+      "name": "Record assurance review",
+      "graph": {
+        "id": "workflow:uc-reviews:graph",
+        "name": "Record assurance review",
+        "nodes": [
+          {
+            "id": "review:start",
+            "kind": "initial",
+            "label": "Initial",
+            "description": "The review workflow starts.",
+            "refinesIds": []
+          },
+          {
+            "id": "review:select",
+            "kind": "action",
+            "label": "Select review evidence",
+            "description": "The user selects exact evidence revisions.",
+            "refinesIds": [
+              "uc-reviews:step:scope"
+            ],
+            "actorId": "actor-qa"
+          },
+          {
+            "id": "review:fork",
+            "kind": "fork",
+            "label": "Parallel review",
+            "description": "The workflow starts two independent checks.",
+            "refinesIds": []
+          },
+          {
+            "id": "review:independence",
+            "kind": "action",
+            "label": "Confirm reviewer independence",
+            "description": "The reviewer records independence evidence.",
+            "refinesIds": [
+              "uc-reviews:step:independence"
+            ],
+            "actorId": "actor-auditor"
+          },
+          {
+            "id": "review:inspect",
+            "kind": "action",
+            "label": "Inspect review history",
+            "description": "The engineer inspects prior review decisions.",
+            "refinesIds": [
+              "uc-reviews:step:inspect"
+            ],
+            "actorId": "actor-vv"
+          },
+          {
+            "id": "review:join",
+            "kind": "join",
+            "label": "Review checks complete",
+            "description": "The workflow waits for both checks.",
+            "refinesIds": []
+          },
+          {
+            "id": "review:accepted",
+            "kind": "decision",
+            "label": "Review accepted",
+            "description": "The auditor checks the review result.",
+            "refinesIds": []
+          },
+          {
+            "id": "review:request-change",
+            "kind": "action",
+            "label": "Request review change",
+            "description": "The auditor records a required change.",
+            "refinesIds": [
+              "uc-reviews:step:change"
+            ],
+            "actorId": "actor-auditor"
+          },
+          {
+            "id": "review:merge",
+            "kind": "merge",
+            "label": "Review decision",
+            "description": "The workflow combines the review paths.",
+            "refinesIds": []
+          },
+          {
+            "id": "review:record",
+            "kind": "action",
+            "label": "Record review decision",
+            "description": "The workflow appends the review decision.",
+            "refinesIds": [
+              "uc-reviews:step:decide"
+            ],
+            "actorId": "actor-auditor"
+          },
+          {
+            "id": "review:end",
+            "kind": "final",
+            "label": "Final",
+            "description": "The review workflow ends.",
+            "refinesIds": []
+          }
+        ],
+        "edges": [
+          {
+            "id": "workflow:uc-reviews:graph:edge:start-select",
+            "fromNodeId": "review:start",
+            "toNodeId": "review:select",
+            "traceIds": [
+              "uc-reviews:main",
+              "uc-reviews:path:change"
+            ]
+          },
+          {
+            "id": "workflow:uc-reviews:graph:edge:select-fork",
+            "fromNodeId": "review:select",
+            "toNodeId": "review:fork",
+            "traceIds": [
+              "uc-reviews:main",
+              "uc-reviews:path:change"
+            ]
+          },
+          {
+            "id": "workflow:uc-reviews:graph:edge:fork-independence",
+            "fromNodeId": "review:fork",
+            "toNodeId": "review:independence",
+            "traceIds": [
+              "uc-reviews:main",
+              "uc-reviews:path:change"
+            ]
+          },
+          {
+            "id": "workflow:uc-reviews:graph:edge:fork-inspect",
+            "fromNodeId": "review:fork",
+            "toNodeId": "review:inspect",
+            "traceIds": [
+              "uc-reviews:main",
+              "uc-reviews:path:change"
+            ]
+          },
+          {
+            "id": "workflow:uc-reviews:graph:edge:independence-join",
+            "fromNodeId": "review:independence",
+            "toNodeId": "review:join",
+            "traceIds": [
+              "uc-reviews:main",
+              "uc-reviews:path:change"
+            ]
+          },
+          {
+            "id": "workflow:uc-reviews:graph:edge:inspect-join",
+            "fromNodeId": "review:inspect",
+            "toNodeId": "review:join",
+            "traceIds": [
+              "uc-reviews:main",
+              "uc-reviews:path:change"
+            ]
+          },
+          {
+            "id": "workflow:uc-reviews:graph:edge:join-accepted",
+            "fromNodeId": "review:join",
+            "toNodeId": "review:accepted",
+            "traceIds": [
+              "uc-reviews:main",
+              "uc-reviews:path:change"
+            ]
+          },
+          {
+            "id": "workflow:uc-reviews:graph:edge:accepted-merge",
+            "fromNodeId": "review:accepted",
+            "toNodeId": "review:merge",
+            "traceIds": [
+              "uc-reviews:main"
+            ],
+            "guard": "The review evidence is acceptable.",
+            "outcome": "success"
+          },
+          {
+            "id": "workflow:uc-reviews:graph:edge:accepted-change",
+            "fromNodeId": "review:accepted",
+            "toNodeId": "review:request-change",
+            "traceIds": [
+              "uc-reviews:path:change"
+            ],
+            "guard": "The review evidence needs changes.",
+            "outcome": "alternate"
+          },
+          {
+            "id": "workflow:uc-reviews:graph:edge:change-merge",
+            "fromNodeId": "review:request-change",
+            "toNodeId": "review:merge",
+            "traceIds": [
+              "uc-reviews:path:change"
+            ]
+          },
+          {
+            "id": "workflow:uc-reviews:graph:edge:merge-record",
+            "fromNodeId": "review:merge",
+            "toNodeId": "review:record",
+            "traceIds": [
+              "uc-reviews:main",
+              "uc-reviews:path:change"
+            ]
+          },
+          {
+            "id": "workflow:uc-reviews:graph:edge:record-end",
+            "fromNodeId": "review:record",
+            "toNodeId": "review:end",
+            "traceIds": [
+              "uc-reviews:main",
+              "uc-reviews:path:change"
+            ]
+          }
+        ]
+      },
+      "pathIds": [
+        "uc-reviews:main",
+        "uc-reviews:path:change"
+      ],
+      "acceptanceCaseIds": [
+        "ac-2"
+      ],
+      "sourceRefs": [
+        "source-1",
+        "source-2",
+        "source-3"
+      ]
+    },
+    {
+      "id": "workflow:uc-package",
+      "useCaseId": "uc-package",
+      "name": "Build audit package",
+      "graph": {
+        "id": "workflow:uc-package:graph",
+        "name": "Build audit package",
+        "nodes": [
+          {
+            "id": "package:start",
+            "kind": "initial",
+            "label": "Initial",
+            "description": "The package workflow starts.",
+            "refinesIds": []
+          },
+          {
+            "id": "package:select",
+            "kind": "action",
+            "label": "Select package evidence",
+            "description": "The lead selects evidence for the package.",
+            "refinesIds": [
+              "uc-package:step:select"
+            ],
+            "actorId": "actor-lead"
+          },
+          {
+            "id": "package:baseline",
+            "kind": "action",
+            "label": "Record baseline metadata",
+            "description": "The engineer records exact source revisions.",
+            "refinesIds": [
+              "uc-package:step:baseline"
+            ],
+            "actorId": "actor-cm"
+          },
+          {
+            "id": "package:selection-merge",
+            "kind": "merge",
+            "label": "Package selection",
+            "description": "The workflow combines new and corrected selections.",
+            "refinesIds": []
+          },
+          {
+            "id": "package:check",
+            "kind": "action",
+            "label": "Check package integrity",
+            "description": "The auditor checks hashes and source data.",
+            "refinesIds": [
+              "uc-package:step:verify"
+            ],
+            "actorId": "actor-auditor"
+          },
+          {
+            "id": "package:valid",
+            "kind": "decision",
+            "label": "Package valid",
+            "description": "The workflow checks package integrity.",
+            "refinesIds": []
+          },
+          {
+            "id": "package:remove",
+            "kind": "action",
+            "label": "Remove invalid item",
+            "description": "The lead removes invalid evidence.",
+            "refinesIds": [
+              "uc-package:step:remove"
+            ],
+            "actorId": "actor-lead"
+          },
+          {
+            "id": "package:watermark",
+            "kind": "action",
+            "label": "Mark synthetic sample",
+            "description": "The package records the sample watermark.",
+            "refinesIds": [
+              "uc-package:step:watermark"
+            ]
+          },
+          {
+            "id": "package:export",
+            "kind": "action",
+            "label": "Export audit package",
+            "description": "The adapter writes the package and manifest.",
+            "refinesIds": [
+              "uc-package:step:export"
+            ],
+            "actorId": "actor-lead"
+          },
+          {
+            "id": "package:exported",
+            "kind": "decision",
+            "label": "Export complete",
+            "description": "The workflow checks the export result.",
+            "refinesIds": []
+          },
+          {
+            "id": "package:retain",
+            "kind": "action",
+            "label": "Retain last package",
+            "description": "The hub keeps the last valid package.",
+            "refinesIds": [
+              "uc-package:step:retain"
+            ],
+            "actorId": "actor-cm"
+          },
+          {
+            "id": "package:retry",
+            "kind": "action",
+            "label": "Retry package export",
+            "description": "The lead retries the local export.",
+            "refinesIds": [
+              "uc-package:step:retry"
+            ],
+            "actorId": "actor-lead"
+          },
+          {
+            "id": "package:end",
+            "kind": "final",
+            "label": "Final",
+            "description": "The package workflow ends.",
+            "refinesIds": []
+          }
+        ],
+        "edges": [
+          {
+            "id": "workflow:uc-package:graph:edge:start-select",
+            "fromNodeId": "package:start",
+            "toNodeId": "package:select",
+            "traceIds": [
+              "uc-package:main",
+              "uc-package:path:remove",
+              "uc-package:path:failure",
+              "uc-package:path:retry"
+            ]
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:select-baseline",
+            "fromNodeId": "package:select",
+            "toNodeId": "package:baseline",
+            "traceIds": [
+              "uc-package:main",
+              "uc-package:path:remove",
+              "uc-package:path:failure",
+              "uc-package:path:retry"
+            ]
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:baseline-merge",
+            "fromNodeId": "package:baseline",
+            "toNodeId": "package:selection-merge",
+            "traceIds": [
+              "uc-package:main",
+              "uc-package:path:remove",
+              "uc-package:path:failure",
+              "uc-package:path:retry"
+            ]
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:merge-check",
+            "fromNodeId": "package:selection-merge",
+            "toNodeId": "package:check",
+            "traceIds": [
+              "uc-package:main",
+              "uc-package:path:remove",
+              "uc-package:path:failure",
+              "uc-package:path:retry"
+            ]
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:check-valid",
+            "fromNodeId": "package:check",
+            "toNodeId": "package:valid",
+            "traceIds": [
+              "uc-package:main",
+              "uc-package:path:remove",
+              "uc-package:path:failure",
+              "uc-package:path:retry"
+            ]
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:valid-watermark",
+            "fromNodeId": "package:valid",
+            "toNodeId": "package:watermark",
+            "traceIds": [
+              "uc-package:main",
+              "uc-package:path:failure",
+              "uc-package:path:retry"
+            ],
+            "guard": "All package items are valid.",
+            "outcome": "success"
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:valid-remove",
+            "fromNodeId": "package:valid",
+            "toNodeId": "package:remove",
+            "traceIds": [
+              "uc-package:path:remove"
+            ],
+            "guard": "A package item is invalid.",
+            "outcome": "alternate"
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:remove-merge",
+            "fromNodeId": "package:remove",
+            "toNodeId": "package:selection-merge",
+            "traceIds": [
+              "uc-package:path:remove"
+            ],
+            "loop": {
+              "exitCondition": "All package items are valid.",
+              "maximumIterations": 10
+            },
+            "outcome": "recovery"
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:watermark-export",
+            "fromNodeId": "package:watermark",
+            "toNodeId": "package:export",
+            "traceIds": [
+              "uc-package:main",
+              "uc-package:path:failure",
+              "uc-package:path:retry"
+            ]
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:export-result",
+            "fromNodeId": "package:export",
+            "toNodeId": "package:exported",
+            "traceIds": [
+              "uc-package:main",
+              "uc-package:path:failure",
+              "uc-package:path:retry"
+            ]
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:exported-end",
+            "fromNodeId": "package:exported",
+            "toNodeId": "package:end",
+            "traceIds": [
+              "uc-package:main"
+            ],
+            "guard": "The package export is complete.",
+            "outcome": "success"
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:exported-retain",
+            "fromNodeId": "package:exported",
+            "toNodeId": "package:retain",
+            "traceIds": [
+              "uc-package:path:failure",
+              "uc-package:path:retry"
+            ],
+            "guard": "The package export failed.",
+            "outcome": "failure"
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:retain-retry",
+            "fromNodeId": "package:retain",
+            "toNodeId": "package:retry",
+            "traceIds": [
+              "uc-package:path:retry"
+            ],
+            "outcome": "recovery"
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:retry-export",
+            "fromNodeId": "package:retry",
+            "toNodeId": "package:export",
+            "traceIds": [
+              "uc-package:path:retry"
+            ],
+            "loop": {
+              "exitCondition": "The package export is complete.",
+              "maximumIterations": 3
+            },
+            "outcome": "recovery"
+          },
+          {
+            "id": "workflow:uc-package:graph:edge:retain-end",
+            "fromNodeId": "package:retain",
+            "toNodeId": "package:end",
+            "traceIds": [
+              "uc-package:path:failure"
+            ],
+            "outcome": "failure"
+          }
+        ]
+      },
+      "pathIds": [
+        "uc-package:main",
+        "uc-package:path:remove",
+        "uc-package:path:failure",
+        "uc-package:path:retry"
+      ],
+      "acceptanceCaseIds": [
+        "ac-9"
+      ],
+      "sourceRefs": [
+        "source-1",
+        "source-2",
+        "source-3"
+      ]
+    }
+  ],
+  "scenarioDefinitions": [
+    {
+      "id": "uc-findings:scenario:main",
+      "useCaseId": "uc-findings",
+      "pathId": "uc-findings:main",
+      "workflowId": "workflow:uc-findings",
+      "workflowNodeIds": [
+        "finding:inspect",
+        "finding:assign",
+        "finding:correct",
+        "finding:reverify",
+        "finding:close"
+      ],
+      "name": "Close audit finding",
+      "kind": "main",
+      "stepIds": [
+        "uc-findings:step:open",
+        "uc-findings:step:assign",
+        "uc-findings:step:correct",
+        "uc-findings:step:reverify",
+        "uc-findings:step:close"
+      ],
+      "tags": [
+        "uc-findings",
+        "workflow:uc-findings",
+        "main"
+      ],
+      "requiredEvidence": "either"
+    },
+    {
+      "id": "uc-findings:scenario:return",
+      "useCaseId": "uc-findings",
+      "pathId": "uc-findings:path:return",
+      "workflowId": "workflow:uc-findings",
+      "workflowNodeIds": [
+        "finding:inspect",
+        "finding:assign",
+        "finding:correct",
+        "finding:return"
+      ],
+      "name": "Return audit finding",
+      "kind": "alternate",
+      "stepIds": [
+        "uc-findings:step:open",
+        "uc-findings:step:assign",
+        "uc-findings:step:correct",
+        "uc-findings:step:return"
+      ],
+      "tags": [
+        "uc-findings",
+        "workflow:uc-findings",
+        "alternate"
+      ],
+      "requiredEvidence": "either"
+    },
+    {
+      "id": "uc-findings:scenario:update",
+      "useCaseId": "uc-findings",
+      "pathId": "uc-findings:path:update",
+      "workflowId": "workflow:uc-findings",
+      "workflowNodeIds": [
+        "finding:inspect",
+        "finding:assign",
+        "finding:correct"
+      ],
+      "name": "Update corrective action",
+      "kind": "recovery",
+      "stepIds": [
+        "uc-findings:step:open",
+        "uc-findings:step:assign",
+        "uc-findings:step:correct"
+      ],
+      "tags": [
+        "uc-findings",
+        "workflow:uc-findings",
+        "recovery"
+      ],
+      "requiredEvidence": "either"
+    },
+    {
+      "id": "uc-reviews:scenario:main",
+      "useCaseId": "uc-reviews",
+      "pathId": "uc-reviews:main",
+      "workflowId": "workflow:uc-reviews",
+      "workflowNodeIds": [
+        "review:select",
+        "review:independence",
+        "review:inspect",
+        "review:record"
+      ],
+      "name": "Record assurance review",
+      "kind": "main",
+      "stepIds": [
+        "uc-reviews:step:scope",
+        "uc-reviews:step:independence",
+        "uc-reviews:step:inspect",
+        "uc-reviews:step:decide"
+      ],
+      "tags": [
+        "uc-reviews",
+        "workflow:uc-reviews",
+        "main"
+      ],
+      "requiredEvidence": "either"
+    },
+    {
+      "id": "uc-reviews:scenario:change",
+      "useCaseId": "uc-reviews",
+      "pathId": "uc-reviews:path:change",
+      "workflowId": "workflow:uc-reviews",
+      "workflowNodeIds": [
+        "review:select",
+        "review:independence",
+        "review:inspect",
+        "review:request-change",
+        "review:record"
+      ],
+      "name": "Request review change",
+      "kind": "alternate",
+      "stepIds": [
+        "uc-reviews:step:scope",
+        "uc-reviews:step:independence",
+        "uc-reviews:step:inspect",
+        "uc-reviews:step:change",
+        "uc-reviews:step:decide"
+      ],
+      "tags": [
+        "uc-reviews",
+        "workflow:uc-reviews",
+        "alternate"
+      ],
+      "requiredEvidence": "either"
+    },
+    {
+      "id": "uc-package:scenario:main",
+      "useCaseId": "uc-package",
+      "pathId": "uc-package:main",
+      "workflowId": "workflow:uc-package",
+      "workflowNodeIds": [
+        "package:select",
+        "package:baseline",
+        "package:check",
+        "package:watermark",
+        "package:export"
+      ],
+      "name": "Build audit package",
+      "kind": "main",
+      "stepIds": [
+        "uc-package:step:select",
+        "uc-package:step:baseline",
+        "uc-package:step:verify",
+        "uc-package:step:watermark",
+        "uc-package:step:export"
+      ],
+      "tags": [
+        "uc-package",
+        "workflow:uc-package",
+        "main"
+      ],
+      "requiredEvidence": "structured"
+    },
+    {
+      "id": "uc-package:scenario:remove",
+      "useCaseId": "uc-package",
+      "pathId": "uc-package:path:remove",
+      "workflowId": "workflow:uc-package",
+      "workflowNodeIds": [
+        "package:select",
+        "package:baseline",
+        "package:check",
+        "package:remove"
+      ],
+      "name": "Remove invalid item",
+      "kind": "alternate",
+      "stepIds": [
+        "uc-package:step:select",
+        "uc-package:step:baseline",
+        "uc-package:step:verify",
+        "uc-package:step:remove"
+      ],
+      "tags": [
+        "uc-package",
+        "workflow:uc-package",
+        "alternate"
+      ],
+      "requiredEvidence": "structured"
+    },
+    {
+      "id": "uc-package:scenario:failure",
+      "useCaseId": "uc-package",
+      "pathId": "uc-package:path:failure",
+      "workflowId": "workflow:uc-package",
+      "workflowNodeIds": [
+        "package:select",
+        "package:baseline",
+        "package:check",
+        "package:watermark",
+        "package:export",
+        "package:retain"
+      ],
+      "name": "Retain last package",
+      "kind": "failure",
+      "stepIds": [
+        "uc-package:step:select",
+        "uc-package:step:baseline",
+        "uc-package:step:verify",
+        "uc-package:step:watermark",
+        "uc-package:step:export",
+        "uc-package:step:retain"
+      ],
+      "tags": [
+        "uc-package",
+        "workflow:uc-package",
+        "failure"
+      ],
+      "requiredEvidence": "structured"
+    },
+    {
+      "id": "uc-package:scenario:retry",
+      "useCaseId": "uc-package",
+      "pathId": "uc-package:path:retry",
+      "workflowId": "workflow:uc-package",
+      "workflowNodeIds": [
+        "package:select",
+        "package:baseline",
+        "package:check",
+        "package:watermark",
+        "package:export",
+        "package:retain",
+        "package:retry"
+      ],
+      "name": "Retry package export",
+      "kind": "recovery",
+      "stepIds": [
+        "uc-package:step:select",
+        "uc-package:step:baseline",
+        "uc-package:step:verify",
+        "uc-package:step:watermark",
+        "uc-package:step:export",
+        "uc-package:step:retain",
+        "uc-package:step:retry"
+      ],
+      "tags": [
+        "uc-package",
+        "workflow:uc-package",
+        "recovery"
+      ],
+      "requiredEvidence": "structured"
+    }
+  ]
 }

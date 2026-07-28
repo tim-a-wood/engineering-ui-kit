@@ -103,7 +103,7 @@ export function buildUiModuleTaskFields(
       : []),
   ].join('\n\n')
   return {
-    taskTitle: `Build UI from approved capability spec: ${manifest.name}`,
+    taskTitle: `Build ${manifest.name}`,
     goal: requirementSpec,
     scope: [
       `Approved module: ${manifest.moduleId} @ ${manifest.moduleVersion}`,

@@ -95,6 +95,23 @@ describe('CAP-TEST-073 foundation approval gate and brief deployment enrichment'
     expect(() => ws.approveFoundation('proj-1', ambiguousPlan)).toThrow()
     expect(ws.getApprovedFoundation('proj-1')).toBeUndefined()
 
+    const nonStePlan = {
+      ...plan,
+      deployables: plan.deployables.map((deployable, index) => index === 0
+        ? {
+            ...deployable,
+            proposedLocations: deployable.proposedLocations.map((location) => ({
+              ...location,
+              evidence: 'The repository identifies the path; the manifest identifies the host.',
+            })),
+          }
+        : deployable),
+    }
+    expect(() => ws.approveFoundation('proj-1', nonStePlan)).toThrow(
+      /STE-PUNCTUATION-SEMICOLON/,
+    )
+    expect(ws.getApprovedFoundation('proj-1')).toBeUndefined()
+
     ws.approveFoundation('proj-1', plan)
     const approvedFoundation = ws.getApprovedFoundation('proj-1')
     expect(approvedFoundation).toEqual(plan)

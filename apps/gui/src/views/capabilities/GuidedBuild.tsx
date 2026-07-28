@@ -36,6 +36,7 @@ type Props = {
   previewRef?: React.RefObject<CapabilityPreviewHandle | null>
   onProjectChanged?: () => Promise<void> | void
   entryPointsReady?: boolean
+  requireModuleDesigns?: boolean
 }
 
 export function GuidedBuild(props: Props) {
@@ -213,6 +214,7 @@ export function GuidedBuild(props: Props) {
             onStartUiBuild={props.onStartUiBuild}
             approvedFoundation={props.approvedFoundation}
             foundationGate={props.foundationGate}
+            requireModuleDesigns={props.requireModuleDesigns}
           />
         ) : (
           <p role="status" className="capabilities-note">Select a module to work on.</p>
@@ -239,7 +241,7 @@ export function GuidedBuild(props: Props) {
           modulesReady={modulesReady}
         />
       </section>
-      <section id="cap-build-shared-setup" className="cap-build-phase" aria-label="Prepare shared application setup">
+      <section id="cap-build-shared-setup" className="cap-build-phase" aria-label="Shared application setup">
         <IntegrationWorkspace
           bridge={props.bridge}
           projectId={props.projectId}

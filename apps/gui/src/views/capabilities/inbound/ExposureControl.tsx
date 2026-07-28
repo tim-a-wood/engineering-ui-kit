@@ -5,6 +5,7 @@
  * field change.
  */
 
+import type { ChangeEvent } from 'react'
 import type { ExposureLevel } from '@engineering-ui-kit/core'
 import { DEFAULT_EXPOSURE } from './inboundBinding'
 
@@ -18,6 +19,14 @@ const ELEVATED_LEVELS: ExposureLevel[] = ['protected', 'public']
 export function ExposureControl({ exposure, onChange }: Props) {
   const elevated = exposure !== DEFAULT_EXPOSURE
 
+  function changeExternalAccess(event: ChangeEvent<HTMLInputElement>) {
+    onChange(event.target.checked ? 'protected' : DEFAULT_EXPOSURE)
+  }
+
+  function changeExposure(event: ChangeEvent<HTMLSelectElement>) {
+    onChange(event.target.value as ExposureLevel)
+  }
+
   return (
     <div className="cap-exposure-control" role="group" aria-label="Exposure">
       <p className="capabilities-note">
@@ -27,10 +36,10 @@ export function ExposureControl({ exposure, onChange }: Props) {
         <input
           type="checkbox"
           checked={elevated}
-          aria-label="Allow this entry point to be reached from outside this application"
-          onChange={(e) => onChange(e.target.checked ? 'protected' : DEFAULT_EXPOSURE)}
+          aria-label="Allow external access"
+          onChange={changeExternalAccess}
         />
-        Allow this entry point to be reached from outside this application
+        Allow external access
       </label>
       {elevated ? (
         <label className="cap-connect-field">
@@ -38,11 +47,11 @@ export function ExposureControl({ exposure, onChange }: Props) {
           <select
             aria-label="Exposure level"
             value={exposure}
-            onChange={(e) => onChange(e.target.value as ExposureLevel)}
+            onChange={changeExposure}
           >
             {ELEVATED_LEVELS.map((level) => (
               <option key={level} value={level}>
-                {level === 'protected' ? 'Protected (trusted callers only)' : 'Public (any caller)'}
+                {level === 'protected' ? 'Protected: trusted callers' : 'Public: all callers'}
               </option>
             ))}
           </select>

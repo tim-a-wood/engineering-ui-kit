@@ -10,11 +10,19 @@ import type {
   DeployableKind,
   DeployableSpecification,
   ModuleImplementationSpecification,
+  ModuleDesignSpecification,
   ModuleManifest,
   ModuleType,
   OperationContract,
   RuntimeLanguage,
 } from './types.js'
+import {
+  assertSteProfile,
+  checkSteEntries,
+  type SteLexicon,
+  type SteCheckResult,
+  type SteTextEntry,
+} from './simplifiedTechnicalEnglish.js'
 
 export type RepositoryImplementationContext = {
   repositoryName: string
@@ -90,6 +98,17 @@ export type ModuleImplementationBrief = {
     adapterAllocations: ArchitectureSpecification['adapterAllocations']
     workflowTraces: ArchitectureSpecification['workflowTraces']
   }
+  moduleDesign?: {
+    revision: string
+    contentHash: string
+    trace: ModuleDesignSpecification['trace']
+    boundary: ModuleDesignSpecification['boundary']
+    behavior: ModuleDesignSpecification['behavior']
+    data: ModuleDesignSpecification['data']
+    runtime: ModuleDesignSpecification['runtime']
+    verification: ModuleDesignSpecification['verification']
+    diagramRefs: { id: string; kind: string; contentHash: string }[]
+  }
   repositoryContext: RepositoryImplementationContext
   /**
    * Generated-deployment references (WP5A-core enrichment): which deployable
@@ -124,7 +143,7 @@ const COMMON_PROFILE = {
   profileId: 'hexagonal-ports-and-adapters' as const,
   version: '1.0' as const,
   dependencyRules: [
-    'Dependencies point toward application and domain policy; adapters depend on ports, never the reverse.',
+    'Point dependencies toward application and domain policy. Make adapters depend on ports, not the reverse.',
     'Cross-module behavior is invoked through an explicit provided or required operation boundary.',
     'Do not import another module’s internal implementation or duplicate its owned concerns.',
     'Keep infrastructure, transport, storage, and presentation details outside domain policy.',
@@ -133,7 +152,7 @@ const COMMON_PROFILE = {
     'Represent provided operations as stable inbound ports and required operations as outbound ports.',
     'Use repository-native types while preserving the approved operation identifiers and contract versions.',
     'Validate data at the boundary and translate technical failures without hiding domain rejections.',
-    'Do not invent an operation contract when approved detail is missing; identify the exact missing decision.',
+    'Do not invent an operation contract when approved detail is missing. Identify the exact missing decision.',
   ],
   testingRules: [
     'Trace every approved acceptance case to at least one automated test.',
@@ -173,7 +192,7 @@ const TYPE_PROFILE: Record<ModuleType, Pick<ModuleReferenceProfile, 'role' | 'im
     implementationRules: [
       'Isolate vendor and protocol types inside the adapter and map them at the port boundary.',
       'Implement approved authentication references, timeouts, cancellation, compatibility, and failure mapping.',
-      'Never embed secret values; consume the repository’s configuration or secret-reference mechanism.',
+      'Never embed secret values. Use the repository’s configuration or secret-reference mechanism.',
     ],
   },
   platform: {
@@ -223,7 +242,7 @@ function readinessIssues(
       code: 'IMPLEMENTATION-BRIEF-INTERVIEW-DETAIL',
       severity: 'warning',
       message: 'The approved module predates preservation of the complete interview outcome.',
-      resolution: 'Use the approved manifest and repository context; revisit the module interview only if behavior remains ambiguous.',
+      resolution: 'Use the approved manifest and repository context. Revisit the module interview only if behavior remains ambiguous.',
     })
   }
   if (!(interview?.acceptanceCases?.length)) {
@@ -240,7 +259,7 @@ function readinessIssues(
       code: 'IMPLEMENTATION-BRIEF-OPERATION-DETAIL',
       severity: 'warning',
       message: 'Provided operation identifiers exist without preserved input/output interview detail.',
-      resolution: 'Inspect existing contracts in the repository; do not invent incompatible boundary shapes.',
+      resolution: 'Inspect existing contracts in the repository. Do not invent incompatible boundary shapes.',
     })
   }
   const availableContractIds = new Set([
@@ -255,7 +274,7 @@ function readinessIssues(
         code: 'IMPLEMENTATION-BRIEF-PROVIDED-CONTRACT',
         severity: 'warning',
         message: `Detailed contract ${operation.operationId}@${operation.contractVersion} is not preserved with this module.`,
-        resolution: 'Use an existing repository contract if it is authoritative; otherwise revisit only this module contract before implementation.',
+        resolution: 'Use an authoritative repository contract. Otherwise, revisit only this module contract before implementation.',
       })
     }
   }
@@ -265,7 +284,7 @@ function readinessIssues(
         code: 'IMPLEMENTATION-BRIEF-REQUIRED-CONTRACT',
         severity: 'warning',
         message: `The approved provider contract for required operation ${operation.operationId} is not available.`,
-        resolution: 'Inspect the provider module or existing repository contract; do not invent an incompatible dependency interface.',
+        resolution: 'Inspect the provider module or repository contract. Do not invent an incompatible dependency interface.',
       })
     }
   }
@@ -286,26 +305,215 @@ function implementationPlan(
   repository: RepositoryImplementationContext,
 ): string[] {
   const profile = referenceArchitectureFor(manifest.moduleType)
+  const firstExistingFile = repository.existingFilesInScope.find(
+    (file) => !/(?:^|[./_-])test(?:[./_-]|$)|\.spec\./i.test(file),
+  ) ?? repository.existingFilesInScope[0]
   const firstPath = repository.existingFilesInScope.length
-    ? `Inspect the existing in-scope files first: ${repository.existingFilesInScope.slice(0, 8).join(', ')}.`
-    : `Inspect the nearby repository patterns before creating files under: ${manifest.ownedPaths.join(', ')}.`
+    ? `Inspect this existing file first: ${firstExistingFile}.`
+    : `Inspect the nearby repository patterns before you create files under ${manifest.ownedPaths[0] ?? 'the approved path'}.`
   const acceptance = interview?.acceptanceCases?.length
     ? `Implement the ${interview.acceptanceCases.length} approved acceptance case(s) and keep their IDs in test names or comments for traceability.`
     : 'Implement the approved responsibility and convert each observable outcome into an automated test.'
   return [
     firstPath,
     `Follow the ${profile.profileId} ${profile.version} role and dependency rules for a ${manifest.moduleType} module.`,
-    'Define or update the module’s public ports using the approved provided and required operations; reuse existing repository contract types where present.',
+    'Define the module’s public ports from the approved operations. Reuse repository contract types when they exist.',
     ...profile.implementationRules,
     acceptance,
     'Run the configured verification commands, fix failures caused by this change, and return only the changed implementation and test files.',
   ]
 }
 
+/** Check all human-facing prose emitted in the implementation brief. */
+export function evaluateImplementationBriefSte(
+  brief: ModuleImplementationBrief,
+  lexicon?: SteLexicon,
+): SteCheckResult {
+  const operationContractEntries = (
+    contracts: readonly OperationContract[],
+    fieldPath: string,
+  ): SteTextEntry[] => contracts.flatMap((contract, contractIndex) => [
+    ...contract.preconditions.map((text, index) => ({
+      text,
+      textClass: 'description' as const,
+      fieldPath: `${fieldPath}.${contractIndex}.preconditions.${index}`,
+    })),
+    ...contract.postconditions.map((text, index) => ({
+      text,
+      textClass: 'description' as const,
+      fieldPath: `${fieldPath}.${contractIndex}.postconditions.${index}`,
+    })),
+    ...contract.domainRejections.map((text, index) => ({
+      text,
+      textClass: 'description' as const,
+      fieldPath: `${fieldPath}.${contractIndex}.domainRejections.${index}`,
+    })),
+    ...contract.technicalErrors.map((text, index) => ({
+      text,
+      textClass: 'description' as const,
+      fieldPath: `${fieldPath}.${contractIndex}.technicalErrors.${index}`,
+    })),
+    ...contract.sideEffects.map((text, index) => ({
+      text,
+      textClass: 'description' as const,
+      fieldPath: `${fieldPath}.${contractIndex}.sideEffects.${index}`,
+    })),
+  ])
+  const entries: SteTextEntry[] = [
+    {
+      text: brief.target.name,
+      textClass: 'technical-name',
+      fieldPath: 'target.name',
+    },
+    {
+      text: brief.target.responsibility,
+      textClass: 'description',
+      fieldPath: 'target.responsibility',
+    },
+    ...brief.approvedSpecification.ownedConcerns.map((text, index) => ({
+      text,
+      textClass: 'technical-name' as const,
+      fieldPath: `approvedSpecification.ownedConcerns.${index}`,
+    })),
+    ...brief.approvedSpecification.excludedConcerns.map((text, index) => ({
+      text,
+      textClass: 'technical-name' as const,
+      fieldPath: `approvedSpecification.excludedConcerns.${index}`,
+    })),
+    ...brief.approvedSpecification.detailAnswers.map((answer, index) => ({
+      text: answer.text,
+      textClass: 'description' as const,
+      fieldPath: `approvedSpecification.detailAnswers.${index}.text`,
+    })),
+    ...brief.approvedSpecification.rules.map((rule, index) => ({
+      text: rule.text,
+      textClass: 'description' as const,
+      fieldPath: `approvedSpecification.rules.${index}.text`,
+    })),
+    ...brief.approvedSpecification.acceptanceCases.flatMap((acceptanceCase, index) => [
+      {
+        text: acceptanceCase.description,
+        textClass: 'description' as const,
+        fieldPath: `approvedSpecification.acceptanceCases.${index}.description`,
+      },
+      {
+        text: acceptanceCase.expectedOutcome,
+        textClass: 'description' as const,
+        fieldPath: `approvedSpecification.acceptanceCases.${index}.expectedOutcome`,
+      },
+    ]),
+    ...brief.contracts.requiredOperations.map((operation, index) => ({
+      text: operation.reason,
+      textClass: 'description' as const,
+      fieldPath: `contracts.requiredOperations.${index}.reason`,
+    })),
+    ...operationContractEntries(
+      brief.contracts.providedOperationContracts,
+      'contracts.providedOperationContracts',
+    ),
+    ...operationContractEntries(
+      brief.contracts.requiredOperationContracts,
+      'contracts.requiredOperationContracts',
+    ),
+    ...brief.contracts.dataSchemas.flatMap((schema, schemaIndex) => [
+      {
+        text: schema.description,
+        textClass: 'description' as const,
+        fieldPath: `contracts.dataSchemas.${schemaIndex}.description`,
+      },
+      ...schema.fields.flatMap((field, fieldIndex) => [
+        {
+          text: field.description,
+          textClass: 'description' as const,
+          fieldPath: `contracts.dataSchemas.${schemaIndex}.fields.${fieldIndex}.description`,
+        },
+        ...field.constraints.map((text, constraintIndex) => ({
+          text,
+          textClass: 'description' as const,
+          fieldPath: `contracts.dataSchemas.${schemaIndex}.fields.${fieldIndex}.constraints.${constraintIndex}`,
+        })),
+      ]),
+    ]),
+    ...(brief.architectureContext.targetModule
+      ? [
+          {
+            text: brief.architectureContext.targetModule.name,
+            textClass: 'technical-name' as const,
+            fieldPath: 'architectureContext.targetModule.name',
+          },
+          {
+            text: brief.architectureContext.targetModule.responsibility,
+            textClass: 'description' as const,
+            fieldPath: 'architectureContext.targetModule.responsibility',
+          },
+        ]
+      : []),
+    ...brief.architectureContext.dependencyEdges.map((edge, index) => ({
+      text: edge.reason,
+      textClass: 'description' as const,
+      fieldPath: `architectureContext.dependencyEdges.${index}.reason`,
+    })),
+    ...brief.readiness.issues.flatMap((issue, index) => [
+      {
+        text: issue.message,
+        textClass: 'description' as const,
+        fieldPath: `readiness.issues.${index}.message`,
+      },
+      {
+        text: issue.resolution,
+        textClass: 'instruction' as const,
+        fieldPath: `readiness.issues.${index}.resolution`,
+      },
+    ]),
+    {
+      text: brief.referenceArchitecture.role,
+      textClass: 'description',
+      fieldPath: 'referenceArchitecture.role',
+    },
+    ...brief.referenceArchitecture.dependencyRules.map((text, index) => ({
+      text,
+      textClass: 'instruction' as const,
+      fieldPath: `referenceArchitecture.dependencyRules.${index}`,
+    })),
+    ...brief.referenceArchitecture.implementationRules.map((text, index) => ({
+      text,
+      textClass: 'instruction' as const,
+      fieldPath: `referenceArchitecture.implementationRules.${index}`,
+    })),
+    ...brief.referenceArchitecture.portRules.map((text, index) => ({
+      text,
+      textClass: 'instruction' as const,
+      fieldPath: `referenceArchitecture.portRules.${index}`,
+    })),
+    ...brief.referenceArchitecture.testingRules.map((text, index) => ({
+      text,
+      textClass: 'instruction' as const,
+      fieldPath: `referenceArchitecture.testingRules.${index}`,
+    })),
+    ...brief.implementationPlan.map((text, index) => ({
+      text,
+      textClass: 'instruction' as const,
+      fieldPath: `implementationPlan.${index}`,
+    })),
+    ...brief.verificationPlan.requiredEvidence.map((text, index) => ({
+      text,
+      textClass: 'description' as const,
+      fieldPath: `verificationPlan.requiredEvidence.${index}`,
+    })),
+    ...brief.precedence.map((text, index) => ({
+      text,
+      textClass: 'description' as const,
+      fieldPath: `precedence.${index}`,
+    })),
+  ]
+  return checkSteEntries(entries, { lexicon })
+}
+
 export function buildModuleImplementationBrief(input: {
   manifest: ModuleManifest
   interview?: ModuleInterviewResponse
   architecture: ArchitectureSpecification
+  moduleDesign?: ModuleDesignSpecification
   repository: RepositoryImplementationContext
   availableOperationContracts?: OperationContract[]
   availableDataSchemas?: ModuleDataSchema[]
@@ -313,6 +521,8 @@ export function buildModuleImplementationBrief(input: {
   deployable?: DeployableSpecification
   /** WP5A-core enrichment: this module's canonical implementation specification, if generated. */
   specification?: ModuleImplementationSpecification
+  /** Project-selected vocabulary and preferred terms. */
+  steLexicon?: SteLexicon
   now?: () => Date
 }): ModuleImplementationBrief {
   const availableOperationContracts = input.availableOperationContracts ?? []
@@ -345,7 +555,7 @@ export function buildModuleImplementationBrief(input: {
   const dataSchemas = [...(input.interview?.dataSchemas ?? []), ...availableDataSchemas]
     .filter((schema, index, all) => all.findIndex((candidate) => candidate.schemaId === schema.schemaId) === index)
     .filter((schema) => referencedSchemaIds.has(schema.schemaId))
-  return {
+  const brief: ModuleImplementationBrief = {
     schemaVersion: '1.0',
     generatedAt: (input.now?.() ?? new Date()).toISOString(),
     readiness: { status, issues },
@@ -378,6 +588,23 @@ export function buildModuleImplementationBrief(input: {
         .map((answer) => ({ detailId: answer.id, text: answer.text })),
     },
     architectureContext: architectureSlice(input.architecture, input.manifest.moduleId),
+    ...(input.moduleDesign ? {
+      moduleDesign: {
+        revision: input.moduleDesign.revision,
+        contentHash: input.moduleDesign.contentHash,
+        trace: input.moduleDesign.trace,
+        boundary: input.moduleDesign.boundary,
+        behavior: input.moduleDesign.behavior,
+        data: input.moduleDesign.data,
+        runtime: input.moduleDesign.runtime,
+        verification: input.moduleDesign.verification,
+        diagramRefs: input.moduleDesign.diagrams.map((diagram) => ({
+          id: diagram.id,
+          kind: diagram.kind,
+          contentHash: diagram.contentHash,
+        })),
+      },
+    } : {}),
     repositoryContext: input.repository,
     ...(input.deployable
       ? {
@@ -408,10 +635,16 @@ export function buildModuleImplementationBrief(input: {
       ],
     },
     precedence: [
+      'The approved module-design revision supplies the authoritative use-case trace, behavior, data, runtime, and verification detail.',
       'Approved project and module behavior overrides reference-architecture defaults.',
       'Existing repository conventions override generic file-layout suggestions when they preserve approved boundaries.',
       'Reference architecture supplies defaults only where the approved specification and repository are silent.',
       'If a material business or contract decision remains unresolved, ask a targeted question instead of inventing it.',
     ],
   }
+  assertSteProfile(
+    'Module implementation brief',
+    evaluateImplementationBriefSte(brief, input.steLexicon),
+  )
+  return brief
 }

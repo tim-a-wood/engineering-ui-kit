@@ -86,7 +86,7 @@ export function ConnectionVerificationPanel(props: Props) {
           </p>
         </div>
         {rows.length ? (
-          <div className={`cap-verify-score${passedCount === rows.length ? ' complete' : ''}`} role="status" aria-label={`${passedCount} of ${rows.length} entry points verified`}>
+          <div className={`cap-verify-score${passedCount === rows.length ? ' complete' : ''}`} role="status" aria-label="Verification progress">
             <strong>{passedCount}/{rows.length}</strong>
             <span>verified</span>
           </div>
@@ -143,7 +143,7 @@ export function ConnectionVerificationPanel(props: Props) {
                     )}
                     {design ? (
                       <details>
-                        <summary>Evidence identifiers and hashes</summary>
+                        <summary>Show evidence IDs</summary>
                         <dl className="capabilities-ids">
                           <div><dt>Verification</dt><dd><code>{evidence.verificationId}</code></dd></div>
                           <div><dt>Correlation</dt><dd><code>{evidence.correlationId}</code></dd></div>
@@ -157,7 +157,7 @@ export function ConnectionVerificationPanel(props: Props) {
                   <button type="button" className={`btn ${design ? 'btn-primary' : 'btn-secondary'} btn-compact`} disabled={!ready || Boolean(busyBinding)} onClick={() => void verify(binding)}>
                     {busyBinding === binding.bindingId ? 'Verifying…' : evidence ? 'Run again' : 'Run live check'}
                   </button>
-                  {!design && evidence ? <button type="button" className="btn btn-ghost btn-compact" onClick={() => setTechnicalBindingId(binding.bindingId)}>Technical details</button> : null}
+                  {!design && evidence ? <button type="button" className="btn btn-ghost btn-compact" onClick={setTechnicalBindingId.bind(null, binding.bindingId)}>View technical evidence</button> : null}
                 </div>
                 {messages[binding.bindingId] ? <p className="capabilities-note" role="status">{messages[binding.bindingId]}</p> : null}
               </article>

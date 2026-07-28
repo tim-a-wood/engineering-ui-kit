@@ -13,6 +13,8 @@ Reusable prompt wording lives in `standards/prompts/implementation-prompt.md`.
 
 ## Controlling Decisions
 
+- All generated user-interface text, diagrams, and documents use the project writing
+  Engineering UI Kit writing profile based on ASD-STE100 Issue 9.
 - Copilot must inspect all three inputs before editing.
 - Changes are limited to expected files and task scope.
 - Domain behavior is preserved.
@@ -20,6 +22,15 @@ Reusable prompt wording lives in `standards/prompts/implementation-prompt.md`.
 - Limitations must be reported rather than silently invented.
 
 ## Required Architecture
+
+### AI-IMPL-000 — Enforce the technical writing policy
+
+Apply the Engineering UI Kit writing profile based on ASD-STE100 Issue 9 to all generated
+user-interface text, source-code text, diagrams, and documents. Use American English
+and active voice. Limit instructions to 20 words and descriptions to 25 words per
+sentence. Write names and diagram labels as `VERB + OBJECT` with no more than four
+words. Use the same technical term for the same concept. Do not use contractions or
+semicolons. Check all generated text before returning the overlay.
 
 ### AI-IMPL-001 — Inspect all three inputs first
 

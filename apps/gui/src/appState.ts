@@ -29,7 +29,7 @@ export type ViewId =
 export type BuildWorkspaceState = 'handoff' | 'copilot' | 'overlay'
 
 export const NAV_ITEMS: { id: ViewId; label: string; glyph: string }[] = [
-  { id: 'copilot-handoff', label: 'Build & Test', glyph: '⌂' },
+  { id: 'copilot-handoff', label: 'Workflow', glyph: '⌂' },
   { id: 'capabilities', label: 'Capabilities', glyph: '◈' },
   { id: 'recipes', label: 'Recipes', glyph: '▦' },
   { id: 'components', label: 'Components', glyph: '⬡' },
@@ -45,8 +45,8 @@ export const WORKFLOW_STEPS: {
   short: string
   supporting: string
 }[] = [
-  { id: 'build', index: 0, name: '1. Build', short: 'Build', supporting: 'Prepare, hand off & apply' },
-  { id: 'verify-review', index: 1, name: '2. Test', short: 'Test', supporting: 'Verify & review' },
+  { id: 'build', index: 0, name: '1. Build', short: 'Build', supporting: 'Prepare application' },
+  { id: 'verify-review', index: 1, name: '2. Test', short: 'Test', supporting: 'Review application' },
 ]
 
 /** Persisted run.currentStep order (compatibility with stored runs). */

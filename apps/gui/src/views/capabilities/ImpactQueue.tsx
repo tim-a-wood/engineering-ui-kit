@@ -45,7 +45,7 @@ export function ImpactQueue({ bridge, projectId, records, projection = 'design' 
   }
 
   return (
-    <section aria-label="Impact and delta queue" className="capabilities-impact">
+    <section aria-label="Assess impact" className="capabilities-impact">
       <h3>Assess a change</h3>
       <div className="capabilities-toolbar cap-form-row" role="group" aria-label="Impact controls">
         <label>Changed capability

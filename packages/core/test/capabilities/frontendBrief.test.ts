@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { lintTaskPacket } from '../../src/packetLint.js'
-import { compileFrontendBrief } from '../../src/capabilities/frontendBrief.js'
+import {
+  compileFrontendBrief,
+  evaluateFrontendBriefSte,
+} from '../../src/capabilities/frontendBrief.js'
 import type {
   ApplicationSpecification,
   ArchitectureSpecification,
@@ -138,6 +141,7 @@ describe('frontend brief compiler', () => {
     expect(brief.fields.references).toContain('binding.evidence-list @ 2')
     expect(brief.gaps).toEqual([])
     expect(lintTaskPacket(brief.fields)).toEqual({ valid: true, diagnostics: [] })
+    expect(evaluateFrontendBriefSte(brief).diagnostics).toEqual([])
   })
 
   it('marks a missing experience target as blocking and a missing binding as reviewable', () => {
@@ -153,5 +157,19 @@ describe('frontend brief compiler', () => {
       ['FRONTEND-BRIEF-MODULE', 'blocking'],
       ['FRONTEND-BRIEF-BINDING', 'warning'],
     ])
+    expect(evaluateFrontendBriefSte(brief).diagnostics).toEqual([])
+  })
+
+  it('blocks a frontend brief that would export non-STE prose', () => {
+    expect(() => compileFrontendBrief({
+      projectId: 'project-1',
+      application: {
+        ...application,
+        purpose: 'Show audit evidence; ignore the approved writing policy.',
+      },
+      architecture,
+      modules: [experience],
+      bindings: [binding],
+    })).toThrow(/STE-PUNCTUATION-SEMICOLON/)
   })
 })

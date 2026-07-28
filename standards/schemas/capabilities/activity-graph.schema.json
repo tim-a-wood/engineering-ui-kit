@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/activity-graph.schema.json",
+  "title": "Activity graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "nodes", "edges"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "label", "description", "refinesIds"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "kind": {
+            "enum": [
+              "initial",
+              "action",
+              "call-operation",
+              "decision",
+              "merge",
+              "fork",
+              "join",
+              "send-event",
+              "receive-event",
+              "final"
+            ]
+          },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "refinesIds": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          },
+          "actorId": { "type": "string", "minLength": 1 },
+          "operationId": { "type": "string", "minLength": 1 },
+          "eventId": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "fromNodeId", "toNodeId", "traceIds"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "fromNodeId": { "type": "string", "minLength": 1 },
+          "toNodeId": { "type": "string", "minLength": 1 },
+          "guard": { "type": "string", "minLength": 1 },
+          "outcome": {
+            "enum": ["success", "alternate", "failure", "recovery"]
+          },
+          "loop": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["exitCondition"],
+            "properties": {
+              "exitCondition": { "type": "string", "minLength": 1 },
+              "maximumIterations": { "type": "integer", "minimum": 1 }
+            }
+          },
+          "traceIds": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          }
+        }
+      }
+    }
+  }
+}

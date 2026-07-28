@@ -66,7 +66,7 @@ export function ProjectsView(props: {
         subtitle="Organize and manage your Engineering UI Kit projects."
         actions={
           <button type="button" className="btn btn-primary" onClick={() => setDialogOpen(true)}>
-            {Icon.plus(14)} New Project
+            {Icon.plus(14)} Create project
           </button>
         }
       />
@@ -190,7 +190,7 @@ export function ProjectsView(props: {
                     <span aria-hidden="true" style={{ color: 'var(--semantic-text-muted)', display: 'inline-flex' }}>{Icon.folder()}</span>
                     <div>
                       <strong>{project.name}</strong>
-                      {project.isSample && <span className="sample-chip" title="Built-in sample project — explore freely">Sample</span>}
+                      {project.isSample && <span className="sample-chip" title="Sample project">Sample</span>}
                       <p className="row-meta" title={project.description ?? project.repoPath}>{project.description ?? project.repoPath}</p>
                     </div>
                   </div>
@@ -232,7 +232,7 @@ export function ProjectsView(props: {
                             }]
                           : []),
                         {
-                          label: project.launchUrl ? 'Launch & evidence…' : 'Set launch & evidence…',
+                          label: 'Configure project launch',
                           onSelect: () => setLaunchUrlProject(project),
                         },
                         {
@@ -305,7 +305,7 @@ export function ProjectsView(props: {
             } as Partial<Project>)
             await props.refreshProjects()
             setLaunchUrlProject(null)
-            setStatus({ tone: 'success', text: `Launch & evidence settings saved for ${launchUrlProject.name}.` })
+            setStatus({ tone: 'success', text: `Launch settings saved for ${launchUrlProject.name}.` })
           }}
         />
       )}
@@ -331,8 +331,8 @@ function RowMenu(props: { items: { label: string; onSelect: () => void }[] }) {
         className="icon-btn icon-btn-outline"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="More actions"
-        data-tip="More actions"
+        aria-label="Open project menu"
+        data-tip="Open project menu"
         onClick={() => setOpen((o) => !o)}
       >
         {Icon.dots(14)}
@@ -410,7 +410,7 @@ export function LaunchUrlDialog(props: {
 
   return (
     <Dialog
-      title={`Launch & evidence — ${props.project.name}`}
+      title="Launch settings"
       onClose={props.onClose}
       actions={
         <>
@@ -443,12 +443,12 @@ export function LaunchUrlDialog(props: {
           onChange={(e) => { setCommand(e.target.value); setError(null) }}
         />
         <p className="muted" style={{ margin: 0, fontSize: 12 }}>
-          Run in the repo when nothing is serving the launch URL — Launch App and evidence capture
-          start it for you and stop it when the workbench quits. Leave empty to start your dev server manually.
+          The application runs this command in the repository when the launch URL is not available.
+          It stops the command when the workbench closes. Leave this field empty to start the server manually.
         </p>
       </div>
       <div className="field">
-        <label htmlFor="evidence-views">Evidence target views (one per line: <code>Label | /path</code>)</label>
+        <label htmlFor="evidence-views">Evidence views</label>
         <textarea
           id="evidence-views"
           rows={4}
@@ -458,8 +458,8 @@ export function LaunchUrlDialog(props: {
         />
         {error && <p className="field-error" role="alert">Error: {error}</p>}
         <p className="muted" style={{ margin: 0, fontSize: 12 }}>
-          These views are screenshotted before and after each handoff; the pairs (plus an element-loss census)
-          go into the review evidence contact sheet.
+          Use one line for each view: <code>Label | /path</code>. The application captures these views before and after each handoff.
+          The review evidence includes the image pairs and an element-loss census.
         </p>
       </div>
     </Dialog>
@@ -494,7 +494,7 @@ export function NewProjectDialog(props: {
 
   return (
     <Dialog
-      title="New Project"
+      title="Create project"
       onClose={props.onClose}
       actions={
         <>
@@ -502,7 +502,7 @@ export function NewProjectDialog(props: {
             Cancel
           </button>
           <button type="button" className="btn btn-primary" onClick={create}>
-            Create Project
+            Create project
           </button>
         </>
       }

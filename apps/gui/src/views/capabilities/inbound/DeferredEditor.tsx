@@ -31,15 +31,14 @@ export function DeferredEditor({ bridge, projectId, onDeferred }: Props) {
   }
 
   return (
-    <div className="cap-connect-deferred" role="group" aria-label="Decide the entry point later">
+    <div className="cap-connect-deferred" role="group" aria-label="Defer entry point">
       <p>
-        You can continue without configuring this entry point now. It stays visible in{' '}
-        <strong>Needs attention</strong> until you come back and configure a real entry point. Build cannot finish
-        until every required application part is ready.
+        You can continue without this entry point. It remains in <strong>Needs attention</strong> until you configure it.
+        Build cannot finish until each required application part is ready.
       </p>
       {error ? <p className="field-error" role="alert">{error}</p> : null}
-      <button type="button" className="btn btn-secondary btn-compact" disabled={busy} onClick={() => void deferEntryPoint()}>
-        Decide later
+      <button type="button" className="btn btn-secondary btn-compact" disabled={busy} onClick={deferEntryPoint}>
+        Defer entry point
       </button>
     </div>
   )

@@ -92,8 +92,8 @@ describe('BuildWorkspace unified flow', () => {
     const html = renderToStaticMarkup(<BuildWorkspace {...baseProps({ workspace: 'copilot' })} />)
     expect(html).not.toContain('role="tablist"')
     expect(html).not.toContain('role="tab"')
-    expect(html).toContain('What are you building?')
-    expect(html).toContain('Hand off and apply')
+    expect(html).toContain('Define work')
+    expect(html).toContain('Complete handoff')
     expect(html).toContain('Result zip')
     expect(html).not.toContain('Work in Copilot')
   })
@@ -156,7 +156,7 @@ describe('Overlay apply gating', () => {
       <OverlayWorkspace {...baseProps({ workspace: 'overlay', inspection: blocked })} />,
     )
     expect(html).toMatch(/disabled[^>]*>[\s\S]*?Apply changes/)
-    expect(html).toContain('Hard blockers')
+    expect(html).toContain('Apply blockers')
     expect(html).toContain('can never be applied')
   })
 

@@ -13,6 +13,7 @@
 
 import type {
   ArchitectureSpecification,
+  ApplicationSpecification,
   CapabilityIntegrationState,
   CapabilityBindingRecord,
   CapabilityModuleRecord,
@@ -21,11 +22,14 @@ import type {
   ExposureLevel,
   FoundationPlan,
   ModuleManifest,
+  ModuleDesignSpecification,
+  ScenarioRunRecord,
 } from '@engineering-ui-kit/core'
 import {
   capabilityRunEvidenceState,
   evaluateConnectEntryPoints,
   hasReachedWorkState,
+  compileScenarioDefinitions,
   type DeployableConnectStatus,
   type WorkLifecycleState,
 } from '@engineering-ui-kit/core/browser'
@@ -96,6 +100,10 @@ export type JourneyInput = {
    */
   foundation?: { approved?: FoundationPlan }
   modules: CapabilityModuleRecord[]
+  /** Approved module-design records are required before implementation can count as complete. */
+  moduleDesigns?: { moduleId: string; approved?: ModuleDesignSpecification }[]
+  /** Scenario runs compiled from the approved use-case analysis. */
+  scenarioRuns?: ScenarioRunRecord[]
   /** Persisted implementation/delta runs. Approved specifications alone never complete Build. */
   capabilityRuns?: CapabilityRunScope[]
   /**
@@ -219,6 +227,16 @@ export function deriveJourney(input: JourneyInput): Journey {
   const approved = approvedManifests(input.modules)
   const approvedById = new Map(approved.map((m) => [m.moduleId, m]))
   const capabilityRuns = input.capabilityRuns ?? []
+  const moduleDesignsRequired = input.moduleDesigns !== undefined
+  const approvedModuleDesignIds = new Set(
+    (input.moduleDesigns ?? [])
+      .filter((record) => Boolean(
+        record.approved
+        && approvedArch
+        && record.approved.architecture.contentHash === approvedArch.contentHash,
+      ))
+      .map((record) => record.moduleId),
+  )
 
   // ---- Build: applied implementations → entry points → shared application setup ----
   const buildTotal = allocatedModuleIds.length
@@ -235,6 +253,8 @@ export function deriveJourney(input: JourneyInput): Journey {
   }).length
   const buildHasModules = buildTotal > 0
   const modulesApproved = buildHasModules && approvedCount === buildTotal
+  const moduleDesignsApproved = !moduleDesignsRequired
+    || (buildHasModules && allocatedModuleIds.every((moduleId) => approvedModuleDesignIds.has(moduleId)))
   const modulesApplied = buildHasModules && buildDone === buildTotal
 
   const approvedOperationKeys = new Set(approved.flatMap((manifest) => manifest.providedOperations
@@ -279,7 +299,7 @@ export function deriveJourney(input: JourneyInput): Journey {
       && item.latestCommandRun.planHash === item.currentPlan.planHash,
     ))
   )
-  const buildComplete = modulesApproved && modulesApplied && entryPointsConfigured && currentGenerationApplied && currentCommandsPassed
+  const buildComplete = modulesApproved && moduleDesignsApproved && modulesApplied && entryPointsConfigured && currentGenerationApplied && currentCommandsPassed
 
   // ---- Verify ----
   const requiredBindings = inboundBindings.filter((binding) => binding.approved)
@@ -296,8 +316,19 @@ export function deriveJourney(input: JourneyInput): Journey {
   const verifiedBindings = hasProductionIntegration
     ? requiredBindings.filter((binding) => passingBindingIds.has(binding.bindingId)).length
     : 0
-  const verifyReady = verifiedModules + verifiedBindings
-  const verifyTotal = buildTotal + (hasProductionIntegration ? requiredBindings.length : 0)
+  const approvedApplication = input.application.approved as ApplicationSpecification | undefined
+  const scenarioIds = approvedApplication?.useCaseDefinitions?.length
+    ? compileScenarioDefinitions(approvedApplication).map((scenario) => scenario.id)
+    : []
+  const currentScenarioRuns = new Map(scenarioIds.flatMap((scenarioId) => {
+    const current = (input.scenarioRuns ?? [])
+      .filter((record) => record.scenarioId === scenarioId)
+      .sort((left, right) => right.startedAt.localeCompare(left.startedAt))[0]
+    return current ? [[scenarioId, current] as const] : []
+  }))
+  const verifiedScenarios = scenarioIds.filter((scenarioId) => currentScenarioRuns.get(scenarioId)?.outcome === 'passed').length
+  const verifyReady = verifiedModules + verifiedBindings + verifiedScenarios
+  const verifyTotal = buildTotal + (hasProductionIntegration ? requiredBindings.length : 0) + scenarioIds.length
   const verifyUnlocked = buildComplete
   const verifyComplete = verifyUnlocked
     && (verifyTotal > 0 ? verifyReady === verifyTotal : hasProductionIntegration && currentGenerationApplied)
@@ -353,8 +384,10 @@ export function deriveJourney(input: JourneyInput): Journey {
       ? 'Approve Design first.'
       : !buildHasModules
         ? 'The architecture allocates no modules.'
-        : !modulesApproved
+          : !modulesApproved
           ? `${approvedCount} of ${buildTotal} module specifications approved.`
+          : !moduleDesignsApproved
+            ? `${approvedModuleDesignIds.size} of ${buildTotal} module designs approved.`
           : !modulesApplied
             ? `${buildDone} of ${buildTotal} module implementations applied (${approvedCount} specifications approved).`
           : requiresEntryPoints && !hasApprovedOperation
@@ -374,8 +407,8 @@ export function deriveJourney(input: JourneyInput): Journey {
                 : 'Generate and apply the deployable infrastructure.',
     prerequisiteReason: !designComplete ? 'Requires an approved solution design.' : undefined,
     progress: archApproved && buildHasModules ? {
-      done: buildDone + entryPointDone + (hasProductionIntegration && currentGenerationApplied && currentCommandsPassed ? 1 : 0),
-      total: buildTotal + entryPointTotal + (hasProductionIntegration ? 1 : 0),
+      done: buildDone + (moduleDesignsRequired ? approvedModuleDesignIds.size : 0) + entryPointDone + (hasProductionIntegration && currentGenerationApplied && currentCommandsPassed ? 1 : 0),
+      total: buildTotal + (moduleDesignsRequired ? buildTotal : 0) + entryPointTotal + (hasProductionIntegration ? 1 : 0),
     } : undefined,
     helpTopic: STAGE_HELP.build,
     nextStageId: 'verify',
@@ -397,7 +430,7 @@ export function deriveJourney(input: JourneyInput): Journey {
       : verifyTotal === 0
         ? 'No approved modules to verify.'
         : verifyComplete
-          ? `All ${verifyTotal} modules ready.`
+          ? `All ${verifyTotal} module, connection, and scenario checks passed.`
           : `${verifyReady} of ${verifyTotal} ready.`,
     prerequisiteReason: !verifyUnlocked
       ? 'Requires approved modules, configured entry points, and current shared application setup.'

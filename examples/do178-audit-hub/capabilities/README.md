@@ -14,6 +14,28 @@ which:
 Generated operation and schema contracts are preserved in
 `src/capabilities/generated/`.
 
+## Approved behavior model
+
+The sample exercises the complete use-case-led behavior workflow:
+
+- three detailed use cases own main, alternate, failure, and recovery paths;
+- three application workflows contain more than 20 stable behavior nodes;
+- architecture node allocations place the workflows across six modules;
+- nine approved module manifests define the solution boundary;
+- six approved module designs define internal activity, state, interaction,
+  operation, event, retry, and recovery behavior; and
+- scenario records trace observed evidence through application, allocation,
+  and module behavior.
+
+Application workflows do not contain module names or implementation
+operations. Module activities are generated only from their structured module
+design records; they do not copy a use-case main flow.
+
+The canonical approved module designs are in
+`approved/module-designs/`. Run
+`scripts/update-do178-behavior-model.ts` from the repository root to regenerate
+the structured sample records after an intentional fixture change.
+
 ## Actor-specific adapter refinement
 
 The approved `mod.external-adapters` specification is retained for

@@ -9,13 +9,14 @@
  * time via `capabilitiesSaveInboundBindingDraft` / `capabilitiesApproveInboundBinding`.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { buildConnectionPacket, evaluateBindingApprovalGate } from '@engineering-ui-kit/core/browser'
 import type {
   BindingTrigger,
   FrontendBinding,
   Project,
   SelectionEvidence,
+  SteLexicon,
   UiInboundBinding,
 } from '@engineering-ui-kit/core'
 import type { EuikBridge } from '../../../bridge'
@@ -108,6 +109,7 @@ export function UiBindingEditor(props: Props) {
 
   const evidence = props.selectionEvidence ?? initialFrontend?.selectionEvidence ?? emptyEvidence
   const [binding, setBinding] = useState<FrontendBinding>(() => bindingFromCanonical(projectId, evidence, initialFrontend, props.suggestedOperation))
+  const [steLexicon, setSteLexicon] = useState<SteLexicon | undefined>()
   const [attempted, setAttempted] = useState(false)
   const [busy, setBusy] = useState(false)
   const busyRef = useRef(false)
@@ -133,6 +135,20 @@ export function UiBindingEditor(props: Props) {
   useEffect(() => {
     if (props.selectionEvidence) setBinding((prev) => ({ ...prev, selectionEvidence: props.selectionEvidence!, projectId }))
   }, [props.selectionEvidence, projectId])
+
+  useEffect(() => {
+    let active = true
+    void bridge.capabilitiesGetSteLexicon(projectId)
+      .then((value) => {
+        if (active) setSteLexicon(value as SteLexicon | undefined)
+      })
+      .catch(() => {
+        if (active) setSteLexicon(undefined)
+      })
+    return () => {
+      active = false
+    }
+  }, [bridge, projectId])
 
   function update<K extends keyof FrontendBinding>(key: K, value: FrontendBinding[K]) {
     setBinding((prev) => ({ ...prev, [key]: value }))
@@ -163,7 +179,7 @@ export function UiBindingEditor(props: Props) {
   const elementSelected = canProceedWithSelection(binding.selectionEvidence) && Boolean(binding.selectionEvidence.elementTag)
   const capabilityChosen = binding.operationId !== ''
   const behaviorsComplete = BEHAVIOR_FIELDS.every((f) => binding[f].trim() !== '')
-  const gate = evaluateBindingApprovalGate(binding)
+  const gate = evaluateBindingApprovalGate(binding, { steLexicon })
   const guidedError = (message: string): Status => ({ tone: 'error', text: sanitizeGuidedMessage(message) })
 
   async function approve() {
@@ -197,41 +213,67 @@ export function UiBindingEditor(props: Props) {
 
   const issues = attempted && !gate.passed ? presentDiagnosticsForGuided(gate.diagnostics) : []
 
+  function changeUiUrl(event: ChangeEvent<HTMLInputElement>) {
+    setUiUrl(event.target.value)
+    setUiSetupError('')
+  }
+
+  function changeUiCommand(event: ChangeEvent<HTMLInputElement>) {
+    setUiCommand(event.target.value)
+    setUiSetupError('')
+  }
+
+  function selectCapability(event: ChangeEvent<HTMLSelectElement>) {
+    const [id, version] = event.target.value.split('@')
+    setBinding((prev) => ({ ...prev, operationId: id ?? '', operationVersion: version ?? '' }))
+  }
+
+  function selectUi() {
+    setUiConfirmed(true)
+  }
+
+  function editUiSetup() {
+    setEditingUi(true)
+    setUiConfirmed(false)
+  }
+
   return (
-    <div className="cap-connect-ui-editor" aria-label="UI entry point editor">
+    <div className="cap-connect-ui-editor" aria-label="Edit UI entry">
       {(editingUi || !uiProject?.launchUrl) && (
-        <section className="cap-connect-step active" aria-label="Configure the application UI">
-          <header className="cap-connect-step-head"><h3>Configure the application UI</h3></header>
+        <section className="cap-connect-step active" aria-label="Configure application UI">
+          <header className="cap-connect-step-head"><h3>Configure application UI</h3></header>
           <div className="cap-ui-setup-form" aria-label="Application UI setup">
             <div className="cap-ui-setup-intro">
               <strong>{uiProject?.name ?? humanizeIdentifier(projectId)}</strong>
               <span>Repository: <code>{uiProject?.repoPath ?? 'Current project folder'}</code></span>
             </div>
-            <label className="cap-connect-field">
-              Application URL
+            <div className="cap-connect-field">
+              <label htmlFor="cap-ui-url">Application URL</label>
               <input
+                id="cap-ui-url"
                 aria-label="Application UI URL"
                 value={uiUrl}
                 placeholder="http://localhost:5173"
-                onChange={(event) => { setUiUrl(event.target.value); setUiSetupError('') }}
+                onChange={changeUiUrl}
               />
               <span>The application page Build will preview so you can select the intended element.</span>
-            </label>
-            <label className="cap-connect-field">
-              Start command <span className="muted">(optional)</span>
+            </div>
+            <div className="cap-connect-field">
+              <label htmlFor="cap-ui-command">Start command <span className="muted">(optional)</span></label>
               <input
-                aria-label="Application UI start command"
+                id="cap-ui-command"
+                aria-label="UI start command"
                 className="mono"
                 value={uiCommand}
                 placeholder="npm run dev"
-                onChange={(event) => { setUiCommand(event.target.value); setUiSetupError('') }}
+                onChange={changeUiCommand}
               />
               <span>Run in the project repository if the URL is not already available.</span>
-            </label>
+            </div>
             {uiSetupError ? <p className="field-error" role="alert">{uiSetupError}</p> : null}
             <div className="cap-ui-source-actions">
-              <button type="button" className="btn btn-primary btn-compact" disabled={busy} onClick={() => void saveUiSetup()}>
-                Save and use this UI
+              <button type="button" className="btn btn-primary btn-compact" disabled={busy} onClick={saveUiSetup}>
+                Save UI setup
               </button>
             </div>
           </div>
@@ -249,13 +291,13 @@ export function UiBindingEditor(props: Props) {
             </div>
             <div className="cap-ui-source-actions">
               {!uiConfirmed ? (
-                <button type="button" className="btn btn-primary btn-compact" onClick={() => setUiConfirmed(true)}>
-                  Use this UI
+                <button type="button" className="btn btn-primary btn-compact" onClick={selectUi}>
+                  Select UI
                 </button>
               ) : (
                 <span className="status status-ok"><span className="status-dot" aria-hidden="true" /> Selected</span>
               )}
-              <button type="button" className="btn btn-secondary btn-compact" onClick={() => { setEditingUi(true); setUiConfirmed(false) }}>
+              <button type="button" className="btn btn-secondary btn-compact" onClick={editUiSetup}>
                 Change UI setup
               </button>
             </div>
@@ -294,15 +336,13 @@ export function UiBindingEditor(props: Props) {
           {operations.length === 0 ? (
             <p role="status">No approved capabilities are available yet. Approve a module first.</p>
           ) : (
-            <label className="cap-connect-field">
-              Capability
+            <div className="cap-connect-field">
+              <label htmlFor="cap-ui-operation">Capability</label>
               <select
+                id="cap-ui-operation"
                 aria-label="Capability"
                 value={binding.operationId ? `${binding.operationId}@${binding.operationVersion}` : ''}
-                onChange={(e) => {
-                  const [id, version] = e.target.value.split('@')
-                  setBinding((prev) => ({ ...prev, operationId: id ?? '', operationVersion: version ?? '' }))
-                }}
+                onChange={selectCapability}
               >
                 <option value="">Select a capability…</option>
                 {operations.map((op) => (
@@ -311,7 +351,7 @@ export function UiBindingEditor(props: Props) {
                   </option>
                 ))}
               </select>
-            </label>
+            </div>
           )}
         </section>
       )}
@@ -342,10 +382,10 @@ export function UiBindingEditor(props: Props) {
       )}
 
       {elementSelected && capabilityChosen && (
-        <section className="cap-connect-step active" aria-label="Review and approve">
-          <header className="cap-connect-step-head"><h3>Review and approve</h3></header>
-          <div className="cap-connect-test" role="group" aria-label="Review and approve">
-            <button type="button" className="btn btn-primary btn-compact" disabled={busy || !behaviorsComplete} onClick={() => void approve()}>
+        <section className="cap-connect-step active" aria-label="Approve entry point">
+          <header className="cap-connect-step-head"><h3>Approve entry point</h3></header>
+          <div className="cap-connect-test" role="group" aria-label="Approve entry point">
+            <button type="button" className="btn btn-primary btn-compact" disabled={busy || !behaviorsComplete} onClick={approve}>
               Approve entry point
             </button>
           </div>
@@ -358,7 +398,7 @@ export function UiBindingEditor(props: Props) {
 
       {issues.length > 0 && (
         <section aria-label="Open issues" className="cap-issues">
-          <h3>To finish this entry point</h3>
+          <h3>Resolve entry issues</h3>
           <ul className="cap-issue-list">{issues.map((issue, i) => <li key={i}>{issue.message}</li>)}</ul>
         </section>
       )}

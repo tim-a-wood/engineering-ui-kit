@@ -38,7 +38,7 @@ export { EXPOSURE_LEVELS, HTTP_METHODS, MISFIRE_POLICIES, OVERLAP_POLICIES, fron
 export type TriggerChoice = InboundBindingKind | 'deferred'
 
 export const TRIGGER_OPTIONS: { id: TriggerChoice; label: string; description: string }[] = [
-  { id: 'ui', label: 'Existing or new UI', description: 'A user interacts with an element in an application screen.' },
+  { id: 'ui', label: 'User interface', description: 'A user interacts with an element in an application screen.' },
   { id: 'http', label: 'HTTP endpoint', description: 'Another system calls this over HTTP.' },
   { id: 'cli', label: 'Command line', description: 'A person or script runs a command.' },
   { id: 'schedule', label: 'Scheduled or background', description: 'Runs on a timer, with no one watching.' },

@@ -76,7 +76,7 @@ export function promoteInterviewToModuleImplementationSpecification(input: {
   if (!interview) {
     unresolvedItems.push({
       id: 'missing-interview',
-      description: 'No preserved module interview was available to promote; fields inferred from the manifest only.',
+      description: 'The module has no preserved interview. The specification uses only manifest fields.',
       materiality: 'material',
     })
   }
@@ -84,7 +84,7 @@ export function promoteInterviewToModuleImplementationSpecification(input: {
   if (!acceptanceCases.length) {
     unresolvedItems.push({
       id: 'missing-acceptance-cases',
-      description: 'No acceptance cases were preserved; derive them from the responsibility before implementation.',
+      description: 'The module has no preserved acceptance case. Add an acceptance case before implementation.',
       materiality: 'non-material',
     })
   }
@@ -119,15 +119,15 @@ export function promoteInterviewToModuleImplementationSpecification(input: {
     edgeCases: [],
     failureSemantics: [],
     performanceConstraints: [],
-    cancellationExpectations: 'unspecified (migrated)',
-    timeoutExpectations: 'unspecified (migrated)',
-    concurrencyExpectations: 'unspecified (migrated)',
+    cancellationExpectations: 'The source does not specify cancellation.',
+    timeoutExpectations: 'The source does not specify a timeout.',
+    concurrencyExpectations: 'The source does not specify concurrency.',
     lifecycleRegistration: 'request-job',
     configurationRefs: [],
     secretReferenceIds: [],
-    persistenceExpectations: 'unspecified (migrated)',
-    telemetryExpectations: 'unspecified (migrated)',
-    healthExpectations: 'unspecified (migrated)',
+    persistenceExpectations: 'The source does not specify persistence.',
+    telemetryExpectations: 'The source does not specify telemetry.',
+    healthExpectations: 'The source does not specify health checks.',
     implementationSteps: [],
     acceptanceCases,
     acceptanceCommands: [],
@@ -169,6 +169,7 @@ export function planCapabilityMigration(
     ],
     compatibilityShims: [
       'FrontendBinding (CAP-CONTRACT-013) retained; ui InboundBinding (CAP-CONTRACT-028) is its successor.',
+      'Legacy use cases, step allocations, and module behavior lists remain readable through behavior-model compatibility adapters.',
     ],
     dataLossAssessment: { hasLoss: false, details: [] },
     blockedAmbiguities: [],

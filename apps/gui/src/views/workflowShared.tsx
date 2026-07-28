@@ -9,8 +9,10 @@ import type {
   HandoffRun,
   OverlayInspectionSummary,
   Project,
+  SteLexicon,
   VerificationResult,
 } from '@engineering-ui-kit/core'
+import { withStePrompt } from '@engineering-ui-kit/core/browser'
 import type { EuikBridge, RunEvidence } from '../bridge'
 import { Dialog, StatusLine, type Status } from '../components'
 import { Markdown } from '../markdown'
@@ -43,6 +45,20 @@ export function GuideLink(props: { topic: GuideTopicId; onOpenGuide: (topic: Gui
 
 export const READY: Status = { tone: 'info', text: 'Ready.' }
 export const COPILOT_URL = 'https://m365.cloud.microsoft/chat'
+export const FALLBACK_COPILOT_PROMPT = withStePrompt(
+  'Inspect all uploaded files. Follow the task packet and standard pack. Return only ui-overlay.zip with changed files at repository-relative paths.',
+  {
+    technicalTerms: [
+      'application',
+      'repository',
+      'source code',
+      'standard pack',
+      'task packet',
+      'user interface',
+      'ZIP',
+    ],
+  },
+)
 
 export function durationLabel(results: VerificationResult[]): string {
   const totalMs = results.reduce((sum, r) => sum + (new Date(r.endedAt).getTime() - new Date(r.startedAt).getTime()), 0)
@@ -159,7 +175,7 @@ export function TaskPacketPreviewModal(props: { text: string; onClose: () => voi
           Preview
         </button>
         <button type="button" role="tab" aria-selected={tab === 'code'} className={tab === 'code' ? 'tab active' : 'tab'} onClick={() => setTab('code')}>
-          Code / Markdown
+          Show Markdown
         </button>
       </div>
       {tab === 'preview' ? (
@@ -208,11 +224,25 @@ export function TreeView(props: { node: TreeNode; depth?: number }) {
  * Paste-ready remediation prompt for a refused overlay: names every blocker
  * the inspector found and restates the packaging contract.
  */
-export function buildBlockerFixPrompt(summary: OverlayInspectionSummary): string {
+export async function loadProjectSteLexicon(
+  bridge: EuikBridge,
+  projectId: string,
+): Promise<SteLexicon | undefined> {
+  try {
+    return await bridge.capabilitiesGetSteLexicon(projectId) as SteLexicon | undefined
+  } catch {
+    return undefined
+  }
+}
+
+export function buildBlockerFixPrompt(
+  summary: OverlayInspectionSummary,
+  lexicon?: SteLexicon,
+): string {
   const blockers = summary.hardBlockers
     .map((b, i) => `${i + 1}. ${b.ruleId}${b.path ? ` — \`${b.path}\`` : ''}: ${b.message}`)
     .join('\n')
-  return [
+  return withStePrompt([
     'The `ui-overlay.zip` you returned was refused by our overlay inspector before a single file was extracted. Violations found:',
     '',
     blockers,
@@ -225,7 +255,18 @@ export function buildBlockerFixPrompt(summary: OverlayInspectionSummary): string
     '- Do not claim the overlay was locally verified.',
     '',
     'The original `repo-flatfile.txt` and `task-and-standard-pack.md` are attached again for full context.',
-  ].join('\n')
+  ].join('\n'), {
+    technicalTerms: [
+      'application',
+      'overlay',
+      'repository',
+      'source code',
+      'task packet',
+      'ZIP',
+      ...(lexicon?.technicalTerms ?? []),
+    ],
+    prohibitedAliases: lexicon?.prohibitedAliases,
+  })
 }
 
 /**
@@ -279,7 +320,7 @@ export function EvidenceSection(props: {
       <div className="hstack between" style={{ alignItems: 'flex-start' }}>
         <div>
           <h2 id={`evidence-${props.phase}-heading`} className={props.frameless ? 'sr-only' : undefined}>
-            {props.phase === 'before' ? 'Baseline evidence' : 'Visual evidence — before / after'}
+            {props.phase === 'before' ? 'Baseline evidence' : 'Changed evidence'}
           </h2>
           <p className="panel-desc" style={{ marginBottom: 0 }}>
             {props.phase === 'before'

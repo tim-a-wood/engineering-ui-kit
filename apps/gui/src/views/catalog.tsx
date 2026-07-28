@@ -30,8 +30,8 @@ export const RECIPES: Recipe[] = [
     componentsUsed: ['CMP-SHELL-APP', 'CMP-NAV-PRIMARY', 'CMP-SHELL-PAGE-HEADER', 'CMP-SURFACE-PANEL'],
     goal: 'Implement the standard dark-first engineering app shell: persistent top bar, left primary navigation with visible active state, and a page content region with a consistent header.',
     scope: 'Application shell only: top bar, primary navigation, page header, and content container.\nNo feature screens beyond a placeholder content area.',
-    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nNo new dependencies; no router or state library additions.',
-    acceptanceCriteria: 'Shell renders with semantic surface hierarchy (canvas, panel).\nNavigation exposes the active item semantically and by keyboard.\nPage header shows title, subtitle, and action region.\nDark-first tokens only; no raw colors outside the token entry point.',
+    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library.',
+    acceptanceCriteria: 'Shell renders with semantic surface hierarchy (canvas, panel).\nNavigation exposes the active item semantically and by keyboard.\nPage header shows title, subtitle, and action region.\nUse only dark-first tokens. Do not use raw colors outside the token entry point.',
     references: 'LAY-SHELL-001 (standards/layouts-and-recipes/application-shell.md)\nCMP-SHELL-APP, CMP-NAV-PRIMARY, CMP-SHELL-PAGE-HEADER',
     thumbnail: thumb(
       <>
@@ -51,8 +51,8 @@ export const RECIPES: Recipe[] = [
     description: 'A dashboard layout with summary cards, charts, and key metrics.',
     componentsUsed: ['CMP-SURFACE-PANEL', 'CMP-DATA-CHART-LINE', 'CMP-FEEDBACK-BADGE', 'CMP-SHELL-PAGE-HEADER'],
     goal: 'Implement a dark-first engineering dashboard with summary stat cards, a primary chart region, and a recent-activity list.',
-    scope: 'One dashboard screen: stat card row, chart panel, activity panel.\nStatic or sample data wiring only; no new data services.',
-    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nNo new dependencies; no router or state library additions.',
+    scope: 'One dashboard screen: stat card row, chart panel, activity panel.\nUse only static or sample data. Do not add data services.',
+    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library.',
     acceptanceCriteria: 'Stat cards use raised panels with text labels beside every value.\nChart region uses an inset technical surface.\nStatus indicators carry text, never color alone.\nDark-first tokens only.',
     references: 'RCP-DASH-001 (standards/layouts-and-recipes/workflow-pages.md)\nApproved mockup: Dashboard recipe row',
     thumbnail: thumb(
@@ -72,8 +72,8 @@ export const RECIPES: Recipe[] = [
     description: 'A two-pane workspace for focused work with contextual details.',
     componentsUsed: ['CMP-SURFACE-PANEL', 'CMP-NAV-TREE', 'CMP-FORM-FIELD', 'CMP-SHELL-PAGE-HEADER'],
     goal: 'Implement a two-pane workspace: a primary working pane and a contextual details pane, with a clear focus hierarchy.',
-    scope: 'One workspace screen with list/tree on the left pane and detail editor on the right pane.\nSelection state only; no new persistence.',
-    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nNo new dependencies; no router or state library additions.',
+    scope: 'One workspace screen with a list or tree in the left pane and a detail editor in the right pane.\nUse selection state only. Do not add persistence.',
+    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library.',
     acceptanceCriteria: 'Two panes with visible boundary and correct keyboard traversal order.\nDetail pane updates from selection with status text.\nDark-first tokens only.',
     references: 'RCP-SPLIT-001 / RCP-SPLIT-002 (standards/layouts-and-recipes/workflow-pages.md)',
     thumbnail: thumb(
@@ -96,7 +96,7 @@ export const RECIPES: Recipe[] = [
     componentsUsed: ['CMP-TABLE-DATA', 'CMP-FORM-INPUT', 'CMP-FEEDBACK-BADGE', 'CMP-NAV-PAGINATION'],
     goal: 'Implement a dense, readable engineering data table with search, status badges, and pagination.',
     scope: 'One table screen: toolbar (search + filter), table with sortable headers, status column, pagination.\nSample data only.',
-    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nNo new dependencies; no router or state library additions.',
+    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library.',
     acceptanceCriteria: 'Table uses semantic headers and caption.\nRow status shown as text badges.\nKeyboard operable controls with visible focus.\nDark-first tokens only.',
     references: 'RCP-TABLE-001 (standards/layouts-and-recipes/workflow-pages.md)\nApproved mockup: Projects table',
     thumbnail: thumb(
@@ -117,7 +117,7 @@ export const RECIPES: Recipe[] = [
     componentsUsed: ['CMP-WORKFLOW-STEP-INDICATOR', 'CMP-FEEDBACK-PROGRESS', 'CMP-FEEDBACK-ALERT', 'CMP-SURFACE-PANEL'],
     goal: 'Implement a multi-step execution screen with a step indicator, per-step status, and explicit progress text.',
     scope: 'One workflow screen with an ordered stepper, current-step panel, and status region.\nStep state driven by existing app state only.',
-    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nNo new dependencies; no router or state library additions.',
+    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library.',
     acceptanceCriteria: 'Stepper shows completed, current, and pending states with text.\nProgress is announced in text, not color alone.\nDark-first tokens only.',
     references: 'RCP-WORKFLOW-001 (standards/layouts-and-recipes/workflow-pages.md)\nApproved mockup: workflow stepper',
     thumbnail: thumb(
@@ -140,9 +140,9 @@ export const RECIPES: Recipe[] = [
     description: 'A structured detail page with summary, metadata, tabs, and related panels.',
     componentsUsed: ['CMP-LAYOUT-DETAIL', 'CMP-SHELL-PAGE-HEADER', 'CMP-NAV-TABS', 'CMP-CONTENT-KEY-VALUE-LIST'],
     goal: 'Implement a dark-first entity detail page: identity header, key-value metadata, tabbed sections, and related-record panels.',
-    scope: 'REPLACE: name the entity and its fields.\nOne detail view: header with title/status, metadata list, 2-3 tabbed content sections.\nRead-only in this pass; actions listed but stubbed.',
-    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nNo new dependencies; no router or state library additions unless the task explicitly allows them.\nDark-first only; semantic tokens as CSS custom properties; no raw colors outside the token entry point.',
-    acceptanceCriteria: 'npm run typecheck and npm run build pass after overlay application.\nHeader, metadata, and tabs render from the entity data with text status badges.\nComplete keyboard operation with visible focus; tabs follow the established keyboard pattern.',
+    scope: 'REPLACE: name the entity and its fields.\nOne detail view: header with title and status, metadata list, and two or three tabbed sections.\nKeep this view read-only. Show actions as stubs.',
+    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library unless the task allows them.\nUse only dark-first semantic tokens. Do not use raw colors outside the token entry point.',
+    acceptanceCriteria: 'npm run typecheck and npm run build pass after overlay application.\nHeader, metadata, and tabs render from the entity data with text status badges.\nProvide complete keyboard operation and visible focus. Tabs follow the established keyboard pattern.',
     references: 'RCP-DETAIL-001 (standards/layouts-and-recipes/workflow-pages.md)',
     thumbnail: thumb(
       <>
@@ -160,13 +160,13 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'RCP-SPLIT-002',
-    title: 'Compare & Review',
+    title: 'Review differences',
     description: 'A side-by-side compare/review layout for diffs, evidence, and approval decisions.',
     componentsUsed: ['CMP-LAYOUT-SPLIT-PANEL', 'CMP-ENG-DIFF-VIEWER', 'CMP-FEEDBACK-VALIDATION-SUMMARY', 'CMP-ACTION-BUTTON'],
     goal: 'Implement a dark-first compare/review screen: two synchronized panes for before/after content with a decision bar (approve, reject, notes).',
     scope: 'REPLACE: name the artifacts being compared.\nTwo-pane compare region, difference highlights, decision action bar with confirmation.',
-    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nNo new dependencies; no router or state library additions unless the task explicitly allows them.\nDark-first only; semantic tokens as CSS custom properties; no raw colors outside the token entry point.',
-    acceptanceCriteria: 'npm run typecheck and npm run build pass after overlay application.\nBoth panes render with clear labels; differences carry text markers, not color alone.\nDecision actions require explicit confirmation.',
+    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library unless the task allows them.\nUse only dark-first semantic tokens. Do not use raw colors outside the token entry point.',
+    acceptanceCriteria: 'npm run typecheck and npm run build pass after overlay application.\nBoth panes render with clear labels. Differences use text markers and not color alone.\nDecision actions require explicit confirmation.',
     references: 'RCP-SPLIT-002 (standards/layouts-and-recipes/workflow-pages.md)',
     thumbnail: thumb(
       <>
@@ -218,9 +218,9 @@ export function RecipesView(props: { hasActiveRun: boolean; onUseRecipe: (recipe
                 type="button"
                 className="btn btn-secondary btn-compact"
                 onClick={() => props.onUseRecipe(recipe)}
-                title={props.hasActiveRun ? 'Prefill the task packet with this recipe' : 'Starts with this recipe when you begin a handoff'}
+                title={props.hasActiveRun ? 'Prefill task packet' : 'Select recipe'}
               >
-                Use in Task Packet {Icon.chevronRight(12)}
+                Use task recipe {Icon.chevronRight(12)}
               </button>
             </li>
           ))}
@@ -252,8 +252,8 @@ function DemoSwitch() {
   const [on, setOn] = useState(true)
   return (
     <div className="toggle-row" style={{ width: '100%' }}>
-      <span className="toggle-label" style={{ fontSize: 12 }}>Warn on dirty repo</span>
-      <button type="button" className="toggle" role="switch" aria-checked={on} aria-label="Warn on dirty repo" onClick={() => setOn(!on)} />
+      <span className="toggle-label" style={{ fontSize: 12 }}>Dirty repository warning</span>
+      <button type="button" className="toggle" role="switch" aria-checked={on} aria-label="Dirty repository warning" onClick={() => setOn(!on)} />
     </div>
   )
 }
@@ -287,7 +287,7 @@ const CURATED: { title: string; body: string; id: string; demo: ReactElement }[]
     ),
   },
   {
-    title: 'Status', body: 'Routine statuses are a dot plus text; tinted pills are reserved for prominent run states.', id: 'CMP-FEEDBACK-BADGE',
+    title: 'Status', body: 'Routine statuses use a dot and text. Tinted pills show prominent run states.', id: 'CMP-FEEDBACK-BADGE',
     demo: (
       <span className="stack" style={{ gap: 8, alignItems: 'flex-start' }}>
         <span className="status status-ok"><span className="status-dot" aria-hidden="true" /> Passed</span>
@@ -310,7 +310,7 @@ const CURATED: { title: string; body: string; id: string; demo: ReactElement }[]
     ),
   },
   { title: 'Tabs', body: 'Machined segmented control: inset track, raised active segment.', id: 'CMP-NAV-TABS', demo: <DemoTabs /> },
-  { title: 'Input', body: 'Collects and validates user input.', id: 'CMP-FORM-INPUT', demo: <div className="field" style={{ margin: 0, width: '100%' }}><input type="text" placeholder="Enter your email" aria-label="Example input" /><p className="muted" style={{ margin: 0, fontSize: 11 }}>We'll never share your email.</p></div> },
+  { title: 'Input', body: 'Collects and validates user input.', id: 'CMP-FORM-INPUT', demo: <div className="field" style={{ margin: 0, width: '100%' }}><input type="text" placeholder="Enter your email" aria-label="Example input" /><p className="muted" style={{ margin: 0, fontSize: 11 }}>We will not share your email.</p></div> },
   {
     title: 'Panel', body: 'Groups related content in a contained area.', id: 'CMP-SURFACE-PANEL',
     demo: <div className="panel" style={{ width: '100%', padding: 12 }}><strong style={{ fontSize: 12 }}>Project Overview</strong><p className="muted" style={{ margin: 0, fontSize: 11 }}>Bounded region on the panel surface with a hairline border.</p></div>,
@@ -325,7 +325,7 @@ const CURATED: { title: string; body: string; id: string; demo: ReactElement }[]
     ),
   },
   {
-    title: 'Progress', body: 'Shows completion status of a task; the numeral is tabular.', id: 'CMP-FEEDBACK-PROGRESS',
+    title: 'Progress', body: 'Shows the task completion status. The numeral is tabular.', id: 'CMP-FEEDBACK-PROGRESS',
     demo: (
       <div className="hstack" style={{ width: '100%' }} aria-label="Progress: 60 percent">
         <div className="demo-progress-track">
@@ -374,7 +374,7 @@ const CURATED: { title: string; body: string; id: string; demo: ReactElement }[]
     ),
   },
   {
-    title: 'Icon Button', body: '28×28 icon-only action; the CSS tooltip carries its label.', id: 'CMP-ACTION-ICON-BUTTON',
+    title: 'Icon Button', body: 'Shows a 28×28 icon-only action. The CSS tooltip contains its label.', id: 'CMP-ACTION-ICON-BUTTON',
     demo: (
       <span className="hstack" style={{ gap: 4 }}>
         <button type="button" className="icon-btn" aria-label="Copy" data-tip="Copy">{Icon.copy()}</button>
@@ -384,7 +384,7 @@ const CURATED: { title: string; body: string; id: string; demo: ReactElement }[]
     ),
   },
   {
-    title: 'Checkbox & Radio', body: '16px selection controls: accent fill with a white check or dot.', id: 'CMP-FORM-CHECKBOX',
+    title: 'Selection controls', body: '16px selection controls: accent fill with a white check or dot.', id: 'CMP-FORM-CHECKBOX',
     demo: (
       <span className="stack" style={{ gap: 8, alignItems: 'flex-start' }}>
         <label className="hstack" style={{ fontSize: 12, cursor: 'pointer' }}>

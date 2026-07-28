@@ -136,6 +136,110 @@ describe('CAP-TEST-010 module interviews and CAP-GATE-003', () => {
     expect(withoutSchema.diagnostics.some((item) => item.code === 'CAP-GATE-003-SCHEMA')).toBe(true)
   })
 
+  it('rejects non-STE prose anywhere in a module AI response', () => {
+    const response = completeResponse('domain')
+    response.answers[0] = {
+      ...response.answers[0]!,
+      text: "The module can't own this behavior; another part must handle it.",
+    }
+    response.dataSchemas![0]!.description = 'The input catalogue.'
+    response.operationContracts![0]!.postconditions = [
+      'The module records the result; the caller receives the result.',
+    ]
+
+    const imported = importModuleInterviewResponse(response)
+
+    expect(imported.ok).toBe(false)
+    expect(imported.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: 'STE-WORD-CONTRACTION',
+        fieldPath: `answers.${response.answers[0]!.id}.text`,
+      }),
+      expect.objectContaining({
+        code: 'STE-SPELLING-AMERICAN',
+        fieldPath: `dataSchemas.${response.dataSchemas![0]!.schemaId}.description`,
+      }),
+      expect.objectContaining({
+        code: 'STE-PUNCTUATION-SEMICOLON',
+        fieldPath: `operationContracts.${response.operationContracts![0]!.operationId}.postconditions.0`,
+      }),
+    ]))
+  })
+
+  it('rejects malformed nested AI records without throwing', () => {
+    const raw = {
+      ...completeResponse('domain'),
+      answers: [null],
+      dataSchemas: [{ ...completeResponse('domain').dataSchemas![0], fields: [null] }],
+    }
+
+    expect(() => importModuleInterviewResponse(raw)).not.toThrow()
+    const imported = importModuleInterviewResponse(raw)
+    expect(imported.ok).toBe(false)
+    expect(imported.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'CAP-MOD-IMPORT-ITEM', fieldPath: 'answers.0' }),
+      expect.objectContaining({
+        code: 'CAP-MOD-IMPORT-ITEM',
+        fieldPath: 'dataSchemas.0.fields.0',
+      }),
+    ]))
+  })
+
+  it('rejects malformed fields instead of silently using module defaults', () => {
+    const raw = {
+      ...completeResponse('domain'),
+      name: null,
+      moduleVersion: 2,
+      runtimeAllocation: 'cloud',
+      configurationSchemaRef: 42,
+      rules: { id: 'rule-1', text: "The module can't continue; stop." },
+    }
+
+    const imported = importModuleInterviewResponse(raw)
+
+    expect(imported.ok).toBe(false)
+    expect(imported.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'CAP-MOD-IMPORT-TEXT', fieldPath: 'name' }),
+      expect.objectContaining({ code: 'CAP-MOD-IMPORT-TEXT', fieldPath: 'moduleVersion' }),
+      expect.objectContaining({ code: 'CAP-MOD-IMPORT-RUNTIME' }),
+      expect.objectContaining({ code: 'CAP-MOD-IMPORT-CONFIGURATION' }),
+      expect.objectContaining({ code: 'CAP-MOD-IMPORT-LIST', fieldPath: 'rules' }),
+    ]))
+    expect(imported.response?.rules).toEqual([])
+  })
+
+  it('rejects malformed operation contract fields without throwing', () => {
+    const response = completeResponse('domain')
+    const raw = {
+      ...response,
+      providedOperations: [{}],
+      operationContracts: [{
+        ...response.operationContracts![0],
+        preconditions: 7,
+        postconditions: [null],
+        cancellable: 'yes',
+      }],
+    }
+
+    expect(() => importModuleInterviewResponse(raw)).not.toThrow()
+    const imported = importModuleInterviewResponse(raw)
+    expect(imported.ok).toBe(false)
+    expect(imported.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: 'CAP-MOD-IMPORT-TEXT',
+        fieldPath: 'providedOperations.0.operationId',
+      }),
+      expect.objectContaining({
+        code: 'CAP-MOD-IMPORT-TEXT',
+        fieldPath: 'operationContracts.0.postconditions.0',
+      }),
+      expect.objectContaining({
+        code: 'CAP-MOD-IMPORT-CONTRACT',
+        fieldPath: 'operationContracts.0',
+      }),
+    ]))
+  })
+
   it('grounds the opening questions in architecture context and offers type-specific suggestions', () => {
     const contextualArchitecture: ArchitectureSpecification = {
       ...architecture,
@@ -160,6 +264,10 @@ describe('CAP-TEST-010 module interviews and CAP-GATE-003', () => {
     expect(packet.inputContext.facts).toContain('capabilityGroup:Work management')
     expect(packet.inputContext.facts).toContain('workflowTrace:usecase.complete-work')
     expect(packet.inputContext.facts.some((fact) => fact.startsWith('usedByModule:mod.workflow | Work Order Workflow'))).toBe(true)
+    expect(packet.inputContext.glossary).toEqual(expect.arrayContaining([
+      { id: 'mod.workflow', text: 'Work Order Workflow' },
+      { id: 'mod.domain', text: 'Work Order Domain' },
+    ]))
 
     const guidance = moduleInterviewOpeningGuidance(packet)
     expect(guidance).toContain('Work Order Domain (domain; architecture role: domain core)')
@@ -233,5 +341,31 @@ describe('CAP-TEST-010 module interviews and CAP-GATE-003', () => {
     const reopened = new CapabilityWorkspace(dir)
     reopened.approveModule('proj-1', imported.manifest!)
     expect(reopened.getApprovedModuleInterview('proj-1', response.moduleId)).toEqual(response)
+  })
+
+  it('does not approve non-STE interview prose directly or after a reload', () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'euik-cap-010-ste-approval-'))
+    const ws = new CapabilityWorkspace(dir)
+    const response = completeResponse('domain')
+    const imported = importModuleInterviewResponse(response)
+    expect(imported.manifest).toBeDefined()
+    const invalidInterview: ModuleInterviewResponse = {
+      ...response,
+      rules: [{ id: 'r1', text: 'Store the record; then publish it.' }],
+    }
+
+    expect(() => ws.approveModule(
+      'proj-1',
+      imported.manifest!,
+      invalidInterview,
+    )).toThrow(/STE-PUNCTUATION-SEMICOLON/)
+
+    ws.saveModuleDraft('proj-1', imported.manifest!, invalidInterview)
+    const reopened = new CapabilityWorkspace(dir)
+    expect(() => reopened.approveModule(
+      'proj-1',
+      imported.manifest!,
+    )).toThrow(/STE-PUNCTUATION-SEMICOLON/)
+    expect(reopened.getApprovedModuleInterview('proj-1', response.moduleId)).toBeUndefined()
   })
 })

@@ -24,7 +24,7 @@ export type GuideTopicId =
   | 'capabilities-verify'
   | 'capabilities-changes'
 
-export type GuideGroup = 'Build & Test' | 'Capabilities'
+export type GuideGroup = 'Workflow' | 'Capabilities'
 
 export type GuideStep = { title: string; body: string }
 
@@ -52,12 +52,12 @@ const inset = 'var(--semantic-surface-inset)'
 
 function StepsArt() {
   return (
-    <svg viewBox="0 0 520 220" role="img" aria-label="The current Build and Test workflow">
+    <svg viewBox="0 0 520 220" role="img" aria-label="Show build workflow">
       <rect x="18" y="20" width="300" height="164" rx="12" fill={panel} stroke={accent} strokeWidth="1.5" />
       <circle cx="42" cy="43" r="12" fill={accent} />
       <text x="42" y="47" textAnchor="middle" fontSize="10" fontWeight="700" fill="#fff">1</text>
       <text x="62" y="47" fontSize="13" fontWeight="700" fill="var(--semantic-text-primary)">Build</text>
-      <text x="34" y="69" fontSize="9.5" fill={muted}>WHAT ARE YOU BUILDING?</text>
+      <text x="34" y="69" fontSize="9.5" fill={muted}>DEFINE WORK</text>
       {[0, 1, 2, 3, 4].map((i) => <rect key={i} x={34 + i * 38} y="79" width="30" height="30" rx="6" fill={i === 1 ? 'var(--semantic-accent-primary-tint)' : inset} stroke={i === 1 ? accent : stroke} />)}
       <rect x="34" y="121" width="126" height="35" rx="6" fill={inset} stroke={stroke} />
       <line x1="44" y1="132" x2="96" y2="132" stroke={muted} strokeWidth="3" strokeLinecap="round" />
@@ -72,7 +72,7 @@ function StepsArt() {
       <text x="406" y="47" textAnchor="middle" fontSize="10" fontWeight="700" fill={accentText}>2</text>
       <text x="426" y="47" fontSize="13" fontWeight="700" fill="var(--semantic-text-primary)">Test</text>
       <rect x="398" y="67" width="88" height="16" rx="8" fill={inset} stroke={ok} />
-      <text x="442" y="78" textAnchor="middle" fontSize="7.5" fill={ok}>Checks · passed</text>
+      <text x="442" y="78" textAnchor="middle" fontSize="7.5" fill={ok}>Checks passed</text>
       <rect x="398" y="92" width="88" height="52" rx="6" fill={inset} stroke={stroke} />
       <rect x="406" y="100" width="72" height="5" rx="2" fill={stroke} />
       <rect x="406" y="112" width="45" height="20" rx="3" fill="var(--semantic-accent-primary-tint)" />
@@ -80,7 +80,7 @@ function StepsArt() {
       <text x="446" y="166" textAnchor="middle" fontSize="8" fontWeight="600" fill="#fff">Approve</text>
       <path d="M442 190 C442 214, 126 214, 126 188" fill="none" stroke={warn} strokeWidth="1.5" strokeDasharray="4 4" markerEnd="url(#guide-arrow-warn)" />
       <rect x="174" y="188" width="220" height="22" rx="11" fill={panel} stroke={warn} strokeWidth="1" />
-      <text x="284" y="202.5" textAnchor="middle" fontSize="9" fontWeight="600" fill={warn}>Feedback returns to Build for the next iteration</text>
+      <text x="284" y="202.5" textAnchor="middle" fontSize="9" fontWeight="600" fill={warn}>Return feedback</text>
       <defs>
         <marker id="guide-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
           <path d="M0 0 L8 4 L0 8 z" fill={accent} />
@@ -93,7 +93,7 @@ function StepsArt() {
 
 function SetupArt() {
   return (
-    <svg viewBox="0 0 460 170" role="img" aria-label="A project card with a launch URL and target views">
+    <svg viewBox="0 0 460 170" role="img" aria-label="Show project setup">
       <rect x="30" y="30" width="180" height="110" rx="10" fill={panel} stroke={stroke} />
       <rect x="46" y="46" width="26" height="22" rx="5" fill={inset} stroke={stroke} />
       <text x="84" y="61" fontSize="12" fontWeight="600" fill="var(--semantic-text-primary)">my-web-app</text>
@@ -119,9 +119,9 @@ function SetupArt() {
 
 function ContextArt() {
   return (
-    <svg viewBox="0 0 460 170" role="img" aria-label="Repository filtered into a flatfile and inventory, with baseline screenshots">
+    <svg viewBox="0 0 460 170" role="img" aria-label="Show context files">
       <rect x="24" y="40" width="110" height="90" rx="10" fill={panel} stroke={stroke} />
-      <text x="79" y="30" textAnchor="middle" fontSize="10.5" fill={muted}>your repo</text>
+      <text x="79" y="30" textAnchor="middle" fontSize="10.5" fill={muted}>repository</text>
       {[0, 1, 2, 3].map((i) => (
         <rect key={i} x={38 + (i % 2) * 44} y={56 + Math.floor(i / 2) * 34} width="36" height="24" rx="4" fill={inset} stroke={stroke} />
       ))}
@@ -133,7 +133,7 @@ function ContextArt() {
       <text x="374" y="60" textAnchor="middle" fontSize="10.5" fill={accentText} fontFamily="monospace">repo-flatfile.txt</text>
       <rect x="318" y="92" width="112" height="44" rx="8" fill={panel} stroke={stroke} />
       <text x="374" y="112" textAnchor="middle" fontSize="10.5" fill="var(--semantic-text-secondary)" fontFamily="monospace">inventory.json</text>
-      <text x="374" y="126" textAnchor="middle" fontSize="9" fill={muted}>+ baseline screenshots</text>
+      <text x="374" y="126" textAnchor="middle" fontSize="9" fill={muted}>baseline screenshots</text>
       <defs>
         <marker id="ctx-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
           <path d="M0 0 L8 4 L0 8 z" fill={stroke} />
@@ -145,7 +145,7 @@ function ContextArt() {
 
 function UploadArt() {
   return (
-    <svg viewBox="0 0 460 170" role="img" aria-label="Dragging the two upload files into the Copilot chat">
+    <svg viewBox="0 0 460 170" role="img" aria-label="Show Copilot upload">
       <rect x="40" y="60" width="150" height="30" rx="15" fill={inset} stroke={accent} strokeDasharray="5 4" />
       <text x="58" y="79" fontSize="10" fill={accentText} fontFamily="monospace">⣿ 2 files</text>
       <rect x="250" y="20" width="180" height="130" rx="10" fill={panel} stroke={stroke} />
@@ -167,7 +167,7 @@ function UploadArt() {
 
 function ShieldArt() {
   return (
-    <svg viewBox="0 0 460 170" role="img" aria-label="The overlay inspector blocking unsafe zips and flagging element loss">
+    <svg viewBox="0 0 460 170" role="img" aria-label="Show overlay inspection">
       <rect x="30" y="60" width="80" height="52" rx="8" fill={panel} stroke={stroke} />
       <text x="70" y="90" textAnchor="middle" fontSize="10.5" fill="var(--semantic-text-secondary)" fontFamily="monospace">ui-overlay</text>
       <text x="70" y="103" textAnchor="middle" fontSize="10.5" fill="var(--semantic-text-secondary)" fontFamily="monospace">.zip</text>
@@ -177,10 +177,10 @@ function ShieldArt() {
       <text x="215" y="94" textAnchor="middle" fontSize="8.5" fill={muted}>030…048</text>
       <line x1="256" y1="60" x2="308" y2="44" stroke={danger} strokeWidth="1.5" markerEnd="url(#sh-arrow-d)" />
       <rect x="316" y="26" width="118" height="34" rx="8" fill="var(--semantic-status-danger-tint)" stroke={danger} />
-      <text x="375" y="47" textAnchor="middle" fontSize="10" fill={danger}>blockers: never applied</text>
+      <text x="375" y="47" textAnchor="middle" fontSize="10" fill={danger}>block overlay</text>
       <line x1="256" y1="106" x2="308" y2="122" stroke={warn} strokeWidth="1.5" markerEnd="url(#sh-arrow-w)" />
       <rect x="316" y="106" width="118" height="46" rx="8" fill="var(--semantic-status-warning-tint)" stroke={warn} />
-      <text x="375" y="125" textAnchor="middle" fontSize="10" fill={warn}>warnings need your OK</text>
+      <text x="375" y="125" textAnchor="middle" fontSize="10" fill={warn}>review warnings</text>
       <text x="375" y="141" textAnchor="middle" fontSize="9.5" fill={warn} fontFamily="monospace">svg 4→0 in App.tsx</text>
       <defs>
         <marker id="sh-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={stroke} /></marker>
@@ -193,7 +193,7 @@ function ShieldArt() {
 
 function EvidenceArt() {
   return (
-    <svg viewBox="0 0 460 170" role="img" aria-label="Before and after screenshots compared into a review packet PDF">
+    <svg viewBox="0 0 460 170" role="img" aria-label="Compare review evidence">
       <rect x="30" y="34" width="130" height="94" rx="8" fill={panel} stroke={stroke} />
       <text x="95" y="26" textAnchor="middle" fontSize="10" fill={muted}>BEFORE</text>
       <polyline points="44,104 64,76 84,90 104,60 124,70 144,54" fill="none" stroke={ok} strokeWidth="2" />
@@ -220,7 +220,7 @@ function EvidenceArt() {
 function CapJourneyArt() {
   const stages = ['Plan', 'Design', 'Build', 'Verify']
   return (
-    <svg viewBox="0 0 520 150" role="img" aria-label="The four-step Capabilities journey">
+    <svg viewBox="0 0 520 150" role="img" aria-label="Show capability workflow">
       {stages.map((label, i) => {
         const x = 28 + i * 126
         const done = i < 1
@@ -235,8 +235,8 @@ function CapJourneyArt() {
           </g>
         )
       })}
-      <text x="260" y="28" textAnchor="middle" fontSize="10.5" fill={muted}>One canonical model · Guided is the task view · Design holds the detail</text>
-      <text x="260" y="130" textAnchor="middle" fontSize="9.5" fill={muted}>Needs attention finds maintenance · Changes processes bounded updates</text>
+      <text x="260" y="28" textAnchor="middle" fontSize="10.5" fill={muted}>Use canonical model</text>
+      <text x="260" y="130" textAnchor="middle" fontSize="9.5" fill={muted}>Process bounded changes</text>
       <defs>
         <marker id="cap-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={stroke} /></marker>
       </defs>
@@ -270,7 +270,7 @@ function CapHandoffArt(props: { label: string; aria: string }) {
 
 function CapVerifyArt() {
   return (
-    <svg viewBox="0 0 460 150" role="img" aria-label="Running verification and reaching a ready state">
+    <svg viewBox="0 0 460 150" role="img" aria-label="Show module verification">
       <rect x="30" y="34" width="120" height="84" rx="10" fill={panel} stroke={stroke} />
       <text x="90" y="26" textAnchor="middle" fontSize="9.5" fill={muted}>modules</text>
       {[0, 1, 2].map((i) => (
@@ -296,7 +296,7 @@ function CapVerifyArt() {
 
 function CapChangesArt() {
   return (
-    <svg viewBox="0 0 460 150" role="img" aria-label="Assessing impact and processing a delta queue one target at a time">
+    <svg viewBox="0 0 460 150" role="img" aria-label="Show change flow">
       <rect x="24" y="48" width="96" height="54" rx="10" fill={panel} stroke={warn} />
       <text x="72" y="72" textAnchor="middle" fontSize="10" fill={warn}>impact</text>
       <text x="72" y="88" textAnchor="middle" fontSize="8.5" fill={muted}>affected?</text>
@@ -308,7 +308,7 @@ function CapChangesArt() {
           {i < 2 && <path d={`M${258 + i * 96} 75 H${268 + i * 96}`} stroke={stroke} strokeWidth="1.5" />}
         </g>
       ))}
-      <text x="240" y="120" textAnchor="middle" fontSize="9" fill={muted}>verify each target before the next unlocks</text>
+      <text x="240" y="120" textAnchor="middle" fontSize="9" fill={muted}>verify target</text>
       <defs>
         <marker id="cap-ch-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill={stroke} /></marker>
       </defs>
@@ -323,12 +323,12 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
     id: 'capabilities-overview',
     group: 'Capabilities',
     label: 'The journey',
-    title: 'Capabilities, in one picture',
-    blurb: 'Capabilities turns "what should this application do" into an approved, verified application through four steps: Plan, Design, Build, and Verify. Guided is the task-focused view; the technical view holds the detailed records. Both read the same model.',
+    title: 'Capability workflow',
+    blurb: 'Capabilities turns application needs into an approved and verified application through four steps. Guided shows the tasks. The technical view shows detailed records. Both use the same model.',
     art: <CapJourneyArt />,
     steps: [
-      { title: 'Guided vs technical view', body: 'Guided follows four steps and shows the next useful action. Plan establishes an understanding of the application; Design shapes the solution. The technical view exposes the same records in more detail.' },
-      { title: 'One model', body: 'Switching modes never duplicates or forks your work — both projections read and write the same canonical records.' },
+      { title: 'Compare workflow views', body: 'Guided follows four steps and shows the next useful action. Plan defines the application. Design shapes the solution. The technical view shows the same records in more detail.' },
+      { title: 'Use one model', body: 'Switching modes does not duplicate your work. Both views read and write the same canonical records.' },
       { title: 'Maintenance', body: 'Needs attention lists modules that have drifted and the one action each needs. Changes assesses the impact of an edit and walks the affected modules in dependency order.' },
     ],
   },
@@ -336,12 +336,12 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
     id: 'capabilities-define',
     group: 'Capabilities',
     label: 'Plan · Understand',
-    title: 'Understand what the application must do',
+    title: 'Plan application',
     blurb: 'Capture outcomes and user-visible behavior through a Copilot interview, then approve the definition. Nothing downstream unlocks until it is approved.',
-    art: <CapHandoffArt label="Interview" aria="Product interview handoff and import loop" />,
+    art: <CapHandoffArt label="Interview" aria="Show interview handoff" />,
     steps: [
       { title: 'Create the handoff', body: 'Generate the product-interview files and open them in Copilot with the recommended prompt.' },
-      { title: 'Attach and prompt', body: 'Attach the files in Copilot, paste the prompt, and let it draft the definition.' },
+      { title: 'Send interview files', body: 'Attach the files in Copilot. Paste the prompt. Let Copilot draft the definition.' },
       { title: 'Import the response', body: 'Bring the response file back. Review proposed and unresolved items — unresolved first.' },
       { title: 'Approve', body: 'When the application plan is complete, approve it to unlock Design.' },
     ],
@@ -350,13 +350,13 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
     id: 'capabilities-architect',
     group: 'Capabilities',
     label: 'Design · Shape',
-    title: 'Shape the modules and their dependencies',
+    title: 'Design modules',
     blurb: 'A second interview proposes the module structure. Review the modules and dependencies, resolve any cycles, and approve the architecture.',
-    art: <CapHandoffArt label="Architecture" aria="Architecture interview handoff and import loop" />,
+    art: <CapHandoffArt label="Architecture" aria="Show design handoff" />,
     steps: [
       { title: 'Create the handoff', body: 'Generate the architecture-interview files from the approved definition.' },
       { title: 'Import the proposal', body: 'Bring the proposal back and review the derived module diagram and dependency list.' },
-      { title: 'Resolve findings', body: 'Dependency cycles and invalid structure are flagged in plain language — fix them before approving.' },
+      { title: 'Resolve findings', body: 'The application identifies dependency cycles and invalid structures. Correct these findings before you approve the design.' },
       { title: 'Approve', body: 'Approve the architecture to unlock Build.' },
     ],
   },
@@ -364,13 +364,13 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
     id: 'capabilities-build',
     group: 'Capabilities',
     label: 'Build',
-    title: 'Build the modules, entry points, and shared setup',
+    title: 'Build modules',
     blurb: 'Complete each module, decide how people or systems start its capabilities, then generate the shared application setup that wires everything together.',
-    art: <CapHandoffArt label="Module" aria="Module interview and implementation overlay loop" />,
+    art: <CapHandoffArt label="Module" aria="Show module handoff" />,
     steps: [
-      { title: 'Select one module', body: 'Pick a module from the list. Its status and the single next action are shown.' },
-      { title: 'Interview and approve', body: 'Run the module interview, import the response, and approve the manifest.' },
-      { title: 'Choose how to implement', body: 'For UI modules, open Build & Test with the approved module context already prepared. You can still use the external implementation handoff.' },
+      { title: 'Select module', body: 'Select a module from the list. The application shows its status and next action.' },
+      { title: 'Approve module', body: 'Run the module interview. Import the response. Then, approve the manifest.' },
+      { title: 'Choose implementation', body: 'For UI modules, open Workflow with the approved module context. You can also use the external implementation handoff.' },
       { title: 'Configure entry points', body: 'Review the suggested UI, HTTP, command-line, schedule, or embedded entry points. Confirm the decisions that affect exposure or runtime behavior.' },
       { title: 'Prepare shared setup', body: 'Generate and apply the shared application files only after required entry points are approved. If an entry point changes, refresh this final Build step.' },
     ],
@@ -379,13 +379,13 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
     id: 'capabilities-verify',
     group: 'Capabilities',
     label: 'Verify',
-    title: 'Verify every module is ready',
-    blurb: 'Run each approved module’s configured checks and read the outcome. A module is ready when its checks pass; failures route you back to repair.',
+    title: 'Verify modules',
+    blurb: 'Run the configured checks for each approved module. A module is ready when its checks pass. A failure routes you back to repair.',
     art: <CapVerifyArt />,
     steps: [
-      { title: 'Select an approved module', body: 'Choose a module and see its total ready progress.' },
+      { title: 'Select module', body: 'Choose a module and see its total ready progress.' },
       { title: 'Run checks', body: 'Run the module’s configured verification. Watch the pending state while it runs.' },
-      { title: 'Read the outcome', body: 'Passed, setup failure, behavioral failure, technical failure, or cancelled — each shown with an icon and text.' },
+      { title: 'Read outcome', body: 'An icon and text show each result. Results include passed, setup failure, behavior failure, technical failure, and canceled.' },
       { title: 'Repair failures', body: 'A failure offers a clear route back to Build or the relevant repair action. When every module is ready, the journey is complete.' },
     ],
   },
@@ -393,14 +393,14 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
     id: 'capabilities-changes',
     group: 'Capabilities',
     label: 'Changes',
-    title: 'Process a bounded change',
+    title: 'Process change',
     blurb: 'When something changes, assess its impact, approve it, then work the affected modules one at a time. Each delta target must verify before the next unlocks.',
     art: <CapChangesArt />,
     steps: [
       { title: 'Assess impact', body: 'Calculate which modules a change affects and which it does not — each with a reason.' },
-      { title: 'Review and approve', body: 'Review affected and unaffected capabilities, then approve the impact.' },
-      { title: 'Process one target', body: 'The delta queue shows the provider-first order. Only the next target is actionable; later targets stay locked.' },
-      { title: 'Verify each target', body: 'Export, apply, and verify each target before the next one unlocks.' },
+      { title: 'Approve impact', body: 'Review affected and unaffected capabilities. Then, approve the impact.' },
+      { title: 'Process one target', body: 'The delta queue shows the provider-first order. Only the next target is available. Later targets stay locked.' },
+      { title: 'Verify target', body: 'Export, apply, and verify each target before the next target becomes available.' },
     ],
   },
 ]
@@ -408,9 +408,9 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
 export const GUIDE_TOPICS: GuideTopic[] = [
   {
     id: 'workflow-overview',
-    group: 'Build & Test',
+    group: 'Workflow',
     label: 'The workflow',
-    title: 'Build and Test, in one picture',
+    title: 'Build workflow',
     blurb: 'The current app has two main work areas. Build defines the change, prepares the Copilot handoff, and safely applies the returned zip. Test shows the result, captures feedback, and completes or repeats the loop.',
     art: <StepsArt />,
     steps: [
@@ -420,76 +420,76 @@ export const GUIDE_TOPICS: GuideTopic[] = [
   },
   {
     id: 'getting-started',
-    group: 'Build & Test',
+    group: 'Workflow',
     label: 'Getting started',
-    title: 'Set up a project in two minutes',
-    blurb: 'A project is a repo plus how to see it running. Configure it once; every handoff reuses it.',
+    title: 'Set up project',
+    blurb: 'A project is a repository and its running application. Configure it one time. Each handoff uses the same configuration.',
     art: <SetupArt />,
     steps: [
       { title: 'Create the project', body: 'Projects → + New Project, point it at a React/Vite/TypeScript repo on disk. No repo handy? Use the built-in sample at examples/work-orders-monolith — a full multi-page work-order app made to be restyled.' },
-      { title: 'Set the launch URL', body: 'Projects → Launch & evidence. Enter the URL your dev server serves (e.g. http://localhost:5173). The Launch App button and evidence capture both use it.' },
-      { title: 'List your target views', body: 'In the same dialog, add one line per view you care about: "Dashboard | /", "Orders | #/orders". These are the screens the workbench screenshots before and after every handoff.' },
-      { title: 'Start a handoff', body: 'Hub → Start handoff. The stepper at the top always shows where you are; every step keeps its artifacts in the run folder.' },
+      { title: 'Set launch URL', body: 'Open Launch and evidence in Projects. Enter the URL for the development server. The Launch App button and evidence capture use this URL.' },
+      { title: 'List target views', body: 'In the same dialog, add one line for each important view. The workbench captures these views before and after each handoff.' },
+      { title: 'Start a handoff', body: 'Select Start handoff in the Hub. The stepper shows your position. Each step keeps its artifacts in the run folder.' },
     ],
   },
   {
     id: 'prepare-context',
-    group: 'Build & Test',
+    group: 'Workflow',
     label: 'Define the change',
-    title: 'Use “What are you building?” to define the work',
+    title: 'Define work',
     blurb: 'The Build panel now brings the use case, requirements, reference material, project context, and handoff generation together in one place.',
     art: <ContextArt />,
     steps: [
-      { title: 'Choose a use case', body: 'Select the square tile that best matches the work. The guidance underneath updates to show the information that task needs.' },
-      { title: 'Describe and reference', body: 'Write the project-specific requirements and add a document, mockup, PDF, or image when it will help Copilot understand the intended result.' },
+      { title: 'Choose use case', body: 'Select the square tile that best matches the work. The guidance shows the information that the task needs.' },
+      { title: 'Describe change', body: 'Write the project requirements. Add a document, mockup, PDF, or image when it helps Copilot understand the intended result.' },
       { title: 'Generate safely', body: 'Generate screens the project context, excludes dependencies, build output, Git data, and secret-shaped files, then prepares the handoff packet.' },
     ],
   },
   {
     id: 'upload-run',
-    group: 'Build & Test',
+    group: 'Workflow',
     label: 'Run in Copilot',
-    title: 'Attach the files, then paste the prompt',
+    title: 'Open Copilot',
     blurb: 'No folder digging: the upload set is a chip you drag straight into the chat, and the prompt is on your clipboard the moment Copilot opens.',
     art: <UploadArt />,
     steps: [
       { title: 'Drag the chip', body: 'Grab the dashed strip (repo-flatfile.txt + task-and-standard-pack.md) and drop it on the Copilot attach area. Prefer keyboard? Copy Files puts the same files on your OS clipboard for Ctrl/Cmd+V.' },
-      { title: 'Open Copilot (copies prompt)', body: 'The button opens the chat and drops the recommended prompt onto your clipboard — attach, paste, send.' },
-      { title: 'Get the overlay back', body: 'Copilot must return one file: ui-overlay.zip, containing only changed and new files with repo-relative paths. Download it and return to the Apply area in Build.' },
+      { title: 'Open Copilot', body: 'The button opens the chat and copies the recommended prompt. Attach the files. Paste the prompt. Then, send the message.' },
+      { title: 'Get overlay', body: 'Copilot must return one ui-overlay.zip file. The file contains only changed and new files at repository-relative paths. Download the file and return to Build.' },
     ],
   },
   {
     id: 'apply-safely',
-    group: 'Build & Test',
+    group: 'Workflow',
     label: 'Apply safely',
-    title: 'Nothing is applied that you did not accept',
-    blurb: 'Inspection runs before anything touches your repo. Blockers stop the overlay outright; warnings — including visual element loss — wait for your explicit acceptance. Nothing is ever deleted.',
+    title: 'Inspect overlay',
+    blurb: 'Inspection runs before the application changes your repository. Blockers stop the overlay. Warnings wait for your acceptance. The application does not delete files.',
     art: <ShieldArt />,
     steps: [
       { title: 'Hard blockers', body: 'Absolute paths, traversal, git metadata, dependency folders, secret-shaped files, and repo dumps are rejected outright (rules AI-HANDOFF-030…039). These can never be applied.' },
-      { title: 'The fidelity gate', body: 'If a file the overlay overwrites would lose icons, images, buttons, or inputs, warning AI-HANDOFF-048 tells you exactly what disappears — "svg 4→0 in src/App.tsx" — before anything is written.' },
+      { title: 'Review fidelity', body: 'Warning AI-HANDOFF-048 identifies lost icons, images, buttons, or inputs before the application writes a file.' },
       { title: 'Accept knowingly', body: 'Warnings list every overwrite, config change, and asset addition. Applying requires ticking the acceptance box — and the applier only creates or overwrites files, never deletes.' },
     ],
   },
   {
     id: 'verify-review',
-    group: 'Build & Test',
-    label: 'Test and review',
-    title: 'Use “What changes are needed?” to judge the result',
+    group: 'Workflow',
+    label: 'Review result',
+    title: 'Review changes',
     blurb: 'Test brings checks, the live application preview, feedback notes, evidence, and final approval into one review panel.',
     art: <EvidenceArt />,
     steps: [
-      { title: 'Run your checks', body: 'Typecheck and build run with your project’s own commands; output is captured into the run folder.' },
+      { title: 'Run checks', body: 'Typecheck and build use the project commands. The application saves the output in the run folder.' },
       { title: 'Capture After', body: 'The same target views are screenshotted again. Any rendered element loss against the baseline is badged per view — this is what catches "the icons disappeared".' },
-      { title: 'Generate the review packet', body: 'One click produces review-packet.md, review-evidence.pdf (before/after contact sheet with acceptance criteria and losses), and changes.zip — a 3-file set a reviewer can judge without repo access.' },
-      { title: 'Approve or iterate', body: 'Happy? Approve & complete. Not yet? Add feedback and generate a new task packet — your notes and the evidence travel into the next run.' },
+      { title: 'Create review packet', body: 'One action creates review-packet.md, review-evidence.pdf, and changes.zip. A reviewer can assess these three files without repository access.' },
+      { title: 'Approve result', body: 'Approve the result when it is correct. Add feedback when it needs more work. Then, create a new task packet.' },
     ],
   },
   ...CAPABILITIES_TOPICS,
 ]
 
 /** Distinct group order for the guide rail. */
-const GUIDE_GROUP_ORDER: GuideGroup[] = ['Build & Test', 'Capabilities']
+const GUIDE_GROUP_ORDER: GuideGroup[] = ['Workflow', 'Capabilities']
 
 /* ---------------------------------------------------------------- overlay */
 

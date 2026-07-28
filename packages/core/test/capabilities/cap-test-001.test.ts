@@ -46,6 +46,12 @@ function collectPropertyKeys(node: unknown, keys: Set<string> = new Set()): Set<
 function createAjv() {
   const ajv = new Ajv2020({ allErrors: true, strict: false })
   addFormats(ajv)
+  for (const name of ['activity-graph', 'application-workflow']) {
+    const schema = JSON.parse(
+      fs.readFileSync(path.join(schemaDir, `${name}.schema.json`), 'utf8'),
+    ) as object
+    ajv.addSchema(schema)
+  }
   return ajv
 }
 

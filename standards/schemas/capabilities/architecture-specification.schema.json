@@ -83,6 +83,14 @@
             "items": {
               "type": "string"
             }
+          },
+          "entryPointId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "outputId": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "additionalProperties": false
@@ -92,6 +100,12 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "moduleDefinitions": {
+      "type": "array",
+      "items": {
+        "type": "object"
       }
     },
     "dependencyEdges": {
@@ -136,6 +150,10 @@
           "moduleId": {
             "type": "string",
             "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "additionalProperties": false
@@ -145,11 +163,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": [
-          "adapterId",
-          "moduleId",
-          "portId"
-        ],
+        "required": ["adapterId"],
         "properties": {
           "adapterId": {
             "type": "string",
@@ -160,6 +174,14 @@
             "minLength": 1
           },
           "portId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "port": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
             "type": "string",
             "minLength": 1
           }
@@ -185,6 +207,45 @@
             "items": {
               "type": "string"
             }
+          },
+          "nodeAllocations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workflowId",
+                "nodeId",
+                "primaryModuleId",
+                "participatingModuleIds"
+              ],
+              "properties": {
+                "workflowId": { "type": "string", "minLength": 1 },
+                "nodeId": { "type": "string", "minLength": 1 },
+                "primaryModuleId": { "type": "string", "minLength": 1 },
+                "participatingModuleIds": {
+                  "type": "array",
+                  "items": { "type": "string", "minLength": 1 },
+                  "uniqueItems": true
+                },
+                "entryPointId": { "type": "string", "minLength": 1 },
+                "operationId": { "type": "string", "minLength": 1 },
+                "outputId": { "type": "string", "minLength": 1 },
+                "eventId": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "stepAllocations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["stepId", "moduleId"],
+              "properties": {
+                "stepId": { "type": "string", "minLength": 1 },
+                "moduleId": { "type": "string", "minLength": 1 }
+              }
+            }
           }
         },
         "additionalProperties": false
@@ -193,22 +254,18 @@
     "proposals": {
       "type": "array",
       "items": {
-        "type": "object",
-        "required": [
-          "id",
-          "text"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "text": {
-            "type": "string",
-            "minLength": 1
+        "anyOf": [
+          { "type": "string", "minLength": 1 },
+          {
+            "type": "object",
+            "required": ["id", "text"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "text": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
           }
-        },
-        "additionalProperties": false
+        ]
       }
     },
     "unresolvedQuestions": {

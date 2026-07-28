@@ -17,9 +17,14 @@ import type {
   FrontendBinding,
   HandoffRun,
   InboundBinding,
+  InterviewPacket,
   ModuleManifest,
+  ModuleDesignSession,
+  ModuleDesignSpecification,
   ModuleInterviewResponse,
+  OperationContract,
   OverlayInspectionSummary,
+  ProjectSteLexicon,
   Project,
   Settings,
   VerificationResult,
@@ -28,6 +33,8 @@ import type {
   GenerationApplyRecord,
   GenerationPlan,
   ConnectionVerificationRecord,
+  ArtifactReference,
+  ScenarioRunRecord,
 } from '@engineering-ui-kit/core'
 import {
   buildNeedsAttention,
@@ -39,18 +46,59 @@ import {
   deltaQueueState,
   assertTargetExportable,
   evaluateBindingApprovalGate,
+  evaluateArchitectureApplicationLink,
+  evaluateArchitectureGate,
+  evaluateArchitectureProposal,
+  evaluateInboundBindingSte,
   evaluateModuleGate,
+  evaluateModuleInterview,
   implementationWaveDeliverable,
   planImplementationWaves,
   proposeArchitectureModuleBatch,
   proposeFoundation,
+  canonicalHash,
+  compileScenarioDefinitions,
+  createModuleDesignDraft,
+  createModuleDesignSession,
+  createScenarioRun,
+  evaluateModuleDesign,
+  evaluateProductGate,
+  finalizeScenarioRun,
+  importProductInterviewResponse,
+  projectModuleDiagrams,
+  recordScenarioStep,
   runModuleVerification,
+  withStePrompt,
+  createProjectSteLexicon,
 } from '@engineering-ui-kit/core/browser'
 import type { BuildPacketResult, CapabilityDeployableSummary, InboundBindingReadRecord, EuikBridge, PrepareContextResult, RunEvidence, TaskPacketFields } from './bridge'
 import { validateInboundBindingDraft } from './views/capabilities/inbound/inboundBinding'
+import do178ApplicationRecord from '../../../examples/do178-audit-hub/capabilities/approved/application.json'
+import do178ArchitectureRecord from '../../../examples/do178-audit-hub/capabilities/approved/architecture.json'
+import do178AssuranceModuleRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-specifications/mod.assurance-workflow.json'
+import do178AuditExperienceModuleRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-specifications/mod.audit-experience.json'
+import do178EvidenceGraphModuleRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-specifications/mod.evidence-graph.json'
+import do178EvidenceStoreModuleRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-specifications/mod.evidence-store.json'
+import do178ExternalAdaptersModuleRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-specifications/mod.external-adapters.json'
+import do178IngestionPublicationModuleRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-specifications/mod.ingestion-publication.json'
+import do178LifecycleExplorerModuleRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-specifications/mod.lifecycle-explorer.json'
+import do178SampleWorkspaceModuleRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-specifications/mod.sample-workspace.json'
+import do178WorkspaceSnapshotsModuleRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-specifications/mod.workspace-snapshots.json'
+import do178AssuranceDesignRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-designs/mod.assurance-workflow.json'
+import do178AuditExperienceDesignRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-designs/mod.audit-experience.json'
+import do178EvidenceGraphDesignRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-designs/mod.evidence-graph.json'
+import do178EvidenceStoreDesignRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-designs/mod.evidence-store.json'
+import do178ExternalAdaptersDesignRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-designs/mod.external-adapters.json'
+import do178WorkspaceSnapshotsDesignRecord from '../../../examples/do178-audit-hub/capabilities/approved/module-designs/mod.workspace-snapshots.json'
+import {
+  buildDo178ApplicationWorkflows,
+  buildDo178UseCases,
+  buildDo178WorkflowAllocations,
+} from './do178BehaviorFixture'
 
 type CapProjectState = {
   initializedAt: string
+  steLexicon?: ProjectSteLexicon
   applicationDraft?: ApplicationSpecification
   applicationApproved?: ApplicationSpecification
   architectureDraft?: ArchitectureSpecification
@@ -59,6 +107,11 @@ type CapProjectState = {
   moduleApproved: Map<string, ModuleManifest>
   moduleInterviewDrafts: Map<string, ModuleInterviewResponse>
   moduleInterviewApproved: Map<string, ModuleInterviewResponse>
+  moduleDesignDrafts: Map<string, ModuleDesignSpecification>
+  moduleDesignApproved: Map<string, ModuleDesignSpecification>
+  moduleDesignSessions: Map<string, ModuleDesignSession>
+  scenarioRuns: Map<string, ScenarioRunRecord>
+  scenarioEvidence: Map<string, { reference: ArtifactReference; base64: string }>
   bindingDrafts: Map<string, FrontendBinding>
   bindingApproved: Map<string, FrontendBinding>
   freshness: Map<string, FreshnessRecord>
@@ -108,6 +161,748 @@ export function installMockBridge(): EuikBridge {
   const evidenceCaptured = new Map<string, { before?: string; after?: string }>()
   const capByProject = new Map<string, CapProjectState>()
 
+  function seedPlantOpsWorkflow(state: CapProjectState) {
+    const application: ApplicationSpecification = {
+      schemaVersion: '1.0',
+      projectId: 'plantops-sample',
+      id: 'app.plantops',
+      revision: '2.0.0',
+      status: 'approved',
+      purpose: 'Plan, assign, and complete maintenance work with auditable evidence.',
+      outcomes: ['Planners can release valid work orders.', 'Technicians can complete assigned work with evidence.'],
+      actors: [
+        { id: 'planner', text: 'Maintenance planner' },
+        { id: 'technician', text: 'Field technician' },
+        { id: 'supervisor', text: 'Maintenance supervisor' },
+        { id: 'auditor', text: 'Compliance auditor' },
+      ],
+      goals: [
+        { id: 'goal-plan', text: 'Release a safe, complete work order' },
+        { id: 'goal-complete', text: 'Complete assigned maintenance with evidence' },
+      ],
+      useCases: [
+        { id: 'uc-release-work-order', text: 'Release a work order' },
+        { id: 'uc-complete-work-order', text: 'Complete assigned maintenance' },
+        { id: 'uc-review-evidence', text: 'Review maintenance evidence' },
+      ],
+      scenarios: [],
+      useCaseDefinitions: [{
+        id: 'uc-release-work-order',
+        name: 'Release work order',
+        actorIds: ['planner', 'supervisor'],
+        trigger: 'A planner opens a draft work order that is ready for scheduling.',
+        preconditions: ['The asset exists.', 'Required safety information is available.'],
+        mainFlow: [
+          {
+            id: 'uc-release:step:review',
+            order: 1,
+            actorId: 'planner',
+            action: 'Review work scope',
+            expectedResult: 'The application presents a complete release checklist.',
+            inputIds: ['work-order-draft'],
+            outputIds: ['release-checklist'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'screenshot',
+          },
+          {
+            id: 'uc-release:step:validate',
+            order: 2,
+            action: 'Check release constraints',
+            expectedResult: 'Every blocking omission is reported without changing the draft.',
+            inputIds: ['release-checklist'],
+            outputIds: ['validation-result'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'structured',
+          },
+          {
+            id: 'uc-release:step:release',
+            order: 3,
+            actorId: 'planner',
+            action: 'Schedule work order',
+            expectedResult: 'The schedule and technician assignment are held for this work order.',
+            inputIds: ['validation-result'],
+            outputIds: ['reserved-maintenance-window'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'either',
+          },
+          {
+            id: 'uc-release:step:approve',
+            order: 4,
+            actorId: 'supervisor',
+            action: 'Approve release plan',
+            expectedResult: 'Supervisor approval is bound to the reviewed revision.',
+            inputIds: ['reserved-maintenance-window'],
+            outputIds: ['approved-release-plan'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'structured',
+          },
+          {
+            id: 'uc-release:step:record',
+            order: 5,
+            action: 'Record release decision',
+            expectedResult: 'The audit ledger records the actor, revision, decision, and controls.',
+            inputIds: ['approved-release-plan'],
+            outputIds: ['release-audit-record'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'structured',
+          },
+          {
+            id: 'uc-release:step:notify',
+            order: 6,
+            action: 'Publish work order',
+            expectedResult: 'The work order becomes released and assigned technicians are notified.',
+            inputIds: ['release-audit-record'],
+            outputIds: ['released-work-order'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'screenshot',
+          },
+        ],
+        alternatePaths: [],
+        failurePaths: [{
+          id: 'uc-release:failure:missing-safety',
+          name: 'Block unsafe release',
+          kind: 'failure',
+          trigger: 'Validation finds a missing safety requirement.',
+          preconditions: [],
+          steps: [{
+            id: 'uc-release:step:block',
+            order: 1,
+            action: 'Block unsafe release',
+            expectedResult: 'The draft remains unchanged and the planner sees the corrective action.',
+            inputIds: ['validation-result'],
+            outputIds: ['release-rejection'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'screenshot',
+          }],
+          outcome: 'Release is blocked without losing the planner’s work.',
+        }],
+        recoveryPaths: [{
+          id: 'uc-release:recovery:correct',
+          name: 'Correct release draft',
+          kind: 'recovery',
+          trigger: 'The planner supplies the missing safety information.',
+          preconditions: [],
+          steps: [{
+            id: 'uc-release:step:retry',
+            order: 1,
+            actorId: 'planner',
+            action: 'Correct release draft',
+            expectedResult: 'The same work order is revalidated with the corrections preserved.',
+            inputIds: ['release-rejection'],
+            outputIds: ['validation-result'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'either',
+          }],
+          outcome: 'The corrected order can continue through the main release path.',
+        }],
+        ruleIds: ['rule-safety'],
+        inputIds: ['work-order-draft'],
+        outputIds: ['released-work-order'],
+        acceptanceCaseIds: ['accept-release'],
+        sourceRefs: ['source-ops'],
+      }, {
+        id: 'uc-complete-work-order',
+        name: 'Complete assigned maintenance',
+        actorIds: ['technician', 'supervisor'],
+        trigger: 'A technician opens a released work order assigned to their field team.',
+        preconditions: ['The work order is released.', 'The technician is assigned.'],
+        mainFlow: [
+          {
+            id: 'uc-complete:step:start',
+            order: 1,
+            actorId: 'technician',
+            action: 'Start maintenance task',
+            expectedResult: 'The work order enters in-progress state.',
+            inputIds: ['released-work-order'],
+            outputIds: ['active-work-order'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'structured',
+          },
+          {
+            id: 'uc-complete:step:evidence',
+            order: 2,
+            actorId: 'technician',
+            action: 'Record completion evidence',
+            expectedResult: 'Evidence remains linked to the exact task revision.',
+            inputIds: ['active-work-order'],
+            outputIds: ['completion-evidence'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'screenshot',
+          },
+          {
+            id: 'uc-complete:step:review',
+            order: 3,
+            actorId: 'supervisor',
+            action: 'Inspect completion evidence',
+            expectedResult: 'Blocking exceptions remain visible before closure.',
+            inputIds: ['completion-evidence'],
+            outputIds: ['completion-review'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'either',
+          },
+          {
+            id: 'uc-complete:step:close',
+            order: 4,
+            actorId: 'supervisor',
+            action: 'Close work order',
+            expectedResult: 'The order is completed once and its evidence becomes immutable.',
+            inputIds: ['completion-review'],
+            outputIds: ['completed-work-order'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'structured',
+          },
+        ],
+        alternatePaths: [],
+        failurePaths: [],
+        recoveryPaths: [],
+        ruleIds: ['rule-safety'],
+        inputIds: ['released-work-order'],
+        outputIds: ['completed-work-order'],
+        acceptanceCaseIds: ['accept-complete'],
+        sourceRefs: ['source-ops'],
+      }, {
+        id: 'uc-review-evidence',
+        name: 'Review maintenance evidence',
+        actorIds: ['auditor', 'supervisor'],
+        trigger: 'An authorized reviewer opens a completed maintenance record.',
+        preconditions: ['A completed work order and immutable audit record exist.'],
+        mainFlow: [
+          {
+            id: 'uc-review:step:locate',
+            order: 1,
+            actorId: 'auditor',
+            action: 'Find completed work order',
+            expectedResult: 'Matching immutable records are returned.',
+            inputIds: ['completed-work-order'],
+            outputIds: ['evidence-search-result'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'structured',
+          },
+          {
+            id: 'uc-review:step:trace',
+            order: 2,
+            actorId: 'auditor',
+            action: 'Trace maintenance evidence',
+            expectedResult: 'Every artifact resolves to its actor and source revision.',
+            inputIds: ['evidence-search-result'],
+            outputIds: ['evidence-trace'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'screenshot',
+          },
+          {
+            id: 'uc-review:step:export',
+            order: 3,
+            actorId: 'auditor',
+            action: 'Export evidence package',
+            expectedResult: 'The export includes integrity hashes and provenance.',
+            inputIds: ['evidence-trace'],
+            outputIds: ['evidence-package'],
+            ruleIds: ['rule-safety'],
+            evidencePolicy: 'either',
+          },
+        ],
+        alternatePaths: [],
+        failurePaths: [],
+        recoveryPaths: [],
+        ruleIds: ['rule-safety'],
+        inputIds: ['completed-work-order'],
+        outputIds: ['evidence-package'],
+        acceptanceCaseIds: ['accept-review-evidence'],
+        sourceRefs: ['source-ops'],
+      }],
+      information: [{ id: 'work-order-draft', text: 'Work order draft' }],
+      rules: [{ id: 'rule-safety', text: 'A work order cannot be released until every required safety field is complete.' }],
+      externalSystems: [],
+      constraints: [{ id: 'constraint-audit', text: 'Every release decision must be auditable.' }],
+      scope: { inScope: ['Work-order release'], outOfScope: ['Inventory purchasing'] },
+      acceptanceCases: [{
+        id: 'accept-release',
+        description: 'Release a complete work order',
+        expectedOutcome: 'The order is released once and its audit event identifies the approved revision.',
+      }, {
+        id: 'accept-complete',
+        description: 'Complete assigned maintenance with evidence',
+        expectedOutcome: 'The order closes once with immutable completion evidence.',
+      }, {
+        id: 'accept-review-evidence',
+        description: 'Review and export maintenance evidence',
+        expectedOutcome: 'The evidence package resolves to immutable records and source revisions.',
+      }],
+      sources: [{ id: 'source-ops', text: 'Plant maintenance operating procedure' }],
+      unresolvedQuestions: [],
+      contentHash: '',
+    }
+    application.scenarioDefinitions = compileScenarioDefinitions(application)
+    const {
+      contentHash: _applicationContentHash,
+      approvedAt: _applicationApprovedAt,
+      ...applicationBody
+    } = application
+    application.contentHash = canonicalHash(applicationBody)
+
+    const architecture: ArchitectureSpecification = {
+      schemaVersion: '1.0',
+      projectId: application.projectId,
+      id: 'arch.plantops',
+      revision: '2.0.0',
+      status: 'approved',
+      applicationSpecId: application.id,
+      applicationSpecRevision: application.revision,
+      applicationSpecHash: application.contentHash,
+      capabilityProjections: [{
+        id: 'cap.work-orders',
+        name: 'Auditable maintenance execution',
+        moduleIds: [
+          'mod.work-orders-ui',
+          'mod.release-workflow',
+          'mod.work-order-domain',
+          'mod.audit-ledger',
+          'mod.notification-gateway',
+        ],
+      }],
+      moduleIds: [
+        'mod.work-orders-ui',
+        'mod.release-workflow',
+        'mod.work-order-domain',
+        'mod.audit-ledger',
+        'mod.notification-gateway',
+      ],
+      moduleDefinitions: [
+        { moduleId: 'mod.work-orders-ui', name: 'Work Orders UI', moduleType: 'experience', responsibility: 'Present and capture the work-order release interaction.' },
+        { moduleId: 'mod.release-workflow', name: 'Release Workflow', moduleType: 'workflow', responsibility: 'Coordinate validation, release, and audit recording.' },
+        { moduleId: 'mod.work-order-domain', name: 'Work Order Domain', moduleType: 'domain', responsibility: 'Own work-order state and release invariants.' },
+        { moduleId: 'mod.audit-ledger', name: 'Audit Ledger', moduleType: 'domain', responsibility: 'Persist immutable decisions, state transitions, evidence hashes, and provenance.' },
+        { moduleId: 'mod.notification-gateway', name: 'Notification Gateway', moduleType: 'connection', responsibility: 'Publish approved work-order events to assigned field teams.' },
+      ],
+      dependencyEdges: [
+        { fromModuleId: 'mod.work-orders-ui', toModuleId: 'mod.release-workflow', reason: 'The UI invokes the release use case through its application port.' },
+        { fromModuleId: 'mod.release-workflow', toModuleId: 'mod.work-order-domain', reason: 'The workflow delegates release validity and state transition to the domain.' },
+        { fromModuleId: 'mod.release-workflow', toModuleId: 'mod.audit-ledger', reason: 'Every release and completion decision is recorded with immutable provenance.' },
+        { fromModuleId: 'mod.release-workflow', toModuleId: 'mod.notification-gateway', reason: 'Approved state changes are published to the assigned field team.' },
+        { fromModuleId: 'mod.work-order-domain', toModuleId: 'mod.audit-ledger', reason: 'Domain state transitions are appended to the immutable maintenance history.' },
+      ],
+      operationAllocations: [
+        { operationId: 'work-orders.release', moduleId: 'mod.release-workflow' },
+        { operationId: 'work-orders.validate-release', moduleId: 'mod.work-order-domain' },
+        { operationId: 'audit.append-maintenance-record', moduleId: 'mod.audit-ledger' },
+        { operationId: 'notifications.publish-work-order-event', moduleId: 'mod.notification-gateway' },
+      ],
+      adapterAllocations: [],
+      workflowTraces: [{
+        useCaseId: 'uc-release-work-order',
+        moduleIds: [
+          'mod.work-orders-ui',
+          'mod.release-workflow',
+          'mod.work-order-domain',
+          'mod.audit-ledger',
+          'mod.notification-gateway',
+        ],
+        entryPointId: 'route:/orders/:id/release',
+        outputId: 'released-work-order',
+        stepAllocations: [
+          { stepId: 'uc-release:step:review', moduleId: 'mod.work-orders-ui' },
+          { stepId: 'uc-release:step:validate', moduleId: 'mod.work-order-domain' },
+          { stepId: 'uc-release:step:release', moduleId: 'mod.release-workflow' },
+          { stepId: 'uc-release:step:approve', moduleId: 'mod.release-workflow' },
+          { stepId: 'uc-release:step:record', moduleId: 'mod.audit-ledger' },
+          { stepId: 'uc-release:step:notify', moduleId: 'mod.notification-gateway' },
+          { stepId: 'uc-release:step:block', moduleId: 'mod.release-workflow' },
+          { stepId: 'uc-release:step:retry', moduleId: 'mod.work-orders-ui' },
+        ],
+      }, {
+        useCaseId: 'uc-complete-work-order',
+        moduleIds: ['mod.work-orders-ui', 'mod.release-workflow', 'mod.work-order-domain', 'mod.audit-ledger'],
+        entryPointId: 'route:/orders/:id/complete',
+        outputId: 'completed-work-order',
+        stepAllocations: [
+          { stepId: 'uc-complete:step:start', moduleId: 'mod.work-order-domain' },
+          { stepId: 'uc-complete:step:evidence', moduleId: 'mod.work-orders-ui' },
+          { stepId: 'uc-complete:step:review', moduleId: 'mod.release-workflow' },
+          { stepId: 'uc-complete:step:close', moduleId: 'mod.audit-ledger' },
+        ],
+      }, {
+        useCaseId: 'uc-review-evidence',
+        moduleIds: ['mod.work-orders-ui', 'mod.release-workflow', 'mod.audit-ledger'],
+        entryPointId: 'route:/evidence',
+        outputId: 'evidence-package',
+        stepAllocations: [
+          { stepId: 'uc-review:step:locate', moduleId: 'mod.audit-ledger' },
+          { stepId: 'uc-review:step:trace', moduleId: 'mod.release-workflow' },
+          { stepId: 'uc-review:step:export', moduleId: 'mod.work-orders-ui' },
+        ],
+      }],
+      proposals: [],
+      unresolvedQuestions: [],
+      gateResult: { gateId: 'CAP-GATE-002', passed: true, diagnostics: [] },
+      contentHash: '',
+    }
+    architecture.contentHash = canonicalHash({ ...architecture, contentHash: undefined })
+
+    const manifests: ModuleManifest[] = [
+      {
+        schemaVersion: '1.0', architectureVersion: '1.0', moduleId: 'mod.work-orders-ui', moduleVersion: '1.0.0',
+        moduleType: 'experience', name: 'Work Orders UI', responsibility: 'Present and capture the work-order release interaction.',
+        ownedConcerns: ['Release form', 'Validation feedback'], excludedConcerns: ['Release policy', 'Audit storage'],
+        providedOperations: [], requiredOperations: [{ operationId: 'work-orders.release', acceptedContractRange: '^1.0.0', reason: 'Submit an approved release request.' }],
+        verificationSuiteIds: ['suite.work-orders-ui'], runtimeAllocation: 'local-embedded', events: [], ownedPaths: ['src/work-orders/'],
+      },
+      {
+        schemaVersion: '1.0', architectureVersion: '1.0', moduleId: 'mod.release-workflow', moduleVersion: '1.0.0',
+        moduleType: 'workflow', name: 'Release Workflow', responsibility: 'Coordinate validation, release, and audit recording.',
+        ownedConcerns: ['Release coordination'], excludedConcerns: ['Presentation', 'Domain invariants'],
+        providedOperations: [{ operationId: 'work-orders.release', contractVersion: '1.0.0' }],
+        requiredOperations: [
+          { operationId: 'work-orders.validate-release', acceptedContractRange: '^1.0.0', reason: 'Validate release invariants.' },
+          { operationId: 'audit.append-maintenance-record', acceptedContractRange: '^1.0.0', reason: 'Record immutable decisions and provenance.' },
+          { operationId: 'notifications.publish-work-order-event', acceptedContractRange: '^1.0.0', reason: 'Notify assigned field teams.' },
+        ],
+        verificationSuiteIds: ['suite.release-workflow'], runtimeAllocation: 'local-embedded', events: ['work-order.released'], ownedPaths: ['src/release-workflow/'],
+      },
+      {
+        schemaVersion: '1.0', architectureVersion: '1.0', moduleId: 'mod.work-order-domain', moduleVersion: '1.0.0',
+        moduleType: 'domain', name: 'Work Order Domain', responsibility: 'Own work-order state and release invariants.',
+        ownedConcerns: ['Work-order state', 'Release invariants'], excludedConcerns: ['Presentation', 'Workflow coordination'],
+        providedOperations: [{ operationId: 'work-orders.validate-release', contractVersion: '1.0.0' }], requiredOperations: [],
+        verificationSuiteIds: ['suite.work-order-domain'], runtimeAllocation: 'local-embedded', events: [], ownedPaths: ['src/domain/work-orders/'],
+      },
+      {
+        schemaVersion: '1.0', architectureVersion: '1.0', moduleId: 'mod.audit-ledger', moduleVersion: '1.0.0',
+        moduleType: 'domain', name: 'Audit Ledger', responsibility: 'Persist immutable maintenance decisions and evidence provenance.',
+        ownedConcerns: ['Audit records', 'Evidence hashes', 'Decision provenance'], excludedConcerns: ['Workflow coordination', 'Notifications'],
+        providedOperations: [{ operationId: 'audit.append-maintenance-record', contractVersion: '1.0.0' }], requiredOperations: [],
+        verificationSuiteIds: ['suite.audit-ledger'], runtimeAllocation: 'local-embedded', events: [], ownedPaths: ['src/domain/audit/'],
+      },
+      {
+        schemaVersion: '1.0', architectureVersion: '1.0', moduleId: 'mod.notification-gateway', moduleVersion: '1.0.0',
+        moduleType: 'connection', name: 'Notification Gateway', responsibility: 'Publish approved work-order events to field channels.',
+        ownedConcerns: ['Notification delivery', 'Channel adaptation'], excludedConcerns: ['Release decisions', 'Work-order state'],
+        providedOperations: [{ operationId: 'notifications.publish-work-order-event', contractVersion: '1.0.0' }], requiredOperations: [],
+        verificationSuiteIds: ['suite.notification-gateway'], runtimeAllocation: 'external-adapter', events: [], ownedPaths: ['src/adapters/notifications/'],
+      },
+    ]
+    const contracts: OperationContract[] = [
+      {
+        schemaVersion: '1.0', operationId: 'work-orders.release', version: '1.0.0', behavior: 'command',
+        inputSchemaRef: 'schema.release-request', outputSchemaRef: 'schema.released-work-order',
+        preconditions: [], postconditions: ['The order is released.'], domainRejections: ['Safety information is incomplete.'],
+        technicalErrors: [], sideEffects: ['An audit event is recorded.'], idempotency: 'idempotent', timeoutClass: 'short',
+        cancellable: true, artifactTypes: [], provenanceFields: ['revision'],
+      },
+      {
+        schemaVersion: '1.0', operationId: 'work-orders.validate-release', version: '1.0.0', behavior: 'query',
+        inputSchemaRef: 'schema.work-order', outputSchemaRef: 'schema.validation-result',
+        preconditions: [], postconditions: [], domainRejections: [], technicalErrors: [], sideEffects: [],
+        idempotency: 'idempotent', timeoutClass: 'short', cancellable: true, artifactTypes: [], provenanceFields: [],
+      },
+      {
+        schemaVersion: '1.0', operationId: 'audit.append-maintenance-record', version: '1.0.0', behavior: 'command',
+        inputSchemaRef: 'schema.maintenance-decision', outputSchemaRef: 'schema.audit-record',
+        preconditions: [], postconditions: ['The record is immutable and content-addressed.'], domainRejections: [],
+        technicalErrors: [], sideEffects: ['A maintenance history entry is appended.'],
+        idempotency: 'idempotent', timeoutClass: 'short', cancellable: false, artifactTypes: ['audit-record'], provenanceFields: ['revision', 'actorId'],
+      },
+      {
+        schemaVersion: '1.0', operationId: 'notifications.publish-work-order-event', version: '1.0.0', behavior: 'command',
+        inputSchemaRef: 'schema.work-order-event', outputSchemaRef: 'schema.delivery-result',
+        preconditions: [], postconditions: ['The event is accepted for delivery.'], domainRejections: [],
+        technicalErrors: [], sideEffects: ['One or more field channels are notified.'],
+        idempotency: 'idempotent', timeoutClass: 'short', cancellable: true, artifactTypes: [], provenanceFields: ['revision'],
+      },
+    ]
+
+    state.applicationApproved = application
+    state.architectureApproved = architecture
+    for (const manifest of manifests) {
+      state.moduleApproved.set(manifest.moduleId, manifest)
+      let design = createModuleDesignDraft({
+        application,
+        architecture,
+        manifest,
+        operationContracts: contracts,
+        steLexicon: state.steLexicon,
+      })
+      design = {
+        ...design,
+        schemas: [{ id: 'schema.release', text: 'Approved operation input and output schemas' }],
+        behavior: {
+          ...design.behavior,
+          preconditions: ['The work order exists and is a draft.'],
+          postconditions: ['A valid work order is released exactly once.'],
+          domainRejections: ['Safety information is incomplete.'],
+          states: [
+            { id: 'draft', text: 'Draft' },
+            { id: 'validation-pending', text: 'Validation pending' },
+            { id: 'awaiting-approval', text: 'Awaiting supervisor approval' },
+            { id: 'scheduled', text: 'Scheduled' },
+            { id: 'released', text: 'Released' },
+            { id: 'in-progress', text: 'In progress' },
+            { id: 'completed', text: 'Completed' },
+          ],
+        },
+      }
+      design.diagrams = projectModuleDiagrams({ application, architecture, design })
+      const evaluation = evaluateModuleDesign(
+        design,
+        contracts,
+        state.steLexicon,
+        { application, architecture },
+      )
+      design.gates = [{
+        gateId: 'CAP-GATE-MODULE-DESIGN',
+        passed: evaluation.passed,
+        diagnostics: evaluation.diagnostics.map((item, index) => ({
+          id: `${item.code}:${index + 1}`, code: item.code, message: item.message, relatedIds: item.relatedIds,
+        })),
+      }]
+      design.status = evaluation.passed ? 'approved' : 'needsInput'
+      design.approval = {
+        approvedAt: now(),
+        approvedBy: 'PlantOps sample',
+        sourceHashes: { architecture: architecture.contentHash },
+        openNonblockingItemIds: [],
+      }
+      design.contentHash = canonicalHash({ ...design, contentHash: undefined })
+      state.moduleDesignApproved.set(manifest.moduleId, design)
+      state.moduleDesignSessions.set(manifest.moduleId, {
+        ...createModuleDesignSession({
+          projectId: application.projectId,
+          moduleId: manifest.moduleId,
+          architecture,
+          baseModuleDesignRevision: design.revision,
+        }),
+        state: 'completed',
+        currentStep: 'approval',
+        completedSteps: ['boundary', 'behavior', 'contracts', 'diagrams', 'checks', 'approval'],
+      })
+    }
+  }
+
+  function seedDo178AuditHubWorkflow(state: CapProjectState) {
+    const sourceApplication = do178ApplicationRecord as ApplicationSpecification
+    const sourceArchitecture = do178ArchitectureRecord as unknown as ArchitectureSpecification
+    const step = (
+      useCaseId: string,
+      suffix: string,
+      order: number,
+      actorId: string | undefined,
+      action: string,
+      expectedResult: string,
+    ) => ({
+      id: `${useCaseId}:step:${suffix}`,
+      order,
+      ...(actorId ? { actorId } : {}),
+      action,
+      expectedResult,
+      inputIds: [],
+      outputIds: [],
+      ruleIds: sourceApplication.rules.map((rule) => rule.id),
+      evidencePolicy: 'structured' as const,
+    })
+    let detailedUseCases: NonNullable<ApplicationSpecification['useCaseDefinitions']> = [{
+      id: 'uc-findings',
+      name: 'Close audit finding',
+      actorIds: ['actor-vv', 'actor-qa', 'actor-lead'],
+      trigger: 'A reviewer opens an audit finding that is ready for work.',
+      preconditions: ['The selected immutable snapshot contains evidence linked to an open finding.'],
+      mainFlow: [
+        step('uc-findings', 'open', 1, 'actor-vv', 'Inspect finding evidence', 'The view shows the exact evidence identity, revision, hash, and history.'),
+        step('uc-findings', 'assign', 2, 'actor-qa', 'Assign finding owner', 'The record includes the owner, severity, and due date.'),
+        step('uc-findings', 'correct', 3, 'actor-vv', 'Record corrective action', 'The corrective action stays linked to the authoritative evidence revision.'),
+        step('uc-findings', 'review', 4, 'actor-qa', 'Check closure readiness', 'The closure gate shows the evidence status and the independence status.'),
+        step('uc-findings', 'reverify', 5, 'actor-lead', 'Verify corrective action', 'The verification result stays linked to the finding history.'),
+        step('uc-findings', 'close', 6, 'actor-lead', 'Close audit finding', 'The finding closes with an immutable decision and complete source data.'),
+      ],
+      alternatePaths: [],
+      failurePaths: [],
+      recoveryPaths: [],
+      ruleIds: sourceApplication.rules.map((rule) => rule.id),
+      inputIds: [],
+      outputIds: [],
+      acceptanceCaseIds: ['ac-4'],
+      sourceRefs: sourceApplication.sources.map((source) => source.id),
+    }, {
+      id: 'uc-reviews',
+      name: 'Record assurance review',
+      actorIds: ['actor-qa', 'actor-vv', 'actor-auditor'],
+      trigger: 'A reviewer starts an assurance review for the selected snapshot.',
+      preconditions: ['The reviewer has approved access to the selected snapshot.'],
+      mainFlow: [
+        step('uc-reviews', 'scope', 1, 'actor-qa', 'Select review evidence', 'The review uses the selected scope, artifact revisions, and hashes.'),
+        step('uc-reviews', 'independence', 2, 'actor-auditor', 'Confirm reviewer independence', 'The record includes the reviewer identity and independence evidence.'),
+        step('uc-reviews', 'inspect', 3, 'actor-vv', 'Inspect review history', 'The view shows related traces, findings, and prior decisions without a source change.'),
+        step('uc-reviews', 'decide', 4, 'actor-auditor', 'Record review decision', 'The record adds the decision and comments to the immutable review history.'),
+      ],
+      alternatePaths: [],
+      failurePaths: [],
+      recoveryPaths: [],
+      ruleIds: sourceApplication.rules.map((rule) => rule.id),
+      inputIds: [],
+      outputIds: [],
+      acceptanceCaseIds: ['ac-2'],
+      sourceRefs: sourceApplication.sources.map((source) => source.id),
+    }, {
+      id: 'uc-package',
+      name: 'Build audit package',
+      actorIds: ['actor-lead', 'actor-auditor', 'actor-cm'],
+      trigger: 'A certification lead starts an audit-package export.',
+      preconditions: ['A published immutable snapshot and package selection exist.'],
+      mainFlow: [
+        step('uc-package', 'select', 1, 'actor-lead', 'Select package evidence', 'The selection includes dossiers, trace matrices, reviews, and findings.'),
+        step('uc-package', 'baseline', 2, 'actor-cm', 'Record baseline metadata', 'The manifest records the immutable snapshot and exact source revisions.'),
+        step('uc-package', 'verify', 3, 'actor-auditor', 'Check package integrity', 'Each package item passes the hash, review, open-item, and source-data checks.'),
+        step('uc-package', 'watermark', 4, undefined, 'Mark synthetic sample', 'The watermark distinguishes sample evidence from certification evidence.'),
+        step('uc-package', 'export', 5, 'actor-lead', 'Export audit package', 'The outbound adapter writes a reproducible package and manifest.'),
+      ],
+      alternatePaths: [],
+      failurePaths: [],
+      recoveryPaths: [],
+      ruleIds: sourceApplication.rules.map((rule) => rule.id),
+      inputIds: [],
+      outputIds: [],
+      acceptanceCaseIds: ['ac-5'],
+      sourceRefs: sourceApplication.sources.map((source) => source.id),
+    }]
+    detailedUseCases = buildDo178UseCases(sourceApplication)
+    const applicationWorkflows = buildDo178ApplicationWorkflows(sourceApplication)
+    const application: ApplicationSpecification = {
+      ...sourceApplication,
+      projectId: 'do-178c-audit-hub',
+      useCaseDefinitions: detailedUseCases,
+      applicationWorkflows,
+      scenarioDefinitions: undefined,
+      contentHash: '',
+    }
+    application.scenarioDefinitions = compileScenarioDefinitions(application)
+    application.contentHash = canonicalHash({ ...application, contentHash: undefined })
+    const workflowAllocations = buildDo178WorkflowAllocations()
+    const architecture: ArchitectureSpecification = {
+      ...sourceArchitecture,
+      projectId: application.projectId,
+      applicationSpecId: application.id,
+      applicationSpecRevision: application.revision,
+      applicationSpecHash: application.contentHash,
+      workflowTraces: sourceArchitecture.workflowTraces.map((trace) => {
+        const allocations = workflowAllocations[trace.useCaseId]
+        return allocations
+          ? {
+            ...trace,
+            moduleIds: [...new Set(allocations.flatMap((allocation) => [
+              allocation.primaryModuleId,
+              ...allocation.participatingModuleIds,
+            ]))],
+            nodeAllocations: allocations,
+          }
+          : trace
+      }),
+      contentHash: '',
+    }
+    const {
+      contentHash: _architectureContentHash,
+      approvedAt: _architectureApprovedAt,
+      ...architectureBody
+    } = architecture
+    architecture.contentHash = canonicalHash(architectureBody)
+    const sourceManifests = [
+      do178AssuranceModuleRecord,
+      do178AuditExperienceModuleRecord,
+      do178EvidenceGraphModuleRecord,
+      do178EvidenceStoreModuleRecord,
+      do178ExternalAdaptersModuleRecord,
+      do178IngestionPublicationModuleRecord,
+      do178LifecycleExplorerModuleRecord,
+      do178SampleWorkspaceModuleRecord,
+      do178WorkspaceSnapshotsModuleRecord,
+    ] as unknown as {
+      moduleId: string
+      moduleVersion: string
+      moduleType: ModuleManifest['moduleType']
+      name?: string
+      responsibility: string
+      nonResponsibilities?: string[]
+      ownedConcerns?: string[]
+      excludedConcerns?: string[]
+      providedOperations: ModuleManifest['providedOperations']
+      requiredOperations: ModuleManifest['requiredOperations']
+      verificationSuiteIds?: string[]
+      runtimeAllocation?: ModuleManifest['runtimeAllocation']
+      events?: string[]
+      ownedPaths: string[]
+    }[]
+    state.applicationApproved = application
+    state.architectureApproved = architecture
+    for (const sourceManifest of sourceManifests) {
+      const definition = architecture.moduleDefinitions!.find((item) =>
+        item.moduleId === sourceManifest.moduleId)
+      const manifest: ModuleManifest = {
+        schemaVersion: '1.0',
+        architectureVersion: '1.0',
+        moduleId: sourceManifest.moduleId,
+        moduleVersion: sourceManifest.moduleVersion,
+        moduleType: sourceManifest.moduleType,
+        name: sourceManifest.name ?? definition?.name ?? sourceManifest.moduleId,
+        responsibility: sourceManifest.responsibility,
+        ownedConcerns: sourceManifest.ownedConcerns ?? [definition?.name ?? sourceManifest.moduleId],
+        excludedConcerns: sourceManifest.excludedConcerns ?? sourceManifest.nonResponsibilities ?? [],
+        providedOperations: [...sourceManifest.providedOperations],
+        requiredOperations: [...sourceManifest.requiredOperations],
+        verificationSuiteIds: sourceManifest.verificationSuiteIds
+          ?? [`acceptance:${sourceManifest.moduleId}`],
+        runtimeAllocation: sourceManifest.runtimeAllocation
+          ?? (sourceManifest.moduleType === 'connection' ? 'external-adapter' : 'local-embedded'),
+        events: sourceManifest.events ?? [],
+        ownedPaths: [...sourceManifest.ownedPaths],
+      }
+      state.moduleApproved.set(manifest.moduleId, manifest)
+    }
+    for (const approvedDesign of [
+      do178AssuranceDesignRecord,
+      do178AuditExperienceDesignRecord,
+      do178EvidenceGraphDesignRecord,
+      do178EvidenceStoreDesignRecord,
+      do178ExternalAdaptersDesignRecord,
+      do178WorkspaceSnapshotsDesignRecord,
+    ] as unknown as ModuleDesignSpecification[]) {
+      const rebasedDesign: ModuleDesignSpecification = {
+        ...structuredClone(approvedDesign),
+        projectId: application.projectId,
+        architecture: {
+          id: architecture.id,
+          revision: architecture.revision,
+          contentHash: architecture.contentHash,
+        },
+        approval: approvedDesign.approval
+          ? {
+            ...approvedDesign.approval,
+            sourceHashes: {
+              ...approvedDesign.approval.sourceHashes,
+              architecture: architecture.contentHash,
+            },
+          }
+          : approvedDesign.approval,
+        diagrams: [],
+        contentHash: '',
+      }
+      rebasedDesign.diagrams = projectModuleDiagrams({
+        application,
+        architecture,
+        design: rebasedDesign,
+      })
+      rebasedDesign.contentHash = canonicalHash({ ...rebasedDesign, contentHash: undefined })
+      state.moduleDesignApproved.set(rebasedDesign.module.moduleId, rebasedDesign)
+      state.moduleDesignSessions.set(rebasedDesign.module.moduleId, {
+        ...createModuleDesignSession({
+          projectId: application.projectId,
+          moduleId: rebasedDesign.module.moduleId,
+          architecture,
+          baseModuleDesignRevision: rebasedDesign.revision,
+        }),
+        state: 'completed',
+        currentStep: 'diagrams',
+        completedSteps: ['boundary', 'behavior', 'contracts', 'diagrams', 'checks', 'approval'],
+      })
+    }
+  }
+
   function ensureCap(projectId: string): CapProjectState {
     let state = capByProject.get(projectId)
     if (!state) {
@@ -117,6 +912,11 @@ export function installMockBridge(): EuikBridge {
         moduleApproved: new Map(),
         moduleInterviewDrafts: new Map(),
         moduleInterviewApproved: new Map(),
+        moduleDesignDrafts: new Map(),
+        moduleDesignApproved: new Map(),
+        moduleDesignSessions: new Map(),
+        scenarioRuns: new Map(),
+        scenarioEvidence: new Map(),
         bindingDrafts: new Map(),
         bindingApproved: new Map(),
         freshness: new Map(),
@@ -128,6 +928,8 @@ export function installMockBridge(): EuikBridge {
         connectionVerifications: new Map(),
         capabilityRuns: new Map(),
       }
+      if (projectId === 'plantops-sample') seedPlantOpsWorkflow(state)
+      if (projectId === 'do-178c-audit-hub') seedDo178AuditHubWorkflow(state)
       capByProject.set(projectId, state)
     }
     return state
@@ -232,9 +1034,61 @@ export function installMockBridge(): EuikBridge {
     createdAt: new Date(Date.now() - 864e5).toISOString(),
     updatedAt: new Date(Date.now() - 864e5).toISOString(),
   })
+  projects.set('do-178c-audit-hub', {
+    id: 'do-178c-audit-hub',
+    name: 'DO-178C Audit Hub (sample)',
+    description: 'Canonical aerospace assurance sample with approved application, architecture, and module specifications.',
+    repoPath: 'examples/do178-audit-hub',
+    status: 'active',
+    isSample: true,
+    verificationCommands: { typecheck: 'npm run typecheck', build: 'npm run build' },
+    evidenceViews: [{ id: 'overview', label: 'Audit overview', path: '/' }],
+    settingsSchemaVersion: '1',
+    createdAt: new Date(Date.now() - 864e5).toISOString(),
+    updatedAt: new Date().toISOString(),
+  })
 
   let counter = 0
   const newId = (prefix: string) => `${prefix}-${++counter}`
+  const saveMockModuleDesign = (
+    projectId: string,
+    draft: ModuleDesignSpecification,
+  ): { ok: true; design: ModuleDesignSpecification; diagnostics: ReturnType<typeof evaluateModuleDesign>['diagnostics'] } => {
+    const state = ensureCap(projectId)
+    const application = state.applicationApproved
+    const architecture = state.architectureApproved
+    if (!application || !architecture) throw new Error('Approved application and architecture are required.')
+    const design: ModuleDesignSpecification = {
+      ...draft,
+      status: 'draft',
+      approval: undefined,
+      diagrams: [],
+      gates: [],
+      contentHash: '',
+    }
+    design.diagrams = projectModuleDiagrams({ application, architecture, design })
+    const evaluation = evaluateModuleDesign(
+      design,
+      [],
+      state.steLexicon,
+      { application, architecture },
+    )
+    const diagnostics = evaluation.diagnostics
+    design.gates = [{
+      gateId: 'CAP-GATE-MODULE-DESIGN',
+      passed: diagnostics.length === 0,
+      diagnostics: diagnostics.map((item, index) => ({
+        id: `${item.code}:${index + 1}`,
+        code: item.code,
+        message: item.message,
+        relatedIds: item.relatedIds,
+      })),
+    }]
+    design.status = diagnostics.length === 0 ? 'readyForReview' : 'needsInput'
+    design.contentHash = canonicalHash({ ...design, contentHash: undefined })
+    state.moduleDesignDrafts.set(design.module.moduleId, design)
+    return { ok: true, design, diagnostics }
+  }
 
   return {
     async appVersion() { return '0.1.0 (mock)' },
@@ -390,6 +1244,8 @@ export function installMockBridge(): EuikBridge {
         uploadSetType: 'text-only',
       })
       lastPacketFields = { ...fields }
+      const projectId = runs.get(runId)?.projectId
+      const steLexicon = projectId ? ensureCap(projectId).steLexicon : undefined
       return {
         taskPacketPath: '/mock/task-packet.md',
         standardPackPath: '/mock/standard-pack.md',
@@ -399,7 +1255,16 @@ export function installMockBridge(): EuikBridge {
           { file: 'repo-flatfile.txt', bytes: 2_460_000, sha256: 'a'.repeat(64) },
           { file: 'task-and-standard-pack.md', bytes: 73_000, sha256: 'b'.repeat(64) },
         ],
-        recommendedPrompt: `You are implementing a focused UI transformation.\n\nTask goal:\n\n${fields.goal}\n\nReturn only ui-overlay.zip containing changed and new files.`,
+        recommendedPrompt: withStePrompt(`Implement the focused UI change.
+
+Task goal:
+
+${fields.goal}
+
+Return only ui-overlay.zip with the changed files and new files.`, {
+          technicalTerms: steLexicon?.technicalTerms,
+          prohibitedAliases: steLexicon?.prohibitedAliases,
+        }),
       }
     },
     async getArtifactText(_runId, fileName): Promise<string> {
@@ -423,15 +1288,37 @@ export function installMockBridge(): EuikBridge {
       return this.updateRun(runId, { userReviewNotesPath: '/mock/user-review-notes.md' })
     },
     async buildReviewPacket(runId) {
+      const run = runs.get(runId)
+      if (!run) throw new Error(`run not found: ${runId}`)
+      const steLexicon = ensureCap(run.projectId).steLexicon
       const captured = evidenceCaptured.get(runId)
       const visual = Boolean(captured?.before || captured?.after)
       await this.updateRun(runId, {
         reviewEvidencePackPath: '/mock/review-packet.md',
         uploadSetType: visual ? 'follow-up-visual' : 'follow-up-text',
       })
+      const reviewPacketText = withStePrompt(
+        `# Copilot Review Packet
+
+- runId: \`${runId}\`
+
+## Review request
+
+Review the changed files and evidence.
+Classify each finding as a blocker, warning, or note.
+Give one corrective action for each finding.
+
+## Reviewer feedback
+
+${mockFeedback.map((item) => item.text).join('\n\n') || '_No manual feedback is available._'}`,
+        {
+          technicalTerms: steLexicon?.technicalTerms,
+          prohibitedAliases: steLexicon?.prohibitedAliases,
+        },
+      )
       return {
         reviewPacketPath: '/mock/review-packet.md',
-        reviewPacketText: `# Copilot Review Packet\n\n- runId: \`${runId}\`\n\n## Reviewer Feedback\n\n${mockFeedback.map((f) => f.text).join('\n\n') || '_No manual feedback captured yet._'}\n`,
+        reviewPacketText,
         ...(visual ? { contactSheetPath: '/mock/review-evidence.pdf' } : {}),
         changesZipPath: '/mock/changes.zip',
         uploadFiles: visual
@@ -550,6 +1437,20 @@ export function installMockBridge(): EuikBridge {
       const state = ensureCap(projectId)
       return { schemaVersion: '1.0', initializedAt: state.initializedAt }
     },
+    async capabilitiesGetSteLexicon(projectId) {
+      return ensureCap(projectId).steLexicon
+    },
+    async capabilitiesSaveSteLexicon(projectId, lexicon, source, reviewedAt) {
+      const record = createProjectSteLexicon({
+        source,
+        reviewedAt,
+        generalWords: lexicon.generalWords ?? [],
+        technicalTerms: lexicon.technicalTerms,
+        prohibitedAliases: lexicon.prohibitedAliases,
+      })
+      ensureCap(projectId).steLexicon = record
+      return record
+    },
     async capabilitiesGetApplication(projectId) {
       const state = ensureCap(projectId)
       return { draft: state.applicationDraft, approved: state.applicationApproved }
@@ -560,28 +1461,64 @@ export function installMockBridge(): EuikBridge {
     },
     async capabilitiesApproveApplication(projectId, draft) {
       const state = ensureCap(projectId)
-      const approved = draft as ApplicationSpecification
+      const candidate = draft as ApplicationSpecification
+      const gate = evaluateProductGate(candidate, state.steLexicon)
+      if (!gate.passed) return { ok: false, gate }
+      const approved = { ...candidate, status: 'approved' as const }
       state.applicationApproved = approved
       state.applicationDraft = undefined
-      return { ok: true, approved, gate: { gateId: 'CAP-GATE-001', passed: true, diagnostics: [] } }
+      return { ok: true, approved, gate }
     },
-    async capabilitiesEvaluateProductGate() {
-      return { gateId: 'CAP-GATE-001', passed: true, diagnostics: [] }
+    async capabilitiesEvaluateProductGate(specification) {
+      const candidate = specification as ApplicationSpecification
+      return evaluateProductGate(candidate, ensureCap(candidate.projectId).steLexicon)
     },
     async capabilitiesBuildInterviewPacket(input) {
       return input
     },
     async capabilitiesExportInterviewPacket(input) {
-      const packet = input as { packetId?: string }
+      const packet = input as InterviewPacket
+      const state = ensureCap(packet.projectId)
       const runId = `cap-interview-${Date.now()}`
       const files = ['capability-interview-handoff.md']
         .map((name) => ({ path: `/mock/${runId}/${name}`, bytes: 100, sha256: `mock-${name}` }))
-      return { runId, packetId: packet.packetId ?? 'packet', recommendedPrompt: 'Conduct the bounded interview.', files, uploadFiles: files.map((f) => f.path) }
+      return {
+        runId,
+        packetId: packet.packetId,
+        recommendedPrompt: withStePrompt('Conduct the bounded interview.', {
+          technicalTerms: [
+            ...(state.steLexicon?.technicalTerms ?? []),
+            ...packet.inputContext.glossary.map((item) => item.text),
+          ],
+          prohibitedAliases: state.steLexicon?.prohibitedAliases,
+        }),
+        files,
+        uploadFiles: files.map((f) => f.path),
+      }
     },
     async capabilitiesExportImplementationPacket(input) {
+      const state = ensureCap(input.projectId)
+      const moduleDesign = state.moduleDesignApproved.get(input.moduleId)
+      if (
+        state.applicationApproved
+        && state.architectureApproved
+        && !evaluateArchitectureApplicationLink(
+          state.applicationApproved,
+          state.architectureApproved,
+        ).current
+      ) {
+        throw new Error('Approved architecture is stale. Revise it for the current application workflow.')
+      }
+      const requiresModuleDesign = Boolean(state.applicationApproved?.useCaseDefinitions?.length)
+      if (requiresModuleDesign && !moduleDesign) {
+        throw new Error(`Approved module design not found: ${input.moduleId}. Complete and approve the module design before implementation.`)
+      }
+      if (state.architectureApproved && moduleDesign && moduleDesign.architecture.contentHash !== state.architectureApproved.contentHash) {
+        throw new Error(`Approved module design is stale for ${input.moduleId}.`)
+      }
       const runId = `cap-implementation-${Date.now()}`
       const createdAt = now()
-      ensureCap(input.projectId).capabilityRuns.set(runId, {
+      state.capabilityRuns.set(runId, {
         schemaVersion: '1.0',
         runId,
         kind: 'implementation',
@@ -589,8 +1526,11 @@ export function installMockBridge(): EuikBridge {
         targetOwnerId: input.moduleId,
         targetKind: 'module',
         lifecycleState: 'exported',
-        inputRevisions: { module: 'mock' },
-        inputHashes: { module: 'mock' },
+        inputRevisions: {
+          module: 'mock',
+          ...(moduleDesign ? { moduleDesign: moduleDesign.revision } : {}),
+        },
+        inputHashes: moduleDesign ? { moduleDesign: moduleDesign.contentHash } : {},
         allowedPaths: [],
         expectedPaths: [],
         protectedPaths: [],
@@ -610,7 +1550,15 @@ export function installMockBridge(): EuikBridge {
       return {
         runId,
         packetId: `pkt-${input.moduleId}`,
-        recommendedPrompt: `Implement production source code and tests for ${input.moduleId}.`,
+        recommendedPrompt: withStePrompt(
+          moduleDesign
+            ? `Implement production source code and tests for ${input.moduleId}. Use approved design ${moduleDesign.revision}.`
+            : `Implement production source code and tests for ${input.moduleId}. Use its approved legacy module record.`,
+          {
+            technicalTerms: state.steLexicon?.technicalTerms,
+            prohibitedAliases: state.steLexicon?.prohibitedAliases,
+          },
+        ),
         files,
         uploadFiles: files.map((f) => f.path),
         readiness: { status: 'ready' as const, issues: [] },
@@ -631,6 +1579,13 @@ export function installMockBridge(): EuikBridge {
       const wave = plan.waves.find((candidate) => candidate.index === input.waveIndex)
       if (!wave) throw new Error(`implementation wave not found: ${input.waveIndex}`)
       const moduleIds = input.moduleIds?.length ? input.moduleIds : wave.targets.map((target) => target.moduleId)
+      const requiresModuleDesign = Boolean(state.applicationApproved?.useCaseDefinitions?.length)
+      const missingDesigns = requiresModuleDesign
+        ? moduleIds.filter((moduleId) => !state.moduleDesignApproved.has(moduleId))
+        : []
+      if (missingDesigns.length) {
+        throw new Error(`Approve module designs before implementation: ${missingDesigns.join(', ')}`)
+      }
       const groupId = `cap-wave-${Date.now()}`
       const createdAt = now()
       const targets = moduleIds.map((moduleId, index) => {
@@ -680,7 +1635,10 @@ export function installMockBridge(): EuikBridge {
       return {
         groupId,
         waveIndex: input.waveIndex,
-        recommendedPrompt: `Implement capability wave ${input.waveIndex}.`,
+        recommendedPrompt: withStePrompt(`Implement capability wave ${input.waveIndex}.`, {
+          technicalTerms: state.steLexicon?.technicalTerms,
+          prohibitedAliases: state.steLexicon?.prohibitedAliases,
+        }),
         files,
         uploadFiles: files.map((file) => file.path),
         targets,
@@ -689,15 +1647,17 @@ export function installMockBridge(): EuikBridge {
     async capabilitiesStartHandoffDrag() { return { files: 1 } },
     async capabilitiesImportInterviewResponse(projectId, raw) {
       const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
-      const draft = (parsed as { draft?: ApplicationSpecification }).draft ?? (parsed as ApplicationSpecification)
-      ensureCap(projectId).applicationDraft = draft
+      const response = (parsed as { draft?: ApplicationSpecification }).draft ?? (parsed as ApplicationSpecification)
+      const state = ensureCap(projectId)
+      const imported = importProductInterviewResponse(response, {
+        projectId,
+        approved: state.applicationApproved,
+        lexicon: state.steLexicon,
+      })
+      state.applicationDraft = imported.draft
       return {
-        draft,
-        diagnostics: [],
-        gate: { gateId: 'CAP-GATE-001', passed: true, diagnostics: [] },
-        delta: [],
-        valid: true,
-        approvedUnchanged: ensureCap(projectId).applicationApproved,
+        ...imported,
+        approvedUnchanged: state.applicationApproved,
       }
     },
     async capabilitiesGetArchitecture(projectId) {
@@ -710,10 +1670,23 @@ export function installMockBridge(): EuikBridge {
     },
     async capabilitiesApproveArchitecture(projectId, draft) {
       const state = ensureCap(projectId)
-      const approved = { ...(draft as ArchitectureSpecification), status: 'approved' as const }
+      const candidate = draft as ArchitectureSpecification
+      const gate = state.applicationApproved
+        ? evaluateArchitectureProposal(state.applicationApproved, {
+            architecture: candidate,
+            moduleNeedTraces: candidate.moduleIds.map((moduleId) => ({
+              moduleId,
+              needIds: candidate.workflowTraces
+                .filter((trace) => trace.moduleIds.includes(moduleId))
+                .map((trace) => trace.useCaseId),
+            })),
+          }, state.steLexicon)
+        : evaluateArchitectureGate(candidate, [], undefined, state.steLexicon)
+      if (!gate.passed) return { ok: false, gate }
+      const approved = { ...candidate, status: 'approved' as const }
       state.architectureApproved = approved
       state.architectureDraft = undefined
-      return { ok: true, approved, gate: { gateId: 'CAP-GATE-002', passed: true, diagnostics: [] } }
+      return { ok: true, approved, gate }
     },
     async capabilitiesProposeFoundation(input) {
       const state = ensureCap(input.projectId)
@@ -813,13 +1786,29 @@ export function installMockBridge(): EuikBridge {
     },
     async capabilitiesApproveModule(projectId, draft, interviewResponse) {
       const state = ensureCap(projectId)
-      const approved = draft as ModuleManifest
-      state.moduleApproved.set(approved.moduleId, approved)
+      const candidate = draft as ModuleManifest
       const approvedInterview = interviewResponse as ModuleInterviewResponse | undefined
-        ?? state.moduleInterviewDrafts.get(approved.moduleId)
-      if (approvedInterview) state.moduleInterviewApproved.set(approved.moduleId, approvedInterview)
-      state.moduleDrafts.delete(approved.moduleId)
-      return { ok: true, approved, gate: { gateId: 'CAP-GATE-003', passed: true, diagnostics: [] } }
+        ?? state.moduleInterviewDrafts.get(candidate.moduleId)
+      const candidateGate = evaluateModuleGate(candidate, undefined, state.steLexicon)
+      const interviewGate = approvedInterview
+        ? evaluateModuleInterview(approvedInterview, state.steLexicon)
+        : undefined
+      const gate = interviewGate
+        ? {
+            ...interviewGate,
+            diagnostics: [...candidateGate.diagnostics, ...interviewGate.diagnostics]
+              .filter((item, index, items) => items.findIndex((candidateItem) =>
+                candidateItem.code === item.code
+                && candidateItem.fieldPath === item.fieldPath
+                && candidateItem.message === item.message) === index),
+          }
+        : candidateGate
+      gate.passed = gate.diagnostics.length === 0
+      if (!gate.passed) return { ok: false, gate }
+      state.moduleApproved.set(candidate.moduleId, candidate)
+      if (approvedInterview) state.moduleInterviewApproved.set(candidate.moduleId, approvedInterview)
+      state.moduleDrafts.delete(candidate.moduleId)
+      return { ok: true, approved: candidate, gate }
     },
     async capabilitiesProposeModuleBatch(projectId) {
       const state = ensureCap(projectId)
@@ -856,7 +1845,7 @@ export function installMockBridge(): EuikBridge {
         if (approved) return { moduleId, status: 'already-approved' as const, ok: true as const, approved }
         const draft = state.moduleDrafts.get(moduleId)
         if (!draft) return { moduleId, status: 'missing' as const, ok: false as const }
-        const gate = evaluateModuleGate(draft)
+        const gate = evaluateModuleGate(draft, undefined, state.steLexicon)
         if (!gate.passed) return { moduleId, status: 'blocked' as const, ok: false as const, gate }
         state.moduleApproved.set(moduleId, draft)
         state.moduleDrafts.delete(moduleId)
@@ -891,8 +1880,10 @@ export function installMockBridge(): EuikBridge {
         application: state.applicationApproved,
         architecture,
         modules: [...state.moduleApproved.values()],
+        moduleDesigns: [...state.moduleDesignApproved.values()],
         bindings: [...inbound, ...legacy],
         targetModuleIds: input.targetModuleIds,
+        steLexicon: state.steLexicon,
       })
     },
     async capabilitiesListModules(projectId) {
@@ -909,6 +1900,178 @@ export function installMockBridge(): EuikBridge {
         approved: state.moduleApproved.get(moduleId),
         freshness: state.freshness.get(moduleId),
       }))
+    },
+    async capabilitiesListModuleDesigns(projectId) {
+      const state = ensureCap(projectId)
+      const moduleIds = [...new Set([
+        ...state.moduleDrafts.keys(),
+        ...state.moduleApproved.keys(),
+        ...state.moduleDesignDrafts.keys(),
+        ...state.moduleDesignApproved.keys(),
+      ])].sort((a, b) => a.localeCompare(b))
+      return moduleIds.map((moduleId) => ({
+        moduleId,
+        draft: state.moduleDesignDrafts.get(moduleId),
+        approved: state.moduleDesignApproved.get(moduleId),
+        session: state.moduleDesignSessions.get(moduleId),
+      }))
+    },
+    async capabilitiesCreateModuleDesignDraft(input) {
+      const state = ensureCap(input.projectId)
+      const application = state.applicationApproved
+      const architecture = state.architectureApproved
+      const manifest = state.moduleApproved.get(input.moduleId) ?? state.moduleDrafts.get(input.moduleId)
+      if (!application || !architecture || !manifest) {
+        throw new Error('Approve the application and architecture, then create the module manifest.')
+      }
+      const previous = state.moduleDesignApproved.get(input.moduleId)
+      const approvedInterview = state.moduleInterviewApproved.get(input.moduleId)
+      const revision = previous
+        ? (/^(\d+)\.(\d+)\.(\d+)$/.test(previous.revision)
+            ? previous.revision.replace(/^(\d+)\.(\d+)\.(\d+)$/, (_, major, minor, patch) => `${major}.${minor}.${Number(patch) + 1}`)
+            : `${previous.revision}-next`)
+        : manifest.moduleVersion
+      const design = createModuleDesignDraft({
+        application,
+        architecture,
+        manifest,
+        behaviorDraft: approvedInterview?.behaviorDraft,
+        steLexicon: state.steLexicon,
+        revision,
+      })
+      const existingSession = state.moduleDesignSessions.get(input.moduleId)
+      const session = existingSession && existingSession.state !== 'completed' ? existingSession : createModuleDesignSession({
+        projectId: input.projectId,
+        moduleId: input.moduleId,
+        architecture,
+        baseModuleDesignRevision: design.revision,
+      })
+      state.moduleDesignDrafts.set(input.moduleId, design)
+      state.moduleDesignSessions.set(input.moduleId, session)
+      return { design, session }
+    },
+    async capabilitiesSaveModuleDesignDraft(projectId, draft) {
+      return saveMockModuleDesign(projectId, draft)
+    },
+    async capabilitiesApproveModuleDesign(input) {
+      if (!input.explicit) throw new Error('Module design approval requires explicit confirmation.')
+      const saved = saveMockModuleDesign(input.projectId, input.draft)
+      if (saved.diagnostics.length) return { ok: false, design: saved.design, diagnostics: saved.diagnostics }
+      const approved: ModuleDesignSpecification = {
+        ...saved.design,
+        status: 'approved',
+        approval: {
+          approvedAt: now(),
+          approvedBy: input.approvedBy,
+          sourceHashes: {
+            architecture: saved.design.architecture.contentHash,
+            draft: saved.design.contentHash,
+          },
+          openNonblockingItemIds: [],
+        },
+        contentHash: '',
+      }
+      approved.contentHash = canonicalHash({ ...approved, contentHash: undefined })
+      const state = ensureCap(input.projectId)
+      state.moduleDesignApproved.set(approved.module.moduleId, approved)
+      state.moduleDesignDrafts.delete(approved.module.moduleId)
+      return { ok: true, approved, diagnostics: [] }
+    },
+    async capabilitiesSaveModuleDesignSession(projectId, session) {
+      ensureCap(projectId).moduleDesignSessions.set(session.moduleId, { ...session, updatedAt: now() })
+      return { ok: true as const }
+    },
+    async capabilitiesListScenarioRuns(projectId) {
+      return [...ensureCap(projectId).scenarioRuns.values()]
+        .sort((left, right) => right.startedAt.localeCompare(left.startedAt))
+    },
+    async capabilitiesCreateScenarioRun(input) {
+      const state = ensureCap(input.projectId)
+      if (!state.applicationApproved || !state.architectureApproved) {
+        throw new Error('Approve the application and architecture before preparing scenario verification.')
+      }
+      const scenario = compileScenarioDefinitions(state.applicationApproved)
+        .find((candidate) => candidate.id === input.scenarioId)
+      const trace = state.architectureApproved.workflowTraces
+        .find((candidate) => candidate.useCaseId === scenario?.useCaseId)
+      const missingDesignIds = (trace?.moduleIds ?? []).filter((moduleId) => {
+        const design = state.moduleDesignApproved.get(moduleId)
+        return !design || design.architecture.contentHash !== state.architectureApproved!.contentHash
+      })
+      if (missingDesignIds.length) {
+        throw new Error(`Approve current module designs before scenario verification: ${missingDesignIds.join(', ')}`)
+      }
+      const record = createScenarioRun({
+        runId: `scenario-${Date.now()}`,
+        application: state.applicationApproved,
+        architecture: state.architectureApproved,
+        moduleDesigns: [...state.moduleDesignApproved.values()],
+        scenarioId: input.scenarioId,
+        build: input.build,
+        sourceRevision: input.sourceRevision,
+        environment: input.environment,
+        testDataRevision: input.testDataRevision,
+        runner: input.runner,
+        implementationRevisions: input.implementationRevisions,
+        connectionRevision: input.connectionRevision,
+      })
+      state.scenarioRuns.set(record.runId, record)
+      return record
+    },
+    async capabilitiesRunScenarioCommand() {
+      throw new Error('Configured scenario commands run only in the desktop app against the selected project repository.')
+    },
+    async capabilitiesRecordScenarioStep(input) {
+      const state = ensureCap(input.projectId)
+      const current = state.scenarioRuns.get(input.runId)
+      if (!current) throw new Error('Scenario run not found.')
+      const evidenceHashes = Object.fromEntries(input.evidence.flatMap((item) => {
+        if (!item.artifactId) return []
+        const artifact = state.scenarioEvidence.get(`${input.runId}:${item.artifactId}`)
+        if (!artifact) throw new Error(`Scenario evidence artifact not found: ${item.artifactId}`)
+        return [[item.artifactId, artifact.reference.checksum]]
+      }))
+      const record = recordScenarioStep({ ...input, record: current, evidenceHashes })
+      state.scenarioRuns.set(record.runId, record)
+      return record
+    },
+    async capabilitiesFinalizeScenarioRun(input) {
+      const state = ensureCap(input.projectId)
+      const application = state.applicationApproved
+      const architecture = state.architectureApproved
+      const current = state.scenarioRuns.get(input.runId)
+      if (!application || !architecture || !current) {
+        throw new Error('Approved application, architecture, and scenario run are required.')
+      }
+      const finalized = finalizeScenarioRun(application, current, undefined, {
+        architecture,
+        moduleDesigns: [...state.moduleDesignApproved.values()],
+      })
+      state.scenarioRuns.set(finalized.record.runId, finalized.record)
+      return finalized
+    },
+    async capabilitiesSaveScenarioEvidence(input) {
+      const state = ensureCap(input.projectId)
+      if (!state.scenarioRuns.has(input.runId)) throw new Error('Scenario run not found.')
+      const reference: ArtifactReference = {
+        schemaVersion: '1.0',
+        artifactId: input.artifactId,
+        projectId: input.projectId,
+        mediaType: input.mediaType,
+        checksum: canonicalHash(input.base64),
+        byteSize: Math.ceil(input.base64.length * 0.75),
+        createdAt: now(),
+        producingOperationId: input.producingOperationId,
+        producingRunId: input.runId,
+        provenance: { source: input.provenanceSource, recordedAt: now() },
+        storageClass: 'app-managed',
+        opaqueStorageRef: `mock/${input.runId}/${input.artifactId}`,
+      }
+      state.scenarioEvidence.set(`${input.runId}:${input.artifactId}`, { reference, base64: input.base64 })
+      return reference
+    },
+    async capabilitiesGetScenarioEvidence(input) {
+      return ensureCap(input.projectId).scenarioEvidence.get(`${input.runId}:${input.artifactId}`)
     },
     async capabilitiesListBindings(projectId) {
       const state = ensureCap(projectId)
@@ -1028,6 +2191,7 @@ export function installMockBridge(): EuikBridge {
     },
     async capabilitiesApproveBinding(projectId, draft) {
       const binding = draft as FrontendBinding
+      const state = ensureCap(projectId)
       if (!binding?.selectionEvidence?.stableMarker && !binding?.selectionEvidence?.sourceTargetConfirmed) {
         return {
           ok: false,
@@ -1039,11 +2203,12 @@ export function installMockBridge(): EuikBridge {
           ],
         }
       }
-      const gate = evaluateBindingApprovalGate(binding)
+      const gate = evaluateBindingApprovalGate(binding, {
+        steLexicon: state.steLexicon,
+      })
       if (!gate.passed) {
         return { ok: false, diagnostics: gate.diagnostics }
       }
-      const state = ensureCap(projectId)
       state.bindingApproved.set(binding.bindingId, binding)
       state.bindingDrafts.delete(binding.bindingId)
       return { ok: true, approved: binding }
@@ -1072,10 +2237,12 @@ export function installMockBridge(): EuikBridge {
     async capabilitiesApproveInboundBinding(projectId, draft) {
       const binding: InboundBinding = { ...draft, exposure: draft.exposure ?? 'private', approvalState: 'approved' }
       const issues = validateInboundBindingDraft(binding)
-      if (issues.length > 0) {
-        return { ok: false, diagnostics: issues.map((message) => ({ code: 'CAP-BIND-INBOUND-001', message })) }
-      }
       const state = ensureCap(projectId)
+      const diagnostics = [
+        ...issues.map((message) => ({ code: 'CAP-BIND-INBOUND-001', message })),
+        ...evaluateInboundBindingSte(binding, state.steLexicon).diagnostics,
+      ]
+      if (diagnostics.length > 0) return { ok: false, diagnostics }
       // Multiple bindings may target the same operation — none are deduplicated (§12.4).
       state.inboundBindingApproved.set(binding.bindingId, binding)
       state.inboundBindingDrafts.delete(binding.bindingId)
@@ -1207,7 +2374,13 @@ export function installMockBridge(): EuikBridge {
       return {
         runId,
         packetId: `pkt-delta-${input.targetId}`,
-        recommendedPrompt: `Apply only the delta for ${input.targetId} and return only ui-overlay.zip.`,
+        recommendedPrompt: withStePrompt(
+          `Apply only the delta for ${input.targetId}. Return only ui-overlay.zip.`,
+          {
+            technicalTerms: state.steLexicon?.technicalTerms,
+            prohibitedAliases: state.steLexicon?.prohibitedAliases,
+          },
+        ),
         files,
         uploadFiles: files.map((f) => f.path),
       }

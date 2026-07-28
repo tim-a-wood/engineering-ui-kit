@@ -45,7 +45,7 @@ export function InterviewImport({ label = 'Import interview response', onImport,
       type="file"
       accept="application/json,.json"
       disabled={disabled}
-      aria-label="Choose interview response file"
+      aria-label="Choose response file"
       className="sr-only"
       onChange={async (e) => {
         const file = e.target.files?.[0]
@@ -99,7 +99,7 @@ export function InterviewImport({ label = 'Import interview response', onImport,
             <span className="capabilities-note">Choose the response file produced by Copilot.</span>
           </div>
           <details className="cap-import-advanced">
-            <summary>Paste or inspect JSON</summary>
+            <summary>JSON options</summary>
             {pasteBox}
           </details>
         </>

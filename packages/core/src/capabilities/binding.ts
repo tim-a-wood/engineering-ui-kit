@@ -7,6 +7,10 @@ import { diagnostic, sortDiagnostics, type CapDiagnostic } from './diagnostics.j
 import type { GateResult } from './gates.js'
 import { canonicalHash } from './hash.js'
 import {
+  evaluateFrontendBindingSte,
+  type SteLexicon,
+} from './simplifiedTechnicalEnglish.js'
+import {
   cancelledResult,
   domainRejectionResult,
   successResult,
@@ -289,9 +293,15 @@ export function validateFrontendBinding(
 
 export function evaluateBindingApprovalGate(
   binding: FrontendBinding,
-  options: { ambiguities?: MappingAmbiguity[] } = {},
+  options: {
+    ambiguities?: MappingAmbiguity[]
+    steLexicon?: SteLexicon
+  } = {},
 ): GateResult {
-  const diagnostics = validateFrontendBinding(binding, options)
+  const diagnostics = sortDiagnostics([
+    ...validateFrontendBinding(binding, options),
+    ...evaluateFrontendBindingSte(binding, options.steLexicon).diagnostics,
+  ])
   return {
     gateId: 'CAP-GATE-BINDING',
     passed: diagnostics.length === 0,
@@ -573,7 +583,10 @@ export function selectionAllowsProgress(evidence: SelectionEvidence): CapDiagnos
 /** Alias used by offline journeys (CAP-PKT-032). */
 export function approveFrontendBinding(
   binding: FrontendBinding,
-  options: { ambiguities?: MappingAmbiguity[] } = {},
+  options: {
+    ambiguities?: MappingAmbiguity[]
+    steLexicon?: SteLexicon
+  } = {},
 ): { ok: boolean; diagnostics: CapDiagnostic[]; gate: GateResult } {
   const gate = evaluateBindingApprovalGate(binding, options)
   return { ok: gate.passed, diagnostics: gate.diagnostics, gate }

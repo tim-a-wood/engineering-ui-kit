@@ -424,7 +424,7 @@ describe('architecture exploration', () => {
     }
     render(<ArchitectureView projection={projectArchitecture(architecture, [], {}, { mode: 'guided' })} mode="guided" />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Flight Planner, Workflow, Planned. Open details' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open Flight Planner' }))
 
     const dialog = screen.getByRole('dialog', { name: 'Flight Planner' })
     expect(dialog).toBeTruthy()
@@ -448,7 +448,7 @@ describe('module isolation', () => {
     // A valid response but for mod.other, not the selected mod.orders.
     const wrong = JSON.stringify({ moduleId: 'mod.other', moduleType: 'domain', name: 'x', moduleVersion: '1.0.0', responsibility: 'x', ownedConcerns: [], excludedConcerns: [], providedOperations: [], requiredOperations: [], verificationSuiteIds: [], runtimeAllocation: 'local-embedded', events: [], ownedPaths: [], answers: [], acceptanceCases: [], rules: [] })
     fireEvent.change(screen.getByLabelText('Interview response JSON'), { target: { value: wrong } })
-    fireEvent.click(screen.getByRole('button', { name: 'Import module interview response' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import module response' }))
 
     await waitFor(() => expect(screen.getByText(/does not match selected module/i)).toBeTruthy())
     expect(saveModuleDraft).not.toHaveBeenCalled()
@@ -463,7 +463,7 @@ describe('module isolation', () => {
     const approvedRecords: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: { moduleId: 'mod.orders' } as never }]
     render(<ModulesView bridge={bridge} projectId="p1" architectureApproved projection="guided" records={approvedRecords} hideModuleList progressive externalSelectedModuleId="mod.orders" />)
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /Select and inspect overlay/i })).toBeTruthy())
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Inspect overlay' })).toBeTruthy())
     expect(screen.queryByRole('button', { name: /Create implementation handoff/i })).toBeNull()
   })
 
@@ -479,7 +479,7 @@ describe('module isolation', () => {
         <ModulesView bridge={bridge} projectId="p1" architectureApproved projection="guided" records={approvedRecords} hideModuleList progressive externalSelectedModuleId="mod.orders" />
       </StrictMode>,
     )
-    await waitFor(() => expect(screen.getByRole('button', { name: /Select and inspect overlay/i })).toBeTruthy())
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Inspect overlay' })).toBeTruthy())
   })
 
   it('resumes an overlay-applied implementation run at verification', async () => {
@@ -543,7 +543,7 @@ describe('module isolation', () => {
       inputContext: expect.objectContaining({ facts: expect.arrayContaining(['moduleVersion:1.2.1']) }),
     }))
     expect(await screen.findByRole('region', { name: 'Ready for Copilot' })).toBeTruthy()
-    expect(screen.getAllByRole('button', { name: 'Import module interview response' }).some((button) => !(button as HTMLButtonElement).disabled)).toBe(true)
+    expect(screen.getAllByRole('button', { name: 'Import module response' }).some((button) => !(button as HTMLButtonElement).disabled)).toBe(true)
     expect(within(outcome).getByText('Revising')).toBeTruthy()
   })
 
@@ -558,7 +558,7 @@ describe('module isolation', () => {
     await waitFor(() => expect(screen.getByLabelText('Interview response JSON')).toBeTruthy())
     const response = JSON.stringify({ moduleId: 'mod.orders', moduleType: 'domain', name: 'Orders', moduleVersion: '1.0.0', responsibility: 'orders', ownedConcerns: [], excludedConcerns: [], providedOperations: [], requiredOperations: [], verificationSuiteIds: [], runtimeAllocation: 'local-embedded', events: [], ownedPaths: [], answers: [], acceptanceCases: [], rules: [] })
     fireEvent.change(screen.getByLabelText('Interview response JSON'), { target: { value: response } })
-    fireEvent.click(screen.getByRole('button', { name: 'Import module interview response' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import module response' }))
     await waitFor(() => expect(screen.getByText(/Manifest draft mod\.orders/i)).toBeTruthy())
 
     fireEvent.click(screen.getByRole('button', { name: 'Select module mod.other' }))
@@ -576,7 +576,7 @@ describe('module isolation', () => {
     const afterApproval: CapabilityModuleRecord[] = [{ moduleId: 'mod.orders', approved: { moduleId: 'mod.orders' } as never }, { moduleId: 'mod.other' }]
     rerender(<GuidedBuild bridge={bridge} projectId="p1" archSpec={architecture as never} records={afterApproval} onChanged={() => {}} />)
     await waitFor(() => expect(screen.getByRole('button', { name: /Other, Not started/i }).getAttribute('aria-current')).toBe('true'))
-    expect(screen.getByText('Generate the module draft')).toBeTruthy()
+    expect(screen.getByText('Generate module draft')).toBeTruthy()
   })
 
   it('offers an agent-assisted build for an approved experience module with approved context', async () => {
@@ -634,10 +634,10 @@ describe('module isolation', () => {
     render(<ModulesView bridge={bridge} projectId="p1" architectureApproved projection="guided" records={[{ moduleId: 'mod.ui', approved: manifest }]} hideModuleList progressive externalSelectedModuleId="mod.ui" onStartUiBuild={onStartUiBuild} />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Compile frontend brief' }))
-    const dialog = await screen.findByRole('dialog', { name: 'Review compiled frontend brief' })
+    const dialog = await screen.findByRole('dialog', { name: 'Review frontend brief' })
     expect(within(dialog).getByText(/2 operation\(s\)/)).toBeTruthy()
     fireEvent.change(within(dialog).getByLabelText('Task title'), { target: { value: 'Build polished flight planner' } })
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Open Build with this brief' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Open build brief' }))
     await waitFor(() => expect(onStartUiBuild).toHaveBeenCalledTimes(1))
     const [projectId, fields] = onStartUiBuild.mock.calls[0]
     expect(projectId).toBe('p1')
@@ -664,7 +664,7 @@ describe('capability preview recovery', () => {
 
     render(<CapabilityPreview bridge={bridge} projectId="p1" />)
     expect(await screen.findByText('Project setup required')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Install dependencies and retry' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Install dependencies' }))
 
     await waitFor(() => expect(installDependencies).toHaveBeenCalledWith('run-setup'))
     await waitFor(() => expect(launchApp).toHaveBeenCalledTimes(2))
@@ -695,12 +695,12 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
     const updateProject = vi.fn(async (_id, patch) => ({ ...configuredProject, ...patch }))
     render(<GuidedConnect bridge={makeBridge({ launchApp: launchApp as never, updateProject: updateProject as never })} projectId="p1" project={configuredProject} records={records} deployables={uiDeployables} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
 
-    expect(screen.getByRole('heading', { name: 'Configure application entry points' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Configure entry points' })).toBeTruthy()
     expect(launchApp).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /User interface/i }))
     await waitFor(() => expect(screen.getByText('Aircraft Performance')).toBeTruthy())
-    fireEvent.click(screen.getByRole('button', { name: 'Use this UI' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Select UI' }))
     await waitFor(() => expect(launchApp).toHaveBeenCalledWith('p1', { open: false }))
     expect(await screen.findByTitle('Target application Preview')).toBeTruthy()
   })
@@ -712,11 +712,11 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
     const launchApp = vi.fn(async () => ({ url: updatedProject.launchUrl, started: true, rebuilt: false }))
     render(<GuidedConnect bridge={makeBridge({ updateProject: updateProject as never, launchApp: launchApp as never })} projectId="p1" project={unconfiguredProject} records={records} deployables={uiDeployables} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /User interface/i }))
     await waitFor(() => expect(screen.getByLabelText('Application UI URL')).toBeTruthy())
     fireEvent.change(screen.getByLabelText('Application UI URL'), { target: { value: 'http://localhost:4400' } })
-    fireEvent.change(screen.getByLabelText('Application UI start command'), { target: { value: 'npm run ui' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save and use this UI' }))
+    fireEvent.change(screen.getByLabelText('UI start command'), { target: { value: 'npm run ui' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save UI setup' }))
 
     await waitFor(() => expect(updateProject).toHaveBeenLastCalledWith('p1', {
       launchUrl: 'http://localhost:4400', launchCommand: 'npm run ui',
@@ -731,7 +731,7 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
       onSelectionEvidence: () => {}, previewRef: { current: null }, onChanged: () => {},
     }
     const { rerender } = render(<GuidedConnect {...baseProps} selectionEvidence={undefined} />)
-    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /User interface/i }))
     expect(screen.queryByLabelText('Capability')).toBeNull()
 
     rerender(<GuidedConnect {...baseProps} selectionEvidence={evidence} />)
@@ -748,7 +748,7 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Decide later/i }))
     expect(screen.getByText(/Needs attention/i)).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Decide later' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Defer entry point' }))
     await waitFor(() => expect(updateProject).toHaveBeenCalledWith('p1', { capabilitiesConnectDisposition: 'deferred' }))
     expect(launchApp).not.toHaveBeenCalled()
   })
@@ -759,7 +759,7 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
     const bridge = makeBridge({ capabilitiesApproveInboundBinding: approveInboundBinding as never, capabilitiesSaveInboundBindingDraft: saveInboundBindingDraft as never })
     render(<GuidedConnect bridge={bridge} projectId="p1" records={records} deployables={uiDeployables} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /User interface/i }))
     fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
     fillAllBehaviors()
@@ -773,7 +773,7 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
 
   it('withholds approval until every behavior is described and leaves runtime proof to Verify', async () => {
     render(<GuidedConnect bridge={makeBridge()} projectId="p1" records={records} deployables={uiDeployables} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
-    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /User interface/i }))
     fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
     expect((screen.getByRole('button', { name: 'Approve entry point' }) as HTMLButtonElement).disabled).toBe(true)
@@ -785,15 +785,15 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
 
   it('re-initializes (empty behaviors) when the project identity changes', async () => {
     const { rerender } = render(<GuidedConnect key="p1" bridge={makeBridge()} projectId="p1" records={records} deployables={uiDeployables} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
-    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /User interface/i }))
     fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
     fireEvent.change(screen.getByLabelText('While it runs'), { target: { value: 'typed in project 1' } })
     expect((screen.getByLabelText('While it runs') as HTMLInputElement).value).toBe('typed in project 1')
     // Remount under a new project key (as the shell does) -> fresh, empty editor back at the trigger question.
     rerender(<GuidedConnect key="p2" bridge={makeBridge()} projectId="p2" records={records} deployables={uiDeployables} selectionEvidence={evidence} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
-    expect(screen.getByRole('heading', { name: 'Configure application entry points' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /Existing or new UI/i }))
+    expect(screen.getByRole('heading', { name: 'Configure entry points' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /User interface/i }))
     fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     await waitFor(() => expect(screen.getByLabelText('While it runs')).toBeTruthy())
     expect((screen.getByLabelText('While it runs') as HTMLInputElement).value).toBe('')
@@ -802,7 +802,7 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
   it('the trigger picker offers every host and hides the UI choice when there is no UI deployable', () => {
     const headlessOnly = [{ deployableId: 'deployable.main', kind: 'http-api' as const, name: 'Application' }]
     render(<GuidedConnect bridge={makeBridge()} projectId="p1" records={records} deployables={headlessOnly} onSelectionEvidence={() => {}} previewRef={{ current: null }} onChanged={() => {}} />)
-    expect(screen.queryByRole('button', { name: /Existing or new UI/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /User interface/i })).toBeNull()
     expect(screen.getByRole('button', { name: /HTTP endpoint/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /Command line/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /Scheduled or background/i })).toBeTruthy()
@@ -874,7 +874,7 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
     expect((await screen.findAllByText(/explain why this operation is only reachable/i)).length).toBeGreaterThan(0)
     expect(await bridge.capabilitiesListInboundBindings('p1')).toEqual([])
 
-    fireEvent.change(screen.getByLabelText('Reason this is embedded-library only'), { target: { value: 'Only ever invoked in-process by the batch job runner.' } })
+    fireEvent.change(screen.getByLabelText('Explain embedding'), { target: { value: 'Only ever invoked in-process by the batch job runner.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Approve entry point' }))
     await waitFor(async () => expect((await bridge.capabilitiesListInboundBindings('p1'))[0]?.approved?.kind).toBe('embedded-library'))
   })
@@ -894,7 +894,7 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
     fireEvent.click(await screen.findByRole('button', { name: /HTTP endpoint/i }))
     fireEvent.change(await screen.findByLabelText('Capability'), { target: { value: 'op.placeOrder@2.0' } })
     fireEvent.change(screen.getByLabelText('HTTP path'), { target: { value: '/orders/place-2' } })
-    fireEvent.click(screen.getByLabelText('Allow this entry point to be reached from outside this application'))
+    fireEvent.click(screen.getByLabelText('Allow external access'))
     expect(screen.getByLabelText('Exposure level')).toBeTruthy()
     fireEvent.change(screen.getByLabelText('Exposure level'), { target: { value: 'public' } })
     fireEvent.click(screen.getByRole('button', { name: 'Approve entry point' }))
@@ -939,14 +939,14 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
 
     expect(document.body.textContent).not.toContain('binding.raw.orders-entry')
     expect(document.body.textContent).not.toContain('architecture-raw-hash')
-    fireEvent.click(screen.getByRole('button', { name: 'Technical specification' }))
+    fireEvent.click(screen.getByRole('button', { name: 'View specifications' }))
     const technical = screen.getByRole('dialog', { name: 'Entry-point technical specification' })
     expect(technical.textContent).toContain('binding.raw.orders-entry')
     expect(technical.textContent).toContain('architecture-raw-hash')
-    fireEvent.click(within(technical).getByRole('button', { name: 'Close' }))
+    fireEvent.click(within(technical).getByRole('button', { name: 'Close details' }))
     expect(screen.queryByRole('dialog', { name: 'Entry-point technical specification' })).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit entry point' }))
     expect((screen.getByLabelText('Capability') as HTMLSelectElement).value).toBe('op.placeOrder@2.0')
     expect((screen.getByLabelText('HTTP path') as HTMLInputElement).value).toBe('/orders/place')
     fireEvent.change(screen.getByLabelText('HTTP path'), { target: { value: '/orders/place-revised' } })
@@ -960,8 +960,8 @@ describe('guided connect isolation (WP6B trigger-first)', () => {
       bindingId: 'binding.raw.orders-entry', version: '1.0.1', path: '/orders/place-revised',
     })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm remove' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove entry point' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove entry point' }))
     await waitFor(() => expect(archive).toHaveBeenCalledWith('p1', 'binding.raw.orders-entry'))
     expect(screen.getByText(/Entry point removed/i)).toBeTruthy()
   })

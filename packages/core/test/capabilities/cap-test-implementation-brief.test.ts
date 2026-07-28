@@ -4,12 +4,14 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   buildModuleImplementationBrief,
+  evaluateImplementationBriefSte,
   referenceArchitectureFor,
 } from '../../src/capabilities/implementationBrief.js'
 import { discoverRepositoryImplementationContext } from '../../src/capabilities/repositoryContext.js'
 import type {
   ArchitectureSpecification,
   ModuleManifest,
+  ModuleType,
 } from '../../src/capabilities/types.js'
 import type { ModuleInterviewResponse } from '../../src/capabilities/moduleInterview.js'
 
@@ -64,7 +66,7 @@ const interview: ModuleInterviewResponse = {
     ] },
   ],
   answers: [
-    { id: 'inputs-outputs', text: 'Input is an order and credit decision; output is approval or a typed rejection.', status: 'confirmed' },
+    { id: 'inputs-outputs', text: 'The input is an order and a credit decision. The output is approval or a typed rejection.', status: 'confirmed' },
     { id: 'rules-invariants', text: 'Orders with a non-positive total cannot be approved.', status: 'confirmed' },
     { id: 'preconditions-postconditions', text: 'Approved orders emit order-approved exactly once.', status: 'confirmed' },
   ],
@@ -143,6 +145,92 @@ describe('implementation-ready module handoff context', () => {
     expect(brief.repositoryContext.nearbyPatternFiles).toContain('src/domain/customers/index.ts')
     expect(brief.verificationPlan.commands.test).toBe('npm test')
     expect(brief.implementationPlan.join(' ')).toContain('src/domain/orders/index.ts')
+    expect(evaluateImplementationBriefSte(brief).diagnostics).toEqual([])
+  })
+
+  it('rejects non-STE prose copied from an approved specification', () => {
+    const repository = {
+      repositoryName: 'reference',
+      detectedLanguages: ['TypeScript'],
+      detectedFrameworks: [],
+      detectedPackageManager: 'npm',
+      manifestFiles: ['package.json'],
+      sourceRoots: ['src'],
+      packageScripts: {},
+      configuredVerificationCommands: {},
+      ownedPaths: [{ path: 'src/domain/orders/', exists: false, kind: 'missing' as const }],
+      existingFilesInScope: [],
+      nearbyPatternFiles: [],
+      testFiles: [],
+    }
+    const brief = buildModuleImplementationBrief({
+      manifest,
+      interview,
+      architecture,
+      repository,
+    })
+    brief.approvedSpecification.rules = [{
+      id: 'rule-positive-total',
+      text: 'Check the total; then approve the order.',
+    }]
+    brief.approvedSpecification.acceptanceCases = [{
+      id: 'ac-order-positive',
+      description: 'Approve an eligible order.',
+      expectedOutcome: 'The order is approved; the event is recorded.',
+    }]
+
+    expect(evaluateImplementationBriefSte(brief).diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: 'STE-PUNCTUATION-SEMICOLON',
+        fieldPath: 'approvedSpecification.rules.0.text',
+      }),
+      expect.objectContaining({
+        code: 'STE-PUNCTUATION-SEMICOLON',
+        fieldPath: 'approvedSpecification.acceptanceCases.0.expectedOutcome',
+      }),
+    ]))
+
+    expect(() => buildModuleImplementationBrief({
+      manifest,
+      interview: {
+        ...interview,
+        rules: brief.approvedSpecification.rules,
+        acceptanceCases: brief.approvedSpecification.acceptanceCases,
+      },
+      architecture,
+      repository,
+    })).toThrow(/STE-PUNCTUATION-SEMICOLON/)
+  })
+
+  it('applies the project preferred-term map to copied brief prose', () => {
+    const repository = {
+      repositoryName: 'reference',
+      detectedLanguages: ['TypeScript'],
+      detectedFrameworks: [],
+      detectedPackageManager: 'npm',
+      manifestFiles: ['package.json'],
+      sourceRoots: ['src'],
+      packageScripts: {},
+      configuredVerificationCommands: {},
+      ownedPaths: [{ path: 'src/domain/orders/', exists: false, kind: 'missing' as const }],
+      existingFilesInScope: [],
+      nearbyPatternFiles: [],
+      testFiles: [],
+    }
+
+    expect(() => buildModuleImplementationBrief({
+      manifest,
+      interview: {
+        ...interview,
+        rules: [{ id: 'rule-term', text: 'Inspect defect.' }],
+      },
+      architecture,
+      repository,
+      steLexicon: {
+        technicalTerms: ['audit finding'],
+        prohibitedAliases: { defect: 'audit finding' },
+      },
+    })).toThrow(/STE-TERM-PREFERRED/)
   })
 
   it('keeps legacy approved modules usable while documenting missing detail', () => {
@@ -163,5 +251,43 @@ describe('implementation-ready module handoff context', () => {
     expect(brief.readiness.status).toBe('ready-with-gaps')
     expect(brief.readiness.issues.map((issue) => issue.code)).toContain('IMPLEMENTATION-BRIEF-INTERVIEW-DETAIL')
     expect(brief.implementationPlan[0]).toContain('Inspect the nearby repository patterns')
+    expect(evaluateImplementationBriefSte(brief).diagnostics).toEqual([])
+  })
+
+  it('keeps generated guidance valid for every module type', () => {
+    const moduleTypes: ModuleType[] = [
+      'domain',
+      'workflow',
+      'experience',
+      'connection',
+      'platform',
+    ]
+    for (const moduleType of moduleTypes) {
+      const brief = buildModuleImplementationBrief({
+        manifest: {
+          ...manifest,
+          moduleType,
+          providedOperations: [],
+          requiredOperations: [],
+        },
+        architecture,
+        repository: {
+          repositoryName: 'reference',
+          detectedLanguages: ['TypeScript'],
+          detectedFrameworks: [],
+          detectedPackageManager: 'npm',
+          manifestFiles: ['package.json'],
+          sourceRoots: ['src'],
+          packageScripts: {},
+          configuredVerificationCommands: {},
+          ownedPaths: [{ path: 'src/domain/orders/', exists: false, kind: 'missing' }],
+          existingFilesInScope: [],
+          nearbyPatternFiles: [],
+          testFiles: [],
+        },
+      })
+
+      expect(evaluateImplementationBriefSte(brief).diagnostics, moduleType).toEqual([])
+    }
   })
 })

@@ -107,7 +107,7 @@ export function BuildView(props: BuildViewProps) {
         setPacketStale(Boolean(props.run.taskPacketPath || props.run.taskAndStandardPackPath))
         setStatus({
           tone: 'info',
-          text: `Iteration packet prefilled from ${fresh.length} saved feedback note${fresh.length === 1 ? '' : 's'} — Scope carries your feedback; the constraints hold the previous design steady. Adjust and export.`,
+          text: `Iteration packet uses ${fresh.length} saved feedback note${fresh.length === 1 ? '' : 's'}. The scope contains your feedback. The constraints preserve the previous design. Review and export the packet.`,
         })
       } catch { /* notes unreadable — keep the regular prefill */ }
     })()
@@ -268,7 +268,7 @@ export function BuildView(props: BuildViewProps) {
           ? summary.warnings.length > 0
             ? { tone: 'info', text: `Inspection verdict: warning — ${summary.warnings.length} warnings require explicit acceptance.` }
             : { tone: 'success', text: 'Inspection verdict: pass.' }
-          : { tone: 'error', text: `Inspection verdict: blocked — ${summary.hardBlockers.length} hard blockers. This overlay can never be applied; copy the fix prompt below to get a corrected zip from Copilot.` },
+          : { tone: 'error', text: `Inspection verdict: blocked. The overlay has ${summary.hardBlockers.length} hard blockers. Copy the fix prompt to get a corrected zip from Copilot.` },
       )
     } catch (error) {
       setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
@@ -355,7 +355,7 @@ export function BuildView(props: BuildViewProps) {
             type="button"
             className="page-step-link"
             disabled={!Boolean(applied || props.run.appliedFilesPath)}
-            title={applied || props.run.appliedFilesPath ? 'Go to Test' : 'Apply changes before testing'}
+            title={applied || props.run.appliedFilesPath ? 'Open Test' : 'Apply changes first'}
             onClick={() => props.onNavigate('verify-review')}
           >
             Test <span aria-hidden="true">→</span>
@@ -369,7 +369,7 @@ export function BuildView(props: BuildViewProps) {
 
       {taskOpen && (
         <Dialog title="Task packet" wide onClose={() => setTaskOpen(false)} actions={(
-          <button type="button" className="btn btn-primary" onClick={() => setTaskOpen(false)}>Done</button>
+          <button type="button" className="btn btn-primary" onClick={() => setTaskOpen(false)}>Close task</button>
         )}>
           <BuildTaskPanel
             project={props.project}
@@ -396,7 +396,7 @@ export function BuildView(props: BuildViewProps) {
       )}
       {contextOpen && (
         <Dialog title="Project context" wide onClose={() => setContextOpen(false)} actions={(
-          <button type="button" className="btn btn-primary" onClick={() => setContextOpen(false)}>Done</button>
+          <button type="button" className="btn btn-primary" onClick={() => setContextOpen(false)}>Close context</button>
         )}>
           <ProjectContextPanel
             bridge={bridge}

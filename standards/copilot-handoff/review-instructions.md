@@ -14,12 +14,23 @@ corrective-action output. Reusable prompt wording lives in
 
 ## Controlling Decisions
 
+- Review all user-interface text, diagrams, and documents against the project writing
+  Engineering UI Kit writing profile based on ASD-STE100 Issue 9.
 - Review only provided changed files and evidence.
 - Every acceptance criterion receives an explicit result.
 - Findings are classified as blocker, warning, or note.
 - Broad rewrites are out of scope for review output.
 
 ## Required Architecture
+
+### AI-REVIEW-000 — Check the technical writing policy
+
+Check all reviewed user-interface text, diagrams, and documents against the project
+Engineering UI Kit writing profile based on ASD-STE100 Issue 9. Require American English and active
+voice. Limit instructions to 20 words and descriptions to 25 words per sentence.
+Require names and diagram labels in `VERB + OBJECT` form with no more than four
+words. Require the same technical term for the same concept. Report contractions and
+semicolons. Give each writing finding a direct correction.
 
 ### AI-REVIEW-001 — Review only provided changed files and evidence
 

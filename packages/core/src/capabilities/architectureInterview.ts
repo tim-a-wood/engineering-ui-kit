@@ -15,6 +15,11 @@ import {
 } from './graph.js'
 import { buildInterviewPacket } from './packets.js'
 import { canonicalHash } from './hash.js'
+import { allUseCaseSteps } from './useCaseAnalysis.js'
+import {
+  evaluateArchitectureApplicationLink,
+  evaluateSolutionAllocations,
+} from './applicationWorkflow.js'
 import type { CapabilityWorkspace } from './persistence.js'
 import { validateContractRecord } from './validation.js'
 import type {
@@ -25,6 +30,12 @@ import type {
   ModuleManifest,
 } from './types.js'
 import { MODULE_TYPES } from './parity.js'
+import {
+  evaluateArchitectureSte,
+  evaluateModuleSte,
+  type SteLexicon,
+  type SteReviewDiagnostic,
+} from './simplifiedTechnicalEnglish.js'
 
 export type ArchitectureProposalInput = {
   architecture: ArchitectureSpecification
@@ -44,6 +55,7 @@ export type ArchitectureInterviewEvaluation = GateResult & {
   redundantModuleIds: string[]
   orphanModuleIds: string[]
   graph: CapabilityGraph
+  reviewDiagnostics: SteReviewDiagnostic[]
 }
 
 export type ArchitectureImportResult = {
@@ -52,6 +64,7 @@ export type ArchitectureImportResult = {
   draft?: ArchitectureSpecification
   evaluation?: ArchitectureInterviewEvaluation
   diagnostics: CapDiagnostic[]
+  reviewDiagnostics: SteReviewDiagnostic[]
 }
 
 const PRODUCT_NEED_IDS = (spec: ApplicationSpecification): Set<string> => {
@@ -129,11 +142,17 @@ export function normalizeArchitectureProposal(
   })
 
   const traces = new Map(
-    (architecture.workflowTraces ?? []).map((trace) => [trace.useCaseId, new Set(trace.moduleIds ?? [])]),
+    (architecture.workflowTraces ?? []).map((trace) => [trace.useCaseId, {
+      moduleIds: new Set(trace.moduleIds ?? []),
+      entryPointId: trace.entryPointId,
+      outputId: trace.outputId,
+      nodeAllocations: [...(trace.nodeAllocations ?? [])],
+      stepAllocations: [...(trace.stepAllocations ?? [])],
+    }]),
   )
   const useCaseIds = new Set(product.useCases.map((useCase) => useCase.id))
   const needsByModule = new Map((proposal.moduleNeedTraces ?? []).map((trace) => [trace.moduleId, trace.needIds ?? []]))
-  const tracedModules = new Set([...traces.values()].flatMap((moduleIds) => [...moduleIds]))
+  const tracedModules = new Set([...traces.values()].flatMap((trace) => [...trace.moduleIds]))
   for (const moduleId of architecture.moduleIds ?? []) {
     if (tracedModules.has(moduleId)) continue
     const matchingUseCases = (needsByModule.get(moduleId) ?? []).filter((needId) => useCaseIds.has(needId))
@@ -141,9 +160,15 @@ export function normalizeArchitectureProposal(
       ? matchingUseCases
       : traces.size ? [[...traces.keys()][0]!] : product.useCases[0] ? [product.useCases[0].id] : []
     for (const useCaseId of targetUseCases) {
-      const modules = traces.get(useCaseId) ?? new Set<string>()
-      modules.add(moduleId)
-      traces.set(useCaseId, modules)
+      const trace = traces.get(useCaseId) ?? {
+        moduleIds: new Set<string>(),
+        entryPointId: undefined,
+        outputId: undefined,
+        nodeAllocations: [],
+        stepAllocations: [],
+      }
+      trace.moduleIds.add(moduleId)
+      traces.set(useCaseId, trace)
     }
   }
 
@@ -153,9 +178,13 @@ export function normalizeArchitectureProposal(
       ...architecture,
       moduleDefinitions,
       dependencyEdges,
-      workflowTraces: [...traces.entries()].map(([useCaseId, moduleIds]) => ({
+      workflowTraces: [...traces.entries()].map(([useCaseId, trace]) => ({
         useCaseId,
-        moduleIds: [...moduleIds],
+        moduleIds: [...trace.moduleIds],
+        entryPointId: trace.entryPointId,
+        outputId: trace.outputId,
+        nodeAllocations: trace.nodeAllocations,
+        stepAllocations: trace.stepAllocations,
       })),
     },
   }
@@ -189,6 +218,18 @@ export function buildArchitectureInterviewPacket(input: {
         ...input.application.actors.map((actor) => `actor:${actor.id}:${actor.text}`),
         ...input.application.goals.map((goal) => `goal:${goal.id}:${goal.text}`),
         ...input.application.useCases.map((u) => `useCase:${u.id}:${u.text}`),
+        ...(input.application.useCaseDefinitions ?? []).flatMap((useCase) => [
+          `useCaseDetail:${useCase.id}:actors=${useCase.actorIds.join(',')}:trigger=${useCase.trigger}`,
+          ...allUseCaseSteps(useCase).map((step) =>
+            `useCaseStep:${useCase.id}:${step.id}:${step.order}:${step.actorId ?? 'system'}:${step.action}=>${step.expectedResult}`),
+        ]),
+        ...(input.application.applicationWorkflows ?? []).flatMap((workflow) => [
+          `applicationWorkflow:${workflow.id}:useCase=${workflow.useCaseId}:paths=${workflow.pathIds.join(',')}`,
+          ...workflow.graph.nodes.map((node) =>
+            `workflowNode:${workflow.id}:${node.id}:${node.kind}:${node.label}:refines=${node.refinesIds.join(',')}`),
+          ...workflow.graph.edges.map((edge) =>
+            `workflowEdge:${workflow.id}:${edge.id}:${edge.fromNodeId}->${edge.toNodeId}:guard=${edge.guard ?? ''}:outcome=${edge.outcome ?? ''}`),
+        ]),
         ...input.application.scenarios.map((scenario) => `scenario:${scenario.id}:${scenario.text}`),
         ...input.application.information.map((item) => `information:${item.id}:${item.text}`),
         ...input.application.rules.map((rule) => `rule:${rule.id}:${rule.text}`),
@@ -201,12 +242,15 @@ export function buildArchitectureInterviewPacket(input: {
         'architectureCompletion:assign each module a name, moduleType, and single responsibility',
         'architectureCompletion:every dependency edge must include a concrete reason',
         'architectureCompletion:every module must appear in at least one workflow trace and module need trace',
+        'architectureCompletion:allocate every executable application workflow node to one primary module in workflowTraces.nodeAllocations',
+        'architectureBoundary:define an operation, event, entry point, or output for each cross-module transition',
+        'architectureBoundary:do not define internal module algorithms or module-only decisions',
         ...(input.reusableModuleIds ?? []).map((id) => `reusable:${id}`),
         ...(input.availableAdapterIds ?? ['adapter.filesystem', 'adapter.matlab', 'adapter.azure-devops']).map(
           (id) => `adapter:${id}`,
         ),
       ],
-      glossary: [],
+      glossary: input.application.information.map((item) => ({ ...item })),
     },
   })
 }
@@ -276,16 +320,105 @@ export function projectDerivedGraph(
 export function evaluateArchitectureProposal(
   product: ApplicationSpecification,
   proposal: ArchitectureProposalInput,
+  lexicon?: SteLexicon,
 ): ArchitectureInterviewEvaluation {
   const manifests = proposal.manifests ?? []
   const graph = projectDerivedGraph(proposal.architecture, manifests)
   const cycles = detectCycles(graph)
-  const gate = evaluateArchitectureGate(proposal.architecture, manifests, graph)
+  const languageEvaluation = evaluateArchitectureSte(proposal.architecture, lexicon)
+  const manifestLanguageEvaluations = manifests.map((manifest) => evaluateModuleSte(manifest, lexicon))
+  const gate = evaluateArchitectureGate(proposal.architecture, manifests, graph, lexicon)
   const unsupportedModuleIds = findUnsupportedModules(product, proposal)
   const redundantModuleIds = findRedundantModules(proposal)
   const orphanModuleIds = findOrphanModules(proposal.architecture)
 
   const extras: CapDiagnostic[] = []
+  extras.push(...evaluateArchitectureApplicationLink(product, proposal.architecture).diagnostics)
+  if (product.applicationWorkflows?.length) {
+    extras.push(...evaluateSolutionAllocations(product, proposal.architecture).diagnostics)
+  }
+  const detailedUseCases = product.useCaseDefinitions ?? []
+  const detailedUseCaseById = new Map(detailedUseCases.map((useCase) => [useCase.id, useCase]))
+  const knownUseCaseIds = new Set(product.useCases.map((useCase) => useCase.id))
+  for (const useCase of detailedUseCases) knownUseCaseIds.add(useCase.id)
+  const tracedUseCaseIds = new Set<string>()
+  for (const trace of proposal.architecture.workflowTraces ?? []) {
+    if (!knownUseCaseIds.has(trace.useCaseId)) {
+      extras.push(
+        diagnostic('CAP-GATE-002-TRACE-USE-CASE', 'workflow trace references an unknown use case', {
+          ruleId: 'CAP-GATE-002',
+          fieldPath: trace.useCaseId,
+          relatedIds: [trace.useCaseId],
+        }),
+      )
+      continue
+    }
+    if (tracedUseCaseIds.has(trace.useCaseId)) {
+      extras.push(
+        diagnostic('CAP-GATE-002-TRACE-DUPLICATE', 'use case must have one canonical workflow trace', {
+          ruleId: 'CAP-GATE-002',
+          fieldPath: trace.useCaseId,
+          relatedIds: [trace.useCaseId],
+        }),
+      )
+    }
+    tracedUseCaseIds.add(trace.useCaseId)
+    const detailed = detailedUseCaseById.get(trace.useCaseId)
+    if (!detailed) continue
+    if (product.applicationWorkflows?.length) continue
+    const validStepIds = new Set(allUseCaseSteps(detailed).map((step) => step.id))
+    const allocationCounts = new Map<string, number>()
+    for (const allocation of trace.stepAllocations ?? []) {
+      allocationCounts.set(allocation.stepId, (allocationCounts.get(allocation.stepId) ?? 0) + 1)
+      if (!validStepIds.has(allocation.stepId)) {
+        extras.push(
+          diagnostic('CAP-GATE-002-TRACE-STEP', 'workflow trace allocates an unknown scenario step', {
+            ruleId: 'CAP-GATE-002',
+            fieldPath: `${trace.useCaseId}.${allocation.stepId}`,
+            relatedIds: [allocation.stepId],
+          }),
+        )
+      }
+      if (!trace.moduleIds.includes(allocation.moduleId)) {
+        extras.push(
+          diagnostic('CAP-GATE-002-TRACE-STEP-MODULE', 'scenario step is allocated outside the use-case module path', {
+            ruleId: 'CAP-GATE-002',
+            fieldPath: `${trace.useCaseId}.${allocation.stepId}`,
+            relatedIds: [allocation.moduleId],
+          }),
+        )
+      }
+    }
+    for (const stepId of validStepIds) {
+      const count = allocationCounts.get(stepId) ?? 0
+      if (count !== 1) {
+        extras.push(
+          diagnostic(
+            count === 0 ? 'CAP-GATE-002-TRACE-STEP-MISSING' : 'CAP-GATE-002-TRACE-STEP-DUPLICATE',
+            count === 0
+              ? 'every approved scenario step must be allocated to one module'
+              : 'approved scenario step must not be allocated more than once',
+            {
+              ruleId: 'CAP-DES-SYS-006',
+              fieldPath: `${trace.useCaseId}.${stepId}`,
+              relatedIds: [stepId],
+            },
+          ),
+        )
+      }
+    }
+  }
+  for (const useCase of detailedUseCases) {
+    if (!tracedUseCaseIds.has(useCase.id)) {
+      extras.push(
+        diagnostic('CAP-GATE-002-USE-CASE-PATH', 'approved use case lacks a complete module path', {
+          ruleId: 'CAP-DES-SYS-006',
+          fieldPath: useCase.id,
+          relatedIds: [useCase.id],
+        }),
+      )
+    }
+  }
   for (const moduleId of unsupportedModuleIds) {
     extras.push(
       diagnostic('CAP-GATE-002-UNSUPPORTED', 'module does not support a product need', {
@@ -321,6 +454,10 @@ export function evaluateArchitectureProposal(
     redundantModuleIds,
     orphanModuleIds,
     graph,
+    reviewDiagnostics: [
+      ...languageEvaluation.reviewDiagnostics,
+      ...manifestLanguageEvaluations.flatMap((evaluation) => evaluation.reviewDiagnostics),
+    ],
   }
 }
 
@@ -338,14 +475,14 @@ export function parseArchitectureProposal(raw: unknown): {
     }
   }
   const record = raw as Record<string, unknown>
-  const architecture = (record.architecture ?? record) as ArchitectureSpecification
-  const schemaDiagnostics = validateContractRecord('CAP-CONTRACT-002', architecture).map((d) =>
+  const architectureInput = (record.architecture ?? record) as ArchitectureSpecification
+  const schemaDiagnostics = validateContractRecord('CAP-CONTRACT-002', architectureInput).map((d) =>
     diagnostic(d.code, d.message, { fieldPath: d.fieldPath, relatedIds: d.relatedIds }),
   )
   if (schemaDiagnostics.some((d) => d.code.startsWith('CAP-VAL') || d.fieldPath)) {
     // keep going with soft validation; hard-fail only when architecture is unusable
   }
-  if (!architecture || typeof architecture !== 'object' || !Array.isArray(architecture.moduleIds)) {
+  if (!architectureInput || typeof architectureInput !== 'object' || !Array.isArray(architectureInput.moduleIds)) {
     return {
       diagnostics: [
         diagnostic('CAP-ARCH-IMPORT-MODULES', 'architecture.moduleIds is required', {
@@ -355,26 +492,311 @@ export function parseArchitectureProposal(raw: unknown): {
       ],
     }
   }
+  const nestedDiagnostics: CapDiagnostic[] = []
+  const objectItems = (value: unknown, fieldPath: string): Record<string, unknown>[] => {
+    if (!Array.isArray(value)) {
+      if (value !== undefined) {
+        nestedDiagnostics.push(diagnostic(
+          'CAP-ARCH-IMPORT-LIST',
+          'Replace the invalid value with a list of JSON objects.',
+          { fieldPath },
+        ))
+      }
+      return []
+    }
+    return value.flatMap((item, index) => {
+      if (item && typeof item === 'object' && !Array.isArray(item)) {
+        return [item as Record<string, unknown>]
+      }
+      nestedDiagnostics.push(diagnostic(
+        'CAP-ARCH-IMPORT-ITEM',
+        'Replace the invalid list item with a JSON object.',
+        { fieldPath: `${fieldPath}.${index}` },
+      ))
+      return []
+    })
+  }
+  const text = (value: unknown, fieldPath: string): string => {
+    if (typeof value === 'string') return value
+    nestedDiagnostics.push(diagnostic(
+      'CAP-ARCH-IMPORT-TEXT',
+      'Replace the invalid value with text.',
+      { fieldPath },
+    ))
+    return ''
+  }
+  const optionalText = (value: unknown, fieldPath: string): string | undefined => {
+    if (value === undefined) return undefined
+    return text(value, fieldPath)
+  }
+  const stringItems = (value: unknown, fieldPath: string): string[] => {
+    if (!Array.isArray(value)) {
+      if (value !== undefined) {
+        nestedDiagnostics.push(diagnostic(
+          'CAP-ARCH-IMPORT-LIST',
+          'Replace the invalid value with a list of text values.',
+          { fieldPath },
+        ))
+      }
+      return []
+    }
+    return value.flatMap((item, index) => {
+      if (typeof item === 'string') return [item]
+      nestedDiagnostics.push(diagnostic(
+        'CAP-ARCH-IMPORT-TEXT',
+        'Replace the invalid list item with text.',
+        { fieldPath: `${fieldPath}.${index}` },
+      ))
+      return []
+    })
+  }
+  const namedItems = (value: unknown, fieldPath: string) =>
+    objectItems(value, fieldPath).map((item, index) => ({
+      id: text(item.id, `${fieldPath}.${index}.id`),
+      text: text(item.text, `${fieldPath}.${index}.text`),
+    }))
+  const moduleType = (
+    value: unknown,
+    moduleId: unknown,
+    name: unknown,
+    fieldPath: string,
+  ): ArchitectureModuleDefinition['moduleType'] => {
+    if (VALID_MODULE_TYPES.has(String(value))) {
+      return value as ArchitectureModuleDefinition['moduleType']
+    }
+    nestedDiagnostics.push(diagnostic(
+      'CAP-ARCH-IMPORT-MODULE-TYPE',
+      'Use a valid module type.',
+      { fieldPath },
+    ))
+    return inferModuleType(
+      typeof moduleId === 'string' ? moduleId : '',
+      typeof name === 'string' ? name : '',
+    )
+  }
+  const runtimeAllocation = (
+    value: unknown,
+    fieldPath: string,
+  ): ModuleManifest['runtimeAllocation'] => {
+    if (value === 'external-adapter' || value === 'local-embedded') return value
+    nestedDiagnostics.push(diagnostic(
+      'CAP-ARCH-IMPORT-RUNTIME',
+      'Use local-embedded or external-adapter.',
+      { fieldPath },
+    ))
+    return 'local-embedded'
+  }
+  const configurationSchemaRef = (
+    value: unknown,
+    fieldPath: string,
+  ): string | null => {
+    if (value === undefined || value === null || typeof value === 'string') {
+      return value ?? null
+    }
+    nestedDiagnostics.push(diagnostic(
+      'CAP-ARCH-IMPORT-CONFIGURATION',
+      'Use a text schema reference or null.',
+      { fieldPath },
+    ))
+    return null
+  }
+  const versionLiteral = (
+    value: unknown,
+    fieldPath: string,
+  ): '1.0' => {
+    if (value !== undefined && value !== '1.0') {
+      nestedDiagnostics.push(diagnostic(
+        'CAP-ARCH-IMPORT-VERSION',
+        'Use schema version 1.0.',
+        { fieldPath },
+      ))
+    }
+    return '1.0'
+  }
+  const architecture: ArchitectureSpecification = {
+    ...architectureInput,
+    moduleIds: stringItems(architectureInput.moduleIds, 'moduleIds'),
+    capabilityProjections: objectItems(
+      architectureInput.capabilityProjections,
+      'capabilityProjections',
+    ).map((item, index) => ({
+      id: text(item.id, `capabilityProjections.${index}.id`),
+      name: text(item.name, `capabilityProjections.${index}.name`),
+      moduleIds: stringItems(item.moduleIds, `capabilityProjections.${index}.moduleIds`),
+    })),
+    moduleDefinitions: objectItems(
+      architectureInput.moduleDefinitions,
+      'moduleDefinitions',
+    ).map((item, index) => ({
+      moduleId: text(item.moduleId, `moduleDefinitions.${index}.moduleId`),
+      name: text(item.name, `moduleDefinitions.${index}.name`),
+      moduleType: moduleType(
+        item.moduleType,
+        item.moduleId,
+        item.name,
+        `moduleDefinitions.${index}.moduleType`,
+      ),
+      responsibility: text(item.responsibility, `moduleDefinitions.${index}.responsibility`),
+    })),
+    dependencyEdges: objectItems(
+      architectureInput.dependencyEdges,
+      'dependencyEdges',
+    ).map((item, index) => ({
+      fromModuleId: text(item.fromModuleId, `dependencyEdges.${index}.fromModuleId`),
+      toModuleId: text(item.toModuleId, `dependencyEdges.${index}.toModuleId`),
+      reason: item.reason === undefined
+        ? ''
+        : text(item.reason, `dependencyEdges.${index}.reason`),
+    })),
+    operationAllocations: objectItems(
+      architectureInput.operationAllocations,
+      'operationAllocations',
+    ).map((item, index) => ({
+      operationId: text(item.operationId, `operationAllocations.${index}.operationId`),
+      moduleId: text(item.moduleId, `operationAllocations.${index}.moduleId`),
+    })),
+    adapterAllocations: objectItems(
+      architectureInput.adapterAllocations,
+      'adapterAllocations',
+    ).map((item, index) => ({
+      adapterId: text(item.adapterId, `adapterAllocations.${index}.adapterId`),
+      moduleId: text(item.moduleId, `adapterAllocations.${index}.moduleId`),
+      portId: text(item.portId, `adapterAllocations.${index}.portId`),
+    })),
+    workflowTraces: objectItems(
+      architectureInput.workflowTraces,
+      'workflowTraces',
+    ).map((trace, traceIndex) => ({
+      useCaseId: text(trace.useCaseId, `workflowTraces.${traceIndex}.useCaseId`),
+      moduleIds: stringItems(trace.moduleIds, `workflowTraces.${traceIndex}.moduleIds`),
+      entryPointId: optionalText(trace.entryPointId, `workflowTraces.${traceIndex}.entryPointId`),
+      outputId: optionalText(trace.outputId, `workflowTraces.${traceIndex}.outputId`),
+      stepAllocations: objectItems(
+        trace.stepAllocations,
+        `workflowTraces.${traceIndex}.stepAllocations`,
+      ).map((item, itemIndex) => ({
+        stepId: text(item.stepId, `workflowTraces.${traceIndex}.stepAllocations.${itemIndex}.stepId`),
+        moduleId: text(item.moduleId, `workflowTraces.${traceIndex}.stepAllocations.${itemIndex}.moduleId`),
+      })),
+    })),
+    proposals: namedItems(architectureInput.proposals, 'proposals'),
+    unresolvedQuestions: namedItems(architectureInput.unresolvedQuestions, 'unresolvedQuestions'),
+  }
+  const manifests = objectItems(record.manifests, 'manifests').map((item, index) => ({
+    schemaVersion: versionLiteral(item.schemaVersion, `manifests.${index}.schemaVersion`),
+    architectureVersion: versionLiteral(
+      item.architectureVersion,
+      `manifests.${index}.architectureVersion`,
+    ),
+    moduleId: text(item.moduleId, `manifests.${index}.moduleId`),
+    moduleVersion: text(item.moduleVersion, `manifests.${index}.moduleVersion`),
+    moduleType: moduleType(
+      item.moduleType,
+      item.moduleId,
+      item.name,
+      `manifests.${index}.moduleType`,
+    ),
+    name: text(item.name, `manifests.${index}.name`),
+    responsibility: text(item.responsibility, `manifests.${index}.responsibility`),
+    ownedConcerns: stringItems(item.ownedConcerns, `manifests.${index}.ownedConcerns`),
+    excludedConcerns: stringItems(item.excludedConcerns, `manifests.${index}.excludedConcerns`),
+    providedOperations: objectItems(
+      item.providedOperations,
+      `manifests.${index}.providedOperations`,
+    ).map((operation, operationIndex) => ({
+      operationId: text(
+        operation.operationId,
+        `manifests.${index}.providedOperations.${operationIndex}.operationId`,
+      ),
+      contractVersion: text(
+        operation.contractVersion,
+        `manifests.${index}.providedOperations.${operationIndex}.contractVersion`,
+      ),
+    })),
+    requiredOperations: objectItems(
+      item.requiredOperations,
+      `manifests.${index}.requiredOperations`,
+    ).map((operation, operationIndex) => ({
+      operationId: text(
+        operation.operationId,
+        `manifests.${index}.requiredOperations.${operationIndex}.operationId`,
+      ),
+      acceptedContractRange: text(
+        operation.acceptedContractRange,
+        `manifests.${index}.requiredOperations.${operationIndex}.acceptedContractRange`,
+      ),
+      reason: text(
+        operation.reason,
+        `manifests.${index}.requiredOperations.${operationIndex}.reason`,
+      ),
+    })),
+    verificationSuiteIds: stringItems(
+      item.verificationSuiteIds,
+      `manifests.${index}.verificationSuiteIds`,
+    ),
+    runtimeAllocation: runtimeAllocation(
+      item.runtimeAllocation,
+      `manifests.${index}.runtimeAllocation`,
+    ),
+    events: stringItems(item.events, `manifests.${index}.events`),
+    ownedPaths: stringItems(item.ownedPaths, `manifests.${index}.ownedPaths`),
+    configurationSchemaRef: configurationSchemaRef(
+      item.configurationSchemaRef,
+      `manifests.${index}.configurationSchemaRef`,
+    ),
+  }))
+  const moduleNeedTraces = objectItems(record.moduleNeedTraces, 'moduleNeedTraces').map(
+    (item, index) => ({
+      moduleId: text(item.moduleId, `moduleNeedTraces.${index}.moduleId`),
+      needIds: stringItems(item.needIds, `moduleNeedTraces.${index}.needIds`),
+    }),
+  )
+  const validJustifications = new Set([
+    'distinct-rules',
+    'independent-change',
+    'reuse',
+    'external-boundary',
+  ])
+  const moduleJustifications = objectItems(
+    record.moduleJustifications,
+    'moduleJustifications',
+  ).flatMap((item, index) => {
+    const moduleId = text(item.moduleId, `moduleJustifications.${index}.moduleId`)
+    if (!validJustifications.has(String(item.justification))) {
+      nestedDiagnostics.push(diagnostic(
+        'CAP-ARCH-IMPORT-JUSTIFICATION',
+        'Use a valid module justification.',
+        { fieldPath: `moduleJustifications.${index}.justification` },
+      ))
+      return []
+    }
+    return [{
+      moduleId,
+      justification: item.justification as NonNullable<
+        ArchitectureProposalInput['moduleJustifications']
+      >[number]['justification'],
+    }]
+  })
   const proposal: ArchitectureProposalInput = {
     architecture,
-    manifests: Array.isArray(record.manifests) ? (record.manifests as ModuleManifest[]) : undefined,
-    moduleNeedTraces: Array.isArray(record.moduleNeedTraces)
-      ? (record.moduleNeedTraces as ArchitectureProposalInput['moduleNeedTraces'])
-      : undefined,
-    moduleJustifications: Array.isArray(record.moduleJustifications)
-      ? (record.moduleJustifications as ArchitectureProposalInput['moduleJustifications'])
-      : undefined,
+    manifests,
+    moduleNeedTraces,
+    moduleJustifications,
   }
-  return { proposal, diagnostics: schemaDiagnostics }
+  return {
+    proposal,
+    diagnostics: sortDiagnostics([...schemaDiagnostics, ...nestedDiagnostics]),
+  }
 }
 
 export function importArchitectureProposal(
   product: ApplicationSpecification,
   raw: unknown,
+  lexicon?: SteLexicon,
 ): ArchitectureImportResult {
   const parsed = parseArchitectureProposal(raw)
   if (!parsed.proposal) {
-    return { ok: false, diagnostics: parsed.diagnostics }
+    return { ok: false, diagnostics: parsed.diagnostics, reviewDiagnostics: [] }
   }
   const normalized = normalizeArchitectureProposal(product, parsed.proposal)
   const draft: ArchitectureSpecification = {
@@ -391,11 +813,16 @@ export function importArchitectureProposal(
     }),
   }
   const proposal: ArchitectureProposalInput = { ...normalized, architecture: draft }
-  const evaluation = evaluateArchitectureProposal(product, proposal)
+  const evaluation = evaluateArchitectureProposal(product, proposal, lexicon)
+  const diagnostics = sortDiagnostics([...parsed.diagnostics, ...evaluation.diagnostics])
+  const importPassed = evaluation.passed && parsed.diagnostics.length === 0
+  const importEvaluation = importPassed
+    ? evaluation
+    : { ...evaluation, passed: false, diagnostics }
   draft.gateResult = {
     gateId: evaluation.gateId,
-    passed: evaluation.passed,
-    diagnostics: evaluation.diagnostics.map((d, i) => ({
+    passed: importPassed,
+    diagnostics: diagnostics.map((d, i) => ({
       id: `d${i}`,
       code: d.code,
       message: d.message,
@@ -403,11 +830,12 @@ export function importArchitectureProposal(
     })),
   }
   return {
-    ok: evaluation.passed,
+    ok: importPassed,
     proposal,
     draft,
-    evaluation,
-    diagnostics: sortDiagnostics([...parsed.diagnostics, ...evaluation.diagnostics]),
+    evaluation: importEvaluation,
+    diagnostics,
+    reviewDiagnostics: evaluation.reviewDiagnostics,
   }
 }
 
@@ -420,7 +848,7 @@ export function approveArchitectureIfReady(
   ok: false
   evaluation: ArchitectureInterviewEvaluation
 } {
-  const evaluation = evaluateArchitectureProposal(product, proposal)
+  const evaluation = evaluateArchitectureProposal(product, proposal, workspace.getSteLexicon(projectId))
   if (!evaluation.passed) return { ok: false, evaluation }
   const draft: ArchitectureSpecification = {
     ...proposal.architecture,

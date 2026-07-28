@@ -10,15 +10,19 @@ import type {
   GateResult,
   InterviewPacket,
   Project,
+  ProjectSteLexicon,
 } from '@engineering-ui-kit/core'
 import {
   buildProductInterviewPacket,
   diffApplicationSpecification,
+  evaluateApplicationSte,
   importProductInterviewResponse,
 } from '@engineering-ui-kit/core/browser'
 import type { EuikBridge, CapabilityPacketExportResult } from '../../bridge'
 import { InterviewImport, type InterviewImportResult } from './InterviewImport'
 import { CapabilityHandoffCard } from './CapabilityHandoffCard'
+import { UseCaseAnalysisPanel } from './UseCaseAnalysisPanel'
+import { ApplicationWorkflowWorkspace } from './ApplicationWorkflowWorkspace'
 import { humanizeFieldPath, presentDiagnosticsForGuided } from './capabilityPresentation'
 
 type Props = {
@@ -87,14 +91,17 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
   const [exportResult, setExportResult] = useState<CapabilityPacketExportResult | undefined>()
   const [delta, setDelta] = useState<FieldDelta[]>([])
   const [diagnostics, setDiagnostics] = useState<CapDiagnostic[]>([])
+  const [reviewDiagnostics, setReviewDiagnostics] = useState<CapDiagnostic[]>([])
   const [gate, setGate] = useState<GateLike | undefined>()
   const [fieldStates, setFieldStates] = useState<Record<string, string>>({})
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  const [steLexicon, setSteLexicon] = useState<ProjectSteLexicon | undefined>()
 
   async function refresh() {
     if (!projectId) return
     await bridge.capabilitiesEnsureInitialized(projectId)
+    const configuredLexicon = await bridge.capabilitiesGetSteLexicon(projectId) as ProjectSteLexicon | undefined
     const app = await bridge.capabilitiesGetApplication(projectId)
     const nextDraft = asApp(app.draft)
     const nextApproved = asApp(app.approved)
@@ -102,6 +109,10 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
     setApproved(nextApproved)
     const visible = nextDraft ?? nextApproved
     setFieldStates(storedFieldStates(visible, visible === nextApproved ? 'confirmed' : 'proposed'))
+    setSteLexicon(configuredLexicon)
+    setReviewDiagnostics(
+      visible ? evaluateApplicationSte(visible, configuredLexicon).reviewDiagnostics : [],
+    )
   }
 
   useEffect(() => {
@@ -129,6 +140,7 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
         packetId: `pkt-product-${projectId}-${Date.now()}`,
         projectId,
         approved: currentDefinition,
+        glossary: currentDefinition?.information,
         facts: [
           project?.name ? `projectName:${project.name}` : '',
           project?.description ? `projectDescription:${project.description}` : '',
@@ -164,9 +176,11 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
         projectId,
         approved,
         packet,
+        lexicon: steLexicon,
       })
       setDraft(imported.draft)
       setDiagnostics(imported.diagnostics)
+      setReviewDiagnostics(imported.reviewDiagnostics)
       setGate(imported.gate)
       setDelta(imported.delta)
       setFieldStates(imported.fieldStates)
@@ -184,6 +198,7 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
       onChanged?.()
       await refresh()
       setDraft(imported.draft)
+      setReviewDiagnostics(imported.reviewDiagnostics)
       setFieldStates(imported.fieldStates)
       setDelta(imported.delta.length ? imported.delta : diffApplicationSpecification(approved, imported.draft))
     } catch (error) {
@@ -225,6 +240,15 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
     } finally {
       setBusy(false)
     }
+  }
+
+  async function saveUseCaseAnalysis(specification: ApplicationSpecification) {
+    await bridge.capabilitiesSaveApplicationDraft(projectId, specification)
+    setDraft(specification)
+    setApproved((current) => current)
+    setGate(await bridge.capabilitiesEvaluateProductGate(specification) as GateLike)
+    setReviewDiagnostics(evaluateApplicationSte(specification, steLexicon).reviewDiagnostics)
+    onChanged?.()
   }
 
   const confirmed = Object.entries(fieldStates).filter(([, s]) => s === 'confirmed')
@@ -342,7 +366,7 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
 
       {guided ? (
         <details className="cap-interview-import" open={!draft || openQuestions.length > 0}>
-          <summary>{draft ? 'Import an updated Copilot response' : 'Import the Copilot response'}</summary>
+          <summary>{draft ? 'Import updated response' : 'Import Copilot response'}</summary>
           <InterviewImport onImport={(r) => void handleImport(r)} disabled={!projectId || busy} projection={projection} />
         </details>
       ) : (
@@ -509,9 +533,25 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
         </div>
       )}
 
+      {(draft ?? approved) ? (
+        <>
+          <UseCaseAnalysisPanel
+            specification={(draft ?? approved)!}
+            approved={!draft && Boolean(approved)}
+            steLexicon={steLexicon}
+            onSave={saveUseCaseAnalysis}
+          />
+          <ApplicationWorkflowWorkspace
+            specification={(draft ?? approved)!}
+            approved={!draft && Boolean(approved)}
+            onSave={saveUseCaseAnalysis}
+          />
+        </>
+      ) : null}
+
       {visibleDelta.length > 0 ? (
         <section aria-label="Field-level delta">
-          <h3>Field-level delta vs approved</h3>
+          <h3>Approved changes</h3>
           <table className="capabilities-delta-table">
             <thead>
               <tr>
@@ -579,6 +619,22 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
           </section>
         )
       )}
+
+      {reviewDiagnostics.length > 0 ? (
+        <details aria-label="Writing review items" className="cap-issues cap-ste-review">
+          <summary>Writing review ({reviewDiagnostics.length})</summary>
+          <p className="capabilities-note">
+            Review these items before publication. These items do not block the draft.
+          </p>
+          <ul className="cap-issue-list">
+            {reviewDiagnostics.map((item, index) => (
+              <li key={`${item.code}-${item.fieldPath ?? index}`}>
+                {item.message}{item.fieldPath ? ` (${item.fieldPath})` : ''}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
 
       {projection === 'design' && (draft || approved) ? (
         <dl className="capabilities-ids">

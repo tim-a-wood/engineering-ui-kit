@@ -1,0 +1,244 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/module-design-specification.schema.json",
+  "title": "Module design specification",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "id",
+    "revision",
+    "status",
+    "architecture",
+    "module",
+    "trace",
+    "boundary",
+    "providedOperations",
+    "requiredOperations",
+    "schemas",
+    "rules",
+    "invariants",
+    "behavior",
+    "data",
+    "runtime",
+    "verification",
+    "diagrams",
+    "unresolvedItems",
+    "gates",
+    "contentHash"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "projectId": { "type": "string", "minLength": 1 },
+    "id": { "type": "string", "minLength": 1 },
+    "revision": { "type": "string", "minLength": 1 },
+    "status": {
+      "enum": [
+        "draft",
+        "needsInput",
+        "readyForReview",
+        "approved",
+        "stale",
+        "conflict",
+        "superseded",
+        "withdrawn"
+      ]
+    },
+    "architecture": {
+      "type": "object",
+      "required": ["id", "revision", "contentHash"]
+    },
+    "module": {
+      "type": "object",
+      "required": ["moduleId", "moduleVersion", "name", "moduleType", "responsibility"]
+    },
+    "trace": {
+      "type": "object",
+      "required": ["useCaseIds", "scenarioStepIds", "ruleIds", "sourceRefs"],
+      "properties": {
+        "useCaseIds": { "type": "array", "items": { "type": "string" } },
+        "workflowNodeIds": { "type": "array", "items": { "type": "string" } },
+        "scenarioStepIds": { "type": "array", "items": { "type": "string" } },
+        "ruleIds": { "type": "array", "items": { "type": "string" } },
+        "sourceRefs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "boundary": { "type": "object" },
+    "providedOperations": { "type": "array" },
+    "requiredOperations": { "type": "array" },
+    "schemas": { "type": "array" },
+    "rules": { "type": "array" },
+    "invariants": { "type": "array", "items": { "type": "string" } },
+    "behavior": {
+      "type": "object",
+      "required": [
+        "preconditions",
+        "postconditions",
+        "domainRejections",
+        "technicalFailures",
+        "sideEffects",
+        "idempotency",
+        "cancellation",
+        "timeouts",
+        "concurrency",
+        "retry",
+        "recovery",
+        "emittedEvents",
+        "consumedEvents",
+        "states",
+        "activities",
+        "interactions"
+      ],
+      "properties": {
+        "activityDefinitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "refinesWorkflowNodeIds", "graph"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1 },
+              "entryOperationId": { "type": "string", "minLength": 1 },
+              "refinesWorkflowNodeIds": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "graph": { "$ref": "activity-graph.schema.json" }
+            }
+          }
+        },
+        "stateDefinitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "entryActionIds", "exitActionIds"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1 },
+              "parentStateId": { "type": "string", "minLength": 1 },
+              "entryActionIds": { "type": "array", "items": { "type": "string" } },
+              "exitActionIds": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "stateTransitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "fromStateId", "toStateId", "trigger", "effectActivityNodeIds"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "fromStateId": { "type": "string", "minLength": 1 },
+              "toStateId": { "type": "string", "minLength": 1 },
+              "trigger": { "type": "string", "minLength": 1 },
+              "guard": { "type": "string", "minLength": 1 },
+              "effectActivityNodeIds": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "interactionDefinitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "participants", "messages"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1 },
+              "participants": {
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["id", "label", "kind"],
+                  "properties": {
+                    "id": { "type": "string", "minLength": 1 },
+                    "label": { "type": "string", "minLength": 1 },
+                    "kind": { "enum": ["actor", "module", "operation", "external"] }
+                  }
+                }
+              },
+              "messages": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "fromParticipantId",
+                    "toParticipantId",
+                    "label",
+                    "kind",
+                    "refinesActivityNodeIds"
+                  ],
+                  "properties": {
+                    "id": { "type": "string", "minLength": 1 },
+                    "fromParticipantId": { "type": "string", "minLength": 1 },
+                    "toParticipantId": { "type": "string", "minLength": 1 },
+                    "label": { "type": "string", "minLength": 1 },
+                    "kind": { "enum": ["synchronous", "reply", "event"] },
+                    "operationId": { "type": "string", "minLength": 1 },
+                    "eventId": { "type": "string", "minLength": 1 },
+                    "guard": { "type": "string", "minLength": 1 },
+                    "refinesActivityNodeIds": {
+                      "type": "array",
+                      "items": { "type": "string", "minLength": 1 }
+                    }
+                  }
+                }
+              },
+              "fragments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["id", "kind", "label", "messageIds"],
+                  "properties": {
+                    "id": { "type": "string", "minLength": 1 },
+                    "kind": { "enum": ["alt", "opt", "loop"] },
+                    "label": { "type": "string", "minLength": 1 },
+                    "guard": { "type": "string", "minLength": 1 },
+                    "messageIds": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": { "type": "string", "minLength": 1 }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "preconditions": { "type": "array" },
+        "postconditions": { "type": "array" },
+        "domainRejections": { "type": "array" },
+        "technicalFailures": { "type": "array" },
+        "sideEffects": { "type": "array" },
+        "idempotency": { "type": "string" },
+        "cancellation": { "type": "string" },
+        "timeouts": { "type": "string" },
+        "concurrency": { "type": "string" },
+        "retry": { "type": "string" },
+        "recovery": { "type": "string" },
+        "emittedEvents": { "type": "array" },
+        "consumedEvents": { "type": "array" },
+        "states": { "type": "array" },
+        "activities": { "type": "array" },
+        "interactions": { "type": "array" }
+      }
+    },
+    "data": { "type": "object" },
+    "runtime": { "type": "object" },
+    "verification": { "type": "object" },
+    "diagrams": { "type": "array" },
+    "unresolvedItems": { "type": "array" },
+    "gates": { "type": "array" },
+    "approval": { "type": "object" },
+    "contentHash": { "type": "string" }
+  }
+}

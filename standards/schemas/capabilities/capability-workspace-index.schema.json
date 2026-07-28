@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/engineering-ui-kit/capabilities/capability-workspace-index.schema.json",
+  "title": "Capability workspace index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "behaviorModelVersion",
+    "modules",
+    "moduleDesigns",
+    "scenarioRuns",
+    "bindings",
+    "deployables",
+    "inboundBindings"
+  ],
+  "properties": {
+    "schemaVersion": { "enum": ["1.0", "2.0"] },
+    "behaviorModelVersion": { "const": "1.0" },
+    "applicationDraftId": { "type": "string" },
+    "applicationApprovedRevision": { "type": "string" },
+    "architectureDraftId": { "type": "string" },
+    "architectureApprovedRevision": { "type": "string" },
+    "modules": { "type": "object", "additionalProperties": { "type": "object" } },
+    "moduleDesigns": { "type": "object", "additionalProperties": { "type": "object" } },
+    "scenarioRuns": { "type": "object", "additionalProperties": { "type": "object" } },
+    "bindings": { "type": "object", "additionalProperties": { "type": "object" } },
+    "deployables": { "type": "object", "additionalProperties": { "type": "object" } },
+    "inboundBindings": { "type": "object", "additionalProperties": { "type": "object" } },
+    "foundationApprovedRevision": { "type": "string" }
+  }
+}

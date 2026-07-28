@@ -12,7 +12,7 @@
   "editablePaths": [
     "src/modules/sample-workspace/"
   ],
-  "responsibility": "Supply the built-in AeroNav Flight Guidance Computer — Lateral Guidance Level B workspace whenever no real project is configured, including two baselines, complete cross-phase evidence, twelve seeded findings, review records, deterministic adapter fixtures, and a resettable sandbox overlay.",
+  "responsibility": "Supply the built-in AeroNav Level B workspace when no real project exists. Include two baselines, complete evidence, twelve findings, review records, deterministic fixtures, and a resettable sandbox.",
   "nonResponsibilities": [
     "real-project-configuration",
     "proprietary-binaries",

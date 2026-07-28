@@ -1,5 +1,6 @@
 import {
   moduleInterviewOpeningGuidance,
+  withStePrompt,
   type InterviewPacket,
 } from '@engineering-ui-kit/core'
 
@@ -9,12 +10,14 @@ import {
  */
 export function interactiveInterviewPrompt(packet: InterviewPacket): string {
   const completionRule = packet.outputSchemaRef === 'CAP-CONTRACT-003'
-    ? 'Every required answer must contain a concrete answer and no answer may have status "unresolved". Every provided operation must have one matching operationContracts entry at the same version, and its inputSchemaRef and outputSchemaRef must resolve to concrete dataSchemas entries.'
+    ? 'Every required answer must contain a concrete answer and no answer may have status "unresolved". Every provided operation must have one matching operationContracts entry at the same version, and its inputSchemaRef and outputSchemaRef must resolve to concrete dataSchemas entries. The behaviorDraft must contain structured internal activities and states that refine only allocated workflow nodes. Include operation calls, events, material failures, retries, and recovery. Do not add application scope or copy the application workflow.'
     : packet.outputSchemaRef === 'CAP-CONTRACT-002'
-      ? 'The final response must assign every module a name, moduleType, and responsibility; give every dependency edge a concrete reason; cover every module in a workflow trace and moduleNeedTrace; and contain an empty unresolvedQuestions array.'
-      : 'The final response must contain an empty unresolvedQuestions array. Do not leave proposals or assumptions awaiting confirmation.'
+      ? 'The final response must assign every module a name, moduleType, and responsibility; give every dependency edge a concrete reason; allocate every executable application workflow node to one primary module; define an operation, event, entry point, or output for every cross-module transition; cover every module in a workflow trace and moduleNeedTrace; and contain an empty unresolvedQuestions array. Do not add internal module algorithms.'
+      : packet.outputSchemaRef === 'CAP-CONTRACT-001'
+        ? 'The final response must contain detailed use cases and structured applicationWorkflows for main, alternate, failure, recovery, and parallel behavior where material. Every executable workflow action must refine a stable use-case step. Do not allocate modules or add internal software design. Return an empty unresolvedQuestions array.'
+        : 'The final response must contain an empty unresolvedQuestions array. Do not leave proposals or assumptions awaiting confirmation.'
   const moduleOpeningGuidance = moduleInterviewOpeningGuidance(packet)
-  return `Run the bounded definition task in the embedded capability packet as a fast, draft-first review with the user.
+  return withStePrompt(`Run the bounded definition task in the embedded capability packet as a fast, draft-first review with the user.
 
 Interview protocol:
 1. Review every supplied fact first. Build a complete proposed response internally from confirmed context, repository clues, architecture allocations, connected modules, and reasonable reversible defaults.
@@ -26,5 +29,18 @@ Interview protocol:
 7. ${completionRule}
 ${moduleOpeningGuidance}
 
-After the review is genuinely complete, return only a new ${packet.outputFileName} using the exact template below. Do not design beyond the definition boundary, implement source code, or approve the application's separate in-app review gate.`
+After the review is genuinely complete, return only a new ${packet.outputFileName} using the exact template below. Do not design beyond the definition boundary, implement source code, or approve the application's separate in-app review gate.`, {
+    technicalTerms: [
+      'acceptance case',
+      'application',
+      'architecture',
+      'capability packet',
+      'module',
+      'operation contract',
+      'project',
+      'repository',
+      'use case',
+      ...packet.inputContext.glossary.map((item) => item.text),
+    ],
+  })
 }

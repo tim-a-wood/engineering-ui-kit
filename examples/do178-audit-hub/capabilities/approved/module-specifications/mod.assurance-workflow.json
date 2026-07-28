@@ -12,7 +12,7 @@
   "editablePaths": [
     "src/modules/assurance-workflow/"
   ],
-  "responsibility": "Own hub-local finding lifecycles, assignments, dispositions, corrective actions, reverification and immutable history; record independent reviews; and assemble reproducible audit packages without mutating authoritative lifecycle evidence.",
+  "responsibility": "Own audit finding workflows, review records, and reproducible audit packages. Keep immutable history. Do not change authoritative lifecycle evidence.",
   "nonResponsibilities": [
     "authoritative-artifact-editing",
     "evidence-parsing",

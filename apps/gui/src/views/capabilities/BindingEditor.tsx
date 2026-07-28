@@ -21,6 +21,7 @@ import type {
   FrontendBinding,
   ResultEnvelope,
   SelectionEvidence,
+  SteLexicon,
 } from '@engineering-ui-kit/core'
 import { behaviorLabel, presentDiagnosticsForGuided } from './capabilityPresentation'
 
@@ -112,6 +113,7 @@ export function BindingEditor({
     defaultBinding(projectId, evidence, initialBinding),
   )
   const [ambiguities, setAmbiguities] = useState<MappingAmbiguity[]>([])
+  const [steLexicon, setSteLexicon] = useState<SteLexicon | undefined>()
   const [status, setStatus] = useState('Draft binding — complete all behavior fields to approve.')
   const [packetJson, setPacketJson] = useState<string>('')
   const [lastResult, setLastResult] = useState<{
@@ -132,7 +134,21 @@ export function BindingEditor({
     setBinding(defaultBinding(projectId, initialBinding.selectionEvidence ?? evidence, initialBinding))
   }, [initialBinding, projectId])
 
-  const gate = evaluateBindingApprovalGate(binding, { ambiguities })
+  useEffect(() => {
+    let active = true
+    void bridge.capabilitiesGetSteLexicon(projectId)
+      .then((value) => {
+        if (active) setSteLexicon(value as SteLexicon | undefined)
+      })
+      .catch(() => {
+        if (active) setSteLexicon(undefined)
+      })
+    return () => {
+      active = false
+    }
+  }, [bridge, projectId])
+
+  const gate = evaluateBindingApprovalGate(binding, { ambiguities, steLexicon })
   const guided = projection === 'guided'
   const designDiagnosticGroups = Array.from(
     gate.diagnostics.reduce<Map<string, (typeof gate.diagnostics)[number][]>>((groups, diagnostic) => {
@@ -339,7 +355,7 @@ export function BindingEditor({
           >
             <option value="">
               {operations.length === 0
-                ? 'No approved operations available'
+                ? 'No approved operations'
                 : 'Select one operation'}
             </option>
             {operations.map((op) => (
@@ -440,7 +456,7 @@ export function BindingEditor({
               }))
             }
           />{' '}
-          Confirm proposed source target
+          Confirm source target
         </label>
       ) : null}
 
@@ -488,13 +504,13 @@ export function BindingEditor({
                     type="button"
                     className="btn btn-ghost btn-compact"
                     aria-label={`Remove ${label} ${i + 1}`}
-                    onClick={() => removeMapping(side, i)}
+                    onClick={removeMapping.bind(null, side, i)}
                   >
                     Remove
                   </button>
                 </div>
               ))}
-              <button type="button" className="btn btn-secondary btn-compact" onClick={() => addMapping(side)}>
+              <button type="button" className="btn btn-secondary btn-compact" onClick={addMapping.bind(null, side)}>
                 Add {side === 'inputMappings' ? 'input' : 'output'} mapping
               </button>
             </div>
@@ -518,7 +534,7 @@ export function BindingEditor({
                       key={candidate}
                       type="button"
                       className="btn btn-secondary btn-compact"
-                      onClick={() => resolveAmbiguity(a.from, candidate)}
+                      onClick={resolveAmbiguity.bind(null, a.from, candidate)}
                     >
                       Use {candidate}
                     </button>
@@ -530,13 +546,13 @@ export function BindingEditor({
       ) : null}
 
       <div className="capabilities-toolbar" role="group" aria-label="Binding actions">
-        <button type="button" className="btn btn-secondary btn-compact" onClick={() => void onSaveDraft()}>
+        <button type="button" className="btn btn-secondary btn-compact" onClick={onSaveDraft}>
           Save draft
         </button>
-        <button type="button" className="btn btn-primary btn-compact" onClick={() => void onApprove()} disabled={!gate.passed}>
+        <button type="button" className="btn btn-primary btn-compact" onClick={onApprove} disabled={!gate.passed}>
           Approve binding
         </button>
-        <button type="button" className="btn btn-secondary btn-compact" onClick={() => void onRunMode()}>
+        <button type="button" className="btn btn-secondary btn-compact" onClick={onRunMode}>
           Run {bindingModeLabel(binding.dataMode)}
         </button>
       </div>

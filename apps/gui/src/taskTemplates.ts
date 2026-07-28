@@ -5,6 +5,7 @@
  * (PRD §28.8 — this is the consumer of that setting).
  */
 import type { TaskIntentProfile } from '@engineering-ui-kit/core'
+import { buildStePromptRules } from '@engineering-ui-kit/core/browser'
 
 export type TaskTemplate = {
   id: string
@@ -96,16 +97,31 @@ const TASK_INTENT_PROFILES: Partial<Record<string, TaskIntentProfile>> = {
 /** The port the monolithic-web-app method standardizes on (template ⇄ launch default). */
 export const MONOLITH_PORT = 4180
 
+const STE_CONSTRAINT = buildStePromptRules({
+  technicalTerms: [
+    'application',
+    'component',
+    'diagram',
+    'document',
+    'module',
+    'repository',
+    'source code',
+    'use case',
+    'user interface',
+  ],
+})
+
 const SHARED_CONSTRAINTS = [
+  STE_CONSTRAINT,
   'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.',
-  'No new dependencies; no router or state library additions unless the task explicitly allows them.',
-  'Dark-first only; semantic tokens as CSS custom properties; no raw colors outside the token entry point.',
+  'Do not add dependencies, a router, or a state library unless the task explicitly allows them.',
+  'Use dark-first semantic tokens as CSS custom properties. Do not use raw colors outside the token entry point.',
 ]
 
 const SHARED_ACCEPTANCE = [
   'npm run typecheck and npm run build pass after overlay application.',
-  'Dark-first shell with semantic surface hierarchy; no light-mode surfaces.',
-  'Complete keyboard operation with visible focus; status and validation carry text, not color alone.',
+  'Use a dark-first shell with semantic surface hierarchy. Do not use light-mode surfaces.',
+  'Provide complete keyboard operation with visible focus. Status and validation use text and not color alone.',
 ]
 
 export const TASK_TEMPLATES: TaskTemplate[] = [
@@ -118,7 +134,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     scope: [
       'Presentation, layout, and styling only: stylesheets, the semantic token entry point, and view markup where presentation requires.',
       'Existing component structure may be reorganized only where necessary for the presentation change.',
-      'Start with the primary screen; leave secondary screens untouched unless listed here.',
+      'Start with the primary screen. Leave secondary screens unchanged unless the scope lists them.',
     ].join('\n'),
     constraints: [
       'Preserve all existing behavior: state handling, validation, serialization, exports, dialogs, and focus management.',
@@ -127,7 +143,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     acceptanceCriteria: [
       ...SHARED_ACCEPTANCE,
       'All pre-existing interactions still work exactly as before (edit/save/cancel, dialogs, exports where present).',
-      'Presentation consumes semantic tokens through CSS custom properties; single token entry stylesheet.',
+      'Presentation uses semantic tokens through CSS custom properties. Use one token entry stylesheet.',
     ].join('\n'),
     references: [
       'standard-pack.md (attached): applicable rule IDs, component IDs, and the semantic token table.',
@@ -143,10 +159,10 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     scope: [
       'REPLACE: one-paragraph description of the screen(s) to build and the user problem they solve.',
       'New view components, a single token entry stylesheet, and sample data modules.',
-      'Local React state only; loading/empty/error states rendered from sample data variants.',
+      'Use only local React state. Render loading, empty, and error states from sample data variants.',
     ].join('\n'),
     constraints: [
-      'No network requests, persistence, or filesystem access; sample data lives in a dedicated module.',
+      'Do not use network requests, persistence, or filesystem access. Keep sample data in a dedicated module.',
       'Keep domain/sample data separate from presentation (no data rules inside CSS or markup).',
       ...SHARED_CONSTRAINTS,
     ].join('\n'),
@@ -162,9 +178,9 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   },
   {
     id: 'new-ui-existing-api',
-    title: 'Build a new UI on an existing backend/API',
-    summary: 'New screens wired to an existing API through a thin typed client; the API itself must not change.',
-    taskTitle: 'Build UI for {project} against the existing API',
+    title: 'Existing API UI',
+    summary: 'Connect new screens to an existing API through a thin typed client. Do not change the API.',
+    taskTitle: 'Build {project} UI',
     goal: 'Implement a new dark-first UI for {project} that consumes the existing backend/API exactly as documented below, without modifying the API, its contracts, or server code.',
     scope: [
       'REPLACE: list the screens to build and the API endpoints/types each consumes.',
@@ -172,8 +188,8 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
       'Loading, empty, error, and offline states for every remote data region.',
     ].join('\n'),
     constraints: [
-      'Do not modify server code, API routes, schemas, or contracts; consume them exactly as documented.',
-      'All requests go through the single typed client module; no fetch calls scattered in views.',
+      'Do not modify server code, API routes, schemas, or contracts. Use them as documented.',
+      'Send all requests through the single typed client module. Do not put fetch calls in multiple views.',
       ...SHARED_CONSTRAINTS,
     ].join('\n'),
     acceptanceCriteria: [
@@ -188,16 +204,24 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   },
   {
     id: 'requirements-from-brief',
-    title: 'Write the requirements (from a short brief)',
+    title: 'Write requirements',
     summary: 'Turn a few sentences of product intent into a complete REQUIREMENTS.md — run this handoff first, then build from the document it returns.',
-    taskTitle: 'Write REQUIREMENTS.md for {project}',
+    taskTitle: 'Write {project} requirements',
     goal: 'Produce a complete, buildable requirements document for {project} from the short brief below. The next handoff will build the app from that document alone, so it must be self-sufficient.',
     scope: [
       'REPLACE: 3–6 sentences of product intent — who uses it, the question it answers, the 2–4 screens you imagine, and the data it manages.',
       'Return exactly one file: REQUIREMENTS.md at the repository root (as the zip overlay).',
-      'Document structure: a one-paragraph context; numbered requirements (one per capability, each concrete enough to verify); exact input tables with types, ranges, and validation wherever forms exist; outputs and status rules with thresholds; persistence and seed-data expectations; a one-deployable run contract (npm run build, npm start, one port); an installable-PWA/offline section when offline matters; a quality bar; explicit non-goals.',
+      'Document structure: one context paragraph.',
+      'Add numbered requirements. Use one verifiable requirement for each capability.',
+      'For each form, add exact input tables with types, ranges, and validation.',
+      'Add outputs and status rules with thresholds.',
+      'Add persistence and seed-data requirements.',
+      'Add a one-deployable run contract with npm run build, npm start, and one port.',
+      'Add an installable PWA and offline section when offline operation is necessary.',
+      'Add the quality bar and explicit non-goals.',
     ].join('\n'),
     constraints: [
+      STE_CONSTRAINT,
       'No implementation and no code — the requirements document only.',
       'Invent nothing beyond the brief silently: collect anything you had to assume in an "Assumptions" section for review.',
       'The document must stand alone: the build handoff will see only REQUIREMENTS.md plus the standard pack.',
@@ -205,7 +229,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     ].join('\n'),
     acceptanceCriteria: [
       'Every capability in the brief appears as a numbered requirement with verifiable detail.',
-      'Input tables carry types, ranges, and validation rules; outputs carry status rules with thresholds.',
+      'Input tables contain types, ranges, and validation rules. Outputs contain status rules with thresholds.',
       'Seed data, the run contract (npm run typecheck / npm run build / npm start on one port), and non-goals are specified.',
       'Assumptions beyond the brief are listed in their own section.',
     ].join('\n'),
@@ -228,16 +252,17 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
       'One-command run: an `npm start` script that runs the Node server, which serves the built frontend from `dist/` and the JSON API on one port — `process.env.PORT` or 4180 (reachable at http://localhost:4180). Add the `start` script to package.json (a script addition, not a dependency change).',
     ].join('\n'),
     constraints: [
-      'Minimal dependencies: React, Vite, TypeScript, and the Node standard library; justify anything beyond that in response text.',
-      'Frontend/backend boundary through the typed JSON API only; no server imports in the renderer.',
-      'Dark-first only; semantic tokens as CSS custom properties; no raw colors outside the token entry point.',
+      STE_CONSTRAINT,
+      'Use only React, Vite, TypeScript, and the Node standard library. Explain any additional dependency in the response.',
+      'Use only the typed JSON API for the frontend and backend boundary. Do not import server modules in the renderer.',
+      'Use dark-first semantic tokens as CSS custom properties. Do not use raw colors outside the token entry point.',
       'No auth, telemetry, or deployment tooling in this pass.',
       'Keep the tsconfig include limited to source directories — leave vite.config.ts out of the typecheck project (repos hosted inside a workspace/monorepo hit duplicate-vite type-identity errors otherwise).',
     ].join('\n'),
     acceptanceCriteria: [
-      'npm run typecheck and npm run build pass; `npm run build` then `npm start` serves the built frontend and API at http://localhost:4180 (PORT overridable via process.env.PORT).',
+      'npm run typecheck and npm run build pass. Then, npm start serves the built frontend and API at http://localhost:4180. PORT can override this port.',
       'Core screens perform their create/read/update flows end to end against the local API.',
-      'Dark-first shell with semantic surface hierarchy; complete keyboard operation with visible focus.',
+      'Use a dark-first shell with semantic surface hierarchy. Provide complete keyboard operation with visible focus.',
       'Loading, empty, and error states exist for every remote data region.',
     ].join('\n'),
     references: [
@@ -248,17 +273,17 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   },
   {
     id: 'add-screen',
-    title: 'Add a screen to an existing app',
+    title: 'Add screen',
     summary: 'One new view wired into existing navigation, matching the app’s established patterns.',
     taskTitle: 'Add screen to {project}',
     goal: 'Add one new screen to {project}, wired into the existing navigation and consistent with the app’s established structure, state patterns, and Engineering UI Kit standards.',
     scope: [
       'REPLACE: name the new screen, its purpose, and where it appears in navigation.',
-      'One new view component plus minimal navigation wiring; styling through the existing token entry point.',
+      'Add one view component and minimal navigation wiring. Use the existing token entry point for styling.',
       'No changes to existing screens beyond the navigation entry.',
     ].join('\n'),
     constraints: [
-      'Follow the existing app conventions for state, file placement, and naming; do not restructure existing code.',
+      'Follow the existing application conventions for state, file placement, and naming. Do not restructure existing code.',
       ...SHARED_CONSTRAINTS,
     ].join('\n'),
     acceptanceCriteria: [
@@ -272,15 +297,15 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   },
   {
     id: 'iterate-on-feedback',
-    title: 'Iterate on the previous design (feedback-driven)',
+    title: 'Apply review feedback',
     summary: 'Follow-up pass on an already-applied overlay: address the reviewer feedback, change nothing else.',
-    taskTitle: 'Iterate on {project}: address review feedback',
+    taskTitle: 'Revise {project}',
     goal: 'Refine the UI previously delivered for {project}: address every reviewer feedback point listed in Scope while preserving the delivered design, behavior, and file layout everywhere else.',
     scope: [
       'REPLACE: the reviewer feedback points to address (auto-filled from Verify & Review feedback when present).',
     ].join('\n'),
     constraints: [
-      'Address only the feedback points in Scope; no redesigns, rescaffolds, or unrelated refactors.',
+      'Address only the feedback points in Scope. Do not redesign, rescaffold, or make unrelated refactors.',
       'Preserve the previously delivered structure: routes, API contracts, data shapes, file layout, and naming.',
       'Return only changed or new files — files absent from the zip remain untouched.',
       ...SHARED_CONSTRAINTS,
@@ -297,9 +322,9 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   },
   {
     id: 'a11y-remediation',
-    title: 'UI/UX issue finder',
+    title: 'Accessibility repair',
     summary: 'Find and fix UI/UX issues: clarity, keyboard, focus, labels, status text, contrast.',
-    taskTitle: 'UI/UX issue pass for {project}',
+    taskTitle: 'Improve {project} access',
     goal: 'Find and fix UI/UX issues in {project} without changing domain behavior: clarity problems, complete keyboard operation, visible focus, accessible names, text-backed status, dialog semantics, and reduced-motion support.',
     scope: [
       'REPLACE: name the screen(s) in scope.',
@@ -308,12 +333,12 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     ].join('\n'),
     constraints: [
       'Behavior, data flow, and visual identity remain unchanged apart from accessibility corrections.',
-      'Use the semantic focus tokens for focus rings; do not invent new colors.',
+      'Use the semantic focus tokens for focus rings. Do not add colors.',
       ...SHARED_CONSTRAINTS,
     ].join('\n'),
     acceptanceCriteria: [
       'Every interactive control is reachable and operable by keyboard with a visible focus indicator.',
-      'All controls, inputs, dialogs, and status regions expose accessible names; validation errors are text, linked to fields.',
+      'All controls, inputs, dialogs, and status regions expose accessible names. Validation errors use text and link to fields.',
       'Dialogs trap focus, support Escape, and restore focus to the invoking control.',
       'prefers-reduced-motion is respected.',
       'npm run typecheck and npm run build pass after overlay application.',
@@ -325,17 +350,17 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   },
   {
     id: 'data-viz-screen',
-    title: 'Data visualization screen from a dataset',
+    title: 'Data chart',
     summary: 'Chart-centric screen (XY plot, series, stats) rendered from a supplied dataset — SVG, no chart library.',
-    taskTitle: 'Data visualization screen for {project}',
+    taskTitle: 'Build {project} chart',
     goal: 'Implement a dark-first data visualization screen for {project} that renders the supplied dataset as an accessible SVG chart with axis ticks, series legend, and summary statistics.',
     scope: [
       'REPLACE: describe the dataset (fields, units) and the chart type (XY scatter/line, bar, etc.).',
       'One visualization view: chart region (inset technical surface), dataset selector, summary stats, and a data table fallback.',
-      'Hand-rolled SVG rendering; a dedicated data module supplies the dataset.',
+      'Use custom SVG rendering. Supply the dataset from a dedicated data module.',
     ].join('\n'),
     constraints: [
-      'No chart libraries; SVG primitives only, colors via semantic tokens (status/accent scale).',
+      'Do not use chart libraries. Use SVG primitives and semantic color tokens.',
       'The chart must not be the only representation — provide a data table or text summary for accessibility.',
       ...SHARED_CONSTRAINTS,
     ].join('\n'),
@@ -360,7 +385,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
       'List view with status badges, create/edit form (field wrapper, labels, errors, helper text), delete with confirmation dialog.',
     ].join('\n'),
     constraints: [
-      'Validation errors are per-field text plus a summary; never color-only.',
+      'Show validation text for each field and in a summary. Do not use only color.',
       'Destructive actions require an explicit confirmation dialog.',
       ...SHARED_CONSTRAINTS,
     ].join('\n'),

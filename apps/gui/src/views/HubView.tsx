@@ -71,14 +71,14 @@ export function HubView(props: {
               </button>
             ) : null}
             <button type="button" className="btn btn-primary" onClick={() => setNewProjectOpen(true)}>
-              {Icon.plus()} New Project
+              {Icon.plus()} Create project
             </button>
           </>
         }
       />
 
       {runOpen && activeProject && currentStep && (
-        <button type="button" className="hub-continue" aria-label={`Continue ${activeProject.name} in ${currentStep.short}`} onClick={() => props.onOpenStep(continueView)}>
+        <button type="button" className="hub-continue" aria-label="Resume active project" onClick={() => props.onOpenStep(continueView)}>
           <div className="hub-continue-head">
             <div className="hub-continue-copy">
               <span className="hub-continue-kicker">Resume active task</span>
@@ -93,11 +93,11 @@ export function HubView(props: {
             </span>
             <div className="hub-continue-details">
               <span className="hub-continue-status"><span /> Ready to continue</span>
-              <h3>{currentStep.short === 'Test' ? 'Review the latest result' : 'Prepare the next change'}</h3>
+              <h3>{currentStep.short === 'Test' ? 'Review latest result' : 'Prepare next change'}</h3>
               <p>{currentStep.short === 'Test'
-                ? 'Inspect the running app, resolve any failed checks, and approve or iterate on the result.'
-                : 'Define the work, prepare the Copilot handoff, and apply the returned changes safely.'}</p>
-              <div className="hub-continue-journey" aria-label="Build and Test progress">
+                ? 'Inspect the application. Resolve failed checks. Approve the result or make another change.'
+                : 'Define the work. Prepare the Copilot handoff. Apply the returned changes.'}</p>
+              <div className="hub-continue-journey" aria-label="Workflow progress">
                 <span className={currentStep.short === 'Build' ? 'current' : 'complete'}>{currentStep.short === 'Build' ? '1' : '✓'} <b>Build</b></span>
                 <i aria-hidden="true" />
                 <span className={currentStep.short === 'Test' ? 'current' : ''}>2 <b>Test</b></span>
@@ -115,7 +115,7 @@ export function HubView(props: {
       <section className="hub-projects hub-projects-minimal" aria-labelledby="recent-projects-heading">
         <div className="panel-head">
           <div className="hstack">
-            <h2 id="recent-projects-heading">Recent Projects</h2>
+            <h2 id="recent-projects-heading">Recent projects</h2>
             <span className="toolbar-count num" style={{ color: 'var(--semantic-text-muted)', fontSize: 12 }}>
               {recent.length} active
             </span>
@@ -130,7 +130,7 @@ export function HubView(props: {
             <p className="empty-title">No projects yet</p>
             <p className="empty-hint">Create a project to start your first handoff.</p>
             <button type="button" className="btn btn-secondary" onClick={() => setNewProjectOpen(true)}>
-              {Icon.plus(14)} New Project
+              {Icon.plus(14)} Create project
             </button>
           </div>
         ) : (
@@ -142,7 +142,7 @@ export function HubView(props: {
                     <span className="project-row-icon" aria-hidden="true">{Icon.folder(18)}</span>
                     <div className="project-row-copy">
                       <strong>{project.name}</strong>
-                      {project.isSample && <span className="sample-chip" title="Built-in sample project — explore freely">Sample</span>}
+                      {project.isSample && <span className="sample-chip" title="Sample project">Sample</span>}
                       <p className="project-meta">
                         {project.description ? `${project.description} · ` : ''}
                         {lastUpdatedLabel(project.updatedAt)}

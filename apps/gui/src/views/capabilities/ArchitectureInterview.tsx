@@ -9,15 +9,18 @@ import type {
   CapDiagnostic,
   FoundationPlan,
   InterviewPacket,
+  SteLexicon,
 } from '@engineering-ui-kit/core'
 import {
   buildArchitectureInterviewPacket,
   canonicalHash,
   detectCycles,
+  evaluateArchitectureSte,
   evaluateArchitectureProposal,
   importArchitectureProposal,
   normalizeArchitectureProposal,
   projectDerivedGraph,
+  withStePrompt,
   type ArchitectureProposalInput,
 } from '@engineering-ui-kit/core/browser'
 import type { CapabilityPacketExportResult, EuikBridge } from '../../bridge'
@@ -75,6 +78,7 @@ function buildArchitectureCorrectionPrompt(input: {
   response: string
   diagnostics: CapDiagnostic[]
   cycles: string[][]
+  steLexicon?: SteLexicon
 }): string {
   const cycleFindings = input.diagnostics.some((diagnostic) => diagnostic.code === 'CAP-AR-006')
     ? []
@@ -90,7 +94,7 @@ function buildArchitectureCorrectionPrompt(input: {
     ...cycleFindings,
   ]
 
-  return [
+  return withStePrompt([
     'Correct the architecture proposal JSON below so it passes every listed validation finding.',
     '',
     'Preserve valid requirements, IDs, and design intent. Make only the changes needed to produce a complete valid architecture response. Do not omit required fields, leave unresolved questions, or introduce dependency cycles.',
@@ -109,7 +113,21 @@ function buildArchitectureCorrectionPrompt(input: {
     '',
     'Rejected JSON:',
     input.response,
-  ].join('\n')
+  ].join('\n'), {
+    technicalTerms: [
+      'application',
+      'architecture',
+      'dependency',
+      'diagnostic',
+      'module',
+      'module need trace',
+      'project',
+      'use case',
+      'workflow trace',
+      ...(input.steLexicon?.technicalTerms ?? []),
+    ],
+    prohibitedAliases: input.steLexicon?.prohibitedAliases,
+  })
 }
 
 export function ArchitectureInterview({
@@ -130,21 +148,31 @@ export function ArchitectureInterview({
   const [exportResult, setExportResult] = useState<CapabilityPacketExportResult | undefined>()
   const [proposal, setProposal] = useState<ArchitectureProposalInput | undefined>()
   const [diagnostics, setDiagnostics] = useState<CapDiagnostic[]>([])
+  const [reviewDiagnostics, setReviewDiagnostics] = useState<CapDiagnostic[]>([])
   const [cycles, setCycles] = useState<string[][]>([])
   const [gatePassed, setGatePassed] = useState<boolean | undefined>()
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [lastImportedText, setLastImportedText] = useState('')
   const [revisionStarted, setRevisionStarted] = useState(false)
+  const [steLexicon, setSteLexicon] = useState<SteLexicon | undefined>()
 
   async function refresh() {
     if (!projectId) return
     await bridge.capabilitiesEnsureInitialized(projectId)
+    const configuredLexicon = await bridge.capabilitiesGetSteLexicon(projectId) as SteLexicon | undefined
     const app = await bridge.capabilitiesGetApplication(projectId)
     const arch = await bridge.capabilitiesGetArchitecture(projectId)
     setProduct(asApp(app.approved) ?? asApp(app.draft))
-    setDraft(asArch(arch.draft) ?? asArch(arch.approved))
+    const visibleArchitecture = asArch(arch.draft) ?? asArch(arch.approved)
+    setDraft(visibleArchitecture)
     setApprovedArch(asArch(arch.approved))
+    setSteLexicon(configuredLexicon)
+    setReviewDiagnostics(
+      visibleArchitecture
+        ? evaluateArchitectureSte(visibleArchitecture, configuredLexicon).reviewDiagnostics
+        : [],
+    )
     setFoundation(await bridge.capabilitiesGetFoundation(projectId))
   }
 
@@ -221,7 +249,7 @@ export function ArchitectureInterview({
     setMessage('')
     try {
       const parsed = result.parsed ?? JSON.parse(result.rawText)
-      const imported = importArchitectureProposal(product, parsed)
+      const imported = importArchitectureProposal(product, parsed, steLexicon)
       const importedDraft = imported.draft && approvedArch
         ? prepareRevisedArchitecture(imported.draft, approvedArch)
         : imported.draft
@@ -231,6 +259,7 @@ export function ArchitectureInterview({
       setDraft(importedDraft)
       setProposal(importedProposal)
       setDiagnostics(imported.diagnostics)
+      setReviewDiagnostics(imported.reviewDiagnostics)
       setGatePassed(imported.ok)
       setCycles(imported.evaluation?.cycles ?? [])
       if (importedDraft) {
@@ -262,6 +291,7 @@ export function ArchitectureInterview({
       response,
       diagnostics,
       cycles: draft ? detectCycles(projectDerivedGraph(draft)) : cycles,
+      steLexicon,
     })
     setBusy(true)
     let copied = false
@@ -303,8 +333,9 @@ export function ArchitectureInterview({
       setDraft(normalizedDraft)
       setProposal(currentProposal)
       await bridge.capabilitiesSaveArchitectureDraft(projectId, normalizedDraft)
-      const evaluation = evaluateArchitectureProposal(product, currentProposal)
+      const evaluation = evaluateArchitectureProposal(product, currentProposal, steLexicon)
       setDiagnostics(evaluation.diagnostics)
+      setReviewDiagnostics(evaluation.reviewDiagnostics)
       setCycles(evaluation.cycles)
       setGatePassed(evaluation.passed)
       if (!evaluation.passed) {
@@ -388,7 +419,7 @@ export function ArchitectureInterview({
               <button
                 type="button"
                 className={`btn ${readyToApprove ? 'btn-primary' : 'btn-secondary'} btn-compact`}
-                onClick={() => void approve()}
+                onClick={approve}
                 disabled={!readyToApprove || busy}
               >
                 Approve application structure
@@ -401,8 +432,8 @@ export function ArchitectureInterview({
           <p className="lede">Review the proposed structure, dependencies, approval state, and technical record details.</p>
           <p role="status">{message || (currentApproval ? 'Architecture is approved.' : revising ? 'An architecture revision is in progress.' : 'Architecture not yet approved.')}</p>
           <div className="capabilities-toolbar" role="group" aria-label="Architecture interview actions">
-            <button type="button" className="btn btn-primary btn-compact" onClick={() => void exportPacket()} disabled={!projectId || !product || busy}>{currentApproval ? 'Revise architecture' : 'Generate architecture draft'}</button>
-            <button type="button" className="btn btn-secondary btn-compact" onClick={() => void approve()} disabled={!projectId || !readyToApprove || busy}>Approve architecture</button>
+            <button type="button" className="btn btn-primary btn-compact" onClick={exportPacket} disabled={!projectId || !product || busy}>{currentApproval ? 'Revise architecture' : 'Generate architecture draft'}</button>
+            <button type="button" className="btn btn-secondary btn-compact" onClick={approve} disabled={!projectId || !readyToApprove || busy}>Approve architecture</button>
           </div>
         </>
       )}
@@ -420,7 +451,7 @@ export function ArchitectureInterview({
 
       {guided ? (
         <details className="cap-interview-import" open={!draft || revising || liveCycles.length > 0 || diagnostics.length > 0}>
-          <summary>{draft ? 'Import an updated Copilot response' : 'Import the proposed structure'}</summary>
+          <summary>{draft ? 'Import revised response' : 'Import proposed structure'}</summary>
           <InterviewImport label="Import proposed structure" onImport={(r) => void handleImport(r)} disabled={!projectId || !product || busy} projection={projection} />
         </details>
       ) : (
@@ -437,7 +468,7 @@ export function ArchitectureInterview({
             <button
               type="button"
               className="btn btn-primary btn-compact"
-              onClick={() => void fixErrorsInCopilot()}
+              onClick={fixErrorsInCopilot}
               disabled={busy || !product}
             >
               {Icon.sparkle(14)} Fix errors in Copilot
@@ -472,6 +503,22 @@ export function ArchitectureInterview({
             )
           ) : null}
         </section>
+      ) : null}
+
+      {reviewDiagnostics.length > 0 ? (
+        <details className="cap-issues cap-ste-review" aria-label="Writing review items">
+          <summary>Writing review ({reviewDiagnostics.length})</summary>
+          <p className="capabilities-note">
+            Review these items before publication.
+          </p>
+          <ul className="cap-issue-list">
+            {reviewDiagnostics.map((item, index) => (
+              <li key={`${item.code}-${item.fieldPath ?? index}`}>
+                {item.message}{item.fieldPath ? ` (${item.fieldPath})` : ''}
+              </li>
+            ))}
+          </ul>
+        </details>
       ) : null}
 
       {projection === 'design' && graph ? (

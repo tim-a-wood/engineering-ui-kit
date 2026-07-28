@@ -9,9 +9,20 @@ import { buildInterviewPacket } from './packets.js'
 import { canonicalHash } from './hash.js'
 import type { CapabilityWorkspace } from './persistence.js'
 import { validateContractRecord } from './validation.js'
+import {
+  evaluateModuleInterviewSte,
+  type SteLexicon,
+  type SteReviewDiagnostic,
+} from './simplifiedTechnicalEnglish.js'
 import type {
+  ActivityEdge,
+  ActivityNodeKind,
   ArchitectureSpecification,
   InterviewPacket,
+  ModuleBehaviorSpecification,
+  ModuleInteractionFragment,
+  ModuleInteractionMessage,
+  ModuleInteractionParticipant,
   ModuleManifest,
   ModuleType,
   OperationContract,
@@ -58,12 +69,15 @@ export type ModuleInterviewResponse = {
   answers: ModuleInterviewAnswer[]
   acceptanceCases?: { id: string; description: string; expectedOutcome: string }[]
   rules?: { id: string; text: string }[]
+  /** Draft internal behavior for the later module-design approval authority. */
+  behaviorDraft?: ModuleBehaviorSpecification
 }
 
 export type ModuleInterviewEvaluation = GateResult & {
   missingApplicableDetailIds: string[]
   unresolvedDomainQuestionIds: string[]
   manifest?: ModuleManifest
+  reviewDiagnostics: SteReviewDiagnostic[]
 }
 
 export type ModuleImportResult = {
@@ -72,6 +86,7 @@ export type ModuleImportResult = {
   manifest?: ModuleManifest
   evaluation?: ModuleInterviewEvaluation
   diagnostics: CapDiagnostic[]
+  reviewDiagnostics?: SteReviewDiagnostic[]
 }
 
 /** Single interview depth — applicable detail IDs per module type. */
@@ -190,7 +205,13 @@ export function buildModuleInterviewPacket(input: {
       .map((allocation) => `allocatedAdapter:${allocation.adapterId} | port:${allocation.portId}`),
     ...input.architecture.workflowTraces
       .filter((trace) => trace.moduleIds.includes(input.moduleId))
-      .map((trace) => `workflowTrace:${trace.useCaseId}`),
+      .flatMap((trace) => [
+        `workflowTrace:${trace.useCaseId}`,
+        ...(trace.nodeAllocations ?? [])
+          .filter((allocation) => allocation.primaryModuleId === input.moduleId)
+          .map((allocation) =>
+            `allocatedWorkflowNode:${allocation.workflowId}:${allocation.nodeId}:operation=${allocation.operationId ?? ''}:event=${allocation.eventId ?? ''}`),
+      ]),
   ]
   return buildInterviewPacket({
     packetId: input.packetId,
@@ -224,7 +245,10 @@ export function buildModuleInterviewPacket(input: {
         ...details.map((d) => `detail:${d}`),
         ...(input.dependencyContractIds ?? []).map((id) => `contract:${id}`),
       ],
-      glossary: [],
+      glossary: (input.architecture.moduleDefinitions ?? []).map((item) => ({
+        id: item.moduleId,
+        text: item.name,
+      })),
     },
   })
 }
@@ -246,6 +270,7 @@ export function moduleInterviewOpeningGuidance(packet: InterviewPacket): string 
   const uses = packetFactValues(packet, 'usesModule:')
   const usedBy = packetFactValues(packet, 'usedByModule:')
   const workflows = packetFactValues(packet, 'workflowTrace:')
+  const allocatedNodes = packetFactValues(packet, 'allocatedWorkflowNode:')
   const connections = [...uses.map((value) => `uses ${value}`), ...usedBy.map((value) => `is used by ${value}`)]
   const typeSuggestions: Record<string, string> = {
     domain: 'Suggest likely domain vocabulary and invariants from the responsibility, then ask the user to correct or confirm the inputs, outputs, ranges, and exceptional outcomes implied by connected modules.',
@@ -259,6 +284,7 @@ export function moduleInterviewOpeningGuidance(packet: InterviewPacket): string 
     `- Existing responsibility: ${responsibility}`,
     capabilityGroups.length ? `- Capability group: ${capabilityGroups.join(', ')}` : '',
     workflows.length ? `- Participates in workflow: ${workflows.join(', ')}` : '',
+    allocatedNodes.length ? `- Allocated application actions: ${allocatedNodes.join('; ')}` : '',
     connections.length ? `- Architecture connections: ${connections.join('; ')}` : '',
   ].filter(Boolean).join('\n')
 
@@ -270,6 +296,7 @@ ${context}
 - Ask a follow-up batch only when the reply exposes a material contradiction or a business decision that cannot be safely defaulted. Do not conduct a serial, field-by-field interview.
 - ${typeSuggestions[moduleType] ?? 'Suggest concrete defaults from the supplied architecture context and ask the user to correct or confirm them.'}
 - For every provided operation, establish its command/query/job behavior, concrete input and output fields, preconditions, postconditions, domain rejections, technical errors, side effects, idempotency, timeout, and cancellation behavior. Encode these in operationContracts and dataSchemas in the final response rather than leaving them only in prose.
+- Propose structured internal module activities and state transitions that refine only the allocated application actions. Include operation calls, events, material failures, retries, and recovery. Do not introduce new application scope or copy the application workflow as the module algorithm.
 - Avoid identifier-heavy or checklist-style wording. Keep the confirmation request to at most five concise decision bullets that can be answered together.\n`
 }
 
@@ -312,15 +339,23 @@ export function draftManifestFromResponse(
   }
 }
 
-export function evaluateModuleInterview(response: ModuleInterviewResponse): ModuleInterviewEvaluation {
+export function evaluateModuleInterview(
+  response: ModuleInterviewResponse,
+  lexicon?: SteLexicon,
+): ModuleInterviewEvaluation {
   const missingApplicableDetailIds = missingApplicableDetails(response.moduleType, response.answers)
   const unresolvedDomainQuestionIds = unresolvedDomainQuestions(response.answers)
   const manifest = draftManifestFromResponse(response)
+  const language = evaluateModuleInterviewSte(response, lexicon)
   const gate = evaluateModuleGate(manifest, {
     unresolvedDomainQuestions: unresolvedDomainQuestionIds,
     acceptanceCases: response.acceptanceCases,
     rules: response.rules,
-  })
+  }, lexicon)
+  const gateDiagnosticKeys = new Set(gate.diagnostics.map((item) =>
+    `${item.code}\u0000${item.fieldPath ?? ''}\u0000${item.message}`))
+  const interviewLanguageDiagnostics = language.diagnostics.filter((item) =>
+    !gateDiagnosticKeys.has(`${item.code}\u0000${item.fieldPath ?? ''}\u0000${item.message}`))
 
   const extras: CapDiagnostic[] = []
   for (const id of missingApplicableDetailIds) {
@@ -382,7 +417,11 @@ export function evaluateModuleInterview(response: ModuleInterviewResponse): Modu
     }
   }
 
-  const diagnostics = sortDiagnostics([...gate.diagnostics, ...extras])
+  const diagnostics = sortDiagnostics([
+    ...gate.diagnostics,
+    ...extras,
+    ...interviewLanguageDiagnostics,
+  ])
   return {
     gateId: 'CAP-GATE-003',
     passed: diagnostics.length === 0,
@@ -390,6 +429,7 @@ export function evaluateModuleInterview(response: ModuleInterviewResponse): Modu
     missingApplicableDetailIds,
     unresolvedDomainQuestionIds,
     manifest,
+    reviewDiagnostics: language.reviewDiagnostics,
   }
 }
 
@@ -407,6 +447,91 @@ export function parseModuleInterviewResponse(raw: unknown): {
     }
   }
   const r = raw as Record<string, unknown>
+  const nestedDiagnostics: CapDiagnostic[] = []
+  const objectItems = (
+    value: unknown,
+    fieldPath: string,
+  ): Record<string, unknown>[] => {
+    if (!Array.isArray(value)) {
+      if (value !== undefined) {
+        nestedDiagnostics.push(diagnostic(
+          'CAP-MOD-IMPORT-LIST',
+          'Replace the invalid value with a list of JSON objects.',
+          { fieldPath },
+        ))
+      }
+      return []
+    }
+    return value.flatMap((item, index) => {
+      if (item && typeof item === 'object' && !Array.isArray(item)) {
+        return [item as Record<string, unknown>]
+      }
+      nestedDiagnostics.push(diagnostic(
+        'CAP-MOD-IMPORT-ITEM',
+        'Remove the invalid list item or replace it with a JSON object.',
+        { fieldPath: `${fieldPath}.${index}` },
+      ))
+      return []
+    })
+  }
+  const stringItems = (value: unknown, fieldPath: string): string[] => {
+    if (!Array.isArray(value)) {
+      if (value !== undefined) {
+        nestedDiagnostics.push(diagnostic(
+          'CAP-MOD-IMPORT-LIST',
+          'Replace the invalid value with a list of text values.',
+          { fieldPath },
+        ))
+      }
+      return []
+    }
+    return value.flatMap((item, index) => {
+      if (typeof item === 'string') return [item]
+      nestedDiagnostics.push(diagnostic(
+        'CAP-MOD-IMPORT-TEXT',
+        'Replace the invalid list item with text.',
+        { fieldPath: `${fieldPath}.${index}` },
+      ))
+      return []
+    })
+  }
+  const textValue = (value: unknown, fieldPath: string): string => {
+    if (typeof value === 'string') return value
+    nestedDiagnostics.push(diagnostic(
+      'CAP-MOD-IMPORT-TEXT',
+      'Replace the invalid value with text.',
+      { fieldPath },
+    ))
+    return ''
+  }
+  const requiredText = (
+    value: unknown,
+    fieldPath: string,
+    fallback: string,
+  ): string => {
+    if (typeof value === 'string' && value.trim()) return value
+    nestedDiagnostics.push(diagnostic(
+      'CAP-MOD-IMPORT-TEXT',
+      'Replace the invalid value with nonempty text.',
+      { fieldPath },
+    ))
+    return fallback
+  }
+  const optionalText = (value: unknown, fieldPath: string): string | undefined => {
+    if (value === undefined || value === null || value === '') return undefined
+    return textValue(value, fieldPath)
+  }
+  const recordValue = (value: unknown, fieldPath: string): Record<string, unknown> => {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as Record<string, unknown>
+    }
+    nestedDiagnostics.push(diagnostic(
+      'CAP-MOD-IMPORT-OBJECT',
+      'Replace the invalid value with a JSON object.',
+      { fieldPath },
+    ))
+    return {}
+  }
   const moduleType = r.moduleType as ModuleType
   if (!moduleType || !(moduleType in MODULE_APPLICABLE_DETAILS)) {
     return {
@@ -424,50 +549,547 @@ export function parseModuleInterviewResponse(raw: unknown): {
       ],
     }
   }
+  const behaviorDraft = (() => {
+    if (r.behaviorDraft === undefined) return undefined
+    const behavior = recordValue(r.behaviorDraft, 'behaviorDraft')
+    const activityNodeKinds = new Set([
+      'initial',
+      'action',
+      'call-operation',
+      'decision',
+      'merge',
+      'fork',
+      'join',
+      'send-event',
+      'receive-event',
+      'final',
+    ])
+    const outcomes = new Set(['success', 'alternate', 'failure', 'recovery'])
+    const participantKinds = new Set(['actor', 'module', 'operation', 'external'])
+    const messageKinds = new Set(['synchronous', 'reply', 'event'])
+    const fragmentKinds = new Set(['alt', 'opt', 'loop'])
+    const activityDefinitions = objectItems(
+      behavior.activityDefinitions,
+      'behaviorDraft.activityDefinitions',
+    ).map((activity, activityIndex) => {
+      const activityPath = `behaviorDraft.activityDefinitions.${activityIndex}`
+      const graph = recordValue(activity.graph, `${activityPath}.graph`)
+      return {
+        id: requiredText(activity.id, `${activityPath}.id`, `activity-${activityIndex + 1}`),
+        name: requiredText(activity.name, `${activityPath}.name`, 'Define module activity'),
+        entryOperationId: optionalText(
+          activity.entryOperationId,
+          `${activityPath}.entryOperationId`,
+        ),
+        refinesWorkflowNodeIds: stringItems(
+          activity.refinesWorkflowNodeIds,
+          `${activityPath}.refinesWorkflowNodeIds`,
+        ),
+        graph: {
+          id: requiredText(graph.id, `${activityPath}.graph.id`, `activity-${activityIndex + 1}:graph`),
+          name: requiredText(graph.name, `${activityPath}.graph.name`, 'Define module activity'),
+          nodes: objectItems(graph.nodes, `${activityPath}.graph.nodes`).map((node, nodeIndex) => {
+            const nodePath = `${activityPath}.graph.nodes.${nodeIndex}`
+            const kind = typeof node.kind === 'string' && activityNodeKinds.has(node.kind)
+              ? node.kind
+              : 'action'
+            if (kind !== node.kind) {
+              nestedDiagnostics.push(diagnostic(
+                'CAP-MOD-IMPORT-ACTIVITY-KIND',
+                'Use a supported module activity node kind.',
+                { fieldPath: `${nodePath}.kind` },
+              ))
+            }
+            return {
+              id: requiredText(node.id, `${nodePath}.id`, `node-${nodeIndex + 1}`),
+              kind: kind as ActivityNodeKind,
+              label: requiredText(node.label, `${nodePath}.label`, 'Define module action'),
+              description: requiredText(
+                node.description,
+                `${nodePath}.description`,
+                'Define the internal module action.',
+              ),
+              refinesIds: stringItems(node.refinesIds, `${nodePath}.refinesIds`),
+              actorId: optionalText(node.actorId, `${nodePath}.actorId`),
+              operationId: optionalText(node.operationId, `${nodePath}.operationId`),
+              eventId: optionalText(node.eventId, `${nodePath}.eventId`),
+            }
+          }),
+          edges: objectItems(graph.edges, `${activityPath}.graph.edges`).map((edge, edgeIndex) => {
+            const edgePath = `${activityPath}.graph.edges.${edgeIndex}`
+            const outcome = typeof edge.outcome === 'string' && outcomes.has(edge.outcome)
+              ? edge.outcome
+              : undefined
+            if (edge.outcome !== undefined && !outcome) {
+              nestedDiagnostics.push(diagnostic(
+                'CAP-MOD-IMPORT-ACTIVITY-OUTCOME',
+                'Use success, alternate, failure, or recovery.',
+                { fieldPath: `${edgePath}.outcome` },
+              ))
+            }
+            const loop = edge.loop === undefined
+              ? undefined
+              : recordValue(edge.loop, `${edgePath}.loop`)
+            return {
+              id: requiredText(edge.id, `${edgePath}.id`, `edge-${edgeIndex + 1}`),
+              fromNodeId: requiredText(edge.fromNodeId, `${edgePath}.fromNodeId`, ''),
+              toNodeId: requiredText(edge.toNodeId, `${edgePath}.toNodeId`, ''),
+              guard: optionalText(edge.guard, `${edgePath}.guard`),
+              outcome: outcome as ActivityEdge['outcome'] | undefined,
+              loop: loop
+                ? {
+                  exitCondition: requiredText(
+                    loop.exitCondition,
+                    `${edgePath}.loop.exitCondition`,
+                    '',
+                  ),
+                  maximumIterations: typeof loop.maximumIterations === 'number'
+                    ? loop.maximumIterations
+                    : undefined,
+                }
+                : undefined,
+              traceIds: stringItems(edge.traceIds, `${edgePath}.traceIds`),
+            }
+          }),
+        },
+      }
+    })
+    const stateDefinitions = objectItems(
+      behavior.stateDefinitions,
+      'behaviorDraft.stateDefinitions',
+    ).map((state, index) => ({
+      id: requiredText(state.id, `behaviorDraft.stateDefinitions.${index}.id`, `state-${index + 1}`),
+      name: requiredText(state.name, `behaviorDraft.stateDefinitions.${index}.name`, 'Define state'),
+      parentStateId: optionalText(
+        state.parentStateId,
+        `behaviorDraft.stateDefinitions.${index}.parentStateId`,
+      ),
+      entryActionIds: stringItems(
+        state.entryActionIds,
+        `behaviorDraft.stateDefinitions.${index}.entryActionIds`,
+      ),
+      exitActionIds: stringItems(
+        state.exitActionIds,
+        `behaviorDraft.stateDefinitions.${index}.exitActionIds`,
+      ),
+    }))
+    const stateTransitions = objectItems(
+      behavior.stateTransitions,
+      'behaviorDraft.stateTransitions',
+    ).map((transition, index) => ({
+      id: requiredText(
+        transition.id,
+        `behaviorDraft.stateTransitions.${index}.id`,
+        `transition-${index + 1}`,
+      ),
+      fromStateId: requiredText(
+        transition.fromStateId,
+        `behaviorDraft.stateTransitions.${index}.fromStateId`,
+        '',
+      ),
+      toStateId: requiredText(
+        transition.toStateId,
+        `behaviorDraft.stateTransitions.${index}.toStateId`,
+        '',
+      ),
+      trigger: requiredText(
+        transition.trigger,
+        `behaviorDraft.stateTransitions.${index}.trigger`,
+        'Define trigger',
+      ),
+      guard: optionalText(
+        transition.guard,
+        `behaviorDraft.stateTransitions.${index}.guard`,
+      ),
+      effectActivityNodeIds: stringItems(
+        transition.effectActivityNodeIds,
+        `behaviorDraft.stateTransitions.${index}.effectActivityNodeIds`,
+      ),
+    }))
+    const interactionDefinitions = objectItems(
+      behavior.interactionDefinitions,
+      'behaviorDraft.interactionDefinitions',
+    ).map((interaction, interactionIndex) => {
+      const interactionPath = `behaviorDraft.interactionDefinitions.${interactionIndex}`
+      return {
+        id: requiredText(
+          interaction.id,
+          `${interactionPath}.id`,
+          `interaction-${interactionIndex + 1}`,
+        ),
+        name: requiredText(
+          interaction.name,
+          `${interactionPath}.name`,
+          'Define internal interaction',
+        ),
+        participants: objectItems(
+          interaction.participants,
+          `${interactionPath}.participants`,
+        ).map((participant, index) => {
+          const kind = typeof participant.kind === 'string' && participantKinds.has(participant.kind)
+            ? participant.kind
+            : 'module'
+          if (kind !== participant.kind) {
+            nestedDiagnostics.push(diagnostic(
+              'CAP-MOD-IMPORT-PARTICIPANT-KIND',
+              'Use actor, module, operation, or external.',
+              { fieldPath: `${interactionPath}.participants.${index}.kind` },
+            ))
+          }
+          return {
+            id: requiredText(
+              participant.id,
+              `${interactionPath}.participants.${index}.id`,
+              `participant-${index + 1}`,
+            ),
+            label: requiredText(
+              participant.label,
+              `${interactionPath}.participants.${index}.label`,
+              'Define participant',
+            ),
+            kind: kind as ModuleInteractionParticipant['kind'],
+          }
+        }),
+        messages: objectItems(interaction.messages, `${interactionPath}.messages`)
+          .map((message, index) => {
+            const kind = typeof message.kind === 'string' && messageKinds.has(message.kind)
+              ? message.kind
+              : 'synchronous'
+            if (kind !== message.kind) {
+              nestedDiagnostics.push(diagnostic(
+                'CAP-MOD-IMPORT-MESSAGE-KIND',
+                'Use synchronous, reply, or event.',
+                { fieldPath: `${interactionPath}.messages.${index}.kind` },
+              ))
+            }
+            return {
+              id: requiredText(
+                message.id,
+                `${interactionPath}.messages.${index}.id`,
+                `message-${index + 1}`,
+              ),
+              fromParticipantId: requiredText(
+                message.fromParticipantId,
+                `${interactionPath}.messages.${index}.fromParticipantId`,
+                '',
+              ),
+              toParticipantId: requiredText(
+                message.toParticipantId,
+                `${interactionPath}.messages.${index}.toParticipantId`,
+                '',
+              ),
+              label: requiredText(
+                message.label,
+                `${interactionPath}.messages.${index}.label`,
+                'Call module operation',
+              ),
+              kind: kind as ModuleInteractionMessage['kind'],
+              operationId: optionalText(
+                message.operationId,
+                `${interactionPath}.messages.${index}.operationId`,
+              ),
+              eventId: optionalText(
+                message.eventId,
+                `${interactionPath}.messages.${index}.eventId`,
+              ),
+              guard: optionalText(
+                message.guard,
+                `${interactionPath}.messages.${index}.guard`,
+              ),
+              refinesActivityNodeIds: stringItems(
+                message.refinesActivityNodeIds,
+                `${interactionPath}.messages.${index}.refinesActivityNodeIds`,
+              ),
+            }
+          }),
+        fragments: objectItems(interaction.fragments, `${interactionPath}.fragments`)
+          .map((fragment, index) => {
+            const kind = typeof fragment.kind === 'string' && fragmentKinds.has(fragment.kind)
+              ? fragment.kind
+              : 'alt'
+            if (kind !== fragment.kind) {
+              nestedDiagnostics.push(diagnostic(
+                'CAP-MOD-IMPORT-FRAGMENT-KIND',
+                'Use alt, opt, or loop.',
+                { fieldPath: `${interactionPath}.fragments.${index}.kind` },
+              ))
+            }
+            return {
+              id: requiredText(
+                fragment.id,
+                `${interactionPath}.fragments.${index}.id`,
+                `fragment-${index + 1}`,
+              ),
+              kind: kind as ModuleInteractionFragment['kind'],
+              label: requiredText(
+                fragment.label,
+                `${interactionPath}.fragments.${index}.label`,
+                'Alternate result',
+              ),
+              guard: optionalText(
+                fragment.guard,
+                `${interactionPath}.fragments.${index}.guard`,
+              ),
+              messageIds: stringItems(
+                fragment.messageIds,
+                `${interactionPath}.fragments.${index}.messageIds`,
+              ),
+            }
+          }),
+      }
+    })
+    return {
+      preconditions: stringItems(behavior.preconditions, 'behaviorDraft.preconditions'),
+      postconditions: stringItems(behavior.postconditions, 'behaviorDraft.postconditions'),
+      domainRejections: stringItems(behavior.domainRejections, 'behaviorDraft.domainRejections'),
+      technicalFailures: stringItems(behavior.technicalFailures, 'behaviorDraft.technicalFailures'),
+      sideEffects: stringItems(behavior.sideEffects, 'behaviorDraft.sideEffects'),
+      idempotency: requiredText(behavior.idempotency, 'behaviorDraft.idempotency', 'Not defined'),
+      cancellation: requiredText(behavior.cancellation, 'behaviorDraft.cancellation', 'Not defined'),
+      timeouts: requiredText(behavior.timeouts, 'behaviorDraft.timeouts', 'Not defined'),
+      concurrency: requiredText(behavior.concurrency, 'behaviorDraft.concurrency', 'Not defined'),
+      retry: requiredText(behavior.retry, 'behaviorDraft.retry', 'Not defined'),
+      recovery: requiredText(behavior.recovery, 'behaviorDraft.recovery', 'Not defined'),
+      emittedEvents: stringItems(behavior.emittedEvents, 'behaviorDraft.emittedEvents'),
+      consumedEvents: stringItems(behavior.consumedEvents, 'behaviorDraft.consumedEvents'),
+      stateDefinitions,
+      stateTransitions,
+      activityDefinitions,
+      interactionDefinitions,
+      states: [],
+      activities: [],
+      interactions: [],
+    } satisfies ModuleBehaviorSpecification
+  })()
   const response: ModuleInterviewResponse = {
     moduleId: r.moduleId,
     moduleType,
-    name: typeof r.name === 'string' ? r.name : r.moduleId,
-    moduleVersion: typeof r.moduleVersion === 'string' ? r.moduleVersion : '1.0.0',
-    responsibility: typeof r.responsibility === 'string' ? r.responsibility : '',
-    ownedConcerns: Array.isArray(r.ownedConcerns) ? (r.ownedConcerns as string[]) : [],
-    excludedConcerns: Array.isArray(r.excludedConcerns) ? (r.excludedConcerns as string[]) : [],
-    providedOperations: Array.isArray(r.providedOperations)
-      ? (r.providedOperations as ModuleManifest['providedOperations'])
-      : [],
-    requiredOperations: Array.isArray(r.requiredOperations)
-      ? (r.requiredOperations as ModuleManifest['requiredOperations'])
-      : [],
-    verificationSuiteIds: Array.isArray(r.verificationSuiteIds)
-      ? (r.verificationSuiteIds as string[])
-      : [],
-    runtimeAllocation:
-      r.runtimeAllocation === 'external-adapter' ? 'external-adapter' : 'local-embedded',
-    events: Array.isArray(r.events) ? (r.events as string[]) : [],
-    ownedPaths: Array.isArray(r.ownedPaths) ? (r.ownedPaths as string[]) : undefined,
-    configurationSchemaRef:
-      r.configurationSchemaRef === null || typeof r.configurationSchemaRef === 'string'
-        ? (r.configurationSchemaRef as string | null)
-        : null,
-    operationContracts: Array.isArray(r.operationContracts)
-      ? (r.operationContracts as OperationContract[])
-      : [],
-    dataSchemas: Array.isArray(r.dataSchemas) ? (r.dataSchemas as ModuleDataSchema[]) : [],
-    answers: Array.isArray(r.answers) ? (r.answers as ModuleInterviewAnswer[]) : [],
-    acceptanceCases: Array.isArray(r.acceptanceCases)
-      ? (r.acceptanceCases as ModuleInterviewResponse['acceptanceCases'])
-      : undefined,
-    rules: Array.isArray(r.rules) ? (r.rules as ModuleInterviewResponse['rules']) : undefined,
+    name: requiredText(r.name, 'name', r.moduleId),
+    moduleVersion: requiredText(r.moduleVersion, 'moduleVersion', '1.0.0'),
+    responsibility: requiredText(r.responsibility, 'responsibility', ''),
+    ownedConcerns: stringItems(r.ownedConcerns, 'ownedConcerns'),
+    excludedConcerns: stringItems(r.excludedConcerns, 'excludedConcerns'),
+    providedOperations: objectItems(
+      r.providedOperations,
+      'providedOperations',
+    ).map((operation, index) => ({
+      operationId: textValue(operation.operationId, `providedOperations.${index}.operationId`),
+      contractVersion: textValue(
+        operation.contractVersion,
+        `providedOperations.${index}.contractVersion`,
+      ),
+    })),
+    requiredOperations: objectItems(
+      r.requiredOperations,
+      'requiredOperations',
+    ).map((operation, index) => ({
+      operationId: textValue(operation.operationId, `requiredOperations.${index}.operationId`),
+      acceptedContractRange: textValue(
+        operation.acceptedContractRange,
+        `requiredOperations.${index}.acceptedContractRange`,
+      ),
+      reason: textValue(operation.reason, `requiredOperations.${index}.reason`),
+    })),
+    verificationSuiteIds: stringItems(r.verificationSuiteIds, 'verificationSuiteIds'),
+    runtimeAllocation: (() => {
+      if (r.runtimeAllocation === 'external-adapter' || r.runtimeAllocation === 'local-embedded') {
+        return r.runtimeAllocation
+      }
+      nestedDiagnostics.push(diagnostic(
+        'CAP-MOD-IMPORT-RUNTIME',
+        'Use local-embedded or external-adapter.',
+        { fieldPath: 'runtimeAllocation' },
+      ))
+      return 'local-embedded'
+    })(),
+    events: stringItems(r.events, 'events'),
+    ownedPaths: r.ownedPaths === undefined ? undefined : stringItems(r.ownedPaths, 'ownedPaths'),
+    configurationSchemaRef: (() => {
+      if (
+        r.configurationSchemaRef === undefined
+        || r.configurationSchemaRef === null
+        || typeof r.configurationSchemaRef === 'string'
+      ) {
+        return (r.configurationSchemaRef ?? null) as string | null
+      }
+      nestedDiagnostics.push(diagnostic(
+        'CAP-MOD-IMPORT-CONFIGURATION',
+        'Use a text schema reference or null.',
+        { fieldPath: 'configurationSchemaRef' },
+      ))
+      return null
+    })(),
+    operationContracts: objectItems(
+      r.operationContracts,
+      'operationContracts',
+    ).map((contract, index) => {
+      const behavior = contract.behavior === 'command'
+        || contract.behavior === 'query'
+        || contract.behavior === 'job'
+        ? contract.behavior
+        : 'command'
+      const idempotency = contract.idempotency === 'idempotent'
+        || contract.idempotency === 'non-idempotent'
+        || contract.idempotency === 'unknown'
+        ? contract.idempotency
+        : 'unknown'
+      const timeoutClass = contract.timeoutClass === 'short'
+        || contract.timeoutClass === 'medium'
+        || contract.timeoutClass === 'long'
+        ? contract.timeoutClass
+        : 'medium'
+      if (
+        behavior !== contract.behavior
+        || idempotency !== contract.idempotency
+        || timeoutClass !== contract.timeoutClass
+        || typeof contract.cancellable !== 'boolean'
+        || (contract.schemaVersion !== undefined && contract.schemaVersion !== '1.0')
+      ) {
+        nestedDiagnostics.push(diagnostic(
+          'CAP-MOD-IMPORT-CONTRACT',
+          'Use valid operation contract values.',
+          { fieldPath: `operationContracts.${index}` },
+        ))
+      }
+      return {
+        schemaVersion: '1.0',
+        operationId: textValue(contract.operationId, `operationContracts.${index}.operationId`),
+        version: textValue(contract.version, `operationContracts.${index}.version`),
+        behavior,
+        inputSchemaRef: textValue(
+          contract.inputSchemaRef,
+          `operationContracts.${index}.inputSchemaRef`,
+        ),
+        outputSchemaRef: textValue(
+          contract.outputSchemaRef,
+          `operationContracts.${index}.outputSchemaRef`,
+        ),
+        preconditions: stringItems(
+          contract.preconditions,
+          `operationContracts.${index}.preconditions`,
+        ),
+        postconditions: stringItems(
+          contract.postconditions,
+          `operationContracts.${index}.postconditions`,
+        ),
+        domainRejections: stringItems(
+          contract.domainRejections,
+          `operationContracts.${index}.domainRejections`,
+        ),
+        technicalErrors: stringItems(
+          contract.technicalErrors,
+          `operationContracts.${index}.technicalErrors`,
+        ),
+        sideEffects: stringItems(
+          contract.sideEffects,
+          `operationContracts.${index}.sideEffects`,
+        ),
+        idempotency,
+        timeoutClass,
+        cancellable: contract.cancellable === true,
+        artifactTypes: stringItems(
+          contract.artifactTypes,
+          `operationContracts.${index}.artifactTypes`,
+        ),
+        provenanceFields: stringItems(
+          contract.provenanceFields,
+          `operationContracts.${index}.provenanceFields`,
+        ),
+      } satisfies OperationContract
+    }),
+    dataSchemas: objectItems(r.dataSchemas, 'dataSchemas').map((schema, schemaIndex) => ({
+      schemaId: requiredText(
+        schema.schemaId,
+        `dataSchemas.${schemaIndex}.schemaId`,
+        `schema-${schemaIndex + 1}`,
+      ),
+      description: requiredText(
+        schema.description,
+        `dataSchemas.${schemaIndex}.description`,
+        '',
+      ),
+      fields: objectItems(schema.fields, `dataSchemas.${schemaIndex}.fields`).map((field, fieldIndex) => {
+        if (typeof field.required !== 'boolean') {
+          nestedDiagnostics.push(diagnostic(
+            'CAP-MOD-IMPORT-FIELD',
+            'Use true or false for the required value.',
+            { fieldPath: `dataSchemas.${schemaIndex}.fields.${fieldIndex}.required` },
+          ))
+        }
+        return {
+          name: requiredText(
+            field.name,
+            `dataSchemas.${schemaIndex}.fields.${fieldIndex}.name`,
+            '',
+          ),
+          type: requiredText(
+            field.type,
+            `dataSchemas.${schemaIndex}.fields.${fieldIndex}.type`,
+            '',
+          ),
+          required: field.required === true,
+          description: requiredText(
+            field.description,
+            `dataSchemas.${schemaIndex}.fields.${fieldIndex}.description`,
+            '',
+          ),
+          constraints: stringItems(
+            field.constraints,
+            `dataSchemas.${schemaIndex}.fields.${fieldIndex}.constraints`,
+          ),
+        }
+      }),
+    })),
+    answers: objectItems(r.answers, 'answers').map((answer, index) => {
+      const status = answer.status === 'confirmed'
+        || answer.status === 'proposed'
+        || answer.status === 'unresolved'
+        ? answer.status
+        : 'unresolved'
+      if (
+        typeof answer.id !== 'string'
+        || typeof answer.text !== 'string'
+        || status !== answer.status
+      ) {
+        nestedDiagnostics.push(diagnostic(
+          'CAP-MOD-IMPORT-ANSWER',
+          'Each answer requires an ID, text, and valid status.',
+          { fieldPath: `answers.${index}` },
+        ))
+      }
+      return {
+        id: typeof answer.id === 'string' ? answer.id : `answer-${index + 1}`,
+        text: typeof answer.text === 'string' ? answer.text : '',
+        status,
+      }
+    }),
+    acceptanceCases: objectItems(r.acceptanceCases, 'acceptanceCases').map((item, index) => ({
+      id: requiredText(item.id, `acceptanceCases.${index}.id`, `acceptance-${index + 1}`),
+      description: requiredText(item.description, `acceptanceCases.${index}.description`, ''),
+      expectedOutcome: requiredText(
+        item.expectedOutcome,
+        `acceptanceCases.${index}.expectedOutcome`,
+        '',
+      ),
+    })),
+    rules: objectItems(r.rules, 'rules').map((item, index) => ({
+      id: requiredText(item.id, `rules.${index}.id`, `rule-${index + 1}`),
+      text: requiredText(item.text, `rules.${index}.text`, ''),
+    })),
+    behaviorDraft,
   }
-  return { response, diagnostics: [] }
+  return { response, diagnostics: sortDiagnostics(nestedDiagnostics) }
 }
 
-export function importModuleInterviewResponse(raw: unknown): ModuleImportResult {
+export function importModuleInterviewResponse(
+  raw: unknown,
+  lexicon?: SteLexicon,
+): ModuleImportResult {
   const parsed = parseModuleInterviewResponse(raw)
   if (!parsed.response) {
     return { ok: false, diagnostics: parsed.diagnostics }
   }
-  const evaluation = evaluateModuleInterview(parsed.response)
+  const evaluation = evaluateModuleInterview(parsed.response, lexicon)
   const schemaDiagnostics = validateContractRecord('CAP-CONTRACT-003', evaluation.manifest!).map((d) =>
     diagnostic(d.code, d.message, { fieldPath: d.fieldPath, relatedIds: d.relatedIds }),
   )
@@ -486,14 +1108,16 @@ export function importModuleInterviewResponse(raw: unknown): ModuleImportResult 
     ...(evaluation.passed ? operationContractDiagnostics : []),
   ])
   const schemaFailed = evaluation.passed && (schemaDiagnostics.length > 0 || operationContractDiagnostics.length > 0)
+  const importFailed = parsed.diagnostics.length > 0
   return {
-    ok: evaluation.passed && !schemaFailed,
+    ok: evaluation.passed && !schemaFailed && !importFailed,
     response: parsed.response,
     manifest: evaluation.manifest,
-    evaluation: schemaFailed
+    evaluation: schemaFailed || importFailed
       ? { ...evaluation, passed: false, diagnostics }
       : evaluation,
     diagnostics,
+    reviewDiagnostics: evaluation.reviewDiagnostics,
   }
 }
 
@@ -504,7 +1128,7 @@ export function approveModuleIfReady(
 ):
   | { ok: true; approved: ModuleManifest; evaluation: ModuleInterviewEvaluation }
   | { ok: false; evaluation: ModuleInterviewEvaluation } {
-  const evaluation = evaluateModuleInterview(response)
+  const evaluation = evaluateModuleInterview(response, workspace.getSteLexicon(projectId))
   if (!evaluation.passed || !evaluation.manifest) return { ok: false, evaluation }
   const schemaDiagnostics = [
     ...validateContractRecord('CAP-CONTRACT-003', evaluation.manifest),

@@ -3,7 +3,7 @@
  * Surfaces only the command name; every behavior field is pre-filled.
  */
 
-import { useState } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import type { CliInboundBinding } from '@engineering-ui-kit/core'
 import type { EuikBridge } from '../../../bridge'
 import { InboundBindingShell } from './InboundBindingShell'
@@ -19,19 +19,24 @@ type Props = {
 export function CliBindingEditor({ bridge, projectId, operations, initial, onSaved }: Props) {
   const [binding, setBinding] = useState<CliInboundBinding>(initial)
 
+  function changeCommand(event: ChangeEvent<HTMLInputElement>) {
+    setBinding((prev) => ({ ...prev, command: event.target.value }))
+  }
+
   return (
     <InboundBindingShell bridge={bridge} projectId={projectId} binding={binding} setBinding={setBinding} operations={operations} onSaved={onSaved}>
-      <label className="cap-connect-field">
-        Command
+      <div className="cap-connect-field">
+        <label htmlFor="cap-cli-command">Command</label>
         <input
+          id="cap-cli-command"
           aria-label="Command"
           className="mono"
           value={binding.command}
           placeholder="orders approve"
-          onChange={(e) => setBinding((prev) => ({ ...prev, command: e.target.value }))}
+          onChange={changeCommand}
         />
         <span>The command a person or script runs to trigger this capability.</span>
-      </label>
+      </div>
     </InboundBindingShell>
   )
 }

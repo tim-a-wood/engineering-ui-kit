@@ -11,6 +11,7 @@ import {
   CapabilityRunStore,
   CapabilityWorkspace,
   buildCapabilityHandoffMarkdown,
+  buildCapabilityHandoffPrompt,
   buildModuleImplementationBrief,
   buildImplementationWaveHandoffMarkdown,
   buildImplementationPacket,
@@ -25,10 +26,22 @@ import {
   calculateFreshness,
   canonicalHash,
   compileFrontendBrief,
+  compileScenarioDefinitions,
+  createModuleDesignDraft,
+  createModuleDesignSession,
+  createScenarioRun,
+  evaluateModuleDesign,
+  finalizeScenarioRun,
+  projectModuleDiagrams,
+  recordScenarioStep,
   runModuleVerification,
   runCommand,
   selectVerificationSuites,
   evaluateArchitectureGate,
+  evaluateArchitectureApplicationLink,
+  evaluateArchitectureProposal,
+  evaluateFrontendBindingSte,
+  evaluateInboundBindingSte,
   evaluateModuleInterview,
   evaluateModuleGate,
   evaluateProductGate,
@@ -44,6 +57,7 @@ import {
   isRealPathWithinProjectRoot,
   successResult,
   technicalFailureResult,
+  withStePrompt,
   sanitizeBoundaryError,
   transitionJob,
   discoverRepository,
@@ -52,6 +66,7 @@ import {
   proposeArchitectureModuleBatch,
   planImplementationWaves,
   type ApplicationSpecification,
+  type ArtifactReference,
   type ArchitectureSpecification,
   type CapabilityHandoffMarkdownInput,
   type CapabilityRunScope,
@@ -64,11 +79,16 @@ import {
   type JobRecord,
   type InterviewPacket,
   type ModuleManifest,
+  type ModuleDesignSession,
+  type ModuleDesignSpecification,
   type ModuleInterviewResponse,
   type ImplementationWavePlan,
   type ImplementationPacket,
   type ModuleImplementationBrief,
   type ResultEnvelope,
+  type ScenarioOutcome,
+  type ScenarioRunRecord,
+  type ScenarioStepEvidence,
 } from '@engineering-ui-kit/core'
 import type { Workspace } from '@engineering-ui-kit/core'
 import { createMatlabAdapter } from './matlabAdapter.js'
@@ -77,11 +97,14 @@ import { ReferenceArchitectureOrchestrator } from './referenceArchitectureOrches
 import { buildRepositoryEvidence } from './repositoryEvidence.js'
 import { projectActiveBindingRecords, projectActiveDeployables } from './deployableProjection.js'
 import { interactiveInterviewPrompt } from './interviewPrompt.js'
+import { interviewResponseStarter } from './interviewResponseStarter.js'
 
 export { interactiveInterviewPrompt } from './interviewPrompt.js'
 
 const CAP_CHANNELS = {
   ensureInitialized: 'capabilities:ensure-initialized',
+  getSteLexicon: 'capabilities:get-ste-lexicon',
+  saveSteLexicon: 'capabilities:save-ste-lexicon',
   getApplication: 'capabilities:get-application',
   saveApplicationDraft: 'capabilities:save-application-draft',
   approveApplication: 'capabilities:approve-application',
@@ -97,6 +120,18 @@ const CAP_CHANNELS = {
   planImplementationWaves: 'capabilities:plan-implementation-waves',
   compileFrontendBrief: 'capabilities:compile-frontend-brief',
   listModules: 'capabilities:list-modules',
+  listModuleDesigns: 'capabilities:list-module-designs',
+  createModuleDesignDraft: 'capabilities:create-module-design-draft',
+  saveModuleDesignDraft: 'capabilities:save-module-design-draft',
+  approveModuleDesign: 'capabilities:approve-module-design',
+  saveModuleDesignSession: 'capabilities:save-module-design-session',
+  listScenarioRuns: 'capabilities:list-scenario-runs',
+  createScenarioRun: 'capabilities:create-scenario-run',
+  runScenarioCommand: 'capabilities:run-scenario-command',
+  recordScenarioStep: 'capabilities:record-scenario-step',
+  finalizeScenarioRun: 'capabilities:finalize-scenario-run',
+  saveScenarioEvidence: 'capabilities:save-scenario-evidence',
+  getScenarioEvidence: 'capabilities:get-scenario-evidence',
   listBindings: 'capabilities:list-bindings',
   evaluateModuleGate: 'capabilities:evaluate-module-gate',
   buildInterviewPacket: 'capabilities:build-interview-packet',
@@ -198,66 +233,6 @@ function implementationHash(repoRoot: string, ownedPaths: readonly string[]): st
   return canonicalHash(entries)
 }
 
-function factValue(packet: InterviewPacket, prefix: string): string | undefined {
-  return packet.inputContext.facts.find((fact) => fact.startsWith(prefix))?.slice(prefix.length)
-}
-
-/** Exact importer-facing starter, embedded in the one-file interview handoff. */
-function interviewResponseStarter(packet: InterviewPacket): unknown {
-  if (packet.outputSchemaRef === 'CAP-CONTRACT-002') {
-    const applicationId = packet.inputContext.recordIds[0] ?? 'app.current'
-    return {
-      architecture: {
-        schemaVersion: '1.0', projectId: packet.projectId, id: 'arch.proposed', revision: '1', status: 'proposed',
-        applicationSpecId: applicationId,
-        applicationSpecRevision: packet.inputContext.revisions[0] ?? '1',
-        applicationSpecHash: packet.inputContext.hashes[0] ?? 'pending',
-        capabilityProjections: [{ id: 'capability.example', name: 'Replace with a capability', moduleIds: ['mod.example'] }],
-        moduleIds: ['mod.example'],
-        moduleDefinitions: [{
-          moduleId: 'mod.example', name: 'Replace with a clear module name', moduleType: 'domain',
-          responsibility: 'Replace with the single responsibility owned by this module',
-        }],
-        dependencyEdges: [],
-        operationAllocations: [], adapterAllocations: [],
-        workflowTraces: [{ useCaseId: 'replace-with-use-case-id', moduleIds: ['mod.example'] }],
-        proposals: [], unresolvedQuestions: [],
-        gateResult: { gateId: 'CAP-GATE-002', passed: false, diagnostics: [] }, contentHash: 'pending',
-      },
-      moduleNeedTraces: [{ moduleId: 'mod.example', needIds: ['replace-with-use-case-id'] }],
-      moduleJustifications: [{ moduleId: 'mod.example', justification: 'distinct-rules' }],
-    }
-  }
-  if (packet.outputSchemaRef === 'CAP-CONTRACT-003') {
-    const moduleId = packet.inputContext.recordIds[1] ?? 'mod.example'
-    const moduleType = factValue(packet, 'moduleType:') ?? 'domain'
-    const moduleVersion = factValue(packet, 'moduleVersion:') ?? '1.0.0'
-    return {
-      moduleId, moduleType, name: 'Replace with module name', moduleVersion,
-      responsibility: 'Replace with one clear responsibility', ownedConcerns: [], excludedConcerns: [],
-      providedOperations: [], requiredOperations: [], verificationSuiteIds: [], runtimeAllocation: 'local-embedded',
-      events: [], ownedPaths: [`capabilities/modules/${moduleId}/`], configurationSchemaRef: null,
-      operationContracts: [], dataSchemas: [],
-      answers: packet.inputContext.facts.filter((fact) => fact.startsWith('detail:')).map((fact) => ({
-        id: fact.slice('detail:'.length), text: 'Replace with a concrete answer', status: 'proposed',
-      })),
-      acceptanceCases: [{ id: 'ac-1', description: 'Replace with an acceptance case', expectedOutcome: 'Replace with the expected outcome' }],
-      rules: [],
-    }
-  }
-  return {
-    schemaVersion: '1.0', projectId: packet.projectId, id: 'app.proposed', revision: '1', status: 'proposed',
-    purpose: 'Replace with the application purpose', outcomes: ['Replace with a measurable outcome'],
-    actors: [{ id: 'actor-1', text: 'Replace with an actor' }],
-    goals: [{ id: 'goal-1', text: 'Replace with an actor goal' }],
-    useCases: [{ id: 'use-case-1', text: 'Replace with a complete use case' }], scenarios: [],
-    information: [], rules: [], externalSystems: [], constraints: [],
-    scope: { inScope: ['Replace with an in-scope item'], outOfScope: [] },
-    acceptanceCases: [{ id: 'ac-1', description: 'Replace with an acceptance case', expectedOutcome: 'Replace with the expected outcome' }],
-    sources: [], unresolvedQuestions: [], contentHash: 'pending',
-  }
-}
-
 function exportCapabilityPacketFiles(input: {
   caps: CapabilityWorkspace
   runs: CapabilityRunStore
@@ -270,12 +245,27 @@ function exportCapabilityPacketFiles(input: {
   input.runs.createRun(input.run)
   const handoffDir = path.join(input.caps.root(input.run.projectId), 'runs', input.run.runId, 'handoff')
   fs.mkdirSync(handoffDir, { recursive: true })
+  const projectLexicon = input.caps.getSteLexicon(input.run.projectId)
+  const packetTerms = 'inputContext' in input.packet
+    ? input.packet.inputContext.glossary.map((item) => item.text)
+    : []
+  const steLexicon = projectLexicon || packetTerms.length
+    ? {
+        ...projectLexicon,
+        technicalTerms: [
+          ...(projectLexicon?.technicalTerms ?? []),
+          ...packetTerms,
+        ],
+      }
+    : undefined
+  const recommendedPrompt = buildCapabilityHandoffPrompt(input.recommendedPrompt, steLexicon)
   const content = buildCapabilityHandoffMarkdown({
     kind: input.run.kind,
     packet: input.packet,
-    recommendedPrompt: input.recommendedPrompt,
+    recommendedPrompt,
     responseTemplate: input.responseTemplate,
     supportingRecord: input.supportingRecord,
+    steLexicon,
   })
   const filePath = path.join(handoffDir, `capability-${input.run.kind}-handoff.md`)
   fs.writeFileSync(filePath, content)
@@ -300,7 +290,7 @@ function exportCapabilityPacketFiles(input: {
   return {
     runId: input.run.runId,
     packetId: input.packet.packetId,
-    recommendedPrompt: input.recommendedPrompt,
+    recommendedPrompt,
     files,
     uploadFiles: files.map((file) => file.path),
   }
@@ -309,6 +299,14 @@ function exportCapabilityPacketFiles(input: {
 function requireString(value: unknown, name: string): string {
   if (typeof value !== 'string' || !value.trim()) throw new Error(`invalid ${name}`)
   return value
+}
+
+function nextRecordRevision(revision: string): string {
+  const semantic = /^(\d+)\.(\d+)\.(\d+)$/.exec(revision)
+  if (semantic) return `${semantic[1]}.${semantic[2]}.${Number(semantic[3]) + 1}`
+  const numeric = /^(\d+)$/.exec(revision)
+  if (numeric) return String(Number(numeric[1]) + 1)
+  return `${revision}-next`
 }
 
 function approvedContractContext(
@@ -323,6 +321,56 @@ function approvedContractContext(
     availableOperationContracts: interviews.flatMap((response) => response.operationContracts ?? []),
     availableDataSchemas: interviews.flatMap((response) => response.dataSchemas ?? []),
   }
+}
+
+function refreshModuleDesign(
+  caps: CapabilityWorkspace,
+  projectId: string,
+  draft: ModuleDesignSpecification,
+): { design: ModuleDesignSpecification; diagnostics: ReturnType<typeof evaluateModuleDesign>['diagnostics'] } {
+  const application = caps.getApprovedApplication(projectId)
+  const architecture = caps.getApprovedArchitecture(projectId)
+  if (!application || !architecture) {
+    throw new Error('Approve the application and architecture before editing a module design.')
+  }
+  if (!architecture.moduleIds.includes(draft.module.moduleId)) {
+    throw new Error('Module design target is not allocated by the approved architecture.')
+  }
+  const contracts = approvedContractContext(caps, projectId, architecture).availableOperationContracts
+  const projected: ModuleDesignSpecification = {
+    ...draft,
+    projectId,
+    architecture: {
+      id: architecture.id,
+      revision: architecture.revision,
+      contentHash: architecture.contentHash,
+    },
+    status: 'draft',
+    approval: undefined,
+    diagrams: [],
+    gates: [],
+    contentHash: '',
+  }
+  projected.diagrams = projectModuleDiagrams({ application, architecture, design: projected })
+  const evaluation = evaluateModuleDesign(
+    projected,
+    contracts,
+    caps.getSteLexicon(projectId),
+    { application, architecture },
+  )
+  projected.gates = [{
+    gateId: 'CAP-GATE-MODULE-DESIGN',
+    passed: evaluation.passed,
+    diagnostics: evaluation.diagnostics.map((item, index) => ({
+      id: `${item.code}:${index + 1}`,
+      code: item.code,
+      message: item.message,
+      relatedIds: item.relatedIds,
+    })),
+  }]
+  projected.status = evaluation.passed ? 'readyForReview' : 'needsInput'
+  projected.contentHash = canonicalHash({ ...projected, contentHash: undefined })
+  return { design: projected, diagnostics: evaluation.diagnostics }
 }
 
 function secretsDir(dataDir: string): string {
@@ -376,6 +424,27 @@ export function registerCapabilityIpcHandlers(
     return caps.ensureInitialized(projectId)
   })
 
+  ipcMain.handle(CAP_CHANNELS.getSteLexicon, (_e, projectId: string) => {
+    requireString(projectId, 'projectId')
+    return caps.getSteLexicon(projectId)
+  })
+
+  ipcMain.handle(CAP_CHANNELS.saveSteLexicon, (
+    _e,
+    projectId: string,
+    lexicon: {
+      generalWords?: string[]
+      technicalTerms?: string[]
+      prohibitedAliases?: Record<string, string>
+    },
+    source: string,
+    reviewedAt?: string,
+  ) => {
+    requireString(projectId, 'projectId')
+    requireString(source, 'source')
+    return caps.saveSteLexicon(projectId, lexicon, source, reviewedAt)
+  })
+
   ipcMain.handle(CAP_CHANNELS.getApplication, (_e, projectId: string) => {
     requireString(projectId, 'projectId')
     return {
@@ -392,12 +461,14 @@ export function registerCapabilityIpcHandlers(
 
   ipcMain.handle(CAP_CHANNELS.approveApplication, (_e, projectId: string, draft: ApplicationSpecification) => {
     requireString(projectId, 'projectId')
-    const gate = evaluateProductGate(draft)
+    const gate = evaluateProductGate(draft, caps.getSteLexicon(projectId))
     if (!gate.passed) return { ok: false as const, gate }
     return { ok: true as const, approved: caps.approveApplication(projectId, draft), gate }
   })
 
-  ipcMain.handle(CAP_CHANNELS.evaluateProductGate, (_e, spec: ApplicationSpecification) => evaluateProductGate(spec))
+  ipcMain.handle(CAP_CHANNELS.evaluateProductGate, (_e, spec: ApplicationSpecification) =>
+    evaluateProductGate(spec, caps.getSteLexicon(spec.projectId)),
+  )
 
   ipcMain.handle(CAP_CHANNELS.getArchitecture, (_e, projectId: string) => {
     requireString(projectId, 'projectId')
@@ -415,13 +486,25 @@ export function registerCapabilityIpcHandlers(
 
   ipcMain.handle(CAP_CHANNELS.approveArchitecture, (_e, projectId: string, draft: ArchitectureSpecification) => {
     requireString(projectId, 'projectId')
-    const gate = evaluateArchitectureGate(draft)
+    const application = caps.getApprovedApplication(projectId)
+    const steLexicon = caps.getSteLexicon(projectId)
+    const gate = application
+      ? evaluateArchitectureProposal(application, {
+          architecture: draft,
+          moduleNeedTraces: draft.moduleIds.map((moduleId) => ({
+            moduleId,
+            needIds: draft.workflowTraces
+              .filter((trace) => trace.moduleIds.includes(moduleId))
+              .map((trace) => trace.useCaseId),
+          })),
+        }, steLexicon)
+      : evaluateArchitectureGate(draft, [], undefined, steLexicon)
     if (!gate.passed) return { ok: false as const, gate }
     return { ok: true as const, approved: caps.approveArchitecture(projectId, draft), gate }
   })
 
   ipcMain.handle(CAP_CHANNELS.evaluateArchitectureGate, (_e, arch: ArchitectureSpecification) =>
-    evaluateArchitectureGate(arch),
+    evaluateArchitectureGate(arch, [], undefined, caps.getSteLexicon(arch.projectId)),
   )
 
   ipcMain.handle(CAP_CHANNELS.saveModuleDraft, (
@@ -443,7 +526,10 @@ export function registerCapabilityIpcHandlers(
   ) => {
     requireString(projectId, 'projectId')
     const detailedResponse = interviewResponse ?? caps.getModuleInterviewDraft(projectId, draft.moduleId)
-    const gate = detailedResponse ? evaluateModuleInterview(detailedResponse) : evaluateModuleGate(draft)
+    const steLexicon = caps.getSteLexicon(projectId)
+    const gate = detailedResponse
+      ? evaluateModuleInterview(detailedResponse, steLexicon)
+      : evaluateModuleGate(draft, undefined, steLexicon)
     if (!gate.passed) return { ok: false as const, gate }
     return { ok: true as const, approved: caps.approveModule(projectId, draft, interviewResponse), gate }
   })
@@ -484,7 +570,7 @@ export function registerCapabilityIpcHandlers(
       if (approved) return { moduleId, status: 'already-approved' as const, ok: true as const, approved }
       const draft = caps.getModuleDraft(projectId, moduleId)
       if (!draft) return { moduleId, status: 'missing' as const, ok: false as const }
-      const gate = evaluateModuleGate(draft)
+      const gate = evaluateModuleGate(draft, undefined, caps.getSteLexicon(projectId))
       if (!gate.passed) return { moduleId, status: 'blocked' as const, ok: false as const, gate }
       return {
         moduleId,
@@ -518,6 +604,10 @@ export function registerCapabilityIpcHandlers(
     const modules = caps.listModules(projectId, architecture.moduleIds)
       .map((record) => record.approved)
       .filter((manifest): manifest is ModuleManifest => Boolean(manifest))
+    const moduleDesigns = caps.listModuleDesigns(projectId)
+      .map((record) => record.approved)
+      .filter((design): design is ModuleDesignSpecification =>
+        Boolean(design) && design!.architecture.contentHash === architecture.contentHash)
     const inbound = projectActiveBindingRecords(
       caps.listInboundBindings(projectId),
       caps.getApprovedFoundation(projectId),
@@ -534,8 +624,10 @@ export function registerCapabilityIpcHandlers(
       application: caps.getApprovedApplication(projectId),
       architecture,
       modules,
+      moduleDesigns,
       bindings: [...inbound, ...legacy],
       targetModuleIds: input.targetModuleIds,
+      steLexicon: caps.getSteLexicon(projectId),
     })
   })
 
@@ -547,6 +639,311 @@ export function registerCapabilityIpcHandlers(
       ...record,
       freshness: runs.getFreshness(projectId, record.moduleId),
     }))
+  })
+
+  ipcMain.handle(CAP_CHANNELS.listModuleDesigns, (_e, projectId: string) => {
+    requireString(projectId, 'projectId')
+    caps.ensureInitialized(projectId)
+    return caps.listModuleDesigns(projectId)
+  })
+
+  ipcMain.handle(CAP_CHANNELS.createModuleDesignDraft, (
+    _e,
+    input: { projectId: string; moduleId: string },
+  ) => {
+    const projectId = requireString(input.projectId, 'projectId')
+    const moduleId = requireString(input.moduleId, 'moduleId')
+    const application = caps.getApprovedApplication(projectId)
+    const architecture = caps.getApprovedArchitecture(projectId)
+    const manifest = caps.getApprovedModule(projectId, moduleId) ?? caps.getModuleDraft(projectId, moduleId)
+    if (!application || !architecture) {
+      throw new Error('Approve the application and architecture before starting module design.')
+    }
+    if (!manifest) throw new Error('Create the module manifest before starting module design.')
+    const contracts = approvedContractContext(caps, projectId, architecture).availableOperationContracts
+    const approvedInterview = caps.getApprovedModuleInterview(projectId, moduleId)
+    const previous = caps.getApprovedModuleDesign(projectId, moduleId)
+    const design = createModuleDesignDraft({
+      application,
+      architecture,
+      manifest,
+      operationContracts: contracts,
+      behaviorDraft: approvedInterview?.behaviorDraft,
+      steLexicon: caps.getSteLexicon(projectId),
+      revision: previous ? nextRecordRevision(previous.revision) : manifest.moduleVersion,
+    })
+    caps.saveModuleDesignDraft(projectId, design)
+    const existingSession = caps.getActiveModuleDesignSession(projectId, moduleId)
+    const session = existingSession && existingSession.state !== 'completed'
+      ? existingSession
+      : createModuleDesignSession({
+      projectId,
+      moduleId,
+      architecture,
+      baseModuleDesignRevision: design.revision,
+    })
+    if (session !== existingSession) caps.saveModuleDesignSession(projectId, session)
+    return { design, session }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.saveModuleDesignDraft, (
+    _e,
+    projectId: string,
+    draft: ModuleDesignSpecification,
+  ) => {
+    requireString(projectId, 'projectId')
+    const refreshed = refreshModuleDesign(caps, projectId, draft)
+    caps.saveModuleDesignDraft(projectId, refreshed.design)
+    return { ok: true as const, ...refreshed }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.approveModuleDesign, (
+    _e,
+    input: { projectId: string; draft: ModuleDesignSpecification; approvedBy?: string; explicit: boolean },
+  ) => {
+    const projectId = requireString(input.projectId, 'projectId')
+    if (!input.explicit) throw new Error('Module design approval requires explicit confirmation.')
+    const refreshed = refreshModuleDesign(caps, projectId, input.draft)
+    caps.saveModuleDesignDraft(projectId, refreshed.design)
+    if (refreshed.diagnostics.length) {
+      return { ok: false as const, design: refreshed.design, diagnostics: refreshed.diagnostics }
+    }
+    return {
+      ok: true as const,
+      approved: caps.approveModuleDesign(projectId, refreshed.design, input.approvedBy),
+      diagnostics: [],
+    }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.saveModuleDesignSession, (
+    _e,
+    projectId: string,
+    session: ModuleDesignSession,
+  ) => {
+    requireString(projectId, 'projectId')
+    caps.saveModuleDesignSession(projectId, { ...session, updatedAt: new Date().toISOString() })
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.listScenarioRuns, (_e, projectId: string) => {
+    requireString(projectId, 'projectId')
+    caps.ensureInitialized(projectId)
+    return caps.listScenarioRuns(projectId)
+  })
+
+  ipcMain.handle(CAP_CHANNELS.createScenarioRun, (
+    _e,
+    input: {
+      projectId: string
+      scenarioId: string
+      build: string
+      sourceRevision: string
+      environment: string
+      testDataRevision: string
+      runner: string
+      implementationRevisions?: Record<string, string>
+      connectionRevision?: string
+    },
+  ): ScenarioRunRecord => {
+    const projectId = requireString(input.projectId, 'projectId')
+    const application = caps.getApprovedApplication(projectId)
+    const architecture = caps.getApprovedArchitecture(projectId)
+    if (!application || !architecture) {
+      throw new Error('Approve the application and architecture before preparing scenario verification.')
+    }
+    const moduleDesigns = caps.listModuleDesigns(projectId)
+      .map((record) => record.approved)
+      .filter((design): design is ModuleDesignSpecification =>
+        Boolean(design) && design!.architecture.contentHash === architecture.contentHash)
+    const scenario = compileScenarioDefinitions(application)
+      .find((candidate) => candidate.id === input.scenarioId)
+    const trace = architecture.workflowTraces.find((candidate) => candidate.useCaseId === scenario?.useCaseId)
+    const missingDesignIds = (trace?.moduleIds ?? [])
+      .filter((moduleId) => !moduleDesigns.some((design) => design.module.moduleId === moduleId))
+    if (missingDesignIds.length) {
+      throw new Error(`Approve current module designs before scenario verification: ${missingDesignIds.join(', ')}`)
+    }
+    const record = createScenarioRun({
+      runId: `scenario-${crypto.randomUUID()}`,
+      application,
+      architecture,
+      moduleDesigns,
+      scenarioId: requireString(input.scenarioId, 'scenarioId'),
+      build: requireString(input.build, 'build'),
+      sourceRevision: requireString(input.sourceRevision, 'sourceRevision'),
+      environment: requireString(input.environment, 'environment'),
+      testDataRevision: requireString(input.testDataRevision, 'testDataRevision'),
+      runner: requireString(input.runner, 'runner'),
+      implementationRevisions: input.implementationRevisions,
+      connectionRevision: input.connectionRevision,
+    })
+    caps.saveScenarioRun(projectId, record)
+    return record
+  })
+
+  ipcMain.handle(CAP_CHANNELS.runScenarioCommand, async (
+    _e,
+    input: { projectId: string; runId: string; explicit: boolean },
+  ) => {
+    const projectId = requireString(input.projectId, 'projectId')
+    const runId = requireString(input.runId, 'runId')
+    if (!input.explicit) throw new Error('Running a scenario command requires explicit confirmation.')
+    const project = workspace.getProject(projectId)
+    const application = caps.getApprovedApplication(projectId)
+    const current = caps.getScenarioRun(projectId, runId)
+    if (!project || !application || !current) {
+      throw new Error('Project, approved application, or scenario run not found.')
+    }
+    const scenario = compileScenarioDefinitions(application)
+      .find((candidate) => candidate.id === current.scenarioId)
+    if (!scenario?.testCommand?.trim()) {
+      throw new Error('This scenario has no configured test command. Record observed steps and evidence instead.')
+    }
+    const outputDir = path.join(caps.root(projectId), 'scenario-runs', runId, 'command')
+    const command = await runCommand({
+      runId,
+      commandLabel: `scenario-${scenario.id}`,
+      commandText: scenario.testCommand,
+      workingDirectory: project.repoPath,
+      outputDir,
+    })
+    const combined = command.combinedOutputPath && fs.existsSync(command.combinedOutputPath)
+      ? fs.readFileSync(command.combinedOutputPath)
+      : Buffer.from(`Scenario command ${command.status}; exit code ${String(command.exitCode)}.`)
+    const artifactId = `command-${scenario.id.replace(/[^a-z0-9._-]+/gi, '-').slice(0, 80)}`
+    const reference = caps.saveScenarioEvidence({
+      projectId,
+      runId,
+      artifactId,
+      mediaType: 'text/plain',
+      bytes: combined,
+      producingOperationId: 'capabilities:run-scenario-command',
+      provenanceSource: `configured test command: ${command.commandText}`,
+    })
+    let record = current
+    for (const step of current.steps) {
+      record = recordScenarioStep({
+        record,
+        scenarioStepId: step.scenarioStepId,
+        actualResult: command.status === 'passed'
+          ? `Configured scenario test passed: ${command.commandLabel}.`
+          : `Configured scenario test ${command.status}: ${command.commandLabel}.`,
+        outcome: command.status === 'passed' ? 'passed' : 'failed',
+        evidence: [{ kind: 'structured', artifactId }],
+        evidenceHashes: { [artifactId]: reference.checksum },
+        startedAt: command.startedAt,
+        completedAt: command.endedAt,
+      })
+    }
+    const architecture = caps.getApprovedArchitecture(projectId)
+    const moduleDesigns = caps.listModuleDesigns(projectId)
+      .map((item) => item.approved)
+      .filter((design): design is ModuleDesignSpecification => Boolean(design))
+    const finalized = architecture
+      ? finalizeScenarioRun(application, record, command.endedAt, { architecture, moduleDesigns })
+      : finalizeScenarioRun(application, record, command.endedAt)
+    caps.saveScenarioRun(projectId, finalized.record)
+    return { ...finalized, command, evidence: reference }
+  })
+
+  ipcMain.handle(CAP_CHANNELS.recordScenarioStep, (
+    _e,
+    input: {
+      projectId: string
+      runId: string
+      scenarioStepId: string
+      actualResult: string
+      outcome: Exclude<ScenarioOutcome, 'unverified'>
+      evidence: ScenarioStepEvidence[]
+      startedAt: string
+      completedAt: string
+    },
+  ): ScenarioRunRecord => {
+    const projectId = requireString(input.projectId, 'projectId')
+    const runId = requireString(input.runId, 'runId')
+    const current = caps.getScenarioRun(projectId, runId)
+    if (!current) throw new Error('Scenario run not found.')
+    const evidenceHashes = Object.fromEntries(input.evidence.flatMap((item) => {
+      if (!item.artifactId) return []
+      const artifact = caps.getScenarioEvidence(projectId, runId, item.artifactId)
+      if (!artifact) throw new Error(`Scenario evidence artifact not found: ${item.artifactId}`)
+      return [[item.artifactId, artifact.reference.checksum]]
+    }))
+    const record = recordScenarioStep({
+      record: current,
+      scenarioStepId: requireString(input.scenarioStepId, 'scenarioStepId'),
+      actualResult: requireString(input.actualResult, 'actualResult'),
+      outcome: input.outcome,
+      evidence: input.evidence,
+      startedAt: requireString(input.startedAt, 'startedAt'),
+      completedAt: requireString(input.completedAt, 'completedAt'),
+      evidenceHashes,
+    })
+    caps.saveScenarioRun(projectId, record)
+    return record
+  })
+
+  ipcMain.handle(CAP_CHANNELS.finalizeScenarioRun, (
+    _e,
+    input: { projectId: string; runId: string },
+  ) => {
+    const projectId = requireString(input.projectId, 'projectId')
+    const application = caps.getApprovedApplication(projectId)
+    const architecture = caps.getApprovedArchitecture(projectId)
+    if (!application || !architecture) throw new Error('Approved application or architecture not found.')
+    const current = caps.getScenarioRun(projectId, requireString(input.runId, 'runId'))
+    if (!current) throw new Error('Scenario run not found.')
+    const moduleDesigns = caps.listModuleDesigns(projectId)
+      .map((item) => item.approved)
+      .filter((design): design is ModuleDesignSpecification => Boolean(design))
+    const finalized = finalizeScenarioRun(application, current, undefined, {
+      architecture,
+      moduleDesigns,
+    })
+    caps.saveScenarioRun(projectId, finalized.record)
+    return finalized
+  })
+
+  ipcMain.handle(CAP_CHANNELS.saveScenarioEvidence, (
+    _e,
+    input: {
+      projectId: string
+      runId: string
+      artifactId: string
+      mediaType: string
+      base64: string
+      producingOperationId?: string
+      provenanceSource: string
+    },
+  ): ArtifactReference => {
+    const base64 = requireString(input.base64, 'base64')
+    const bytes = Buffer.from(base64, 'base64')
+    if (!bytes.length || bytes.length > 25 * 1024 * 1024) {
+      throw new Error('Scenario evidence must be between 1 byte and 25 MB.')
+    }
+    return caps.saveScenarioEvidence({
+      projectId: requireString(input.projectId, 'projectId'),
+      runId: requireString(input.runId, 'runId'),
+      artifactId: requireString(input.artifactId, 'artifactId'),
+      mediaType: requireString(input.mediaType, 'mediaType'),
+      bytes,
+      producingOperationId: input.producingOperationId,
+      provenanceSource: requireString(input.provenanceSource, 'provenanceSource'),
+    })
+  })
+
+  ipcMain.handle(CAP_CHANNELS.getScenarioEvidence, (
+    _e,
+    input: { projectId: string; runId: string; artifactId: string },
+  ) => {
+    const artifact = caps.getScenarioEvidence(
+      requireString(input.projectId, 'projectId'),
+      requireString(input.runId, 'runId'),
+      requireString(input.artifactId, 'artifactId'),
+    )
+    return artifact
+      ? { reference: artifact.reference, base64: Buffer.from(artifact.bytes).toString('base64') }
+      : undefined
   })
 
   ipcMain.handle(CAP_CHANNELS.listBindings, (_e, projectId: string) => {
@@ -616,6 +1013,7 @@ export function registerCapabilityIpcHandlers(
 
   type ModuleImplementationContext = {
     manifest: ModuleManifest
+    moduleDesign?: ModuleDesignSpecification
     architecture: ArchitectureSpecification
     packet: ImplementationPacket
     brief: ModuleImplementationBrief
@@ -627,10 +1025,23 @@ export function registerCapabilityIpcHandlers(
     moduleId: string,
   ): ModuleImplementationContext => {
     const manifest = caps.getApprovedModule(projectId, moduleId)
+    const moduleDesign = caps.getApprovedModuleDesign(projectId, moduleId)
     const architecture = caps.getApprovedArchitecture(projectId)
+    const application = caps.getApprovedApplication(projectId)
     const project = workspace.getProject(projectId)
     if (!manifest) throw new Error(`approved module not found: ${moduleId}`)
     if (!architecture) throw new Error('approved architecture not found')
+    if (!application) throw new Error('approved application not found')
+    if (!evaluateArchitectureApplicationLink(application, architecture).current) {
+      throw new Error('approved architecture is stale. Revise it for the current application workflow.')
+    }
+    const requiresModuleDesign = Boolean(application.useCaseDefinitions?.length)
+    if (requiresModuleDesign && !moduleDesign) {
+      throw new Error(`approved module design not found: ${moduleId}. Complete and approve the module design before implementation.`)
+    }
+    if (moduleDesign && moduleDesign.architecture.contentHash !== architecture.contentHash) {
+      throw new Error(`approved module design is stale for ${moduleId}. Revise it against architecture ${architecture.revision}.`)
+    }
     if (!project) throw new Error('project not found')
     const interview = caps.getApprovedModuleInterview(projectId, moduleId)
     const repository = discoverRepositoryImplementationContext({
@@ -642,9 +1053,20 @@ export function registerCapabilityIpcHandlers(
       manifest,
       interview,
       architecture,
+      moduleDesign,
       repository,
+      steLexicon: caps.getSteLexicon(projectId),
       ...approvedContractContext(caps, projectId, architecture),
     })
+    const tracedAcceptanceCases = application.acceptanceCases
+      .filter((acceptance) => !moduleDesign || moduleDesign.verification.acceptanceCaseIds.includes(acceptance.id))
+      .map((acceptance) => ({
+        id: acceptance.id,
+        description: acceptance.description,
+        expectedOutcome: acceptance.expectedOutcome,
+      }))
+      .concat(interview?.acceptanceCases ?? [])
+      .filter((acceptance, index, all) => all.findIndex((candidate) => candidate.id === acceptance.id) === index)
     const packet = buildImplementationPacket({
       packetId: `pkt-implementation-${moduleId}-${Date.now()}-${crypto.randomUUID()}`,
       projectId,
@@ -654,12 +1076,12 @@ export function registerCapabilityIpcHandlers(
       architectureVersion: architecture.revision,
       architectureHash: architecture.contentHash,
       inputHashes: {
-        specification: canonicalHash(manifest),
+        specification: moduleDesign?.contentHash ?? canonicalHash(manifest),
         architecture: architecture.contentHash,
         dependencies: canonicalHash(manifest.requiredOperations),
       },
-      acceptanceCases: interview?.acceptanceCases?.length
-        ? interview.acceptanceCases
+      acceptanceCases: tracedAcceptanceCases.length
+        ? tracedAcceptanceCases
         : [{
             id: `accept-${moduleId}`,
             description: manifest.responsibility,
@@ -671,10 +1093,31 @@ export function registerCapabilityIpcHandlers(
     const requiredOperations = manifest.requiredOperations.map((operation) => operation.operationId).join(', ') || 'none'
     return {
       manifest,
+      moduleDesign,
       architecture,
       packet,
       brief,
-      recommendedPrompt: `Implement production source code and tests for “${manifest.name}” (${moduleId}). Its approved responsibility is: ${manifest.responsibility}. Implement its provided operations (${providedOperations}) and consume its required operations (${requiredOperations}) only through the approved architecture boundaries. Follow the implementation plan, precedence rules, detailed interview evidence, reference architecture, and live repository context in the embedded implementation brief. Work only within allowedPaths, preserve unchanged behavior, run the required tests, and return only ${packet.requiredOutput}.`,
+      recommendedPrompt: withStePrompt(
+        moduleDesign
+          ? `Implement production source code and tests for “${manifest.name}” (${moduleId}) from approved module-design revision ${moduleDesign.revision}. Its approved responsibility is: ${manifest.responsibility}. Trace implementation and tests to the design’s use-case and scenario-step IDs. Implement its provided operations (${providedOperations}) and consume its required operations (${requiredOperations}) only through the approved architecture boundaries. Follow the approved behavior, data, runtime, verification plan, precedence rules, detailed interview evidence, reference architecture, and live repository context in the embedded implementation brief. Work only within allowedPaths, preserve unchanged behavior, run the required tests, and return only ${packet.requiredOutput}.`
+          : `Implement production source code and tests for “${manifest.name}” (${moduleId}) from its approved legacy module record. Its approved responsibility is: ${manifest.responsibility}. Implement its provided operations (${providedOperations}) and consume its required operations (${requiredOperations}) only through the approved architecture boundaries. Follow the approved interview evidence, reference architecture, and live repository context in the embedded implementation brief. Work only within allowedPaths, preserve unchanged behavior, run the required tests, and return only ${packet.requiredOutput}.`,
+        {
+          technicalTerms: [
+            'acceptance case',
+            'application',
+            'architecture',
+            'capability packet',
+            'implementation brief',
+            'module',
+            'operation',
+            'repository',
+            'scenario step',
+            'source code',
+            'use case',
+            'verification plan',
+          ],
+        },
+      ),
     }
   }
 
@@ -696,6 +1139,7 @@ export function registerCapabilityIpcHandlers(
     lifecycleState: 'draft',
     inputRevisions: {
       module: context.manifest.moduleVersion,
+      ...(context.moduleDesign ? { moduleDesign: context.moduleDesign.revision } : {}),
       architecture: context.architecture.revision,
     },
     inputHashes: context.packet.inputHashes,
@@ -766,6 +1210,7 @@ export function registerCapabilityIpcHandlers(
         groupId,
         projectId,
         waveIndex: input.waveIndex,
+        steLexicon: caps.getSteLexicon(projectId),
         targets: contexts.map(({ target, runId, context }) => ({
           runId,
           moduleId: target.moduleId,
@@ -802,7 +1247,23 @@ export function registerCapabilityIpcHandlers(
       return {
         groupId,
         waveIndex: input.waveIndex,
-        recommendedPrompt: `Implement capability wave ${input.waveIndex} using the attached handoff. Return one scoped ZIP per target using the exact filenames in its result manifest.`,
+        recommendedPrompt: withStePrompt(
+          `Implement capability wave ${input.waveIndex} using the attached handoff. Return one scoped ZIP per target. Use the exact filenames in the result manifest.`,
+          {
+            technicalTerms: [
+              'capability',
+              'handoff',
+              'implementation wave',
+              'module',
+              'repository',
+              'result manifest',
+              'source code',
+              'ZIP',
+              ...(caps.getSteLexicon(projectId)?.technicalTerms ?? []),
+            ],
+            prohibitedAliases: caps.getSteLexicon(projectId)?.prohibitedAliases,
+          },
+        ),
         files: [file],
         uploadFiles: [file.path],
         targets: contexts.map(({ target, runId, context }) => ({
@@ -820,7 +1281,11 @@ export function registerCapabilityIpcHandlers(
     requireString(projectId, 'projectId')
     const approved = caps.getApprovedApplication(projectId)
     const approvedSnapshot = approved ? structuredClone(approved) : undefined
-    const imported = importProductInterviewResponse(raw, { projectId, approved })
+    const imported = importProductInterviewResponse(raw, {
+      projectId,
+      approved,
+      lexicon: caps.getSteLexicon(projectId),
+    })
     caps.saveApplicationDraft(projectId, imported.draft)
     const approvedAfter = caps.getApprovedApplication(projectId)
     return {
@@ -861,6 +1326,7 @@ export function registerCapabilityIpcHandlers(
         expectedFiles: run.expectedPaths.length ? run.expectedPaths : undefined,
         capabilityAllowedPaths: run.allowedPaths,
         protectedPaths: [...new Set([...run.protectedPaths, ...generatedProtectedPaths])],
+        steLexicon: caps.getSteLexicon(input.projectId),
       })
       const inspectionRef = runs.saveRunArtifact(
         input.projectId,
@@ -937,6 +1403,7 @@ export function registerCapabilityIpcHandlers(
             .flatMap((deployable) => integration.integration.getLatestApplyRecord(input.projectId, deployable.deployableId)?.ownershipManifests ?? [])
             .map((manifest) => manifest.filePath),
         ])],
+        steLexicon: caps.getSteLexicon(input.projectId),
       })
       const applied = applyOverlay(input.zipPath, currentInspection, {
         runId: input.runId,
@@ -1114,6 +1581,7 @@ export function registerCapabilityIpcHandlers(
         interview,
         architecture,
         repository,
+        steLexicon: caps.getSteLexicon(projectId),
         ...approvedContractContext(caps, projectId, architecture),
       })
 
@@ -1178,7 +1646,23 @@ export function registerCapabilityIpcHandlers(
           packetRefs: [], artifactRefs: [], transitionHistory: [], createdAt: now, updatedAt: now,
         },
         packet: delta,
-        recommendedPrompt: `Apply the approved delta for “${manifest.name}” (${targetId}) as production source code and tests. The embedded delta packet and module implementation brief are requirements, not outputs. Follow the approved interview evidence, reference architecture, live repository context, and implementation plan. Preserve the listed behavior, change only what is required, add the new tests, leave unchanged modules untouched, and return only ${delta.requiredOutput}.`,
+        recommendedPrompt: withStePrompt(
+          `Apply the approved delta for “${manifest.name}” (${targetId}) as production source code and tests. The embedded delta packet and module implementation brief are requirements, not outputs. Follow the approved interview evidence, reference architecture, live repository context, and implementation plan. Preserve the listed behavior. Change only what is required. Add the new tests. Leave unchanged modules untouched. Return only ${delta.requiredOutput}.`,
+          {
+            technicalTerms: [
+              'application',
+              'architecture',
+              'delta',
+              'delta packet',
+              'implementation brief',
+              'implementation plan',
+              'module',
+              'repository',
+              'source code',
+              'test',
+            ],
+          },
+        ),
         supportingRecord: {
           fileName: 'module-implementation-brief.json',
           value: brief,
@@ -1748,6 +2232,10 @@ export function registerCapabilityIpcHandlers(
     if (required.some((v) => !v?.trim())) {
       return { ok: false as const, diagnostics: [{ code: 'CAP-BIND-002', message: 'all behavior mappings are required' }] }
     }
+    const languageEvaluation = evaluateFrontendBindingSte(draft, caps.getSteLexicon(projectId))
+    if (!languageEvaluation.passed) {
+      return { ok: false as const, diagnostics: languageEvaluation.diagnostics }
+    }
     return { ok: true as const, approved: caps.approveBinding(projectId, draft) }
   })
 
@@ -1944,6 +2432,10 @@ export function registerCapabilityIpcHandlers(
           },
         ],
       }
+    }
+    const languageEvaluation = evaluateInboundBindingSte(draft, caps.getSteLexicon(projectId))
+    if (!languageEvaluation.passed) {
+      return { ok: false as const, diagnostics: languageEvaluation.diagnostics }
     }
     // Multiple inbound bindings may target the same operation — never deduplicated (CAP-ERA-001 §12.4).
     return { ok: true as const, approved: caps.approveInboundBinding(projectId, draft) }

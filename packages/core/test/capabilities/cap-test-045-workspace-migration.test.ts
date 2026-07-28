@@ -9,9 +9,11 @@ import { describe, expect, it } from 'vitest'
 import { CapabilityWorkspace } from '../../src/capabilities/persistence.js'
 import {
   applyCapabilityMigration,
+  promoteInterviewToModuleImplementationSpecification,
   rollbackCapabilityMigration,
 } from '../../src/capabilities/migration.js'
-import type { FrontendBinding } from '../../src/capabilities/types.js'
+import { evaluateModuleImplementationSte } from '../../src/capabilities/simplifiedTechnicalEnglish.js'
+import type { FrontendBinding, ModuleManifest } from '../../src/capabilities/types.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -93,5 +95,44 @@ describe('CAP-TEST-045 workspace 1.0 -> 2.0 migration', () => {
     expect(ws.getApprovedBinding('proj-1', binding.bindingId)).toEqual(binding)
     expect(ws.getBindingDraft('proj-1', binding.bindingId)).toEqual(revisedDraft)
     expect(ws.listInboundBindings('proj-1')).toEqual([])
+  })
+
+  it('uses the STE profile for prose in a promoted module specification', () => {
+    const manifest: ModuleManifest = {
+      schemaVersion: '1.0',
+      architectureVersion: '1.0',
+      moduleId: 'module-1',
+      moduleVersion: '1.0.0',
+      moduleType: 'domain',
+      name: 'Test module',
+      responsibility: 'Provide a test operation.',
+      ownedConcerns: ['test'],
+      excludedConcerns: [],
+      providedOperations: [],
+      requiredOperations: [],
+      configurationSchemaRef: null,
+      verificationSuiteIds: [],
+      runtimeAllocation: 'local-embedded',
+      events: [],
+      ownedPaths: ['src/modules/module-1/'],
+    }
+    const specification = promoteInterviewToModuleImplementationSpecification({
+      manifest,
+      projectId: 'project-1',
+      deployableId: 'deployable-1',
+      runtimeLanguage: 'typescript',
+    })
+
+    expect(evaluateModuleImplementationSte(specification).diagnostics).toEqual([])
+    expect(specification.unresolvedItems).toEqual([
+      expect.objectContaining({
+        id: 'missing-interview',
+        description: 'The module has no preserved interview. The specification uses only manifest fields.',
+      }),
+      expect.objectContaining({
+        id: 'missing-acceptance-cases',
+        description: 'The module has no preserved acceptance case. Add an acceptance case before implementation.',
+      }),
+    ])
   })
 })

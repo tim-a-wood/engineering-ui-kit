@@ -58,8 +58,8 @@ function buildDefaultCompositionPath(candidate: DeployableKindEvidence, discover
 function compositionEvidence(candidate: DeployableKindEvidence, discovery: RepositoryDiscoveryResult): string {
   const root = discovery.sourceRoots[0]
   return root
-    ? `evidence-derived source root "${root}"; ${candidate.evidence}`
-    : `no existing source-root evidence; ${candidate.evidence}`
+    ? `Repository evidence identifies source root "${root}". ${candidate.evidence}`
+    : `Repository evidence does not identify a source root. ${candidate.evidence}`
 }
 
 export type ApprovedDeployableLocation = {
@@ -100,11 +100,11 @@ export function proposeDeployables(input: DeployableProposalInput): DeployablePr
   const candidates: DeployableKindEvidence[] = []
 
   if (frameworks.has('electron')) {
-    candidates.push({ kind: 'electron-main', language: 'typescript', evidence: 'manifest dependency "electron"' })
+    candidates.push({ kind: 'electron-main', language: 'typescript', evidence: 'The manifest includes dependency "electron".' })
   }
   const uiFramework = UI_FRAMEWORKS.find((name) => frameworks.has(name))
   if (uiFramework) {
-    candidates.push({ kind: 'browser', language: 'typescript', evidence: `manifest dependency "${uiFramework}"` })
+    candidates.push({ kind: 'browser', language: 'typescript', evidence: `The manifest includes dependency "${uiFramework}".` })
   }
 
   const tsHttp = HTTP_FRAMEWORKS_TS.find((name) => frameworks.has(name))
@@ -116,9 +116,9 @@ export function proposeDeployables(input: DeployableProposalInput): DeployablePr
       choices: sortByKey([tsHttp, pyHttp], (value) => value),
     })
   } else if (tsHttp) {
-    candidates.push({ kind: 'http-api', language: 'typescript', evidence: `manifest dependency "${tsHttp}"` })
+    candidates.push({ kind: 'http-api', language: 'typescript', evidence: `The manifest includes dependency "${tsHttp}".` })
   } else if (pyHttp) {
-    candidates.push({ kind: 'http-api', language: 'python', evidence: `manifest dependency "${pyHttp}"` })
+    candidates.push({ kind: 'http-api', language: 'python', evidence: `The manifest includes dependency "${pyHttp}".` })
   }
 
   if (candidates.length === 0 && !(tsHttp && pyHttp)) {
@@ -127,7 +127,7 @@ export function proposeDeployables(input: DeployableProposalInput): DeployablePr
       candidates.push({
         kind: 'embedded-library',
         language,
-        evidence: `single detected runtime language "${language}" and no host-framework evidence`,
+        evidence: `The repository has one runtime language, "${language}", and no host framework.`,
       })
     } else if (input.discovery.languages.length > 1) {
       ambiguities.push({
@@ -139,7 +139,7 @@ export function proposeDeployables(input: DeployableProposalInput): DeployablePr
       candidates.push({
         kind: 'embedded-library',
         language: 'typescript',
-        evidence: 'greenfield repository with no file or framework evidence; defaulting to the TypeScript baseline (CAP-ERA-001 §5.3)',
+        evidence: 'The repository has no files or framework evidence. Use the TypeScript baseline (CAP-ERA-001 §5.3).',
       })
     }
   }
@@ -169,8 +169,8 @@ export function proposeDeployables(input: DeployableProposalInput): DeployablePr
         kind: 'http-api',
         language,
         evidence: input.discovery.languages.length === 1
-          ? `single detected runtime language "${language}" for the browser application's local backend`
-          : 'greenfield browser project with non-experience modules; defaulting the local HTTP backend to TypeScript',
+          ? `The repository has one runtime language, "${language}", for the browser application's local backend.`
+          : 'The browser project has no file or framework evidence. Use TypeScript for the local HTTP backend.',
       })
     } else if (!ambiguities.some((ambiguity) => ambiguity.id === 'deployable-language')) {
       ambiguities.push({
@@ -215,7 +215,7 @@ export function proposeDeployables(input: DeployableProposalInput): DeployablePr
       {
         path: proposedPath,
         evidence: approved
-          ? 'user-approved location persisted from a prior generation plan'
+          ? 'The location comes from an approved generation plan.'
           : compositionEvidence(candidate, input.discovery),
         approvalStatus: (approved ? 'approved' : 'proposed') satisfies ProposedLocationApprovalStatus,
       },

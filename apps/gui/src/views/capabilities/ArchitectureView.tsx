@@ -5,7 +5,12 @@
  */
 
 import { useEffect, useId, useMemo, useState, type KeyboardEvent } from 'react'
-import type { ArchitectureNodeProjection, ArchitectureProjection, ArchitectureProjectionMode } from '@engineering-ui-kit/core'
+import type {
+  ArchitectureNodeProjection,
+  ArchitectureProjection,
+  ArchitectureProjectionMode,
+  ArchitectureSpecification,
+} from '@engineering-ui-kit/core'
 import { focusArchitectureNeighbors } from '@engineering-ui-kit/core/browser'
 import { Dialog } from '../../components'
 import { humanizeIdentifier, moduleTypeLabel } from './capabilityPresentation'
@@ -13,6 +18,7 @@ import { humanizeIdentifier, moduleTypeLabel } from './capabilityPresentation'
 type Props = {
   projection: ArchitectureProjection
   mode: ArchitectureProjectionMode
+  architecture?: ArchitectureSpecification
 }
 
 const STATUS_GLYPH: Record<string, string> = {
@@ -65,7 +71,7 @@ function ModuleDetails(props: {
       </dl>
       <div className="architecture-detail-columns">
         <section aria-label="Module port connections">
-          <h3>Ports &amp; connections</h3>
+          <h3>Connections</h3>
           {incoming.length + outgoing.length === 0 ? <p className="capabilities-note">No direct dependencies.</p> : (
             <ul className="architecture-connection-list">
               {outgoing.map((edge) => (
@@ -78,7 +84,7 @@ function ModuleDetails(props: {
           )}
         </section>
         <section aria-label="Module allocations">
-          <h3>Operations &amp; adapters</h3>
+          <h3>Allocated services</h3>
           {node.toolsAndData.length ? <ul className="architecture-chip-list">{node.toolsAndData.map((item) => <li key={item}>{humanizeIdentifier(item)}</li>)}</ul> : <p className="capabilities-note">No operations or data allocations yet.</p>}
         </section>
       </div>
@@ -86,7 +92,7 @@ function ModuleDetails(props: {
   )
 }
 
-export function ArchitectureView({ projection, mode }: Props) {
+export function ArchitectureView({ projection, mode, architecture }: Props) {
   const labelId = useId()
   const [selectedId, setSelectedId] = useState<string | null>(projection.nodes[0]?.id ?? null)
   const [detailId, setDetailId] = useState<string | null>(null)
@@ -176,9 +182,12 @@ export function ArchitectureView({ projection, mode }: Props) {
                         <button
                           type="button"
                           className={['architecture-node-card', node.proposed ? 'proposed' : '', selected ? 'selected' : '', inFocus ? 'in-focus' : '', `status-${node.statusIcon}`, `type-${node.moduleType ?? 'unassigned'}`].filter(Boolean).join(' ')}
-                          onClick={() => { setSelectedId(node.id); setDetailId(node.id) }}
+                          onClick={function openModule() {
+                            setSelectedId(node.id)
+                            setDetailId(node.id)
+                          }}
                           tabIndex={-1}
-                          aria-label={`${node.name}, ${moduleTypeLabel(node.moduleType ?? 'module')}, ${node.statusLabel}. Open details`}
+                          aria-label={`Open ${node.name}`}
                           aria-pressed={selected}
                         >
                           <span className={`architecture-node-icon architecture-type-${node.moduleType ?? 'unassigned'}`} aria-hidden="true">{moduleTypeLabel(node.moduleType ?? 'module').charAt(0)}</span>
@@ -202,7 +211,7 @@ export function ArchitectureView({ projection, mode }: Props) {
             <div className="architecture-routes-heading">
               <div>
                 <p className="architecture-eyebrow">Interactions</p>
-                <h4>{mode === 'guided' ? 'How the parts work together' : 'Port-to-port dependency routes'}</h4>
+                <h4>{mode === 'guided' ? 'Part interactions' : 'Dependency routes'}</h4>
               </div>
               <span>{routes.length} connection{routes.length === 1 ? '' : 's'}</span>
             </div>
@@ -227,6 +236,69 @@ export function ArchitectureView({ projection, mode }: Props) {
           </section>
         </div>
       </div>
+
+      {architecture?.workflowTraces.length ? (
+        <section className="architecture-workflow-traces" aria-labelledby={`${labelId}-traces`}>
+          <div className="architecture-routes-heading">
+            <div>
+              <p className="architecture-eyebrow">Use-case allocation</p>
+              <h4 id={`${labelId}-traces`}>Workflow traceability</h4>
+            </div>
+            <span>{architecture.workflowTraces.length} trace{architecture.workflowTraces.length === 1 ? '' : 's'}</span>
+          </div>
+          <div className="architecture-trace-grid">
+            {architecture.workflowTraces.map((trace) => {
+              const nodeAllocations = trace.nodeAllocations ?? []
+              const allocationByModule = Object.entries(nodeAllocations.reduce<
+                Record<string, typeof nodeAllocations>
+              >((groups, allocation) => {
+                groups[allocation.primaryModuleId] = [...(groups[allocation.primaryModuleId] ?? []), allocation]
+                return groups
+              }, {}))
+              const allocationCount = nodeAllocations.length || trace.stepAllocations?.length || 0
+              return (
+                <article key={trace.useCaseId} className="architecture-trace-card">
+                  <header>
+                    <div>
+                      <span>Use case</span>
+                      <code>{trace.useCaseId}</code>
+                    </div>
+                    <span className={allocationCount ? 'badge approved' : 'badge badge-warning'}>
+                      {allocationCount} allocated actions
+                    </span>
+                  </header>
+                  <div className="architecture-trace-route" aria-label={`Module route for ${trace.useCaseId}`}>
+                    {trace.moduleIds.map((moduleId, index) => (
+                      <span key={moduleId}>
+                        <strong>{projection.nodes.find((node) => node.id === moduleId)?.name ?? humanizeIdentifier(moduleId)}</strong>
+                        {index < trace.moduleIds.length - 1 ? <i aria-hidden="true">→</i> : null}
+                      </span>
+                    ))}
+                  </div>
+                  {(trace.entryPointId || trace.outputId) ? (
+                    <dl>
+                      {trace.entryPointId ? <div><dt>Entry</dt><dd><code>{trace.entryPointId}</code></dd></div> : null}
+                      {trace.outputId ? <div><dt>Output</dt><dd><code>{trace.outputId}</code></dd></div> : null}
+                    </dl>
+                  ) : null}
+                  {allocationByModule.length ? (
+                    <div className="architecture-trace-steps">
+                      {allocationByModule.map(([moduleId, allocations]) => (
+                        <div key={moduleId}>
+                          <strong>{projection.nodes.find((node) => node.id === moduleId)?.name ?? humanizeIdentifier(moduleId)}</strong>
+                          {(allocations ?? []).map((allocation) => <code key={allocation.nodeId}>{allocation.nodeId}</code>)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                     <p className="capabilities-note">No action allocations are recorded. Module design cannot show the responsible module.</p>
+                  )}
+                </article>
+              )
+            })}
+          </div>
+        </section>
+      ) : null}
 
       {focused ? <p role="status" aria-live="polite" className="sr-only">Focused {focused.name}. {neighbors.length} connected modules.</p> : null}
 

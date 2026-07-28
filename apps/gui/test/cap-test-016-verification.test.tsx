@@ -16,12 +16,12 @@ const approvedManifest: ModuleManifest = {
   moduleVersion: '1.0.0',
   moduleType: 'domain',
   name: 'Domain module',
-  responsibility: 'domain',
-  ownedConcerns: [],
-  excludedConcerns: [],
-  providedOperations: [],
+  responsibility: 'Manage domain records.',
+  ownedConcerns: ['Domain records'],
+  excludedConcerns: ['User interface'],
+  providedOperations: [{ operationId: 'op.read-domain', contractVersion: '1.0.0' }],
   requiredOperations: [],
-  verificationSuiteIds: [],
+  verificationSuiteIds: ['accept.domain'],
   runtimeAllocation: 'local-embedded',
   events: [],
   ownedPaths: ['capabilities/modules/mod.domain/'],
@@ -39,7 +39,7 @@ describe('CAP-TEST-016 GUI verification', () => {
         onVerified={() => {}}
       />,
     )
-    expect(html).toContain('No approved modules yet')
+    expect(html).toContain('No approved modules')
     expect(html).not.toContain('aria-label="Verification controls"')
     // No demo scenario picker.
     expect(html).not.toContain('Injected outcome')

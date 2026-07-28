@@ -6,7 +6,7 @@
   "status": "approved",
   "applicationSpecId": "app.do178c-audit-hub",
   "applicationSpecRevision": "2",
-  "applicationSpecHash": "21a8b8d730c7c15ab56d62abdc98f82759963007cfeece39080e66daf7f583f8",
+  "applicationSpecHash": "06b865ddcee646df0e509d18bc16ac32a55caecfbc4d1130f8e693e9aaed39b9",
   "capabilityProjections": [
     {
       "id": "capability.audit-experience",
@@ -42,7 +42,7 @@
     },
     {
       "id": "capability.assurance",
-      "name": "Findings Reviews and Audit Packages",
+      "name": "Assurance Workflows",
       "moduleIds": [
         "mod.audit-experience",
         "mod.assurance-workflow",
@@ -53,7 +53,7 @@
     },
     {
       "id": "capability.ingestion",
-      "name": "Artifact Ingestion and Snapshot Publication",
+      "name": "Evidence Publication",
       "moduleIds": [
         "mod.audit-experience",
         "mod.ingestion-publication",
@@ -80,11 +80,11 @@
       "moduleId": "mod.audit-experience",
       "name": "Audit Hub Experience",
       "moduleType": "experience",
-      "responsibility": "Own the complete responsive, accessible Audit Hub front end: workspace selection, Overview, all nine lifecycle-area views and phase subviews, global search, dossiers, trace navigation, baseline comparison, findings, reviews, packages, sample reset, and refresh status."
+      "responsibility": "Own the responsive Audit Hub front end. Provide workspace selection, lifecycle views, search, dossiers, traces, baseline comparison, findings, reviews, packages, sample reset, and refresh status."
     },
     {
       "moduleId": "mod.workspace-snapshots",
-      "name": "Workspace & Snapshot Management",
+      "name": "Workspace snapshots",
       "moduleType": "domain",
       "responsibility": "Own project configuration, objective-profile references, repository definitions, real-versus-sample selection, last-real-project preference, exact revision sets, immutable snapshot identity, baselines, and publication state."
     },
@@ -92,7 +92,7 @@
       "moduleId": "mod.lifecycle-explorer",
       "name": "Lifecycle Explorer",
       "moduleType": "domain",
-      "responsibility": "Own the phase model, phase-specific subviews, readiness summaries, evidence-table projections, compare projections, and shared lifecycle-area anatomy for Overview, Planning, Requirements, Design, Implementation, Verification, Configuration Management, Quality Assurance, and Certification."
+      "responsibility": "Own the lifecycle phase model and shared view structure. Provide phase views, readiness summaries, evidence projections, comparison projections, and approved lifecycle areas."
     },
     {
       "moduleId": "mod.evidence-graph",
@@ -108,7 +108,7 @@
     },
     {
       "moduleId": "mod.ingestion-publication",
-      "name": "Ingestion & Publication",
+      "name": "Evidence publication",
       "moduleType": "domain",
       "responsibility": "Own scanning, artifact classification, extractor orchestration, normalization, diagnostics, deterministic check execution, refresh progress, reliability gates, and atomic publication while preserving the last valid snapshot."
     },
@@ -116,13 +116,13 @@
       "moduleId": "mod.sample-workspace",
       "name": "Deterministic Sample Workspace",
       "moduleType": "domain",
-      "responsibility": "Own the bundled AeroNav lateral-guidance normalized snapshot, baselines 2.3.0 and 2.4.0, seeded complete and incomplete chains, twelve findings, deterministic identities and hashes, resettable overlay defaults, and offline fallback behavior."
+      "responsibility": "Own the bundled AeroNav snapshot and the 2.3.0 and 2.4.0 baselines. Provide complete chains, incomplete chains, twelve findings, deterministic identities, reset defaults, and offline fallback."
     },
     {
       "moduleId": "mod.evidence-store",
       "name": "Evidence Store",
       "moduleType": "domain",
-      "responsibility": "Persist and query project metadata, immutable snapshots, normalized evidence, graph relationships, search and phase projections, reviews, findings, activity history, sample overlay state, comparison inputs, and package manifests."
+      "responsibility": "Persist project metadata, immutable snapshots, normalized evidence, graph relationships, reviews, findings, history, overlay state, and package manifests. Provide search, phase, and comparison queries."
     },
     {
       "moduleId": "mod.external-adapters",
@@ -275,17 +275,17 @@
       "reason": "Cross-phase search resolves canonical artifacts and relationships."
     },
     {
-      "operationId": "op-manage-finding",
+      "operationId": "op.manage-finding",
       "moduleId": "mod.assurance-workflow",
       "reason": "Assignment, corrective action, reverification, closure, and history are assurance business rules."
     },
     {
-      "operationId": "op-record-review",
+      "operationId": "op.record-review",
       "moduleId": "mod.assurance-workflow",
       "reason": "Review scope, independence, comments, decisions, and evidence links belong to assurance."
     },
     {
-      "operationId": "op-build-audit-package",
+      "operationId": "op.build-audit-package",
       "moduleId": "mod.assurance-workflow",
       "reason": "Package selection, manifest, hashes, revision metadata, and watermark enforcement form one assurance workflow."
     },
@@ -305,12 +305,12 @@
       "reason": "Only the sample module knows bundled defaults and reset semantics."
     },
     {
-      "operationId": "op-persist-evidence-state",
+      "operationId": "op.persist-evidence-state",
       "moduleId": "mod.evidence-store",
       "reason": "Durable canonical and overlay state is owned by the persistence module."
     },
     {
-      "operationId": "op-access-external-artifacts",
+      "operationId": "op.access-external-artifacts",
       "moduleId": "mod.external-adapters",
       "reason": "All technology-specific reads, source links, revision operations, and exports cross explicit adapter ports."
     }
@@ -503,8 +503,78 @@
       "moduleIds": [
         "mod.audit-experience",
         "mod.assurance-workflow",
-        "mod.evidence-graph",
-        "mod.evidence-store"
+        "mod.evidence-store",
+        "mod.evidence-graph"
+      ],
+      "nodeAllocations": [
+        {
+          "workflowId": "workflow:uc-findings",
+          "nodeId": "finding:inspect",
+          "primaryModuleId": "mod.audit-experience",
+          "participatingModuleIds": [],
+          "operationId": "op.render-audit-hub",
+          "entryPointId": "entry:mod.audit-experience"
+        },
+        {
+          "workflowId": "workflow:uc-findings",
+          "nodeId": "finding:assign",
+          "primaryModuleId": "mod.assurance-workflow",
+          "participatingModuleIds": [
+            "mod.evidence-store"
+          ],
+          "operationId": "op.manage-finding",
+          "entryPointId": "entry:mod.assurance-workflow"
+        },
+        {
+          "workflowId": "workflow:uc-findings",
+          "nodeId": "finding:correct",
+          "primaryModuleId": "mod.assurance-workflow",
+          "participatingModuleIds": [
+            "mod.evidence-store"
+          ],
+          "operationId": "op.manage-finding",
+          "entryPointId": "entry:mod.assurance-workflow"
+        },
+        {
+          "workflowId": "workflow:uc-findings",
+          "nodeId": "finding:return",
+          "primaryModuleId": "mod.assurance-workflow",
+          "participatingModuleIds": [
+            "mod.evidence-store"
+          ],
+          "operationId": "op.manage-finding",
+          "entryPointId": "entry:mod.assurance-workflow"
+        },
+        {
+          "workflowId": "workflow:uc-findings",
+          "nodeId": "finding:reverify",
+          "primaryModuleId": "mod.evidence-graph",
+          "participatingModuleIds": [
+            "mod.assurance-workflow"
+          ],
+          "operationId": "op-traverse-evidence-chain",
+          "entryPointId": "entry:mod.evidence-graph"
+        },
+        {
+          "workflowId": "workflow:uc-findings",
+          "nodeId": "finding:update",
+          "primaryModuleId": "mod.assurance-workflow",
+          "participatingModuleIds": [
+            "mod.evidence-store"
+          ],
+          "operationId": "op.manage-finding",
+          "entryPointId": "entry:mod.assurance-workflow"
+        },
+        {
+          "workflowId": "workflow:uc-findings",
+          "nodeId": "finding:close",
+          "primaryModuleId": "mod.assurance-workflow",
+          "participatingModuleIds": [
+            "mod.evidence-store"
+          ],
+          "operationId": "op.manage-finding",
+          "entryPointId": "entry:mod.assurance-workflow"
+        }
       ]
     },
     {
@@ -512,8 +582,56 @@
       "moduleIds": [
         "mod.audit-experience",
         "mod.assurance-workflow",
-        "mod.evidence-graph",
-        "mod.evidence-store"
+        "mod.evidence-store",
+        "mod.evidence-graph"
+      ],
+      "nodeAllocations": [
+        {
+          "workflowId": "workflow:uc-reviews",
+          "nodeId": "review:select",
+          "primaryModuleId": "mod.audit-experience",
+          "participatingModuleIds": [],
+          "operationId": "op.render-audit-hub",
+          "entryPointId": "entry:mod.audit-experience"
+        },
+        {
+          "workflowId": "workflow:uc-reviews",
+          "nodeId": "review:independence",
+          "primaryModuleId": "mod.assurance-workflow",
+          "participatingModuleIds": [
+            "mod.evidence-store"
+          ],
+          "operationId": "op.record-review",
+          "entryPointId": "entry:mod.assurance-workflow"
+        },
+        {
+          "workflowId": "workflow:uc-reviews",
+          "nodeId": "review:inspect",
+          "primaryModuleId": "mod.evidence-graph",
+          "participatingModuleIds": [],
+          "operationId": "op.query-dossier",
+          "entryPointId": "entry:mod.evidence-graph"
+        },
+        {
+          "workflowId": "workflow:uc-reviews",
+          "nodeId": "review:request-change",
+          "primaryModuleId": "mod.assurance-workflow",
+          "participatingModuleIds": [
+            "mod.evidence-store"
+          ],
+          "operationId": "op.record-review",
+          "entryPointId": "entry:mod.assurance-workflow"
+        },
+        {
+          "workflowId": "workflow:uc-reviews",
+          "nodeId": "review:record",
+          "primaryModuleId": "mod.assurance-workflow",
+          "participatingModuleIds": [
+            "mod.evidence-store"
+          ],
+          "operationId": "op.record-review",
+          "entryPointId": "entry:mod.assurance-workflow"
+        }
       ]
     },
     {
@@ -532,11 +650,77 @@
       "useCaseId": "uc-package",
       "moduleIds": [
         "mod.audit-experience",
-        "mod.assurance-workflow",
-        "mod.evidence-graph",
         "mod.workspace-snapshots",
-        "mod.evidence-store",
-        "mod.external-adapters"
+        "mod.evidence-graph",
+        "mod.assurance-workflow",
+        "mod.external-adapters",
+        "mod.evidence-store"
+      ],
+      "nodeAllocations": [
+        {
+          "workflowId": "workflow:uc-package",
+          "nodeId": "package:select",
+          "primaryModuleId": "mod.audit-experience",
+          "participatingModuleIds": [],
+          "operationId": "op.render-audit-hub",
+          "entryPointId": "entry:mod.audit-experience"
+        },
+        {
+          "workflowId": "workflow:uc-package",
+          "nodeId": "package:baseline",
+          "primaryModuleId": "mod.workspace-snapshots",
+          "participatingModuleIds": [],
+          "operationId": "op.select-workspace-baseline",
+          "entryPointId": "entry:mod.workspace-snapshots"
+        },
+        {
+          "workflowId": "workflow:uc-package",
+          "nodeId": "package:check",
+          "primaryModuleId": "mod.evidence-graph",
+          "participatingModuleIds": [],
+          "operationId": "op.query-dossier",
+          "entryPointId": "entry:mod.evidence-graph"
+        },
+        {
+          "workflowId": "workflow:uc-package",
+          "nodeId": "package:remove",
+          "primaryModuleId": "mod.assurance-workflow",
+          "participatingModuleIds": [],
+          "operationId": "op.build-audit-package",
+          "entryPointId": "entry:mod.assurance-workflow"
+        },
+        {
+          "workflowId": "workflow:uc-package",
+          "nodeId": "package:watermark",
+          "primaryModuleId": "mod.assurance-workflow",
+          "participatingModuleIds": [],
+          "operationId": "op.build-audit-package",
+          "entryPointId": "entry:mod.assurance-workflow"
+        },
+        {
+          "workflowId": "workflow:uc-package",
+          "nodeId": "package:export",
+          "primaryModuleId": "mod.external-adapters",
+          "participatingModuleIds": [],
+          "operationId": "op.access-external-artifacts",
+          "entryPointId": "entry:mod.external-adapters"
+        },
+        {
+          "workflowId": "workflow:uc-package",
+          "nodeId": "package:retain",
+          "primaryModuleId": "mod.evidence-store",
+          "participatingModuleIds": [],
+          "operationId": "op.persist-evidence-state",
+          "entryPointId": "entry:mod.evidence-store"
+        },
+        {
+          "workflowId": "workflow:uc-package",
+          "nodeId": "package:retry",
+          "primaryModuleId": "mod.assurance-workflow",
+          "participatingModuleIds": [],
+          "operationId": "op.build-audit-package",
+          "entryPointId": "entry:mod.assurance-workflow"
+        }
       ]
     },
     {
@@ -562,6 +746,6 @@
     "passed": true,
     "diagnostics": []
   },
-  "contentHash": "b74ed12d692384ee074aa4a6a9b09e233dc9babf264a91bf6d4b9e314368f86d",
+  "contentHash": "9e85b23877737297bba216dd45275f490a1a042c2e11a3bdd97fc218762756c2",
   "approvedAt": "2026-07-22T23:26:08.614Z"
 }

@@ -251,10 +251,10 @@ export function GuidedConnect(props: Props) {
       <div className="cap-stage-head cap-entry-point-head">
         <div>
           <p className="capabilities-eyebrow">Build step 2</p>
-          <h3>Configure application entry points</h3>
+          <h3>Configure entry points</h3>
           <p className="cap-connect-purpose">Choose how people, systems, or scheduled work start an application capability. Suggestions come from the approved application design and remain editable.</p>
         </div>
-        <button type="button" className="btn btn-secondary btn-compact" onClick={() => setTechnicalOpen(true)}>Technical specification</button>
+        <button type="button" className="btn btn-secondary btn-compact" onClick={setTechnicalOpen.bind(null, true)}>View specifications</button>
       </div>
 
       {!modulesReady ? (
@@ -284,7 +284,7 @@ export function GuidedConnect(props: Props) {
                   <div className="cap-entry-point-suggestion">
                     <span className="badge">Suggested</span>
                     <span>{triggerLabel(recommendation)}</span>
-                    <button type="button" className="btn btn-primary btn-compact" disabled={!modulesReady} onClick={() => openNew(recommendation, deployable.deployableId)}>Use suggestion</button>
+                    <button type="button" className="btn btn-primary btn-compact" disabled={!modulesReady} onClick={openNew.bind(null, recommendation, deployable.deployableId)}>Use suggestion</button>
                   </div>
                 ) : null}
               </article>
@@ -310,16 +310,16 @@ export function GuidedConnect(props: Props) {
                   </dl>
                   {isExposureElevated(binding.exposure) ? <p className="cap-entry-point-warning">This entry point can be reached beyond the application’s private boundary.</p> : null}
                   <div className="capabilities-toolbar">
-                    <button type="button" className="btn btn-secondary btn-compact" onClick={() => {
+                    <button type="button" className="btn btn-secondary btn-compact" onClick={function editEntryPoint() {
                       const initial = editableBinding(record)
                       if (initial) {
                         props.onSelectionEvidence(initial.kind === 'ui' ? initial.selectionEvidence : undefined)
                         setEditorState({ choice: initial.kind, deployableId: initial.deployableId, bindingId: initial.bindingId, initial })
                       }
-                    }}>Edit</button>
+                    }}>Edit entry point</button>
                     {removingId === record.bindingId ? (
-                      <><button type="button" className="btn btn-secondary btn-compact" onClick={() => setRemovingId('')}>Cancel</button><button type="button" className="btn btn-danger btn-compact" disabled={busyId === record.bindingId} onClick={() => void removeBinding(record.bindingId)}>Confirm remove</button></>
-                    ) : <button type="button" className="btn btn-secondary btn-compact" onClick={() => setRemovingId(record.bindingId)}>Remove</button>}
+                      <><button type="button" className="btn btn-secondary btn-compact" onClick={setRemovingId.bind(null, '')}>Cancel removal</button><button type="button" className="btn btn-danger btn-compact" disabled={busyId === record.bindingId} onClick={removeBinding.bind(null, record.bindingId)}>Remove entry point</button></>
+                    ) : <button type="button" className="btn btn-secondary btn-compact" onClick={setRemovingId.bind(null, record.bindingId)}>Remove entry point</button>}
                   </div>
                 </article>
               )
@@ -329,11 +329,13 @@ export function GuidedConnect(props: Props) {
       ) : null}
 
       {!editorState ? (
-        <section aria-label="Add an entry point">
-          <h4>{inboundBindingRecords.length ? 'Add another entry point' : 'Choose another way to start a capability'}</h4>
+        <section aria-label="Add entry point">
+          <h4>{inboundBindingRecords.length ? 'Add entry point' : 'Choose entry point'}</h4>
           <div className="cap-connect-dispositions" role="group" aria-label="Entry point type">
             {visibleTriggerOptions.map((option) => (
-              <button key={option.id} type="button" className="cap-connect-disposition" disabled={!modulesReady} onClick={() => openNew(option.id)}>
+              <button key={option.id} type="button" className="cap-connect-disposition" disabled={!modulesReady} onClick={function addEntryPoint() {
+                openNew(option.id)
+              }}>
                 <span className="cap-connect-disposition-icon" aria-hidden="true">•</span>
                 <strong>{option.label}</strong><span>{option.description}</span>
               </button>
@@ -342,7 +344,7 @@ export function GuidedConnect(props: Props) {
         </section>
       ) : (
         <section className="cap-entry-point-editor-wrap" aria-label="Edit entry point">
-          <div className="cap-entry-point-editor-head"><div><span className="capabilities-eyebrow">Entry point</span><h4>{editorState.initial ? 'Revise this entry point' : `Add ${triggerLabel(editorState.choice)}`}</h4></div><button type="button" className="btn btn-ghost btn-compact" onClick={() => setEditorState(undefined)}>Cancel</button></div>
+          <div className="cap-entry-point-editor-head"><div><span className="capabilities-eyebrow">Entry point</span><h4>{editorState.initial ? 'Revise entry point' : `Add ${triggerLabel(editorState.choice)}`}</h4></div><button type="button" className="btn btn-ghost btn-compact" onClick={setEditorState.bind(null, undefined)}>Cancel edit</button></div>
           {renderEditor()}
         </section>
       )}
@@ -350,7 +352,7 @@ export function GuidedConnect(props: Props) {
       {actionMessage ? <p className="capabilities-note" role="status">{actionMessage}</p> : null}
 
       {technicalOpen ? (
-        <Dialog title="Entry-point technical specification" wide onClose={() => setTechnicalOpen(false)} actions={<button type="button" className="btn btn-primary" onClick={() => setTechnicalOpen(false)}>Close</button>}>
+        <Dialog title="Entry-point technical specification" wide onClose={setTechnicalOpen.bind(null, false)} actions={<button type="button" className="btn btn-primary" onClick={setTechnicalOpen.bind(null, false)}>Close details</button>}>
           <p className="lede">Canonical binding records, generated adapter targets, routes, commands, identifiers, diagnostics, and architecture provenance used by shared-setup generation.</p>
           <dl className="capabilities-ids">
             <div><dt>Project</dt><dd><code>{projectId}</code></dd></div>

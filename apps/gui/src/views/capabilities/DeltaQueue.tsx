@@ -123,7 +123,7 @@ export function DeltaQueue({ bridge, projectId, projection }: Props) {
       <p className="lede">
         {projection === 'guided'
           ? 'Process the approved change one module at a time. Each target is verified before the next unlocks.'
-          : 'Deterministic provider-first ordering; only the next actionable target can export a bounded delta packet.'}
+          : 'The queue uses provider-first order. Only the next target can export a delta packet.'}
       </p>
 
       {impacts.length === 0 ? (
@@ -196,11 +196,11 @@ export function DeltaQueue({ bridge, projectId, projection }: Props) {
             <p role="status">Queue exhausted — every approved target has been processed.</p>
           ) : (
             <div className="capabilities-toolbar" role="group" aria-label="Delta actions">
-              <button type="button" className="btn btn-primary btn-compact" disabled={busy} onClick={() => void exportNext()}>
-                Export delta packet for {queue.nextTarget}
+              <button type="button" className="btn btn-primary btn-compact" disabled={busy} onClick={exportNext}>
+                Export next delta
               </button>
-              <button type="button" className="btn btn-secondary btn-compact" disabled={busy} onClick={() => void verifyAndComplete()}>
-                Verify &amp; complete {queue.nextTarget}
+              <button type="button" className="btn btn-secondary btn-compact" disabled={busy} onClick={verifyAndComplete}>
+                Complete next delta
               </button>
             </div>
           )}

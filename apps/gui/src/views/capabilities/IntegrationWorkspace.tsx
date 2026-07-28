@@ -325,6 +325,17 @@ function CompositionConfigurationEditor(props: {
     ])))
   }, [signature])
 
+  function saveEmptyRoot() {
+    void props.onSave([])
+  }
+
+  function saveCompositionFactories() {
+    void props.onSave(props.configuration.registrations.map((registration) => ({
+      contractId: registration.contractId,
+      implementationTarget: targets[registration.contractId]!.trim(),
+    })))
+  }
+
   if (props.configuration.registrations.length === 0) {
     return (
       <div className="cap-composition-config ready">
@@ -335,7 +346,7 @@ function CompositionConfigurationEditor(props: {
             type="button"
             className="btn btn-secondary btn-compact"
             disabled={props.busy}
-            onClick={() => void props.onSave([])}
+            onClick={saveEmptyRoot}
           >
             Create empty composition root
           </button>
@@ -368,10 +379,7 @@ function CompositionConfigurationEditor(props: {
         type="button"
         className="btn btn-secondary btn-compact"
         disabled={props.busy || !complete}
-        onClick={() => void props.onSave(props.configuration.registrations.map((registration) => ({
-          contractId: registration.contractId,
-          implementationTarget: targets[registration.contractId]!.trim(),
-        })))}
+        onClick={saveCompositionFactories}
       >
         Save composition factories
       </button>

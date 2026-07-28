@@ -119,6 +119,18 @@ describe('CAP-TEST-070 Build entry-point backing persistence', () => {
     expect(ws.getApprovedInboundBinding('proj-1', withoutExposure.bindingId)?.exposure).toBe('private')
   })
 
+  it('blocks non-STE inbound behavior before persistence', () => {
+    const ws = tmpWorkspace()
+    const draft = httpBinding({
+      validationBehavior: 'Validate the request; return each error.',
+    })
+
+    expect(() => ws.approveInboundBinding('proj-1', draft)).toThrow(
+      /cannot approve inbound binding: STE check failed.*STE-PUNCTUATION-SEMICOLON/,
+    )
+    expect(ws.getApprovedInboundBinding('proj-1', draft.bindingId)).toBeUndefined()
+  })
+
   it('persists and lists multiple inbound bindings on the same operation (never deduplicated)', () => {
     const ws = tmpWorkspace()
     const first = httpBinding({ bindingId: 'bind-http-1', method: 'POST', path: '/widgets' })

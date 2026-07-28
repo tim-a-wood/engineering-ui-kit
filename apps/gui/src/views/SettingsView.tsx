@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Settings } from '@engineering-ui-kit/core'
+import { stePolicyNotice } from '@engineering-ui-kit/core/browser'
 import type { EuikBridge } from '../bridge'
 import { PageHeader, StatusLine, Toggle, type Status } from '../components'
 import { Icon } from '../icons'
@@ -81,7 +82,7 @@ export function SettingsView(props: {
               ))}
             </select>
             <p className="muted" id="s-template-note" style={{ margin: 0, fontSize: 12 }}>
-              Preselected in Create Task Packet's template picker.
+              The Create Task Packet template picker preselects this template.
             </p>
           </div>
           <SaveButton panel="Workspace" />
@@ -91,7 +92,7 @@ export function SettingsView(props: {
           <h2 id="handoff-heading">Copilot handoff defaults</h2>
           <p className="panel-desc">Set defaults for creating Copilot handoff task packets.</p>
           <div className="field">
-            <label htmlFor="s-max-uploads">Max uploads per task packet</label>
+            <label htmlFor="s-max-uploads">Maximum uploads</label>
             <input id="s-max-uploads" type="text" value="3" readOnly aria-describedby="s-max-uploads-note" />
             <p className="muted" id="s-max-uploads-note" style={{ margin: 0, fontSize: 12 }}>
               Fixed by the strict Microsoft 365 Copilot three-file budget.
@@ -109,9 +110,9 @@ export function SettingsView(props: {
         </section>
 
         <section className="panel" aria-labelledby="review-heading">
-          <h2 id="review-heading">Review &amp; verification defaults</h2>
+          <h2 id="review-heading">Review defaults</h2>
           <p className="panel-desc">Set defaults for verifying and reviewing changes.</p>
-          <Toggle label="Include build/test results in review packets" checked={draft.includeBuildTestResultsByDefault} onChange={(v) => set('includeBuildTestResultsByDefault', v)} />
+          <Toggle label="Include test results" checked={draft.includeBuildTestResultsByDefault} onChange={(v) => set('includeBuildTestResultsByDefault', v)} />
           <div className="field" style={{ marginTop: 12 }}>
             <label htmlFor="s-timeout">Command timeout (minutes)</label>
             <input
@@ -128,14 +129,30 @@ export function SettingsView(props: {
           <SaveButton panel="Review & verification" />
         </section>
 
+        <section className="panel settings-writing-standard" aria-labelledby="writing-heading">
+          <div className="settings-policy-heading">
+            <h2 id="writing-heading">Writing standard</h2>
+            <span className="badge badge-success">Required</span>
+          </div>
+          <p className="panel-desc">{stePolicyNotice()}</p>
+          <ul className="settings-policy-list">
+            <li>Use concise labels, direct instructions, and consistent technical terms.</li>
+            <li>Apply the profile to interface text, diagrams, design documents, and module descriptions.</li>
+            <li>Built-in AI prompts require the same profile for all human-facing output.</li>
+          </ul>
+          <p className="muted settings-policy-note">
+            Project terms can extend this profile. They cannot replace or weaken it.
+          </p>
+        </section>
+
         <section className="panel" aria-labelledby="safety-heading">
           <h2 id="safety-heading">Safety</h2>
           <p className="panel-desc">Configure safety and confirmation preferences.</p>
-          <Toggle label="Require manual review before apply" checked={draft.requireManualReviewBeforeApply} onChange={(v) => set('requireManualReviewBeforeApply', v)} />
-          <Toggle label="Confirm overwrite of existing files" checked={draft.confirmOverwriteExistingFiles} onChange={(v) => set('confirmOverwriteExistingFiles', v)} />
-          <Toggle label="Warn on dirty repo" checked={draft.warnOnDirtyRepo} onChange={(v) => set('warnOnDirtyRepo', v)} />
+          <Toggle label="Require review" checked={draft.requireManualReviewBeforeApply} onChange={(v) => set('requireManualReviewBeforeApply', v)} />
+          <Toggle label="Confirm file overwrite" checked={draft.confirmOverwriteExistingFiles} onChange={(v) => set('confirmOverwriteExistingFiles', v)} />
+          <Toggle label="Dirty repository warning" checked={draft.warnOnDirtyRepo} onChange={(v) => set('warnOnDirtyRepo', v)} />
           <div className="field" style={{ marginTop: 12 }}>
-            <label htmlFor="s-warn-files">Warn when overlay changes more than (files)</label>
+            <label htmlFor="s-warn-files">File warning limit</label>
             <input
               id="s-warn-files"
               type="text"
@@ -146,6 +163,9 @@ export function SettingsView(props: {
                 if (Number.isFinite(parsed) && parsed > 0) set('warnWhenOverlayChangesMoreThanFiles', parsed)
               }}
             />
+            <p className="muted" style={{ margin: 0, fontSize: 12 }}>
+              The application warns you when an overlay changes more files than this limit.
+            </p>
           </div>
           <SaveButton panel="Safety" />
         </section>

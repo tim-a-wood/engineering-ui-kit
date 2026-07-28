@@ -10,6 +10,8 @@ import { installMockBridge } from '../src/mockBridge'
  */
 const CANONICAL_CAP_METHODS = [
   'capabilitiesEnsureInitialized',
+  'capabilitiesGetSteLexicon',
+  'capabilitiesSaveSteLexicon',
   'capabilitiesGetApplication',
   'capabilitiesSaveApplicationDraft',
   'capabilitiesApproveApplication',
@@ -30,6 +32,18 @@ const CANONICAL_CAP_METHODS = [
   'capabilitiesSaveModuleDraft',
   'capabilitiesApproveModule',
   'capabilitiesListModules',
+  'capabilitiesListModuleDesigns',
+  'capabilitiesCreateModuleDesignDraft',
+  'capabilitiesSaveModuleDesignDraft',
+  'capabilitiesApproveModuleDesign',
+  'capabilitiesSaveModuleDesignSession',
+  'capabilitiesListScenarioRuns',
+  'capabilitiesCreateScenarioRun',
+  'capabilitiesRunScenarioCommand',
+  'capabilitiesRecordScenarioStep',
+  'capabilitiesFinalizeScenarioRun',
+  'capabilitiesSaveScenarioEvidence',
+  'capabilitiesGetScenarioEvidence',
   'capabilitiesListBindings',
   'capabilitiesListRuns',
   'capabilitiesCreateRun',
@@ -96,6 +110,27 @@ describe('CAP-TEST-003 capabilities bridge surface', () => {
     expect((bridge as { exec?: unknown }).exec).toBeUndefined()
     expect((bridge as { matlabEval?: unknown }).matlabEval).toBeUndefined()
     expect((bridge as { invoke?: unknown }).invoke).toBeUndefined()
+  })
+
+  it('stores a versioned project STE vocabulary record', async () => {
+    const bridge = installMockBridge()
+    const saved = await bridge.capabilitiesSaveSteLexicon(
+      'project-ste',
+      {
+        generalWords: ['use'],
+        technicalTerms: ['audit finding'],
+        prohibitedAliases: { defect: 'audit finding' },
+      },
+      'Licensed checker export 2026-07',
+      '2026-07-28T00:00:00.000Z',
+    )
+
+    expect(await bridge.capabilitiesGetSteLexicon('project-ste')).toEqual(saved)
+    expect(saved).toEqual(expect.objectContaining({
+      profileId: 'EUIT-STE-001',
+      standardIssue: 'ASD-STE100 Issue 9 (2025-01-15)',
+      source: 'Licensed checker export 2026-07',
+    }))
   })
 
   it('lists needs-attention from architecture modules as draft until verified', async () => {

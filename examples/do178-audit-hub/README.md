@@ -101,6 +101,14 @@ The implementation follows explicit ports and adapters:
 - `server/http-api.ts` — the driving capability HTTP adapter; and
 - `src` — the React audit experience and live API client.
 
+The Engineering UI Kit design record also separates behavior by authority:
+
+- Plan owns the Audit Hub application workflows.
+- Design allocates each workflow action to the approved modules.
+- Build owns each module activity, state machine, and internal interaction.
+- Verify preserves the observed step and its source, allocation, refinement,
+  operation, event, and evidence identities.
+
 `capabilities/adapter-catalog.json` preserves the approved
 `mod.external-adapters` traceability boundary while refining it into
 actor-specific technology adapters. `capabilities/implementation-architecture.json`

@@ -1,0 +1,1109 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "id": "module-design:mod.evidence-graph",
+  "revision": "1.1.0",
+  "status": "approved",
+  "architecture": {
+    "id": "arch.do178c-audit-hub",
+    "revision": "4",
+    "contentHash": "9e85b23877737297bba216dd45275f490a1a042c2e11a3bdd97fc218762756c2"
+  },
+  "module": {
+    "moduleId": "mod.evidence-graph",
+    "moduleVersion": "1.0.0",
+    "name": "Evidence Graph",
+    "moduleType": "domain",
+    "responsibility": "Own normalized lifecycle evidence metadata, stable identities, typed relationships, complete requirement-to-result chains, provenance, content hashes, dossiers, cross-phase search, staleness evaluation, change impact, and trace traversal.",
+    "nonResponsibilities": [
+      "source-file-parsing",
+      "workspace-selection",
+      "finding-transitions",
+      "UI-rendering",
+      "artifact-mutation"
+    ],
+    "ownedConcerns": [
+      "Module behavior"
+    ],
+    "excludedConcerns": [
+      "source-file-parsing",
+      "workspace-selection",
+      "finding-transitions",
+      "UI-rendering",
+      "artifact-mutation"
+    ]
+  },
+  "trace": {
+    "useCaseIds": [
+      "uc-findings",
+      "uc-reviews",
+      "uc-package"
+    ],
+    "workflowNodeIds": [
+      "finding:reverify",
+      "review:inspect",
+      "package:check"
+    ],
+    "scenarioStepIds": [
+      "uc-findings:step:reverify",
+      "uc-reviews:step:inspect",
+      "uc-package:step:verify"
+    ],
+    "ruleIds": [
+      "rule-authority",
+      "rule-local-workflow",
+      "rule-snapshot",
+      "rule-publish",
+      "rule-fallback",
+      "rule-finding",
+      "rule-stale",
+      "rule-phases",
+      "rule-shared-anatomy",
+      "rule-shared-actions",
+      "rule-sample-default",
+      "rule-sample-real",
+      "rule-sample-badge",
+      "rule-sample-overlay",
+      "rule-sample-export",
+      "rule-sample-portable",
+      "rule-same-ui",
+      "rule-objectives",
+      "rule-claims",
+      "rule-llr",
+      "rule-coverage",
+      "rule-compare",
+      "rule-security",
+      "rule-performance",
+      "rule-determinism"
+    ],
+    "qualityRequirementIds": [],
+    "sourceRefs": [
+      "source-1",
+      "source-2",
+      "source-3"
+    ],
+    "designDecisionIds": []
+  },
+  "boundary": {
+    "directDependencyIds": [
+      "mod.evidence-store"
+    ],
+    "directConsumerIds": [
+      "mod.audit-experience",
+      "mod.lifecycle-explorer",
+      "mod.assurance-workflow",
+      "mod.ingestion-publication"
+    ],
+    "deployableId": "unassigned",
+    "runtimeAllocation": "local-embedded",
+    "runtimeLanguage": "typescript",
+    "ownedPaths": [
+      "src/modules/evidence-graph/"
+    ],
+    "editableSharedPaths": []
+  },
+  "providedOperations": [
+    {
+      "operationId": "op.query-dossier",
+      "contractVersion": "1.0.0"
+    },
+    {
+      "operationId": "op-traverse-evidence-chain",
+      "contractVersion": "1.0.0"
+    },
+    {
+      "operationId": "op-search-evidence",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [
+    {
+      "operationId": "op.persist-evidence-state",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Load and save canonical evidence snapshots."
+    }
+  ],
+  "schemas": [
+    {
+      "id": "op.query-dossier.input",
+      "text": "op.query-dossier.input"
+    },
+    {
+      "id": "op.query-dossier.output",
+      "text": "op.query-dossier.output"
+    },
+    {
+      "id": "op-traverse-evidence-chain.input",
+      "text": "op-traverse-evidence-chain.input"
+    },
+    {
+      "id": "op-traverse-evidence-chain.output",
+      "text": "op-traverse-evidence-chain.output"
+    },
+    {
+      "id": "op-search-evidence.input",
+      "text": "op-search-evidence.input"
+    },
+    {
+      "id": "op-search-evidence.output",
+      "text": "op-search-evidence.output"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule-authority",
+      "text": "Connected engineering artifacts remain authoritative. The hub must not write changes to lifecycle files."
+    },
+    {
+      "id": "rule-local-workflow",
+      "text": "Only hub-local findings, reviews, dispositions, package selections, annotations, and sample sandbox state are editable, and every change is auditable."
+    },
+    {
+      "id": "rule-snapshot",
+      "text": "Each published snapshot is immutable and identifies exact source revisions, extraction context, and hashes."
+    },
+    {
+      "id": "rule-publish",
+      "text": "An extraction or indexing failure prevents candidate publication. An evidence gap stays visible and does not prevent a reliable snapshot."
+    },
+    {
+      "id": "rule-fallback",
+      "text": "A failed or partial refresh never replaces the last valid published snapshot."
+    },
+    {
+      "id": "rule-finding",
+      "text": "The hub calculates deterministic findings for each snapshot. Human findings keep attribution, history, disposition, and closure evidence."
+    },
+    {
+      "id": "rule-stale",
+      "text": "Evidence is stale when its source revision or dependency hash differs from the selected snapshot. Evidence is also stale after an unreviewed dependency change."
+    },
+    {
+      "id": "rule-phases",
+      "text": "The Evidence Explorer navigation is Overview, Planning, Requirements, Design, Implementation, Verification, Configuration Management, Quality Assurance, and Certification."
+    },
+    {
+      "id": "rule-shared-anatomy",
+      "text": "Every lifecycle area uses a consistent phase header, tailored subnavigation, working evidence table or visualization, evidence inspector, findings drawer, and baseline-compare mode."
+    },
+    {
+      "id": "rule-shared-actions",
+      "text": "Each evidence item provides its dossier, traces, source location, baseline comparison, source data, findings, reviews, and package controls."
+    },
+    {
+      "id": "rule-sample-default",
+      "text": "If zero real projects exist, the sample opens automatically with no picker blocker or blank dashboard."
+    },
+    {
+      "id": "rule-sample-real",
+      "text": "After a real project exists, the last real project opens by default and the sample remains selectable under Examples."
+    },
+    {
+      "id": "rule-sample-badge",
+      "text": "The sample always displays a Sample Data badge and a Connect a real project action."
+    },
+    {
+      "id": "rule-sample-overlay",
+      "text": "Bundled sample evidence is immutable. A resettable sandbox stores sample findings, reviews, dispositions, packages, and preferences."
+    },
+    {
+      "id": "rule-sample-export",
+      "text": "Every sample export is marked Synthetic sample — not certification evidence in both visible output and manifest metadata."
+    },
+    {
+      "id": "rule-sample-portable",
+      "text": "The sample uses a normalized extraction snapshot for synthetic artifacts. It must not disguise text or JSON as proprietary binary files."
+    },
+    {
+      "id": "rule-same-ui",
+      "text": "Sample projects and real projects use the same APIs, domain model, routes, and components. The product has no demo-only interface."
+    },
+    {
+      "id": "rule-objectives",
+      "text": "Do not bundle copyrighted DO-178C or DO-331 objective text. Use configurable identifiers and licensed profiles."
+    },
+    {
+      "id": "rule-claims",
+      "text": "The application may report evidence status against the configured profile but must not claim certification, regulatory approval, or compliance."
+    },
+    {
+      "id": "rule-llr",
+      "text": "Requirement classifications and allocation rules prevent ambiguous duplication between higher-level and low-level requirement views."
+    },
+    {
+      "id": "rule-coverage",
+      "text": "The hub imports coverage from authoritative results. The hub does not calculate coverage."
+    },
+    {
+      "id": "rule-compare",
+      "text": "Baseline comparison reports added, removed, changed, and stale evidence without performing semantic merge or conflict resolution."
+    },
+    {
+      "id": "rule-security",
+      "text": "Credentials and secrets are never stored in project configuration, snapshots, logs, packages, or displayed evidence."
+    },
+    {
+      "id": "rule-performance",
+      "text": "Normal browsing, filtering, search, trace navigation, dossier opening, and phase switching should usually respond within two seconds at accepted scale."
+    },
+    {
+      "id": "rule-determinism",
+      "text": "The bundled sample has deterministic identifiers, dates, people, revisions, hashes, relationships, counts, and reset behavior."
+    }
+  ],
+  "invariants": [],
+  "behavior": {
+    "preconditions": [
+      "The application request is valid."
+    ],
+    "postconditions": [
+      "The module returns an observable result."
+    ],
+    "domainRejections": [],
+    "technicalFailures": [],
+    "sideEffects": [],
+    "idempotency": "Not defined",
+    "cancellation": "Not defined",
+    "timeouts": "Not defined",
+    "concurrency": "Not defined",
+    "retry": "Retry only a declared technical failure.",
+    "recovery": "Keep the last valid module state.",
+    "emittedEvents": [],
+    "consumedEvents": [],
+    "stateDefinitions": [],
+    "stateTransitions": [],
+    "activityDefinitions": [
+      {
+        "id": "activity:mod.evidence-graph:allocated-actions",
+        "name": "Perform allocated actions",
+        "refinesWorkflowNodeIds": [
+          "finding:reverify",
+          "review:inspect",
+          "package:check"
+        ],
+        "graph": {
+          "id": "activity:mod.evidence-graph:allocated-actions:graph",
+          "name": "Perform allocated actions",
+          "nodes": [
+            {
+              "id": "module:mod.evidence-graph:initial",
+              "kind": "initial",
+              "label": "Initial",
+              "description": "The module activity starts.",
+              "refinesIds": []
+            },
+            {
+              "id": "module:mod.evidence-graph:refine:finding:reverify",
+              "kind": "call-operation",
+              "label": "Verify corrective action",
+              "description": "The module performs the allocated verify corrective action action.",
+              "refinesIds": [
+                "finding:reverify"
+              ],
+              "operationId": "op-traverse-evidence-chain"
+            },
+            {
+              "id": "module:mod.evidence-graph:refine:review:inspect",
+              "kind": "call-operation",
+              "label": "Inspect review history",
+              "description": "The module performs the allocated inspect review history action.",
+              "refinesIds": [
+                "review:inspect"
+              ],
+              "operationId": "op.query-dossier"
+            },
+            {
+              "id": "module:mod.evidence-graph:refine:package:check",
+              "kind": "call-operation",
+              "label": "Check package integrity",
+              "description": "The module performs the allocated check package integrity action.",
+              "refinesIds": [
+                "package:check"
+              ],
+              "operationId": "op.query-dossier"
+            },
+            {
+              "id": "module:mod.evidence-graph:final",
+              "kind": "final",
+              "label": "Final",
+              "description": "The module activity ends.",
+              "refinesIds": []
+            }
+          ],
+          "edges": [
+            {
+              "id": "activity:mod.evidence-graph:edge:1",
+              "fromNodeId": "module:mod.evidence-graph:initial",
+              "toNodeId": "module:mod.evidence-graph:refine:finding:reverify",
+              "traceIds": [
+                "workflow:uc-findings",
+                "finding:reverify",
+                "workflow:uc-reviews",
+                "review:inspect",
+                "workflow:uc-package",
+                "package:check"
+              ]
+            },
+            {
+              "id": "activity:mod.evidence-graph:edge:2",
+              "fromNodeId": "module:mod.evidence-graph:refine:finding:reverify",
+              "toNodeId": "module:mod.evidence-graph:refine:review:inspect",
+              "traceIds": [
+                "workflow:uc-findings",
+                "finding:reverify",
+                "workflow:uc-reviews",
+                "review:inspect",
+                "workflow:uc-package",
+                "package:check"
+              ]
+            },
+            {
+              "id": "activity:mod.evidence-graph:edge:3",
+              "fromNodeId": "module:mod.evidence-graph:refine:review:inspect",
+              "toNodeId": "module:mod.evidence-graph:refine:package:check",
+              "traceIds": [
+                "workflow:uc-findings",
+                "finding:reverify",
+                "workflow:uc-reviews",
+                "review:inspect",
+                "workflow:uc-package",
+                "package:check"
+              ]
+            },
+            {
+              "id": "activity:mod.evidence-graph:edge:4",
+              "fromNodeId": "module:mod.evidence-graph:refine:package:check",
+              "toNodeId": "module:mod.evidence-graph:final",
+              "traceIds": [
+                "workflow:uc-findings",
+                "finding:reverify",
+                "workflow:uc-reviews",
+                "review:inspect",
+                "workflow:uc-package",
+                "package:check"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "interactionDefinitions": [],
+    "states": [],
+    "activities": [],
+    "interactions": []
+  },
+  "data": {
+    "persistentRecords": [],
+    "ownership": [],
+    "retention": [],
+    "migrationNeeds": [],
+    "confidentiality": "Not classified",
+    "provenanceFields": [],
+    "canonicalUnits": []
+  },
+  "runtime": {
+    "configurationRefs": [],
+    "secretRefs": [],
+    "lifecycleRegistration": "Not defined",
+    "health": [],
+    "telemetry": [],
+    "resourceOwnership": [],
+    "startup": [],
+    "shutdown": [],
+    "compatibilityConstraints": []
+  },
+  "verification": {
+    "examples": [],
+    "edgeCases": [],
+    "acceptanceCaseIds": [
+      "ac-7",
+      "ac-2",
+      "ac-9"
+    ],
+    "verificationSuiteIds": [
+      "acceptance:mod.evidence-graph"
+    ],
+    "requiredEvidence": [
+      "screenshot",
+      "structured"
+    ],
+    "testDoubles": [],
+    "fixtureNeeds": [],
+    "commands": []
+  },
+  "diagrams": [
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:component:mod.evidence-graph",
+      "kind": "component",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.evidence-graph"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.evidence-graph",
+      "title": "Evidence Graph component diagram",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "component:mod.audit-experience",
+          "kind": "component",
+          "label": "Audit Hub Experience",
+          "stereotype": "component",
+          "description": "Own the responsive Audit Hub front end. Provide workspace selection, lifecycle views, search, dossiers, traces, baseline comparison, findings, reviews, packages, sample reset, and refresh status.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package",
+            "uc-reset"
+          ]
+        },
+        {
+          "id": "component:mod.lifecycle-explorer",
+          "kind": "component",
+          "label": "Lifecycle Explorer",
+          "stereotype": "component",
+          "description": "Own the lifecycle phase model and shared view structure. Provide phase views, readiness summaries, evidence projections, comparison projections, and approved lifecycle areas.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-gaps",
+            "uc-compare"
+          ]
+        },
+        {
+          "id": "component:mod.assurance-workflow",
+          "kind": "component",
+          "label": "Assurance Workflow",
+          "stereotype": "component",
+          "description": "Own deterministic and human findings, review and independence records, assignment, disposition, corrective action, reverification, closure history, configurable objective mappings, audit-package membership, manifests, and watermark policy.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "component:mod.ingestion-publication",
+          "kind": "component",
+          "label": "Evidence publication",
+          "stereotype": "component",
+          "description": "Own scanning, artifact classification, extractor orchestration, normalization, diagnostics, deterministic check execution, refresh progress, reliability gates, and atomic publication while preserving the last valid snapshot.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh"
+          ]
+        },
+        {
+          "id": "component:mod.evidence-graph",
+          "kind": "component",
+          "label": "Evidence Graph",
+          "stereotype": "component",
+          "description": "Own normalized lifecycle artifact metadata, typed relationships, requirement-to-result chains, provenance and hashes, dossiers, cross-phase search, staleness evaluation, change impact, and trace traversal.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "component:mod.evidence-store",
+          "kind": "component",
+          "label": "Evidence Store",
+          "stereotype": "component",
+          "description": "Persist project metadata, immutable snapshots, normalized evidence, graph relationships, reviews, findings, history, overlay state, and package manifests. Provide search, phase, and comparison queries.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package",
+            "uc-reset"
+          ]
+        },
+        {
+          "id": "provided:mod.evidence-graph:op.query-dossier",
+          "kind": "provided-interface",
+          "label": "Query dossier",
+          "description": "Evidence Graph provides this operation.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-graph"
+        },
+        {
+          "id": "provided:mod.evidence-graph:op-traverse-evidence-chain",
+          "kind": "provided-interface",
+          "label": "Traverse evidence chain",
+          "description": "Evidence Graph provides this operation.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-graph"
+        },
+        {
+          "id": "provided:mod.evidence-graph:op-search-evidence",
+          "kind": "provided-interface",
+          "label": "Search evidence",
+          "description": "Evidence Graph provides this operation.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-graph"
+        },
+        {
+          "id": "required:mod.evidence-graph:op.persist-evidence-state",
+          "kind": "required-interface",
+          "label": "Persist evidence state",
+          "description": "Evidence Graph requires this operation.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-graph"
+        },
+        {
+          "id": "required:mod.audit-experience:op.query-dossier:for:mod.evidence-graph",
+          "kind": "required-interface",
+          "label": "Query dossier",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.lifecycle-explorer:op-traverse-evidence-chain:for:mod.evidence-graph",
+          "kind": "required-interface",
+          "label": "Traverse evidence chain",
+          "description": "Lifecycle Explorer requires this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.lifecycle-explorer"
+        },
+        {
+          "id": "provided:mod.evidence-store:op.persist-evidence-state:for:mod.evidence-graph",
+          "kind": "provided-interface",
+          "label": "Persist evidence state",
+          "description": "Evidence Store provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-store"
+        },
+        {
+          "id": "required:mod.assurance-workflow:op-search-evidence:for:mod.evidence-graph",
+          "kind": "required-interface",
+          "label": "Search evidence",
+          "description": "Assurance Workflow requires this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.assurance-workflow"
+        }
+      ],
+      "edges": [
+        {
+          "id": "assembly:mod.audit-experience:mod.evidence-graph:op.query-dossier",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.query-dossier:for:mod.evidence-graph",
+          "toId": "provided:mod.evidence-graph:op.query-dossier",
+          "label": "Query dossier",
+          "description": "Search, dossiers, traces, provenance, staleness, and comparison pivots require normalized graph queries.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.lifecycle-explorer:mod.evidence-graph:op-traverse-evidence-chain",
+          "kind": "assembly",
+          "fromId": "required:mod.lifecycle-explorer:op-traverse-evidence-chain:for:mod.evidence-graph",
+          "toId": "provided:mod.evidence-graph:op-traverse-evidence-chain",
+          "label": "Traverse evidence chain",
+          "description": "Phase tables, readiness metrics, evidence flow, and compare views are derived from normalized artifacts and relationships.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-gaps",
+            "uc-compare"
+          ]
+        },
+        {
+          "id": "assembly:mod.evidence-graph:mod.evidence-store:op.persist-evidence-state",
+          "kind": "assembly",
+          "fromId": "required:mod.evidence-graph:op.persist-evidence-state",
+          "toId": "provided:mod.evidence-store:op.persist-evidence-state:for:mod.evidence-graph",
+          "label": "Persist evidence state",
+          "description": "Artifacts, relationships, provenance, hashes, search indexes, staleness inputs, and trace projections are stored behind one persistence boundary.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.assurance-workflow:mod.evidence-graph:op-search-evidence",
+          "kind": "assembly",
+          "fromId": "required:mod.assurance-workflow:op-search-evidence:for:mod.evidence-graph",
+          "toId": "provided:mod.evidence-graph:op-search-evidence",
+          "label": "Search evidence",
+          "description": "Findings, reviews, objectives, and package items must reference canonical evidence identities and revisions.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "dependency:mod.ingestion-publication:mod.evidence-graph",
+          "kind": "dependency",
+          "fromId": "component:mod.ingestion-publication",
+          "toId": "component:mod.evidence-graph",
+          "label": "«use»",
+          "description": "Normalized extractor output and deterministic relationship checks must conform to the canonical graph model.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Evidence Graph with 4 direct consumers and 1 direct dependencies.",
+      "contentHash": "07d99bb15157775f4424b68b2da7f5d3b5482fde44bbc7dd67fb76296c798931"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-activity:mod.evidence-graph:activity:mod.evidence-graph:allocated-actions",
+      "kind": "activity",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.evidence-graph",
+        "activity:mod.evidence-graph:allocated-actions"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.evidence-graph",
+      "title": "Perform allocated actions module activity",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:initial",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module activity starts.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "module-design:mod.evidence-graph",
+            "mod.evidence-graph",
+            "activity:mod.evidence-graph:allocated-actions",
+            "module:mod.evidence-graph:initial",
+            "finding:reverify",
+            "review:inspect",
+            "package:check"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:refine:finding:reverify",
+          "kind": "call-operation",
+          "label": "Verify corrective action",
+          "description": "The module performs the allocated verify corrective action action.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "module-design:mod.evidence-graph",
+            "mod.evidence-graph",
+            "activity:mod.evidence-graph:allocated-actions",
+            "module:mod.evidence-graph:refine:finding:reverify",
+            "finding:reverify",
+            "review:inspect",
+            "package:check",
+            "finding:reverify"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op-traverse-evidence-chain",
+            "Refines: finding:reverify"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:refine:review:inspect",
+          "kind": "call-operation",
+          "label": "Inspect review history",
+          "description": "The module performs the allocated inspect review history action.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "module-design:mod.evidence-graph",
+            "mod.evidence-graph",
+            "activity:mod.evidence-graph:allocated-actions",
+            "module:mod.evidence-graph:refine:review:inspect",
+            "finding:reverify",
+            "review:inspect",
+            "package:check",
+            "review:inspect"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.query-dossier",
+            "Refines: review:inspect"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:refine:package:check",
+          "kind": "call-operation",
+          "label": "Check package integrity",
+          "description": "The module performs the allocated check package integrity action.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "module-design:mod.evidence-graph",
+            "mod.evidence-graph",
+            "activity:mod.evidence-graph:allocated-actions",
+            "module:mod.evidence-graph:refine:package:check",
+            "finding:reverify",
+            "review:inspect",
+            "package:check",
+            "package:check"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.query-dossier",
+            "Refines: package:check"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:final",
+          "kind": "final",
+          "label": "Final",
+          "description": "The module activity ends.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "module-design:mod.evidence-graph",
+            "mod.evidence-graph",
+            "activity:mod.evidence-graph:allocated-actions",
+            "module:mod.evidence-graph:final",
+            "finding:reverify",
+            "review:inspect",
+            "package:check"
+          ],
+          "details": []
+        }
+      ],
+      "edges": [
+        {
+          "id": "module-activity:activity:mod.evidence-graph:allocated-actions:edge:activity:mod.evidence-graph:edge:1",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:initial",
+          "toId": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:refine:finding:reverify",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "module-design:mod.evidence-graph",
+            "activity:mod.evidence-graph:allocated-actions",
+            "activity:mod.evidence-graph:edge:1",
+            "workflow:uc-findings",
+            "finding:reverify",
+            "workflow:uc-reviews",
+            "review:inspect",
+            "workflow:uc-package",
+            "package:check"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.evidence-graph:allocated-actions:edge:activity:mod.evidence-graph:edge:2",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:refine:finding:reverify",
+          "toId": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:refine:review:inspect",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "module-design:mod.evidence-graph",
+            "activity:mod.evidence-graph:allocated-actions",
+            "activity:mod.evidence-graph:edge:2",
+            "workflow:uc-findings",
+            "finding:reverify",
+            "workflow:uc-reviews",
+            "review:inspect",
+            "workflow:uc-package",
+            "package:check"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.evidence-graph:allocated-actions:edge:activity:mod.evidence-graph:edge:3",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:refine:review:inspect",
+          "toId": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:refine:package:check",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "module-design:mod.evidence-graph",
+            "activity:mod.evidence-graph:allocated-actions",
+            "activity:mod.evidence-graph:edge:3",
+            "workflow:uc-findings",
+            "finding:reverify",
+            "workflow:uc-reviews",
+            "review:inspect",
+            "workflow:uc-package",
+            "package:check"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.evidence-graph:allocated-actions:edge:activity:mod.evidence-graph:edge:4",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:refine:package:check",
+          "toId": "module-activity:activity:mod.evidence-graph:allocated-actions:node:module:mod.evidence-graph:final",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "module-design:mod.evidence-graph",
+            "activity:mod.evidence-graph:allocated-actions",
+            "activity:mod.evidence-graph:edge:4",
+            "workflow:uc-findings",
+            "finding:reverify",
+            "workflow:uc-reviews",
+            "review:inspect",
+            "workflow:uc-package",
+            "package:check"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Perform allocated actions has 5 behavior nodes and 4 control flows.",
+      "contentHash": "d1c4a8c8ea372f6e94c989990548d1799034f65ae59ee0bb2d2acf7ac4996426"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-state:mod.evidence-graph",
+      "kind": "state-machine",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.evidence-graph"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.evidence-graph",
+      "title": "Evidence Graph state behavior",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-state:mod.evidence-graph:initial",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module state machine starts.",
+          "sourceRecordId": "module-design:mod.evidence-graph",
+          "traceIds": [
+            "module-design:mod.evidence-graph",
+            "mod.evidence-graph"
+          ]
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "id": "CAP-UML-STATE-NOT-APPLICABLE",
+          "code": "CAP-UML-STATE-NOT-APPLICABLE",
+          "message": "This module has no structured state behavior."
+        }
+      ],
+      "textAlternative": "Evidence Graph has no structured state behavior.",
+      "contentHash": "4c8c9910f60fc947c7c70cf154a4a7bd906fdc3eda05131819d3431ad6adc192"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-sequence:mod.evidence-graph:empty",
+      "kind": "sequence",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.evidence-graph"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.evidence-graph",
+      "title": "Evidence Graph internal sequence",
+      "sourceRevision": "1.1.0",
+      "nodes": [],
+      "edges": [],
+      "diagnostics": [
+        {
+          "id": "CAP-UML-INTERNAL-SEQUENCE-NOT-APPLICABLE",
+          "code": "CAP-UML-INTERNAL-SEQUENCE-NOT-APPLICABLE",
+          "message": "This module has no structured internal interaction."
+        }
+      ],
+      "textAlternative": "Evidence Graph has no structured internal interaction.",
+      "contentHash": "a4db139b9f349de6b66c13b1ce201b98858d9e71a5f67aac19a50b6f9e141fee"
+    }
+  ],
+  "unresolvedItems": [],
+  "gates": [
+    {
+      "gateId": "CAP-GATE-MODULE-DESIGN",
+      "passed": true,
+      "diagnostics": []
+    }
+  ],
+  "contentHash": "93212b38fa1b3244dd64f88dfba1417315a9f54eca2fa9cce43e3b38e82ac72e",
+  "approval": {
+    "approvedAt": "2026-07-28T00:00:00.000Z",
+    "approvedBy": "DO-178C sample fixture"
+  }
+}

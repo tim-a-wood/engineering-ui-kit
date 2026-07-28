@@ -74,8 +74,8 @@ export function CapabilityHandoffCard(props: {
           draggable
           onDragStart={dragHandoff}
           role="button"
-          aria-label={`Drag ${fileNameOf(result.files[0].path)} out to Copilot`}
-          title="Drag this straight onto the Copilot chat's attach area"
+          aria-label="Drag handoff"
+          title="Attach in Copilot"
         >
           <span className="drag-dots" aria-hidden="true">⣿</span>
           <span className="drag-file-chip" aria-hidden="true">

@@ -3,7 +3,7 @@
   "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
   "architectureId": "arch.do178c-audit-hub",
   "architectureRevision": "4",
-  "architectureHash": "b74ed12d692384ee074aa4a6a9b09e233dc9babf264a91bf6d4b9e314368f86d",
+  "architectureHash": "9e85b23877737297bba216dd45275f490a1a042c2e11a3bdd97fc218762756c2",
   "deployables": [
     {
       "schemaVersion": "1.0",
@@ -23,7 +23,7 @@
       "proposedLocations": [
         {
           "path": "composition/browser.ts",
-          "evidence": "evidence-derived source root \"composition\"; manifest dependency \"react\"",
+          "evidence": "Repository evidence identifies source root \"composition\". The manifest includes dependency \"react\".",
           "approvalStatus": "proposed"
         }
       ]
@@ -53,7 +53,7 @@
       "proposedLocations": [
         {
           "path": "composition/http-api.ts",
-          "evidence": "evidence-derived source root \"composition\"; single detected runtime language \"typescript\" for the browser application's local backend",
+          "evidence": "Repository evidence identifies source root \"composition\". The repository has one runtime language, \"typescript\", for the browser application's local backend.",
           "approvalStatus": "proposed"
         }
       ]
@@ -126,5 +126,5 @@
     "status": "ready",
     "issues": []
   },
-  "contentHash": "f025d3b115ee688ed8d1fb95e0f8beea0298752485912c7412fdc9347929d0cc"
+  "contentHash": "cf544680528bc758ab2bb0fc49a1d03a81a01484e76ff7798555e281b881626a"
 }

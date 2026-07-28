@@ -9,14 +9,33 @@ import crypto from 'node:crypto'
 import type {
   ApplicationSpecification,
   ArchitectureSpecification,
+  ArtifactReference,
   DeployableSpecification,
   FrontendBinding,
   InboundBinding,
+  ModuleDesignSession,
+  ModuleDesignSpecification,
   ModuleManifest,
+  ScenarioRunRecord,
 } from './types.js'
 import type { ModuleInterviewResponse } from './moduleInterview.js'
 import type { FoundationPlan } from './foundation.js'
 import { withDefaultExposure } from './journeys.js'
+import {
+  evaluateApplicationSte,
+  evaluateArchitectureSte,
+  evaluateFoundationSte,
+  evaluateFrontendBindingSte,
+  evaluateInboundBindingSte,
+  evaluateModuleDesignSte,
+  evaluateModuleInterviewSte,
+  evaluateModuleSte,
+  createProjectSteLexicon,
+  validateProjectSteLexicon,
+  type ProjectSteLexicon,
+  type SteLexicon,
+  type SteRecordEvaluation,
+} from './simplifiedTechnicalEnglish.js'
 
 function atomicWriteJson(filePath: string, value: unknown): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true })
@@ -30,16 +49,31 @@ function readJson<T>(filePath: string): T | undefined {
   return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T
 }
 
+function assertSteApproval(recordName: string, evaluation: SteRecordEvaluation): void {
+  if (evaluation.passed) return
+  const details = evaluation.diagnostics
+    .slice(0, 5)
+    .map((item) => `${item.code}${item.fieldPath ? ` at ${item.fieldPath}` : ''}`)
+    .join(', ')
+  const remainder = Math.max(0, evaluation.diagnostics.length - 5)
+  throw new Error(
+    `cannot approve ${recordName}: STE check failed (${details}${remainder ? `, and ${remainder} more` : ''})`,
+  )
+}
+
 import { canonicalHash } from './hash.js'
 export { canonicalHash }
 
 export type CapabilityIndex = {
   schemaVersion: string
+  behaviorModelVersion?: '1.0'
   applicationDraftId?: string
   applicationApprovedRevision?: string
   architectureDraftId?: string
   architectureApprovedRevision?: string
   modules: Record<string, { draft?: boolean; approvedRevision?: string }>
+  moduleDesigns?: Record<string, { draft?: boolean; approvedRevision?: string; activeSessionId?: string }>
+  scenarioRuns?: Record<string, { scenarioId: string; outcome: string; startedAt: string }>
   bindings: Record<string, { draft?: boolean; approvedRevision?: string }>
   deployables: Record<string, { draft?: boolean; approvedRevision?: string }>
   inboundBindings: Record<string, { draft?: boolean; approvedRevision?: string; removedAt?: string }>
@@ -74,7 +108,10 @@ export class CapabilityWorkspace {
     atomicWriteJson(metaPath, meta)
     atomicWriteJson(path.join(root, 'index.json'), {
       schemaVersion: '1.0',
+      behaviorModelVersion: '1.0',
       modules: {},
+      moduleDesigns: {},
+      scenarioRuns: {},
       bindings: {},
       deployables: {},
       inboundBindings: {},
@@ -85,6 +122,9 @@ export class CapabilityWorkspace {
       'architecture/drafts',
       'architecture/approved',
       'modules',
+      'module-designs',
+      'scenario-runs',
+      'evidence/scenarios',
       'bindings',
       'deployables',
       'inbound-bindings',
@@ -101,6 +141,34 @@ export class CapabilityWorkspace {
     return !(SUPPORTED_WORKSPACE_SCHEMA_VERSIONS as readonly string[]).includes(meta.schemaVersion)
   }
 
+  saveSteLexicon(
+    projectId: string,
+    lexicon: SteLexicon,
+    source: string,
+    reviewedAt?: string,
+  ): ProjectSteLexicon {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    const record = createProjectSteLexicon({
+      source,
+      reviewedAt,
+      generalWords: lexicon.generalWords ?? [],
+      technicalTerms: lexicon.technicalTerms,
+      prohibitedAliases: lexicon.prohibitedAliases,
+    })
+    atomicWriteJson(path.join(this.root(projectId), 'meta', 'ste-lexicon.json'), record)
+    return record
+  }
+
+  getSteLexicon(projectId: string): ProjectSteLexicon | undefined {
+    const stored = readJson<unknown>(
+      path.join(this.root(projectId), 'meta', 'ste-lexicon.json'),
+    )
+    return stored === undefined ? undefined : validateProjectSteLexicon(stored)
+  }
+
   private indexPath(projectId: string): string {
     return path.join(this.root(projectId), 'index.json')
   }
@@ -109,7 +177,10 @@ export class CapabilityWorkspace {
     this.ensureInitialized(projectId)
     const index = readJson<CapabilityIndex>(this.indexPath(projectId)) ?? {
       schemaVersion: '1.0',
+      behaviorModelVersion: '1.0',
       modules: {},
+      moduleDesigns: {},
+      scenarioRuns: {},
       bindings: {},
       deployables: {},
       inboundBindings: {},
@@ -118,6 +189,9 @@ export class CapabilityWorkspace {
     // may be missing these maps on disk.
     index.deployables ??= {}
     index.inboundBindings ??= {}
+    index.moduleDesigns ??= {}
+    index.scenarioRuns ??= {}
+    index.behaviorModelVersion ??= '1.0'
     return index
   }
 
@@ -145,6 +219,7 @@ export class CapabilityWorkspace {
       throw new Error('capability workspace is read-only due to future schema version')
     }
     this.ensureInitialized(projectId)
+    assertSteApproval('application', evaluateApplicationSte(draft, this.getSteLexicon(projectId)))
     const approved: ApplicationSpecification = {
       ...draft,
       status: 'approved',
@@ -188,6 +263,7 @@ export class CapabilityWorkspace {
       throw new Error('capability workspace is read-only due to future schema version')
     }
     this.ensureInitialized(projectId)
+    assertSteApproval('architecture', evaluateArchitectureSte(draft, this.getSteLexicon(projectId)))
     const approved: ArchitectureSpecification = {
       ...draft,
       status: 'approved',
@@ -260,6 +336,8 @@ export class CapabilityWorkspace {
       throw new Error('capability workspace is read-only due to future schema version')
     }
     this.ensureInitialized(projectId)
+    const steLexicon = this.getSteLexicon(projectId)
+    assertSteApproval(`module ${draft.moduleId}`, evaluateModuleSte(draft, steLexicon))
     const dest = path.join(
       this.root(projectId),
       'modules',
@@ -276,6 +354,12 @@ export class CapabilityWorkspace {
       || (approvedInterview.moduleVersion && approvedInterview.moduleVersion !== draft.moduleVersion)
     )) {
       throw new Error('module interview response does not match the module identity or version being approved')
+    }
+    if (approvedInterview) {
+      assertSteApproval(
+        `module interview ${draft.moduleId}`,
+        evaluateModuleInterviewSte(approvedInterview, steLexicon),
+      )
     }
     atomicWriteJson(dest, draft)
     if (approvedInterview) {
@@ -333,6 +417,265 @@ export class CapabilityWorkspace {
     }))
   }
 
+  // --- Polished workflow module-design records and sessions ---------------
+
+  saveModuleDesignDraft(projectId: string, draft: ModuleDesignSpecification): void {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    if (draft.projectId !== projectId) throw new Error('module design projectId does not match workspace')
+    const moduleId = draft.module.moduleId
+    atomicWriteJson(
+      path.join(this.root(projectId), 'module-designs', moduleId, 'drafts', 'current.json'),
+      draft,
+    )
+    const index = this.getIndex(projectId)
+    index.moduleDesigns![moduleId] = { ...index.moduleDesigns![moduleId], draft: true }
+    this.saveIndex(projectId, index)
+  }
+
+  getModuleDesignDraft(projectId: string, moduleId: string): ModuleDesignSpecification | undefined {
+    return readJson(
+      path.join(this.root(projectId), 'module-designs', moduleId, 'drafts', 'current.json'),
+    )
+  }
+
+  approveModuleDesign(
+    projectId: string,
+    draft: ModuleDesignSpecification,
+    approvedBy?: string,
+  ): ModuleDesignSpecification {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    if (draft.projectId !== projectId) throw new Error('module design projectId does not match workspace')
+    if (draft.gates.some((gate) => !gate.passed)) throw new Error('module design has blocking gate diagnostics')
+    assertSteApproval(
+      `module design ${draft.module.moduleId}`,
+      evaluateModuleDesignSte(draft, this.getSteLexicon(projectId)),
+    )
+    const moduleId = draft.module.moduleId
+    const approvedAt = new Date().toISOString()
+    const approved: ModuleDesignSpecification = {
+      ...draft,
+      status: 'approved',
+      approval: {
+        approvedAt,
+        approvedBy,
+        sourceHashes: {
+          architecture: draft.architecture.contentHash,
+          draft: draft.contentHash,
+        },
+        openNonblockingItemIds: draft.unresolvedItems
+          .filter((item) => item.materiality !== 'material')
+          .map((item) => item.id),
+      },
+      contentHash: '',
+    }
+    approved.contentHash = canonicalHash({ ...approved, contentHash: undefined })
+    const dest = path.join(
+      this.root(projectId),
+      'module-designs',
+      moduleId,
+      'approved',
+      `${approved.revision}.json`,
+    )
+    if (fs.existsSync(dest)) {
+      throw new Error(`approved module design revision already exists: ${moduleId}@${approved.revision}`)
+    }
+    atomicWriteJson(dest, approved)
+    const draftPath = path.join(
+      this.root(projectId),
+      'module-designs',
+      moduleId,
+      'drafts',
+      'current.json',
+    )
+    if (fs.existsSync(draftPath)) fs.unlinkSync(draftPath)
+    const index = this.getIndex(projectId)
+    index.moduleDesigns![moduleId] = { ...index.moduleDesigns![moduleId], draft: false, approvedRevision: approved.revision }
+    this.saveIndex(projectId, index)
+    return approved
+  }
+
+  getApprovedModuleDesign(
+    projectId: string,
+    moduleId: string,
+    revision?: string,
+  ): ModuleDesignSpecification | undefined {
+    const rev = revision ?? this.getIndex(projectId).moduleDesigns?.[moduleId]?.approvedRevision
+    if (!rev) return undefined
+    return readJson(
+      path.join(this.root(projectId), 'module-designs', moduleId, 'approved', `${rev}.json`),
+    )
+  }
+
+  listModuleDesigns(projectId: string): {
+    moduleId: string
+    draft?: ModuleDesignSpecification
+    approved?: ModuleDesignSpecification
+    session?: ModuleDesignSession
+  }[] {
+    const index = this.getIndex(projectId)
+    const moduleIds = [...new Set([
+      ...Object.keys(index.modules),
+      ...Object.keys(index.moduleDesigns ?? {}),
+    ])].sort((left, right) => left.localeCompare(right))
+    return moduleIds.map((moduleId) => ({
+      moduleId,
+      draft: this.getModuleDesignDraft(projectId, moduleId),
+      approved: this.getApprovedModuleDesign(projectId, moduleId),
+      session: this.getActiveModuleDesignSession(projectId, moduleId),
+    }))
+  }
+
+  saveModuleDesignSession(projectId: string, session: ModuleDesignSession): void {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    if (session.projectId !== projectId) throw new Error('module design session projectId does not match workspace')
+    atomicWriteJson(
+      path.join(this.root(projectId), 'module-designs', session.moduleId, 'sessions', `${session.id}.json`),
+      session,
+    )
+    const index = this.getIndex(projectId)
+    index.moduleDesigns![session.moduleId] = {
+      ...index.moduleDesigns![session.moduleId],
+      activeSessionId: session.id,
+    }
+    this.saveIndex(projectId, index)
+  }
+
+  getModuleDesignSession(
+    projectId: string,
+    moduleId: string,
+    sessionId: string,
+  ): ModuleDesignSession | undefined {
+    return readJson(
+      path.join(this.root(projectId), 'module-designs', moduleId, 'sessions', `${sessionId}.json`),
+    )
+  }
+
+  getActiveModuleDesignSession(projectId: string, moduleId: string): ModuleDesignSession | undefined {
+    const sessionId = this.getIndex(projectId).moduleDesigns?.[moduleId]?.activeSessionId
+    return sessionId ? this.getModuleDesignSession(projectId, moduleId, sessionId) : undefined
+  }
+
+  // --- Scenario runs and immutable evidence --------------------------------
+
+  saveScenarioRun(projectId: string, record: ScenarioRunRecord): void {
+    if (this.isFutureSchemaVersion(projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(projectId)
+    if (record.projectId !== projectId) throw new Error('scenario run projectId does not match workspace')
+    atomicWriteJson(
+      path.join(this.root(projectId), 'scenario-runs', record.runId, 'run.json'),
+      record,
+    )
+    const index = this.getIndex(projectId)
+    index.scenarioRuns![record.runId] = {
+      scenarioId: record.scenarioId,
+      outcome: record.outcome,
+      startedAt: record.startedAt,
+    }
+    this.saveIndex(projectId, index)
+  }
+
+  getScenarioRun(projectId: string, runId: string): ScenarioRunRecord | undefined {
+    return readJson(path.join(this.root(projectId), 'scenario-runs', runId, 'run.json'))
+  }
+
+  listScenarioRuns(projectId: string): ScenarioRunRecord[] {
+    return Object.keys(this.getIndex(projectId).scenarioRuns ?? {})
+      .map((runId) => this.getScenarioRun(projectId, runId))
+      .filter((record): record is ScenarioRunRecord => Boolean(record))
+      .sort((left, right) => right.startedAt.localeCompare(left.startedAt))
+  }
+
+  saveScenarioEvidence(input: {
+    projectId: string
+    runId: string
+    artifactId: string
+    mediaType: string
+    bytes: Uint8Array
+    producingOperationId?: string
+    provenanceSource: string
+  }): ArtifactReference {
+    if (this.isFutureSchemaVersion(input.projectId)) {
+      throw new Error('capability workspace is read-only due to future schema version')
+    }
+    this.ensureInitialized(input.projectId)
+    if (!this.getScenarioRun(input.projectId, input.runId)) {
+      throw new Error(`scenario run not found: ${input.runId}`)
+    }
+    if (!/^[a-z0-9][a-z0-9._-]*$/i.test(input.artifactId)) {
+      throw new Error('invalid scenario evidence artifactId')
+    }
+    const extension = input.mediaType === 'image/png'
+      ? 'png'
+      : input.mediaType === 'image/jpeg'
+        ? 'jpg'
+        : 'bin'
+    const checksum = crypto.createHash('sha256').update(input.bytes).digest('hex')
+    const relativeRef = path.posix.join('evidence', 'scenarios', input.runId, `${input.artifactId}.${extension}`)
+    const target = path.join(this.root(input.projectId), ...relativeRef.split('/'))
+    fs.mkdirSync(path.dirname(target), { recursive: true })
+    if (fs.existsSync(target)) {
+      const existingChecksum = crypto.createHash('sha256').update(fs.readFileSync(target)).digest('hex')
+      if (existingChecksum !== checksum) {
+        throw new Error(`scenario evidence artifact is immutable: ${input.artifactId}`)
+      }
+    } else {
+      fs.writeFileSync(target, input.bytes)
+    }
+    const reference: ArtifactReference = {
+      schemaVersion: '1.0',
+      artifactId: input.artifactId,
+      projectId: input.projectId,
+      mediaType: input.mediaType,
+      checksum,
+      byteSize: input.bytes.byteLength,
+      createdAt: new Date().toISOString(),
+      producingOperationId: input.producingOperationId,
+      producingRunId: input.runId,
+      provenance: {
+        source: input.provenanceSource,
+        recordedAt: new Date().toISOString(),
+      },
+      storageClass: 'app-managed',
+      opaqueStorageRef: relativeRef,
+    }
+    atomicWriteJson(
+      path.join(this.root(input.projectId), 'evidence', 'scenarios', input.runId, `${input.artifactId}.json`),
+      reference,
+    )
+    return reference
+  }
+
+  getScenarioEvidence(
+    projectId: string,
+    runId: string,
+    artifactId: string,
+  ): { reference: ArtifactReference; bytes: Uint8Array } | undefined {
+    if (!/^[a-z0-9][a-z0-9._-]*$/i.test(artifactId)) throw new Error('invalid scenario evidence artifactId')
+    const reference = readJson<ArtifactReference>(
+      path.join(this.root(projectId), 'evidence', 'scenarios', runId, `${artifactId}.json`),
+    )
+    if (!reference) return undefined
+    const root = path.resolve(this.root(projectId))
+    const target = path.resolve(root, ...reference.opaqueStorageRef.split('/'))
+    if (!target.startsWith(root + path.sep)) throw new Error('scenario evidence escaped workspace')
+    if (!fs.existsSync(target)) return undefined
+    const bytes = fs.readFileSync(target)
+    const checksum = crypto.createHash('sha256').update(bytes).digest('hex')
+    if (checksum !== reference.checksum) throw new Error(`scenario evidence checksum mismatch: ${artifactId}`)
+    return { reference, bytes }
+  }
+
   saveBindingDraft(projectId: string, draft: FrontendBinding): void {
     if (this.isFutureSchemaVersion(projectId)) {
       throw new Error('capability workspace is read-only due to future schema version')
@@ -358,6 +701,10 @@ export class CapabilityWorkspace {
       throw new Error('capability workspace is read-only due to future schema version')
     }
     this.ensureInitialized(projectId)
+    assertSteApproval(
+      'frontend binding',
+      evaluateFrontendBindingSte(draft, this.getSteLexicon(projectId)),
+    )
     const dest = path.join(
       this.root(projectId),
       'bindings',
@@ -496,6 +843,7 @@ export class CapabilityWorkspace {
       throw new Error(`cannot approve a foundation plan with readiness status "${plan.readiness.status}"`)
     }
     this.ensureInitialized(projectId)
+    assertSteApproval('foundation plan', evaluateFoundationSte(plan, this.getSteLexicon(projectId)))
     const revision = canonicalHash(plan)
     atomicWriteJson(path.join(this.root(projectId), 'foundation', 'approved', `${revision}.json`), plan)
     const index = this.getIndex(projectId)
@@ -557,6 +905,10 @@ export class CapabilityWorkspace {
     }
     this.ensureInitialized(projectId)
     const binding = withDefaultExposure(draft)
+    assertSteApproval(
+      'inbound binding',
+      evaluateInboundBindingSte(binding, this.getSteLexicon(projectId)),
+    )
     const dest = path.join(
       this.root(projectId),
       'inbound-bindings',

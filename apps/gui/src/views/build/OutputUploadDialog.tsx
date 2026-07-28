@@ -15,7 +15,7 @@ export function OutputUploadDialog(props: {
 }) {
   return (
     <Dialog
-      title="Output & upload set"
+      title="Upload output"
       onClose={props.onClose}
       wide
       actions={
@@ -38,7 +38,7 @@ export function OutputUploadDialog(props: {
             <span className="format-radio unselected" aria-hidden="true" />
             <div>
               <h3>Structured (JSON)</h3>
-              <p>File inventory with metadata — generated alongside as <code>repo-inventory.json</code>.</p>
+              <p>The application also generates <code>repo-inventory.json</code> with file metadata.</p>
             </div>
           </div>
         </div>

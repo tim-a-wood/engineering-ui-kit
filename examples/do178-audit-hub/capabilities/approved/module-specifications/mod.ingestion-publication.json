@@ -12,7 +12,7 @@
   "editablePaths": [
     "src/modules/ingestion-publication/"
   ],
-  "responsibility": "Orchestrate deterministic refreshes from configured adapters, validate normalized evidence and trace integrity, publish immutable snapshots only after all validation passes, and preserve the last valid snapshot on failure or cancellation.",
+  "responsibility": "Orchestrate deterministic refreshes through configured adapters. Check normalized evidence and trace integrity before snapshot publication. Keep the last valid snapshot after failure or cancellation.",
   "nonResponsibilities": [
     "technology-specific-file-access",
     "artifact-authoring",

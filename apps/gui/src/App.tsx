@@ -80,7 +80,7 @@ class ViewErrorBoundary extends Component<{ viewKey: string; children: ReactNode
     if (this.state.error) {
       return (
         <div className="panel" role="alert">
-          <h2>Something went wrong in this view</h2>
+          <h2>View error</h2>
           <p className="secondary-text">{this.state.error.message}</p>
           <button type="button" className="btn btn-secondary" onClick={() => this.setState({ error: null })}>
             Try again
@@ -308,7 +308,7 @@ export default function App() {
           <div className="panel" role="alert">
             <h2>Project not found</h2>
             <button type="button" className="btn btn-primary" onClick={() => setView('projects')}>
-              Back to projects
+              Open projects
             </button>
           </div>
         )
@@ -345,7 +345,7 @@ export default function App() {
         {isRunOpen && activeProject && isWorkflowView(view) && (
           <nav className="topbar-crumbs" aria-label="Active handoff run">
             <button type="button" className="crumb" onClick={() => navigate('copilot-handoff')}>
-              Build &amp; Test
+              Build application
             </button>
             <span className="crumb-sep" aria-hidden="true">{Icon.chevronRight(12)}</span>
             <span className="crumb-current">{activeProject.name}</span>
@@ -353,7 +353,7 @@ export default function App() {
         )}
         <span className="titlebar-spacer" />
         {isMock && (
-          <span className="mode-chip" title="Running against the in-memory mock bridge">
+          <span className="mode-chip" title="Use mock bridge">
             <span className="mode-dot" aria-hidden="true" />
             Mock data
           </span>
@@ -432,10 +432,10 @@ export default function App() {
 function MissingRun(props: { onBack: () => void }) {
   return (
     <div className="panel" role="alert">
-      <h2>No active handoff run</h2>
-      <p className="secondary-text">Start from Build &amp; Test or Projects first.</p>
+      <h2>No active run</h2>
+      <p className="secondary-text">Start from Workflow or Projects.</p>
       <button type="button" className="btn btn-primary" onClick={props.onBack}>
-        Go to Build &amp; Test
+        Open build workspace
       </button>
     </div>
   )

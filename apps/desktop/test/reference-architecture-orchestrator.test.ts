@@ -403,7 +403,7 @@ describe('production reference-architecture orchestrator', () => {
       deployableId: 'embedded-library', operationId: 'operation.test', operationVersion: '1.0.0',
       inputMappings: [], outputMappings: [], validationBehavior: 'reject invalid input',
       domainRejectionBehavior: 'return a typed rejection', technicalFailureBehavior: 'return a safe failure',
-      timeoutBehavior: 'return timed out', cancellationBehavior: 'return cancelled', retryBehavior: 'none',
+      timeoutBehavior: 'return timed out', cancellationBehavior: 'return canceled', retryBehavior: 'none',
       duplicateSubmissionBehavior: 'reject duplicates', exposure: 'private' as const, generatedTargets: [],
       approvalState: 'approved', exportedCallable: 'runOperationTest', reason: 'approved library boundary',
     }
@@ -443,7 +443,7 @@ describe('production reference-architecture orchestrator', () => {
       deployableId: 'embedded-library', operationId: 'operation.test', operationVersion: '1.0.0',
       inputMappings: [], outputMappings: [], validationBehavior: 'reject invalid input',
       domainRejectionBehavior: 'return a typed rejection', technicalFailureBehavior: 'return a safe failure',
-      timeoutBehavior: 'return timed out', cancellationBehavior: 'return cancelled', retryBehavior: 'none',
+      timeoutBehavior: 'return timed out', cancellationBehavior: 'return canceled', retryBehavior: 'none',
       duplicateSubmissionBehavior: 'reject duplicates', exposure: 'private' as const, generatedTargets: [],
       approvalState: 'approved', exportedCallable: 'runOperationTest', reason: 'approved library boundary',
     }

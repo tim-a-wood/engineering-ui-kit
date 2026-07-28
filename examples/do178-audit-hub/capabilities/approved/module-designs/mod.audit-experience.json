@@ -1,0 +1,1453 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+  "id": "module-design:mod.audit-experience",
+  "revision": "1.1.0",
+  "status": "approved",
+  "architecture": {
+    "id": "arch.do178c-audit-hub",
+    "revision": "4",
+    "contentHash": "9e85b23877737297bba216dd45275f490a1a042c2e11a3bdd97fc218762756c2"
+  },
+  "module": {
+    "moduleId": "mod.audit-experience",
+    "moduleVersion": "1.0.1",
+    "name": "Audit Hub Experience",
+    "moduleType": "experience",
+    "responsibility": "Own the responsive Audit Hub front end. Orchestrate workspace selection, all lifecycle areas, search, dossiers, traces, baseline comparison, assurance workflows, sample reset, and refresh status through approved contracts.",
+    "nonResponsibilities": [
+      "authoritative-artifact-mutation",
+      "evidence-persistence",
+      "artifact-extraction",
+      "domain-rule-evaluation",
+      "direct-filesystem-or-MATLAB-access"
+    ],
+    "ownedConcerns": [
+      "Module behavior"
+    ],
+    "excludedConcerns": [
+      "authoritative-artifact-mutation",
+      "evidence-persistence",
+      "artifact-extraction",
+      "domain-rule-evaluation",
+      "direct-filesystem-or-MATLAB-access"
+    ]
+  },
+  "trace": {
+    "useCaseIds": [
+      "uc-findings",
+      "uc-reviews",
+      "uc-package"
+    ],
+    "workflowNodeIds": [
+      "finding:inspect",
+      "review:select",
+      "package:select"
+    ],
+    "scenarioStepIds": [
+      "uc-findings:step:open",
+      "uc-reviews:step:scope",
+      "uc-package:step:select"
+    ],
+    "ruleIds": [
+      "rule-authority",
+      "rule-local-workflow",
+      "rule-snapshot",
+      "rule-publish",
+      "rule-fallback",
+      "rule-finding",
+      "rule-stale",
+      "rule-phases",
+      "rule-shared-anatomy",
+      "rule-shared-actions",
+      "rule-sample-default",
+      "rule-sample-real",
+      "rule-sample-badge",
+      "rule-sample-overlay",
+      "rule-sample-export",
+      "rule-sample-portable",
+      "rule-same-ui",
+      "rule-objectives",
+      "rule-claims",
+      "rule-llr",
+      "rule-coverage",
+      "rule-compare",
+      "rule-security",
+      "rule-performance",
+      "rule-determinism"
+    ],
+    "qualityRequirementIds": [],
+    "sourceRefs": [
+      "source-1",
+      "source-2",
+      "source-3"
+    ],
+    "designDecisionIds": []
+  },
+  "boundary": {
+    "directDependencyIds": [
+      "mod.workspace-snapshots",
+      "mod.lifecycle-explorer",
+      "mod.evidence-graph",
+      "mod.assurance-workflow",
+      "mod.ingestion-publication",
+      "mod.sample-workspace"
+    ],
+    "directConsumerIds": [],
+    "deployableId": "unassigned",
+    "runtimeAllocation": "local-embedded",
+    "runtimeLanguage": "typescript",
+    "ownedPaths": [
+      "src/modules/audit-experience/"
+    ],
+    "editableSharedPaths": []
+  },
+  "providedOperations": [
+    {
+      "operationId": "op.render-audit-hub",
+      "contractVersion": "1.0.0"
+    }
+  ],
+  "requiredOperations": [
+    {
+      "operationId": "op.select-workspace-baseline",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Resolve workspace, sample fallback, baseline, and revision context."
+    },
+    {
+      "operationId": "op.project-lifecycle-area",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Load phase-specific view projections."
+    },
+    {
+      "operationId": "op.query-dossier",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Open canonical evidence dossiers."
+    },
+    {
+      "operationId": "op-traverse-evidence-chain",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Follow bidirectional evidence chains."
+    },
+    {
+      "operationId": "op-search-evidence",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Run global evidence search and filters."
+    },
+    {
+      "operationId": "op.manage-finding",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Run hub-local finding workflows."
+    },
+    {
+      "operationId": "op.record-review",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Record hub-local review decisions."
+    },
+    {
+      "operationId": "op.build-audit-package",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Assemble and export packages."
+    },
+    {
+      "operationId": "op.run-refresh",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Start and monitor ingestion refreshes."
+    },
+    {
+      "operationId": "op.open-sample",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Load deterministic sample context."
+    },
+    {
+      "operationId": "op.reset-sample-overlay",
+      "acceptedContractRange": "^1.0.0",
+      "reason": "Reset sample edits."
+    }
+  ],
+  "schemas": [
+    {
+      "id": "op.render-audit-hub.input",
+      "text": "op.render-audit-hub.input"
+    },
+    {
+      "id": "op.render-audit-hub.output",
+      "text": "op.render-audit-hub.output"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule-authority",
+      "text": "Connected engineering artifacts remain authoritative. The hub must not write changes to lifecycle files."
+    },
+    {
+      "id": "rule-local-workflow",
+      "text": "Only hub-local findings, reviews, dispositions, package selections, annotations, and sample sandbox state are editable, and every change is auditable."
+    },
+    {
+      "id": "rule-snapshot",
+      "text": "Each published snapshot is immutable and identifies exact source revisions, extraction context, and hashes."
+    },
+    {
+      "id": "rule-publish",
+      "text": "An extraction or indexing failure prevents candidate publication. An evidence gap stays visible and does not prevent a reliable snapshot."
+    },
+    {
+      "id": "rule-fallback",
+      "text": "A failed or partial refresh never replaces the last valid published snapshot."
+    },
+    {
+      "id": "rule-finding",
+      "text": "The hub calculates deterministic findings for each snapshot. Human findings keep attribution, history, disposition, and closure evidence."
+    },
+    {
+      "id": "rule-stale",
+      "text": "Evidence is stale when its source revision or dependency hash differs from the selected snapshot. Evidence is also stale after an unreviewed dependency change."
+    },
+    {
+      "id": "rule-phases",
+      "text": "The Evidence Explorer navigation is Overview, Planning, Requirements, Design, Implementation, Verification, Configuration Management, Quality Assurance, and Certification."
+    },
+    {
+      "id": "rule-shared-anatomy",
+      "text": "Every lifecycle area uses a consistent phase header, tailored subnavigation, working evidence table or visualization, evidence inspector, findings drawer, and baseline-compare mode."
+    },
+    {
+      "id": "rule-shared-actions",
+      "text": "Each evidence item provides its dossier, traces, source location, baseline comparison, source data, findings, reviews, and package controls."
+    },
+    {
+      "id": "rule-sample-default",
+      "text": "If zero real projects exist, the sample opens automatically with no picker blocker or blank dashboard."
+    },
+    {
+      "id": "rule-sample-real",
+      "text": "After a real project exists, the last real project opens by default and the sample remains selectable under Examples."
+    },
+    {
+      "id": "rule-sample-badge",
+      "text": "The sample always displays a Sample Data badge and a Connect a real project action."
+    },
+    {
+      "id": "rule-sample-overlay",
+      "text": "Bundled sample evidence is immutable. A resettable sandbox stores sample findings, reviews, dispositions, packages, and preferences."
+    },
+    {
+      "id": "rule-sample-export",
+      "text": "Every sample export is marked Synthetic sample — not certification evidence in both visible output and manifest metadata."
+    },
+    {
+      "id": "rule-sample-portable",
+      "text": "The sample uses a normalized extraction snapshot for synthetic artifacts. It must not disguise text or JSON as proprietary binary files."
+    },
+    {
+      "id": "rule-same-ui",
+      "text": "Sample projects and real projects use the same APIs, domain model, routes, and components. The product has no demo-only interface."
+    },
+    {
+      "id": "rule-objectives",
+      "text": "Do not bundle copyrighted DO-178C or DO-331 objective text. Use configurable identifiers and licensed profiles."
+    },
+    {
+      "id": "rule-claims",
+      "text": "The application may report evidence status against the configured profile but must not claim certification, regulatory approval, or compliance."
+    },
+    {
+      "id": "rule-llr",
+      "text": "Requirement classifications and allocation rules prevent ambiguous duplication between higher-level and low-level requirement views."
+    },
+    {
+      "id": "rule-coverage",
+      "text": "The hub imports coverage from authoritative results. The hub does not calculate coverage."
+    },
+    {
+      "id": "rule-compare",
+      "text": "Baseline comparison reports added, removed, changed, and stale evidence without performing semantic merge or conflict resolution."
+    },
+    {
+      "id": "rule-security",
+      "text": "Credentials and secrets are never stored in project configuration, snapshots, logs, packages, or displayed evidence."
+    },
+    {
+      "id": "rule-performance",
+      "text": "Normal browsing, filtering, search, trace navigation, dossier opening, and phase switching should usually respond within two seconds at accepted scale."
+    },
+    {
+      "id": "rule-determinism",
+      "text": "The bundled sample has deterministic identifiers, dates, people, revisions, hashes, relationships, counts, and reset behavior."
+    }
+  ],
+  "invariants": [],
+  "behavior": {
+    "preconditions": [
+      "The application request is valid."
+    ],
+    "postconditions": [
+      "The module returns an observable result."
+    ],
+    "domainRejections": [],
+    "technicalFailures": [],
+    "sideEffects": [],
+    "idempotency": "Not defined",
+    "cancellation": "Not defined",
+    "timeouts": "Not defined",
+    "concurrency": "Not defined",
+    "retry": "Retry only a declared technical failure.",
+    "recovery": "Keep the last valid module state.",
+    "emittedEvents": [],
+    "consumedEvents": [],
+    "stateDefinitions": [],
+    "stateTransitions": [],
+    "activityDefinitions": [
+      {
+        "id": "activity:mod.audit-experience:allocated-actions",
+        "name": "Perform allocated actions",
+        "refinesWorkflowNodeIds": [
+          "finding:inspect",
+          "review:select",
+          "package:select"
+        ],
+        "graph": {
+          "id": "activity:mod.audit-experience:allocated-actions:graph",
+          "name": "Perform allocated actions",
+          "nodes": [
+            {
+              "id": "module:mod.audit-experience:initial",
+              "kind": "initial",
+              "label": "Initial",
+              "description": "The module activity starts.",
+              "refinesIds": []
+            },
+            {
+              "id": "module:mod.audit-experience:refine:finding:inspect",
+              "kind": "call-operation",
+              "label": "Inspect finding evidence",
+              "description": "The module performs the allocated inspect finding evidence action.",
+              "refinesIds": [
+                "finding:inspect"
+              ],
+              "operationId": "op.render-audit-hub"
+            },
+            {
+              "id": "module:mod.audit-experience:refine:review:select",
+              "kind": "call-operation",
+              "label": "Select review evidence",
+              "description": "The module performs the allocated select review evidence action.",
+              "refinesIds": [
+                "review:select"
+              ],
+              "operationId": "op.render-audit-hub"
+            },
+            {
+              "id": "module:mod.audit-experience:refine:package:select",
+              "kind": "call-operation",
+              "label": "Select package evidence",
+              "description": "The module performs the allocated select package evidence action.",
+              "refinesIds": [
+                "package:select"
+              ],
+              "operationId": "op.render-audit-hub"
+            },
+            {
+              "id": "module:mod.audit-experience:final",
+              "kind": "final",
+              "label": "Final",
+              "description": "The module activity ends.",
+              "refinesIds": []
+            }
+          ],
+          "edges": [
+            {
+              "id": "activity:mod.audit-experience:edge:1",
+              "fromNodeId": "module:mod.audit-experience:initial",
+              "toNodeId": "module:mod.audit-experience:refine:finding:inspect",
+              "traceIds": [
+                "workflow:uc-findings",
+                "finding:inspect",
+                "workflow:uc-reviews",
+                "review:select",
+                "workflow:uc-package",
+                "package:select"
+              ]
+            },
+            {
+              "id": "activity:mod.audit-experience:edge:2",
+              "fromNodeId": "module:mod.audit-experience:refine:finding:inspect",
+              "toNodeId": "module:mod.audit-experience:refine:review:select",
+              "traceIds": [
+                "workflow:uc-findings",
+                "finding:inspect",
+                "workflow:uc-reviews",
+                "review:select",
+                "workflow:uc-package",
+                "package:select"
+              ]
+            },
+            {
+              "id": "activity:mod.audit-experience:edge:3",
+              "fromNodeId": "module:mod.audit-experience:refine:review:select",
+              "toNodeId": "module:mod.audit-experience:refine:package:select",
+              "traceIds": [
+                "workflow:uc-findings",
+                "finding:inspect",
+                "workflow:uc-reviews",
+                "review:select",
+                "workflow:uc-package",
+                "package:select"
+              ]
+            },
+            {
+              "id": "activity:mod.audit-experience:edge:4",
+              "fromNodeId": "module:mod.audit-experience:refine:package:select",
+              "toNodeId": "module:mod.audit-experience:final",
+              "traceIds": [
+                "workflow:uc-findings",
+                "finding:inspect",
+                "workflow:uc-reviews",
+                "review:select",
+                "workflow:uc-package",
+                "package:select"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "interactionDefinitions": [],
+    "states": [],
+    "activities": [],
+    "interactions": []
+  },
+  "data": {
+    "persistentRecords": [],
+    "ownership": [],
+    "retention": [],
+    "migrationNeeds": [],
+    "confidentiality": "Not classified",
+    "provenanceFields": [],
+    "canonicalUnits": []
+  },
+  "runtime": {
+    "configurationRefs": [],
+    "secretRefs": [],
+    "lifecycleRegistration": "Not defined",
+    "health": [],
+    "telemetry": [],
+    "resourceOwnership": [],
+    "startup": [],
+    "shutdown": [],
+    "compatibilityConstraints": []
+  },
+  "verification": {
+    "examples": [],
+    "edgeCases": [],
+    "acceptanceCaseIds": [
+      "ac-7",
+      "ac-2",
+      "ac-9"
+    ],
+    "verificationSuiteIds": [
+      "acceptance:mod.audit-experience"
+    ],
+    "requiredEvidence": [
+      "screenshot",
+      "structured"
+    ],
+    "testDoubles": [],
+    "fixtureNeeds": [],
+    "commands": []
+  },
+  "diagrams": [
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:component:mod.audit-experience",
+      "kind": "component",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.audit-experience"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.audit-experience",
+      "title": "Audit Hub Experience component diagram",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "component:mod.audit-experience",
+          "kind": "component",
+          "label": "Audit Hub Experience",
+          "stereotype": "component",
+          "description": "Own the responsive Audit Hub front end. Provide workspace selection, lifecycle views, search, dossiers, traces, baseline comparison, findings, reviews, packages, sample reset, and refresh status.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package",
+            "uc-reset"
+          ]
+        },
+        {
+          "id": "component:mod.workspace-snapshots",
+          "kind": "component",
+          "label": "Workspace snapshots",
+          "stereotype": "component",
+          "description": "Own project configuration, objective-profile references, repository definitions, real-versus-sample selection, last-real-project preference, exact revision sets, immutable snapshot identity, baselines, and publication state.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-compare",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "component:mod.lifecycle-explorer",
+          "kind": "component",
+          "label": "Lifecycle Explorer",
+          "stereotype": "component",
+          "description": "Own the lifecycle phase model and shared view structure. Provide phase views, readiness summaries, evidence projections, comparison projections, and approved lifecycle areas.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-gaps",
+            "uc-compare"
+          ]
+        },
+        {
+          "id": "component:mod.evidence-graph",
+          "kind": "component",
+          "label": "Evidence Graph",
+          "stereotype": "component",
+          "description": "Own normalized lifecycle artifact metadata, typed relationships, requirement-to-result chains, provenance and hashes, dossiers, cross-phase search, staleness evaluation, change impact, and trace traversal.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "component:mod.assurance-workflow",
+          "kind": "component",
+          "label": "Assurance Workflow",
+          "stereotype": "component",
+          "description": "Own deterministic and human findings, review and independence records, assignment, disposition, corrective action, reverification, closure history, configurable objective mappings, audit-package membership, manifests, and watermark policy.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "component:mod.ingestion-publication",
+          "kind": "component",
+          "label": "Evidence publication",
+          "stereotype": "component",
+          "description": "Own scanning, artifact classification, extractor orchestration, normalization, diagnostics, deterministic check execution, refresh progress, reliability gates, and atomic publication while preserving the last valid snapshot.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh"
+          ]
+        },
+        {
+          "id": "component:mod.sample-workspace",
+          "kind": "component",
+          "label": "Deterministic Sample Workspace",
+          "stereotype": "component",
+          "description": "Own the bundled AeroNav snapshot and the 2.3.0 and 2.4.0 baselines. Provide complete chains, incomplete chains, twelve findings, deterministic identities, reset defaults, and offline fallback.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-sample",
+            "uc-reset"
+          ]
+        },
+        {
+          "id": "provided:mod.audit-experience:op.render-audit-hub",
+          "kind": "provided-interface",
+          "label": "Render audit hub",
+          "description": "Audit Hub Experience provides this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.audit-experience:op.select-workspace-baseline",
+          "kind": "required-interface",
+          "label": "Select workspace baseline",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.audit-experience:op.project-lifecycle-area",
+          "kind": "required-interface",
+          "label": "Project lifecycle area",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.audit-experience:op.query-dossier",
+          "kind": "required-interface",
+          "label": "Query dossier",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.audit-experience:op-traverse-evidence-chain",
+          "kind": "required-interface",
+          "label": "Traverse evidence chain",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.audit-experience:op-search-evidence",
+          "kind": "required-interface",
+          "label": "Search evidence",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.audit-experience:op.manage-finding",
+          "kind": "required-interface",
+          "label": "Manage finding",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.audit-experience:op.record-review",
+          "kind": "required-interface",
+          "label": "Record review",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.audit-experience:op.build-audit-package",
+          "kind": "required-interface",
+          "label": "Build audit package",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.audit-experience:op.run-refresh",
+          "kind": "required-interface",
+          "label": "Run refresh",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.audit-experience:op.open-sample",
+          "kind": "required-interface",
+          "label": "Open sample",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "required:mod.audit-experience:op.reset-sample-overlay",
+          "kind": "required-interface",
+          "label": "Reset sample overlay",
+          "description": "Audit Hub Experience requires this operation.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.audit-experience"
+        },
+        {
+          "id": "provided:mod.workspace-snapshots:op.select-workspace-baseline:for:mod.audit-experience",
+          "kind": "provided-interface",
+          "label": "Select workspace baseline",
+          "description": "Workspace snapshots provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.workspace-snapshots"
+        },
+        {
+          "id": "provided:mod.lifecycle-explorer:op.project-lifecycle-area:for:mod.audit-experience",
+          "kind": "provided-interface",
+          "label": "Project lifecycle area",
+          "description": "Lifecycle Explorer provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.lifecycle-explorer"
+        },
+        {
+          "id": "provided:mod.evidence-graph:op.query-dossier:for:mod.audit-experience",
+          "kind": "provided-interface",
+          "label": "Query dossier",
+          "description": "Evidence Graph provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-graph"
+        },
+        {
+          "id": "provided:mod.evidence-graph:op-traverse-evidence-chain:for:mod.audit-experience",
+          "kind": "provided-interface",
+          "label": "Traverse evidence chain",
+          "description": "Evidence Graph provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-graph"
+        },
+        {
+          "id": "provided:mod.evidence-graph:op-search-evidence:for:mod.audit-experience",
+          "kind": "provided-interface",
+          "label": "Search evidence",
+          "description": "Evidence Graph provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.evidence-graph"
+        },
+        {
+          "id": "provided:mod.assurance-workflow:op.manage-finding:for:mod.audit-experience",
+          "kind": "provided-interface",
+          "label": "Manage finding",
+          "description": "Assurance Workflow provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.assurance-workflow"
+        },
+        {
+          "id": "provided:mod.assurance-workflow:op.record-review:for:mod.audit-experience",
+          "kind": "provided-interface",
+          "label": "Record review",
+          "description": "Assurance Workflow provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.assurance-workflow"
+        },
+        {
+          "id": "provided:mod.assurance-workflow:op.build-audit-package:for:mod.audit-experience",
+          "kind": "provided-interface",
+          "label": "Build audit package",
+          "description": "Assurance Workflow provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.assurance-workflow"
+        },
+        {
+          "id": "provided:mod.ingestion-publication:op.run-refresh:for:mod.audit-experience",
+          "kind": "provided-interface",
+          "label": "Run refresh",
+          "description": "Evidence publication provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.ingestion-publication"
+        },
+        {
+          "id": "provided:mod.sample-workspace:op.open-sample:for:mod.audit-experience",
+          "kind": "provided-interface",
+          "label": "Open sample",
+          "description": "Deterministic Sample Workspace provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.sample-workspace"
+        },
+        {
+          "id": "provided:mod.sample-workspace:op.reset-sample-overlay:for:mod.audit-experience",
+          "kind": "provided-interface",
+          "label": "Reset sample overlay",
+          "description": "Deterministic Sample Workspace provides this operation.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-findings",
+            "uc-reviews",
+            "uc-package"
+          ],
+          "parentId": "component:mod.sample-workspace"
+        }
+      ],
+      "edges": [
+        {
+          "id": "assembly:mod.audit-experience:mod.workspace-snapshots:op.select-workspace-baseline",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.select-workspace-baseline",
+          "toId": "provided:mod.workspace-snapshots:op.select-workspace-baseline:for:mod.audit-experience",
+          "label": "Select workspace baseline",
+          "description": "The front end requires current workspace, baseline, revision, sample-state, and refresh-publication context.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-workspace",
+            "uc-sample",
+            "uc-overview",
+            "uc-compare",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.audit-experience:mod.lifecycle-explorer:op.project-lifecycle-area",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.project-lifecycle-area",
+          "toId": "provided:mod.lifecycle-explorer:op.project-lifecycle-area:for:mod.audit-experience",
+          "label": "Project lifecycle area",
+          "description": "The front end renders all lifecycle-area routes and phase-specific projections through one explorer contract.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-gaps",
+            "uc-compare"
+          ]
+        },
+        {
+          "id": "assembly:mod.audit-experience:mod.evidence-graph:op.query-dossier",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.query-dossier",
+          "toId": "provided:mod.evidence-graph:op.query-dossier:for:mod.audit-experience",
+          "label": "Query dossier",
+          "description": "Search, dossiers, traces, provenance, staleness, and comparison pivots require normalized graph queries.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.audit-experience:mod.evidence-graph:op-traverse-evidence-chain",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op-traverse-evidence-chain",
+          "toId": "provided:mod.evidence-graph:op-traverse-evidence-chain:for:mod.audit-experience",
+          "label": "Traverse evidence chain",
+          "description": "Search, dossiers, traces, provenance, staleness, and comparison pivots require normalized graph queries.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.audit-experience:mod.evidence-graph:op-search-evidence",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op-search-evidence",
+          "toId": "provided:mod.evidence-graph:op-search-evidence:for:mod.audit-experience",
+          "label": "Search evidence",
+          "description": "Search, dossiers, traces, provenance, staleness, and comparison pivots require normalized graph queries.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-chain",
+            "uc-gaps",
+            "uc-search",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.audit-experience:mod.assurance-workflow:op.manage-finding",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.manage-finding",
+          "toId": "provided:mod.assurance-workflow:op.manage-finding:for:mod.audit-experience",
+          "label": "Manage finding",
+          "description": "Findings, reviews, objective mappings, audit packages, and closure actions are exposed as user workflows.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.audit-experience:mod.assurance-workflow:op.record-review",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.record-review",
+          "toId": "provided:mod.assurance-workflow:op.record-review:for:mod.audit-experience",
+          "label": "Record review",
+          "description": "Findings, reviews, objective mappings, audit packages, and closure actions are exposed as user workflows.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.audit-experience:mod.assurance-workflow:op.build-audit-package",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.build-audit-package",
+          "toId": "provided:mod.assurance-workflow:op.build-audit-package:for:mod.audit-experience",
+          "label": "Build audit package",
+          "description": "Findings, reviews, objective mappings, audit packages, and closure actions are exposed as user workflows.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-overview",
+            "uc-planning",
+            "uc-requirements",
+            "uc-design",
+            "uc-implementation",
+            "uc-verification",
+            "uc-cm",
+            "uc-qa",
+            "uc-certification",
+            "uc-dossier",
+            "uc-gaps",
+            "uc-compare",
+            "uc-findings",
+            "uc-reviews",
+            "uc-refresh",
+            "uc-package"
+          ]
+        },
+        {
+          "id": "assembly:mod.audit-experience:mod.ingestion-publication:op.run-refresh",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.run-refresh",
+          "toId": "provided:mod.ingestion-publication:op.run-refresh:for:mod.audit-experience",
+          "label": "Run refresh",
+          "description": "The interface starts refreshes and presents progress, diagnostics, reliability gates, and publication results.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-refresh"
+          ]
+        },
+        {
+          "id": "assembly:mod.audit-experience:mod.sample-workspace:op.open-sample",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.open-sample",
+          "toId": "provided:mod.sample-workspace:op.open-sample:for:mod.audit-experience",
+          "label": "Open sample",
+          "description": "Sample badges, reset controls, seeded walkthroughs, and offline fallback status come from the sample boundary.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-sample",
+            "uc-reset"
+          ]
+        },
+        {
+          "id": "assembly:mod.audit-experience:mod.sample-workspace:op.reset-sample-overlay",
+          "kind": "assembly",
+          "fromId": "required:mod.audit-experience:op.reset-sample-overlay",
+          "toId": "provided:mod.sample-workspace:op.reset-sample-overlay:for:mod.audit-experience",
+          "label": "Reset sample overlay",
+          "description": "Sample badges, reset controls, seeded walkthroughs, and offline fallback status come from the sample boundary.",
+          "sourceRecordId": "arch.do178c-audit-hub",
+          "traceIds": [
+            "uc-sample",
+            "uc-reset"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Audit Hub Experience with 0 direct consumers and 6 direct dependencies.",
+      "contentHash": "3779f4cd397a056eb45ced0e1deea350c5d03e229fc6d8a077b309feae433371"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-activity:mod.audit-experience:activity:mod.audit-experience:allocated-actions",
+      "kind": "activity",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.audit-experience",
+        "activity:mod.audit-experience:allocated-actions"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.audit-experience",
+      "title": "Perform allocated actions module activity",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:initial",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module activity starts.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "module-design:mod.audit-experience",
+            "mod.audit-experience",
+            "activity:mod.audit-experience:allocated-actions",
+            "module:mod.audit-experience:initial",
+            "finding:inspect",
+            "review:select",
+            "package:select"
+          ],
+          "details": []
+        },
+        {
+          "id": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:refine:finding:inspect",
+          "kind": "call-operation",
+          "label": "Inspect finding evidence",
+          "description": "The module performs the allocated inspect finding evidence action.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "module-design:mod.audit-experience",
+            "mod.audit-experience",
+            "activity:mod.audit-experience:allocated-actions",
+            "module:mod.audit-experience:refine:finding:inspect",
+            "finding:inspect",
+            "review:select",
+            "package:select",
+            "finding:inspect"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.render-audit-hub",
+            "Refines: finding:inspect"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:refine:review:select",
+          "kind": "call-operation",
+          "label": "Select review evidence",
+          "description": "The module performs the allocated select review evidence action.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "module-design:mod.audit-experience",
+            "mod.audit-experience",
+            "activity:mod.audit-experience:allocated-actions",
+            "module:mod.audit-experience:refine:review:select",
+            "finding:inspect",
+            "review:select",
+            "package:select",
+            "review:select"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.render-audit-hub",
+            "Refines: review:select"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:refine:package:select",
+          "kind": "call-operation",
+          "label": "Select package evidence",
+          "description": "The module performs the allocated select package evidence action.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "module-design:mod.audit-experience",
+            "mod.audit-experience",
+            "activity:mod.audit-experience:allocated-actions",
+            "module:mod.audit-experience:refine:package:select",
+            "finding:inspect",
+            "review:select",
+            "package:select",
+            "package:select"
+          ],
+          "stereotype": "call",
+          "details": [
+            "Operation: op.render-audit-hub",
+            "Refines: package:select"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:final",
+          "kind": "final",
+          "label": "Final",
+          "description": "The module activity ends.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "module-design:mod.audit-experience",
+            "mod.audit-experience",
+            "activity:mod.audit-experience:allocated-actions",
+            "module:mod.audit-experience:final",
+            "finding:inspect",
+            "review:select",
+            "package:select"
+          ],
+          "details": []
+        }
+      ],
+      "edges": [
+        {
+          "id": "module-activity:activity:mod.audit-experience:allocated-actions:edge:activity:mod.audit-experience:edge:1",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:initial",
+          "toId": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:refine:finding:inspect",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "module-design:mod.audit-experience",
+            "activity:mod.audit-experience:allocated-actions",
+            "activity:mod.audit-experience:edge:1",
+            "workflow:uc-findings",
+            "finding:inspect",
+            "workflow:uc-reviews",
+            "review:select",
+            "workflow:uc-package",
+            "package:select"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.audit-experience:allocated-actions:edge:activity:mod.audit-experience:edge:2",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:refine:finding:inspect",
+          "toId": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:refine:review:select",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "module-design:mod.audit-experience",
+            "activity:mod.audit-experience:allocated-actions",
+            "activity:mod.audit-experience:edge:2",
+            "workflow:uc-findings",
+            "finding:inspect",
+            "workflow:uc-reviews",
+            "review:select",
+            "workflow:uc-package",
+            "package:select"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.audit-experience:allocated-actions:edge:activity:mod.audit-experience:edge:3",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:refine:review:select",
+          "toId": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:refine:package:select",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "module-design:mod.audit-experience",
+            "activity:mod.audit-experience:allocated-actions",
+            "activity:mod.audit-experience:edge:3",
+            "workflow:uc-findings",
+            "finding:inspect",
+            "workflow:uc-reviews",
+            "review:select",
+            "workflow:uc-package",
+            "package:select"
+          ]
+        },
+        {
+          "id": "module-activity:activity:mod.audit-experience:allocated-actions:edge:activity:mod.audit-experience:edge:4",
+          "kind": "control-flow",
+          "fromId": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:refine:package:select",
+          "toId": "module-activity:activity:mod.audit-experience:allocated-actions:node:module:mod.audit-experience:final",
+          "isLoop": false,
+          "description": "Continue to the next module action.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "module-design:mod.audit-experience",
+            "activity:mod.audit-experience:allocated-actions",
+            "activity:mod.audit-experience:edge:4",
+            "workflow:uc-findings",
+            "finding:inspect",
+            "workflow:uc-reviews",
+            "review:select",
+            "workflow:uc-package",
+            "package:select"
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "textAlternative": "Perform allocated actions has 5 behavior nodes and 4 control flows.",
+      "contentHash": "9abe218990bf25b6c3ab75a7dbb1fafff4b2e58493a6207f8959637e6a79309e"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-state:mod.audit-experience",
+      "kind": "state-machine",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.audit-experience"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.audit-experience",
+      "title": "Audit Hub Experience state behavior",
+      "sourceRevision": "1.1.0",
+      "nodes": [
+        {
+          "id": "module-state:mod.audit-experience:initial",
+          "kind": "initial",
+          "label": "Initial",
+          "description": "The module state machine starts.",
+          "sourceRecordId": "module-design:mod.audit-experience",
+          "traceIds": [
+            "module-design:mod.audit-experience",
+            "mod.audit-experience"
+          ]
+        }
+      ],
+      "edges": [],
+      "diagnostics": [
+        {
+          "id": "CAP-UML-STATE-NOT-APPLICABLE",
+          "code": "CAP-UML-STATE-NOT-APPLICABLE",
+          "message": "This module has no structured state behavior."
+        }
+      ],
+      "textAlternative": "Audit Hub Experience has no structured state behavior.",
+      "contentHash": "98e0ccd71aa5c9279b5ca68bbe48961dbfeb60b2f96d56efe62cc0c871ff7714"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "diagram:module-sequence:mod.audit-experience:empty",
+      "kind": "sequence",
+      "level": "module",
+      "sourceRecordIds": [
+        "app.do178c-audit-hub",
+        "arch.do178c-audit-hub",
+        "module-design:mod.audit-experience"
+      ],
+      "projectId": "e345abb6-2092-48ec-b659-fd8478cb9492",
+      "contextId": "mod.audit-experience",
+      "title": "Audit Hub Experience internal sequence",
+      "sourceRevision": "1.1.0",
+      "nodes": [],
+      "edges": [],
+      "diagnostics": [
+        {
+          "id": "CAP-UML-INTERNAL-SEQUENCE-NOT-APPLICABLE",
+          "code": "CAP-UML-INTERNAL-SEQUENCE-NOT-APPLICABLE",
+          "message": "This module has no structured internal interaction."
+        }
+      ],
+      "textAlternative": "Audit Hub Experience has no structured internal interaction.",
+      "contentHash": "922756766d46e7a408714d451a02bc826ac24f41f301eb608345fe5797762cc5"
+    }
+  ],
+  "unresolvedItems": [],
+  "gates": [
+    {
+      "gateId": "CAP-GATE-MODULE-DESIGN",
+      "passed": true,
+      "diagnostics": []
+    }
+  ],
+  "contentHash": "4a75a03a747fa30b1560f4912475bb23ecb66975699b300fbc1f1e9d84ae6551",
+  "approval": {
+    "approvedAt": "2026-07-28T00:00:00.000Z",
+    "approvedBy": "DO-178C sample fixture"
+  }
+}

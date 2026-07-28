@@ -41,13 +41,13 @@ const USE_CASE_GUIDANCE: Record<string, { intro: string; provide: string[] }> = 
 
 /** Square use-case tiles with short labels and accessible full names. */
 const USE_CASE_TILES: { id: string; keyword: string; label: string; icon: (size?: number) => ReactElement }[] = [
-  { id: 'standards-refresh', keyword: 'Refresh', label: 'Visual refresh', icon: Icon.sparkle },
-  { id: 'new-ui-from-requirements', keyword: 'From spec', label: 'From spec', icon: Icon.doc },
-  { id: 'new-ui-existing-api', keyword: 'API', label: 'UI on existing API', icon: Icon.code },
-  { id: 'monolithic-web-app', keyword: 'App', label: 'Self-contained app', icon: Icon.box },
+  { id: 'standards-refresh', keyword: 'Refresh', label: 'Refresh interface', icon: Icon.sparkle },
+  { id: 'new-ui-from-requirements', keyword: 'From spec', label: 'Build from spec', icon: Icon.doc },
+  { id: 'new-ui-existing-api', keyword: 'API', label: 'Build API interface', icon: Icon.code },
+  { id: 'monolithic-web-app', keyword: 'App', label: 'Build application', icon: Icon.box },
   { id: 'add-screen', keyword: 'Screen', label: 'Add screen', icon: Icon.filePlus },
-  { id: 'iterate-on-feedback', keyword: 'Iterate', label: 'Iterate on feedback', icon: Icon.refresh },
-  { id: 'a11y-remediation', keyword: 'Audit', label: 'UI/UX issue finder', icon: Icon.shieldCheck },
+  { id: 'iterate-on-feedback', keyword: 'Iterate', label: 'Apply feedback', icon: Icon.refresh },
+  { id: 'a11y-remediation', keyword: 'Audit', label: 'Improve access', icon: Icon.shieldCheck },
 ]
 
 export function BuildWorkspace(props: BuildWorkspaceProps) {
@@ -82,21 +82,21 @@ export function BuildWorkspace(props: BuildWorkspaceProps) {
     <main className="build-workspace" aria-labelledby={`${baseId}-heading`}>
       <h2 className="sr-only" id={`${baseId}-heading`}>Build workspace</h2>
 
-      <div className="build-workspace-unified" aria-label="Configure, hand off, and apply result">
+      <div className="build-workspace-unified" aria-label="Complete build workflow">
         <section className="build-primary-card" aria-labelledby={`${baseId}-define`}>
           <div className="build-primary-card-head">
             <div>
               <p className="workspace-phase">Build setup</p>
-              <h3 id={`${baseId}-define`}>What are you building?</h3>
+              <h3 id={`${baseId}-define`}>Define work</h3>
               <p className="panel-desc">Choose the use case, then give Copilot the requirements and source material it needs.</p>
             </div>
             <StepHelpButton
               step={1}
               variant="build"
-              title="What are you building?"
+              title="Define work"
               description="Use this panel to turn your intended change into a complete, project-aware handoff."
               flow={[
-                { icon: 'prompt', label: 'Choose a use case' },
+                { icon: 'prompt', label: 'Choose use case' },
                 { icon: 'files', label: 'Add requirements' },
                 { icon: 'check', label: 'Generate handoff' },
               ]}
@@ -184,7 +184,7 @@ export function BuildWorkspace(props: BuildWorkspaceProps) {
                 <span className="file-drop-icon" aria-hidden="true">＋</span>
                 <strong>{props.run.visualReferencePackPath ? props.run.visualReferencePackPath.split(/[\\/]/).pop()?.replace(/^reference-/, '') : 'Add a reference file'}</strong>
                 <small>{props.run.visualReferencePackPath ? 'Drop or browse to replace it' : 'Drop a requirements doc, mockup, PDF, image, or other source file here'}</small>
-                <span className="btn btn-secondary btn-compact">Browse…</span>
+                <span className="btn btn-secondary btn-compact">Browse</span>
               </div>
             </div>
           </div>
@@ -225,13 +225,13 @@ export function BuildWorkspace(props: BuildWorkspaceProps) {
           <div className="build-primary-card-head">
             <div>
               <p className="workspace-phase">Copilot loop</p>
-              <h3 id={`${baseId}-delivery`}>Hand off and apply</h3>
+              <h3 id={`${baseId}-delivery`}>Complete handoff</h3>
               <p className="panel-desc">Prepare the packet, run it in Copilot, then inspect and apply the overlay zip it returns.</p>
             </div>
             <StepHelpButton
               step={2}
               variant="handoff"
-              title="Hand off and apply"
+              title="Complete handoff"
               description="This panel carries the prepared work into Copilot and safely brings the resulting changes back."
               flow={[
                 { icon: 'files', label: 'Attach files' },
@@ -241,7 +241,7 @@ export function BuildWorkspace(props: BuildWorkspaceProps) {
               ]}
               items={[
                 'Open Copilot and attach the prepared files.',
-                'Copy and send the recommended prompt, then download ui-overlay.zip.',
+                'Copy the recommended prompt. Send it to Copilot. Then, download ui-overlay.zip.',
                 'Drop the zip into the result area, review the inspection, and apply it.',
               ]}
             />

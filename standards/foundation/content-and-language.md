@@ -8,6 +8,16 @@ This file defines writing rules for engineering UI copy.
 
 The guidance applies to labels, button text, status text, validation messages, empty states, warnings, confirmations, help text, and implementation prompts.
 
+## FND-CONTENT-000 — Use the STE writing policy
+
+All human-facing text shall pass
+[`EUIT-STE-001`](./simplified-technical-english.md). This requirement applies
+to UI copy, canonical design records, UML labels, design documents, exports,
+AI prompts, and AI-generated output.
+
+Code, identifiers, paths, commands, schema keys, hashes, quoted evidence, and
+official proper names are controlled exemptions.
+
 ## FND-CONTENT-001 — Use direct engineering language
 
 UI copy shall describe the artifact, state, command, or consequence directly. Avoid marketing tone and personality-heavy phrasing.

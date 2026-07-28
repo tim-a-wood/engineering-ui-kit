@@ -128,13 +128,13 @@ describe('CAP-TEST-075 bullet (f) — Guided and Design project the same foundat
     )
 
     for (const html of [guidedHtml, designHtml]) {
-      expect(html).toContain('How the application runs')
+      expect(html).toContain('Application runtime')
       expect(html).toContain('Deployment diagram')
       expect(html).toContain('User interface')
       expect(html).toContain('Application service')
       expect(html).toContain('Sends requests')
       expect(html).toContain('1 connection')
-      expect(html).toContain('Technical specification')
+      expect(html).toContain('View specifications')
       expect(html).not.toContain('src/composition/browser.ts')
       expect(html).not.toContain('src/composition/http-api.ts')
       expect(html).not.toContain('typescript')
@@ -192,7 +192,7 @@ describe('CAP-TEST-075 bullet (f) — Guided and Design project the same foundat
     )
 
     expect(screen.queryByText('src/composition/browser.ts')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Technical specification' }))
+    fireEvent.click(screen.getByRole('button', { name: 'View specifications' }))
 
     expect(screen.getByRole('dialog', { name: 'Technical specification' })).toBeTruthy()
     expect(screen.getByText('src/composition/browser.ts')).toBeTruthy()
