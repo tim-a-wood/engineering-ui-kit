@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S07",
+  "stepIds": [
+    "module-design.import-response"
+  ],
+  "expected": "importModuleDesignResponse imports every valid field from an incomplete response and lists exactly the missing required fields.",
+  "actual": "missing fields exactly: behavior, data, runtime, typeSpecific, verification",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "dfc1325441496a5c95a5596bc1ce23933fc527c913f47c3f2c8a09a97c855422"
+}

@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S22",
+  "stepIds": [
+    "multi-module-handoff.build"
+  ],
+  "expected": "buildMultiModulePacket accepts an explicit, independent, non-overlapping selection of the File-system and Git adapters.",
+  "actual": "combined handoff built for the File-system and Git adapters (2 packets)",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "25b022e41a466e90771710ebf5cbb524de1dc397baea7f0489cca5b9d0d5268f"
+}

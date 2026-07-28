@@ -1,0 +1,89 @@
+{
+  "suite": "design-perf-measurement",
+  "runId": "e01657c-20260725T154356Z-52l2qw9no",
+  "buildRev": "e01657c",
+  "startedAt": "2026-07-25T15:43:56.019Z",
+  "completedAt": "2026-07-25T15:43:56.167Z",
+  "environment": {
+    "platform": "linux",
+    "release": "6.18.5",
+    "nodeVersion": "v22.22.2",
+    "cpuCount": 4
+  },
+  "sample": {
+    "moduleCount": 17
+  },
+  "metrics": [
+    {
+      "metric": "moduleQueueReadModel",
+      "description": "computeModuleDesignProgress + filterModuleQueue over the 17-module sample",
+      "targetMs": 200,
+      "runsMs": [
+        0.3098180000000639,
+        0.09741800000006151,
+        0.06060100000001967,
+        0.05859099999997852,
+        0.057597000000100707
+      ],
+      "medianMs": 0.06060100000001967,
+      "met": true
+    },
+    {
+      "metric": "selectionProjection",
+      "description": "selectDefaultModule + one projectComponentDiagram + layoutDiagram",
+      "targetMs": 100,
+      "runsMs": [
+        6.1555720000000065,
+        5.005089999999996,
+        6.466552999999976,
+        3.7895839999999907,
+        1.8841650000000527
+      ],
+      "medianMs": 5.005089999999996,
+      "met": true
+    },
+    {
+      "metric": "localDesignChecks",
+      "description": "evaluateModuleDesignChecks on the largest sample module (mod.finding-review)",
+      "targetMs": 500,
+      "runsMs": [
+        0.2876180000000659,
+        0.05730799999992087,
+        0.05496199999993223,
+        0.0717619999999215,
+        0.04303500000003169
+      ],
+      "medianMs": 0.05730799999992087,
+      "met": true
+    },
+    {
+      "metric": "impactAnalysisFirstResult",
+      "description": "analyzeDesignChange (operationBehavior) on mod.evidence-store / EvidenceStorePort",
+      "targetMs": 2000,
+      "runsMs": [
+        0.3104190000000244,
+        0.34247500000003583,
+        0.19811300000003484,
+        0.19172500000001946,
+        0.11843899999996665
+      ],
+      "medianMs": 0.19811300000003484,
+      "met": true
+    },
+    {
+      "metric": "diagramSelectionResponse",
+      "description": "projection lookup + accessibleDescription",
+      "targetMs": 100,
+      "runsMs": [
+        0.13275599999997212,
+        0.010433000000034554,
+        0.051878999999985353,
+        0.017859000000044034,
+        0.007950999999934538
+      ],
+      "medianMs": 0.017859000000044034,
+      "met": true
+    }
+  ],
+  "performanceIssues": []
+}

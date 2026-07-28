@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S30",
+  "stepIds": [
+    "verify.summary"
+  ],
+  "expected": "buildVerifySummary carries designLinks and has no field capable of holding a diagram payload.",
+  "actual": "Verify summary carries 2 design links and no diagram-capable field",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "43f93bbc7838d7f225154fdb6c5b4f1c8d1f4ffa03518c90a98046f8982f0efa"
+}

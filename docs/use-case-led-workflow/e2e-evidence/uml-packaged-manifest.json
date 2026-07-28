@@ -1,0 +1,16 @@
+{
+  "journey": "packaged-uml-visual-acceptance",
+  "packaged": true,
+  "passed": true,
+  "screenshots": [
+    "docs/use-case-led-workflow/e2e-evidence/uml-system-canvas.png",
+    "docs/use-case-led-workflow/e2e-evidence/uml-component-fullscreen.png",
+    "docs/use-case-led-workflow/e2e-evidence/uml-activity-fullscreen.png",
+    "docs/use-case-led-workflow/e2e-evidence/uml-state-machine-fullscreen.png",
+    "docs/use-case-led-workflow/e2e-evidence/uml-sequence-fullscreen.png",
+    "docs/use-case-led-workflow/e2e-evidence/uml-use-case-fullscreen.png"
+  ],
+  "rendererErrors": [],
+  "startedAt": "2026-07-26T18:05:55.106Z",
+  "completedAt": "2026-07-26T18:06:00.421Z"
+}

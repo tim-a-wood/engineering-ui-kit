@@ -66,6 +66,7 @@
 
     "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
     "path": { "type": "string" },
+    "localBaseUrl": { "type": "string", "pattern": "^https?://(127\\.0\\.0\\.1|localhost)(:[0-9]+)?/?$" },
     "statusMapping": {
       "type": "array",
       "items": { "type": "object", "required": ["outcome", "status"], "properties": { "outcome": { "type": "string" }, "status": { "type": "integer" } } }

@@ -1,0 +1,20 @@
+{
+  "scenarioId": "S19-CHECK-provider-loss",
+  "stepIds": [
+    "provider.request",
+    "provider.retry"
+  ],
+  "expected": "noProvider leaves the draft intact; a later retry with a configured provider succeeds.",
+  "actual": "draft intact after an unavailable provider response; retry with deterministicTestProvider succeeded",
+  "revisions": {
+    "application": "n/a",
+    "design": "r1",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "96522716dd1ebf8125dd8ed8e0a9960cf73589969d698c4e8b5475d765af1edc"
+}

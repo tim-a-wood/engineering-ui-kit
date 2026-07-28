@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S08",
+  "stepIds": [
+    "module-design.import-response"
+  ],
+  "expected": "A second import that supplies exactly the previously-missing fields completes the draft, preserving every field the first import already contributed.",
+  "actual": "second import completed the draft with zero missing fields; first import fields preserved",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "3c4f85c371032cc2d5e0fec7a09be0728d6b9a8e6dd1c4500fe6961881094a2c"
+}

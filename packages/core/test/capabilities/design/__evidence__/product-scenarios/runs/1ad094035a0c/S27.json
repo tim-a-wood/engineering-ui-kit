@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S27",
+  "stepIds": [
+    "verify.run-scenario"
+  ],
+  "expected": "Every approved main/alternate/failure/recovery scenario from the sample use-case analysis runs and persists an immutable ScenarioRun; re-writing an existing run throws.",
+  "actual": "16 scenario runs persisted (of 16 approved scenarios); re-write of an existing run throws",
+  "revisions": {
+    "application": "n/a",
+    "design": "r1",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "47200af9ce2a8945a6514bbfa7e51154f987b1b748d19ead70288df45a94a8b7"
+}

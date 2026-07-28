@@ -1,0 +1,22 @@
+{
+  "scenarioId": "S10",
+  "stepIds": [
+    "module-design.start",
+    "module-design.update",
+    "module-design.approve",
+    "implementation-packet.create"
+  ],
+  "expected": "createModuleImplementationPacket is blocked for Import and Publish because a required operation (from the still-unapproved Evidence Graph module) has no approved provider contract.",
+  "actual": "handoff blocked: CAP-DES-BUILD-PROVIDER (ResolveEvidenceIdentity has no approved provider)",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "2443bfc72086723a192a73f315e1e6f7079074ffb4daf88443c063e22a3717fe"
+}

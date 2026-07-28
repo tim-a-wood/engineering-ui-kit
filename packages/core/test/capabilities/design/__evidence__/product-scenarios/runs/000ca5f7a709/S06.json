@@ -1,0 +1,20 @@
+{
+  "scenarioId": "S06",
+  "stepIds": [
+    "module-design.session.persist",
+    "module-design.session.resume"
+  ],
+  "expected": "A module-design session stopped at the contracts step is resumed at exactly that step by a new DesignWorkspace instance over the same data directory.",
+  "actual": "resumed at the contracts step from a fresh workspace instance over the same data directory",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "60281cc564784ed81163cfbc9a5f3676c80d1a973b96c01c6d22c43d25cf78f2"
+}

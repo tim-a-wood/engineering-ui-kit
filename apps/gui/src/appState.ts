@@ -13,6 +13,7 @@ import type { HandoffRun } from '@engineering-ui-kit/core'
 export type ViewId =
   | 'copilot-handoff'
   | 'capabilities'
+  | 'design'
   | 'recipes'
   | 'components'
   | 'projects'

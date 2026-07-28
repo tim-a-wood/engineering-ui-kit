@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S15",
+  "stepIds": [
+    "module.verify"
+  ],
+  "expected": "verifyModule reports passed once its configured executor runs a real command (node -e \"process.exit(0)\") that exits 0.",
+  "actual": "real 'node -e process.exit(0)' exited 0; verifyModule reported passed=true",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "7173fc7cc7433c3f7ba63e544fbf6a22774869ee4b1a0ba6e0a46fef9ca8241a"
+}

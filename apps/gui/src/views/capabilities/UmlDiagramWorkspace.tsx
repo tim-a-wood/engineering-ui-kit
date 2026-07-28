@@ -13,6 +13,8 @@ type Props = {
   diagrams: DiagramProjection[]
   onOpenImpact?: () => void
   onSelectElement?: (diagram: DiagramProjection, elementId: string) => void
+  /** Distinguishes controls when a page shows more than one UML workspace. */
+  controlLabelPrefix?: string
 }
 
 type WorkerResponse = {
@@ -78,7 +80,7 @@ function layoutDiagram(
   })
 }
 
-export function UmlDiagramWorkspace({ diagrams, onOpenImpact, onSelectElement }: Props) {
+export function UmlDiagramWorkspace({ diagrams, onOpenImpact, onSelectElement, controlLabelPrefix }: Props) {
   const headingId = useId()
   const descriptionId = useId()
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -185,6 +187,7 @@ export function UmlDiagramWorkspace({ diagrams, onOpenImpact, onSelectElement }:
     setSelectionId(elementId)
     if (diagram) onSelectElement?.(diagram, elementId)
   }
+  const controlLabel = (label: string) => controlLabelPrefix ? `${controlLabelPrefix} ${label.toLocaleLowerCase()}` : label
 
   return (
     <section
@@ -232,7 +235,7 @@ export function UmlDiagramWorkspace({ diagrams, onOpenImpact, onSelectElement }:
           <select
             value={selectionId}
             onChange={(event) => selectElement(event.target.value)}
-            aria-label="Inspect diagram element"
+            aria-label={controlLabel('Inspect diagram element')}
           >
             <option value="">Diagram overview</option>
             {selectionOptions.map((option) => (
@@ -240,20 +243,20 @@ export function UmlDiagramWorkspace({ diagrams, onOpenImpact, onSelectElement }:
             ))}
           </select>
         </label>
-        <div className="uml-zoom-controls" aria-label="Diagram zoom controls">
+        <div className="uml-zoom-controls" aria-label={controlLabel('Diagram zoom controls')}>
           <button
             type="button"
-            aria-label="Zoom out"
+            aria-label={controlLabel('Zoom out')}
             disabled={!layout || zoom <= 0.4}
             onClick={zoomOut}
           >
             −
           </button>
-          <button type="button" disabled={!layout} onClick={fitDiagram}>Fit diagram</button>
-          <output aria-label="Current zoom">{Math.round(zoom * 100)}%</output>
+          <button type="button" disabled={!layout} onClick={fitDiagram}>{controlLabel('Fit diagram')}</button>
+          <output aria-label={controlLabel('Current zoom')}>{Math.round(zoom * 100)}%</output>
           <button
             type="button"
-            aria-label="Zoom in"
+            aria-label={controlLabel('Zoom in')}
             disabled={!layout || zoom >= 1.5}
             onClick={zoomIn}
           >

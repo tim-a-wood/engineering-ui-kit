@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S25",
+  "stepIds": [
+    "use-case-analysis.save"
+  ],
+  "expected": "A concurrent save against a stale expected revision throws DesignConflictError carrying both the on-disk and attempted versions; resolving by saving with the correct expectedRevision succeeds.",
+  "actual": "concurrent save rejected with both versions carried; resolved by saving against the correct expectedRevision",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "7f7b5187dc03b85cea9dc7cedf387739549d13879d6790dccee04bd63afc98e1"
+}

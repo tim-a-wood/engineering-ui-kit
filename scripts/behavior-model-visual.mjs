@@ -57,13 +57,25 @@ async function capture(page, name, workspace) {
   console.log(`captured ${name}`)
 }
 
+async function captureView(page, name, view) {
+  await view.waitFor({ state: 'visible' })
+  await frameWorkspace(page, view)
+  await capture(page, name)
+}
+
+async function captureModuleDiagram(page, name, workspace) {
+  await workspace.locator('.design-diagram-svg').waitFor({ state: 'visible' })
+  await page.waitForTimeout(300)
+  await frameWorkspace(page, workspace)
+  await capture(page, name)
+}
+
 async function openDo178Capabilities(page) {
   await page.goto(targetUrl, { waitUntil: 'networkidle' })
   await page.getByRole('button', { name: 'Capabilities', exact: true }).click()
-  await page.locator('select[aria-label="Capabilities project"]').selectOption('do-178c-audit-hub')
-  await page.waitForTimeout(600)
-  await page.getByRole('button', { name: 'View design' }).click()
-  await page.waitForTimeout(300)
+  await page.getByRole('heading', { name: 'Product delivery', exact: true }).waitFor()
+  await page.getByRole('tab', { name: 'Use-case analysis', exact: true }).waitFor()
+  await page.waitForTimeout(500)
 }
 
 const browser = await chromium.launch({
@@ -81,65 +93,51 @@ page.on('pageerror', (error) => pageErrors.push(String(error)))
 try {
   await openDo178Capabilities(page)
 
-  await page.getByRole('tab', { name: 'Application', exact: true }).click()
-  await page.waitForTimeout(350)
-  const applicationWorkspace = page.locator('.cap-behavior-workspace').last()
-  const applicationDiagram = applicationWorkspace.locator('.uml-workspace')
-  await capture(page, '01-use-case', applicationDiagram)
-  await applicationWorkspace.locator('.cap-behavior-selector select').first()
-    .selectOption('workflow:uc-package')
-  await applicationDiagram.getByRole('tab', { name: 'Activity', exact: true }).click()
-  await capture(page, '02-application-activity', applicationDiagram)
+  await captureView(page, '01-plan-use-cases', page.locator('.design-plan'))
 
-  await page.getByRole('tab', { name: 'Architecture', exact: true }).click()
-  await page.waitForTimeout(350)
-  const allocationWorkspace = page.locator('.cap-behavior-workspace').last()
-  const allocationDiagram = allocationWorkspace.locator('.uml-workspace')
-  await allocationWorkspace.locator('.cap-behavior-selector select').first()
-    .selectOption('workflow:uc-package')
-  await capture(page, '03-solution-allocation', allocationDiagram)
-  await allocationDiagram.getByRole('tab', { name: 'Sequence', exact: true }).click()
-  await capture(page, '04-cross-module-sequence', allocationDiagram)
-
-  await page.getByRole('tab', { name: 'Modules', exact: true }).click()
-  await page.waitForTimeout(350)
-  await page.getByRole('button', { name: /mod\.assurance-workflow/ }).click()
+  await page.getByRole('tab', { name: 'Application workflows', exact: true }).click()
   await page.waitForTimeout(500)
-  const moduleWorkspace = page.locator('.cap-module-design-workspace')
-  const moduleDiagram = moduleWorkspace.locator('.uml-workspace')
-  await capture(page, '05-component', moduleDiagram)
-  await moduleDiagram.getByRole('tab', { name: 'Manage audit finding', exact: true }).click()
-  await capture(page, '06-module-activity', moduleDiagram)
-  await moduleDiagram.getByRole('tab', { name: 'State machine', exact: true }).click()
-  await capture(page, '07-state-machine', moduleDiagram)
-  await moduleDiagram.getByRole('tab', { name: 'Sequence', exact: true }).click()
-  await capture(page, '08-internal-sequence', moduleDiagram)
+  const applicationView = page.locator('.design-application-behavior')
+  await applicationView.locator('.design-behavior-selector select').selectOption({ label: 'Review finding' })
+  const applicationDiagram = applicationView.locator('.uml-workspace')
+  await capture(page, '02-application-activity', applicationDiagram)
+  await applicationDiagram.getByRole('tab', { name: 'Use case', exact: true }).click()
+  await capture(page, '03-application-use-case', applicationDiagram)
 
-  await page.getByRole('tab', { name: 'Verification', exact: true }).click()
-  await page.waitForTimeout(400)
-  const observedScreenshot = await page.screenshot({ type: 'png' })
-  await page.getByRole('button', { name: 'Prepare run' }).click()
-  await page.waitForTimeout(300)
-  const firstStep = page.locator('.cap-scenario-step').first()
-  await firstStep.locator('textarea').fill(
-    'The application shows the approved evidence identity and history.',
-  )
-  const evidenceInput = firstStep.locator('input[type="file"]')
-  if (await evidenceInput.count()) {
-    await evidenceInput.setInputFiles({
-      name: 'observed-evidence.png',
-      mimeType: 'image/png',
-      buffer: observedScreenshot,
-    })
-    await page.waitForTimeout(250)
-  }
-  await firstStep.getByRole('button', { name: 'Record observed step' }).click()
-  await page.waitForTimeout(300)
-  await firstStep.getByRole('button', { name: 'Inspect trace' }).click()
-  const traceDrawer = page.locator('.cap-scenario-trace-drawer')
-  await traceDrawer.waitFor({ state: 'visible' })
-  await frameWorkspace(page, traceDrawer)
-  await capture(page, '09-verification-trace')
+  await page.getByRole('button', { name: /^Design / }).click()
+  await page.waitForTimeout(700)
+  const allocationView = page.locator('.design-workflow-allocation')
+  await allocationView.locator('.design-behavior-selector select').selectOption({ label: 'Refresh evidence' })
+  const allocationDiagram = allocationView.locator('.uml-workspace')
+  await capture(page, '04-solution-allocation', allocationDiagram)
+  await allocationDiagram.getByRole('tab', { name: /^Sequence/ }).click()
+  await capture(page, '05-cross-module-sequence', allocationDiagram)
+  const systemCanvas = page.locator('.design-canvas')
+  await systemCanvas.getByRole('button', { name: 'Fit system', exact: true }).click()
+  await page.waitForTimeout(500)
+  await captureView(page, '06-system-structure', systemCanvas)
+
+  await page.getByRole('button', { name: /^Build / }).click()
+  await page.waitForTimeout(700)
+  await page.locator('#design-handoff-module-select').selectOption('mod.finding-review')
+  await page.waitForTimeout(700)
+  const moduleDiagram = page.locator('.design-build-behavior .design-diagrams')
+  await moduleDiagram.getByRole('tab', { name: 'Component', exact: true }).click()
+  await captureModuleDiagram(page, '07-module-component', moduleDiagram)
+  await moduleDiagram.getByRole('tab', { name: 'Activity', exact: true }).click()
+  await captureModuleDiagram(page, '08-module-activity', moduleDiagram)
+  await moduleDiagram.getByRole('tab', { name: 'State machine', exact: true }).click()
+  await captureModuleDiagram(page, '09-module-state-machine', moduleDiagram)
+  await moduleDiagram.getByRole('tab', { name: 'Sequence', exact: true }).click()
+  await captureModuleDiagram(page, '10-module-sequence', moduleDiagram)
+
+  await page.getByRole('button', { name: /^Verify / }).click()
+  await page.waitForTimeout(500)
+  await captureView(page, '11-scenario-testing', page.locator('.design-verify'))
+
+  await page.getByRole('button', { name: /^Evidence / }).click()
+  await page.waitForTimeout(500)
+  await captureView(page, '12-evidence-trace', page.locator('.design-evidence-live'))
 
   if (pageErrors.length) {
     throw new Error(`The browser reported errors:\n${pageErrors.join('\n')}`)

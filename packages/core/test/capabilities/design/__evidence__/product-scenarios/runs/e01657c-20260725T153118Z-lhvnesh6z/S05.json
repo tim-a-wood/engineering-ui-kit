@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S05",
+  "stepIds": [
+    "module-design.start"
+  ],
+  "expected": "startModuleDesign creates a draft for the Evidence Store module at the boundary step, with a persisted resumable session.",
+  "actual": "mod.evidence-store draft created at revision r1, session step boundary",
+  "revisions": {
+    "application": "n/a",
+    "design": "r1",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "b3db9eb0425f722c7d6d76953c74f9b60c2732de2a8a80d950772554346e8970"
+}

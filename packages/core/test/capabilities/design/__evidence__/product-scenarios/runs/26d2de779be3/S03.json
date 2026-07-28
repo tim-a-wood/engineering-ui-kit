@@ -1,0 +1,20 @@
+{
+  "scenarioId": "S03",
+  "stepIds": [
+    "system-design.create",
+    "system-design.approve"
+  ],
+  "expected": "A system-design draft compiled from the approved application specification is approved as the current architecture.",
+  "actual": "system structure approved at r1",
+  "revisions": {
+    "application": "n/a",
+    "design": "r1",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "f925d1a6086c7ad5cd93955f5fc2780abd1742d2961ef81d10b94f613fbd5958"
+}

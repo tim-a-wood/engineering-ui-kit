@@ -1,0 +1,21 @@
+{
+  "scenarioId": "S20",
+  "stepIds": [
+    "impact.analyze",
+    "change-plan.approve",
+    "diagram.project"
+  ],
+  "expected": "Approving the change plan for the selected relationship is followed by a real diagram content-hash change for the affected module and no change for an unaffected module.",
+  "actual": "affected diagram content hash changed; unaffected module diagram content hash unchanged",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "ef86eb8540a5b6888c3afa793567eca0f1cbff349c3dc9bf21a24a9a7a928421"
+}

@@ -1,0 +1,274 @@
+[
+  {
+    "id": "01",
+    "action": "Open the Design workspace from Primary navigation with no prior state.",
+    "expectedResult": "The workspace opens with the synthetic-data statement, the 17-module queue, and counts-not-percentages progress.",
+    "actualObservation": "Sample statement: \"This is synthetic sample data for the DO-178C Audit Hub. Every actor, evidence item, finding, and package below is invented for demonstration only; it is not real audit evidence.\". Queue: \"17 modules shown\". Status: \"System structure approved. 13 of 17 module designs approved, 4 remain.\".",
+    "screenshot": "01-design-workspace-default.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:34.658Z"
+  },
+  {
+    "id": "02",
+    "action": "Click the \"Approved\" filter chip in the module queue.",
+    "expectedResult": "Only approved-state modules remain in the queue list, with a live-region count update.",
+    "actualObservation": "Queue result count after filtering: \"13 modules shown\".",
+    "screenshot": "02-module-queue-filtered-approved.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:35.020Z"
+  },
+  {
+    "id": "03",
+    "action": "Select \"Finding Review\" from the filtered module queue.",
+    "expectedResult": "The center panel shows the six fixed module-design session steps and the current step content for the selected module.",
+    "actualObservation": "Session steps shown (6): 1. Review boundary (completed) | 2. Define behavior (completed) | 3. Define contracts (completed) | 4. Review diagrams (completed) | 5. Run checks (completed) | 6. Approve module (completed).",
+    "screenshot": "03-module-session-six-step.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:35.242Z"
+  },
+  {
+    "id": "04",
+    "action": "With \"Finding Review\" selected, view the system canvas in its default focus mode.",
+    "expectedResult": "The canvas shows only the selected module and its direct neighborhood (§8.2 \"use focus mode by default\").",
+    "actualObservation": "\"Show all links\" toggle aria-pressed=\"false\" (false means focus mode is active).",
+    "screenshot": "04-system-canvas-focus-mode.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:36.250Z"
+  },
+  {
+    "id": "05",
+    "action": "Click the \"Show all links\" canvas toggle.",
+    "expectedResult": "The canvas now shows every module and every dependency edge in the approved system structure.",
+    "actualObservation": "\"Show all links\" toggle aria-pressed=\"true\" after the click.",
+    "screenshot": "05-system-canvas-all-links.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:36.567Z"
+  },
+  {
+    "id": "06",
+    "action": "Double-click \"Audit Workspace, approved\", the module node actually visible on the default canvas view (the selected module \"Finding Review\" itself is off-canvas — see the defect note in usability-log.json).",
+    "expectedResult": "A modal opens showing the module state, responsibility, provided (consumer) and required (dependency) relationships.",
+    "actualObservation": "Dialog title: \"Audit Workspace\".",
+    "screenshot": "06-canvas-node-detail-modal.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:37.114Z"
+  },
+  {
+    "id": "07",
+    "action": "Open the \"Review diagrams\" step for \"Finding Review\".",
+    "expectedResult": "A rendered UML component diagram appears for the module, with one tab per applicable diagram kind.",
+    "actualObservation": "Diagram tabs available: Component, Activity, State machine, Sequence, Use case.",
+    "screenshot": "07-module-diagrams-component.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:37.608Z"
+  },
+  {
+    "id": "08",
+    "action": "Click the first selectable node on the component diagram.",
+    "expectedResult": "A modal opens with the UML element type, stable element ID, label, source record, definition, connected elements, trace links, and discussion history.",
+    "actualObservation": "Selected diagram element: \"«component»: Audit Workspace\".",
+    "screenshot": "08-diagram-element-detail-modal.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:37.998Z"
+  },
+  {
+    "id": "09",
+    "action": "Click \"Show relationship list\" to toggle the diagram's text alternative.",
+    "expectedResult": "The SVG diagram is replaced by an accessible text list of every relationship (§15.2, §18.4).",
+    "actualObservation": "9 relationship line(s) listed.",
+    "screenshot": "09-diagram-text-alternative-list.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:38.277Z"
+  },
+  {
+    "id": "10",
+    "action": "Open the Build tab.",
+    "expectedResult": "The gate-mode banner and a one-module handoff panel (default module selection) are both visible; there is no automatic dispatch-all action.",
+    "actualObservation": "Gate-mode banner: \"Gate mode: Complete Design baseline Build starts after the complete Design baseline is approved.\".",
+    "screenshot": "10-build-tab-gate-banner-handoff-panel.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:38.859Z"
+  },
+  {
+    "id": "11",
+    "action": "Click \"Create Copilot handoff\" for \"Finding Review\" (build gate: Open).",
+    "expectedResult": "A packet summary appears with the outcome and a context manifest listing every included record/contract with its inclusion reason.",
+    "actualObservation": "Handoff result: \"Created a implementation handoff packet.\". Context manifest entries: 10.",
+    "screenshot": "11-packet-summary-after-handoff.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:39.668Z"
+  },
+  {
+    "id": "12",
+    "action": "Use the in-app sample deterministic-test-provider delta, then click \"Inspect returned changes\".",
+    "expectedResult": "The full delta inspection is shown before any approve/apply action: file summary, record changes, contract changes, affected requirements/use cases, test results, warnings, and rollback point.",
+    "actualObservation": "Inspection outcome: \"Accepted.\".",
+    "screenshot": "12-delta-inspection-panel.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:40.278Z"
+  },
+  {
+    "id": "13",
+    "action": "View the Build tab's implementation-wave plan.",
+    "expectedResult": "Waves list modules with direct dependencies, allowed paths, shared resources, batch eligibility, and blocking contracts/cycles — with no automatic dispatch-all action.",
+    "actualObservation": "7 wave(s) shown.",
+    "screenshot": "13-waves-view.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:40.612Z"
+  },
+  {
+    "id": "14",
+    "action": "Open the Verify tab.",
+    "expectedResult": "Verify shows scenario-run counts and links to approved Design records, and contains no design diagrams (§14.4, §24.2 scenario 30).",
+    "actualObservation": "Counts: \"Use cases 4 Scenarios 16 Passed 14 Failed 2 Skipped 0 Cancelled 0 Steps 24 Screenshots 24 Structured evidence 0 Current results Current: 0 Old results Old: 16\". Design links: 17. SVG diagram elements present: 0.",
+    "screenshot": "14-verify-tab-counts-links.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:40.760Z"
+  },
+  {
+    "id": "15",
+    "action": "Open the Evidence tab.",
+    "expectedResult": "The Evidence Explorer lists the sample defects by lifecycle phase, each with a \"Follow trace\" action back to Design.",
+    "actualObservation": "Defect/valid-evidence labels shown: Broken trace, MATLAB and Simulink timeout, Invalid column mapping, Rejected — reviewer not independent, Old package after baseline change.",
+    "screenshot": "15-evidence-explorer-defects.png",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:41.114Z"
+  },
+  {
+    "id": "16",
+    "action": "Open the Design workspace at a 640x900 narrow viewport.",
+    "expectedResult": "The module queue becomes a drawer/selector, the current module content remains first, and approval actions remain reachable without precision pointing (§18.2).",
+    "actualObservation": ".design-workspace.narrow present: true. Drawer toggle label: \"Show module list — current: Evidence Graph\".",
+    "screenshot": "16-narrow-viewport-640x900-reflow.png",
+    "viewport": {
+      "width": 640,
+      "height": 900
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:42.878Z"
+  },
+  {
+    "id": "17",
+    "action": "Open the Design workspace at a 720x450 viewport (emulating 200% zoom on a 1440x900 display).",
+    "expectedResult": "The workspace remains fully operable with no loss of function at 200% zoom (§18.4).",
+    "actualObservation": "Sample statement visible at this size: true.",
+    "screenshot": "17-zoomed-200-percent-720x450.png",
+    "viewport": {
+      "width": 720,
+      "height": 450
+    },
+    "theme": "default",
+    "build": "dfa6312",
+    "environment": "chromium-headless linux",
+    "testDataRevision": "sample-do178c-audit-hub",
+    "capturedAt": "2026-07-25T03:53:44.438Z"
+  }
+]

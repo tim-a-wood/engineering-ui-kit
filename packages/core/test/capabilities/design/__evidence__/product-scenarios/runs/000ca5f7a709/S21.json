@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S21",
+  "stepIds": [
+    "waves.plan"
+  ],
+  "expected": "getImplementationWaves returns a full wave plan with autoDispatch always false, and creates no implementation packet as a side effect.",
+  "actual": "wave plan: 4 waves, autoDispatch=false, no packet created",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "0e7303d378a01c6d91cef5aec3d0e9370f2dfd0915b2c675713d8ddc11be8be6"
+}

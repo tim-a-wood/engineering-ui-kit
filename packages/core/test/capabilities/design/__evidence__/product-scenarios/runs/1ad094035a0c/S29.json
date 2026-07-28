@@ -1,0 +1,19 @@
+{
+  "scenarioId": "S29",
+  "stepIds": [
+    "evidence-policy.plan"
+  ],
+  "expected": "buildEvidenceExpectationPlan assigns structured evidence to every nonvisual step and to every visible step with a recorded not-applicable reason; every real recorded run step carries screenshotRef, structuredEvidenceRef, or a not-applicable reason.",
+  "actual": "nonvisual steps require structured evidence; 24 recorded steps each carry screenshot, structured evidence, or a not-applicable reason",
+  "revisions": {
+    "application": "n/a",
+    "design": "n/a",
+    "modules": {}
+  },
+  "build": "core-vitest",
+  "environment": "linux/6.18.5 node-v22.22.2",
+  "testDataRevision": "n/a",
+  "outcome": "passed",
+  "notApplicableScreenshotReason": "operations-level scenario; no visual surface to capture",
+  "contentHash": "1e6aafc2ffa02e656ef7d60f3894f2761eea5ace424968fdbd0c5719ea7f415b"
+}
