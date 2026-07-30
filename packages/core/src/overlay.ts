@@ -194,6 +194,22 @@ function normalizeVisibleText(value: string): string {
     .trim())
 }
 
+/**
+ * Approximate the browser accessible-name algorithm for static markup.
+ * Canonical names exclude helper copy, status badges, hidden icons, and
+ * nested controls. The runtime fidelity check still uses the browser for
+ * complete computed accessibility data.
+ */
+function accessibleNameMarkup(value: string): string {
+  let result = value
+  const excludedPair =
+    /<([A-Za-z][\w:.-]*)\b[^>]*(?:aria-hidden\s*=\s*(?:"true"|'true'|\{true\})|class(?:Name)?\s*=\s*(?:"[^"]*\b(?:badge|help|hint|meta|secondary|status|supporting)\b[^"]*"|'[^']*\b(?:badge|help|hint|meta|secondary|status|supporting)\b[^']*'))[^>]*>[\s\S]*?<\/\1\s*>/gi
+  for (let pass = 0; pass < 3; pass += 1) result = result.replace(excludedPair, ' ')
+  return result
+    .replace(/<(?:small|script|style)\b[^>]*>[\s\S]*?<\/(?:small|script|style)\s*>/gi, ' ')
+    .replace(/<(?:input|select|textarea|svg)\b[\s\S]*?(?:\/>|<\/(?:select|textarea|svg)\s*>|>)/gi, ' ')
+}
+
 function normalizeMarkdownText(value: string): string {
   return normalizeVisibleText(value
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
@@ -367,15 +383,36 @@ function extractMarkupSteFragments(source: string): OverlaySteFragment[] {
     if (opening.selfClosing || !pairedNamePattern.test(opening.tagName)) continue
     const closing = closingTag(masked, opening)
     if (!closing) continue
-    if (
-      classifyElementText(opening.tagName) === 'action-label'
-      && /\baria-label\s*=/i.test(opening.attributes)
-    ) continue
+    const explicitName = /\baria-label\s*=/i.test(opening.attributes)
+    const labelledBy = opening.attributes.match(/\baria-labelledby\s*=\s*(?:"([^"]+)"|'([^']+)')/i)
+    if (classifyElementText(opening.tagName) === 'action-label' && (explicitName || labelledBy)) {
+      claimedRanges.push({ start: opening.end + 1, end: closing.start })
+      if (labelledBy) {
+        const ids = (labelledBy[1] ?? labelledBy[2] ?? '').split(/\s+/).filter(Boolean)
+        const labels = ids.flatMap((id) => {
+          const target = openings.find((candidate) => {
+            const idMatch = candidate.attributes.match(/\bid\s*=\s*(?:"([^"]+)"|'([^']+)')/i)
+            return (idMatch?.[1] ?? idMatch?.[2]) === id
+          })
+          if (!target || target.selfClosing) return []
+          const targetClosing = closingTag(masked, target)
+          if (!targetClosing) return []
+          return [normalizeVisibleText(accessibleNameMarkup(masked.slice(target.end + 1, targetClosing.start)))]
+        }).filter(Boolean)
+        const text = labels.join(' ')
+        if (/[A-Za-z]/.test(text)) {
+          fragments.push({
+            text,
+            textClass: 'action-label',
+            offset: opening.nameEnd,
+            source: 'aria-labelledby name',
+          })
+        }
+      }
+      continue
+    }
     const rawText = masked.slice(opening.end + 1, closing.start)
-    const visibleText = opening.tagName.toLowerCase() === 'label'
-      ? rawText
-        .replace(/<select\b[\s\S]*?<\/select\s*>/gi, ' ')
-      : rawText
+    const visibleText = accessibleNameMarkup(rawText)
     const innerOffset = opening.end + 1
     const text = normalizeVisibleText(visibleText)
     claimedRanges.push({ start: innerOffset, end: innerOffset + rawText.length })

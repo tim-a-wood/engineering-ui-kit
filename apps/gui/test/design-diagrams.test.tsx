@@ -11,6 +11,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { projectComponentDiagram } from '@engineering-ui-kit/core/design-browser'
 import { DesignStore } from '../src/views/design/designState'
 import { ModuleDiagrams } from '../src/views/design/ModuleDiagrams'
+import { operationName } from '../src/views/design/designShared'
 
 const NOW = () => '2026-07-25T00:00:00.000Z'
 const MODULE_ID = 'mod.finding-review'
@@ -19,6 +20,12 @@ beforeEach(() => {
   window.localStorage.clear()
 })
 afterEach(cleanup)
+
+describe('Diagram labels', () => {
+  it('uses the approved use-case name instead of a technical operation ID', () => {
+    expect(operationName('harbor.ops.use-case.assign-vessel-berth.acceptance')).toBe('Assign vessel berth')
+  })
+})
 
 function renderDiagrams(store: DesignStore) {
   const state = store.getState()

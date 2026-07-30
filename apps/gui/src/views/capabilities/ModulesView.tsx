@@ -47,6 +47,7 @@ import { CapabilityHandoffCard } from './CapabilityHandoffCard'
 import { humanizeIdentifier, moduleTypeLabel, presentDiagnosticsForGuided } from './capabilityPresentation'
 import { deploymentContextFor } from './moduleBuildTask'
 import { ModuleDesignWorkspace } from './ModuleDesignWorkspace'
+import { InspectionWarningGroups } from '../workflowShared'
 
 type Props = {
   bridge: EuikBridge
@@ -921,7 +922,7 @@ function ModuleWorkspace(props: {
   const overlayInspection = inspection ? (
     <div aria-label="Capability overlay inspection" className="cap-overlay-inspect">
       {inspection.hardBlockers.length ? <ul className="cap-issue-list">{inspection.hardBlockers.map((item, index) => <li key={`${item.ruleId}-${index}`}>{guided ? item.message : `${item.ruleId}: ${item.message}`} <span className="badge">cannot apply</span></li>)}</ul> : null}
-      {inspection.warnings.length ? <ul>{inspection.warnings.map((item, index) => <li key={`${item.ruleId}-${index}`}>Warning: {guided ? item.message : `${item.ruleId}: ${item.message}`}</li>)}</ul> : <p className="capabilities-note">No overlay warnings.</p>}
+      {inspection.warnings.length ? <InspectionWarningGroups warnings={inspection.warnings} guided={guided} /> : <p className="capabilities-note">No overlay warnings.</p>}
       {inspection.warnings.length ? <label className="cap-accept-warnings"><input type="checkbox" checked={warningsAccepted} onChange={(e) => setWarningsAccepted(e.target.checked)} /> Accept overlay warnings</label> : null}
     </div>
   ) : null

@@ -11,6 +11,7 @@ import {
   copyText,
   formatBytes,
   loadProjectSteLexicon,
+  InspectionWarningGroups,
   TreeView,
 } from '../workflowShared'
 import type { BuildWorkspaceProps } from './buildTypes'
@@ -135,13 +136,7 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
               <p className="status-label" style={{ color: 'var(--semantic-status-warning)', marginTop: 0 }}>
                 Overlay warnings
               </p>
-              <ul style={{ margin: 0, paddingLeft: 18 }}>
-                {inspection.warnings.map((w, i) => (
-                  <li key={i} style={{ fontSize: 13 }}>
-                    <code>{w.ruleId}</code> {w.path ? <code className="path-wrap">{w.path}</code> : null} — {w.message}
-                  </li>
-                ))}
-              </ul>
+              <InspectionWarningGroups warnings={inspection.warnings} />
               <p className="muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
                 Review each warning before you continue.
               </p>
@@ -169,7 +164,23 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
 
       {applied && (
         <section aria-labelledby="applied-heading" style={{ marginTop: 14 }}>
-          <h3 id="applied-heading">Applied files</h3>
+          <div className="hstack between">
+            <div>
+              <h3 id="applied-heading">Build ready</h3>
+              <p className="muted" style={{ margin: 0 }}>The reviewed files are in the project. Open the result before you start formal verification.</p>
+            </div>
+            <button type="button" className="btn btn-primary" onClick={async () => {
+              try {
+                const result = await props.bridge.launchApp(props.project.id, { open: true })
+                props.setStatus({ tone: 'success', text: `Opened the built UI at ${result.url}.` })
+              } catch (error) {
+                props.setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
+              }
+            }}>
+              Preview built UI
+            </button>
+          </div>
+          <h4>Applied files</h4>
           <ul className="row-list">
             {applied.files.map((f) => (
               <li key={f.relativePath} className="hstack between" style={{ padding: '4px 0' }}>

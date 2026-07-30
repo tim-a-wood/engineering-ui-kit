@@ -1233,6 +1233,19 @@ export type UiInboundBinding = InboundBindingBase & {
   kind: 'ui'
   transport: UiTransportKind
   trigger: BindingTrigger
+  /** Localhost, file URL, or repository-relative HTML entry point. */
+  launchUrl?: string
+  route?: string
+  readinessSelector?: string
+  captureSelector?: string
+  /** Browser actions that make each approved scenario step executable. */
+  stepActions?: {
+    stepId: string
+    route?: string
+    actionSelector?: string
+    expectedSelector: string
+    expectedText?: string
+  }[]
   selectionEvidence?: SelectionEvidence
   rendererDeployableId?: string
   mainDeployableId?: string

@@ -352,8 +352,8 @@ function buildFlowLayout(
       elementId: element.id,
       x: graphWidth + 220,
       y: Math.min(Math.max(height + 28, layerY / 3), Math.max(height + 28, layerY - height * 1.3)) + index * (height * 1.35 + NODE_GAP_X),
-      width: Math.max(width * 1.45, 240),
-      height: Math.max(height * 1.15, 72),
+      width: Math.max(width * 1.8, 300),
+      height: Math.max(height * 1.55, 104),
     })
   })
 
@@ -612,7 +612,8 @@ function buildComponentLayout(projection: DiagramProjection, width: number, heig
   const mainY = Math.max(180, consumerBottom + 64 + Math.max(0, consumers.length - 1) * 18)
   const sideStep = height + 22
   const sideCount = Math.max(provided.length, required.length)
-  const dependencyY = Math.max(mainY + height + 250, 70 + sideCount * sideStep)
+  const simpleBoundary = sideCount === 0 && consumers.length + lowerComponents.length <= 2
+  const dependencyY = Math.max(mainY + height + (simpleBoundary ? 96 : 250), 70 + sideCount * sideStep)
 
   const nodes: DiagramLayoutNode[] = [{ elementId: main.id, x: centerX, y: mainY, width, height }]
 

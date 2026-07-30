@@ -25,7 +25,7 @@ import { buildSampleAuditHub } from '../../../src/capabilities/design/sampleAudi
 import { createConnectExecutors, type ConnectExecutorDeps } from '../../../src/capabilities/design/connectExecutors.js'
 import * as VerificationPlanner from '../../../src/capabilities/design/verificationPlanner.js'
 import { probeFreePort } from '../../../src/commandRunner.js'
-import type { CliInboundBinding, HttpInboundBinding } from '../../../src/capabilities/types.js'
+import type { CliInboundBinding, HttpInboundBinding, UiInboundBinding } from '../../../src/capabilities/types.js'
 import type { ModuleDesignSpecification } from '../../../src/capabilities/design/records.js'
 
 function tmpDir(prefix: string): string {
@@ -41,7 +41,11 @@ function writeScript(repositoryRoot: string, relPath: string, content: string): 
 const SCREENSHOT_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
 
 function visualStepScript(exitCode: number): string {
-  return `require('node:fs').writeFileSync(process.env.EUIK_SCREENSHOT_PATH, Buffer.from('${SCREENSHOT_PNG_BASE64}', 'base64'));\nprocess.exit(${exitCode});\n`
+  return `require('node:fs').writeFileSync(process.env.EUIK_SCREENSHOT_PATH, Buffer.concat([Buffer.from('${SCREENSHOT_PNG_BASE64}', 'base64'), Buffer.from(process.env.EUIK_STEP_ID || '')]));\nprocess.exit(${exitCode});\n`
+}
+
+function duplicateVisualStepScript(): string {
+  return `require('node:fs').writeFileSync(process.env.EUIK_SCREENSHOT_PATH, Buffer.from('${SCREENSHOT_PNG_BASE64}', 'base64'));\nprocess.exit(0);\n`
 }
 
 /** A fresh workspace + one approved module design + one approved operation contract — the minimum `configureBinding` needs to accept a real binding. */
@@ -296,6 +300,65 @@ describe('connectExecutors.verifyConnection — http', () => {
   })
 })
 
+describe('connectExecutors.verifyConnection — ui', () => {
+  it('opens a real local UI and captures a mapped scenario observation', () => {
+    const fixture = buildFixture()
+    const entry = VerificationPlanner.buildScenarioTestPlan(fixture.sample.useCaseAnalysis).entries[0]!
+    const stepId = entry.actions[0]!.stepId
+    writeScript(
+      fixture.repositoryRoot,
+      'dist/index.html',
+      `<!doctype html><main><button data-scenario-step="${stepId}">Run task</button><p data-scenario-result="${stepId}" hidden>Task complete</p></main><script>document.querySelector('button').onclick=()=>document.querySelector('p').hidden=false</script>`,
+    )
+    const binding: UiInboundBinding = {
+      ...baseBindingFields(fixture),
+      kind: 'ui',
+      bindingId: 'bind.ui.1',
+      transport: 'browser-local',
+      trigger: 'activate',
+      launchUrl: 'dist/index.html',
+      readinessSelector: 'main',
+      captureSelector: 'main',
+      stepActions: [{
+        stepId,
+        actionSelector: `[data-scenario-step="${stepId}"]`,
+        expectedSelector: `[data-scenario-result="${stepId}"]`,
+        expectedText: 'Task complete',
+      }],
+    }
+    const executors = createConnectExecutors(fixture.deps)
+    const configured = executors.configureBinding!({
+      projectId: fixture.sample.projectId,
+      moduleId: fixture.moduleDesign.module.moduleId,
+      bindingConfig: binding,
+    }, {})
+    expect(configured.ok, JSON.stringify(configured.diagnostics)).toBe(true)
+
+    const verified = executors.verifyConnection!({
+      projectId: fixture.sample.projectId,
+      moduleId: fixture.moduleDesign.module.moduleId,
+    }, {})
+    expect(verified.ok, JSON.stringify(verified.diagnostics)).toBe(true)
+    expect(verified.value).toMatchObject({
+      triggerKind: 'ui',
+      verificationStatus: 'pass',
+      evidenceArtifactRefs: [expect.stringMatching(/^design-evidence:\/\//)],
+    })
+
+    const result = executors.runScenario!({ entry, analysis: fixture.sample.useCaseAnalysis }, {})
+    const observed = result.steps.find((step) => step.stepId === stepId)
+    expect(observed).toMatchObject({
+      outcome: 'passed',
+      screenshotRef: expect.stringMatching(/^design-evidence:\/\//),
+      executionTrace: {
+        entryPointKind: 'ui',
+        actionTarget: `[data-scenario-step="${stepId}"]`,
+        observationTarget: `[data-scenario-result="${stepId}"]`,
+      },
+    })
+  }, 30_000)
+})
+
 // ---------------------------------------------------------------------------
 // runScenario
 // ---------------------------------------------------------------------------
@@ -413,5 +476,41 @@ describe('operations-level: configureBinding + verifyConnection + runScenario wi
     // operations.runScenario persists the ScenarioRun itself (the executor
     // only executes) — confirms the real persistence path still runs.
     expect(fixture.workspace.getScenarioRun(fixture.sample.projectId, ran.value!.runId)).toBeDefined()
+  })
+
+  it('blocks a run when different visible steps reuse the same original screenshot', () => {
+    const fixture = buildFixture()
+    const testPlan = VerificationPlanner.buildScenarioTestPlan(fixture.sample.useCaseAnalysis)
+    const entry = testPlan.entries.find((candidate) => {
+      const useCase = fixture.sample.useCaseAnalysis.useCases.find((item) => item.id === candidate.useCaseId)
+      return (useCase?.scenarios.find((scenario) => scenario.id === candidate.scenarioId)?.steps.length ?? 0) > 1
+    })!
+    const useCase = fixture.sample.useCaseAnalysis.useCases.find((item) => item.id === entry.useCaseId)!
+    const scenario = useCase.scenarios.find((item) => item.id === entry.scenarioId)!
+    writeScript(fixture.repositoryRoot, 'scripts/reused-shot.js', duplicateVisualStepScript())
+    const configuredCommands = scenario.steps.map((step) => `${step.id}: ${process.execPath} scripts/reused-shot.js`)
+    const design: ModuleDesignSpecification = {
+      ...fixture.moduleDesign,
+      verification: { ...fixture.moduleDesign.verification, configuredCommands },
+    }
+    const executors = createConnectExecutors({
+      ...fixture.deps,
+      getModuleDesign: () => design,
+      listApprovedModuleDesigns: () => [design],
+    })
+    fixture.workspace.saveProjectRoles(fixture.sample.projectId, { 'user:alice': ['verification-lead'] } as any)
+    const ops = createDesignOperations({ workspace: fixture.workspace, executors })
+
+    const result = ops.runScenario({
+      projectId: fixture.sample.projectId,
+      actor: 'user:alice',
+      idempotencyKey: 's6-duplicate-shot',
+      scenarioId: entry.scenarioId,
+    })
+
+    expect(result.ok).toBe(false)
+    expect(result.value?.outcome).toBe('failed')
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain('EUC16-SCENARIO-DUPLICATE-SCREENSHOT')
+    expect(result.value?.steps.some((step) => step.actualResult.includes('Evidence integrity failure'))).toBe(true)
   })
 })

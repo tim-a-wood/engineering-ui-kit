@@ -21,6 +21,10 @@ function lines(value: string): string[] {
   return value.split('\n').map((item) => item.trim()).filter(Boolean)
 }
 
+function diagnosticDomId(fieldPath: string): string {
+  return `plan-field-${fieldPath.replace(/[^a-z0-9_-]+/gi, '-')}`
+}
+
 function readableDate(value?: string): string {
   if (!value) return 'Unknown time'
   const date = new Date(value)
@@ -80,6 +84,7 @@ function ReviewItem(props: { item: AnalysisItem; editable: boolean; store: Desig
 }
 
 function ReviewableContent(props: {
+  targetId?: string
   label: string
   value: string
   state?: AnalysisItemStatus
@@ -91,7 +96,7 @@ function ReviewableContent(props: {
   useEffect(() => setDraft(props.value), [props.value])
   const settled = props.state === 'confirmed' || props.state === 'changed' || props.state === 'rejected'
   return (
-    <div className="design-reviewable-content">
+    <div className="design-reviewable-content" id={props.targetId}>
       <div className="design-reviewable-copy">
         <span className="design-reviewable-label">{props.label}</span>
         <p>{props.value || 'Not specified'}</p>
@@ -179,6 +184,7 @@ function UseCaseDetail(props: {
   const renderPath = (path: UseCaseScenario, pathKind: 'alternatePaths' | 'failurePaths') => (
     <article key={path.id} className="design-plan-path-card">
       <ReviewableContent
+        targetId={diagnosticDomId(`useCases.${useCase.id}.scenarios.${path.id}.name`)}
         label={pathKind === 'alternatePaths' ? 'Alternate path' : 'Failure path'}
         value={path.name}
         state={statusFor(`path.${path.id}`)}
@@ -193,6 +199,7 @@ function UseCaseDetail(props: {
   const renderStep = (step: ScenarioStep) => (
     <li key={step.id}>
       <ReviewableContent
+        targetId={diagnosticDomId(`useCases.${useCase.id}.scenarios.${useCase.scenarios.find((scenario) => scenario.steps.some((candidate) => candidate.id === step.id))?.id ?? 'main'}.steps.${step.id}.action`)}
         label="Action"
         value={step.action}
         state={statusFor(`step.${step.id}.action`)}
@@ -211,11 +218,11 @@ function UseCaseDetail(props: {
     </li>
   )
   return (
-    <article className="design-plan-use-case-detail" aria-label={`Use case ${useCase.name}`}>
+    <article className="design-plan-use-case-detail" id={diagnosticDomId(`useCases.${useCase.id}`)} aria-label={`Use case ${useCase.name}`}>
       <header>
         <div>
           <p className="overline">User task</p>
-          <h2>{useCase.name}</h2>
+          <h2 id={diagnosticDomId(`useCases.${useCase.id}.name`)}>{useCase.name}</h2>
           <details className="design-technical-details"><summary>Technical identity</summary><code>{useCase.id}</code></details>
         </div>
         <span className="design-plan-scenario-count">{useCase.scenarios.length} scenario{useCase.scenarios.length === 1 ? '' : 's'}</span>
@@ -302,6 +309,7 @@ export function UseCasePlanView({ store, onContinueToDesign, initialUseCaseId, o
   )
   const [workDescription, setWorkDescription] = useState('')
   const [examples, setExamples] = useState('')
+  const [exampleMode, setExampleMode] = useState<'separate-use-cases' | 'steps'>('separate-use-cases')
   const [prohibitedResults, setProhibitedResults] = useState('')
   const [sources, setSources] = useState<DraftSource[]>([])
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -327,6 +335,26 @@ export function UseCasePlanView({ store, onContinueToDesign, initialUseCaseId, o
     () => new Map(analysis.actors.map((actor) => [actor.id, actor.text])),
     [analysis.actors],
   )
+  const blockers = gate?.diagnostics ?? []
+
+  const fixNextBlocker = () => {
+    const blocker = blockers[0]
+    if (!blocker) return
+    const useCase = analysis.useCases.find((candidate) =>
+      blocker.fieldPath?.includes(candidate.id) || blocker.relatedIds?.includes(candidate.id),
+    )
+    if (useCase) {
+      setSelectedUseCaseId(useCase.id)
+      onUseCaseSelected?.(useCase.id)
+    }
+    window.setTimeout(() => {
+      const exact = blocker.fieldPath ? document.getElementById(diagnosticDomId(blocker.fieldPath)) : undefined
+      const fallback = useCase ? document.getElementById(diagnosticDomId(`useCases.${useCase.id}`)) : undefined
+      const target = exact ?? fallback
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      target?.querySelector<HTMLElement>('button, input, textarea, summary')?.focus()
+    }, 0)
+  }
 
   if (!analysis.revision) {
     return (
@@ -346,6 +374,7 @@ export function UseCasePlanView({ store, onContinueToDesign, initialUseCaseId, o
             event.preventDefault()
             store.createUseCaseAnalysis({
               workDescription,
+              exampleMode,
               examples: lines(examples),
               prohibitedResults: lines(prohibitedResults),
               sources: sources.map(({ name, ref, required, status, failureCause }) => ({
@@ -365,6 +394,29 @@ export function UseCasePlanView({ store, onContinueToDesign, initialUseCaseId, o
               Examples
               <textarea value={examples} onChange={(event) => setExamples(event.target.value)} placeholder="Open the current evidence package" />
             </label>
+            {lines(examples).length > 1 && (
+              <fieldset className="design-example-mode">
+                <legend>How do these examples relate?</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="example-mode"
+                    checked={exampleMode === 'separate-use-cases'}
+                    onChange={() => setExampleMode('separate-use-cases')}
+                  />
+                  <span><b>Separate user tasks</b><small>Recommended for goals that can succeed or fail independently.</small></span>
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="example-mode"
+                    checked={exampleMode === 'steps'}
+                    onChange={() => setExampleMode('steps')}
+                  />
+                  <span><b>Steps in one task</b><small>Use this only when the user must complete the examples in order.</small></span>
+                </label>
+              </fieldset>
+            )}
             <label>
               Prohibited results
               <textarea value={prohibitedResults} onChange={(event) => setProhibitedResults(event.target.value)} placeholder="Never replace the last approved evidence set" />
@@ -468,6 +520,23 @@ export function UseCasePlanView({ store, onContinueToDesign, initialUseCaseId, o
         </div>
         <span className={`design-state-badge design-state-${analysis.status}`}>{analysis.status === 'readyForReview' ? 'Ready for review' : analysis.status[0]?.toUpperCase() + analysis.status.slice(1)}</span>
       </div>
+
+      {!gate?.passed && blockers.length > 0 && (
+        <section className="design-plan-blocker-summary" role="alert" aria-label="Approval blockers">
+          <div>
+            <span className="design-plan-blocker-count">{blockers.length}</span>
+            <div>
+              <b>Approval blocked</b>
+              <p>{blockers[0]?.message}</p>
+            </div>
+          </div>
+          <button type="button" className="btn btn-primary btn-compact" onClick={fixNextBlocker}>Fix next blocker</button>
+          <details>
+            <summary>Show all blockers</summary>
+            <ol>{blockers.map((blocker) => <li key={`${blocker.code}.${blocker.fieldPath ?? ''}`}>{blocker.message}</li>)}</ol>
+          </details>
+        </section>
+      )}
 
       <div className="design-plan-metrics" aria-label="Use-case analysis counts">
         <div><strong>{analysis.actors.length}</strong><span>Actors</span></div>

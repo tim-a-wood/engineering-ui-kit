@@ -61,6 +61,7 @@ describe('EUC-01 createUseCaseDraft', () => {
         + 'The workflow must report a structured pass or failure result, preserve the last approved result on failure, '
         + 'and retain evidence that an independent reviewer can inspect.',
       examples: ['Validate the current delivery package', 'Review the recorded result'],
+      exampleMode: 'steps',
       prohibitedResults: ['Never replace the last approved result after a failed validation'],
     })
     const [useCase] = analysis.useCases
@@ -73,12 +74,34 @@ describe('EUC-01 createUseCaseDraft', () => {
       'Evidence is retained for independent review.',
     ])
     expect(useCase?.failurePaths).toHaveLength(1)
-    expect(useCase?.failurePaths[0]?.name).toBe('Preserve the last approved result on failure')
+    expect(useCase?.failurePaths[0]?.name).toBe('Preserve approved result')
     expect(useCase?.failurePaths[0]?.steps[0]?.expectedResult).toBe('The last approved result remains unchanged after the failed validation.')
     expect(useCase?.recoveryBehavior).toBe('Preserve the last approved result on failure.')
     expect(useCase?.scenarios.map((scenario) => scenario.kind)).toEqual(['main', 'failure', 'recovery'])
-    expect(useCase?.scenarios[2]?.name).toBe('Recover from a failed attempt to validate a delivery package')
+    expect(useCase?.scenarios[2]?.name).toBe('Recover failed task')
     expect(useCase?.acceptanceChecks[0]?.text).toContain('report a structured pass or failure result')
+  })
+
+  it('creates separate STE-safe use cases for independent examples by default', () => {
+    const { analysis } = createUseCaseDraft({
+      projectId: 'proj-harbor',
+      workDescription: 'A port coordinator manages vessel arrivals and berth assignments.',
+      examples: ['Register vessel arrival', 'Assign vessel berth', 'Publish berth schedule'],
+      prohibitedResults: ['Never assign a closed berth'],
+    })
+
+    expect(analysis.useCases.map((useCase) => useCase.name)).toEqual([
+      'Register vessel arrival',
+      'Assign vessel berth',
+      'Publish berth schedule',
+    ])
+    expect(analysis.useCases.every((useCase) => useCase.mainFlow.length === 1)).toBe(true)
+    const berthUseCase = analysis.useCases[1]!
+    expect(berthUseCase.failurePaths[0]).toMatchObject({
+      name: 'Reject a closed berth',
+      steps: [expect.objectContaining({ action: 'Reject a closed berth' })],
+    })
+    expect(evaluatePlanGate(analysis).passed).toBe(true)
   })
 
   it('produces a material question and needsInput status when the work description is empty (CAP-PLAN-001)', () => {

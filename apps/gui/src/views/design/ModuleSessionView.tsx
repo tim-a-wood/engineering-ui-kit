@@ -202,6 +202,9 @@ function BehaviorStep(props: { design: ModuleDesignSpecification; onAnswerQuesti
   const requiredQuestions = design.unresolvedItems.filter((item) => item.materiality === 'material' && !item.resolvedAt)
   return (
     <div className="design-step-panel">
+      {design.typeSpecific.moduleType === 'experience' && (
+        <ExperienceDesignSummary design={design} />
+      )}
       <h3>Provided operations</h3>
       {design.providedOperations.length === 0 ? (
         <p className="secondary-text">No provided operations yet.</p>
@@ -237,6 +240,54 @@ function BehaviorStep(props: { design: ModuleDesignSpecification; onAnswerQuesti
         </div>
       )}
     </div>
+  )
+}
+
+function ExperienceDesignSummary(props: { design: ModuleDesignSpecification }) {
+  if (props.design.typeSpecific.moduleType !== 'experience') return null
+  const detail = props.design.typeSpecific.detail
+  return (
+    <section className="design-experience-summary" aria-label="Experience design">
+      <header>
+        <div>
+          <p className="overline">Experience design</p>
+          <h3>User workspace map</h3>
+          <p>Screens, navigation, states, and approved use-case traces for this module.</p>
+        </div>
+        <span>{detail.surfaces.length} view{detail.surfaces.length === 1 ? '' : 's'}</span>
+      </header>
+      <div className="design-experience-flow">
+        {detail.surfaces.map((surface, index) => (
+          <article key={surface.id}>
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <div>
+              <b>{surface.text}</b>
+              <small>{detail.commandsAndNavigation[index] ?? 'Open this view'}</small>
+            </div>
+            {index < detail.surfaces.length - 1 && <i aria-hidden="true">→</i>}
+          </article>
+        ))}
+      </div>
+      <div className="design-experience-states">
+        {detail.viewStates.map((state) => (
+          <div key={state.id}><b>{state.text.split(/[.!?]/)[0]}</b><small>{state.text}</small></div>
+        ))}
+      </div>
+      <dl className="design-experience-rules">
+        <div><dt>Content order</dt><dd>{detail.informationHierarchy}</dd></div>
+        <div><dt>Keyboard</dt><dd>{detail.keyboardBehavior}</dd></div>
+        <div><dt>Responsive</dt><dd>{detail.responsiveBehavior}</dd></div>
+        <div><dt>Recovery</dt><dd>{detail.recoverableFailures}</dd></div>
+      </dl>
+      <details className="design-technical-details">
+        <summary>Traceability</summary>
+        <dl className="design-definition-grid">
+          <dt>Use cases</dt><dd>{props.design.trace.useCaseIds.join(', ') || 'None'}</dd>
+          <dt>Workflow nodes</dt><dd>{props.design.trace.workflowNodeIds?.join(', ') || 'None'}</dd>
+          <dt>Scenario captures</dt><dd>{detail.scenarioScreenshotIds.join(', ') || 'None'}</dd>
+        </dl>
+      </details>
+    </section>
   )
 }
 

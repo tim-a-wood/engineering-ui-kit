@@ -23,12 +23,13 @@ import { ALL_DESIGN_AUTHORITIES, useDesignState, type DesignStore } from './desi
 
 export type ProjectSetupPanelProps = {
   store: DesignStore
+  suggestedRepositoryRoot?: string
 }
 
 export function ProjectSetupPanel(props: ProjectSetupPanelProps) {
   const { store } = props
   const state = useDesignState(store)
-  const [repositoryRootInput, setRepositoryRootInput] = useState('')
+  const [repositoryRootInput, setRepositoryRootInput] = useState(props.suggestedRepositoryRoot ?? '')
 
   useEffect(() => {
     void store.loadProjectSetup()
@@ -45,109 +46,83 @@ export function ProjectSetupPanel(props: ProjectSetupPanelProps) {
   }
 
   const { repositoryConfig, principal, rolesGrant } = state
+  const repositoryReady = repositoryConfig.status === 'configured'
+  const principalReady = principal.status === 'ready'
+  const rolesReady = rolesGrant.status === 'granted'
+  const busy = repositoryConfig.status === 'loading' || principal.status === 'loading' || rolesGrant.status === 'loading'
+
+  async function completeSetup() {
+    if (!repositoryReady && repositoryRootInput.trim()) {
+      const configured = await store.configureRepositoryRoot(repositoryRootInput.trim())
+      if (!configured.ok) return
+    }
+    if (!rolesReady) await store.grantDesignAuthoritiesToSessionUser()
+  }
 
   return (
     <section className="design-project-setup" aria-label="Project setup">
-      <h2>Project setup</h2>
-      <p className="secondary-text">
-        Configure this project&apos;s real repository and grant this session&apos;s design authorities here. An approval or build action that fails because
-        nothing is configured yet links back to this panel.
-      </p>
+      <header>
+        <div>
+          <p className="overline">Project readiness</p>
+          <h2>{repositoryReady && principalReady && rolesReady ? 'Setup complete' : 'Complete project setup'}</h2>
+          <p className="secondary-text">Confirm the repository and your review authority before you approve design work.</p>
+        </div>
+        <span className={repositoryReady && principalReady && rolesReady ? 'ready' : 'pending'}>
+          {[repositoryReady, principalReady, rolesReady].filter(Boolean).length} of 3 ready
+        </span>
+      </header>
 
-      <div className="design-project-setup-section">
-        <h3>Repository root</h3>
-        {repositoryConfig.status === 'loading' && (
-          <p role="status" className="secondary-text">
-            Loading…
-          </p>
-        )}
-        {repositoryConfig.status === 'configured' && (
-          <p data-testid="design-repository-root-configured">
-            Configured repository: <code>{repositoryConfig.repositoryRoot}</code>
-          </p>
-        )}
-        {repositoryConfig.status === 'not-configured' && (
-          <p className="secondary-text" role="status" data-testid="design-repository-root-not-configured">
-            {repositoryConfig.message}
-          </p>
-        )}
-        {repositoryConfig.status === 'error' && (
-          <p role="alert" className="design-project-error">
-            {repositoryConfig.message}
-          </p>
-        )}
+      <div className="design-project-readiness">
+        <div
+          className={repositoryReady ? 'ready' : 'pending'}
+          data-testid={repositoryReady ? 'design-repository-root-configured' : 'design-repository-root-not-configured'}
+        >
+          <span>{repositoryReady ? '✓' : '1'}</span>
+          <b>Repository</b>
+          <small>{repositoryReady ? repositoryConfig.repositoryRoot : repositoryConfig.status === 'not-configured' ? repositoryConfig.message : 'Needs a local path'}</small>
+        </div>
+        <div className={principalReady ? 'ready' : 'pending'}><span>{principalReady ? '✓' : '2'}</span><b>Session user</b><small>{principalReady ? principal.principal : principal.status === 'error' ? principal.message : 'Checking identity'}</small></div>
+        <div className={rolesReady ? 'ready' : 'pending'} data-testid={rolesReady ? 'design-roles-granted' : undefined}><span>{rolesReady ? '✓' : '3'}</span><b>Review authority</b><small>{rolesReady ? `${rolesGrant.authorities.length} authorities granted to ${rolesGrant.principal}` : 'Needs confirmation'}</small></div>
+      </div>
 
+      {!repositoryReady && (
         <form className="design-project-setup-form" onSubmit={submitRepositoryRoot}>
-          <label htmlFor="design-repository-root-input">Configure repository root</label>
-          <div className="field-row">
-            <input
-              id="design-repository-root-input"
-              type="text"
-              value={repositoryRootInput}
-              onChange={(event) => setRepositoryRootInput(event.target.value)}
-              placeholder="/absolute/path/to/repository"
-            />
-            <button type="submit" className="btn btn-primary" disabled={!repositoryRootInput.trim()}>
-              Configure repository root
-            </button>
-          </div>
+          <label htmlFor="design-repository-root-input">Repository root</label>
+          <input
+            id="design-repository-root-input"
+            type="text"
+            value={repositoryRootInput}
+            onChange={(event) => setRepositoryRootInput(event.target.value)}
+            placeholder="/absolute/path/to/repository"
+          />
         </form>
-      </div>
+      )}
 
-      <div className="design-project-setup-section">
-        <h3>Session principal</h3>
-        {principal.status === 'loading' && (
-          <p role="status" className="secondary-text">
-            Loading…
-          </p>
-        )}
-        {principal.status === 'ready' && (
-          <p>
-            Signed in as <strong>{principal.principal}</strong>.
-          </p>
-        )}
-        {principal.status === 'unavailable' && (
-          <p className="secondary-text" role="status">
-            {principal.message}
-          </p>
-        )}
-        {principal.status === 'error' && (
-          <p role="alert" className="design-project-error">
-            {principal.message}
-          </p>
-        )}
-      </div>
-
-      <div className="design-project-setup-section">
-        <h3>Design authorities</h3>
-        <p className="secondary-text">
-          Grant each project design authority ({ALL_DESIGN_AUTHORITIES.join(', ')}) to the current user.
-          The application rejects approval until the user has the required role.
-        </p>
-        <button type="button" className="btn btn-secondary" onClick={() => void store.grantDesignAuthoritiesToSessionUser()}>
-          Grant authorities
+      {!(repositoryReady && principalReady && rolesReady) && (
+        <button type="button" className="btn btn-primary" disabled={busy || (!repositoryReady && !repositoryRootInput.trim())} onClick={() => void completeSetup()}>
+          {busy ? 'Checking setup…' : 'Complete setup'}
         </button>
-        {rolesGrant.status === 'loading' && (
-          <p role="status" className="secondary-text">
-            Granting…
-          </p>
-        )}
-        {rolesGrant.status === 'granted' && (
-          <p role="status" data-testid="design-roles-granted">
-            Granted {rolesGrant.authorities.length} authorit{rolesGrant.authorities.length === 1 ? 'y' : 'ies'} to {rolesGrant.principal}.
-          </p>
-        )}
-        {rolesGrant.status === 'unavailable' && (
-          <p className="secondary-text" role="status">
-            {rolesGrant.message}
-          </p>
-        )}
-        {rolesGrant.status === 'error' && (
-          <p role="alert" className="design-project-error">
-            {rolesGrant.message}
-          </p>
-        )}
-      </div>
+      )}
+
+      {[repositoryConfig, principal, rolesGrant].some((item) => item.status === 'error') && (
+        <div role="alert" className="design-project-error">
+          {'message' in repositoryConfig && repositoryConfig.status === 'error' ? <p>{repositoryConfig.message}</p> : null}
+          {'message' in principal && principal.status === 'error' ? <p>{principal.message}</p> : null}
+          {'message' in rolesGrant && rolesGrant.status === 'error' ? <p>{rolesGrant.message}</p> : null}
+        </div>
+      )}
+
+      {[principal, rolesGrant].some((item) => item.status === 'unavailable') && (
+        <div role="status" className="design-project-notice">
+          {'message' in principal && principal.status === 'unavailable' ? <p>{principal.message}</p> : null}
+          {'message' in rolesGrant && rolesGrant.status === 'unavailable' ? <p>{rolesGrant.message}</p> : null}
+        </div>
+      )}
+
+      <details>
+        <summary>Authority details</summary>
+        <p>{ALL_DESIGN_AUTHORITIES.join(', ')}</p>
+      </details>
     </section>
   )
 }

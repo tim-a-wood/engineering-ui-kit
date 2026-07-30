@@ -8,6 +8,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
+import { pathToFileURL } from 'node:url'
 import { buildCfHdropBuffer, buildFilenamesPboardPlist, buildUriList } from './uploadSetTransfer.js'
 import {
   Workspace,
@@ -66,6 +67,19 @@ function requireProject(workspace: Workspace, projectId: string): Project {
   const project = workspace.getProject(projectId)
   if (!project) throw new Error(`project not found: ${projectId}`)
   return project
+}
+
+function findProjectPreviewFile(repositoryRoot: string): string | undefined {
+  const directCandidates = ['index.html', 'dist/index.html', 'build/index.html']
+    .map((relativePath) => path.join(repositoryRoot, relativePath))
+  const modulesRoot = path.join(repositoryRoot, 'capabilities', 'modules')
+  const moduleCandidates = fs.existsSync(modulesRoot)
+    ? fs.readdirSync(modulesRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => path.join(modulesRoot, entry.name, 'ui', 'index.html'))
+      .sort((a, b) => a.localeCompare(b))
+    : []
+  return [...directCandidates, ...moduleCandidates].find((candidate) => fs.existsSync(candidate) && fs.statSync(candidate).isFile())
 }
 
 /** 24px file-badge shown under the cursor while dragging the upload set out. */
@@ -1084,7 +1098,15 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
   // on app quit).
   ipcMain.handle(BRIDGE_CHANNELS.launchApp, async (_e, projectId: string, options?: { open?: boolean }): Promise<{ url: string; started: boolean; rebuilt: boolean }> => {
     const project = requireProject(workspace, projectId)
-    if (!project.launchUrl) throw new Error('no launch URL configured for this project')
+    if (!project.launchUrl) {
+      const previewFile = findProjectPreviewFile(project.repoPath)
+      if (!previewFile) throw new Error('No launch URL or built UI entry file is available for this project.')
+      if (options?.open !== false) {
+        const openError = await shell.openPath(previewFile)
+        if (openError) throw new Error(openError)
+      }
+      return { url: pathToFileURL(previewFile).href, started: false, rebuilt: false }
+    }
     if (fs.existsSync(path.join(project.repoPath, 'package.json')) && !fs.existsSync(path.join(project.repoPath, 'node_modules'))) {
       throw new Error('Project setup required: dependencies are not installed. Install them with the project package manager, then retry the preview.')
     }

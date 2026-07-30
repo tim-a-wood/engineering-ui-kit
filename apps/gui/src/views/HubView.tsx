@@ -71,7 +71,7 @@ export function HubView(props: {
               </button>
             ) : null}
             <button type="button" className="btn btn-primary" onClick={() => setNewProjectOpen(true)}>
-              {Icon.plus()} Create project
+              {Icon.plus()} New project
             </button>
           </>
         }
@@ -130,7 +130,7 @@ export function HubView(props: {
             <p className="empty-title">No projects yet</p>
             <p className="empty-hint">Create a project to start your first handoff.</p>
             <button type="button" className="btn btn-secondary" onClick={() => setNewProjectOpen(true)}>
-              {Icon.plus(14)} Create project
+              {Icon.plus(14)} New project
             </button>
           </div>
         ) : (

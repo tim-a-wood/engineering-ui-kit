@@ -72,6 +72,36 @@ export function formatBytes(bytes: number): string {
   return `${bytes} B`
 }
 
+export function InspectionWarningGroups(props: {
+  warnings: OverlayInspectionSummary['warnings']
+  guided?: boolean
+}) {
+  const groups = [...props.warnings.reduce((map, warning) => {
+    const current = map.get(warning.ruleId) ?? []
+    current.push(warning)
+    map.set(warning.ruleId, current)
+    return map
+  }, new Map<string, OverlayInspectionSummary['warnings']>()).entries()]
+  return (
+    <div className="inspection-warning-groups">
+      <p><b>{props.warnings.length} warning{props.warnings.length === 1 ? '' : 's'}</b> in {groups.length} group{groups.length === 1 ? '' : 's'}.</p>
+      {groups.map(([ruleId, warnings]) => (
+        <details key={ruleId}>
+          <summary><code>{ruleId}</code><span>{warnings[0]?.message}</span><b>{warnings.length}</b></summary>
+          <ul>
+            {warnings.map((warning, index) => (
+              <li key={`${warning.path ?? 'general'}.${index}`}>
+                {warning.path ? <code className="path-wrap">{warning.path}</code> : null}
+                {!props.guided || warning.message !== warnings[0]?.message ? <span>{warning.message}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ))}
+    </div>
+  )
+}
+
 export async function copyText(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text)

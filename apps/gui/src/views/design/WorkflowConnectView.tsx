@@ -1,9 +1,22 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useDesignState, type DesignStore } from './designState'
+import { operationName } from './designShared'
 
 type Props = { store: DesignStore }
-type SupportedKind = 'cli' | 'http'
+type SupportedKind = 'ui' | 'cli' | 'http'
 type MappingRow = { from: string; to: string }
+type UiStepAction = {
+  stepId: string
+  useCaseName: string
+  scenarioName: string
+  scenarioKind: string
+  approvedAction: string
+  approvedResult: string
+  route: string
+  actionSelector: string
+  expectedSelector: string
+  expectedText: string
+}
 type BindingRecord = Record<string, unknown>
 
 const DEFAULT_POLICIES = {
@@ -17,7 +30,6 @@ const DEFAULT_POLICIES = {
 }
 
 const UNAVAILABLE_KINDS = [
-  { name: 'User interface', detail: 'UI bindings can be designed, but this desktop executor cannot launch and prove them yet.' },
   { name: 'Schedule', detail: 'Schedule bindings are schema-supported but execution and clock evidence are not available here.' },
   { name: 'Embedded library', detail: 'Library bindings are schema-supported but no callable-loader verifier is installed.' },
 ]
@@ -86,19 +98,30 @@ export function WorkflowConnectView({ store }: Props) {
   const state = useDesignState(store)
   const eligibleModuleIds = useMemo(
     () => state.progress.modules
-      .filter((entry) => Boolean(store.getDesign(entry.moduleId)?.providedOperations.length))
+      .filter((entry) => {
+        const candidate = store.getDesign(entry.moduleId)
+        return Boolean(candidate?.providedOperations.length || candidate?.module.moduleType === 'experience')
+      })
       .map((entry) => entry.moduleId),
     [state.moduleDesigns, state.progress.modules, store],
   )
   const [moduleId, setModuleId] = useState(eligibleModuleIds[0] ?? state.selectedModuleId ?? '')
   const design = store.getDesign(moduleId)
-  const operations = useMemo(() => design?.providedOperations ?? [], [design])
+  const operations = useMemo(() => {
+    if (design?.providedOperations.length) return design.providedOperations
+    return state.moduleDesigns.flatMap((candidate) => candidate.providedOperations)
+  }, [design, state.moduleDesigns])
   const [operationKey, setOperationKey] = useState('')
   const [kind, setKind] = useState<SupportedKind>('cli')
   const [command, setCommand] = useState('')
   const [method, setMethod] = useState('POST')
   const [path, setPath] = useState('/')
   const [localBaseUrl, setLocalBaseUrl] = useState('http://127.0.0.1:3000')
+  const [launchUrl, setLaunchUrl] = useState('http://127.0.0.1:3000')
+  const [uiRoute, setUiRoute] = useState('/')
+  const [readinessSelector, setReadinessSelector] = useState('main')
+  const [captureSelector, setCaptureSelector] = useState('main')
+  const [uiStepActions, setUiStepActions] = useState<UiStepAction[]>([])
   const [exposure, setExposure] = useState('private')
   const [inputMappings, setInputMappings] = useState<MappingRow[]>([])
   const [outputMappings, setOutputMappings] = useState<MappingRow[]>([])
@@ -122,15 +145,37 @@ export function WorkflowConnectView({ store }: Props) {
           : '',
     )
     const persistedKind = persisted?.kind
-    setKind(persistedKind === 'http' ? 'http' : 'cli')
+    setKind(persistedKind === 'http' ? 'http' : persistedKind === 'ui' ? 'ui' : 'cli')
     setCommand(text(persisted?.command))
     setMethod(text(persisted?.method, 'POST'))
     setPath(text(persisted?.path, '/'))
     setLocalBaseUrl(text(persisted?.localBaseUrl, 'http://127.0.0.1:3000'))
+    setLaunchUrl(text(persisted?.launchUrl, 'http://127.0.0.1:3000'))
+    setUiRoute(text(persisted?.route, '/'))
+    setReadinessSelector(text(persisted?.readinessSelector, 'main'))
+    setCaptureSelector(text(persisted?.captureSelector, 'main'))
+    const persistedActions = Array.isArray(persisted?.stepActions) ? persisted.stepActions : []
+    const useCaseNames = new Map(state.useCaseAnalysis.useCases.map((useCase) => [useCase.id, useCase.name]))
+    setUiStepActions(state.scenarioTestPlan.entries.flatMap((entry) => entry.actions.map((item) => {
+      const stepId = item.stepId
+      const saved = record(persistedActions.find((candidate) => record(candidate)?.stepId === stepId))
+      return {
+        stepId,
+        useCaseName: useCaseNames.get(entry.useCaseId) ?? 'Approved use case',
+        scenarioName: entry.scenarioName,
+        scenarioKind: entry.scenarioKind,
+        approvedAction: item.action,
+        approvedResult: entry.checks.find((check) => check.stepId === stepId)?.expectedResult ?? 'Observe the approved result.',
+        route: text(saved?.route, '/'),
+        actionSelector: text(saved?.actionSelector, `[data-scenario-step="${stepId}"]`),
+        expectedSelector: text(saved?.expectedSelector, `[data-scenario-result="${stepId}"]`),
+        expectedText: text(saved?.expectedText),
+      }
+    })))
     setExposure(text(persisted?.exposure, 'private'))
     setInputMappings(mappings(persisted?.inputMappings))
     setOutputMappings(mappings(persisted?.outputMappings))
-  }, [moduleId, connection?.configuration, operations])
+  }, [moduleId, connection?.configuration, operations, state.scenarioTestPlan.entries])
 
   const operation = operations.find((candidate) => `${candidate.operationId}\u0000${candidate.version}` === operationKey) ?? operations[0]
   const launchCommands = design?.verification.configuredCommands ?? []
@@ -138,10 +183,13 @@ export function WorkflowConnectView({ store }: Props) {
   const bindingError =
     !operation ? 'Choose an approved operation.'
       : kind === 'cli' && !command.trim() ? 'Enter the CLI command that invokes the operation.'
+        : kind === 'ui' && !launchUrl.trim() ? 'Enter a localhost URL or repository-relative HTML path.'
+          : kind === 'ui' && !readinessSelector.trim() ? 'Enter the selector that proves the UI is ready.'
+            : kind === 'ui' && uiStepActions.some((action) => !action.expectedSelector.trim()) ? 'Enter an observation selector for every scenario step.'
         : kind === 'http' && !path.startsWith('/') ? 'The HTTP route must start with “/”.'
           : kind === 'http' && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(localBaseUrl) ? 'Verification is intentionally limited to a localhost base URL.'
             : incompleteMapping ? 'Complete or remove every field mapping.'
-              : !launchCommands.length ? 'Add a launch or health command in the module verification design before verifying this connection.'
+              : kind !== 'ui' && !launchCommands.length ? 'Add a launch or health command in the module verification design before verifying this connection.'
                 : undefined
 
   function buildBinding(): BindingRecord | undefined {
@@ -158,7 +206,23 @@ export function WorkflowConnectView({ store }: Props) {
       kind,
       ...(kind === 'cli'
         ? { command: command.trim(), argumentMappings: [] }
-        : { method, path: path.trim(), localBaseUrl: localBaseUrl.trim(), statusMapping: [] }),
+        : kind === 'http'
+          ? { method, path: path.trim(), localBaseUrl: localBaseUrl.trim(), statusMapping: [] }
+          : {
+              transport: 'browser-local',
+              trigger: 'activate',
+              launchUrl: launchUrl.trim(),
+              route: uiRoute.trim(),
+              readinessSelector: readinessSelector.trim(),
+              captureSelector: captureSelector.trim() || undefined,
+              stepActions: uiStepActions.map((action) => ({
+                stepId: action.stepId,
+                route: action.route.trim() || undefined,
+                actionSelector: action.actionSelector.trim() || undefined,
+                expectedSelector: action.expectedSelector.trim(),
+                expectedText: action.expectedText.trim() || undefined,
+              })),
+            }),
       inputMappings,
       outputMappings,
       ...DEFAULT_POLICIES,
@@ -250,7 +314,7 @@ export function WorkflowConnectView({ store }: Props) {
                     <select value={operationKey} onChange={(event) => setOperationKey(event.target.value)}>
                       {operations.map((candidate) => (
                         <option key={`${candidate.operationId}-${candidate.version}`} value={`${candidate.operationId}\u0000${candidate.version}`}>
-                          {candidate.operationId} · v{candidate.version}
+                          {operationName(candidate.operationId)} · v{candidate.version}
                         </option>
                       ))}
                     </select>
@@ -263,6 +327,13 @@ export function WorkflowConnectView({ store }: Props) {
                 <div>
                   <h3>Choose entry point</h3>
                   <div className="design-connect-kind-options" role="radiogroup" aria-label="Entry point type">
+                    <div className={`design-connect-kind-option ${kind === 'ui' ? 'selected' : ''}`}>
+                      <label>
+                        <input type="radio" name="binding-kind" value="ui" checked={kind === 'ui'} onChange={() => setKind('ui')} />
+                        <b>User interface</b>
+                      </label>
+                      <small>Open the real local UI and capture each approved scenario observation.</small>
+                    </div>
                     <div className={`design-connect-kind-option ${kind === 'cli' ? 'selected' : ''}`}>
                       <label>
                         <input type="radio" name="binding-kind" value="cli" checked={kind === 'cli'} onChange={() => setKind('cli')} />
@@ -278,7 +349,48 @@ export function WorkflowConnectView({ store }: Props) {
                       <small>Launch a local service, prove its health route, then call the configured operation route.</small>
                     </div>
                   </div>
-                  {kind === 'cli' ? (
+                  {kind === 'ui' ? (
+                    <div className="design-connect-ui-fields">
+                      <label>
+                        Local UI
+                        <input value={launchUrl} onChange={(event) => setLaunchUrl(event.target.value)} placeholder="http://127.0.0.1:3000 or dist/index.html" />
+                        <small>Use localhost, a file URL, or a repository-relative HTML file.</small>
+                      </label>
+                      <label>
+                        Start route
+                        <input value={uiRoute} onChange={(event) => setUiRoute(event.target.value)} placeholder="/" />
+                      </label>
+                      <label>
+                        Ready selector
+                        <input value={readinessSelector} onChange={(event) => setReadinessSelector(event.target.value)} placeholder="main" />
+                      </label>
+                      <label>
+                        Capture target
+                        <input value={captureSelector} onChange={(event) => setCaptureSelector(event.target.value)} placeholder="main" />
+                      </label>
+                      <div className="design-connect-ui-steps">
+                        <h4>Scenario actions</h4>
+                        <p>Each row names the real action and the result that the browser must observe.</p>
+                        {uiStepActions.map((action, index) => (
+                          <fieldset key={action.stepId} data-scenario-name={action.scenarioName}>
+                            <legend>{action.scenarioName}</legend>
+                            <div className="design-connect-approved-step">
+                              <span>{action.scenarioKind} path · {action.useCaseName}</span>
+                              <dl>
+                                <div><dt>Approved action</dt><dd>{action.approvedAction}</dd></div>
+                                <div><dt>Approved result</dt><dd>{action.approvedResult}</dd></div>
+                              </dl>
+                            </div>
+                            <label>Route<input aria-label={`Route for step ${index + 1}`} value={action.route} onChange={(event) => setUiStepActions((current) => current.map((item) => item.stepId === action.stepId ? { ...item, route: event.target.value } : item))} /></label>
+                            <label>Action selector<input aria-label={`Action selector for step ${index + 1}`} value={action.actionSelector} onChange={(event) => setUiStepActions((current) => current.map((item) => item.stepId === action.stepId ? { ...item, actionSelector: event.target.value } : item))} /></label>
+                            <label>Result selector<input aria-label={`Result selector for step ${index + 1}`} value={action.expectedSelector} onChange={(event) => setUiStepActions((current) => current.map((item) => item.stepId === action.stepId ? { ...item, expectedSelector: event.target.value } : item))} /></label>
+                            <label>Expected text<input aria-label={`Expected text for step ${index + 1}`} value={action.expectedText} onChange={(event) => setUiStepActions((current) => current.map((item) => item.stepId === action.stepId ? { ...item, expectedText: event.target.value } : item))} /></label>
+                            <details><summary>Technical step ID</summary><code>{action.stepId}</code></details>
+                          </fieldset>
+                        ))}
+                      </div>
+                    </div>
+                  ) : kind === 'cli' ? (
                     <div className="design-connect-field">
                       <label htmlFor="design-connect-command">Invocation command</label>
                       <input id="design-connect-command" value={command} onChange={(event) => setCommand(event.target.value)} placeholder="node ./bin/app.mjs execute" />

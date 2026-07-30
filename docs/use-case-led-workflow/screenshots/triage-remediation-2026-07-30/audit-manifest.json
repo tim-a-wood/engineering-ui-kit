@@ -1,0 +1,122 @@
+{
+  "journey": "harbor-ops-medium-sample",
+  "passed": true,
+  "packaged": true,
+  "clicks": 68,
+  "screenshots": [
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/02-project-dashboard.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/03-plan-input.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/04-plan-decomposed.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/05-plan-approved.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/05a-application-workflow.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/05b-system-structure.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/06-application-workflow-component.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/06-application-workflow-activity.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/06-application-workflow-state-machine.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/06-application-workflow-sequence.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/06-application-workflow-use-case.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/07-application-workflow-approved.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/06-user-workspace-component.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/06-user-workspace-activity.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/06-user-workspace-state-machine.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/06-user-workspace-sequence.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/06-user-workspace-use-case.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/07-user-workspace-approved.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/08-build-applied.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/10-app-dashboard.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/11-app-assign-berth.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/12-app-vessel-plan.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/13-app-shift-handoff.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/14-app-handoff-approved.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/15-app-mobile-dashboard.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/16-connect-verified.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/17-verify-passed.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/18-evidence-trace.png",
+    "docs/use-case-led-workflow/screenshots/triage-remediation-2026-07-30/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 762,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1293,
+      "clicks": 4
+    },
+    {
+      "name": "Define use case",
+      "status": "passed",
+      "durationMs": 1083,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 388,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 527,
+      "clicks": 3
+    },
+    {
+      "name": "Design module",
+      "status": "passed",
+      "durationMs": 6812,
+      "clicks": 26
+    },
+    {
+      "name": "Build sample",
+      "status": "passed",
+      "durationMs": 905,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise sample UI",
+      "status": "passed",
+      "durationMs": 4461,
+      "clicks": 9
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 2704,
+      "clicks": 4
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 7500,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 747,
+      "clicks": 3
+    }
+  ],
+  "findings": [],
+  "warningReview": {
+    "status": "accepted-for-sample",
+    "evidence": "Overlay warnings129 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 27, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.129capabilities/modules/mod.experience-first/ui/index.htmlline 27, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 33, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 40, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 58, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 72, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 137, element <button>: STE-LEXICO"
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-30T17:03:20.056Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-harbor-audit-JECGPy/harbor-ops-console",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/harbor-ops-console",
+  "scenarioSummary": {
+    "scenarioCount": 6,
+    "passedCount": 6,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-30T17:03:49.347Z",
+  "durationMs": 29291
+}

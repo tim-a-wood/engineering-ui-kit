@@ -796,6 +796,13 @@ export type ModuleImplementationPacket = {
   moduleDesignHash: string
   architectureRevision: string
   architectureHash: string
+  /** Approved design elements that this implementation must realize. */
+  traceability?: {
+    useCaseIds: string[]
+    workflowNodeIds: string[]
+    scenarioStepIds: string[]
+    experienceElementIds: string[]
+  }
   allowedPaths: string[]
   forbiddenPaths: string[]
   editableSharedPaths: string[]
@@ -1057,6 +1064,12 @@ export type ScenarioStepEvidence = {
   startedAt: string
   endedAt: string
   outcome: 'passed' | 'failed' | 'skipped' | 'cancelled'
+  executionTrace?: {
+    entryPointKind: 'ui' | 'cli' | 'http'
+    routeOrCommand: string
+    actionTarget: string
+    observationTarget: string
+  }
   screenshotRef?: string
   screenshotMetadata?: {
     browser?: string

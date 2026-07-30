@@ -528,6 +528,22 @@ describe('EUC-09 layoutDiagram — layout quality', () => {
     expect(layout.diagnostics.filter((d) => d.code === 'LAYOUT-NODE-OVERLAP')).toEqual([])
   })
 
+  it('keeps a two-component boundary compact', () => {
+    const architecture = architectureFixture(4)
+    const design = moduleDesignFixture({
+      id: 'design.mod.experience',
+      moduleId: 'mod.experience',
+      name: 'Review screen',
+      directDependencyIds: ['mod.workflow'],
+    })
+    const projection = projectComponentDiagram({ design, architecture })
+    const layout = layoutDiagram(projection, 'wide')
+    const minY = Math.min(...layout.nodes.map((node) => node.y))
+    const maxY = Math.max(...layout.nodes.map((node) => node.y + node.height))
+    expect(maxY - minY).toBeLessThanOrEqual(280)
+    expect(layout.diagnostics).toEqual([])
+  })
+
   it('respects the configured clearance between edges and unrelated nodes in a crowded component diagram', () => {
     const projection = crowdedComponentProjection()
     const layout = layoutDiagram(projection, 'wide')

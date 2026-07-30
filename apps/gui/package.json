@@ -6,10 +6,10 @@
   "description": "Engineering UI Kit desktop workbench renderer (React + Vite).",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b --pretty false && vite build",
+    "build": "tsc -b --pretty false && vite build --configLoader runner",
     "typecheck": "tsc -b --pretty false",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run --config vitest.config.mjs --configLoader runner"
   },
   "dependencies": {
     "@engineering-ui-kit/core": "*",

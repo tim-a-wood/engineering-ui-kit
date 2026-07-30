@@ -9,7 +9,7 @@
  *  - the repository-root read/configure round trip and its rendered states;
  *  - the session-principal read and its graceful "requires a newer desktop
  *    build" fallback on `EUC16-UNKNOWN-OPERATION`;
- *  - the "Grant authorities" action calls
+ *  - the single "Complete setup" action calls
  *    `adapter:configureProjectRoles` with the full §4 authority list for the
  *    just-read principal, and its own graceful fallback.
  */
@@ -49,6 +49,10 @@ function setup(overrides: Record<string, Handler> = {}) {
     listModuleDesigns: () => ({ projectId: PROJECT_ID, architectureRevision: '', total: 0, notStarted: 0, draft: 0, needsInput: 0, readyForReview: 0, approved: 0, stale: 0, blocked: 0, modules: [] }),
     getImplementationWaves: () => ({ projectId: PROJECT_ID, architectureRevision: '', waves: [], autoDispatch: false }),
     getValidNextActions: () => [],
+    'adapter:getProjectRoles': () => ({
+      ok: false,
+      diagnostics: [{ id: 'roles', code: 'EUC16-AUTHORITY-NOT-CONFIGURED', severity: 'blocker', message: 'no project roles are configured' }],
+    }),
     ...overrides,
   }
   const call = vi.fn(async (request: DesignBridgeRequest) => {
@@ -62,13 +66,14 @@ function setup(overrides: Record<string, Handler> = {}) {
 }
 
 describe('ProjectSetupPanel — repository root (adapter:getProjectRepository / adapter:configureProjectRepository)', () => {
-  it('shows "not configured" and a working form; submitting configures the repository root', async () => {
+  it('shows "not configured" and completes repository and authority setup in one action', async () => {
     const { store, calls, responses } = setup({
       'adapter:getProjectRepository': () => ({
         ok: false,
         diagnostics: [{ id: 'r1', code: 'EUC16-ADAPTER-REPOSITORY-NOT-CONFIGURED', severity: 'blocker', message: `no repository is configured for project "${PROJECT_ID}"` }],
       }),
       'adapter:getPrincipal': () => ({ ok: true, principal: 'user:remote-principal' }),
+      'adapter:configureProjectRoles': () => ({ ok: true, auditEventId: 'audit.roles.1' }),
     })
     await store.ready
 
@@ -79,8 +84,8 @@ describe('ProjectSetupPanel — repository root (adapter:getProjectRepository / 
 
     responses['adapter:configureProjectRepository'] = () => ({ ok: true, projectId: PROJECT_ID, repositoryRoot: '/srv/repo', auditEventId: 'audit.repo.1' })
 
-    fireEvent.change(screen.getByLabelText('Configure repository root'), { target: { value: '/srv/repo' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Configure repository root' }))
+    fireEvent.change(screen.getByLabelText('Repository root'), { target: { value: '/srv/repo' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Complete setup' }))
 
     await waitFor(() => expect(screen.getByTestId('design-repository-root-configured')).toBeTruthy())
     expect(screen.getByTestId('design-repository-root-configured').textContent).toContain('/srv/repo')
@@ -150,7 +155,7 @@ describe('ProjectSetupPanel — grant design authorities (adapter:configureProje
     render(<ProjectSetupPanel store={store} />)
     await waitFor(() => expect(screen.getByText('user:remote-principal')).toBeTruthy())
 
-    fireEvent.click(screen.getByRole('button', { name: 'Grant authorities' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Complete setup' }))
 
     await waitFor(() => expect(screen.getByTestId('design-roles-granted')).toBeTruthy())
     expect(screen.getByTestId('design-roles-granted').textContent).toContain('user:remote-principal')
@@ -175,7 +180,7 @@ describe('ProjectSetupPanel — grant design authorities (adapter:configureProje
     render(<ProjectSetupPanel store={store} />)
     await waitFor(() => expect(screen.getByText('user:remote-principal')).toBeTruthy())
 
-    fireEvent.click(screen.getByRole('button', { name: 'Grant authorities' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Complete setup' }))
 
     await waitFor(() => expect(screen.getByText('Granting authorities requires a newer desktop build.')).toBeTruthy())
   })

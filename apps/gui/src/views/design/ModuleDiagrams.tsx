@@ -30,6 +30,7 @@ import {
 } from '@engineering-ui-kit/core/design-browser'
 import { DiagramDetailModal, type DiagramDetailSelection } from './DiagramDetailModal'
 import type { DiagramElementTarget, DesignStore } from './designState'
+import { operationName } from './designShared'
 
 const NODE_WIDTH = 180
 const NODE_HEIGHT = 68
@@ -125,20 +126,23 @@ function humanizeDiagramText(value: string): string {
   return `${normalized[0]!.toUpperCase()}${normalized.slice(1)}`
 }
 
-function wrapNodeLabel(label: string, limit = 25): string[] {
+function wrapNodeLabel(label: string, limit = 25, maxLines = 2): string[] {
   const words = label.split(/\s+/).filter(Boolean)
   const lines: string[] = []
   for (const word of words) {
     const current = lines[lines.length - 1]
-    if (!current || (current.length + word.length + 1 > limit && lines.length < 2)) lines.push(word)
+    if (!current || (current.length + word.length + 1 > limit && lines.length < maxLines)) lines.push(word)
     else lines[lines.length - 1] = `${current} ${word}`
   }
-  if (lines.length > 2) {
-    const tail = lines.slice(1).join(' ')
-    lines.splice(1, lines.length - 1, tail)
+  if (lines.length > maxLines) {
+    const tail = lines.slice(maxLines - 1).join(' ')
+    lines.splice(maxLines - 1, lines.length - maxLines + 1, tail)
   }
-  if ((lines[1]?.length ?? 0) > limit + 6) lines[1] = `${lines[1]!.slice(0, limit + 3).trimEnd()}…`
-  return lines.slice(0, 2)
+  const lastLine = maxLines - 1
+  if ((lines[lastLine]?.length ?? 0) > limit + 6) {
+    lines[lastLine] = `${lines[lastLine]!.slice(0, limit + 3).trimEnd()}…`
+  }
+  return lines.slice(0, maxLines)
 }
 
 function shortRelationshipLabel(label: string): string {
@@ -162,8 +166,11 @@ function UmlNodeSymbol(props: { element: UmlElement; width: number; height: numb
   const { element, width, height, diagramHeight } = props
   const centerY = height / 2
   const isRecovery = element.sourceElementRef === 'recovery'
-  const displayLabel = humanizeDiagramText(isRecovery ? element.label.replace(/^Recovery:\s*/i, '') : element.label)
-  const lines = wrapNodeLabel(displayLabel, isRecovery ? 38 : 25)
+  const interfaceLabel = element.kind === 'providedInterface' || element.kind === 'requiredInterface'
+    ? operationName(element.label)
+    : element.label
+  const displayLabel = humanizeDiagramText(isRecovery ? interfaceLabel.replace(/^Recovery:\s*/i, '') : interfaceLabel)
+  const lines = wrapNodeLabel(displayLabel, isRecovery ? 34 : 25, isRecovery ? 4 : 2)
   const text = (x: number, y: number, anchor: 'start' | 'middle' = 'start') => (
     <text x={x} y={y} textAnchor={anchor} className="design-diagram-node-title">
       {lines.map((line, index) => <tspan key={`${line}.${index}`} x={x} dy={index === 0 ? 0 : 15}>{line}</tspan>)}
@@ -332,11 +339,6 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
   }, [tabs])
 
   useEffect(() => {
-    setScale(1)
-    if (typeof viewportRef.current?.scrollTo === 'function') viewportRef.current.scrollTo({ left: 0, top: 0 })
-  }, [activeKind])
-
-  useEffect(() => {
     if (!props.initialSelectionId) return
     const containingTab = tabs.find((tab) =>
       tab.projection.elements.some((element) => element.id === props.initialSelectionId)
@@ -352,6 +354,21 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
     if (!active) return undefined
     return layoutDiagram(active.projection, narrow ? 'narrow' : 'wide', { nodeWidth: NODE_WIDTH, nodeHeight: NODE_HEIGHT })
   }, [active, narrow])
+  const bounds = useMemo(() => layout ? boundsOf(layout) : { minX: 0, minY: 0, width: 480, height: 320 }, [layout])
+  const compact = Boolean(layout && layout.nodes.length <= 4 && layout.edges.length <= 4 && bounds.height < 500)
+  const showMinimap = Boolean(
+    layout
+    && (layout.nodes.length >= 7 || bounds.width > container.width * 1.2 || bounds.height > (compact ? 360 : 560)),
+  )
+
+  useEffect(() => {
+    if (!layout) return
+    const availableWidth = Math.max(1, container.width - 32)
+    const availableHeight = compact ? 320 : 520
+    const nextScale = Math.min(1.25, availableWidth / bounds.width, availableHeight / bounds.height)
+    setScale(Math.min(MAX_SCALE, Math.max(MIN_SCALE, Number(nextScale.toFixed(2)))))
+    if (typeof viewportRef.current?.scrollTo === 'function') viewportRef.current.scrollTo({ left: 0, top: 0 })
+  }, [activeKind, bounds.height, bounds.width, compact, container.width, layout])
 
   if (!active || !layout) {
     return <p className="secondary-text">No diagrams apply to this module yet.</p>
@@ -359,7 +376,6 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
 
   const diagramLayout = layout
   const projection = active.projection
-  const bounds = boundsOf(diagramLayout)
   const elementById = new Map(projection.elements.map((element) => [element.id, element]))
 
   const selectedElement = selectedId ? elementById.get(selectedId) : undefined
@@ -547,10 +563,10 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
             )}
           </div>
         ) : (
-          <div className="design-diagram-viewport-shell">
+          <div className={`design-diagram-viewport-shell${compact ? ' compact' : ''}`}>
           <div
             ref={viewportRef}
-            className="design-diagram-viewport"
+            className={`design-diagram-viewport${compact ? ' compact' : ''}`}
             role="application"
             tabIndex={0}
             aria-label="UML diagram"
@@ -567,9 +583,9 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
             }}
           >
           <svg
-            className={narrow ? 'design-diagram-svg narrow' : 'design-diagram-svg wide'}
-            width={Math.max(720, bounds.width * scale)}
-            height={Math.max(460, Math.min(820, bounds.height * scale))}
+            className={`${narrow ? 'design-diagram-svg narrow' : 'design-diagram-svg wide'}${compact ? ' compact' : ''}`}
+            width={Math.max(compact ? 540 : 720, bounds.width * scale)}
+            height={Math.max(compact ? 320 : 460, Math.min(820, bounds.height * scale))}
             viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
             preserveAspectRatio="xMidYMid meet"
           >
@@ -652,12 +668,12 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
             })}
           </svg>
           </div>
-          <div className="design-diagram-minimap" aria-label="Diagram minimap">
+          {showMinimap && <div className="design-diagram-minimap" aria-label="Diagram minimap">
             <svg viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`} width="148" height="88" aria-hidden="true">
               {layout.edges.map((edge) => <polyline key={edge.relationshipId} points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')} />)}
               {layout.nodes.map((node) => <rect key={node.elementId} x={node.x} y={node.y} width={node.width} height={node.height} rx={4} />)}
             </svg>
-          </div>
+          </div>}
           </div>
         )}
         {!showTextAlternative && (

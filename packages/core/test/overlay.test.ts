@@ -267,6 +267,26 @@ describe('inspectOverlay STE gate', () => {
     expect(summary.hardBlockers.some((item) => item.ruleId === 'AI-HANDOFF-STE-001')).toBe(false)
   })
 
+  it('uses canonical accessible names instead of nested status and helper text', () => {
+    const zipPath = makeZip({
+      'src/View.tsx': [
+        'export const View = () => (',
+        '  <main>',
+        '    <span id="save-name">Save record</span>',
+        '    <button aria-labelledby="save-name"><span className="status">Ready for review and approval</span></button>',
+        '    <button aria-label="Open record"><span aria-hidden="true">Open and review every record</span></button>',
+        '    <label><input type="checkbox" /> Accept warnings <small>Review each warning before you continue and approve the result.</small></label>',
+        '  </main>',
+        ')',
+      ].join('\n'),
+    })
+
+    const summary = inspectOverlay(zipPath, baseOptions())
+
+    expect(summary.canApply).toBe(true)
+    expect(summary.hardBlockers.some((item) => item.ruleId === 'AI-HANDOFF-STE-001')).toBe(false)
+  })
+
   it('does not inspect code-only strings, comments, or fenced examples', () => {
     const zipPath = makeZip({
       'src/copy.tsx': [

@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Harbor Ops</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none">
+              <path d="M10 22h8M12 22V9h4v13M11 9h6l-1.8-4h-2.4L11 9Z" />
+              <path d="M5 24c2.2-1.7 4.2-1.7 6.4 0 2.2 1.7 4.2 1.7 6.4 0 2.2-1.7 4.2-1.7 6.2 0" />
+              <path d="m17.3 10.5 6-2.5M10.7 10.5 4.8 8" />
+            </svg>
+          </span>
+          <span>
+            <b>Harbor Ops</b>
+            <small>Northport</small>
+          </span>
+        </div>
+
+        <nav aria-label="Primary navigation">
+          <button class="nav-item active" type="button" data-view-target="board">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20"><path d="M3 3h6v6H3V3Zm8 0h6v3h-6V3Zm0 5h6v9h-6V8ZM3 11h6v6H3v-6Z" /></svg>
+            </span>
+            View board
+          </button>
+          <button class="nav-item" type="button" data-view-target="vessels">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20"><path d="m2 12 2.2 3h11.6l2.2-3-2-1H4l-2 1Zm4-1V6h7l2 5M8 6V3h3v3" /></svg>
+            </span>
+            View vessels
+            <span class="nav-count">6</span>
+          </button>
+          <button class="nav-item" type="button" data-view-target="handoff">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20"><path d="M5 2h8l3 3v13H5V2Zm8 0v4h3M8 9h5M8 12h5M8 15h3" /></svg>
+            </span>
+            View handoff
+            <span class="nav-dot"></span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="shift-card">
+            <div class="avatar">AW</div>
+            <div>
+              <b>Alex Ward</b>
+              <small>Day supervisor</small>
+            </div>
+            <span class="online-dot" title="Online"></span>
+          </div>
+          <button class="support-link" type="button">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" /><path d="M7.8 7a2.4 2.4 0 0 1 4.5 1.1c0 1.9-2.3 2-2.3 3.6M10 15h.01" /></svg>
+            Open guide
+          </button>
+        </div>
+      </aside>
+
+      <main class="main-shell">
+        <header class="topbar">
+          <button class="mobile-menu" type="button" aria-label="Open menu">
+            <svg viewBox="0 0 20 20"><path d="M3 5h14M3 10h14M3 15h14" /></svg>
+          </button>
+          <div>
+            <p class="eyebrow">Thursday · July 30</p>
+            <h1 id="view-title">Harbor status</h1>
+          </div>
+          <div class="topbar-actions">
+            <div class="sync-state">
+              <span></span>
+              Live
+            </div>
+            <button class="icon-button" type="button" aria-label="Review incidents" data-review-incidents>
+              <svg viewBox="0 0 20 20"><path d="M15 8a5 5 0 0 0-10 0c0 6-2 6-2 7h14c0-1-2-1-2-7ZM8 17h4" /></svg>
+              <span class="alert-dot"></span>
+            </button>
+          </div>
+        </header>
+
+        <section class="view active" data-view="board">
+          <div class="status-banner">
+            <div class="status-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+            </div>
+            <div>
+              <b>Harbor is stable</b>
+              <p>All active berths are safe. One maintenance hold starts at 14:00.</p>
+            </div>
+            <div class="weather">
+              <span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h16M7 9h11M10 17h8" /></svg>
+                8 kn
+              </span>
+              <span>18°C</span>
+              <small>Clear</small>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric-card">
+              <div class="metric-icon blue">
+                <svg viewBox="0 0 22 22" aria-hidden="true"><path d="m3 13 2 3h12l2-3-2-1H5l-2 1Zm4-1V7h7l2 5" /></svg>
+              </div>
+              <div>
+                <span>Arrivals</span>
+                <strong>6</strong>
+                <small>Next 12 hours</small>
+              </div>
+              <span class="trend">+2 today</span>
+            </article>
+            <article class="metric-card">
+              <div class="metric-icon green">
+                <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M5 18V4M17 18V4M5 7h12M5 15h12M8 7v8M14 7v8" /></svg>
+              </div>
+              <div>
+                <span>Open berths</span>
+                <strong>3</strong>
+                <small>From 8 berths</small>
+              </div>
+              <span class="trend positive">Ready</span>
+            </article>
+            <article class="metric-card">
+              <div class="metric-icon amber">
+                <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 3 3 18h16L11 3Zm0 5v5m0 2h.01" /></svg>
+              </div>
+              <div>
+                <span>Active holds</span>
+                <strong>1</strong>
+                <small>Berth C2</small>
+              </div>
+              <button class="trend warning" type="button" data-review-maintenance>Review hold</button>
+            </article>
+            <article class="metric-card">
+              <div class="metric-icon violet">
+                <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M5 3h9l3 3v13H5V3Zm9 0v4h3M8 11h6M8 15h4" /></svg>
+              </div>
+              <div>
+                <span>Open reviews</span>
+                <strong>2</strong>
+                <small>Before handoff</small>
+              </div>
+              <span class="trend">Due 17:30</span>
+            </article>
+          </div>
+
+          <div class="board-grid">
+            <article class="panel arrivals-panel">
+              <header class="panel-header">
+                <div>
+                  <h2>Vessel queue</h2>
+                  <p>Review the next arrivals.</p>
+                </div>
+                <button class="text-button" type="button" data-view-target="vessels">View vessels</button>
+              </header>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Vessel</th>
+                      <th>ETA</th>
+                      <th>Berth</th>
+                      <th>State</th>
+                      <th><span class="sr-only">Action</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-vessel="MV North Star">
+                      <td>
+                        <span class="vessel-avatar cargo">NS</span>
+                        <span><b>MV North Star</b><small>Cargo · 128 m</small></span>
+                      </td>
+                      <td><b>09:15</b><small>43 min</small></td>
+                      <td><span class="berth-chip assigned">B1</span></td>
+                      <td><span class="state-chip underway"><i></i>Approaching</span></td>
+                      <td><button class="row-action" type="button" aria-label="Open North Star"><svg viewBox="0 0 20 20"><path d="m7 4 6 6-6 6" /></svg></button></td>
+                    </tr>
+                    <tr data-vessel="Ocean Crown">
+                      <td>
+                        <span class="vessel-avatar tanker">OC</span>
+                        <span><b>Ocean Crown</b><small>Tanker · 186 m</small></span>
+                      </td>
+                      <td><b>10:40</b><small>2 hr</small></td>
+                      <td><span class="berth-chip open">Open</span></td>
+                      <td><span class="state-chip waiting"><i></i>Needs berth</span></td>
+                      <td><button class="row-action" type="button" aria-label="Open Ocean Crown"><svg viewBox="0 0 20 20"><path d="m7 4 6 6-6 6" /></svg></button></td>
+                    </tr>
+                    <tr data-vessel="Seabird">
+                      <td>
+                        <span class="vessel-avatar ferry">SB</span>
+                        <span><b>Seabird</b><small>Ferry · 74 m</small></span>
+                      </td>
+                      <td><b>12:05</b><small>3 hr</small></td>
+                      <td><span class="berth-chip assigned">A2</span></td>
+                      <td><span class="state-chip planned"><i></i>Planned</span></td>
+                      <td><button class="row-action" type="button" aria-label="Open Seabird"><svg viewBox="0 0 20 20"><path d="m7 4 6 6-6 6" /></svg></button></td>
+                    </tr>
+                    <tr data-vessel="Arctic Dawn">
+                      <td>
+                        <span class="vessel-avatar cargo">AD</span>
+                        <span><b>Arctic Dawn</b><small>Cargo · 142 m</small></span>
+                      </td>
+                      <td><b>14:20</b><small>5 hr</small></td>
+                      <td><span class="berth-chip assigned">C1</span></td>
+                      <td><span class="state-chip planned"><i></i>Planned</span></td>
+                      <td><button class="row-action" type="button" aria-label="Open Arctic Dawn"><svg viewBox="0 0 20 20"><path d="m7 4 6 6-6 6" /></svg></button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="panel berth-panel">
+              <header class="panel-header">
+                <div>
+                  <h2>Berth plan</h2>
+                  <p>Select a berth to review it.</p>
+                </div>
+                <span class="plan-time">08:32</span>
+              </header>
+              <div class="berth-map">
+                <div class="water-label">
+                  <svg viewBox="0 0 44 18" aria-hidden="true"><path d="M1 6c4-4 8-4 12 0s8 4 12 0 8-4 12 0 8 4 12 0M1 13c4-4 8-4 12 0s8 4 12 0 8-4 12 0 8 4 12 0" /></svg>
+                  Harbor basin
+                </div>
+                <button class="berth-slot occupied" type="button" aria-label="Open berth A1">
+                  <span>A1</span><b>Coastal Wind</b><small>Departs 11:20</small>
+                </button>
+                <button class="berth-slot occupied" type="button" aria-label="Open berth A2">
+                  <span>A2</span><b>Seabird</b><small>Arrives 12:05</small>
+                </button>
+                <button class="berth-slot occupied" type="button" aria-label="Open berth B1">
+                  <span>B1</span><b>North Star</b><small>Arrives 09:15</small>
+                </button>
+                <button class="berth-slot available" type="button" data-open-assign aria-label="Assign berth B2">
+                  <span>B2</span><b>Available</b><small>Ready now</small>
+                </button>
+                <button class="berth-slot occupied" type="button" aria-label="Open berth C1">
+                  <span>C1</span><b>Arctic Dawn</b><small>Arrives 14:20</small>
+                </button>
+                <button class="berth-slot hold" type="button" aria-label="Test closed berth" data-attempt-closed>
+                  <span>C2</span><b>Maintenance</b><small>Starts 14:00</small>
+                </button>
+              </div>
+              <button class="primary-button full" type="button" data-open-assign>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
+                Assign berth
+              </button>
+            </article>
+          </div>
+
+          <article class="panel activity-panel">
+            <header class="panel-header">
+              <div>
+                <h2>Recent activity</h2>
+                <p>Review important changes from this shift.</p>
+              </div>
+              <button class="text-button" type="button">View activity</button>
+            </header>
+            <div class="activity-list">
+              <div class="activity-item">
+                <span class="activity-icon green"><svg viewBox="0 0 20 20"><path d="m4 10 4 4 8-9" /></svg></span>
+                <div><b>Berth B1 approved</b><p>Alex assigned MV North Star.</p></div>
+                <time>08:24</time>
+              </div>
+              <div class="activity-item">
+                <span class="activity-icon amber"><svg viewBox="0 0 20 20"><path d="M10 3 3 17h14L10 3Zm0 5v4m0 2h.01" /></svg></span>
+                <div><b>Hold added</b><p>Morgan added the C2 maintenance hold.</p></div>
+                <time>07:58</time>
+              </div>
+              <div class="activity-item">
+                <span class="activity-icon blue"><svg viewBox="0 0 20 20"><path d="M4 3h9l3 3v11H4V3Zm9 0v4h3M7 11h6" /></svg></span>
+                <div><b>Handoff started</b><p>Alex prepared the day shift record.</p></div>
+                <time>07:35</time>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="view" data-view="vessels">
+          <div class="workspace-grid">
+            <article class="panel vessel-list-panel">
+              <header class="panel-header">
+                <div>
+                  <h2>Arrival plan</h2>
+                  <p>Review six arrivals in the next 12 hours.</p>
+                </div>
+                <button class="primary-button" type="button" data-open-assign>Assign berth</button>
+              </header>
+              <div class="filter-row">
+                <label class="search-box">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5" /><path d="m13 13 4 4" /></svg>
+                  <span class="sr-only">Search vessels</span>
+                  <input type="search" placeholder="Search vessels" />
+                </label>
+                <button class="filter-button active" type="button">Show all</button>
+                <button class="filter-button" type="button">Show unassigned</button>
+              </div>
+              <div class="vessel-cards">
+                <button class="vessel-card selected" type="button" data-detail="north-star" aria-label="Open North Star">
+                  <span class="vessel-avatar cargo large">NS</span>
+                  <span class="vessel-card-copy"><b>MV North Star</b><small>Cargo · 128 m · Norway</small></span>
+                  <span class="vessel-card-meta"><b>09:15</b><small>Berth B1</small></span>
+                  <span class="state-chip underway"><i></i>Approaching</span>
+                </button>
+                <button class="vessel-card" type="button" data-detail="ocean-crown" aria-label="Open Ocean Crown">
+                  <span class="vessel-avatar tanker large">OC</span>
+                  <span class="vessel-card-copy"><b>Ocean Crown</b><small>Tanker · 186 m · Liberia</small></span>
+                  <span class="vessel-card-meta"><b>10:40</b><small>No berth</small></span>
+                  <span class="state-chip waiting"><i></i>Needs berth</span>
+                </button>
+                <button class="vessel-card" type="button" aria-label="Open Seabird">
+                  <span class="vessel-avatar ferry large">SB</span>
+                  <span class="vessel-card-copy"><b>Seabird</b><small>Ferry · 74 m · United States</small></span>
+                  <span class="vessel-card-meta"><b>12:05</b><small>Berth A2</small></span>
+                  <span class="state-chip planned"><i></i>Planned</span>
+                </button>
+                <button class="vessel-card" type="button" aria-label="Open Arctic Dawn">
+                  <span class="vessel-avatar cargo large">AD</span>
+                  <span class="vessel-card-copy"><b>Arctic Dawn</b><small>Cargo · 142 m · Canada</small></span>
+                  <span class="vessel-card-meta"><b>14:20</b><small>Berth C1</small></span>
+                  <span class="state-chip planned"><i></i>Planned</span>
+                </button>
+              </div>
+            </article>
+            <aside class="panel detail-panel">
+              <div class="detail-hero">
+                <span class="vessel-avatar cargo xlarge" id="detail-avatar">NS</span>
+                <div><span class="state-chip underway" id="detail-state"><i></i>Approaching</span><h2 id="detail-name">MV North Star</h2><p id="detail-type">Cargo · 128 m</p></div>
+              </div>
+              <dl class="detail-list">
+                <div><dt>Arrival</dt><dd id="detail-arrival">09:15</dd></div>
+                <div><dt>Assigned berth</dt><dd id="detail-berth">B1</dd></div>
+                <div><dt>Draft</dt><dd id="detail-draft">7.2 m</dd></div>
+                <div><dt>Pilot</dt><dd id="detail-pilot">Lena Ortiz</dd></div>
+              </dl>
+              <div class="detail-note">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 3h9l3 3v11H4V3Zm9 0v4h3M7 11h6" /></svg>
+                <div><b>Arrival note</b><p id="detail-note">Pilot boards at buoy four. Tug Atlas is ready.</p></div>
+              </div>
+              <button class="primary-button full" type="button" data-open-assign>Change berth</button>
+              <button class="secondary-button full" type="button">Open vessel</button>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view="handoff">
+          <div class="handoff-heading">
+            <div>
+              <span class="handoff-kicker">Day shift · 06:00–18:00</span>
+              <h2>Shift handoff</h2>
+              <p>Review the open work before the night team starts.</p>
+            </div>
+            <div class="handoff-progress">
+              <span><b>4</b> of 5 ready</span>
+              <div><i></i></div>
+            </div>
+          </div>
+          <div class="handoff-grid">
+            <article class="panel handoff-main">
+              <header class="panel-header">
+                <div><h2>Handoff checklist</h2><p>Complete each check before approval.</p></div>
+                <span class="due-chip">Due 17:30</span>
+              </header>
+              <div class="check-list">
+                <div class="check-item complete">
+                  <label class="check-toggle" aria-label="Review arrivals">
+                    <input type="checkbox" checked />
+                    <span class="custom-check"><svg viewBox="0 0 18 18"><path d="m4 9 3 3 7-7" /></svg></span>
+                  </label>
+                  <span><b>Review arrivals</b><small>Six vessel records checked</small></span>
+                  <time>16:42</time>
+                </div>
+                <div class="check-item complete">
+                  <label class="check-toggle" aria-label="Check berth plan">
+                    <input type="checkbox" checked />
+                    <span class="custom-check"><svg viewBox="0 0 18 18"><path d="m4 9 3 3 7-7" /></svg></span>
+                  </label>
+                  <span><b>Check berth plan</b><small>One hold recorded</small></span>
+                  <time>16:48</time>
+                </div>
+                <div class="check-item complete">
+                  <label class="check-toggle" aria-label="Review incidents">
+                    <input type="checkbox" checked />
+                    <span class="custom-check"><svg viewBox="0 0 18 18"><path d="m4 9 3 3 7-7" /></svg></span>
+                  </label>
+                  <span><b>Review incidents</b><small>Two records reviewed</small></span>
+                  <time>16:53</time>
+                </div>
+                <div class="check-item complete">
+                  <label class="check-toggle" aria-label="Confirm pilot roster">
+                    <input type="checkbox" checked />
+                    <span class="custom-check"><svg viewBox="0 0 18 18"><path d="m4 9 3 3 7-7" /></svg></span>
+                  </label>
+                  <span><b>Confirm pilot roster</b><small>Three pilots ready</small></span>
+                  <time>17:01</time>
+                </div>
+                <div class="check-item pending">
+                  <label class="check-toggle" aria-label="Approve open note">
+                    <input type="checkbox" />
+                    <span class="custom-check"><svg viewBox="0 0 18 18"><path d="m4 9 3 3 7-7" /></svg></span>
+                  </label>
+                  <span><b>Approve open note</b><small>Ocean Crown needs a berth</small></span>
+                  <span class="pending-chip">Needs review</span>
+                </div>
+              </div>
+              <button class="primary-button approve-button" type="button" disabled>Approve handoff</button>
+            </article>
+
+            <div class="handoff-side">
+              <article class="panel risk-card">
+                <header class="panel-header"><div><h2>Current risks</h2><p>Review two active items.</p></div></header>
+                <div class="risk-item high">
+                  <span><svg viewBox="0 0 20 20"><path d="M10 3 3 17h14L10 3Zm0 5v4m0 2h.01" /></svg></span>
+                  <div><b>Berth C2 hold</b><p>Maintenance starts at 14:00.</p><small>Owner · Morgan Lee</small></div>
+                </div>
+                <div class="risk-item medium">
+                  <span><svg viewBox="0 0 20 20"><path d="M10 3 3 17h14L10 3Zm0 5v4m0 2h.01" /></svg></span>
+                  <div><b>Ocean Crown berth</b><p>Assign an open berth by 09:45.</p><small>Owner · Alex Ward</small></div>
+                </div>
+              </article>
+              <article class="panel note-card">
+                <header class="panel-header"><div><h2>Shift note</h2><p>Share one concise note.</p></div></header>
+                <textarea aria-label="Shift note">Watch the west wind after 20:00. Move the Seabird departure if the wind exceeds 18 knots.</textarea>
+                <div class="note-meta"><span>142 characters</span><span>Saved 17:04</span></div>
+              </article>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" hidden>
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="assign-title">
+        <header>
+          <div>
+            <span class="modal-kicker">Vessel action</span>
+            <h2 id="assign-title">Assign berth</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-modal aria-label="Close dialog">
+            <svg viewBox="0 0 20 20"><path d="m5 5 10 10M15 5 5 15" /></svg>
+          </button>
+        </header>
+        <div class="modal-body">
+          <div class="selected-vessel">
+            <span class="vessel-avatar tanker large">OC</span>
+            <div><small>Selected vessel</small><b>Ocean Crown</b><span>Tanker · 186 m · ETA 10:40</span></div>
+            <span class="state-chip waiting"><i></i>Needs berth</span>
+          </div>
+          <fieldset>
+            <legend>Select berth</legend>
+            <div class="berth-choice">
+              <label class="berth-radio" aria-label="Select B2"><input type="radio" name="berth" value="B2" checked /></label>
+              <span><b>B2</b><small>Ready now · 210 m</small></span>
+              <i>Recommended</i>
+            </div>
+            <div class="berth-choice">
+              <label class="berth-radio" aria-label="Select A3"><input type="radio" name="berth" value="A3" /></label>
+              <span><b>A3</b><small>Ready at 10:10 · 195 m</small></span>
+            </div>
+            <div class="berth-choice disabled">
+              <label class="berth-radio" aria-label="Select C2"><input type="radio" name="berth" value="C2" disabled /></label>
+              <span><b>C2</b><small>Maintenance hold</small></span>
+              <i>Blocked</i>
+            </div>
+          </fieldset>
+          <div class="safety-note" data-assign-note>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m10 2 7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V5l7-3Zm-3 8 2 2 4-5" /></svg>
+            <p>B2 meets the vessel length and draft limits.</p>
+          </div>
+        </div>
+        <footer>
+          <button class="secondary-button" type="button" data-close-modal>Cancel</button>
+          <button class="primary-button" type="button" data-confirm-assign>Confirm berth</button>
+        </footer>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" data-info-dialog="maintenance" hidden>
+      <section class="modal info-modal" role="dialog" aria-modal="true" aria-labelledby="maintenance-title">
+        <header>
+          <div>
+            <span class="modal-kicker">Maintenance</span>
+            <h2 id="maintenance-title">Review berth hold</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-info aria-label="Close hold review">
+            <svg viewBox="0 0 20 20"><path d="m5 5 10 10M15 5 5 15" /></svg>
+          </button>
+        </header>
+        <div class="modal-body info-body">
+          <span class="state-chip waiting"><i></i>Starts at 14:00</span>
+          <h3>Berth C2 closed</h3>
+          <p>The maintenance team will inspect the south fender and confirm the safe state.</p>
+          <dl>
+            <div><dt>Owner</dt><dd>Morgan Lee</dd></div>
+            <div><dt>Review time</dt><dd>13:30</dd></div>
+            <div><dt>Expected release</dt><dd>16:00</dd></div>
+          </dl>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" data-info-dialog="incidents" hidden>
+      <section class="modal info-modal" role="dialog" aria-modal="true" aria-labelledby="incident-title">
+        <header>
+          <div>
+            <span class="modal-kicker">Incident review</span>
+            <h2 id="incident-title">Review harbor incidents</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-info aria-label="Close incident review">
+            <svg viewBox="0 0 20 20"><path d="m5 5 10 10M15 5 5 15" /></svg>
+          </button>
+        </header>
+        <div class="modal-body info-body">
+          <span class="state-chip planned"><i></i>Two records</span>
+          <h3>No safety action</h3>
+          <p>The day supervisor reviewed both records. The next shift can inspect the recorded notes.</p>
+          <dl>
+            <div><dt>Channel marker</dt><dd>Closed at 07:48</dd></div>
+            <div><dt>Tug delay</dt><dd>Closed at 08:12</dd></div>
+          </dl>
+        </div>
+      </section>
+    </div>
+
+    <div class="toast" role="status" aria-live="polite" hidden>
+      <span><svg viewBox="0 0 20 20"><path d="m4 10 4 4 8-9" /></svg></span>
+      <div><b>Berth assigned</b><small>Ocean Crown will use B2.</small></div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

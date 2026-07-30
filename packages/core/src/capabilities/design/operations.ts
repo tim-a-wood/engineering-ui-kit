@@ -387,14 +387,97 @@ function hydrateGuidedModuleDraft(
   const operationNames = draft.providedOperations.map((operation) => operation.operationId)
   const listedOperations = operationNames.length > 0 ? operationNames.join(', ') : primaryOperation
   const tracedUseCaseIds = new Set(draft.trace.useCaseIds)
+  const tracedUseCases = (analysis?.useCases ?? []).filter((useCase) => tracedUseCaseIds.has(useCase.id))
   const scenarioStepIds = stableSortStrings(
-    (analysis?.useCases ?? [])
-      .filter((useCase) => tracedUseCaseIds.has(useCase.id))
+    tracedUseCases
       .flatMap((useCase) => useCase.scenarios)
       .flatMap((scenario) => scenario.steps)
       .map((step) => step.id),
   )
   const moduleTestCommand = `npm test -- ${moduleId}`
+  const generatedActivities = tracedUseCases.map((useCase) => {
+    const main = useCase.scenarios.find((scenario) => scenario.kind === 'main') ?? useCase.scenarios[0]
+    const failure = useCase.scenarios.find((scenario) => scenario.kind === 'failure')
+    const startId = `${useCase.id}.activity.start`
+    const finalId = `${useCase.id}.activity.complete`
+    const decisionId = `${useCase.id}.activity.valid`
+    const mainActions = (main?.steps ?? []).map((step, index, steps) => ({
+      id: step.id,
+      kind: 'action' as const,
+      label: step.action,
+      next: [{
+        targetId: steps[index + 1]?.id ?? (failure ? decisionId : finalId),
+      }],
+    }))
+    const failureActions = (failure?.steps ?? []).map((step, index, steps) => ({
+      id: step.id,
+      kind: 'action' as const,
+      label: step.action,
+      next: [{ targetId: steps[index + 1]?.id ?? finalId }],
+    }))
+    return {
+      id: `${useCase.id}.activity`,
+      name: useCase.name,
+      refinesWorkflowNodeIds: draft.trace.workflowNodeIds,
+      actions: [
+        { id: startId, kind: 'initial' as const, label: 'Start task', next: [{ targetId: mainActions[0]?.id ?? finalId }] },
+        ...mainActions,
+        ...(failure
+          ? [{
+              id: decisionId,
+              kind: 'decision' as const,
+              label: 'Is result valid',
+              next: [
+                { targetId: finalId, guard: '[valid]' },
+                { targetId: failureActions[0]?.id ?? finalId, guard: '[invalid]' },
+              ],
+            }]
+          : []),
+        ...failureActions,
+        { id: finalId, kind: 'final' as const, label: 'Task complete', next: [] },
+      ],
+    }
+  })
+  const generatedStates = tracedUseCases.length > 0
+    ? [{
+        recordName: `${moduleName} task`,
+        states: ['Ready', 'Working', 'Complete', 'Failed'],
+        initialState: 'Ready',
+        finalStates: ['Complete'],
+        transitions: [
+          { id: `${moduleId}.state.start`, from: 'Ready', to: 'Working', trigger: 'Start task' },
+          { id: `${moduleId}.state.complete`, from: 'Working', to: 'Complete', trigger: 'Accept result' },
+          { id: `${moduleId}.state.fail`, from: 'Working', to: 'Failed', trigger: 'Reject result' },
+          { id: `${moduleId}.state.retry`, from: 'Failed', to: 'Working', trigger: 'Retry task' },
+        ],
+      }]
+    : []
+  const generatedInteractions = tracedUseCases.map((useCase) => {
+    const boundaryId = 'workspace'
+    const controlId = 'workflow'
+    const experience = draft.module.moduleType === 'experience'
+    return {
+      id: `${useCase.id}.interaction`,
+      name: useCase.name,
+      lifelines: [
+        { id: 'actor', label: actor, kind: 'actor' as const },
+        ...(experience ? [{ id: boundaryId, label: moduleName, kind: 'boundary' as const }] : []),
+        { id: controlId, label: experience ? 'Application workflow' : moduleName, kind: 'control' as const },
+      ],
+      fragments: [],
+      messages: experience
+        ? [
+            { id: `${useCase.id}.message.open`, from: 'actor', to: boundaryId, label: useCase.name, kind: 'call' as const },
+            { id: `${useCase.id}.message.run`, from: boundaryId, to: controlId, label: 'Run user task', kind: 'call' as const },
+            { id: `${useCase.id}.message.result`, from: controlId, to: boundaryId, label: 'Return result', kind: 'reply' as const },
+            { id: `${useCase.id}.message.show`, from: boundaryId, to: 'actor', label: 'Show result', kind: 'reply' as const },
+          ]
+        : [
+            { id: `${useCase.id}.message.run`, from: 'actor', to: controlId, label: useCase.name, kind: 'call' as const },
+            { id: `${useCase.id}.message.result`, from: controlId, to: 'actor', label: 'Return result', kind: 'reply' as const },
+          ],
+    }
+  })
 
   const typeSpecific: ModuleDesignSpecification['typeSpecific'] = (() => {
     switch (draft.module.moduleType) {
@@ -402,10 +485,16 @@ function hydrateGuidedModuleDraft(
         return {
           moduleType: 'experience',
           detail: {
-            userRolesAndTasks: [{ id: `${moduleId}.role.primary`, text: `${actor}: ${responsibility}` }],
-            surfaces: [{ id: `${moduleId}.surface.primary`, text: surface }],
+            userRolesAndTasks: tracedUseCases.length
+              ? tracedUseCases.map((useCase) => ({ id: `${moduleId}.role.${useCase.id}`, text: `${actor}: ${useCase.name}` }))
+              : [{ id: `${moduleId}.role.primary`, text: `${actor}: ${responsibility}` }],
+            surfaces: tracedUseCases.length
+              ? tracedUseCases.map((useCase) => ({ id: `${moduleId}.surface.${useCase.id}`, text: `${useCase.name} view` }))
+              : [{ id: `${moduleId}.surface.primary`, text: surface }],
             informationHierarchy: `Present the primary outcome and current state first, followed by supporting details and available actions.`,
-            commandsAndNavigation: [`Open ${surface}`, ...operationNames.map((operation) => `Run ${operation}`)],
+            commandsAndNavigation: tracedUseCases.length
+              ? tracedUseCases.map((useCase) => `Open ${useCase.name} view`)
+              : [`Open ${surface}`],
             viewStates: [
               { id: `${moduleId}.state.loading`, text: 'Loading the current state.' },
               { id: `${moduleId}.state.ready`, text: 'Ready for the next valid action.' },
@@ -428,7 +517,9 @@ function hydrateGuidedModuleDraft(
             themeAndContrast: 'Text, controls, focus indicators, and state colors meet WCAG AA contrast.',
             approvedComponentSources: ['@engineering-ui-kit/ui'],
             inboundBindingIds: [`binding.${moduleId}.open`],
-            scenarioScreenshotIds: [`screenshot.${moduleId}.primary`],
+            scenarioScreenshotIds: tracedUseCases
+              .flatMap((useCase) => useCase.scenarios)
+              .map((scenario) => `screenshot.${scenario.id}`),
           },
         }
       case 'workflow':
@@ -545,6 +636,9 @@ function hydrateGuidedModuleDraft(
       concurrency: 'Reject stale base revisions and serialize conflicting changes within the module boundary.',
       retry: 'Retry only transient failures and preserve the original idempotency key.',
       recovery: 'Preserve the last valid state and expose enough evidence to diagnose and safely retry a failed operation.',
+      activities: draft.behavior.activities?.length ? draft.behavior.activities : generatedActivities,
+      states: draft.behavior.states?.length ? draft.behavior.states : generatedStates,
+      interactions: draft.behavior.interactions?.length ? draft.behavior.interactions : generatedInteractions,
     },
     data: {
       ...draft.data,
@@ -1400,6 +1494,7 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
       const result = UseCase.createUseCaseDraft({
         projectId: input.projectId,
         workDescription: input.workDescription,
+        exampleMode: input.exampleMode,
         examples: input.examples,
         prohibitedResults: input.prohibitedResults,
         sources: input.sources,
@@ -2603,6 +2698,43 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
           return { ok: false, diagnostics: [makeDiagnostic('EUC16-EXECUTOR-NOT-CONFIGURED', 'blocker', 'no scenario-runner executor is configured')] }
         }
         const outcome = runner({ entry, analysis }, { deadlineAt: input.deadlineAt, cancellationRequested: input.cancellationRequested })
+        const duplicateDiagnostics: DesignDiagnostic[] = []
+        const screenshotOwner = new Map<string, string>()
+        for (const priorRun of workspace.listScenarioRuns(input.projectId)) {
+          for (const priorStep of priorRun.steps) {
+            const screenshot = priorStep.artifacts?.find((artifact) =>
+              artifact.kind === 'screenshot'
+              && artifact.role === 'original'
+              && artifact.status === 'available'
+              && artifact.sha256,
+            )
+            if (screenshot?.sha256) screenshotOwner.set(screenshot.sha256, `${priorRun.scenarioId}:${priorStep.stepId}`)
+          }
+        }
+        const checkedSteps = outcome.steps.map((step) => {
+          const screenshot = step.artifacts?.find((artifact) =>
+            artifact.kind === 'screenshot'
+            && artifact.role === 'original'
+            && artifact.status === 'available'
+            && artifact.sha256,
+          )
+          if (!screenshot?.sha256) return step
+          const stepKey = `${entry.scenarioId}:${step.stepId}`
+          const existingOwner = screenshotOwner.get(screenshot.sha256)
+          screenshotOwner.set(screenshot.sha256, stepKey)
+          if (!existingOwner || existingOwner === stepKey) return step
+          duplicateDiagnostics.push(makeDiagnostic(
+            'EUC16-SCENARIO-DUPLICATE-SCREENSHOT',
+            'blocker',
+            `The screenshot for "${step.action}" duplicates proof from ${existingOwner}. Capture this step again.`,
+            step.stepId,
+          ))
+          return {
+            ...step,
+            outcome: 'failed' as const,
+            actualResult: `${step.actualResult} Evidence integrity failure: the screenshot duplicates proof from ${existingOwner}.`,
+          }
+        })
         const architecture = workspace.getApprovedArchitecture(input.projectId)
         // The approved use-case operation compiles an application draft and
         // System Design freezes its revision into the approved architecture;
@@ -2635,15 +2767,15 @@ export function createDesignOperations(deps: CreateDesignOperationsDeps) {
           scenarioId: entry.scenarioId,
           useCaseId: entry.useCaseId,
           identity,
-          steps: outcome.steps,
-          outcome: outcome.outcome,
+          steps: checkedSteps,
+          outcome: duplicateDiagnostics.length > 0 ? 'failed' : outcome.outcome,
           startedAt: outcome.startedAt,
           completedAt: outcome.completedAt,
-          evidenceHashes: outcome.steps.map((s) => s.evidenceHash).filter((h): h is string => Boolean(h)),
+          evidenceHashes: checkedSteps.map((s) => s.evidenceHash).filter((h): h is string => Boolean(h)),
         }
         const run: ScenarioRun = { ...withoutHash, contentHash: canonicalHash(withoutHash) }
         workspace.saveScenarioRun(input.projectId, run)
-        return { ok: run.outcome === 'passed', diagnostics: [], value: run, contentHash: run.contentHash }
+        return { ok: run.outcome === 'passed', diagnostics: duplicateDiagnostics, value: run, contentHash: run.contentHash }
       },
     )
   }
@@ -2713,6 +2845,7 @@ export type DesignOperationsService = ReturnType<typeof createDesignOperations>
 export type CreateUseCaseDraftInput = ChangeOperationInput & {
   projectId: string
   workDescription: string
+  exampleMode?: 'separate-use-cases' | 'steps'
   examples?: string[]
   prohibitedResults?: string[]
   sources?: { name: string; ref: string; required: boolean; status?: 'ok' | 'failed'; failureCause?: string }[]

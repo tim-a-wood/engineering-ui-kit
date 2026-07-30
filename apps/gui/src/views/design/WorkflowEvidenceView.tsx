@@ -118,15 +118,21 @@ export function WorkflowEvidenceView({ store, initialRunId, onRunSelected, onOpe
     {
       phase: 'build' as const,
       label: 'Build',
-      state: selected.identity.build || 'Build identity missing',
-      detail: selected.identity.sourceRevision || 'Source revision not supplied',
+      state: selected.identity.build ? 'Build run recorded' : 'Build identity missing',
+      detail: selected.identity.build
+        ? `Run ${shortId(selected.identity.build)}${selected.identity.sourceRevision ? ` · packet ${shortId(selected.identity.sourceRevision)}` : ''}`
+        : 'Source revision not supplied',
       available: Boolean(selected.identity.build),
     },
     {
       phase: 'connect' as const,
       label: 'Connect',
-      state: selected.identity.connectionRevision || 'Connection identity missing',
-      detail: selected.identity.environment || 'Environment not supplied',
+      state: selected.identity.connectionRevision
+        ? `${selected.steps[0]?.executionTrace?.entryPointKind === 'ui' ? 'UI' : 'Entry-point'} connection proved`
+        : 'Connection identity missing',
+      detail: selected.identity.connectionRevision
+        ? `Proof ${shortId(selected.identity.connectionRevision)} · ${selected.identity.environment || 'environment not supplied'}`
+        : 'Environment not supplied',
       available: Boolean(selected.identity.connectionRevision),
     },
     {
@@ -227,6 +233,14 @@ export function WorkflowEvidenceView({ store, initialRunId, onRunSelected, onOpe
                       <dl>
                         <dt>Expected</dt><dd>{step.expectedResult}</dd>
                         <dt>Observed</dt><dd>{step.actualResult || 'No result recorded.'}</dd>
+                        {step.executionTrace && (
+                          <>
+                            <dt>Entry point</dt><dd>{step.executionTrace.entryPointKind}</dd>
+                            <dt>Route or command</dt><dd><code>{step.executionTrace.routeOrCommand}</code></dd>
+                            <dt>Action target</dt><dd><code>{step.executionTrace.actionTarget}</code></dd>
+                            <dt>Observation target</dt><dd><code>{step.executionTrace.observationTarget}</code></dd>
+                          </>
+                        )}
                         <dt>Captured</dt><dd>{readableDate(step.endedAt)}</dd>
                       </dl>
                     </div>

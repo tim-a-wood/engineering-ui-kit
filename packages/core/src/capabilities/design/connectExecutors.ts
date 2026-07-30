@@ -92,10 +92,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { spawn, spawnSync } from 'node:child_process'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
 import { validateContractRecord } from '../validation.js'
 import { HTTP_METHODS, INBOUND_BINDING_KINDS } from '../parity.js'
 import { canonicalHash } from '../hash.js'
-import type { CliInboundBinding, ConnectionVerificationRecord, HttpInboundBinding, InboundBinding } from '../types.js'
+import type { CliInboundBinding, ConnectionVerificationRecord, HttpInboundBinding, InboundBinding, UiInboundBinding } from '../types.js'
 import type {
   DesignDiagnostic,
   ModuleDesignSpecification,
@@ -221,6 +223,30 @@ function validateBindingShape(raw: unknown): { ok: boolean; binding?: InboundBin
       diagnostics.push(makeDiagnostic('EUC16-CONNECT-BINDING-PATH-INVALID', 'an http binding requires "path" to start with "/"', 'path'))
     }
   }
+  if (record.kind === 'ui') {
+    if (record.transport !== 'browser-local') {
+      diagnostics.push(makeDiagnostic('EUC16-CONNECT-UI-TRANSPORT', 'UI verification requires the browser-local transport.', 'transport'))
+    }
+    if (typeof record.launchUrl !== 'string' || !record.launchUrl.trim()) {
+      diagnostics.push(makeDiagnostic('EUC16-CONNECT-UI-URL', 'A UI binding requires a local launch URL or repository-relative HTML path.', 'launchUrl'))
+    }
+    if (typeof record.readinessSelector !== 'string' || !record.readinessSelector.trim()) {
+      diagnostics.push(makeDiagnostic('EUC16-CONNECT-UI-READY', 'A UI binding requires a readiness selector.', 'readinessSelector'))
+    }
+    if (!Array.isArray(record.stepActions) || record.stepActions.length === 0) {
+      diagnostics.push(makeDiagnostic('EUC16-CONNECT-UI-STEPS', 'Map at least one approved scenario step to a UI observation.', 'stepActions'))
+    } else {
+      for (const [index, action] of record.stepActions.entries()) {
+        const item = action as Record<string, unknown>
+        if (typeof item.stepId !== 'string' || !item.stepId.trim()) {
+          diagnostics.push(makeDiagnostic('EUC16-CONNECT-UI-STEP-ID', 'Each UI action requires a scenario step ID.', `stepActions.${index}.stepId`))
+        }
+        if (typeof item.expectedSelector !== 'string' || !item.expectedSelector.trim()) {
+          diagnostics.push(makeDiagnostic('EUC16-CONNECT-UI-OBSERVE', 'Each UI action requires an observation selector.', `stepActions.${index}.expectedSelector`))
+        }
+      }
+    }
+  }
   if (diagnostics.length) return { ok: false, diagnostics }
   return { ok: true, binding: raw as InboundBinding, diagnostics: [] }
 }
@@ -332,6 +358,7 @@ type RecordInput = {
   healthState: string
   verificationStatus: ConnectionVerificationRecord['verificationStatus']
   reasonCodes: string[]
+  evidenceArtifactRefs?: string[]
 }
 
 function buildVerificationRecord(input: RecordInput): ConnectionVerificationRecord {
@@ -371,7 +398,7 @@ function buildVerificationRecord(input: RecordInput): ConnectionVerificationReco
     healthState: input.healthState,
     usedTestAdapter: false,
     externalEvidenceStatus: input.verificationStatus === 'pass' ? 'complete' : 'not-applicable',
-    evidenceArtifactRefs: [],
+    evidenceArtifactRefs: input.evidenceArtifactRefs ?? [],
     verificationStatus: input.verificationStatus,
     reasonCodes: input.reasonCodes,
   }
@@ -607,6 +634,192 @@ function runHttpConnectionCheck(
   }
 }
 
+type UiBrowserProbe = {
+  ok: boolean
+  url?: string
+  title?: string
+  observedText?: string
+  width?: number
+  height?: number
+  error?: string
+  durationMs: number
+}
+
+function resolveUiTarget(repositoryRoot: string, launchUrl: string, route?: string): string {
+  const raw = launchUrl.trim()
+  if (/^https?:\/\//i.test(raw)) {
+    const base = assertLocalOrigin(raw)
+    return route?.trim() ? new URL(route.trim(), base).href : base.href
+  }
+  const candidate = raw.startsWith('file:')
+    ? decodeURIComponent(new URL(raw).pathname)
+    : path.resolve(repositoryRoot, raw)
+  const relative = path.relative(repositoryRoot, candidate)
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error('The UI file must be inside the configured repository.')
+  }
+  if (!fs.existsSync(candidate) || !fs.statSync(candidate).isFile()) {
+    throw new Error(`The UI entry file does not exist: ${raw}`)
+  }
+  return pathToFileURL(candidate).href
+}
+
+function syncUiBrowserProbe(input: {
+  repositoryRoot: string
+  targetUrl: string
+  readinessSelector: string
+  captureSelector?: string
+  actionSelector?: string
+  expectedSelector?: string
+  expectedText?: string
+  screenshotPath: string
+  timeoutMs?: number
+}): UiBrowserProbe {
+  const started = Date.now()
+  let playwrightModule: string
+  try {
+    playwrightModule = createRequire(import.meta.url).resolve('playwright')
+  } catch (error) {
+    return { ok: false, error: `Playwright is not installed: ${error instanceof Error ? error.message : String(error)}`, durationMs: Date.now() - started }
+  }
+  const configuration = {
+    module: playwrightModule,
+    targetUrl: input.targetUrl,
+    readinessSelector: input.readinessSelector,
+    captureSelector: input.captureSelector,
+    actionSelector: input.actionSelector,
+    expectedSelector: input.expectedSelector,
+    expectedText: input.expectedText,
+    screenshotPath: input.screenshotPath,
+    timeoutMs: input.timeoutMs ?? 15_000,
+  }
+  const script = `(async () => {
+    const config = JSON.parse(process.env.EUIK_UI_PROBE || '{}');
+    const { chromium } = require(config.module);
+    let browser;
+    const started = Date.now();
+    try {
+      try { browser = await chromium.launch({ headless: true }); }
+      catch (_) { browser = await chromium.launch({ headless: true, channel: 'chrome' }); }
+      const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+      await page.goto(config.targetUrl, { waitUntil: 'domcontentloaded', timeout: config.timeoutMs });
+      await page.locator(config.readinessSelector).first().waitFor({ state: 'visible', timeout: config.timeoutMs });
+      if (config.actionSelector) await page.locator(config.actionSelector).first().click({ timeout: config.timeoutMs });
+      const observed = config.expectedSelector || config.readinessSelector;
+      const locator = page.locator(observed).first();
+      await locator.waitFor({ state: 'visible', timeout: config.timeoutMs });
+      const observedText = (await locator.innerText()).trim();
+      if (config.expectedText && !observedText.includes(config.expectedText)) {
+        throw new Error('Observed text did not include the approved expected text.');
+      }
+      if (config.captureSelector) await page.locator(config.captureSelector).first().screenshot({ path: config.screenshotPath });
+      else await page.screenshot({ path: config.screenshotPath, fullPage: true });
+      process.stdout.write(JSON.stringify({ ok: true, url: page.url(), title: await page.title(), observedText, width: 1440, height: 1000, durationMs: Date.now() - started }));
+    } catch (error) {
+      process.stdout.write(JSON.stringify({ ok: false, error: String(error && error.message ? error.message : error), durationMs: Date.now() - started }));
+    } finally {
+      if (browser) await browser.close();
+    }
+  })();`
+  const timeoutMs = (input.timeoutMs ?? 15_000) + 5_000
+  const outcome = spawnSync(process.execPath, ['-e', script], {
+    cwd: input.repositoryRoot,
+    encoding: 'utf8',
+    timeout: timeoutMs,
+    env: {
+      ...process.env,
+      ELECTRON_RUN_AS_NODE: '1',
+      EUIK_UI_PROBE: JSON.stringify(configuration),
+    },
+  })
+  const stdout = typeof outcome.stdout === 'string' ? outcome.stdout.trim() : ''
+  if (outcome.error || !stdout) {
+    return { ok: false, error: outcome.error?.message ?? 'The browser probe returned no result.', durationMs: Date.now() - started }
+  }
+  try {
+    return JSON.parse(stdout.slice(stdout.lastIndexOf('\n') + 1)) as UiBrowserProbe
+  } catch {
+    return { ok: false, error: `The browser probe returned malformed output: ${stdout.slice(-300)}`, durationMs: Date.now() - started }
+  }
+}
+
+function runUiConnectionCheck(
+  deps: ConnectExecutorDeps,
+  projectId: string,
+  binding: UiInboundBinding,
+  design: ModuleDesignSpecification,
+  commands: string[],
+): ConnectionVerificationRecord {
+  const startedAt = new Date().toISOString()
+  const startedMs = Date.now()
+  const executionId = crypto.randomUUID()
+  const screenshotName = 'connection.png'
+  const screenshotPath = path.join(evidenceRunDirectory(deps.dataDir, projectId, executionId), screenshotName)
+  fs.mkdirSync(path.dirname(screenshotPath), { recursive: true })
+  let targetUrl: string
+  try {
+    targetUrl = resolveUiTarget(deps.repositoryRoot, binding.launchUrl ?? '', binding.route)
+  } catch (error) {
+    return buildVerificationRecord({
+      projectId,
+      binding,
+      design,
+      launchCommand: '(not attempted)',
+      triggerKind: 'ui',
+      redactedTriggerInput: binding.route ?? '',
+      outcomeSummary: error instanceof Error ? error.message : String(error),
+      startedAt,
+      completedAt: new Date().toISOString(),
+      durationMs: Date.now() - startedMs,
+      healthState: 'unreachable',
+      verificationStatus: 'fail',
+      reasonCodes: ['ui-target-invalid'],
+    })
+  }
+
+  const runProbe = () => syncUiBrowserProbe({
+    repositoryRoot: deps.repositoryRoot,
+    targetUrl,
+    readinessSelector: binding.readinessSelector ?? 'body',
+    captureSelector: binding.captureSelector,
+    screenshotPath,
+  })
+  let probe = runProbe()
+  let child: ReturnType<typeof spawn> | undefined
+  let launchCommand = '(existing local UI)'
+  if (!probe.ok && /^https?:/i.test(targetUrl) && commands[0]) {
+    const launch = parseCommandLine(commands[0])
+    launchCommand = commands[0]
+    child = spawn(launch.command, launch.args, {
+      cwd: deps.repositoryRoot,
+      stdio: 'ignore',
+      detached: process.platform !== 'win32',
+    })
+    syncSleep(500)
+    probe = runProbe()
+  }
+  if (child) killSpawnedSync(child)
+  const ok = probe.ok && fs.existsSync(screenshotPath)
+  return buildVerificationRecord({
+    projectId,
+    binding,
+    design,
+    launchCommand,
+    triggerKind: 'ui',
+    redactedTriggerInput: JSON.stringify({ route: binding.route ?? '', readinessSelector: binding.readinessSelector }),
+    outcomeSummary: ok
+      ? `The UI opened at ${probe.url ?? targetUrl}. The browser observed ${binding.readinessSelector}.`
+      : `The UI browser check failed: ${probe.error ?? 'no screenshot was captured'}`,
+    startedAt,
+    completedAt: new Date().toISOString(),
+    durationMs: Date.now() - startedMs,
+    healthState: ok ? 'healthy' : 'unreachable',
+    verificationStatus: ok ? 'pass' : 'fail',
+    reasonCodes: ok ? [] : ['ui-probe-failed'],
+    evidenceArtifactRefs: ok ? [artifactRef(executionId, screenshotName)] : [],
+  })
+}
+
 function verifyConnectionExecutor(deps: ConnectExecutorDeps) {
   return (
     input: { projectId: string; moduleId: string; bindingConfig?: unknown },
@@ -638,15 +851,15 @@ function verifyConnectionExecutor(deps: ConnectExecutorDeps) {
       }
     }
 
-    if (binding.kind !== 'cli' && binding.kind !== 'http') {
+    if (binding.kind !== 'cli' && binding.kind !== 'http' && binding.kind !== 'ui') {
       return {
         ok: false,
-        diagnostics: [makeDiagnostic('EUC16-CONNECT-KIND-UNSUPPORTED', `verifyConnection supports "cli" and "http" bindings only (received "${binding.kind}")`, 'kind')],
+        diagnostics: [makeDiagnostic('EUC16-CONNECT-KIND-UNSUPPORTED', `verifyConnection supports "ui", "cli", and "http" bindings only (received "${binding.kind}")`, 'kind')],
       }
     }
 
     const commands = design.verification.configuredCommands
-    if (commands.length === 0) {
+    if (commands.length === 0 && binding.kind !== 'ui') {
       return {
         ok: false,
         diagnostics: [makeDiagnostic('EUC16-CONNECT-NO-CONFIGURED-COMMANDS', `module "${input.moduleId}" defines no verification.configuredCommands to launch/probe its deployable`, 'moduleId')],
@@ -656,7 +869,9 @@ function verifyConnectionExecutor(deps: ConnectExecutorDeps) {
     const record =
       binding.kind === 'cli'
         ? runCliConnectionCheck(deps.repositoryRoot, input.projectId, binding, design, commands, context)
-        : runHttpConnectionCheck(deps.repositoryRoot, input.projectId, binding, design, commands, input.bindingConfig)
+        : binding.kind === 'http'
+          ? runHttpConnectionCheck(deps.repositoryRoot, input.projectId, binding, design, commands, input.bindingConfig)
+          : runUiConnectionCheck(deps, input.projectId, binding, design, commands)
 
     writeJsonAtomic(connectionVerificationFilePath(deps.dataDir, input.projectId, input.moduleId), {
       moduleId: input.moduleId,
@@ -877,7 +1092,12 @@ function runScenarioExecutor(deps: ConnectExecutorDeps) {
       return { steps: [], outcome: 'skipped', startedAt, completedAt: new Date().toISOString() }
     }
 
-    const allCommands = deps.listApprovedModuleDesigns(input.analysis.projectId).flatMap((d) => d.verification.configuredCommands)
+    const approvedDesigns = deps.listApprovedModuleDesigns(input.analysis.projectId)
+    const allCommands = approvedDesigns.flatMap((d) => d.verification.configuredCommands)
+    const uiBindings = approvedDesigns.flatMap((design) => {
+      const binding = loadPersistedBinding(deps.dataDir, input.analysis.projectId, design.module.moduleId)
+      return binding?.kind === 'ui' ? [{ binding, design }] : []
+    })
     const executionId = crypto.randomUUID()
 
     const steps: ScenarioStepEvidence[] = []
@@ -899,6 +1119,79 @@ function runScenarioExecutor(deps: ConnectExecutorDeps) {
             startedAt: stepStartedAt,
             endedAt: new Date().toISOString(),
             outcome: 'cancelled',
+          },
+        }))
+        continue
+      }
+
+      const uiExecution = uiBindings.find(({ binding }) => binding.stepActions?.some((action) => action.stepId === step.id))
+      if (uiExecution) {
+        const mapping = uiExecution.binding.stepActions?.find((action) => action.stepId === step.id)!
+        const screenshotSourcePath = path.join(
+          evidenceRunDirectory(deps.dataDir, input.analysis.projectId, executionId),
+          `${String(stepIndex + 1).padStart(2, '0')}-${evidenceSegment(step.id)}.browser.png`,
+        )
+        fs.mkdirSync(path.dirname(screenshotSourcePath), { recursive: true })
+        let probe: UiBrowserProbe
+        let routeOrCommand = mapping.route ?? uiExecution.binding.route ?? uiExecution.binding.launchUrl ?? ''
+        try {
+          const targetUrl = resolveUiTarget(
+            deps.repositoryRoot,
+            uiExecution.binding.launchUrl ?? '',
+            mapping.route ?? uiExecution.binding.route,
+          )
+          routeOrCommand = targetUrl
+          const runProbe = () => syncUiBrowserProbe({
+            repositoryRoot: deps.repositoryRoot,
+            targetUrl,
+            readinessSelector: uiExecution.binding.readinessSelector ?? 'body',
+            captureSelector: uiExecution.binding.captureSelector,
+            actionSelector: mapping.actionSelector,
+            expectedSelector: mapping.expectedSelector,
+            expectedText: mapping.expectedText,
+            screenshotPath: screenshotSourcePath,
+          })
+          probe = runProbe()
+          let child: ReturnType<typeof spawn> | undefined
+          if (!probe.ok && /^https?:/i.test(targetUrl) && uiExecution.design.verification.configuredCommands[0]) {
+            const launch = parseCommandLine(uiExecution.design.verification.configuredCommands[0])
+            child = spawn(launch.command, launch.args, {
+              cwd: deps.repositoryRoot,
+              stdio: 'ignore',
+              detached: process.platform !== 'win32',
+            })
+            syncSleep(500)
+            probe = runProbe()
+          }
+          if (child) killSpawnedSync(child)
+        } catch (error) {
+          probe = { ok: false, error: error instanceof Error ? error.message : String(error), durationMs: 0 }
+        }
+        const passed = probe.ok
+        steps.push(persistStepEvidence({
+          deps,
+          projectId: input.analysis.projectId,
+          scenarioId: input.entry.scenarioId,
+          executionId,
+          step,
+          stepIndex,
+          screenshotSourcePath,
+          result: {
+            stepId: step.id,
+            action: step.action,
+            expectedResult: step.expectedResult,
+            actualResult: passed
+              ? `Observed ${mapping.expectedSelector}: ${probe.observedText || step.expectedResult}`
+              : `UI step failed: ${probe.error ?? 'the expected result was not visible'}`,
+            startedAt: stepStartedAt,
+            endedAt: new Date().toISOString(),
+            outcome: passed ? 'passed' : 'failed',
+            executionTrace: {
+              entryPointKind: 'ui',
+              routeOrCommand,
+              actionTarget: mapping.actionSelector ?? '(page load)',
+              observationTarget: mapping.expectedSelector,
+            },
           },
         }))
         continue
@@ -963,6 +1256,12 @@ function runScenarioExecutor(deps: ConnectExecutorDeps) {
           startedAt: stepStartedAt,
           endedAt: new Date().toISOString(),
           outcome: passed ? 'passed' : 'failed',
+          executionTrace: {
+            entryPointKind: 'cli',
+            routeOrCommand: commandLine,
+            actionTarget: step.id,
+            observationTarget: step.expectedResult,
+          },
         },
       }))
     }

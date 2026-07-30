@@ -202,7 +202,7 @@ describe('S01 — create a first use-case draft from one sentence', () => {
 
         expect(result.ok).toBe(true)
         expect(result.value?.useCases).toHaveLength(1)
-        expect(result.value?.useCases[0]!.name).toBe('Refresh evidence from every configured source')
+        expect(result.value?.useCases[0]!.name).toBe('Refresh evidence from source')
         expect(result.value?.questions.filter((q) => q.material && !q.answer)).toHaveLength(0)
 
         return {

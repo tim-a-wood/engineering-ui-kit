@@ -85,6 +85,24 @@ export function moduleTypeLabel(moduleType: ModuleType): string {
   }
 }
 
+export function operationName(operationId: string): string {
+  const useCaseMatch = operationId.match(/\.use-case\.([^.]+)\.acceptance(?:\.|$)/i)
+  const source = useCaseMatch?.[1]
+    ?? operationId
+      .replace(/^(?:op|operation)[.:/_-]+/i, '')
+      .split('.')
+      .filter((part) => !/^(?:acceptance|operation|primary)$/i.test(part))
+      .slice(-3)
+      .join(' ')
+  const label = source
+    .replace(/[.:/_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/\b(?:acceptance|operation|primary)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return label ? `${label[0]!.toUpperCase()}${label.slice(1)}` : 'Operation'
+}
+
 /** §9.2 queue filter chips, exact spec wording, in spec order. */
 export const QUEUE_FILTERS: { id: ModuleQueueFilter; label: string }[] = [
   { id: 'all', label: 'All' },

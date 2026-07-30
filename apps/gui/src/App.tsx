@@ -120,10 +120,19 @@ export default function App() {
   const [packet, setPacket] = useState<BuildPacketResult | null>(null)
   const [recipe, setRecipe] = useState<RecipePrefill | null>(null)
   const [buildWorkspace, setBuildWorkspace] = useState<BuildWorkspaceState>('handoff')
-  const [capabilitiesProjectId, setCapabilitiesProjectId] = useState('')
+  const [capabilitiesProjectId, setCapabilitiesProjectId] = useState(() => {
+    try { return localStorage.getItem('euik-active-project') ?? '' } catch { return '' }
+  })
   const [projectOverviewId, setProjectOverviewId] = useState('')
   const [version, setVersion] = useState('')
   const [guideTopic, setGuideTopic] = useState<GuideTopicId | null>(null)
+  const selectCapabilitiesProject = useCallback((projectId: string) => {
+    setCapabilitiesProjectId(projectId)
+    try {
+      if (projectId) localStorage.setItem('euik-active-project', projectId)
+      else localStorage.removeItem('euik-active-project')
+    } catch { /* private mode */ }
+  }, [])
 
   const refreshProjects = useCallback(async () => {
     setProjects(await bridge.listProjects())
@@ -176,7 +185,7 @@ export default function App() {
   const navigate = useCallback(
     (next: ViewId) => {
       if (next === 'capabilities') {
-        if (activeRun?.projectId) setCapabilitiesProjectId(activeRun.projectId)
+        if (activeRun?.projectId) selectCapabilitiesProject(activeRun.projectId)
         setView('capabilities')
         return
       }
@@ -193,14 +202,14 @@ export default function App() {
       }
       setView(next)
     },
-    [activeRun, capabilitiesProjectId],
+    [activeRun, selectCapabilitiesProject],
   )
 
   const openCapabilities = useCallback((projectId?: string) => {
-    const contextualProjectId = projectId ?? activeRun?.projectId ?? ''
-    if (contextualProjectId) setCapabilitiesProjectId(contextualProjectId)
+    const contextualProjectId = projectId ?? projectOverviewId ?? activeRun?.projectId ?? capabilitiesProjectId
+    if (contextualProjectId) selectCapabilitiesProject(contextualProjectId)
     setView('capabilities')
-  }, [activeRun?.projectId])
+  }, [activeRun?.projectId, capabilitiesProjectId, projectOverviewId, selectCapabilitiesProject])
 
   const startNewRun = useCallback(async (projectId: string) => {
     const run = await bridge.createRun(projectId)
@@ -240,6 +249,9 @@ export default function App() {
         `Packet content hash: ${input.packet.contentHash}`,
         `Module design: ${input.packet.moduleId}@${input.packet.moduleDesignRevision}`,
         `Context manifest: ${input.packet.contextManifest.id}`,
+        ...(input.packet.traceability?.useCaseIds.map((id) => `Approved use case: ${id}`) ?? []),
+        ...(input.packet.traceability?.workflowNodeIds.map((id) => `Approved workflow action: ${id}`) ?? []),
+        ...(input.packet.traceability?.experienceElementIds.map((id) => `Approved experience element: ${id}`) ?? []),
         ...input.packet.providedContracts.map((contract) => `Provides: ${contract.operationId}@${contract.version}`),
         ...input.packet.requiredContracts.map((contract) => `Requires: ${contract.operationId}@${contract.version}`),
       ].join('\n'),
@@ -264,22 +276,29 @@ export default function App() {
         linkedAt: new Date().toISOString(),
       },
     })
-    setCapabilitiesProjectId(project.id)
+    selectCapabilitiesProject(project.id)
     setActiveRun(run)
     setPacket(null)
     setRecipe(null)
     setBuildWorkspace('handoff')
     setView('build')
-  }, [activeRun, bridge, projects])
+  }, [activeRun, bridge, projects, selectCapabilitiesProject])
 
   const openProjectOverview = useCallback((projectId: string) => {
+    selectCapabilitiesProject(projectId)
     setProjectOverviewId(projectId)
     setView('project-overview')
-  }, [])
+  }, [selectCapabilitiesProject])
 
   const activeProject = activeRun ? projects.find((p) => p.id === activeRun.projectId) : undefined
   const workflowProjectId = capabilitiesProjectId || activeProject?.id || ''
   const workflowProject = projects.find((project) => project.id === workflowProjectId)
+
+  useEffect(() => {
+    if (projects.length > 0 && capabilitiesProjectId && !projects.some((project) => project.id === capabilitiesProjectId)) {
+      selectCapabilitiesProject('')
+    }
+  }, [capabilitiesProjectId, projects, selectCapabilitiesProject])
 
   /**
    * §22.1 "sample ONLY when no project is configured" — 'project' mode
@@ -334,7 +353,7 @@ export default function App() {
               store={designStore}
               projects={projects}
               activeProjectId={workflowProjectId}
-              onProjectSelected={setCapabilitiesProjectId}
+              onProjectSelected={selectCapabilitiesProject}
               projectModeAvailable={Boolean(designBridgeCaller)}
               onNavigateToProjects={() => setView('projects')}
               linkedRun={activeRun?.projectId === workflowProjectId ? activeRun : undefined}
@@ -427,6 +446,15 @@ export default function App() {
             </button>
             <span className="crumb-sep" aria-hidden="true">{Icon.chevronRight(12)}</span>
             <span className="crumb-current">{activeProject.name}</span>
+          </nav>
+        )}
+        {workflowProject && (view === 'capabilities' || view === 'design') && (
+          <nav className="topbar-crumbs" aria-label="Active capabilities project">
+            <button type="button" className="crumb" onClick={() => openProjectOverview(workflowProject.id)}>
+              Capabilities
+            </button>
+            <span className="crumb-sep" aria-hidden="true">{Icon.chevronRight(12)}</span>
+            <span className="crumb-current">{workflowProject.name}</span>
           </nav>
         )}
         <span className="titlebar-spacer" />

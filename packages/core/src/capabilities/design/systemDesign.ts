@@ -160,6 +160,9 @@ export function proposeSystemStructure(
   const primaryModuleType: ModuleType = options.primaryModuleType ?? 'workflow'
   const primaryModuleName = options.primaryModuleName ?? 'Core application'
   const deployableId = options.primaryDeployableId ?? DEFAULT_DEPLOYABLE_ID
+  const needsWorkflowBoundary = primaryModuleType === 'experience' && application.useCases.length > 1
+  const workflowModuleId = `${primaryModuleId}.workflow`
+  const operationOwnerId = needsWorkflowBoundary ? workflowModuleId : primaryModuleId
 
   const externalSystems = [...(application.externalSystems ?? [])].sort((a, b) => a.id.localeCompare(b.id))
   const useCaseNames = application.useCases.map((useCase) => useCase.text.trim()).filter(Boolean)
@@ -187,6 +190,24 @@ export function proposeSystemStructure(
   const adapterAllocations: { adapterId: string; moduleId: string; portId: string }[] = []
   const adapterModuleIds: string[] = []
 
+  if (needsWorkflowBoundary) {
+    moduleDefinitions.push({
+      moduleId: workflowModuleId,
+      name: 'Application workflow',
+      moduleType: 'workflow',
+      responsibility: 'Coordinates approved user tasks and operation outcomes.',
+    })
+    proposals.push({
+      id: workflowModuleId,
+      text: 'CAP-DES-SYS-001: a workflow boundary keeps process state outside the user experience.',
+    })
+    dependencyEdges.push({
+      fromModuleId: primaryModuleId,
+      toModuleId: workflowModuleId,
+      reason: `${primaryModuleName} calls the application workflow through approved operations.`,
+    })
+  }
+
   for (const system of externalSystems) {
     const key = slug(system.id)
     const adapterModuleId = `mod.adapter.${key}`
@@ -204,17 +225,17 @@ export function proposeSystemStructure(
     })
     adapterAllocations.push({ adapterId: `adapter.${key}`, moduleId: adapterModuleId, portId: `port.${key}` })
     dependencyEdges.push({
-      fromModuleId: primaryModuleId,
+      fromModuleId: operationOwnerId,
       toModuleId: adapterModuleId,
       reason: `${primaryModuleName} calls the ${label} adapter through its port.`,
     })
   }
 
-  const moduleIds = [primaryModuleId, ...adapterModuleIds]
+  const moduleIds = [primaryModuleId, ...(needsWorkflowBoundary ? [workflowModuleId] : []), ...adapterModuleIds]
   const sortedModuleIds = [...moduleIds].sort((a, b) => a.localeCompare(b))
 
   const operations = [...(options.operations ?? [])].sort((a, b) => a.operationId.localeCompare(b.operationId))
-  const operationAllocations = operations.map((op) => ({ operationId: op.operationId, moduleId: primaryModuleId }))
+  const operationAllocations = operations.map((op) => ({ operationId: op.operationId, moduleId: operationOwnerId }))
 
   const useCases = [...(application.useCases ?? [])].sort((a, b) => a.id.localeCompare(b.id))
   const workflows = materializeApplicationWorkflows(application)
@@ -228,8 +249,8 @@ export function proposeSystemStructure(
         .map((node) => ({
           workflowId: workflow.id,
           nodeId: node.id,
-          primaryModuleId,
-          participatingModuleIds: [],
+          primaryModuleId: operationOwnerId,
+          participatingModuleIds: needsWorkflowBoundary ? [primaryModuleId] : [],
         }))),
   }))
 

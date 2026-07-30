@@ -66,6 +66,7 @@ function moduleDesign(overrides: Partial<ModuleDesignSpecification> = {}): Modul
     },
     trace: {
       useCaseIds: ['uc.store-evidence'],
+      workflowNodeIds: ['workflow.store-evidence.action.persist'],
       scenarioStepIds: ['uc.store-evidence.step-1'],
       ruleIds: ['rule.retain-90-days'],
       qualityRequirementIds: ['qual.durable'],
@@ -377,6 +378,12 @@ describe('EUC-10 buildModuleImplementationPacket', () => {
     expect(result.packet?.moduleId).toBe('mod.evidence-store')
     expect(result.packet?.allowedPaths).toEqual(['capabilities/modules/mod.evidence-store/'])
     expect(result.packet?.providedContracts.length).toBe(1)
+    expect(result.packet?.traceability).toEqual({
+      useCaseIds: ['uc.store-evidence'],
+      workflowNodeIds: ['workflow.store-evidence.action.persist'],
+      scenarioStepIds: ['uc.store-evidence.step-1'],
+      experienceElementIds: [],
+    })
   })
 
   it('refuses a draft (unapproved) module design', () => {

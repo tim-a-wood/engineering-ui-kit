@@ -328,6 +328,12 @@ function ScenarioWorkspace(props: DesignVerifyViewProps) {
                         <dl>
                           <dt>Expected</dt><dd>{check?.expectedResult ?? 'No expected result recorded.'}</dd>
                           <dt>Observed</dt><dd>{result?.actualResult || 'Not run yet.'}</dd>
+                          {result?.executionTrace && (
+                            <>
+                              <dt>Proof path</dt>
+                              <dd>{result.executionTrace.routeOrCommand} → {result.executionTrace.actionTarget} → {result.executionTrace.observationTarget}</dd>
+                            </>
+                          )}
                         </dl>
                       </div>
                       <span className={`design-run-outcome design-run-${result?.outcome ?? 'not-run'}`}>{result?.outcome ?? 'not run'}</span>

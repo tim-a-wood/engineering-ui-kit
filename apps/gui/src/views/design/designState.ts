@@ -1513,6 +1513,7 @@ export class DesignStore {
   /** Creates the canonical use-case analysis through the same operation used by the machine API. */
   createUseCaseAnalysis(input: {
     workDescription: string
+    exampleMode?: 'separate-use-cases' | 'steps'
     examples?: string[]
     prohibitedResults?: string[]
     sources?: { name: string; ref: string; required: boolean; status?: 'ok' | 'failed'; failureCause?: string }[]
@@ -1528,6 +1529,7 @@ export class DesignStore {
       {
         projectId: client.projectId,
         workDescription: input.workDescription,
+        exampleMode: input.exampleMode,
         examples: input.examples ?? [],
         prohibitedResults: input.prohibitedResults ?? [],
         sources: input.sources ?? [],

@@ -66,7 +66,7 @@ export function ProjectsView(props: {
         subtitle="Organize and manage your Engineering UI Kit projects."
         actions={
           <button type="button" className="btn btn-primary" onClick={() => setDialogOpen(true)}>
-            {Icon.plus(14)} Create project
+            {Icon.plus(14)} New project
           </button>
         }
       />
@@ -288,7 +288,7 @@ export function ProjectsView(props: {
           onCreated={async (project) => {
             setDialogOpen(false)
             await props.refreshProjects()
-            setStatus({ tone: 'success', text: `Project ${project.name} created.` })
+            props.onOpenProject(project.id)
           }}
         />
       )}

@@ -51,6 +51,12 @@ export const EUC01_DIAGNOSTIC_CODES = {
 export type UseCaseAnalysisInput = {
   projectId: string
   workDescription: string
+  /**
+   * Examples can describe separate user goals or ordered steps in one goal.
+   * The explicit choice prevents a medium product from collapsing into one
+   * long, misleading use case.
+   */
+  exampleMode?: 'separate-use-cases' | 'steps'
   examples?: string[]
   prohibitedResults?: string[]
   sources?: {
@@ -298,6 +304,22 @@ function sentenceCase(text: string): string {
   return trimmed ? `${trimmed[0]!.toUpperCase()}${trimmed.slice(1)}` : ''
 }
 
+/** Keep generated navigation and diagram labels within the STE action-label
+ * budget. The complete source sentence remains in the analysis description. */
+function steActionLabel(text: string, fallback = 'Complete user task'): string {
+  const concise = sentenceCase(text)
+    .replace(/^Never\s+/i, '')
+    .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
+    .replace(/\s+from\s+every\s+(?:configured\s+)?/i, ' from ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const words = concise
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 4)
+  return words.join(' ') || fallback
+}
+
 function inferPrimaryActor(description: string): string {
   const firstSentence = sentenceFragments(description)[0] ?? ''
   const match = firstSentence.match(new RegExp(`^(?:an?|the)\\s+(.{1,64}?)\\s+(?:${ACTOR_ACTION})\\b`, 'i'))
@@ -369,12 +391,16 @@ function inferRecoveryBehavior(requirements: string[]): string {
 function inferredFailureScenario(prohibitedResult: string, index: number, useCaseId: string) {
   const prohibitedOutcome = prohibitedResult.trim().replace(/^never\s+/i, '').replace(/[.!?]+$/, '')
   const protectsApprovedResult = /\b(?:replace|overwrite)\b.*\blast approved result\b/i.test(prohibitedOutcome)
+  const conciseOutcome = steActionLabel(
+    prohibitedOutcome.replace(/^(?:assign|create|delete|open|replace|show|use)\s+/i, ''),
+    'invalid result',
+  ).toLocaleLowerCase()
   const scenarioId = childId(useCaseId, 'scenario', `failure.${index + 1}.${prohibitedResult}`)
   const step: ScenarioStep = {
     id: childId(scenarioId, 'step', 'prevent-prohibited-result'),
     action: protectsApprovedResult
-      ? 'Run validation when the current attempt fails'
-      : `Exercise the failure path related to: ${prohibitedOutcome}`,
+      ? 'Reject failed update'
+      : steActionLabel(`Reject ${conciseOutcome}`),
     expectedResult: protectsApprovedResult
       ? 'The last approved result remains unchanged after the failed validation.'
       : `The prohibited outcome is prevented: ${prohibitedOutcome}.`,
@@ -383,8 +409,8 @@ function inferredFailureScenario(prohibitedResult: string, index: number, useCas
   return {
     id: scenarioId,
     name: protectsApprovedResult
-      ? 'Preserve the last approved result on failure'
-      : `Prevent prohibited outcome ${index + 1}`,
+      ? 'Preserve approved result'
+      : steActionLabel(`Reject ${conciseOutcome}`),
     kind: 'failure' as const,
     steps: [step],
   }
@@ -406,85 +432,104 @@ export function createUseCaseDraft(input: UseCaseAnalysisInput): UseCaseAnalysis
 
   const description = input.workDescription.trim()
   const hasDescription = description.length > 0
-  const useCaseName = hasDescription ? inferUseCaseName(description) : 'Untitled work'
+  const useCaseName = hasDescription ? steActionLabel(inferUseCaseName(description)) : 'Untitled work'
   const primaryActorText = hasDescription ? inferPrimaryActor(description) : 'Primary user'
   const requirements = requirementClauses(description)
   const recoveryBehavior = inferRecoveryBehavior(requirements)
 
   const analysisId = childId(input.projectId, 'use-case-analysis', description || 'untitled')
-  const useCaseId = childId(analysisId, 'use-case', 'main')
-  const mainScenarioId = childId(useCaseId, 'scenario', 'main')
-
   const examples = (input.examples ?? []).filter((example) => typeof example === 'string' && example.trim())
-  const mainFlow: ScenarioStep[] = examples.length
-    ? examples.map((example, index) => ({
-        id: childId(useCaseId, 'step', `${index + 1}.${example}`),
-        action: example,
-        expectedResult: inferredExpectedResult(index, examples.length, requirements),
-        visibleResult: true,
-      }))
-    : [
-        {
-          id: childId(useCaseId, 'step', 'primary'),
-          action: useCaseName,
-          expectedResult: requirements.length ? passiveOutcome(requirements[0]!) : 'The described outcome is observable and reviewable.',
-          visibleResult: true,
-        },
-      ]
-
   const primaryActorId = childId(analysisId, 'actor', primaryActorText)
   const actors: AnalysisItem[] = [{ id: primaryActorId, text: primaryActorText, status: 'inferred' }]
   const prohibitedResults = [...(input.prohibitedResults ?? [])]
-  const failurePaths = prohibitedResults.map((prohibitedResult, index) =>
-    inferredFailureScenario(prohibitedResult, index, useCaseId),
-  )
-  const recoveryScenario = recoveryBehavior
-    ? {
-        id: childId(useCaseId, 'scenario', 'recovery'),
-        name: `Recover from a failed attempt to ${useCaseName.toLocaleLowerCase()}`,
-        kind: 'recovery' as const,
-        steps: [
-          {
-            id: childId(useCaseId, 'step', 'recovery'),
-            action: `Recover after an attempt to ${useCaseName.toLocaleLowerCase()} fails`,
-            expectedResult: recoveryBehavior,
-            visibleResult: true,
-          },
-        ],
-      }
-    : undefined
-  const scenarios = [
-    { id: mainScenarioId, name: useCaseName, kind: 'main' as const, steps: mainFlow },
-    ...failurePaths,
-    ...(recoveryScenario ? [recoveryScenario] : []),
-  ]
+  const separateExamples = examples.length > 1 && (input.exampleMode ?? 'separate-use-cases') === 'separate-use-cases'
+  const useCaseInputs = separateExamples
+    ? examples.map((example, index) => ({ name: steActionLabel(inferUseCaseName(example)), steps: [example], sourceIndex: index }))
+    : [{ name: useCaseName, steps: examples.length ? examples : [useCaseName], sourceIndex: 0 }]
 
-  const acceptanceCheckId = childId(useCaseId, 'acceptance', 'primary')
-  const useCase: UseCaseDefinition = {
-    id: useCaseId,
-    name: useCaseName,
-    actors: [primaryActorId],
-    trigger: `${primaryActorText} needs to ${useCaseName.toLocaleLowerCase()}.`,
-    preconditions: [],
-    mainFlow,
-    alternatePaths: [],
-    failurePaths,
-    recoveryBehavior,
-    rules: [],
-    inputs: [],
-    outputs: requirements.length ? requirements.map(passiveOutcome) : [`Completed outcome: ${useCaseName}`],
-    acceptanceChecks: [
-      {
-        id: acceptanceCheckId,
-        text: requirements.length
-          ? `The primary path satisfies the approved requirements to ${requirements.join('; ')}.`
-          : `The work "${useCaseName}" is completed with an observable, reviewable result.`,
-        status: 'inferred',
-      },
-    ],
-    sourceLinks: [],
-    scenarios,
+  const keywords = (value: string) => new Set(
+    value.toLocaleLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 3),
+  )
+  const prohibitedOwner = (result: string) => {
+    const resultWords = keywords(result)
+    let bestIndex = 0
+    let bestScore = -1
+    useCaseInputs.forEach((candidate, index) => {
+      const score = [...keywords(`${candidate.name} ${candidate.steps.join(' ')}`)].filter((word) => resultWords.has(word)).length
+      if (score > bestScore) {
+        bestIndex = index
+        bestScore = score
+      }
+    })
+    return bestIndex
   }
+
+  const useCases: UseCaseDefinition[] = useCaseInputs.map((candidate, useCaseIndex) => {
+    const useCaseId = childId(analysisId, 'use-case', separateExamples ? candidate.name : 'main')
+    const mainScenarioId = childId(useCaseId, 'scenario', 'main')
+    const mainFlow: ScenarioStep[] = candidate.steps.map((example, stepIndex) => ({
+      id: childId(useCaseId, 'step', `${stepIndex + 1}.${example}`),
+      action: steActionLabel(example),
+      expectedResult: inferredExpectedResult(
+        separateExamples ? candidate.sourceIndex : stepIndex,
+        Math.max(separateExamples ? examples.length : candidate.steps.length, 1),
+        requirements,
+      ),
+      visibleResult: true,
+    }))
+    const ownedProhibitedResults = prohibitedResults
+      .map((result, index) => ({ result, index }))
+      .filter(({ result }) => !separateExamples || prohibitedOwner(result) === useCaseIndex)
+    const failurePaths = ownedProhibitedResults.map(({ result, index }) =>
+      inferredFailureScenario(result, index, useCaseId),
+    )
+    const recoveryScenario = recoveryBehavior
+      ? {
+          id: childId(useCaseId, 'scenario', 'recovery'),
+          name: 'Recover failed task',
+          kind: 'recovery' as const,
+          steps: [
+            {
+              id: childId(useCaseId, 'step', 'recovery'),
+              action: 'Recover failed task',
+              expectedResult: recoveryBehavior,
+              visibleResult: true,
+            },
+          ],
+        }
+      : undefined
+    const scenarios = [
+      { id: mainScenarioId, name: candidate.name, kind: 'main' as const, steps: mainFlow },
+      ...failurePaths,
+      ...(recoveryScenario ? [recoveryScenario] : []),
+    ]
+    const acceptanceCheckId = childId(useCaseId, 'acceptance', 'primary')
+    return {
+      id: useCaseId,
+      name: candidate.name,
+      actors: [primaryActorId],
+      trigger: `${primaryActorText} needs to ${candidate.name.toLocaleLowerCase()}.`,
+      preconditions: [],
+      mainFlow,
+      alternatePaths: [],
+      failurePaths,
+      recoveryBehavior,
+      rules: [],
+      inputs: [],
+      outputs: requirements.length ? requirements.map(passiveOutcome) : [`Completed outcome: ${candidate.name}`],
+      acceptanceChecks: [
+        {
+          id: acceptanceCheckId,
+          text: requirements.length
+            ? `The primary path satisfies the approved requirements to ${requirements.join('; ')}.`
+            : `The work "${candidate.name}" is completed with an observable, reviewable result.`,
+          status: 'inferred',
+        },
+      ],
+      sourceLinks: [],
+      scenarios,
+    }
+  })
 
   const sources: AnalysisSource[] = (input.sources ?? []).map((source, index) => ({
     id: childId(analysisId, 'source', source.name || source.ref || String(index)),
@@ -516,7 +561,7 @@ export function createUseCaseDraft(input: UseCaseAnalysisInput): UseCaseAnalysis
     examples,
     prohibitedResults,
     actors,
-    useCases: [useCase],
+    useCases,
     rules: [],
     qualityNeeds: [],
     sources,

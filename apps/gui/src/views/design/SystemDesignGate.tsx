@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useDesignState, type DesignStore } from './designState'
+import { operationName } from './designShared'
 
 type Props = {
   store: DesignStore
@@ -40,11 +41,11 @@ const STRUCTURE_OPTIONS: StructureOption[] = [
   {
     id: 'experience-first',
     name: 'Experience-first',
-    moduleName: 'Primary experience',
+    moduleName: 'User workspace',
     moduleType: 'experience',
-    summary: 'Start from the user-facing experience and extract workflow/domain modules after the first validated path.',
-    strengths: 'Fastest route to a coherent user-facing slice.',
-    tradeoff: 'Needs care to prevent rules and process state from accumulating in the experience layer.',
+    summary: 'Design the user workspace and keep multi-step process state in an application workflow.',
+    strengths: 'Creates a traceable screen model and a separate workflow boundary for medium products.',
+    tradeoff: 'Adds one boundary when the approved plan contains several independent user tasks.',
   },
 ]
 
@@ -205,7 +206,12 @@ export function SystemDesignGate({ store, onOpenPlan }: Props) {
                 <>
                   <details>
                     <summary>Allocated operations ({allocationsForSelected.length})</summary>
-                    <ul>{allocationsForSelected.map((allocation) => <li key={allocation.operationId}>{allocation.operationId}</li>)}</ul>
+                    <ul>{allocationsForSelected.map((allocation) => (
+                      <li key={allocation.operationId}>
+                        {operationName(allocation.operationId)}
+                        <small title="Stable operation ID"> {allocation.operationId}</small>
+                      </li>
+                    ))}</ul>
                   </details>
                 </>
               )}
@@ -217,7 +223,7 @@ export function SystemDesignGate({ store, onOpenPlan }: Props) {
               <h3>Preview operation move</h3>
               <p>Moving an operation changes the owning module and will make affected module designs require review.</p>
               <label>Operation<select value={operationId} onChange={(event) => setOperationId(event.target.value)}>
-                {state.architecture.operationAllocations.map((allocation) => <option key={allocation.operationId} value={allocation.operationId}>{allocation.operationId}</option>)}
+                {state.architecture.operationAllocations.map((allocation) => <option key={allocation.operationId} value={allocation.operationId}>{operationName(allocation.operationId)}</option>)}
               </select></label>
               <label>Target module<select value={operationTargetId} onChange={(event) => setOperationTargetId(event.target.value)}>
                 {moduleDefinitions.map((module) => <option key={module.moduleId} value={module.moduleId}>{module.name}</option>)}

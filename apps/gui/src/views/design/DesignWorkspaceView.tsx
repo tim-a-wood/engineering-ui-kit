@@ -460,9 +460,11 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
         </div>
         <div className="design-workspace-meta">
           <p className="design-system-status">
-            Use cases {state.useCaseAnalysis.status === 'approved' ? 'approved' : 'not yet approved'} · system structure {state.systemStatus.approved ? 'approved' : 'not yet approved'} · {approvalCountText(state.progress)},{' '}
-            {state.progress.total - state.progress.approved} remain.
-            {blockingModuleNamesForStatus.length > 0 && <> Blocking: {blockingModuleNamesForStatus.join(', ')}.</>}
+            Use cases {state.useCaseAnalysis.status === 'approved' ? 'approved' : 'not yet approved'} · system structure {state.systemStatus.approved ? 'approved' : 'not yet approved'} ·{' '}
+            {state.progress.total > 0
+              ? <>{approvalCountText(state.progress)}, {state.progress.total - state.progress.approved} remain.</>
+              : <>module design starts after structure approval.</>}
+            {state.progress.total > 0 && blockingModuleNamesForStatus.length > 0 && <> Blocking: {blockingModuleNamesForStatus.join(', ')}.</>}
           </p>
           <SaveIndicator saveState={state.saveState} savedAt={state.savedAt} mode={state.mode} />
         </div>
@@ -733,7 +735,10 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
 
       {activeTab === 'setup' && state.mode === 'project' && (
         <div id="design-workspace-panel-setup" role="tabpanel" aria-labelledby="design-workspace-tab-setup">
-          <ProjectSetupPanel store={props.store} />
+          <ProjectSetupPanel
+            store={props.store}
+            suggestedRepositoryRoot={props.projects?.find((project) => project.id === props.activeProjectId)?.repoPath}
+          />
         </div>
       )}
     </div>
