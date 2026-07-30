@@ -9587,7 +9587,16 @@ code.path-wrap {
   font-size: var(--semantic-typography-size-sm);
 }
 
-.design-canvas-header > span {
+.design-canvas-status {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: var(--semantic-spacing-1);
+}
+
+.design-canvas-count,
+.design-canvas-quality {
   flex: 0 0 auto;
   padding: 4px var(--semantic-spacing-2);
   border: 1px solid var(--semantic-border-subtle);
@@ -9595,6 +9604,15 @@ code.path-wrap {
   background: transparent;
   color: var(--semantic-text-muted);
   font-size: var(--semantic-typography-size-sm);
+}
+
+.design-canvas-quality {
+  color: var(--semantic-status-success-text);
+  border-color: color-mix(in srgb, var(--semantic-status-success) 32%, var(--semantic-border-subtle));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--semantic-status-success) 7%, transparent);
+  font-size: var(--semantic-typography-size-xs);
+  font-weight: var(--semantic-typography-weight-semibold);
 }
 
 .design-canvas-toolbar {
@@ -9666,7 +9684,7 @@ code.path-wrap {
 .design-canvas-node rect {
   fill: color-mix(in srgb, var(--semantic-surface-panel-raised) 92%, var(--semantic-surface-canvas));
   stroke: color-mix(in srgb, var(--semantic-border-strong) 82%, transparent);
-  stroke-width: 1.2;
+  stroke-width: 1.35;
 }
 
 .design-canvas-component-mark rect {
@@ -9684,7 +9702,7 @@ code.path-wrap {
 
 .design-canvas-node text {
   fill: var(--semantic-text-primary);
-  font-size: 10.5px;
+  font-size: 12.5px;
 }
 
 .design-canvas-node-title {
@@ -9693,44 +9711,46 @@ code.path-wrap {
 
 .design-canvas-node-meta {
   fill: color-mix(in srgb, var(--semantic-accent-primary) 72%, var(--semantic-text-muted)) !important;
-  font-size: 8.5px !important;
+  font-size: 9.5px !important;
   letter-spacing: .055em;
   text-transform: uppercase;
 }
 
 .design-canvas-node-state {
   fill: var(--semantic-text-muted) !important;
-  font-size: 9px !important;
+  font-size: 10px !important;
 }
 
-.design-canvas-edge polyline {
+.design-canvas-edge :is(polyline, path) {
   fill: none;
   stroke: color-mix(in srgb, var(--semantic-text-secondary) 80%, var(--semantic-border-strong));
-  stroke-width: 1.25;
+  stroke-width: 1.45;
   stroke-dasharray: 5 4;
   stroke-linecap: square;
   stroke-linejoin: round;
 }
 
-.design-canvas-edge.muted > polyline:first-child {
-  opacity: .08;
+.design-canvas-edge.muted > :first-child {
+  opacity: .54;
 }
 
-.design-canvas-edge.contextual > polyline:first-child {
+.design-canvas-edge.contextual > :first-child {
   stroke: color-mix(in srgb, var(--semantic-accent-primary) 46%, var(--semantic-text-secondary));
-  opacity: .78;
+  stroke-width: 1.75;
+  opacity: .94;
 }
 
 .design-canvas-edge marker path,
 #design-arrow path {
   fill: none;
   stroke: var(--semantic-text-secondary);
-  stroke-width: 1.2;
+  stroke-width: 1.4;
 }
 
 .design-canvas-edge .design-canvas-edge-hit {
   stroke: transparent;
   stroke-width: 14;
+  stroke-dasharray: none;
   cursor: pointer;
 }
 

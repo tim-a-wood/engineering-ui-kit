@@ -12,9 +12,11 @@
  */
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from 'react'
+import type { DiagramProjection as LiveDiagramProjection } from '@engineering-ui-kit/core'
 import {
-  layoutDiagram,
+  layoutDiagram as layoutLegacyDiagram,
   type DiagramLayout,
+  type DiagramLayoutEdge,
   type DiagramProjection,
   type ModuleDesignProgress,
   type SystemStructureSpecification,
@@ -22,6 +24,11 @@ import {
   type UmlRelationship,
 } from '@engineering-ui-kit/core/design-browser'
 import { Dialog } from '../../components'
+import {
+  analyzeUmlLayoutQuality,
+  layoutUmlDiagram,
+  type UmlLayoutQuality,
+} from '../capabilities/umlDiagramLayout'
 import { StateBadge, moduleTypeLabel } from './designShared'
 
 const NODE_WIDTH = 176
@@ -84,6 +91,172 @@ function buildSystemProjection(architecture: SystemStructureSpecification): Diag
   return { ...withoutHash, contentHash }
 }
 
+function buildLiveSystemProjection(architecture: SystemStructureSpecification): LiveDiagramProjection {
+  const moduleDefs =
+    architecture.moduleDefinitions && architecture.moduleDefinitions.length > 0
+      ? architecture.moduleDefinitions
+      : architecture.moduleIds.map((moduleId) => ({
+        moduleId,
+        name: moduleId,
+        moduleType: 'domain' as const,
+        responsibility: '',
+      }))
+  const sourceRecordIds = [architecture.id]
+  const nodes = moduleDefs.map((definition) => ({
+    id: elementIdFor(definition.moduleId),
+    kind: 'component' as const,
+    label: definition.name,
+    description: definition.responsibility || `${definition.name} module.`,
+    sourceRecordId: architecture.id,
+    traceIds: [architecture.id, definition.moduleId],
+    stereotype: definition.moduleType,
+  }))
+  const edges = architecture.dependencyEdges.map((edge, index) => ({
+    id: `system.relationship.${edge.fromModuleId}.${edge.toModuleId}.${index}`,
+    kind: 'dependency' as const,
+    fromId: elementIdFor(edge.fromModuleId),
+    toId: elementIdFor(edge.toModuleId),
+    description: edge.reason,
+    sourceRecordId: architecture.id,
+    traceIds: [architecture.id, edge.fromModuleId, edge.toModuleId],
+  }))
+  return {
+    schemaVersion: '1.0',
+    id: `system.diagram.${architecture.id}`,
+    kind: 'component',
+    projectId: architecture.projectId,
+    contextId: architecture.id,
+    title: 'System structure',
+    sourceRevision: architecture.revision,
+    sourceRecordIds,
+    nodes,
+    edges,
+    diagnostics: [],
+    textAlternative: `System structure has ${nodes.length} modules and ${edges.length} dependencies.`,
+    contentHash: `${architecture.contentHash}:${nodes.length}:${edges.length}:elk-system`,
+  }
+}
+
+export type SystemCanvasRouteResult = {
+  layout: DiagramLayout
+  quality: UmlLayoutQuality
+}
+
+/**
+ * Route the architecture canvas through the same ELK geometry and quality
+ * analyzer as the live UML workspaces. The legacy synchronous layout remains
+ * a render fallback only; acceptance tests gate this result.
+ */
+export async function layoutSystemCanvas(
+  architecture: SystemStructureSpecification,
+): Promise<SystemCanvasRouteResult> {
+  const projection = buildLiveSystemProjection(architecture)
+  const routed = await layoutUmlDiagram(projection)
+  const quality = analyzeUmlLayoutQuality(routed, projection)
+  return {
+    quality,
+    layout: {
+      diagramId: projection.id,
+      viewportClass: 'wide',
+      seed: projection.contentHash,
+      nodes: routed.nodes
+        .filter((node) => projection.nodes.find((candidate) => candidate.id === node.id)?.kind === 'component')
+        .map((node) => ({
+          elementId: node.id,
+          x: node.x,
+          y: node.y,
+          width: node.width,
+          height: node.height,
+        })),
+      edges: routed.edges.map((edge) => ({
+        relationshipId: edge.id,
+        points: edge.points,
+      })),
+      diagnostics: [],
+      crossingCount: quality.crossings,
+      contentHash: projection.contentHash,
+    },
+  }
+}
+
+type RoutedSegment = {
+  start: { x: number; y: number }
+  end: { x: number; y: number }
+}
+
+function properOrthogonalIntersection(
+  first: RoutedSegment,
+  second: RoutedSegment,
+): { x: number; y: number } | undefined {
+  const firstHorizontal = first.start.y === first.end.y
+  const firstVertical = first.start.x === first.end.x
+  const secondHorizontal = second.start.y === second.end.y
+  const secondVertical = second.start.x === second.end.x
+  const horizontal = firstHorizontal && secondVertical
+    ? first
+    : secondHorizontal && firstVertical ? second : undefined
+  const vertical = firstVertical && secondHorizontal
+    ? first
+    : secondVertical && firstHorizontal ? second : undefined
+  if (!horizontal || !vertical) return undefined
+  const x = vertical.start.x
+  const y = horizontal.start.y
+  return (
+    x > Math.min(horizontal.start.x, horizontal.end.x)
+    && x < Math.max(horizontal.start.x, horizontal.end.x)
+    && y > Math.min(vertical.start.y, vertical.end.y)
+    && y < Math.max(vertical.start.y, vertical.end.y)
+  ) ? { x, y } : undefined
+}
+
+function routeSegments(edge: DiagramLayoutEdge): RoutedSegment[] {
+  return edge.points.slice(0, -1).map((start, index) => ({
+    start,
+    end: edge.points[index + 1]!,
+  }))
+}
+
+/** Draw only the later relationship with a small bridge at each crossover. */
+function bridgedPath(edge: DiagramLayoutEdge, allEdges: readonly DiagramLayoutEdge[]): string {
+  const firstPoint = edge.points[0]
+  if (!firstPoint) return ''
+  const otherSegments = allEdges
+    .filter((candidate) => candidate.relationshipId.localeCompare(edge.relationshipId) < 0)
+    .flatMap(routeSegments)
+  let path = `M ${firstPoint.x} ${firstPoint.y}`
+  for (const segment of routeSegments(edge)) {
+    const horizontal = segment.start.y === segment.end.y
+    const vertical = segment.start.x === segment.end.x
+    const length = Math.hypot(segment.end.x - segment.start.x, segment.end.y - segment.start.y)
+    const crossings = otherSegments
+      .map((other) => properOrthogonalIntersection(segment, other))
+      .filter((point): point is { x: number; y: number } => Boolean(point))
+      .map((point) => ({
+        ...point,
+        distance: Math.hypot(point.x - segment.start.x, point.y - segment.start.y),
+      }))
+      .filter((point) => point.distance > 8 && point.distance < length - 8)
+      .sort((left, right) => left.distance - right.distance)
+      .filter((point, index, points) =>
+        index === 0
+        || point.x !== points[index - 1]!.x
+        || point.y !== points[index - 1]!.y)
+    for (const crossing of crossings) {
+      if (horizontal) {
+        const direction = Math.sign(segment.end.x - segment.start.x)
+        path += ` L ${crossing.x - direction * 6} ${crossing.y}`
+        path += ` Q ${crossing.x} ${crossing.y - 7} ${crossing.x + direction * 6} ${crossing.y}`
+      } else if (vertical) {
+        const direction = Math.sign(segment.end.y - segment.start.y)
+        path += ` L ${crossing.x} ${crossing.y - direction * 6}`
+        path += ` Q ${crossing.x + 7} ${crossing.y} ${crossing.x} ${crossing.y + direction * 6}`
+      }
+    }
+    path += ` L ${segment.end.x} ${segment.end.y}`
+  }
+  return path
+}
+
 function humanizeIdentifier(value: string): string {
   const normalized = value
     .replace(/[_-]+/g, ' ')
@@ -131,7 +304,48 @@ export function SystemCanvas(props: SystemCanvasProps) {
   const draggingRef = useRef<{ x: number; y: number } | null>(null)
 
   const projection = useMemo(() => buildSystemProjection(props.architecture), [props.architecture])
-  const layout = useMemo(() => layoutDiagram(projection, 'wide', { nodeWidth: NODE_WIDTH, nodeHeight: NODE_HEIGHT }), [projection])
+  const fallbackLayout = useMemo(
+    () => layoutLegacyDiagram(projection, 'wide', { nodeWidth: NODE_WIDTH, nodeHeight: NODE_HEIGHT }),
+    [projection],
+  )
+  const [routedResult, setRoutedResult] = useState<SystemCanvasRouteResult>()
+  const [routingError, setRoutingError] = useState('')
+  useEffect(() => {
+    let active = true
+    setRoutedResult(undefined)
+    setRoutingError('')
+    void layoutSystemCanvas(props.architecture)
+      .then((result) => {
+        if (active) setRoutedResult(result)
+      })
+      .catch((error: unknown) => {
+        if (active) setRoutingError(error instanceof Error ? error.message : String(error))
+      })
+    return () => { active = false }
+  }, [props.architecture])
+  const layout = routedResult?.layout ?? fallbackLayout
+  const quality = routedResult?.quality
+  const qualityDefects = quality
+    ? quality.overlappingConnectorPairs
+      + quality.nodeOverlaps
+      + quality.edgeNodeClearanceViolations
+      + quality.labelNodeOverlaps
+      + quality.labelLabelOverlaps
+      + quality.connectorLabelOverlaps
+      + quality.portAlignmentViolations
+      + quality.canvasBoundsViolations
+    : 0
+  const qualityLabel = routingError
+    ? 'Fallback routing'
+    : !quality
+      ? 'Routing architecture'
+      : qualityDefects > 0
+        ? `${qualityDefects} layout notes`
+        : quality.crossings === 0
+          ? 'Layout verified'
+          : quality.crossings === 1
+            ? '1 bridged crossover'
+            : `${quality.crossings} bridged crossovers`
 
   const stateByModuleId = useMemo(() => new Map(props.progress.modules.map((entry) => [entry.moduleId, entry])), [props.progress])
   const nameByModuleId = useMemo(() => new Map(projection.elements.map((element) => [element.id, element.label])), [projection])
@@ -259,14 +473,21 @@ export function SystemCanvas(props: SystemCanvasProps) {
     : []
 
   return (
-    <section className="design-canvas" aria-label="System canvas">
+    <section
+      className="design-canvas"
+      aria-label="System canvas"
+      data-layout-engine={routedResult ? 'elk' : routingError ? 'fallback' : 'routing'}
+    >
       <header className="design-canvas-header">
         <div>
           <p className="overline">Approved system design</p>
           <h2>Architecture canvas</h2>
           <p>Module topology, deployable boundaries, and dependency direction</p>
         </div>
-        <span className="design-canvas-count">{projection.elements.length} modules · {projection.relationships.length} dependencies</span>
+        <div className="design-canvas-status" aria-label="Architecture layout status">
+          <span className="design-canvas-count">{projection.elements.length} modules · {projection.relationships.length} dependencies</span>
+          <span className="design-canvas-quality">{qualityLabel}</span>
+        </div>
       </header>
       <div className="design-canvas-toolbar">
         <div role="group" aria-label="Canvas display controls">
@@ -360,9 +581,9 @@ export function SystemCanvas(props: SystemCanvasProps) {
                   || relationship?.toId === selectedElementId
                 return (
                 <g key={edge.relationshipId} className={contextual ? 'design-canvas-edge contextual' : 'design-canvas-edge muted'}>
-                  <polyline points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')} markerEnd="url(#design-arrow)" />
-                  <polyline
-                    points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')}
+                  <path d={bridgedPath(edge, visibleEdges)} markerEnd="url(#design-arrow)" />
+                  <path
+                    d={bridgedPath(edge, visibleEdges)}
                     className={detailId === edge.relationshipId ? 'design-canvas-edge-hit selected' : 'design-canvas-edge-hit'}
                     tabIndex={0}
                     role="button"
@@ -416,7 +637,7 @@ export function SystemCanvas(props: SystemCanvasProps) {
                     </g>
                     <text x={10} y={18} className="design-canvas-node-title">
                       {titleLines.map((line, index) => (
-                        <tspan key={`${line}.${index}`} x={10} dy={index === 0 ? 0 : 14}>{line}</tspan>
+                        <tspan key={`${line}.${index}`} x={10} dy={index === 0 ? 0 : 16}>{line}</tspan>
                       ))}
                     </text>
                     <text x={10} y={node.height - 20} className="design-canvas-node-meta" aria-hidden="true">
@@ -437,17 +658,17 @@ export function SystemCanvas(props: SystemCanvasProps) {
               </marker>
             </defs>
           </svg>
-          <div className="design-canvas-minimap" aria-label="System minimap">
+          {scale > 1 && <div className="design-canvas-minimap" aria-label="System minimap">
             <svg viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`} width="148" height="84" aria-hidden="true">
               {layout.edges.map((edge) => <polyline key={edge.relationshipId} points={edge.points.map((point) => `${point.x},${point.y}`).join(' ')} />)}
               {layout.nodes.map((node) => <rect key={node.elementId} x={node.x} y={node.y} width={node.width} height={node.height} rx={4} />)}
             </svg>
-          </div>
+          </div>}
         </div>
       )}
       {!listView && (
         <footer className="design-canvas-footer">
-          <span>Dashed open-arrow connectors denote UML dependencies.</span>
+          <span>Dashed open arrows show UML dependencies. Line bridges mark crossovers.</span>
           <span>Select a module or dependency for its approved design record.</span>
         </footer>
       )}

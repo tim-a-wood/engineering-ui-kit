@@ -1497,9 +1497,9 @@ function layoutQuality(result: ElkNode): [number, number, number, number, number
   return [
     crossingMetrics.count,
     crossingMetrics.count ? -crossingMetrics.minimumClearance : 0,
-    normalizedWidth * normalizedHeight * (1 + aspectPenalty * 0.25),
     routeLength,
     bendCount,
+    normalizedWidth * normalizedHeight * (1 + aspectPenalty * 0.25),
   ]
 }
 
@@ -1517,10 +1517,24 @@ async function layoutWithElk(diagram: DiagramProjection): Promise<UmlDiagramLayo
     ? useCaseActorPartitions(diagram)
     : [{ left: new Set<string>(), right: new Set<string>() }]
   const layoutVariants = diagram.kind === 'component'
-    ? ['NETWORK_SIMPLEX', 'BRANDES_KOEPF', 'LINEAR_SEGMENTS', 'SIMPLE'].map((strategy, index) => ({
-      'elk.randomSeed': String(index + 1),
-      'elk.layered.nodePlacement.strategy': strategy,
-    }))
+    ? [
+      ...['RIGHT', 'DOWN'].flatMap((direction, directionIndex) =>
+        ['NETWORK_SIMPLEX', 'BRANDES_KOEPF', 'LINEAR_SEGMENTS', 'SIMPLE'].map((strategy, index) => ({
+          'elk.direction': direction,
+          'elk.randomSeed': String(directionIndex * 4 + index + 1),
+          'elk.layered.nodePlacement.strategy': strategy,
+        }))),
+      ...(diagram.nodes.length >= 15 && diagram.edges.length >= diagram.nodes.length
+        ? ['3', '4', '5'].flatMap((layerBound, boundIndex) =>
+          ['NETWORK_SIMPLEX', 'BRANDES_KOEPF'].map((strategy, strategyIndex) => ({
+            'elk.direction': 'RIGHT',
+            'elk.randomSeed': String(9 + boundIndex * 2 + strategyIndex),
+            'elk.layered.layering.strategy': 'COFFMAN_GRAHAM',
+            'elk.layered.layering.coffmanGraham.layerBound': layerBound,
+            'elk.layered.nodePlacement.strategy': strategy,
+          })))
+        : []),
+    ]
     : [{}]
   let selected:
     | {

@@ -10,7 +10,7 @@ import { useState } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { buildSampleAuditHub, computeModuleDesignProgress, type ModuleDesignProgress } from '@engineering-ui-kit/core/design-browser'
-import { SystemCanvas } from '../src/views/design/SystemCanvas'
+import { layoutSystemCanvas, SystemCanvas } from '../src/views/design/SystemCanvas'
 
 afterEach(cleanup)
 
@@ -40,6 +40,31 @@ function Harness(props: { selectedModuleId?: string; focusMode?: boolean }) {
 }
 
 describe('System canvas (§8.2)', () => {
+  it('routes the real DO-178 architecture through the verified UML engine', async () => {
+    const { architecture } = sample()
+    const result = await layoutSystemCanvas(architecture)
+
+    expect(result.layout.nodes).toHaveLength(17)
+    expect(result.layout.edges).toHaveLength(26)
+    // Every remaining orthogonal crossover is rendered with a line bridge.
+    // The router must still hold the dense real sample below double digits.
+    expect(result.quality.crossings).toBeLessThanOrEqual(7)
+    expect(result.quality.overlappingConnectorPairs).toBe(0)
+    expect(result.quality.nodeOverlaps).toBe(0)
+    expect(result.quality.edgeNodeClearanceViolations).toBe(0)
+    expect(result.quality.labelNodeOverlaps).toBe(0)
+    expect(result.quality.labelLabelOverlaps).toBe(0)
+    expect(result.quality.connectorLabelOverlaps).toBe(0)
+    expect(result.quality.canvasBoundsViolations).toBe(0)
+    const minX = Math.min(...result.layout.nodes.map((node) => node.x))
+    const minY = Math.min(...result.layout.nodes.map((node) => node.y))
+    const maxX = Math.max(...result.layout.nodes.map((node) => node.x + node.width))
+    const maxY = Math.max(...result.layout.nodes.map((node) => node.y + node.height))
+    const contentAspectRatio = (maxX - minX) / (maxY - minY)
+    expect(contentAspectRatio).toBeGreaterThan(0.85)
+    expect(contentAspectRatio).toBeLessThan(1.7)
+  })
+
   it('places every module once when nothing is focused down', () => {
     const { architecture } = sample()
     render(<Harness />)

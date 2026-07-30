@@ -94,6 +94,7 @@ async function main() {
 
     const systemCanvas = page.locator('.design-canvas')
     await systemCanvas.waitFor({ state: 'visible' })
+    await page.locator('.design-canvas[data-layout-engine="elk"]').waitFor({ state: 'visible' })
     const allDependencies = page.getByRole('button', { name: 'Show all links' })
     if (await allDependencies.getAttribute('aria-pressed') !== 'true') await allDependencies.click()
     evidence.screenshots.push(await capture(page, 'uml-system-canvas.png', systemCanvas))
