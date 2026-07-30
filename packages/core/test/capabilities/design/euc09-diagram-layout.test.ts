@@ -7,7 +7,12 @@
  * crossing threshold, and labels that do not cover node boxes.
  */
 import { describe, expect, it } from 'vitest'
-import { accessibleDescription, checkLayout, layoutDiagram } from '../../../src/capabilities/design/diagramLayout.js'
+import {
+  accessibleDescription,
+  analyzeLayoutQuality,
+  checkLayout,
+  layoutDiagram,
+} from '../../../src/capabilities/design/diagramLayout.js'
 import { buildSampleAuditHub } from '../../../src/capabilities/design/sampleAuditHub.js'
 import {
   projectActivityDiagram,
@@ -483,6 +488,32 @@ describe('EUC-09 layoutDiagram — layout quality', () => {
       expect(layoutDiagram(projection, 'wide').diagnostics, `${projection.diagramId} wide`).toEqual([])
       expect(layoutDiagram(projection, 'narrow').diagnostics, `${projection.diagramId} narrow`).toEqual([])
     }
+  })
+
+  it('uses straight interface connectors and only necessary bends in the Finding Review component diagram', () => {
+    const sample = buildSampleAuditHub()
+    const findingReview = sample.approvedModuleDesigns['mod.finding-review']!
+    const projection = sample.diagrams.find((candidate) =>
+      candidate.kind === 'component' && candidate.sourceRecordId === findingReview.id)!
+    const layout = layoutDiagram(projection, 'wide', { nodeWidth: 180, nodeHeight: 68 })
+    const edgeById = new Map(layout.edges.map((edge) => [edge.relationshipId, edge]))
+    const interfaceRelationships = projection.relationships.filter((relationship) =>
+      relationship.kind === 'provides' || relationship.kind === 'requires')
+
+    for (const relationship of interfaceRelationships) {
+      const route = edgeById.get(relationship.id)!.points
+      expect(route, relationship.id).toHaveLength(2)
+      expect(route[0]!.y, relationship.id).toBe(route[1]!.y)
+    }
+
+    const quality = analyzeLayoutQuality(layout, projection)
+    expect(quality.crossingCount).toBe(0)
+    expect(quality.overlappingEdgePairs).toBe(0)
+    expect(quality.edgeNodeClearanceViolations).toBe(0)
+    expect(quality.labelNodeOverlaps).toBe(0)
+    expect(quality.labelLabelOverlaps).toBe(0)
+    expect(quality.bendCount).toBeLessThanOrEqual(4)
+    expect(quality.totalEdgeLength).toBeLessThanOrEqual(1200)
   })
 
   it('keeps every actor association on a distinct attachment and routing corridor', () => {

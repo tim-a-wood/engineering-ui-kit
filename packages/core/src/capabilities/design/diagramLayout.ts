@@ -74,6 +74,9 @@ function isContainerKind(kind: UmlElement['kind'] | undefined): boolean {
 }
 
 function relationshipLabelText(rel: UmlRelationship): string | undefined {
+  // Component dependency prose remains available in the relationship
+  // inspector. The visible UML connector uses the standard short stereotype.
+  if (rel.kind === 'dependency') return '«use»'
   if (rel.label) return rel.label
   if (rel.guard) {
     const guard = rel.guard.trim()
@@ -616,6 +619,11 @@ function buildFlowLayout(
  * multi-thousand-pixel row and a collector rail far outside the visible
  * diagram. This layout keeps the module component central, consumers above,
  * dependencies below, and UML interface symbols at the left/right edges.
+ *
+ * Prefer the simplest valid connector:
+ * 1. one straight segment when both attachments align;
+ * 2. one orthogonal gap crossing when they do not;
+ * 3. an outside collector only when a simpler route would hit another node.
  */
 function buildComponentLayout(projection: DiagramProjection, width: number, height: number): { nodes: DiagramLayoutNode[]; edges: DiagramLayoutEdge[] } {
   const elementById = new Map(projection.elements.map((element) => [element.id, element]))
@@ -646,7 +654,7 @@ function buildComponentLayout(projection: DiagramProjection, width: number, heig
   const lowerComponents = [...dependencies, ...remaining]
 
   const sideGap = 90
-  const centerX = width * 2 + sideGap * 2
+  const centerX = width + sideGap
   const leftX = 0
   const widestComponentRowCount = Math.max(
     Math.min(4, consumers.length),
@@ -656,13 +664,7 @@ function buildComponentLayout(projection: DiagramProjection, width: number, heig
   const widestComponentRowWidth = widestComponentRowCount * width
     + Math.max(0, widestComponentRowCount - 1) * NODE_GAP_X
   const componentRowRightEdge = centerX + width / 2 + widestComponentRowWidth / 2
-  // Interface columns sit beyond every peer component. Otherwise a route to
-  // the rightmost dependency can pass directly through required-interface
-  // glyphs, which is both visually ambiguous and invalid under §15.2.
-  const rightX = Math.max(
-    centerX + width + sideGap * 2,
-    componentRowRightEdge + sideGap,
-  )
+  const rightX = centerX + width + sideGap
   const consumerRows = Math.max(1, Math.ceil(consumers.length / 4))
   const consumerBottom = consumers.length > 0
     ? consumerRows * height + Math.max(0, consumerRows - 1) * NODE_GAP_X
@@ -672,12 +674,18 @@ function buildComponentLayout(projection: DiagramProjection, width: number, heig
   // later consumer routes could climb back into a wrapped peer row, putting
   // both the connector and its label on top of an unrelated component.
   const mainY = Math.max(180, consumerBottom + 64 + Math.max(0, consumers.length - 1) * 18)
-  const sideStep = height + 22
+  const interfaceHeight = Math.max(40, Math.min(height, 44))
+  const interfaceGap = 18
+  const sideStep = interfaceHeight + interfaceGap
   const sideCount = Math.max(provided.length, required.length)
+  const interfaceBandHeight = sideCount > 0
+    ? sideCount * interfaceHeight + Math.max(0, sideCount - 1) * interfaceGap
+    : height
+  const mainHeight = Math.max(height, interfaceBandHeight)
   const simpleBoundary = sideCount === 0 && consumers.length + lowerComponents.length <= 2
-  const dependencyY = Math.max(mainY + height + (simpleBoundary ? 96 : 250), 70 + sideCount * sideStep)
+  const dependencyY = mainY + mainHeight + (simpleBoundary ? 96 : 150)
 
-  const nodes: DiagramLayoutNode[] = [{ elementId: main.id, x: centerX, y: mainY, width, height }]
+  const nodes: DiagramLayoutNode[] = [{ elementId: main.id, x: centerX, y: mainY, width, height: mainHeight }]
 
   function placeCenteredRow(elements: UmlElement[], y: number) {
     const maxPerRow = 4
@@ -692,18 +700,156 @@ function buildComponentLayout(projection: DiagramProjection, width: number, heig
 
   placeCenteredRow(consumers, 0)
   placeCenteredRow(lowerComponents, dependencyY)
-  provided.forEach((element, index) => nodes.push({ elementId: element.id, x: leftX, y: 80 + index * sideStep, width, height }))
-  required.forEach((element, index) => nodes.push({ elementId: element.id, x: rightX, y: 45 + index * sideStep, width, height }))
+  const interfaceY = (index: number, count: number) => {
+    const bandHeight = count * interfaceHeight + Math.max(0, count - 1) * interfaceGap
+    return mainY + (mainHeight - bandHeight) / 2 + index * sideStep
+  }
+  provided.forEach((element, index) => nodes.push({
+    elementId: element.id,
+    x: leftX,
+    y: interfaceY(index, provided.length),
+    width,
+    height: interfaceHeight,
+  }))
+  required.forEach((element, index) => nodes.push({
+    elementId: element.id,
+    x: rightX,
+    y: interfaceY(index, required.length),
+    width,
+    height: interfaceHeight,
+  }))
 
   const nodeById = new Map(nodes.map((node) => [node.elementId, node]))
-  // Component-to-component relationships share a rail in the clear corridor
-  // between the peer rows and the required-interface column. Branching from
-  // that rail immediately above each target row prevents a dependency bound
-  // for a wrapped row from running through components in earlier rows.
-  const componentCollectorX = componentRowRightEdge + 24
-  const providedIndex = new Map(provided.map((element, index) => [element.id, index]))
-  const requiredIndex = new Map(required.map((element, index) => [element.id, index]))
-  const interfaceAnchorY = (index: number, count: number) => mainY + ((index + 1) * height) / (count + 1)
+  const componentRelationships = projection.relationships.filter((relationship) =>
+    elementById.get(relationship.fromId)?.kind === 'component'
+    && elementById.get(relationship.toId)?.kind === 'component')
+  const peerRowsDoNotWrap = consumers.length <= 4 && lowerComponents.length <= 4
+
+  const compactRoute = (route: Point[]): Point[] => route.reduce<Point[]>((points, point) => {
+    const previous = points.at(-1)
+    if (previous && previous.x === point.x && previous.y === point.y) return points
+    const beforePrevious = points.at(-2)
+    if (
+      beforePrevious
+      && previous
+      && (
+        (beforePrevious.x === previous.x && previous.x === point.x)
+        || (beforePrevious.y === previous.y && previous.y === point.y)
+      )
+    ) {
+      points[points.length - 1] = point
+    } else {
+      points.push(point)
+    }
+    return points
+  }, [])
+
+  const clearsUnrelatedNodes = (
+    route: readonly Point[],
+    fromId: string,
+    toId: string,
+  ) => nodes.every((node) =>
+    node.elementId === fromId
+    || node.elementId === toId
+    || toSegments(route).every(([start, end]) =>
+      segmentToRectDistance(start, end, node) >= DEFAULT_CLEARANCE))
+
+  const simpleComponentRoute = (
+    from: DiagramLayoutNode,
+    to: DiagramLayoutNode,
+    relationship: UmlRelationship,
+  ): Point[] | undefined => {
+    const movingDown = to.y >= from.y + from.height
+    const movingUp = from.y >= to.y + to.height
+    if (!movingDown && !movingUp) return undefined
+
+    const fromCenter = from.x + from.width / 2
+    const toCenter = to.x + to.width / 2
+    const sameDirection = (candidate: UmlRelationship) => {
+      const candidateFrom = nodeById.get(candidate.fromId)
+      const candidateTo = nodeById.get(candidate.toId)
+      if (!candidateFrom || !candidateTo) return false
+      return movingDown
+        ? candidateTo.y >= candidateFrom.y + candidateFrom.height
+        : candidateFrom.y >= candidateTo.y + candidateTo.height
+    }
+    const sourcePeers = componentRelationships
+      .filter((candidate) => candidate.fromId === relationship.fromId && sameDirection(candidate))
+      .sort((left, right) => {
+        const leftTarget = nodeById.get(left.toId)!
+        const rightTarget = nodeById.get(right.toId)!
+        return leftTarget.x + leftTarget.width / 2 - (rightTarget.x + rightTarget.width / 2)
+      })
+    const targetPeers = componentRelationships
+      .filter((candidate) => candidate.toId === relationship.toId && sameDirection(candidate))
+      .sort((left, right) => {
+        const leftSource = nodeById.get(left.fromId)!
+        const rightSource = nodeById.get(right.fromId)!
+        return leftSource.x + leftSource.width / 2 - (rightSource.x + rightSource.width / 2)
+      })
+    const sourceIndex = Math.max(0, sourcePeers.findIndex((candidate) => candidate.id === relationship.id))
+    const targetIndex = Math.max(0, targetPeers.findIndex((candidate) => candidate.id === relationship.id))
+    const start = {
+      x: sourcePeers.length > 1
+        ? from.x + (from.width * (sourceIndex + 1)) / (sourcePeers.length + 1)
+        : fromCenter,
+      y: movingDown ? from.y + from.height : from.y,
+    }
+    const end = {
+      x: targetPeers.length > 1
+        ? to.x + (to.width * (targetIndex + 1)) / (targetPeers.length + 1)
+        : toCenter,
+      y: movingDown ? to.y : to.y + to.height,
+    }
+    const gapPeers = componentRelationships
+      .filter((candidate) => {
+        const candidateFrom = nodeById.get(candidate.fromId)
+        const candidateTo = nodeById.get(candidate.toId)
+        if (!candidateFrom || !candidateTo || !sameDirection(candidate)) return false
+        const candidateStartY = movingDown
+          ? candidateFrom.y + candidateFrom.height
+          : candidateFrom.y
+        const candidateEndY = movingDown
+          ? candidateTo.y
+          : candidateTo.y + candidateTo.height
+        return candidateStartY === start.y && candidateEndY === end.y
+      })
+      .sort((left, right) => {
+        const leftTarget = nodeById.get(left.toId)!
+        const rightTarget = nodeById.get(right.toId)!
+        return leftTarget.x + leftTarget.width / 2 - (rightTarget.x + rightTarget.width / 2)
+      })
+    // Nested routes must not cross one another. Put the farthest targets on
+    // the corridor nearest the source and the inner targets farther into the
+    // gap. Symmetric left/right targets can safely share one corridor.
+    const distances = [...new Set(gapPeers.map((candidate) => {
+      const candidateFrom = nodeById.get(candidate.fromId)!
+      const candidateTo = nodeById.get(candidate.toId)!
+      return Math.abs(
+        candidateTo.x + candidateTo.width / 2
+        - (candidateFrom.x + candidateFrom.width / 2),
+      )
+    }))].sort((left, right) => right - left)
+    const distanceRank = Math.max(0, distances.indexOf(Math.abs(toCenter - fromCenter)))
+    const sharedSource = gapPeers.every((candidate) =>
+      candidate.fromId === relationship.fromId)
+    const farRouteDirection = sharedSource
+      ? (movingDown ? -1 : 1)
+      : (movingDown ? 1 : -1)
+    const gapOffset = (
+      (distances.length - 1) / 2 - distanceRank
+    ) * 12 * farRouteDirection
+    const corridorY = (start.y + end.y) / 2 + gapOffset
+    const route = compactRoute([
+      start,
+      { x: start.x, y: corridorY },
+      { x: end.x, y: corridorY },
+      end,
+    ])
+    return clearsUnrelatedNodes(route, relationship.fromId, relationship.toId)
+      ? route
+      : undefined
+  }
 
   const edges = projection.relationships.map((rel) => {
     const from = nodeById.get(rel.fromId)
@@ -712,29 +858,32 @@ function buildComponentLayout(projection: DiagramProjection, width: number, heig
     let points: Point[]
     let labelPosition: Point | undefined
 
-    if (rel.toId === main.id && elementById.get(rel.fromId)?.kind === 'component') {
-      points = routeGeneric(from, to, 'vertical', componentCollectorX, GAP_BAND_OFFSET)
-      labelPosition = labelAtMidpoint(points, 0)
-    } else if (rel.fromId === main.id && elementById.get(rel.toId)?.kind === 'component') {
-      points = routeGeneric(from, to, 'vertical', componentCollectorX, GAP_BAND_OFFSET)
-      labelPosition = labelAtMidpoint(points, 4)
+    if (
+      elementById.get(rel.fromId)?.kind === 'component'
+      && elementById.get(rel.toId)?.kind === 'component'
+    ) {
+      // A one-row peer set has a clear gap between the main component and
+      // every peer. Wrapped rows need the outside collector because a direct
+      // route to a later row would cut through the rows before it.
+      const simpleRoute = peerRowsDoNotWrap
+        ? simpleComponentRoute(from, to, rel)
+        : undefined
+      if (simpleRoute) {
+        points = simpleRoute
+        labelPosition = labelAtMidpoint(points, points.length === 2 ? 0 : 1)
+      } else {
+        const collectorX = Math.max(componentRowRightEdge + 24, rightX + width + 24)
+        points = routeGeneric(from, to, 'vertical', collectorX, GAP_BAND_OFFSET)
+        labelPosition = labelAtMidpoint(points, 4)
+      }
     } else if (rel.fromId === main.id && elementById.get(rel.toId)?.kind === 'providedInterface') {
-      const index = providedIndex.get(rel.toId) ?? 0
-      const sy = interfaceAnchorY(index, provided.length)
+      const sy = to.y + to.height / 2
       const ty = to.y + to.height / 2
-      // Provided interfaces share the matching left-side rail. Branches meet
-      // the rail orthogonally instead of weaving through one another.
-      const channelX = leftX + width + 36
-      points = [{ x: from.x, y: sy }, { x: channelX, y: sy }, { x: channelX, y: ty }, { x: to.x + to.width, y: ty }]
+      points = [{ x: from.x, y: sy }, { x: to.x + to.width, y: ty }]
     } else if (rel.fromId === main.id && elementById.get(rel.toId)?.kind === 'requiredInterface') {
-      const index = requiredIndex.get(rel.toId) ?? 0
-      const sy = interfaceAnchorY(index, required.length)
+      const sy = to.y + to.height / 2
       const ty = to.y + to.height / 2
-      // Required interfaces share a stable rail in the right-side corridor.
-      // Keeping that rail beyond the component collector prevents the
-      // dependency bus from cutting across every required-interface branch.
-      const channelX = rightX - 36
-      points = [{ x: from.x + from.width, y: sy }, { x: channelX, y: sy }, { x: channelX, y: ty }, { x: to.x, y: ty }]
+      points = [{ x: from.x + from.width, y: sy }, { x: to.x, y: ty }]
     } else {
       const collector = rightX + width + COLLECTOR_MARGIN
       points = routeGeneric(from, to, 'vertical', collector, GAP_BAND_OFFSET)

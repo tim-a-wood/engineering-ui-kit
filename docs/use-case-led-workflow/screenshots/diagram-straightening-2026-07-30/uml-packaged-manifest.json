@@ -1,0 +1,19 @@
+{
+  "journey": "packaged-uml-visual-acceptance",
+  "packaged": true,
+  "passed": true,
+  "screenshots": [
+    "docs/use-case-led-workflow/screenshots/diagram-straightening-2026-07-30/uml-application-activity.png",
+    "docs/use-case-led-workflow/screenshots/diagram-straightening-2026-07-30/uml-application-use-case.png",
+    "docs/use-case-led-workflow/screenshots/diagram-straightening-2026-07-30/uml-solution-allocation.png",
+    "docs/use-case-led-workflow/screenshots/diagram-straightening-2026-07-30/uml-system-canvas.png",
+    "docs/use-case-led-workflow/screenshots/diagram-straightening-2026-07-30/uml-component-fullscreen.png",
+    "docs/use-case-led-workflow/screenshots/diagram-straightening-2026-07-30/uml-activity-fullscreen.png",
+    "docs/use-case-led-workflow/screenshots/diagram-straightening-2026-07-30/uml-state-machine-fullscreen.png",
+    "docs/use-case-led-workflow/screenshots/diagram-straightening-2026-07-30/uml-sequence-fullscreen.png",
+    "docs/use-case-led-workflow/screenshots/diagram-straightening-2026-07-30/uml-use-case-fullscreen.png"
+  ],
+  "rendererErrors": [],
+  "startedAt": "2026-07-30T21:42:36.438Z",
+  "completedAt": "2026-07-30T21:42:43.326Z"
+}
