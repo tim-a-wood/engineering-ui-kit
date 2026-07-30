@@ -473,9 +473,11 @@ function projectActivity(
     kind: 'control-flow',
     fromId: projectionNodeId(activity.id, edge.fromNodeId),
     toId: projectionNodeId(activity.id, edge.toNodeId),
+    // A success outcome is already expressed by the normal control-flow
+    // arrow. Reserve visible labels for guards and exceptional outcomes.
     label: edge.loop?.exitCondition
       ? 'Repeat'
-      : edge.outcome
+      : edge.outcome && edge.outcome !== 'success'
         ? `${edge.outcome[0]!.toUpperCase()}${edge.outcome.slice(1)}`
         : undefined,
     guard: edge.guard,

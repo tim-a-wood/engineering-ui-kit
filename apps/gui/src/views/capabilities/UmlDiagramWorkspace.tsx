@@ -163,12 +163,8 @@ export function UmlDiagramWorkspace({ diagrams, onOpenImpact, onSelectElement, c
     : 0
   const layoutQualityLabel = layoutQuality
     ? layoutDefects > 0
-      ? `${layoutDefects} layout notes`
-      : layoutQuality.crossings === 0
-      ? 'Layout verified'
-      : layoutQuality.crossings === 1
-        ? '1 bridged crossover'
-        : `${layoutQuality.crossings} bridged crossovers`
+      ? 'Layout needs review'
+      : 'Layout verified'
     : 'Routing layout'
 
   useEffect(() => {
@@ -190,7 +186,7 @@ export function UmlDiagramWorkspace({ diagrams, onOpenImpact, onSelectElement, c
       ? 'Ranked swimlane layout'
       : layout?.engine === 'ranked-activity'
         ? 'Ranked activity layout'
-      : layout?.engine === 'balanced-state' ? 'Balanced lifecycle layout' : 'ELK orthogonal layout'
+      : layout?.engine === 'balanced-state' ? 'Balanced lifecycle layout' : 'Orthogonal UML layout'
 
   function fitDiagram() {
     if (!layout) return

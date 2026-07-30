@@ -48,7 +48,7 @@ describe('System canvas (§8.2)', () => {
     expect(result.layout.edges).toHaveLength(26)
     // Every remaining orthogonal crossover is rendered with a line bridge.
     // The router must still hold the dense real sample below double digits.
-    expect(result.quality.crossings).toBeLessThanOrEqual(7)
+    expect(result.quality.crossings).toBeLessThanOrEqual(6)
     expect(result.quality.overlappingConnectorPairs).toBe(0)
     expect(result.quality.nodeOverlaps).toBe(0)
     expect(result.quality.edgeNodeClearanceViolations).toBe(0)
@@ -63,6 +63,13 @@ describe('System canvas (§8.2)', () => {
     const contentAspectRatio = (maxX - minX) / (maxY - minY)
     expect(contentAspectRatio).toBeGreaterThan(0.85)
     expect(contentAspectRatio).toBeLessThan(1.7)
+  })
+
+  it('keeps crossover counts in quality evidence instead of the user interface', async () => {
+    render(<Harness />)
+
+    expect(await screen.findByText('Layout verified')).toBeTruthy()
+    expect(screen.queryByText(/\d+\s+bridged crossovers?/i)).toBeNull()
   })
 
   it('places every module once when nothing is focused down', () => {

@@ -340,12 +340,8 @@ export function SystemCanvas(props: SystemCanvasProps) {
     : !quality
       ? 'Routing architecture'
       : qualityDefects > 0
-        ? `${qualityDefects} layout notes`
-        : quality.crossings === 0
-          ? 'Layout verified'
-          : quality.crossings === 1
-            ? '1 bridged crossover'
-            : `${quality.crossings} bridged crossovers`
+        ? 'Layout needs review'
+        : 'Layout verified'
 
   const stateByModuleId = useMemo(() => new Map(props.progress.modules.map((entry) => [entry.moduleId, entry])), [props.progress])
   const nameByModuleId = useMemo(() => new Map(projection.elements.map((element) => [element.id, element.label])), [projection])

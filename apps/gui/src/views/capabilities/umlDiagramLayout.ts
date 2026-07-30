@@ -1516,7 +1516,7 @@ async function layoutWithElk(diagram: DiagramProjection): Promise<UmlDiagramLayo
   const partitions = diagram.kind === 'use-case'
     ? useCaseActorPartitions(diagram)
     : [{ left: new Set<string>(), right: new Set<string>() }]
-  const layoutVariants = diagram.kind === 'component'
+  const layoutVariants: Record<string, string>[] = diagram.kind === 'component'
     ? [
       ...['RIGHT', 'DOWN'].flatMap((direction, directionIndex) =>
         ['NETWORK_SIMPLEX', 'BRANDES_KOEPF', 'LINEAR_SEGMENTS', 'SIMPLE'].map((strategy, index) => ({
@@ -1525,14 +1525,24 @@ async function layoutWithElk(diagram: DiagramProjection): Promise<UmlDiagramLayo
           'elk.layered.nodePlacement.strategy': strategy,
         }))),
       ...(diagram.nodes.length >= 15 && diagram.edges.length >= diagram.nodes.length
-        ? ['3', '4', '5'].flatMap((layerBound, boundIndex) =>
-          ['NETWORK_SIMPLEX', 'BRANDES_KOEPF'].map((strategy, strategyIndex) => ({
+        ? [
+          ...['3', '4', '5'].flatMap((layerBound, boundIndex) =>
+            ['NETWORK_SIMPLEX', 'BRANDES_KOEPF'].map((strategy, strategyIndex) => ({
+              'elk.direction': 'RIGHT',
+              'elk.randomSeed': String(9 + boundIndex * 2 + strategyIndex),
+              'elk.layered.layering.strategy': 'COFFMAN_GRAHAM',
+              'elk.layered.layering.coffmanGraham.layerBound': layerBound,
+              'elk.layered.nodePlacement.strategy': strategy,
+            }))),
+          {
             'elk.direction': 'RIGHT',
-            'elk.randomSeed': String(9 + boundIndex * 2 + strategyIndex),
-            'elk.layered.layering.strategy': 'COFFMAN_GRAHAM',
-            'elk.layered.layering.coffmanGraham.layerBound': layerBound,
-            'elk.layered.nodePlacement.strategy': strategy,
-          })))
+            'elk.randomSeed': '22',
+            'elk.layered.layering.strategy': 'MIN_WIDTH',
+            'elk.layered.layering.minWidth.upperBoundOnWidth': '4',
+            'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
+            'elk.layered.nodePlacement.strategy': 'LINEAR_SEGMENTS',
+          },
+        ]
         : []),
     ]
     : [{}]

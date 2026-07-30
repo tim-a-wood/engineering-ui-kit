@@ -104,9 +104,11 @@ function controlEdge(
   edge: ActivityEdge,
   sourceRecordId = workflow.id,
 ): DiagramProjectionEdge {
+  // A success outcome is the default control flow. Keep it in the semantic
+  // record and inspector, but do not repeat it on every connector.
   const label = edge.loop?.exitCondition
     ? 'Repeat'
-    : edge.outcome
+    : edge.outcome && edge.outcome !== 'success'
       ? humanLabel(edge.outcome)
       : undefined
   return {

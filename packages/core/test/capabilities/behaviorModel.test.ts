@@ -466,11 +466,20 @@ describe('three-level behavior model', () => {
     expect(applicationDiagram.nodes).toEqual(expect.arrayContaining([
       expect.objectContaining({ kind: 'swimlane', label: 'Reviewer' }),
     ]))
+    const applicationSuccess = applicationDiagram.edges.find((edge) => edge.outcome === 'success')
+    expect(applicationSuccess).toEqual(expect.objectContaining({
+      label: undefined,
+      guard: 'The evidence is valid.',
+    }))
     expect(allocationDiagrams.map((item) => item.level)).toEqual(['allocation', 'allocation'])
     expect(moduleDiagrams.every((item) => item.level === 'module')).toBe(true)
-    expect(moduleDiagrams.find((item) => item.kind === 'activity')?.nodes.map((node) => node.label))
+    const moduleActivity = moduleDiagrams.find((item) => item.kind === 'activity')
+    expect(moduleActivity?.nodes.map((node) => node.label))
       .not.toContain('Open evidence')
-    expect(moduleDiagrams.find((item) => item.kind === 'activity')?.sourceRecordIds)
+    expect(moduleActivity?.edges.find((edge) => edge.outcome === 'success')).toEqual(
+      expect.objectContaining({ label: undefined, guard: 'The evidence is valid.' }),
+    )
+    expect(moduleActivity?.sourceRecordIds)
       .toContain(moduleDesign.id)
   })
 
