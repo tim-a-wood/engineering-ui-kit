@@ -24,7 +24,10 @@ import {
   buildDo178UseCases,
   buildDo178WorkflowAllocations,
 } from '../src/do178BehaviorFixture'
-import { layoutUmlDiagram } from '../src/views/capabilities/umlDiagramLayout'
+import {
+  analyzeUmlLayoutQuality,
+  layoutUmlDiagram,
+} from '../src/views/capabilities/umlDiagramLayout'
 
 function fixture() {
   const sourceApplication = structuredClone(sourceApplicationRecord) as unknown as ApplicationSpecification
@@ -138,5 +141,22 @@ describe('detailed DO-178C behavior fixture', () => {
     expect(complex.textAlternative).not.toBe('')
     expect(complex.nodes.every((node) => node.sourceRecordId && node.traceIds.length)).toBe(true)
     expect(complex.edges.every((edge) => edge.sourceRecordId && edge.traceIds.length)).toBe(true)
+
+    for (const diagram of diagrams) {
+      const candidate = await layoutUmlDiagram(diagram)
+      const quality = analyzeUmlLayoutQuality(candidate, diagram)
+      expect(candidate.edges, diagram.title).toHaveLength(diagram.edges.length)
+      expect(quality.nodeOverlaps, diagram.title).toBe(0)
+      expect(quality.overlappingConnectorPairs, diagram.title).toBe(0)
+      expect(quality.edgeNodeClearanceViolations, diagram.title).toBe(0)
+      expect(quality.labelNodeOverlaps, diagram.title).toBe(0)
+      expect(quality.labelLabelOverlaps, diagram.title).toBe(0)
+      expect(quality.connectorLabelOverlaps, diagram.title).toBe(0)
+      expect(quality.portAlignmentViolations, diagram.title).toBe(0)
+      expect(quality.canvasBoundsViolations, diagram.title).toBe(0)
+      expect(quality.crossings, diagram.title).toBeLessThanOrEqual(
+        diagram.level === 'allocation' ? 2 : 1,
+      )
+    }
   })
 })

@@ -289,7 +289,7 @@ describe('JointJS + ELK UML layout adapter', () => {
     expect(layout.edges.every((connector) => connector.points.length >= 2)).toBe(true)
   })
 
-  it('balances a cyclic state machine without delegating cycles to ELK', async () => {
+  it('balances a cyclic state machine with distinct forward and return routes', async () => {
     const projection = diagram('state-machine', [
       node('state:initial', 'initial', 'Initial'),
       node('state:open', 'state', 'Open'),

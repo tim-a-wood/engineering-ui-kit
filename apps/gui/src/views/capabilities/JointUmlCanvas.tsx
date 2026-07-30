@@ -827,9 +827,11 @@ function createLink(
     source: sourceEndpoint,
     target: targetEndpoint,
     vertices,
-    connector: edge.kind === 'association'
-      ? { name: 'jumpover', args: { jump: 'arc', size: 7, radius: 5 } }
-      : { name: 'straight', args: { cornerType: 'cubic', cornerRadius: 7 } },
+    // ELK removes crossings where the graph is planar. A dense, non-planar
+    // graph can still have one residual crossover. Draw that crossover as an
+    // explicit UML bridge for every relationship kind, not as two ambiguous
+    // lines that appear connected.
+    connector: { name: 'jumpover', args: { jump: 'arc', size: 7, radius: 5 } },
     attrs: {
       root: {
         class: [

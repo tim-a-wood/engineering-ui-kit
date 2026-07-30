@@ -11,7 +11,9 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
-const EVIDENCE_DIR = path.join(REPO_ROOT, 'docs/use-case-led-workflow/e2e-evidence')
+const EVIDENCE_DIR = process.env.EUIK_UML_EVIDENCE_DIR
+  ? path.resolve(REPO_ROOT, process.env.EUIK_UML_EVIDENCE_DIR)
+  : path.join(REPO_ROOT, 'docs/use-case-led-workflow/e2e-evidence')
 const TIMEOUT = Number(process.env.EUIK_PACKAGED_TIMEOUT_MS ?? 60_000)
 
 function packagedExecutable() {
@@ -58,6 +60,14 @@ async function main() {
   try {
     const page = await app.firstWindow({ timeout: TIMEOUT })
     page.setDefaultTimeout(TIMEOUT)
+    // Keep the full workspace in the rendered viewport. A normal 833 px test
+    // window clipped the last actor or final node from tall UML workspaces,
+    // which made valid layouts look incomplete in the evidence.
+    await app.evaluate(({ BrowserWindow }) => {
+      BrowserWindow.getAllWindows()[0]?.setContentSize(1470, 1120)
+    })
+    await page.setViewportSize({ width: 1470, height: 1120 })
+    await page.waitForTimeout(200)
     page.on('pageerror', (error) => evidence.rendererErrors.push({ source: 'pageerror', message: error.message }))
     page.on('console', (message) => {
       if (message.type() === 'error') evidence.rendererErrors.push({ source: 'console', message: message.text() })
@@ -68,7 +78,20 @@ async function main() {
 
     await page.getByRole('button', { name: 'Capabilities', exact: true }).click()
     await page.getByText('Synthetic workflow showcase').waitFor({ state: 'visible' })
+
+    await page.locator('#design-workspace-tab-plan').click()
+    await page.getByRole('tab', { name: 'Application workflows', exact: true }).click()
+    const applicationWorkspace = page.locator('.design-application-behavior .uml-workspace')
+    await applicationWorkspace.waitFor({ state: 'visible' })
+    evidence.screenshots.push(await capture(page, 'uml-application-activity.png', applicationWorkspace))
+    await applicationWorkspace.getByRole('tab', { name: 'Use case', exact: true }).click()
+    evidence.screenshots.push(await capture(page, 'uml-application-use-case.png', applicationWorkspace))
+
     await page.locator('#design-workspace-tab-design').click()
+    const allocationWorkspace = page.locator('.design-workflow-allocation .uml-workspace')
+    await allocationWorkspace.waitFor({ state: 'visible' })
+    evidence.screenshots.push(await capture(page, 'uml-solution-allocation.png', allocationWorkspace))
+
     const systemCanvas = page.locator('.design-canvas')
     await systemCanvas.waitFor({ state: 'visible' })
     const allDependencies = page.getByRole('button', { name: 'Show all links' })

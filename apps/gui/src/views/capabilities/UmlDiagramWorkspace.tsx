@@ -5,6 +5,7 @@ import type {
 } from '@engineering-ui-kit/core'
 import { JointUmlCanvas } from './JointUmlCanvas'
 import {
+  analyzeUmlLayoutQuality,
   layoutUmlDiagram,
   type UmlDiagramLayout,
 } from './umlDiagramLayout'
@@ -146,6 +147,29 @@ export function UmlDiagramWorkspace({ diagrams, onOpenImpact, onSelectElement, c
   const selectedEdge = diagram?.edges.find((edge) => edge.id === selectionId)
   const selected = selectedNode ?? selectedEdge
   const hasInspector = Boolean(selected || diagram?.diagnostics.length)
+  const layoutQuality = useMemo(
+    () => layout && diagram ? analyzeUmlLayoutQuality(layout, diagram) : undefined,
+    [diagram, layout],
+  )
+  const layoutDefects = layoutQuality
+    ? layoutQuality.overlappingConnectorPairs
+      + layoutQuality.nodeOverlaps
+      + layoutQuality.edgeNodeClearanceViolations
+      + layoutQuality.labelNodeOverlaps
+      + layoutQuality.labelLabelOverlaps
+      + layoutQuality.connectorLabelOverlaps
+      + layoutQuality.portAlignmentViolations
+      + layoutQuality.canvasBoundsViolations
+    : 0
+  const layoutQualityLabel = layoutQuality
+    ? layoutDefects > 0
+      ? `${layoutDefects} layout notes`
+      : layoutQuality.crossings === 0
+      ? 'Layout verified'
+      : layoutQuality.crossings === 1
+        ? '1 bridged crossover'
+        : `${layoutQuality.crossings} bridged crossovers`
+    : 'Routing layout'
 
   useEffect(() => {
     if (!layout) return
@@ -204,6 +228,7 @@ export function UmlDiagramWorkspace({ diagrams, onOpenImpact, onSelectElement, c
         <div className="uml-workspace-status" aria-label="Diagram generation status">
           <span className="uml-live-status"><i aria-hidden="true" />Live projection</span>
           <span className="badge">Revision {diagram.sourceRevision}</span>
+          <span className="badge">{layoutQualityLabel}</span>
         </div>
       </div>
       <div className="tab-row uml-tabs" role="tablist" aria-label="Diagram types">
@@ -322,6 +347,7 @@ export function UmlDiagramWorkspace({ diagrams, onOpenImpact, onSelectElement, c
               <p>{diagram.textAlternative}</p>
               <dl>
                 <div><dt>Layout engine</dt><dd>{engineLabel}</dd></div>
+                <div><dt>Layout quality</dt><dd>{layoutQualityLabel}</dd></div>
                 <div><dt>Projection hash</dt><dd><code>{diagram.contentHash.slice(0, 12)}</code></dd></div>
               </dl>
               <p>Select a symbol, port, connector, or label to inspect its source record and trace identifiers.</p>

@@ -55,6 +55,21 @@ export type UmlDiagramLayout = {
   engine: 'elk-layered' | 'ranked-activity' | 'swimlane' | 'balanced-state' | 'temporal'
 }
 
+export type UmlLayoutQuality = {
+  crossings: number
+  overlappingConnectorPairs: number
+  nodeOverlaps: number
+  edgeNodeClearanceViolations: number
+  labelNodeOverlaps: number
+  labelLabelOverlaps: number
+  connectorLabelOverlaps: number
+  portAlignmentViolations: number
+  canvasBoundsViolations: number
+  bends: number
+  totalConnectorLength: number
+  canvasOccupancy: number
+}
+
 type SizedNode = DiagramProjectionNode & { width: number; height: number }
 
 const CANVAS_PADDING = 54
@@ -191,7 +206,7 @@ function graphOptions(kind: DiagramKind): Record<string, string> {
     'elk.layered.spacing.nodeNodeBetweenLayers': kind === 'activity'
       ? '62'
       : kind === 'state-machine' ? '30' : kind === 'component' ? '76' : '88',
-    'elk.layered.spacing.edgeNodeBetweenLayers': kind === 'state-machine' ? '16' : '28',
+    'elk.layered.spacing.edgeNodeBetweenLayers': '28',
     'elk.layered.nodePlacement.strategy': kind === 'use-case' ? 'BRANDES_KOEPF' : 'NETWORK_SIMPLEX',
     'elk.layered.nodePlacement.favorStraightEdges': 'true',
     'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
@@ -211,13 +226,7 @@ function graphOptions(kind: DiagramKind): Record<string, string> {
     'elk.layered.unnecessaryBendpoints': 'false',
     'elk.layered.mergeEdges': 'false',
     ...(kind === 'state-machine'
-      ? {
-        'elk.aspectRatio': String(MIN_CANVAS_WIDTH / MIN_CANVAS_HEIGHT),
-        'elk.layered.wrapping.strategy': 'MULTI_EDGE',
-        'elk.layered.wrapping.additionalEdgeSpacing': '26',
-        'elk.layered.wrapping.multiEdge.improveCuts': 'true',
-        'elk.layered.wrapping.multiEdge.improveWrappedEdges': 'true',
-      }
+      ? { 'elk.aspectRatio': String(MIN_CANVAS_WIDTH / MIN_CANVAS_HEIGHT) }
       : {}),
   }
 }
@@ -320,6 +329,7 @@ function useCaseActorPartitions(diagram: DiagramProjection): ActorPartition[] {
 function buildElkGraph(
   diagram: DiagramProjection,
   actorPartition: ActorPartition = { left: new Set(), right: new Set() },
+  layoutOverrides: Record<string, string> = {},
 ): {
   graph: ElkNode
   sizedNodes: Map<string, SizedNode>
@@ -424,8 +434,14 @@ function buildElkGraph(
           'elk.direction': 'DOWN',
           'elk.edgeRouting': 'ORTHOGONAL',
           'elk.padding': '[top=76,left=54,bottom=48,right=54]',
-          'elk.spacing.nodeNode': '48',
-          'elk.layered.spacing.nodeNodeBetweenLayers': '52',
+          'elk.spacing.nodeNode': '60',
+          'elk.spacing.edgeNode': '30',
+          'elk.spacing.edgeEdge': '18',
+          'elk.spacing.edgeLabel': '10',
+          'elk.spacing.labelNode': '18',
+          'elk.spacing.labelLabel': '14',
+          'elk.layered.spacing.nodeNodeBetweenLayers': '62',
+          'elk.layered.spacing.edgeNodeBetweenLayers': '30',
         },
       })
     }
@@ -453,7 +469,10 @@ function buildElkGraph(
   return {
     graph: {
       id: diagram.id,
-      layoutOptions: graphOptions(diagram.kind),
+      layoutOptions: {
+        ...graphOptions(diagram.kind),
+        ...layoutOverrides,
+      },
       children,
       edges,
     },
@@ -590,6 +609,278 @@ function normalizeLayout(
   }
 }
 
+type Segment = { edgeId: string; start: UmlPoint; end: UmlPoint }
+type Rect = { x: number; y: number; width: number; height: number }
+
+function layoutSegments(layout: UmlDiagramLayout): Segment[] {
+  return layout.edges.flatMap((edge) =>
+    edge.points.slice(0, -1).map((start, index) => ({
+      edgeId: edge.id,
+      start,
+      end: edge.points[index + 1]!,
+    })))
+}
+
+function pointEquals(left: UmlPoint, right: UmlPoint): boolean {
+  return Math.abs(left.x - right.x) < 0.01 && Math.abs(left.y - right.y) < 0.01
+}
+
+function orientation(a: UmlPoint, b: UmlPoint, c: UmlPoint): 0 | 1 | 2 {
+  const value = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y)
+  if (Math.abs(value) < 0.01) return 0
+  return value > 0 ? 1 : 2
+}
+
+function properIntersection(a: Segment, b: Segment): boolean {
+  if (
+    pointEquals(a.start, b.start)
+    || pointEquals(a.start, b.end)
+    || pointEquals(a.end, b.start)
+    || pointEquals(a.end, b.end)
+  ) return false
+  const first = orientation(a.start, a.end, b.start)
+  const second = orientation(a.start, a.end, b.end)
+  const third = orientation(b.start, b.end, a.start)
+  const fourth = orientation(b.start, b.end, a.end)
+  return first !== 0 && second !== 0 && third !== 0 && fourth !== 0
+    && first !== second && third !== fourth
+}
+
+function segmentOverlapLength(a: Segment, b: Segment): number {
+  if (
+    orientation(a.start, a.end, b.start) !== 0
+    || orientation(a.start, a.end, b.end) !== 0
+  ) return 0
+  const useX = Math.abs(a.end.x - a.start.x) >= Math.abs(a.end.y - a.start.y)
+  const aStart = useX ? a.start.x : a.start.y
+  const aEnd = useX ? a.end.x : a.end.y
+  const bStart = useX ? b.start.x : b.start.y
+  const bEnd = useX ? b.end.x : b.end.y
+  return Math.max(
+    0,
+    Math.min(Math.max(aStart, aEnd), Math.max(bStart, bEnd))
+      - Math.max(Math.min(aStart, aEnd), Math.min(bStart, bEnd)),
+  )
+}
+
+function rectanglesOverlap(left: Rect, right: Rect): boolean {
+  return left.x < right.x + right.width
+    && left.x + left.width > right.x
+    && left.y < right.y + right.height
+    && left.y + left.height > right.y
+}
+
+function pointToSegmentDistance(point: UmlPoint, start: UmlPoint, end: UmlPoint): number {
+  const dx = end.x - start.x
+  const dy = end.y - start.y
+  const lengthSquared = dx * dx + dy * dy
+  if (!lengthSquared) return Math.hypot(point.x - start.x, point.y - start.y)
+  const ratio = clamp(
+    ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared,
+    0,
+    1,
+  )
+  return Math.hypot(
+    point.x - (start.x + ratio * dx),
+    point.y - (start.y + ratio * dy),
+  )
+}
+
+function segmentsTouch(aStart: UmlPoint, aEnd: UmlPoint, bStart: UmlPoint, bEnd: UmlPoint): boolean {
+  if (properIntersection(
+    { edgeId: 'a', start: aStart, end: aEnd },
+    { edgeId: 'b', start: bStart, end: bEnd },
+  )) return true
+  return segmentOverlapLength(
+    { edgeId: 'a', start: aStart, end: aEnd },
+    { edgeId: 'b', start: bStart, end: bEnd },
+  ) > 0
+}
+
+function segmentToRectDistance(segment: Segment, rect: Rect): number {
+  const corners = [
+    { x: rect.x, y: rect.y },
+    { x: rect.x + rect.width, y: rect.y },
+    { x: rect.x + rect.width, y: rect.y + rect.height },
+    { x: rect.x, y: rect.y + rect.height },
+  ]
+  const sides = corners.map((corner, index) => [
+    corner,
+    corners[(index + 1) % corners.length]!,
+  ] as const)
+  if (
+    segment.start.x >= rect.x && segment.start.x <= rect.x + rect.width
+    && segment.start.y >= rect.y && segment.start.y <= rect.y + rect.height
+  ) return 0
+  if (
+    segment.end.x >= rect.x && segment.end.x <= rect.x + rect.width
+    && segment.end.y >= rect.y && segment.end.y <= rect.y + rect.height
+  ) return 0
+  if (sides.some(([start, end]) => segmentsTouch(segment.start, segment.end, start, end))) return 0
+  return Math.min(
+    ...corners.map((corner) => pointToSegmentDistance(corner, segment.start, segment.end)),
+    ...sides.flatMap(([start, end]) => [
+      pointToSegmentDistance(segment.start, start, end),
+      pointToSegmentDistance(segment.end, start, end),
+    ]),
+  )
+}
+
+function isLayoutContainer(kind: DiagramProjectionNode['kind']): boolean {
+  return kind === 'system-boundary' || kind === 'swimlane' || kind === 'fragment'
+}
+
+/**
+ * Measures rendered geometry, including defects that ELK's own crossing
+ * score does not report: shared connector trunks, label boxes, node
+ * clearance, and semantic port attachment. Tests and the UI can use the same
+ * measurements, so a "verified" diagram means more than "no nodes overlap".
+ */
+export function analyzeUmlLayoutQuality(
+  layout: UmlDiagramLayout,
+  diagram: DiagramProjection,
+  clearance = 12,
+): UmlLayoutQuality {
+  const segments = layoutSegments(layout)
+  const nodeDefinitionById = new Map(diagram.nodes.map((node) => [node.id, node]))
+  const layoutNodeById = new Map(layout.nodes.map((node) => [node.id, node]))
+  const parentByNodeId = new Map(
+    diagram.nodes.flatMap((node) => node.parentId ? [[node.id, node.parentId] as const] : []),
+  )
+  let crossings = 0
+  const overlappingPairs = new Set<string>()
+  for (let left = 0; left < segments.length; left += 1) {
+    for (let right = left + 1; right < segments.length; right += 1) {
+      const first = segments[left]!
+      const second = segments[right]!
+      if (first.edgeId === second.edgeId) continue
+      if (properIntersection(first, second)) crossings += 1
+      if (segmentOverlapLength(first, second) > 4) {
+        overlappingPairs.add([first.edgeId, second.edgeId].sort().join('\u0000'))
+      }
+    }
+  }
+
+  let nodeOverlaps = 0
+  const semanticNodes = layout.nodes.filter((node) => {
+    const definition = nodeDefinitionById.get(node.id)
+    return definition && !isLayoutContainer(definition.kind)
+  })
+  for (let left = 0; left < semanticNodes.length; left += 1) {
+    for (let right = left + 1; right < semanticNodes.length; right += 1) {
+      if (rectanglesOverlap(semanticNodes[left]!, semanticNodes[right]!)) nodeOverlaps += 1
+    }
+  }
+
+  let edgeNodeClearanceViolations = 0
+  for (const edge of layout.edges) {
+    const definition = diagram.edges.find((candidate) => candidate.id === edge.id)
+    const relatedNodeIds = new Set([
+      definition?.fromId,
+      definition?.toId,
+      definition ? parentByNodeId.get(definition.fromId) : undefined,
+      definition ? parentByNodeId.get(definition.toId) : undefined,
+    ].filter((id): id is string => Boolean(id)))
+    const edgeSegments = segments.filter((segment) => segment.edgeId === edge.id)
+    for (const node of semanticNodes) {
+      if (relatedNodeIds.has(node.id)) continue
+      if (diagram.kind === 'sequence' && nodeDefinitionById.get(node.id)?.kind === 'lifeline') continue
+      const distance = Math.min(...edgeSegments.map((segment) => segmentToRectDistance(segment, node)))
+      if (distance < clearance) edgeNodeClearanceViolations += 1
+    }
+  }
+
+  const labels = layout.edges.flatMap((edge) => edge.label ? [{ edgeId: edge.id, ...edge.label }] : [])
+  let labelNodeOverlaps = 0
+  for (const label of labels) {
+    for (const node of semanticNodes) {
+      if (diagram.kind === 'sequence' && nodeDefinitionById.get(node.id)?.kind === 'lifeline') continue
+      if (rectanglesOverlap(label, node)) labelNodeOverlaps += 1
+    }
+  }
+  let labelLabelOverlaps = 0
+  for (let left = 0; left < labels.length; left += 1) {
+    for (let right = left + 1; right < labels.length; right += 1) {
+      if (rectanglesOverlap(labels[left]!, labels[right]!)) labelLabelOverlaps += 1
+    }
+  }
+  let connectorLabelOverlaps = 0
+  for (const label of labels) {
+    for (const segment of segments) {
+      if (segment.edgeId === label.edgeId) continue
+      if (segmentToRectDistance(segment, label) < 2) connectorLabelOverlaps += 1
+    }
+  }
+
+  let portAlignmentViolations = 0
+  for (const definition of diagram.nodes) {
+    if (!definition.parentId || !(
+      definition.kind === 'provided-interface'
+      || definition.kind === 'required-interface'
+      || definition.kind === 'port'
+    )) continue
+    const parent = layoutNodeById.get(definition.parentId)
+    const port = parent?.ports.find((candidate) => candidate.id === definition.id)
+    if (!parent || !port) {
+      portAlignmentViolations += 1
+      continue
+    }
+    const expectedX = definition.kind === 'provided-interface'
+      ? parent.x
+      : parent.x + parent.width
+    if (Math.abs(port.x - expectedX) > 9) portAlignmentViolations += 1
+    for (const edge of diagram.edges.filter((candidate) =>
+      candidate.fromId === definition.id || candidate.toId === definition.id)) {
+      const laidOutEdge = layout.edges.find((candidate) => candidate.id === edge.id)
+      const endpoint = edge.fromId === definition.id
+        ? laidOutEdge?.points[0]
+        : laidOutEdge?.points.at(-1)
+      if (!endpoint || Math.hypot(endpoint.x - port.x, endpoint.y - port.y) > 9) {
+        portAlignmentViolations += 1
+      }
+    }
+  }
+
+  const outsideCanvas = (rect: Rect) =>
+    rect.x < 0
+    || rect.y < 0
+    || rect.x + rect.width > layout.width
+    || rect.y + rect.height > layout.height
+  const canvasBoundsViolations = layout.nodes.filter(outsideCanvas).length
+    + layout.nodes.flatMap((node) => node.ports).filter((port) =>
+      port.x < 0 || port.y < 0 || port.x > layout.width || port.y > layout.height).length
+    + labels.filter(outsideCanvas).length
+    + layout.edges.flatMap((edge) => edge.points).filter((point) =>
+      point.x < 0 || point.y < 0 || point.x > layout.width || point.y > layout.height).length
+
+  const bends = layout.edges.reduce(
+    (total, edge) => total + Math.max(0, edge.points.length - 2),
+    0,
+  )
+  const totalConnectorLength = segments.reduce(
+    (total, segment) => total + Math.hypot(
+      segment.end.x - segment.start.x,
+      segment.end.y - segment.start.y,
+    ),
+    0,
+  )
+  const semanticArea = semanticNodes.reduce((total, node) => total + node.width * node.height, 0)
+  return {
+    crossings,
+    overlappingConnectorPairs: overlappingPairs.size,
+    nodeOverlaps,
+    edgeNodeClearanceViolations,
+    labelNodeOverlaps,
+    labelLabelOverlaps,
+    connectorLabelOverlaps,
+    portAlignmentViolations,
+    canvasBoundsViolations,
+    bends,
+    totalConnectorLength,
+    canvasOccupancy: semanticArea / Math.max(1, layout.width * layout.height),
+  }
+}
+
 function swimlaneNodeSize(node: DiagramProjectionNode): { width: number; height: number } {
   if (
     node.kind === 'action'
@@ -720,6 +1011,9 @@ function compactPoints(points: UmlPoint[]): UmlPoint[] {
 function labelForRoute(
   edge: DiagramProjectionEdge,
   points: readonly UmlPoint[],
+  obstacles: readonly UmlLayoutNode[] = [],
+  connectorObstacles: readonly Segment[] = [],
+  labelObstacles: readonly Rect[] = [],
 ): UmlLayoutLabel | undefined {
   const displayLabel = edgeDisplayLabel(edge)
   if (!displayLabel || points.length < 2) return undefined
@@ -733,20 +1027,79 @@ function labelForRoute(
       length: Math.abs(end.x - start.x) + Math.abs(end.y - start.y),
     }
   })
-  const segment = [...segments].sort((left, right) =>
-    Number(right.horizontal) - Number(left.horizontal) || right.length - left.length)[0]!
-  if (segment.horizontal) {
-    return {
-      x: (segment.start.x + segment.end.x - size.width) / 2,
-      y: segment.start.y - size.height - 7,
+  const candidates = segments.flatMap((segment) => {
+    const base = segment.horizontal
+      ? {
+        x: (segment.start.x + segment.end.x - size.width) / 2,
+        y: segment.start.y - size.height - 7,
+      }
+      : {
+        x: segment.start.x + 8,
+        y: (segment.start.y + segment.end.y - size.height) / 2,
+      }
+    const alternate = segment.horizontal
+      ? { x: base.x, y: segment.start.y + 7 }
+      : { x: segment.start.x - size.width - 8, y: base.y }
+    return [base, alternate].map((position, side) => ({
+      ...position,
       ...size,
-    }
-  }
-  return {
-    x: segment.start.x + 8,
-    y: (segment.start.y + segment.end.y - size.height) / 2,
-    ...size,
-  }
+      nodeOverlapCount: obstacles.filter((node) =>
+        rectanglesOverlap({ ...position, ...size }, node)).length,
+      connectorOverlapCount: connectorObstacles.filter((connector) =>
+        segmentToRectDistance(connector, { ...position, ...size }) < 2).length,
+      labelOverlapCount: labelObstacles.filter((label) =>
+        rectanglesOverlap({ ...position, ...size }, label)).length,
+      orientationRank: segment.horizontal ? 0 : 1,
+      side,
+      length: segment.length,
+    }))
+  })
+  const selected = candidates.sort((left, right) =>
+    left.nodeOverlapCount - right.nodeOverlapCount
+    || left.connectorOverlapCount - right.connectorOverlapCount
+    || left.labelOverlapCount - right.labelOverlapCount
+    || left.orientationRank - right.orientationRank
+    || right.length - left.length
+    || left.side - right.side)[0]
+  if (!selected) return undefined
+  const {
+    nodeOverlapCount: _nodeOverlapCount,
+    connectorOverlapCount: _connectorOverlapCount,
+    labelOverlapCount: _labelOverlapCount,
+    orientationRank: _orientationRank,
+    side: _side,
+    length: _length,
+    ...label
+  } = selected
+  return label
+}
+
+function placeRouteLabels(
+  diagram: DiagramProjection,
+  edges: readonly UmlLayoutEdge[],
+  obstacles: readonly UmlLayoutNode[],
+): UmlLayoutEdge[] {
+  const edgeById = new Map(diagram.edges.map((edge) => [edge.id, edge]))
+  const segments = edges.flatMap((edge) => edge.points.slice(0, -1).map((start, index) => ({
+    edgeId: edge.id,
+    start,
+    end: edge.points[index + 1]!,
+  })))
+  const placedLabels: UmlLayoutLabel[] = []
+  return edges.map((edge) => {
+    const definition = edgeById.get(edge.id)
+    const label = definition
+      ? labelForRoute(
+        definition,
+        edge.points,
+        obstacles,
+        segments.filter((segment) => segment.edgeId !== edge.id),
+        placedLabels,
+      )
+      : edge.label
+    if (label) placedLabels.push(label)
+    return { ...edge, label }
+  })
 }
 
 function layoutSwimlaneActivity(diagram: DiagramProjection): UmlDiagramLayout {
@@ -852,7 +1205,24 @@ function layoutSwimlaneActivity(diagram: DiagramProjection): UmlDiagramLayout {
     outgoing.set(edge.fromId, [...(outgoing.get(edge.fromId) ?? []), edge])
     incoming.set(edge.toId, [...(incoming.get(edge.toId) ?? []), edge])
   }
+  for (const collection of outgoing.values()) {
+    collection.sort((left, right) =>
+      (byId.get(left.toId)?.x ?? 0) - (byId.get(right.toId)?.x ?? 0)
+      || left.id.localeCompare(right.id))
+  }
+  for (const collection of incoming.values()) {
+    collection.sort((left, right) =>
+      (byId.get(left.fromId)?.x ?? 0) - (byId.get(right.fromId)?.x ?? 0)
+      || left.id.localeCompare(right.id))
+  }
   let backTrack = 0
+  const reservedOuterTracks = diagram.edges.filter((edge) => {
+    const fromRank = ranks.get(edge.fromId) ?? 0
+    const toRank = ranks.get(edge.toId) ?? 0
+    return edge.isLoop || toRank <= fromRank
+  }).length
+  let leftDetourTrack = 0
+  let rightDetourTrack = 0
   const anchorX = (
     node: UmlLayoutNode,
     edge: DiagramProjectionEdge,
@@ -868,6 +1238,7 @@ function layoutSwimlaneActivity(diagram: DiagramProjection): UmlDiagramLayout {
     const fromRank = ranks.get(edge.fromId) ?? 0
     const toRank = ranks.get(edge.toId) ?? 0
     let points: UmlPoint[]
+    let customLabel: UmlLayoutLabel | undefined
     if (!edge.isLoop && toRank > fromRank) {
       const start = {
         x: anchorX(from, edge, outgoing.get(edge.fromId) ?? [edge]),
@@ -881,14 +1252,85 @@ function layoutSwimlaneActivity(diagram: DiagramProjection): UmlDiagramLayout {
         points = [start, end]
       } else {
         const collection = outgoing.get(edge.fromId) ?? [edge]
-        const trackIndex = Math.max(0, collection.findIndex((candidate) => candidate.id === edge.id))
+        const sourceCenter = from.x + from.width / 2
+        const leftTargets = collection
+          .filter((candidate) => (byId.get(candidate.toId)?.x ?? sourceCenter) < sourceCenter)
+          .sort((left, right) =>
+            (byId.get(left.toId)?.x ?? 0) - (byId.get(right.toId)?.x ?? 0))
+        const rightTargets = collection
+          .filter((candidate) => (byId.get(candidate.toId)?.x ?? sourceCenter) >= sourceCenter)
+          .sort((left, right) =>
+            (byId.get(right.toId)?.x ?? 0) - (byId.get(left.toId)?.x ?? 0))
+        const routeOrder = [...leftTargets, ...rightTargets]
+        const trackIndex = Math.max(0, routeOrder.findIndex((candidate) => candidate.id === edge.id))
         const displayLabel = edgeDisplayLabel(edge)
         const labelSize = displayLabel ? edgeLabelSize(displayLabel) : undefined
+        const precedingLabelHeight = collection
+          .slice(0, trackIndex)
+          .reduce((total, candidate) => {
+            const candidateLabel = edgeDisplayLabel(candidate)
+            return total + (candidateLabel ? edgeLabelSize(candidateLabel).height : 14) + 10
+          }, 0)
+        const desiredOffset = labelSize
+          ? 14 + labelSize.height + precedingLabelHeight
+          : 20 + trackIndex * 18
         const routeY = start.y + Math.min(
-          Math.max(16, (end.y - start.y) / 2),
-          (labelSize?.height ?? 0) + 14 + trackIndex * ((labelSize?.height ?? 20) + 10),
+          Math.max(16, end.y - start.y - 16),
+          desiredOffset,
         )
         points = [start, { x: start.x, y: routeY }, { x: end.x, y: routeY }, end]
+      }
+      const blockingRouteNodes = nodeLayouts.filter((node) => {
+        if (node.id === from.id || node.id === to.id) return false
+        return points.slice(0, -1).some((point, index) => {
+          const next = points[index + 1]!
+          if (Math.abs(point.x - next.x) < 0.5) {
+            return point.x > node.x - 12
+              && point.x < node.x + node.width + 12
+              && Math.max(point.y, next.y) > node.y - 12
+              && Math.min(point.y, next.y) < node.y + node.height + 12
+          }
+          if (Math.abs(point.y - next.y) < 0.5) {
+            return point.y > node.y - 12
+              && point.y < node.y + node.height + 12
+              && Math.max(point.x, next.x) > node.x - 12
+              && Math.min(point.x, next.x) < node.x + node.width + 12
+          }
+          return false
+        })
+      })
+      if (blockingRouteNodes.length > 0) {
+        const useLeftDetour = start.x <= from.x + from.width / 2
+        const trackIndex = reservedOuterTracks + (
+          useLeftDetour ? leftDetourTrack++ : rightDetourTrack++
+        )
+        const trackX = useLeftDetour
+          ? laneLayouts[0]!.x - 28 - trackIndex * 14
+          : laneLayouts.at(-1)!.x + laneWidth + 28 + trackIndex * 14
+        const entryY = Math.min(
+          end.y - 2,
+          Math.max(
+            end.y - 18,
+            ...blockingRouteNodes.map((node) => node.y + node.height + 12),
+          ),
+        )
+        points = [
+          start,
+          { x: start.x, y: start.y + 18 },
+          { x: trackX, y: start.y + 18 },
+          { x: trackX, y: entryY },
+          { x: end.x, y: entryY },
+          end,
+        ]
+        const displayLabel = edgeDisplayLabel(edge)
+        if (displayLabel) {
+          const size = edgeLabelSize(displayLabel)
+          customLabel = {
+            x: useLeftDetour ? trackX - size.width - 8 : trackX + 8,
+            y: (start.y + end.y - size.height) / 2,
+            ...size,
+          }
+        }
       }
     } else if (!edge.isLoop && fromRank === toRank) {
       const movingRight = to.x >= from.x
@@ -903,18 +1345,33 @@ function layoutSwimlaneActivity(diagram: DiagramProjection): UmlDiagramLayout {
       const routeX = (start.x + end.x) / 2
       points = [start, { x: routeX, y: start.y }, { x: routeX, y: end.y }, end]
     } else {
-      const movingRight = to.x >= from.x
+      const contentCenter = (
+        laneLayouts[0]!.x
+        + laneLayouts.at(-1)!.x
+        + laneWidth
+      ) / 2
+      const useLeftTrack = from.x + from.width / 2 <= contentCenter
+      const sourceRelationships = outgoing.get(edge.fromId) ?? [edge]
+      const targetRelationships = incoming.get(edge.toId) ?? [edge]
+      const sourceIndex = Math.max(
+        0,
+        sourceRelationships.findIndex((candidate) => candidate.id === edge.id),
+      )
+      const targetIndex = Math.max(
+        0,
+        targetRelationships.findIndex((candidate) => candidate.id === edge.id),
+      )
       const source = {
-        x: movingRight ? from.x + from.width : from.x,
-        y: from.y + from.height / 2,
+        x: useLeftTrack ? from.x : from.x + from.width,
+        y: from.y + from.height * ((sourceIndex + 1) / (sourceRelationships.length + 1)),
       }
       const target = {
-        x: movingRight ? to.x + to.width : to.x,
-        y: to.y + to.height / 2,
+        x: useLeftTrack ? to.x : to.x + to.width,
+        y: to.y + to.height * ((targetIndex + 1) / (targetRelationships.length + 1)),
       }
-      const trackX = movingRight
-        ? laneLayouts.at(-1)!.x + laneWidth + 28 + backTrack * 14
-        : laneLayouts[0]!.x - 28 - backTrack * 14
+      const trackX = useLeftTrack
+        ? laneLayouts[0]!.x - 28 - backTrack * 14
+        : laneLayouts.at(-1)!.x + laneWidth + 28 + backTrack * 14
       backTrack += 1
       points = [
         source,
@@ -922,15 +1379,28 @@ function layoutSwimlaneActivity(diagram: DiagramProjection): UmlDiagramLayout {
         { x: trackX, y: target.y },
         target,
       ]
+      const displayLabel = edgeDisplayLabel(edge)
+      if (displayLabel) {
+        const size = edgeLabelSize(displayLabel)
+        customLabel = {
+          x: useLeftTrack ? trackX - size.width - 8 : trackX + 8,
+          y: (source.y + target.y - size.height) / 2,
+          ...size,
+        }
+      }
     }
     const compact = compactPoints(points)
     return [{
       id: edge.id,
       points: compact,
-      label: labelForRoute(edge, compact),
+      label: customLabel ?? labelForRoute(edge, compact, nodeLayouts),
     }]
   })
-  return normalizeLayout([...laneLayouts, ...nodeLayouts], edges, 'swimlane')
+  return normalizeLayout(
+    [...laneLayouts, ...nodeLayouts],
+    placeRouteLabels(diagram, edges, nodeLayouts),
+    'swimlane',
+  )
 }
 
 function layoutRankedActivity(diagram: DiagramProjection): UmlDiagramLayout {
@@ -1046,6 +1516,12 @@ async function layoutWithElk(diagram: DiagramProjection): Promise<UmlDiagramLayo
   const partitions = diagram.kind === 'use-case'
     ? useCaseActorPartitions(diagram)
     : [{ left: new Set<string>(), right: new Set<string>() }]
+  const layoutVariants = diagram.kind === 'component'
+    ? ['NETWORK_SIMPLEX', 'BRANDES_KOEPF', 'LINEAR_SEGMENTS', 'SIMPLE'].map((strategy, index) => ({
+      'elk.randomSeed': String(index + 1),
+      'elk.layered.nodePlacement.strategy': strategy,
+    }))
+    : [{}]
   let selected:
     | {
       result: ElkNode
@@ -1057,13 +1533,16 @@ async function layoutWithElk(diagram: DiagramProjection): Promise<UmlDiagramLayo
     | undefined
 
   for (const partition of partitions) {
-    const built = buildElkGraph(diagram, partition)
-    const result = await elk.layout(built.graph)
-    const quality = layoutQuality(result)
-    if (!selected || isBetterQuality(quality, selected.quality)) {
-      selected = { result, ...built, quality }
+    for (const variant of layoutVariants) {
+      const built = buildElkGraph(diagram, partition, variant)
+      const result = await elk.layout(built.graph)
+      const quality = layoutQuality(result)
+      if (!selected || isBetterQuality(quality, selected.quality)) {
+        selected = { result, ...built, quality }
+      }
+      if (diagram.kind === 'component' && quality[0] === 0) break
     }
-    if (quality[0] === 0 && quality[4] === 0) break
+    if (diagram.kind === 'component' && selected?.quality[0] === 0) break
   }
 
   const {
@@ -1099,15 +1578,36 @@ async function layoutWithElk(diagram: DiagramProjection): Promise<UmlDiagramLayo
     for (const child of node.children ?? []) visitNode(child, x, y)
   }
   for (const node of result.children ?? []) visitNode(node)
+  const semanticNodeById = new Map(diagram.nodes.map((node) => [node.id, node]))
+  const semanticEdgeById = new Map(diagram.edges.map((edge) => [edge.id, edge]))
+  const layoutNodeById = new Map(nodes.map((node) => [node.id, node]))
   const laidOutEdges = (result.edges ?? []).map((edge): UmlLayoutEdge => {
-    const originalPoints = pointsForEdge(edge)
+    const semanticEdge = semanticEdgeById.get(edge.id)
+    const sourceParentId = semanticEdge
+      ? semanticNodeById.get(semanticEdge.fromId)?.parentId
+      : undefined
+    const targetParentId = semanticEdge
+      ? semanticNodeById.get(semanticEdge.toId)?.parentId
+      : undefined
+    // ELK reports an edge whose endpoints share a compound parent in that
+    // parent's local coordinate system. Mixed-level edges are already root
+    // relative. Normalize both cases before JointJS receives the route.
+    const sharedParent = sourceParentId && sourceParentId === targetParentId
+      ? layoutNodeById.get(sourceParentId)
+      : undefined
+    const offsetX = sharedParent?.x ?? 0
+    const offsetY = sharedParent?.y ?? 0
+    const originalPoints = pointsForEdge(edge).map((point) => ({
+      x: point.x + offsetX,
+      y: point.y + offsetY,
+    }))
     const points = reversedEdgeIds.has(edge.id) ? [...originalPoints].reverse() : originalPoints
     const label = edge.labels?.[0]
     const positionedLabel = label && label.x !== undefined && label.y !== undefined
       && label.width !== undefined && label.height !== undefined
       ? {
-        x: label.x,
-        y: label.y,
+        x: label.x + offsetX,
+        y: label.y + offsetY,
         width: label.width,
         height: label.height,
       }
@@ -1171,7 +1671,11 @@ function layoutSequence(diagram: DiagramProjection): UmlDiagramLayout {
     const from = byId.get(edge.fromId)
     const to = byId.get(edge.toId)
     if (!from || !to) return []
-    const y = 174 + messageRows.slice(0, index).reduce((total, rowHeight) => total + rowHeight, 0)
+    // A message label belongs to the message below it. Reserve that label's
+    // height before the message line, not after the preceding line. This keeps
+    // a tall guarded message label clear of the previous interaction.
+    const y = 174 + messageRows.slice(1, index + 1)
+      .reduce((total, rowHeight) => total + rowHeight, 0)
     const points = sequenceEdgePoints(from, to, y)
     const displayLabel = edgeDisplayLabel(edge)
     const labelSize = displayLabel ? edgeLabelSize(displayLabel) : undefined
@@ -1491,12 +1995,23 @@ function layoutNonlinearStateMachine(diagram: DiagramProjection): UmlDiagramLayo
 export async function layoutUmlDiagram(diagram: DiagramProjection): Promise<UmlDiagramLayout> {
   if (diagram.kind === 'sequence') return layoutSequence(diagram)
   if (diagram.kind === 'activity') {
-    return diagram.nodes.some((node) => node.kind === 'swimlane')
-      ? layoutSwimlaneActivity(diagram)
-      : layoutRankedActivity(diagram)
+    if (diagram.nodes.some((node) => node.kind === 'swimlane')) return layoutSwimlaneActivity(diagram)
+    try {
+      const result = await layoutWithElk(diagram)
+      return { ...result, engine: 'ranked-activity' }
+    } catch {
+      return layoutRankedActivity(diagram)
+    }
   }
   const stateOrder = linearStateOrder(diagram)
   if (stateOrder) return layoutLinearStateMachine(diagram, stateOrder)
-  if (diagram.kind === 'state-machine') return layoutNonlinearStateMachine(diagram)
+  if (diagram.kind === 'state-machine') {
+    try {
+      const result = await layoutWithElk(diagram)
+      return { ...result, engine: 'balanced-state' }
+    } catch {
+      return layoutNonlinearStateMachine(diagram)
+    }
+  }
   return layoutWithElk(diagram)
 }

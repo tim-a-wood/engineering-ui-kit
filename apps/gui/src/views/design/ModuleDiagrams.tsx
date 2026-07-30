@@ -483,6 +483,36 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
     element?.focus()
   }
 
+  function renderDiagramNode(node: DiagramLayout['nodes'][number]) {
+    const element = elementById.get(node.elementId)
+    if (!element) return null
+    const selected = selectedId === node.elementId
+    return (
+      <g
+        key={node.elementId}
+        data-diagram-node-id={node.elementId}
+        tabIndex={0}
+        role="button"
+        aria-label={`${element.umlType}: ${element.label}`}
+        aria-pressed={selected}
+        className={selected ? `design-diagram-node design-diagram-node-${element.kind} selected` : `design-diagram-node design-diagram-node-${element.kind}`}
+        transform={`translate(${node.x} ${node.y})`}
+        onClick={() => selectId(node.elementId)}
+        onKeyDown={(event) => {
+          if (event.key.startsWith('Arrow')) {
+            event.preventDefault()
+            moveNodeFocus(node.elementId, event.key)
+          } else if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            selectId(node.elementId)
+          }
+        }}
+      >
+        <UmlNodeSymbol element={element} width={node.width} height={node.height} diagramHeight={bounds.height} />
+      </g>
+    )
+  }
+
   return (
     <div ref={container.ref} className={fullscreen ? 'design-diagrams fullscreen' : 'design-diagrams'}>
       <div className="design-diagram-navigation">
@@ -597,6 +627,12 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
                 <path d="M 1 1 L 9 5 L 1 9 Z" className="design-uml-filled-arrow" />
               </marker>
             </defs>
+            {layout.nodes
+              .filter((node) => {
+                const kind = elementById.get(node.elementId)?.kind
+                return kind === 'systemBoundary' || kind === 'fragment'
+              })
+              .map(renderDiagramNode)}
             {layout.edges.map((edge) => {
               const relationship = projection.relationships.find((rel) => rel.id === edge.relationshipId)
               const displayLabel = visibleRelationshipLabel(relationship?.kind, relationship?.label ?? relationship?.guard)
@@ -637,35 +673,12 @@ export function ModuleDiagrams(props: ModuleDiagramsProps) {
                 </g>
               )
             })}
-            {layout.nodes.map((node) => {
-              const element = elementById.get(node.elementId)
-              if (!element) return null
-              const selected = selectedId === node.elementId
-              return (
-                <g
-                  key={node.elementId}
-                  data-diagram-node-id={node.elementId}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`${element.umlType}: ${element.label}`}
-                  aria-pressed={selected}
-                  className={selected ? `design-diagram-node design-diagram-node-${element.kind} selected` : `design-diagram-node design-diagram-node-${element.kind}`}
-                  transform={`translate(${node.x} ${node.y})`}
-                  onClick={() => selectId(node.elementId)}
-                  onKeyDown={(event) => {
-                    if (event.key.startsWith('Arrow')) {
-                      event.preventDefault()
-                      moveNodeFocus(node.elementId, event.key)
-                    } else if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      selectId(node.elementId)
-                    }
-                  }}
-                >
-                  <UmlNodeSymbol element={element} width={node.width} height={node.height} diagramHeight={bounds.height} />
-                </g>
-              )
-            })}
+            {layout.nodes
+              .filter((node) => {
+                const kind = elementById.get(node.elementId)?.kind
+                return kind !== 'systemBoundary' && kind !== 'fragment'
+              })
+              .map(renderDiagramNode)}
           </svg>
           </div>
           {showMinimap && <div className="design-diagram-minimap" aria-label="Diagram minimap">

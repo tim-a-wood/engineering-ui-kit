@@ -34,6 +34,16 @@ export type DiagramLayoutOptions = {
   minNodeHeight?: number
 }
 
+export type DiagramLayoutQuality = {
+  crossingCount: number
+  overlappingEdgePairs: number
+  edgeNodeClearanceViolations: number
+  labelNodeOverlaps: number
+  labelLabelOverlaps: number
+  bendCount: number
+  totalEdgeLength: number
+}
+
 const DEFAULT_NODE_WIDTH = 160
 const DEFAULT_NODE_HEIGHT = 56
 const MIN_NODE_WIDTH = 120
@@ -52,7 +62,6 @@ const LABEL_OFFSET_Y = 14
 
 const ACTOR_COLUMN_GAP = 120
 const BOUNDARY_PADDING = 32
-const USE_CASE_ROW_GAP_OFFSET = 10
 const USE_CASE_COLUMN_GAP_OFFSET = 20
 
 const DEFAULT_CLEARANCE = 12
@@ -125,6 +134,58 @@ function computeLayers(elements: readonly UmlElement[], relationships: readonly 
   }
 
   return layers
+}
+
+function orderLayerMembers(
+  layerKeys: readonly number[],
+  byLayer: ReadonlyMap<number, string[]>,
+  relationships: readonly UmlRelationship[],
+): Map<number, string[]> {
+  const ordered = new Map(layerKeys.map((layer) => [layer, stableSortStrings(byLayer.get(layer) ?? [])]))
+  const layerById = new Map<string, number>()
+  for (const layer of layerKeys) {
+    for (const id of ordered.get(layer) ?? []) layerById.set(id, layer)
+  }
+  const neighbors = new Map<string, string[]>()
+  for (const relationship of relationships) {
+    const fromLayer = layerById.get(relationship.fromId)
+    const toLayer = layerById.get(relationship.toId)
+    if (fromLayer === undefined || toLayer === undefined || fromLayer === toLayer) continue
+    neighbors.set(relationship.fromId, [...(neighbors.get(relationship.fromId) ?? []), relationship.toId])
+    neighbors.set(relationship.toId, [...(neighbors.get(relationship.toId) ?? []), relationship.fromId])
+  }
+
+  const sweep = (layers: readonly number[]) => {
+    const position = new Map<string, number>()
+    for (const layer of layerKeys) {
+      ;(ordered.get(layer) ?? []).forEach((id, index) => position.set(id, index))
+    }
+    for (const layer of layers) {
+      const current = ordered.get(layer) ?? []
+      const ranked = current.map((id) => {
+        const connected = (neighbors.get(id) ?? [])
+          .filter((neighborId) => layerById.get(neighborId) !== layer)
+          .map((neighborId) => position.get(neighborId))
+          .filter((entry): entry is number => entry !== undefined)
+        const barycenter = connected.length > 0
+          ? connected.reduce((sum, entry) => sum + entry, 0) / connected.length
+          : Number.POSITIVE_INFINITY
+        return { id, barycenter, previous: position.get(id) ?? 0 }
+      })
+      ranked.sort((a, b) =>
+        a.barycenter - b.barycenter
+        || a.previous - b.previous
+        || a.id.localeCompare(b.id),
+      )
+      ordered.set(layer, ranked.map((entry) => entry.id))
+    }
+  }
+
+  for (let pass = 0; pass < 4; pass += 1) {
+    sweep(layerKeys.slice(1))
+    sweep([...layerKeys].reverse().slice(1))
+  }
+  return ordered
 }
 
 function layoutLayeredNodes(projection: DiagramProjection, width: number, height: number, maxNodesPerRow: number): DiagramLayoutNode[] {
@@ -260,6 +321,7 @@ function buildFlowLayout(
   }
 
   const layerKeys = [...byLayer.keys()].sort((a, b) => a - b)
+  const orderedByLayer = orderLayerMembers(layerKeys, byLayer, graphRelationships)
   const layerWidths = layerKeys.map((layer) => {
     const count = byLayer.get(layer)?.length ?? 0
     const columns = Math.min(maxNodesPerRow, Math.max(1, count))
@@ -323,7 +385,7 @@ function buildFlowLayout(
     layerY = Math.max(rowStep * 3 + height, ...nodes.map((node) => node.y + node.height))
   } else {
     layerKeys.forEach((layer, layerIndex) => {
-      const ids = stableSortStrings(byLayer.get(layer) ?? [])
+      const ids = orderedByLayer.get(layer) ?? []
       const rowCount = Math.max(1, Math.ceil(ids.length / maxNodesPerRow))
       for (let row = 0; row < rowCount; row++) {
         const rowIds = ids.slice(row * maxNodesPerRow, row * maxNodesPerRow + maxNodesPerRow)
@@ -700,35 +762,66 @@ function buildSequenceLayout(projection: DiagramProjection, width: number, heigh
     nodes.push({ elementId: lifeline.id, x, y: HEADER_HEIGHT_EXTRA, width, height })
   })
 
-  const fragmentX = lifelines.length * (width + LIFELINE_GAP_X) + width
-  fragments.forEach((fragment, index) => {
-    nodes.push({ elementId: fragment.id, x: fragmentX, y: index * (height + NODE_GAP_X), width, height })
-  })
-
-  const nodeById = new Map(nodes.map((node) => [node.elementId, node]))
   const messageRelationships = projection.relationships.filter((rel) => rel.kind === 'message' || rel.kind === 'reply')
   const edges: DiagramLayoutEdge[] = []
+  let messageY = height + MESSAGE_START_GAP
 
-  messageRelationships.forEach((rel, index) => {
+  messageRelationships.forEach((rel) => {
     const fromX = xById.get(rel.fromId)
     const toX = xById.get(rel.toId)
     if (fromX === undefined || toX === undefined) {
       edges.push(degenerateEdge(rel))
       return
     }
-    const y = height + MESSAGE_START_GAP + index * MESSAGE_GAP_Y
     const fromCenter = fromX + width / 2
     const toCenter = toX + width / 2
-    const points: Point[] = [
-      { x: fromCenter, y },
-      { x: toCenter, y },
-    ]
+    const selfMessage = rel.fromId === rel.toId
+    const points: Point[] = selfMessage
+      ? [
+          { x: fromCenter, y: messageY },
+          { x: fromCenter + 54, y: messageY },
+          { x: fromCenter + 54, y: messageY + 28 },
+          { x: fromCenter, y: messageY + 28 },
+        ]
+      : [
+          { x: fromCenter, y: messageY },
+          { x: toCenter, y: messageY },
+        ]
     const label = relationshipLabelText(rel)
-    edges.push({ relationshipId: rel.id, points, ...(label ? { labelPosition: { x: (fromCenter + toCenter) / 2, y: y - LABEL_OFFSET_Y } } : {}) })
+    edges.push({
+      relationshipId: rel.id,
+      points,
+      ...(label
+        ? {
+            labelPosition: {
+              x: selfMessage ? fromCenter + 27 : (fromCenter + toCenter) / 2,
+              y: messageY - LABEL_OFFSET_Y,
+            },
+          }
+        : {}),
+    })
+    messageY += MESSAGE_GAP_Y + (selfMessage ? 28 : 0)
   })
+
+  if (fragments.length > 0 && lifelines.length > 0) {
+    const totalWidth = (lifelines.length - 1) * (width + LIFELINE_GAP_X) + width
+    const fragmentTop = height + 24
+    const fragmentHeight = Math.max(height + 40, messageY - fragmentTop)
+    fragments.forEach((fragment, index) => {
+      const inset = index * 10
+      nodes.unshift({
+        elementId: fragment.id,
+        x: -18 + inset,
+        y: fragmentTop + inset,
+        width: totalWidth + 36 - inset * 2,
+        height: fragmentHeight - inset * 2,
+      })
+    })
+  }
 
   // Never drop a relationship: any non message/reply relationship on a sequence
   // projection still gets an edge entry via the generic node-center fallback.
+  const nodeById = new Map(nodes.map((node) => [node.elementId, node]))
   for (const rel of projection.relationships) {
     if (rel.kind === 'message' || rel.kind === 'reply') continue
     const from = nodeById.get(rel.fromId)
@@ -752,48 +845,117 @@ function buildUseCaseLayout(projection: DiagramProjection, width: number, height
   const boundary = projection.elements.find((element) => element.kind === 'systemBoundary')
   const actors = projection.elements.filter((element) => element.kind === 'actor')
   const useCases = projection.elements.filter((element) => element.kind === 'useCase')
-
   const actorWidth = Math.max(Math.round(width * 0.7), MIN_NODE_WIDTH)
   const actorHeight = Math.max(height + 32, 96)
   const boundaryX = actorWidth + ACTOR_COLUMN_GAP
-
-  const nodes: DiagramLayoutNode[] = []
-  actors.forEach((actor, index) => {
-    nodes.push({ elementId: actor.id, x: 0, y: index * (actorHeight + NODE_GAP_X), width: actorWidth, height: actorHeight })
-  })
-  useCases.forEach((uc, index) => {
-    nodes.push({ elementId: uc.id, x: boundaryX + BOUNDARY_PADDING, y: BOUNDARY_PADDING + index * (height + NODE_GAP_X), width, height })
-  })
-
-  const actorsBottom = actors.length > 0 ? actors.length * (actorHeight + NODE_GAP_X) : 0
-  const useCasesBottom = useCases.length > 0 ? BOUNDARY_PADDING + useCases.length * (height + NODE_GAP_X) : height
-  const contentBottom = Math.max(actorsBottom, useCasesBottom, height)
-
-  if (boundary) {
-    nodes.unshift({ elementId: boundary.id, x: boundaryX, y: 0, width: width + 2 * BOUNDARY_PADDING, height: contentBottom + BOUNDARY_PADDING })
-  }
-
-  const nodeById = new Map(nodes.map((node) => [node.elementId, node]))
-  const collectorY = (nodes.length > 0 ? Math.max(...nodes.map((node) => node.y + node.height)) : 0) + COLLECTOR_MARGIN
-  const columnCollectorX = boundaryX + BOUNDARY_PADDING / 2
-  const associationsByActor = new Map<string, string[]>()
-  const actorAssociationIds: string[] = []
+  const useCaseIndex = new Map(useCases.map((entry, index) => [entry.id, index]))
+  const actorSet = new Set(actors.map((entry) => entry.id))
+  const useCaseSet = new Set(useCases.map((entry) => entry.id))
+  const actorTargets = new Map<string, number[]>()
   for (const relationship of projection.relationships) {
-    const actorId = actors.some((actor) => actor.id === relationship.fromId)
+    const actorId = actorSet.has(relationship.fromId)
       ? relationship.fromId
-      : actors.some((actor) => actor.id === relationship.toId)
+      : actorSet.has(relationship.toId)
         ? relationship.toId
         : undefined
-    if (!actorId) continue
-    actorAssociationIds.push(relationship.id)
-    const associations = associationsByActor.get(actorId) ?? []
-    associations.push(relationship.id)
-    associationsByActor.set(actorId, associations)
+    const useCaseId = useCaseSet.has(relationship.fromId)
+      ? relationship.fromId
+      : useCaseSet.has(relationship.toId)
+        ? relationship.toId
+        : undefined
+    if (!actorId || !useCaseId) continue
+    actorTargets.set(actorId, [...(actorTargets.get(actorId) ?? []), useCaseIndex.get(useCaseId) ?? 0])
   }
-  const associationChannelIndex = new Map(actorAssociationIds.map((id, index) => [id, index]))
-  const associationChannelStep = Math.min(12, 72 / Math.max(actorAssociationIds.length - 1, 1))
+  const orderedActors = [...actors].sort((a, b) => {
+    const aTargets = actorTargets.get(a.id) ?? []
+    const bTargets = actorTargets.get(b.id) ?? []
+    const average = (values: number[]) => values.length > 0
+      ? values.reduce((sum, value) => sum + value, 0) / values.length
+      : Number.POSITIVE_INFINITY
+    return average(aTargets) - average(bTargets)
+      || bTargets.length - aTargets.length
+      || a.id.localeCompare(b.id)
+  })
+
+  const actorNodes: DiagramLayoutNode[] = []
+  let nextActorY = 0
+  for (const actor of orderedActors) {
+    const targets = actorTargets.get(actor.id) ?? []
+    const averageTarget = targets.length > 0
+      ? targets.reduce((sum, value) => sum + value, 0) / targets.length
+      : actorNodes.length
+    const desiredY = BOUNDARY_PADDING + averageTarget * (height + NODE_GAP_X) + height / 2 - actorHeight / 2
+    const y = Math.max(nextActorY, desiredY)
+    actorNodes.push({ elementId: actor.id, x: 0, y, width: actorWidth, height: actorHeight })
+    nextActorY = y + actorHeight + 24
+  }
+
+  const useCaseNodes = useCases.map((useCase, index) => ({
+    elementId: useCase.id,
+    x: boundaryX + BOUNDARY_PADDING,
+    y: BOUNDARY_PADDING + index * (height + NODE_GAP_X),
+    width,
+    height,
+  }))
+  const useCaseRelationships = projection.relationships.filter((entry) =>
+    useCaseSet.has(entry.fromId) && useCaseSet.has(entry.toId),
+  )
+  const relationRailIndex = new Map(
+    [...useCaseRelationships]
+      .sort((a, b) => {
+        const aSpan = Math.abs((useCaseIndex.get(a.fromId) ?? 0) - (useCaseIndex.get(a.toId) ?? 0))
+        const bSpan = Math.abs((useCaseIndex.get(b.fromId) ?? 0) - (useCaseIndex.get(b.toId) ?? 0))
+        return aSpan - bSpan || a.id.localeCompare(b.id)
+      })
+      .map((entry, index) => [entry.id, index]),
+  )
+  const relationRailWidth = useCaseRelationships.length > 0
+    ? 48 + Math.max(0, useCaseRelationships.length - 1) * 18
+    : 0
+  const actorsBottom = actorNodes.length > 0 ? Math.max(...actorNodes.map((entry) => entry.y + entry.height)) : 0
+  const useCasesBottom = useCaseNodes.length > 0 ? Math.max(...useCaseNodes.map((entry) => entry.y + entry.height)) : height
+  const contentBottom = Math.max(actorsBottom, useCasesBottom, height)
+  const boundaryWidth = width + 2 * BOUNDARY_PADDING + relationRailWidth
+  const boundaryNode = boundary
+    ? { elementId: boundary.id, x: boundaryX, y: 0, width: boundaryWidth, height: contentBottom + BOUNDARY_PADDING }
+    : undefined
+  const nodes = [...(boundaryNode ? [boundaryNode] : []), ...actorNodes, ...useCaseNodes]
+  const nodeById = new Map(nodes.map((node) => [node.elementId, node]))
+
+  const actorAssociations = projection.relationships.filter((entry) =>
+    (actorSet.has(entry.fromId) && useCaseSet.has(entry.toId))
+    || (actorSet.has(entry.toId) && useCaseSet.has(entry.fromId)),
+  )
+  const associationsByActor = new Map<string, UmlRelationship[]>()
+  for (const entry of actorAssociations) {
+    const actorId = actorSet.has(entry.fromId) ? entry.fromId : entry.toId
+    associationsByActor.set(actorId, [...(associationsByActor.get(actorId) ?? []), entry])
+  }
+  for (const entries of associationsByActor.values()) {
+    entries.sort((a, b) => {
+      const aUseCase = actorSet.has(a.fromId) ? a.toId : a.fromId
+      const bUseCase = actorSet.has(b.fromId) ? b.toId : b.fromId
+      return (useCaseIndex.get(aUseCase) ?? 0) - (useCaseIndex.get(bUseCase) ?? 0) || a.id.localeCompare(b.id)
+    })
+  }
+  const associationOrder = [...actorAssociations].sort((a, b) => {
+    const aActor = actorSet.has(a.fromId) ? a.fromId : a.toId
+    const bActor = actorSet.has(b.fromId) ? b.fromId : b.toId
+    const aUseCase = actorSet.has(a.fromId) ? a.toId : a.fromId
+    const bUseCase = actorSet.has(b.fromId) ? b.toId : b.fromId
+    const aActorY = nodeById.get(aActor)?.y ?? 0
+    const bActorY = nodeById.get(bActor)?.y ?? 0
+    return aActorY - bActorY
+      || (useCaseIndex.get(aUseCase) ?? 0) - (useCaseIndex.get(bUseCase) ?? 0)
+      || a.id.localeCompare(b.id)
+  })
+  const associationChannelIndex = new Map(associationOrder.map((entry, index) => [entry.id, index]))
+  const channelBandStart = actorWidth + 18
+  const channelBandWidth = Math.max(24, boundaryX - channelBandStart - 18)
   const associationChannelX = (relationshipId: string) =>
-    actorWidth + 16 + (actorAssociationIds.length - 1 - (associationChannelIndex.get(relationshipId) ?? 0)) * associationChannelStep
+    channelBandStart
+    + ((associationChannelIndex.get(relationshipId) ?? 0) + 1)
+      * channelBandWidth / Math.max(actorAssociations.length + 1, 2)
 
   const edges: DiagramLayoutEdge[] = projection.relationships.map((rel) => {
     const from = nodeById.get(rel.fromId)
@@ -807,17 +969,15 @@ function buildUseCaseLayout(projection: DiagramProjection, width: number, height
       return { relationshipId: rel.id, points: [center, center] }
     }
 
-    const fromKind = projection.elements.find((element) => element.id === rel.fromId)?.kind
-    const toKind = projection.elements.find((element) => element.id === rel.toId)?.kind
+    const fromKind = projection.elements.find((entry) => entry.id === rel.fromId)?.kind
+    const toKind = projection.elements.find((entry) => entry.id === rel.toId)?.kind
     let points: Point[]
     if (fromKind === 'actor' && toKind === 'useCase') {
-      const actorAssociations = associationsByActor.get(rel.fromId) ?? [rel.id]
-      const associationIndex = Math.max(actorAssociations.indexOf(rel.id), 0)
-      const sourceOffset = (associationIndex - (actorAssociations.length - 1) / 2) * 14
-      const sy = from.y + Math.min(34, from.height / 2) + sourceOffset
+      const entries = associationsByActor.get(rel.fromId) ?? [rel]
+      const associationIndex = Math.max(entries.findIndex((entry) => entry.id === rel.id), 0)
+      const sourceOffset = (associationIndex - (entries.length - 1) / 2) * Math.min(14, from.height / Math.max(entries.length + 1, 2))
+      const sy = from.y + from.height / 2 + sourceOffset
       const ty = to.y + to.height / 2
-      // A distinct attachment and corridor for every association prevents
-      // multiple actor lines from visually merging into one unexplained fork.
       const channelX = associationChannelX(rel.id)
       points = [
         { x: from.x + from.width / 2, y: sy },
@@ -827,10 +987,10 @@ function buildUseCaseLayout(projection: DiagramProjection, width: number, height
       ]
     } else if (fromKind === 'useCase' && toKind === 'actor') {
       const sy = from.y + from.height / 2
-      const actorAssociations = associationsByActor.get(rel.toId) ?? [rel.id]
-      const associationIndex = Math.max(actorAssociations.indexOf(rel.id), 0)
-      const targetOffset = (associationIndex - (actorAssociations.length - 1) / 2) * 14
-      const ty = to.y + Math.min(34, to.height / 2) + targetOffset
+      const entries = associationsByActor.get(rel.toId) ?? [rel]
+      const associationIndex = Math.max(entries.findIndex((entry) => entry.id === rel.id), 0)
+      const targetOffset = (associationIndex - (entries.length - 1) / 2) * Math.min(14, to.height / Math.max(entries.length + 1, 2))
+      const ty = to.y + to.height / 2 + targetOffset
       const channelX = associationChannelX(rel.id)
       points = [
         { x: from.x, y: sy },
@@ -838,14 +998,23 @@ function buildUseCaseLayout(projection: DiagramProjection, width: number, height
         { x: channelX, y: ty },
         { x: to.x + to.width / 2, y: ty },
       ]
+    } else if (fromKind === 'useCase' && toKind === 'useCase') {
+      const railX = boundaryX + BOUNDARY_PADDING + width + 24 + (relationRailIndex.get(rel.id) ?? 0) * 18
+      const sy = from.y + from.height / 2
+      const ty = to.y + to.height / 2
+      points = [
+        { x: from.x + from.width, y: sy },
+        { x: railX, y: sy },
+        { x: railX, y: ty },
+        { x: to.x + to.width, y: ty },
+      ]
     } else {
-      const sameColumn = from.x === to.x
-      points = sameColumn
-        ? routeGeneric(from, to, 'vertical', columnCollectorX, USE_CASE_ROW_GAP_OFFSET)
-        : routeGeneric(from, to, 'horizontal', collectorY, USE_CASE_COLUMN_GAP_OFFSET)
+      const collectorY = contentBottom + COLLECTOR_MARGIN
+      points = routeGeneric(from, to, 'horizontal', collectorY, USE_CASE_COLUMN_GAP_OFFSET)
     }
     const label = relationshipLabelText(rel)
-    return { relationshipId: rel.id, points, ...(label ? { labelPosition: labelAtMidpoint(points, 2) } : {}) }
+    const labelSegment = fromKind === 'useCase' && toKind === 'useCase' ? 1 : 2
+    return { relationshipId: rel.id, points, ...(label ? { labelPosition: labelAtMidpoint(points, labelSegment) } : {}) }
   })
 
   return { nodes, edges }
@@ -965,6 +1134,119 @@ function countCrossings(edges: readonly DiagramLayoutEdge[]): number {
     }
   }
   return count
+}
+
+function segmentOverlapLength(a1: Point, a2: Point, b1: Point, b2: Point): number {
+  if (orientation(a1, a2, b1) !== 0 || orientation(a1, a2, b2) !== 0) return 0
+  const useX = Math.abs(a2.x - a1.x) >= Math.abs(a2.y - a1.y)
+  const aStart = useX ? a1.x : a1.y
+  const aEnd = useX ? a2.x : a2.y
+  const bStart = useX ? b1.x : b1.y
+  const bEnd = useX ? b2.x : b2.y
+  return Math.max(0, Math.min(Math.max(aStart, aEnd), Math.max(bStart, bEnd))
+    - Math.max(Math.min(aStart, aEnd), Math.min(bStart, bEnd)))
+}
+
+function countOverlappingEdgePairs(edges: readonly DiagramLayoutEdge[]): number {
+  let count = 0
+  for (let i = 0; i < edges.length; i++) {
+    const segmentsA = toSegments(edges[i]!.points)
+    for (let j = i + 1; j < edges.length; j++) {
+      const segmentsB = toSegments(edges[j]!.points)
+      const overlaps = segmentsA.some(([a1, a2]) =>
+        segmentsB.some(([b1, b2]) => segmentOverlapLength(a1, a2, b1, b2) > 4),
+      )
+      if (overlaps) count += 1
+    }
+  }
+  return count
+}
+
+type LabelRect = { relationshipId: string; x: number; y: number; width: number; height: number }
+
+function labelRect(edge: DiagramLayoutEdge, relationship: UmlRelationship | undefined): LabelRect | undefined {
+  const text = relationship ? relationshipLabelText(relationship) : undefined
+  if (!edge.labelPosition || !text) return undefined
+  const visibleLength = Math.min(text.length, 32)
+  const width = visibleLength * 6.8 + 14
+  return {
+    relationshipId: edge.relationshipId,
+    x: edge.labelPosition.x - width / 2,
+    y: edge.labelPosition.y - 17,
+    width,
+    height: 17,
+  }
+}
+
+function labelRectOverlapsNode(label: LabelRect, node: DiagramLayoutNode): boolean {
+  return !(
+    label.x + label.width <= node.x
+    || node.x + node.width <= label.x
+    || label.y + label.height <= node.y
+    || node.y + node.height <= label.y
+  )
+}
+
+function labelRectsOverlap(a: LabelRect, b: LabelRect): boolean {
+  return !(
+    a.x + a.width <= b.x
+    || b.x + b.width <= a.x
+    || a.y + a.height <= b.y
+    || b.y + b.height <= a.y
+  )
+}
+
+export function analyzeLayoutQuality(
+  layout: DiagramLayout,
+  projection: DiagramProjection,
+  options: DiagramLayoutOptions = {},
+): DiagramLayoutQuality {
+  const kindByElementId = new Map(projection.elements.map((entry) => [entry.id, entry.kind]))
+  const relationshipById = new Map(projection.relationships.map((entry) => [entry.id, entry]))
+  const clearance = options.clearance ?? DEFAULT_CLEARANCE
+  let edgeNodeClearanceViolations = 0
+  let bendCount = 0
+  let totalEdgeLength = 0
+
+  for (const edge of layout.edges) {
+    const relationship = relationshipById.get(edge.relationshipId)
+    const relatedIds = new Set(relationship ? [relationship.fromId, relationship.toId] : [])
+    const segments = toSegments(edge.points)
+    bendCount += Math.max(0, segments.length - 1)
+    for (const [a, b] of segments) totalEdgeLength += Math.hypot(b.x - a.x, b.y - a.y)
+    for (const node of layout.nodes) {
+      if (relatedIds.has(node.elementId) || isContainerKind(kindByElementId.get(node.elementId))) continue
+      const minDistance = Math.min(...segments.map(([a, b]) => segmentToRectDistance(a, b, node)))
+      if (minDistance < clearance) edgeNodeClearanceViolations += 1
+    }
+  }
+
+  const labels = layout.edges
+    .map((edge) => labelRect(edge, relationshipById.get(edge.relationshipId)))
+    .filter((entry): entry is LabelRect => Boolean(entry))
+  let labelNodeOverlaps = 0
+  for (const label of labels) {
+    for (const node of layout.nodes) {
+      if (isContainerKind(kindByElementId.get(node.elementId))) continue
+      if (labelRectOverlapsNode(label, node)) labelNodeOverlaps += 1
+    }
+  }
+  let labelLabelOverlaps = 0
+  for (let index = 0; index < labels.length; index += 1) {
+    for (let other = index + 1; other < labels.length; other += 1) {
+      if (labelRectsOverlap(labels[index]!, labels[other]!)) labelLabelOverlaps += 1
+    }
+  }
+
+  return {
+    crossingCount: countCrossings(layout.edges),
+    overlappingEdgePairs: countOverlappingEdgePairs(layout.edges),
+    edgeNodeClearanceViolations,
+    labelNodeOverlaps,
+    labelLabelOverlaps,
+    bendCount,
+    totalEdgeLength,
+  }
 }
 
 // ---------------------------------------------------------------------------
