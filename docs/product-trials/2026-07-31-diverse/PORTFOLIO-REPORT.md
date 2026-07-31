@@ -84,6 +84,8 @@ The strongest regulated wedges are the DO-178C Review Workbench, Requirements Ch
 
 ## Triage
 
+Status: Deferred at Tim's request on July 30, 2026. Keep these items for later. Do not start them until Tim resumes this triage.
+
 ### High
 
 1. Integrate generation. Replace the external handoff/ZIP round trip with an in-product, policy-controlled generation session. This is the largest self-service and scalable-revenue gap.
@@ -120,5 +122,6 @@ A score of ten requires proof, not more visual polish alone:
 
 - [Product gallery](./GALLERY.html)
 - [UML gallery](./UML-GALLERY.html)
+- [Safari launcher](./OPEN-IN-SAFARI.command)
 - [Portfolio manifest](./evidence/portfolio-manifest.json)
 - [Validation plan](./PLAN.md)
