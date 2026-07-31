@@ -53,13 +53,13 @@ Collapse secondary panels before removing core actions. Primary navigation may c
 Use landmarks for shell regions. Focus order shall move from navigation to page header to main content to local actions. Skip-to-content support should be provided where practical.
 
 ### Approved example
-A dark shell with a quiet top bar, collapsible left navigation, concise page header, integrated title icon, contextual actions, and canvas-first content using panels only where containment is meaningful.
+A task-specific shell with a quiet top bar, appropriate navigation, concise page header, integrated title icon, contextual actions, and canvas-first content using panels only where containment is meaningful.
 
 ### Rejected example
 A generic admin template with white cards, marketing hero header, unlabeled icon navigation, and hidden workflow status.
 
 ### Agent transformation rules
-Preserve shell regions and component IDs. Do not invent new app-level navigation areas unless the task requires them and standards support them.
+Preserve shell regions and component IDs. Select the navigation, header, action placement, and surface model from the task. Do not force a persistent left navigation into an editor, monitor, graph, or short guided task that does not need it.
 
 ### Validation checks
 - `LAY-SHELL-001` regions present.
@@ -73,11 +73,11 @@ Persistent regions shall contain stable orientation and app-level status. They s
 
 ## Page Header Rules
 
-Page headers shall include a title and short description or metadata. A major workflow may include one unboxed semantic icon beside the title. Put only page-level actions in the header; do not repeat global help, breadcrumbs, workflow indicators, or commands already present in the body. For paired modes such as Build and Test, use a quiet text-and-arrow transition rather than a stepper or segmented state control.
+Page headers shall include a title and short description or metadata. A major workflow may include one unboxed semantic icon beside the title. Show one primary page action and no more than two secondary page actions. Put other actions in a labeled command menu or next to the selected object. Do not put the complete action catalog in the header. Do not repeat global help, breadcrumbs, workflow indicators, or commands already present in the body. For paired modes such as Build and Test, use a quiet text-and-arrow transition rather than a stepper or segmented state control.
 
 ## Navigation Region Rules
 
-Navigation shall show active state and shall not duplicate page tabs or command bars.
+Navigation shall show active state and shall not duplicate page tabs or command bars. Use a sidebar for broad product navigation, a rail for a compact work queue, top navigation for a short guided flow, contextual navigation for an editor or detail task, and no persistent navigation for a focused graph when the surrounding product already supplies orientation.
 
 ## Main Content Region Rules
 
@@ -101,8 +101,8 @@ Use semantic landmarks, headings, focus order, and keyboard navigation. Do not r
 
 ## Approved Shell Pattern
 
-Approved: dark frame, restrained surfaces, active navigation, concise icon-supported page header, full-row project navigation, visible local feedback, and predictable command placement.
+Approved: task-specific composition, restrained surfaces, active navigation where needed, concise icon-supported page header, visible local feedback, and predictable command placement.
 
 ## Rejected Shell Patterns
 
-Rejected: marketing landing page, generic SaaS card dashboard, panel around every section, duplicated workflow navigation, missing active state, floating commands with no context, and navigation sprawl.
+Rejected: marketing landing page, generic SaaS card dashboard, one shell reused for unrelated products, panel around every section, duplicated workflow navigation, missing active state, complete action catalog in the page header, floating commands with no context, and navigation sprawl.

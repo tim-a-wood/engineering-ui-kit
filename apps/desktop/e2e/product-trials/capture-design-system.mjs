@@ -7,8 +7,8 @@ import { productTrialSystems } from './systems.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(here, '../../../..')
-const outputRoot = path.join(repoRoot, 'docs/design-system/2026-07-31/screenshots')
-const reportPath = path.join(repoRoot, 'docs/design-system/2026-07-31/browser-validation.json')
+const outputRoot = path.join(repoRoot, 'docs/design-system/2026-07-31-visual-redesign/screenshots')
+const reportPath = path.join(repoRoot, 'docs/design-system/2026-07-31-visual-redesign/browser-validation.json')
 const failures = []
 const screenshots = []
 const browserResults = []
@@ -209,8 +209,11 @@ async function runPhoneMatrix() {
           throw new Error(`The start mode is ${explicitMode ?? 'missing'}.`)
         }
         await assertPageContract(page, 'chromium-mobile', system, false)
-        await page.getByRole('button', { name: 'Open menu' }).click()
         await capture(page, system, 'phone', false)
+        await page.getByRole('button', { name: 'Open menu' }).click()
+        const productNavigation = page.locator('[data-product-nav]').first()
+        await page.waitForFunction((element) => element.getBoundingClientRect().left >= -1, await productNavigation.elementHandle())
+        await capture(page, system, 'phone-menu', false)
         if (errors.length > 0) throw new Error(`Browser errors: ${errors.join(' | ')}`)
       } catch (error) {
         recordFailure('chromium-mobile', system, 'phone contract', error)
@@ -235,11 +238,11 @@ const report = {
   products: productTrialSystems.length,
   engines: ['chromium', 'chromium-mobile'],
   desktopStatesPerProduct: ['light', 'dark', 'help'],
-  phoneStatePerProduct: 'Chromium mobile',
+  phoneStatesPerProduct: ['workspace', 'open navigation'],
   safariCheck: {
     staticFiles: true,
     runtimeDependencies: 0,
-    status: 'The macOS computer was locked during the Safari UI check.',
+    status: 'Not executed. The interactive browser environment was not available.',
   },
   screenshots,
   checks: browserResults,

@@ -85,6 +85,12 @@ export type FrontendLayoutRule = {
   kind: FrontendViewKind
   name: string
   purpose: string
+  composition: {
+    navigation: 'sidebar' | 'rail' | 'top' | 'contextual' | 'none'
+    header: 'workspace' | 'editor' | 'instrument' | 'portal' | 'graph' | 'case'
+    actions: 'selection-contextual' | 'command-first' | 'step-gated' | 'page-primary'
+    surface: 'canvas-sections' | 'bounded-workbench' | 'editor-sheet' | 'control-grid' | 'flow-columns' | 'spatial-canvas'
+  }
   requiredRegions: string[]
   avoid: string[]
 }
@@ -349,6 +355,12 @@ export const FRONTEND_LAYOUT_RULES: Readonly<Record<FrontendViewKind, FrontendLa
     kind: 'workbench',
     name: 'Review workbench',
     purpose: 'Inspect one artifact and its evidence.',
+    composition: {
+      navigation: 'sidebar',
+      header: 'workspace',
+      actions: 'selection-contextual',
+      surface: 'bounded-workbench',
+    },
     requiredRegions: ['context rail', 'primary work surface', 'detail inspector'],
     avoid: ['metric card wall', 'equal panels without a task order'],
   },
@@ -356,6 +368,12 @@ export const FRONTEND_LAYOUT_RULES: Readonly<Record<FrontendViewKind, FrontendLa
     kind: 'table',
     name: 'Record table',
     purpose: 'Find, compare, and act on many records.',
+    composition: {
+      navigation: 'sidebar',
+      header: 'workspace',
+      actions: 'selection-contextual',
+      surface: 'canvas-sections',
+    },
     requiredRegions: ['filter bar', 'data table', 'row or selection detail'],
     avoid: ['record card grid', 'wrapped identifier columns'],
   },
@@ -363,6 +381,12 @@ export const FRONTEND_LAYOUT_RULES: Readonly<Record<FrontendViewKind, FrontendLa
     kind: 'form',
     name: 'Focused form',
     purpose: 'Enter or change one coherent record.',
+    composition: {
+      navigation: 'contextual',
+      header: 'portal',
+      actions: 'page-primary',
+      surface: 'bounded-workbench',
+    },
     requiredRegions: ['short context', 'grouped fields', 'stable action area'],
     avoid: ['placeholder-only labels', 'full-width fields for short values'],
   },
@@ -370,6 +394,12 @@ export const FRONTEND_LAYOUT_RULES: Readonly<Record<FrontendViewKind, FrontendLa
     kind: 'editor',
     name: 'Document editor',
     purpose: 'Create content and resolve review input.',
+    composition: {
+      navigation: 'contextual',
+      header: 'editor',
+      actions: 'command-first',
+      surface: 'editor-sheet',
+    },
     requiredRegions: ['outline', 'document canvas', 'review inspector'],
     avoid: ['dashboard summary before the document', 'nested cards around prose'],
   },
@@ -377,6 +407,12 @@ export const FRONTEND_LAYOUT_RULES: Readonly<Record<FrontendViewKind, FrontendLa
     kind: 'monitor',
     name: 'Live monitor',
     purpose: 'Watch state and investigate change over time.',
+    composition: {
+      navigation: 'rail',
+      header: 'instrument',
+      actions: 'selection-contextual',
+      surface: 'control-grid',
+    },
     requiredRegions: ['channel or scope rail', 'primary plot', 'event stream'],
     avoid: ['equal KPI tiles as the main content', 'color-only alarms'],
   },
@@ -384,6 +420,12 @@ export const FRONTEND_LAYOUT_RULES: Readonly<Record<FrontendViewKind, FrontendLa
     kind: 'board',
     name: 'Flow board',
     purpose: 'Move work through explicit states.',
+    composition: {
+      navigation: 'rail',
+      header: 'workspace',
+      actions: 'selection-contextual',
+      surface: 'flow-columns',
+    },
     requiredRegions: ['state columns', 'work items', 'selected item detail'],
     avoid: ['duplicate summary dashboard', 'unclear item ownership'],
   },
@@ -391,6 +433,12 @@ export const FRONTEND_LAYOUT_RULES: Readonly<Record<FrontendViewKind, FrontendLa
     kind: 'graph',
     name: 'Relationship graph',
     purpose: 'Trace impact and inspect relationships.',
+    composition: {
+      navigation: 'none',
+      header: 'graph',
+      actions: 'selection-contextual',
+      surface: 'spatial-canvas',
+    },
     requiredRegions: ['change context', 'graph canvas', 'selection detail'],
     avoid: ['decorative network view', 'labels without selection detail'],
   },
@@ -398,6 +446,12 @@ export const FRONTEND_LAYOUT_RULES: Readonly<Record<FrontendViewKind, FrontendLa
     kind: 'wizard',
     name: 'Guided task',
     purpose: 'Complete a gated sequence.',
+    composition: {
+      navigation: 'top',
+      header: 'portal',
+      actions: 'step-gated',
+      surface: 'bounded-workbench',
+    },
     requiredRegions: ['progress', 'current step', 'back and next actions'],
     avoid: ['all steps on one screen', 'stepper for two simple modes'],
   },
@@ -405,6 +459,12 @@ export const FRONTEND_LAYOUT_RULES: Readonly<Record<FrontendViewKind, FrontendLa
     kind: 'case',
     name: 'Case workspace',
     purpose: 'Investigate and close one case.',
+    composition: {
+      navigation: 'sidebar',
+      header: 'case',
+      actions: 'selection-contextual',
+      surface: 'bounded-workbench',
+    },
     requiredRegions: ['case list', 'case evidence', 'decision or action area'],
     avoid: ['case card grid', 'hidden case status'],
   },
@@ -412,6 +472,12 @@ export const FRONTEND_LAYOUT_RULES: Readonly<Record<FrontendViewKind, FrontendLa
     kind: 'timeline',
     name: 'Event timeline',
     purpose: 'Review ordered events and evidence.',
+    composition: {
+      navigation: 'contextual',
+      header: 'instrument',
+      actions: 'selection-contextual',
+      surface: 'canvas-sections',
+    },
     requiredRegions: ['time controls', 'event sequence', 'event detail'],
     avoid: ['unordered event cards', 'time encoded by position only'],
   },
@@ -585,6 +651,7 @@ export function renderFrontendDesignCss(config: FrontendDesignSystemConfig): str
 export function buildFrontendDesignPrompt(config: FrontendDesignSystemConfig): string {
   const layoutLines = config.layouts.flatMap((layout) => [
     `- Use ${layout.name} for ${layout.purpose.toLowerCase()}`,
+    `- Use ${layout.composition.navigation} navigation, the ${layout.composition.header} header style, ${layout.composition.actions} actions, and the ${layout.composition.surface} surface model.`,
     `- Include ${layout.requiredRegions.join(', ')}.`,
     `- Avoid ${layout.avoid.join(' and ')}.`,
   ])
@@ -619,8 +686,14 @@ export function buildFrontendDesignPrompt(config: FrontendDesignSystemConfig): s
     '## View layouts',
     ...layoutLines,
     '- Select the layout from the user task.',
+    '- Let the task control the shell. Do not reuse one shell for every product.',
     '- Do not use a dashboard unless measures are the main task.',
     '- Put the main task before support data.',
+    '- Show one primary page action and no more than two secondary page actions.',
+    '- Put other actions in a command menu or next to the selected object.',
+    '- Do not put the complete action catalog in the page header.',
+    '- Use 13 pixel or larger text for normal interface content.',
+    '- Reserve 10 to 12 pixel text for short metadata.',
     '- Show progress for work that takes time.',
     '- Confirm a completed action near its source.',
     '',

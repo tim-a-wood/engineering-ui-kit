@@ -79,6 +79,11 @@ describe('frontend design system', () => {
     expect(prompt).toContain('Do not use accent strips on cards, tiles, panels, sections, or summary blocks.')
     expect(prompt).toContain('Do not use an em dash in visible text.')
     expect(prompt).toContain('Use Document editor')
+    expect(prompt).toContain('Use contextual navigation, the editor header style, command-first actions, and the editor-sheet surface model.')
+    expect(prompt).toContain('Do not reuse one shell for every product.')
+    expect(prompt).toContain('Show one primary page action and no more than two secondary page actions.')
+    expect(prompt).toContain('Do not put the complete action catalog in the page header.')
+    expect(prompt).toContain('Use 13 pixel or larger text for normal interface content.')
   })
 
   it('accepts a complete frontend source set', () => {

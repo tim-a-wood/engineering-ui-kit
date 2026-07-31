@@ -60,6 +60,18 @@ Landing views and project choosers should resemble a native workbench rather tha
 
 Major workflow pages may pair the title with one unboxed semantic icon. The icon shall sit directly in the title bar without a card, tile, glow, or decorative container. A short text-and-arrow transition may appear opposite the title when moving between two closely related modes.
 
+## FND-VIS-013: Task-specific composition
+
+The task shall control the application shell. Select the navigation model, header style, action placement, and surface model from the work that the user must do. A document editor, live monitor, guided intake flow, relationship graph, and case workspace shall not use one interchangeable dashboard shell.
+
+## FND-VIS-014: Restrained page actions
+
+Show one primary page action and no more than two secondary page actions. Put the remaining actions in a labeled command menu or next to the selected object. Do not put the complete action catalog in the page header.
+
+## FND-VIS-015: Readable working text
+
+Use text of 13 pixels or larger for normal interface content. Reserve text from 10 to 12 pixels for short metadata. Do not compress labels, table content, or instructions to create artificial density.
+
 ## Approved Visual Patterns
 
 | Pattern | Rule |
@@ -97,6 +109,9 @@ Major workflow pages may pair the title with one unboxed semantic icon. The icon
 | Ornamental sparkle or magic icon | Signals generic AI branding instead of product meaning. |
 | Em dash in visible copy | Breaks the controlled writing profile and often joins unrelated ideas. |
 | Mixed icon families | Creates inconsistent stroke, weight, geometry, and meaning. |
+| One shell reused for unrelated products | Removes task identity and makes each product look like a template. |
+| Complete action catalog in the page header | Competes with the main task and makes action priority unclear. |
+| Normal interface text below 13 pixels | Reduces scanability and creates artificial density. |
 
 ## Mockup Calibration Notes
 

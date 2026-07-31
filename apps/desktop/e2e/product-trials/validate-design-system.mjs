@@ -99,12 +99,35 @@ for (const system of productTrialSystems) {
   if (findings.length > 0) {
     throw new Error(`${system.slug} failed the frontend gate: ${findings.map((item) => item.code).join(', ')}`)
   }
+  const shellMode = renderedHtml.match(/data-shell-mode="([^"]+)"/)?.[1]
+  const composition = renderedHtml.match(/data-composition="([^"]+)"/)?.[1]
+  const visibleActionCount = (renderedHtml.match(/data-scenario-action=/g) ?? []).length
+  const moreActionCount = (renderedHtml.match(/class="more-actions"/g) ?? []).length
+  const commandActionCount = (renderedHtml.match(/data-command-item=/g) ?? []).length
+  if (!shellMode) throw new Error(`${system.slug} has no shell mode.`)
+  if (!composition) throw new Error(`${system.slug} has no composition identity.`)
+  if (visibleActionCount < 1 || visibleActionCount > 3) {
+    throw new Error(`${system.slug} shows ${visibleActionCount} page actions. Expected 1 to 3.`)
+  }
+  if (moreActionCount !== 1) {
+    throw new Error(`${system.slug} has ${moreActionCount} labeled action menus. Expected 1.`)
+  }
+  if (commandActionCount !== system.scenarios.length) {
+    throw new Error(`${system.slug} exposes ${commandActionCount} of ${system.scenarios.length} actions in its command menu.`)
+  }
+  if (/reward-toast|reward-spark|reward-track/.test(renderedHtml + sharedSources['styles.css'])) {
+    throw new Error(`${system.slug} still contains generic reward UI.`)
+  }
   results.push({
     slug: system.slug,
     productKind: system.productKind,
     architecture: system.architecture.style,
     moduleCount: system.architecture.modules.length,
     scenarioCount: system.scenarios.length,
+    visibleActionCount,
+    commandActionCount,
+    shellMode,
+    composition,
     design: {
       palette: system.design.palette,
       font: system.design.fontId,
@@ -119,6 +142,12 @@ for (const system of productTrialSystems) {
 
 if (new Set(results.map((result) => result.sourceHash)).size !== results.length) {
   throw new Error('Two product frontends have the same rendered source.')
+}
+if (new Set(results.map((result) => result.shellMode)).size !== results.length) {
+  throw new Error('Two product frontends use the same shell mode.')
+}
+if (new Set(results.map((result) => result.composition)).size !== results.length) {
+  throw new Error('Two product frontends use the same composition identity.')
 }
 
 const report = {

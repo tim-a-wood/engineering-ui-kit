@@ -154,6 +154,9 @@ export const STANDARD_APPROVED_GUIDANCE = [
   'Quiet canvas with a task-first hierarchy.',
   'Stable left navigation, visible active state, collapsible to a compact rail with a persisted, keyboard-accessible toggle.',
   'Concise page header.',
+  'Task-specific composition: the navigation, header, action placement, and surface model come from the user task.',
+  'One primary page action and no more than two secondary page actions; other actions stay in a labeled command menu or beside the selected object.',
+  'Normal interface text at 13px or larger; 10px to 12px text is reserved for short metadata.',
   'Compact but readable bounded tools; whitespace and hairlines for ordinary grouping.',
   'Monospaced project paths and technical identifiers.',
   'Primary action hierarchy.',
@@ -216,6 +219,9 @@ export const STANDARD_REJECTED_GUIDANCE = [
   'Decorative accent strips on cards, tiles, panels, sections, summaries, wells, or callouts.',
   'Ornamental sparkles, magic wands, or AI gradient effects.',
   'Em dashes, vague promotional text, and conversational filler in visible copy.',
+  'One application shell reused for unrelated products.',
+  'The complete action catalog in the page header.',
+  'Normal interface labels, table content, or instructions below 13px.',
 ]
 
 export const STANDARD_ACCESSIBILITY_REQUIREMENTS = [

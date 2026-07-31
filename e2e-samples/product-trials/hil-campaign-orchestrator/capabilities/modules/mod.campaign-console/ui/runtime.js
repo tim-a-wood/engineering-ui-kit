@@ -4,10 +4,6 @@ const viewTitle = document.querySelector('[data-view-title]')
 const navButtons = [...document.querySelectorAll('[data-nav-target]')]
 const scenarioButtons = [...document.querySelectorAll('[data-scenario-action]')]
 const results = [...document.querySelectorAll('[data-scenario-result]')]
-const reward = document.querySelector('.reward-toast[data-reward]')
-const rewardLabel = document.querySelector('[data-reward-label]')
-const rewardCount = document.querySelector('[data-reward-count]')
-const rewardBar = document.querySelector('[data-reward-bar]')
 const commandDialog = document.querySelector('[data-command-dialog]')
 const commandInput = document.querySelector('[data-command-input]')
 const commandItems = [...document.querySelectorAll('[data-command-item]')]
@@ -16,8 +12,6 @@ const themeToggle = document.querySelector('[data-theme-toggle]')
 const helpTrigger = document.querySelector('[data-help-trigger]')
 const helpPopover = document.querySelector('[data-help-popover]')
 const tooltipTriggers = [...document.querySelectorAll('[data-tooltip-trigger]')]
-let completedActions = 0
-let rewardTimer
 
 function activeTheme() {
   const explicit = document.documentElement.dataset.theme
@@ -92,14 +86,6 @@ function showResult(id, actionName) {
   const result = results.find((item) => item.dataset.scenarioResult === id)
   if (!result) return
   result.classList.add('is-visible')
-  completedActions = Math.min(config.scenarios.length, completedActions + 1)
-  rewardLabel.textContent = result.dataset.reward || config.reward
-  rewardCount.textContent = `${completedActions} of ${config.scenarios.length} actions complete`
-  rewardBar.style.width = `${Math.round((completedActions / config.scenarios.length) * 100)}%`
-  reward.classList.remove('show')
-  requestAnimationFrame(() => reward.classList.add('show'))
-  clearTimeout(rewardTimer)
-  rewardTimer = window.setTimeout(() => reward.classList.remove('show'), 4200)
 
   const row = document.createElement('li')
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -133,7 +119,9 @@ function closeCommands() {
   commandDialog.hidden = true
 }
 
-document.querySelector('[data-open-commands]').addEventListener('click', openCommands)
+document.querySelectorAll('[data-open-commands]').forEach((control) => {
+  control.addEventListener('click', openCommands)
+})
 document.querySelector('[data-close-commands]').addEventListener('click', closeCommands)
 
 commandInput.addEventListener('input', () => {
@@ -145,9 +133,11 @@ commandInput.addEventListener('input', () => {
 
 commandItems.forEach((item) => {
   item.addEventListener('click', () => {
-    const action = scenarioButtons.find((button) => button.dataset.scenarioAction === item.dataset.commandItem)
+    const action = config.scenarios.find((candidate) => candidate.actionId === item.dataset.commandItem)
     closeCommands()
-    action?.click()
+    if (!action) return
+    setActiveView(action.target)
+    showResult(action.actionId, action.name)
   })
 })
 

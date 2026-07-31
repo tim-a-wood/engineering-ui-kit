@@ -16,6 +16,8 @@
   --eui-color-accent-active: color-mix(in srgb, var(--eui-color-accent) 76%, black);
   --eui-color-accent-soft: var(--eui-brand-soft-light, #e2eef5);
   --eui-color-on-accent: #ffffff;
+  --eui-color-navigation: #08263d;
+  --eui-color-navigation-muted: #a9bdca;
   --eui-color-focus: #0069aa;
   --eui-color-success: #176b3a;
   --eui-color-warning: #805400;
@@ -42,6 +44,8 @@
   --eui-color-accent-active: color-mix(in srgb, var(--eui-color-accent) 82%, black);
   --eui-color-accent-soft: var(--eui-brand-soft-dark, #0d3854);
   --eui-color-on-accent: #071521;
+  --eui-color-navigation: #06131f;
+  --eui-color-navigation-muted: #9fb7c5;
   --eui-color-focus: #8ac9f0;
   --eui-color-success: #63d69b;
   --eui-color-warning: #f2c46d;
@@ -68,6 +72,8 @@
     --eui-color-accent-active: color-mix(in srgb, var(--eui-color-accent) 82%, black);
     --eui-color-accent-soft: var(--eui-brand-soft-dark, #0d3854);
     --eui-color-on-accent: #071521;
+    --eui-color-navigation: #06131f;
+    --eui-color-navigation-muted: #9fb7c5;
     --eui-color-focus: #8ac9f0;
     --eui-color-success: #63d69b;
     --eui-color-warning: #f2c46d;
@@ -95,6 +101,8 @@
   --red: var(--eui-color-danger);
   --blue: var(--eui-color-info);
   --shadow: var(--eui-shadow-raised);
+  --navigation: var(--eui-color-navigation);
+  --navigation-muted: var(--eui-color-navigation-muted);
 }
 
 * {
@@ -175,18 +183,6 @@ input:focus-visible {
   letter-spacing: -0.04em;
 }
 
-.brand-mark::after {
-  position: absolute;
-  right: -9px;
-  bottom: -10px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: rgba(var(--accent-rgb), 0.24);
-  content: "";
-  filter: blur(5px);
-}
-
 .brand-copy {
   display: flex;
   min-width: 0;
@@ -241,7 +237,6 @@ input:focus-visible {
 .nav-item.active {
   border-color: rgba(var(--accent-rgb), 0.3);
   background: rgba(var(--accent-rgb), 0.12);
-  box-shadow: inset 3px 0 var(--accent);
   color: var(--text);
 }
 
@@ -891,8 +886,9 @@ main {
 
 .editor-sheet p.highlight {
   margin-inline: -12px;
+  border: 1px solid rgba(var(--accent-rgb), 0.34);
+  border-radius: 5px;
   padding: 4px 10px 4px 12px;
-  border-left: 2px solid var(--accent);
   background: rgba(var(--accent-rgb), 0.08);
 }
 
@@ -1459,77 +1455,6 @@ main {
 
 .activity-list b {
   font-size: 9px;
-}
-
-.reward-toast {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 80;
-  width: min(330px, calc(100vw - 32px));
-  padding: 15px;
-  border: 1px solid rgba(var(--accent-rgb), 0.42);
-  border-radius: 12px;
-  background: var(--surface-raised);
-  box-shadow: var(--shadow);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(18px) scale(0.98);
-  transition: opacity 180ms ease, transform 220ms ease;
-}
-
-.reward-toast.show {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.reward-head {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-}
-
-.reward-spark {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  border-radius: 10px;
-  background: rgba(var(--accent-rgb), 0.16);
-  color: var(--accent);
-  font-size: 17px;
-}
-
-.reward-head span {
-  display: flex;
-  flex-direction: column;
-}
-
-.reward-head b {
-  font-size: 11px;
-}
-
-.reward-head small {
-  margin-top: 3px;
-  color: var(--quiet);
-  font-size: 8px;
-}
-
-.reward-track {
-  height: 4px;
-  margin-top: 12px;
-  overflow: hidden;
-  border-radius: 2px;
-  background: var(--line);
-}
-
-.reward-track i {
-  display: block;
-  width: 0;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent);
-  transition: width 300ms ease;
 }
 
 .command-dialog {
