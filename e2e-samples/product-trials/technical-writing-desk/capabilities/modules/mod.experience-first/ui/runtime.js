@@ -7,11 +7,27 @@ const results = [...document.querySelectorAll('[data-scenario-result]')]
 const commandDialog = document.querySelector('[data-command-dialog]')
 const commandInput = document.querySelector('[data-command-input]')
 const commandItems = [...document.querySelectorAll('[data-command-item]')]
-const activity = document.querySelector('[data-activity]')
 const themeToggle = document.querySelector('[data-theme-toggle]')
 const helpTrigger = document.querySelector('[data-help-trigger]')
 const helpPopover = document.querySelector('[data-help-popover]')
 const tooltipTriggers = [...document.querySelectorAll('[data-tooltip-trigger]')]
+const mobileMenu = document.querySelector('[data-mobile-menu]')
+const navigationScrim = document.querySelector('[data-close-navigation]')
+const productWorkspace = document.querySelector('.product-workspace')
+const mobileNavigation = document.querySelector('[data-product-nav]')
+
+function setNavigationOpen(open, returnFocus = true) {
+  shell.classList.toggle('menu-open', open)
+  mobileMenu?.setAttribute('aria-expanded', String(open))
+  if (productWorkspace && mobileNavigation && !productWorkspace.contains(mobileNavigation)) {
+    productWorkspace.inert = open
+  }
+  if (open) {
+    document.querySelector('[data-product-nav] button, [data-product-nav] input')?.focus()
+  } else if (returnFocus) {
+    mobileMenu?.focus()
+  }
+}
 
 function activeTheme() {
   const explicit = document.documentElement.dataset.theme
@@ -78,10 +94,10 @@ function setActiveView(view) {
     else button.removeAttribute('aria-current')
   })
   if (selected) viewTitle.textContent = selected.dataset.navTitle
-  shell.classList.remove('menu-open')
+  setNavigationOpen(false, false)
 }
 
-function showResult(id, actionName) {
+function showResult(id) {
   results.forEach((item) => item.classList.remove('is-visible'))
   const result = results.find((item) => item.dataset.scenarioResult === id)
   if (!result) return
@@ -91,10 +107,6 @@ function showResult(id, actionName) {
   actionRegion?.append(result)
   result.classList.add('is-visible')
 
-  const row = document.createElement('li')
-  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  row.innerHTML = `<span>${time}</span><b>${actionName}</b><small>${result.textContent.trim()}</small>`
-  activity.prepend(row)
 }
 
 navButtons.forEach((button) => {
@@ -104,13 +116,15 @@ navButtons.forEach((button) => {
 scenarioButtons.forEach((button) => {
   button.addEventListener('click', () => {
     setActiveView(button.dataset.target || navButtons[0]?.dataset.navTarget)
-    showResult(button.dataset.scenarioAction, button.textContent.trim())
+    showResult(button.dataset.scenarioAction)
   })
 })
 
-document.querySelector('[data-mobile-menu]').addEventListener('click', () => {
-  shell.classList.toggle('menu-open')
+mobileMenu?.addEventListener('click', () => {
+  setNavigationOpen(!shell.classList.contains('menu-open'))
 })
+
+navigationScrim?.addEventListener('click', () => setNavigationOpen(false))
 
 function openCommands() {
   commandDialog.hidden = false
@@ -141,7 +155,7 @@ commandItems.forEach((item) => {
     closeCommands()
     if (!action) return
     setActiveView(action.target)
-    showResult(action.actionId, action.name)
+    showResult(action.actionId)
   })
 })
 
@@ -155,7 +169,7 @@ document.addEventListener('keydown', (event) => {
     closeHelp()
     const activeControl = document.activeElement?.closest?.('[data-tooltip-trigger]')
     activeControl?.classList.add('tooltip-suppressed')
-    shell.classList.remove('menu-open')
+    setNavigationOpen(false, false)
   }
 })
 

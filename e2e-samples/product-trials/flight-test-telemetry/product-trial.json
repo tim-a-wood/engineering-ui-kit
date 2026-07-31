@@ -20,7 +20,7 @@
   "accent": "#f97316",
   "accentRgb": "249, 115, 22",
   "homeTitle": "Telemetry triage",
-  "eyebrow": "FLIGHT FT-284 · LEG 03 · 46 MINUTES",
+  "eyebrow": "Flight FT-284 · Leg 03 · 46 minutes",
   "headline": "Review acceleration exceedance",
   "subhead": "Correlate aircraft state, mark the valid interval, and preserve the source samples.",
   "nav": [
@@ -29,8 +29,8 @@
     "Events",
     "Investigations"
   ],
-  "metricPurpose": "Show data health and triage scope for the selected flight.",
-  "metrics": [
+  "decisionPurpose": "Show data health and triage scope for the selected flight.",
+  "decisionFacts": [
     [
       "Channels",
       "248",
@@ -252,26 +252,722 @@
     "contractId": "EUIT-FRONTEND-001",
     "iconFamily": "lucide",
     "paletteId": "midnight",
-    "fontId": "inter",
+    "fontId": "system",
     "defaultMode": "dark",
     "density": "compact",
+    "viewKinds": [
+      "monitor",
+      "timeline"
+    ],
     "palette": "Midnight blue",
-    "darkCanvas": "#080d14",
-    "darkSurface": "#111923",
-    "darkSurfaceSubtle": "#111923",
-    "darkSurfaceRaised": "#111923",
-    "darkBorder": "#263344",
-    "darkBorderStrong": "#5d6c7e",
-    "lightNavigation": "#145ea8",
-    "darkNavigation": "#080d14",
-    "darkNavigationMuted": "#b8c0ca",
-    "darkOnAccent": "#080d14",
-    "lightAccent": "#145ea8",
-    "darkAccent": "#70a0cf",
-    "lightSoft": "#e4eef9",
-    "darkSoft": "#111923",
-    "lightRgb": "20, 94, 168",
-    "darkRgb": "112, 160, 207",
-    "fontStack": "Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+    "fontStack": "ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+    "config": {
+      "schemaVersion": "1.1",
+      "contractId": "EUIT-FRONTEND-001",
+      "writingProfileId": "EUIT-STE-001",
+      "palette": {
+        "id": "midnight",
+        "name": "Midnight blue",
+        "description": "Neutral graphite surfaces with restrained blue actions and emphasis.",
+        "light": {
+          "canvas": "#f6f8fa",
+          "surface": "#ffffff",
+          "surfaceSubtle": "#ffffff",
+          "surfaceRaised": "#ffffff",
+          "overlay": "#ffffff",
+          "text": "#1f2328",
+          "textMuted": "#59636e",
+          "textQuiet": "#656d76",
+          "border": "#d0d7de",
+          "borderStrong": "#818b98",
+          "accentForeground": "#0969da",
+          "accent": "#0969da",
+          "accentHover": "#0860ca",
+          "accentActive": "#0757ba",
+          "accentSoft": "#ddf4ff",
+          "action": "#0969da",
+          "actionHover": "#0860ca",
+          "actionActive": "#0757ba",
+          "onAccent": "#ffffff",
+          "control": "#f6f8fa",
+          "controlHover": "#eef1f4",
+          "selected": "#ddf4ff",
+          "selectedBorder": "#0969da",
+          "focus": "#0969da",
+          "success": "#176b3a",
+          "warning": "#805400",
+          "danger": "#b42318",
+          "info": "#0969da",
+          "shadow": "0 12px 32px rgba(31, 35, 40, 0.14)"
+        },
+        "dark": {
+          "canvas": "#0d1117",
+          "surface": "#161b22",
+          "surfaceSubtle": "#161b22",
+          "surfaceRaised": "#161b22",
+          "overlay": "#1c2128",
+          "text": "#f0f6fc",
+          "textMuted": "#b1bac4",
+          "textQuiet": "#8b949e",
+          "border": "#30363d",
+          "borderStrong": "#6e7681",
+          "accentForeground": "#58a6ff",
+          "accent": "#1f6feb",
+          "accentHover": "#1a64d6",
+          "accentActive": "#195bbf",
+          "accentSoft": "#1b2a3a",
+          "action": "#1f6feb",
+          "actionHover": "#1a64d6",
+          "actionActive": "#195bbf",
+          "onAccent": "#ffffff",
+          "control": "#0d1117",
+          "controlHover": "#1c2128",
+          "selected": "#1b2a3a",
+          "selectedBorder": "#58a6ff",
+          "focus": "#58a6ff",
+          "success": "#57c785",
+          "warning": "#e5b95c",
+          "danger": "#ff7b72",
+          "info": "#58a6ff",
+          "shadow": "0 18px 48px rgba(0, 0, 0, 0.38)"
+        }
+      },
+      "typography": {
+        "id": "system",
+        "name": "System sans",
+        "stack": "ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "posture": "Native, fast, and neutral."
+      },
+      "defaultMode": "dark",
+      "density": "compact",
+      "modeToggle": true,
+      "icons": {
+        "family": "lucide",
+        "packageNames": [
+          "lucide",
+          "lucide-react",
+          "@lucide/vue",
+          "@lucide/svelte",
+          "lucide-static"
+        ],
+        "license": "ISC",
+        "viewBox": "0 0 24 24",
+        "strokeWidth": 2,
+        "lineCap": "round",
+        "lineJoin": "round",
+        "sizes": {
+          "inline": 16,
+          "control": 18,
+          "navigation": 20,
+          "feature": 24
+        },
+        "helpIcon": "circle-help"
+      },
+      "workspacePolicy": {
+        "surfaces": {
+          "primary-work-surface": {
+            "elevation": "flat",
+            "scope": "task"
+          },
+          "structural-pane": {
+            "elevation": "flat",
+            "scope": "structure"
+          },
+          "inset-object": {
+            "elevation": "contained",
+            "scope": "object"
+          },
+          "overlay": {
+            "elevation": "raised",
+            "scope": "transient"
+          }
+        },
+        "defaultRegionContainer": "flat",
+        "cardsAsDefaultRegionContainers": false,
+        "titleHierarchy": {
+          "visiblePageHeadingCount": 1,
+          "pageTitleLevel": 1,
+          "pageTitleMustExceedSummary": true,
+          "sectionTitleMustExceedDescription": true
+        }
+      },
+      "viewKinds": [
+        "monitor",
+        "timeline"
+      ],
+      "layouts": [
+        {
+          "kind": "monitor",
+          "recipeId": "RCP-MONITOR-001",
+          "name": "Live monitor",
+          "purpose": "Watch state and investigate change over time.",
+          "workspace": {
+            "primaryRegionId": "primary-plot",
+            "primarySurface": "primary-work-surface",
+            "supportingSurface": "structural-pane",
+            "objectSurface": "inset-object",
+            "transientSurface": "overlay",
+            "placement": "explicit-grid",
+            "measurement": {
+              "mode": "task",
+              "approvedDecisionPurpose": "decide-if-state-needs-action"
+            }
+          },
+          "composition": {
+            "navigation": "rail",
+            "header": "instrument",
+            "actions": "selection-contextual",
+            "surface": "control-grid"
+          },
+          "geometry": {
+            "maxContentWidth": "fluid",
+            "columns": "minmax(210px, 0.45fr) minmax(560px, 1.65fr) minmax(300px, 0.65fr)",
+            "gap": 0,
+            "wideMinimumWidth": 1070,
+            "primaryMinWidth": 560,
+            "narrowBreakpoint": 1120
+          },
+          "regions": [
+            {
+              "id": "scope-rail",
+              "role": "context",
+              "priority": 2,
+              "minWidth": 210,
+              "preferredWidth": 240,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 2
+                }
+              },
+              "componentIds": [
+                "CMP-FILTER-BAR",
+                "CMP-NAV-SECONDARY"
+              ]
+            },
+            {
+              "id": "primary-plot",
+              "role": "primary",
+              "priority": 1,
+              "minWidth": 560,
+              "preferredWidth": "fluid",
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 2,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 1
+                }
+              },
+              "componentIds": [
+                "CMP-VIZ-CHART-PANEL",
+                "CMP-VIZ-LINE-CHART",
+                "CMP-VIZ-LEGEND"
+              ]
+            },
+            {
+              "id": "event-stream",
+              "role": "inspector",
+              "priority": 2,
+              "minWidth": 300,
+              "preferredWidth": 340,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 3,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 3
+                }
+              },
+              "componentIds": [
+                "CMP-WORKFLOW-TIMELINE-EVENT-LOG"
+              ]
+            }
+          ],
+          "componentIds": [
+            "CMP-FILTER-BAR",
+            "CMP-NAV-SECONDARY",
+            "CMP-VIZ-CHART-PANEL",
+            "CMP-VIZ-LINE-CHART",
+            "CMP-VIZ-LEGEND",
+            "CMP-WORKFLOW-TIMELINE-EVENT-LOG"
+          ],
+          "requiredRegions": [
+            "channel or scope rail",
+            "primary plot",
+            "event stream"
+          ],
+          "avoid": [
+            "equal KPI tiles as the main content",
+            "color-only alarms"
+          ]
+        },
+        {
+          "kind": "timeline",
+          "recipeId": "RCP-TIMELINE-001",
+          "name": "Event timeline",
+          "purpose": "Review ordered events and evidence.",
+          "workspace": {
+            "primaryRegionId": "event-sequence",
+            "primarySurface": "primary-work-surface",
+            "supportingSurface": "structural-pane",
+            "objectSurface": "inset-object",
+            "transientSurface": "overlay",
+            "placement": "explicit-grid",
+            "measurement": {
+              "mode": "prohibited",
+              "approvedDecisionPurpose": null
+            }
+          },
+          "composition": {
+            "navigation": "contextual",
+            "header": "instrument",
+            "actions": "selection-contextual",
+            "surface": "canvas-sections"
+          },
+          "geometry": {
+            "maxContentWidth": 1280,
+            "columns": "minmax(520px, 1fr) minmax(300px, 0.4fr)",
+            "gap": 16,
+            "wideMinimumWidth": 836,
+            "primaryMinWidth": 520,
+            "narrowBreakpoint": 900
+          },
+          "regions": [
+            {
+              "id": "time-controls",
+              "role": "commands",
+              "priority": 1,
+              "minWidth": 300,
+              "preferredWidth": "fluid",
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 2,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 1
+                }
+              },
+              "componentIds": [
+                "CMP-FILTER-BAR",
+                "CMP-FORM-DATE-TIME-INPUT"
+              ]
+            },
+            {
+              "id": "event-sequence",
+              "role": "primary",
+              "priority": 1,
+              "minWidth": 520,
+              "preferredWidth": "fluid",
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 2
+                },
+                "narrow": {
+                  "order": 2
+                }
+              },
+              "componentIds": [
+                "CMP-WORKFLOW-TIMELINE-EVENT-LOG"
+              ]
+            },
+            {
+              "id": "event-detail",
+              "role": "inspector",
+              "priority": 2,
+              "minWidth": 300,
+              "preferredWidth": 340,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 2,
+                  "columnSpan": 1,
+                  "rowStart": 2
+                },
+                "narrow": {
+                  "order": 3
+                }
+              },
+              "componentIds": [
+                "CMP-LAYOUT-DETAIL",
+                "CMP-ENG-EVIDENCE-CARD"
+              ]
+            }
+          ],
+          "componentIds": [
+            "CMP-FILTER-BAR",
+            "CMP-FORM-DATE-TIME-INPUT",
+            "CMP-WORKFLOW-TIMELINE-EVENT-LOG",
+            "CMP-LAYOUT-DETAIL",
+            "CMP-ENG-EVIDENCE-CARD"
+          ],
+          "requiredRegions": [
+            "time controls",
+            "event sequence",
+            "event detail"
+          ],
+          "avoid": [
+            "unordered event cards",
+            "time encoded by position only"
+          ]
+        }
+      ],
+      "pagePlan": {
+        "primaryViewKind": "monitor",
+        "primaryLayout": {
+          "kind": "monitor",
+          "recipeId": "RCP-MONITOR-001",
+          "name": "Live monitor",
+          "purpose": "Watch state and investigate change over time.",
+          "workspace": {
+            "primaryRegionId": "primary-plot",
+            "primarySurface": "primary-work-surface",
+            "supportingSurface": "structural-pane",
+            "objectSurface": "inset-object",
+            "transientSurface": "overlay",
+            "placement": "explicit-grid",
+            "measurement": {
+              "mode": "task",
+              "approvedDecisionPurpose": "decide-if-state-needs-action"
+            }
+          },
+          "composition": {
+            "navigation": "rail",
+            "header": "instrument",
+            "actions": "selection-contextual",
+            "surface": "control-grid"
+          },
+          "geometry": {
+            "maxContentWidth": "fluid",
+            "columns": "minmax(210px, 0.45fr) minmax(560px, 1.65fr) minmax(300px, 0.65fr)",
+            "gap": 0,
+            "wideMinimumWidth": 1070,
+            "primaryMinWidth": 560,
+            "narrowBreakpoint": 1120
+          },
+          "regions": [
+            {
+              "id": "scope-rail",
+              "role": "context",
+              "priority": 2,
+              "minWidth": 210,
+              "preferredWidth": 240,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 2
+                }
+              },
+              "componentIds": [
+                "CMP-FILTER-BAR",
+                "CMP-NAV-SECONDARY"
+              ]
+            },
+            {
+              "id": "primary-plot",
+              "role": "primary",
+              "priority": 1,
+              "minWidth": 560,
+              "preferredWidth": "fluid",
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 2,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 1
+                }
+              },
+              "componentIds": [
+                "CMP-VIZ-CHART-PANEL",
+                "CMP-VIZ-LINE-CHART",
+                "CMP-VIZ-LEGEND"
+              ]
+            },
+            {
+              "id": "event-stream",
+              "role": "inspector",
+              "priority": 2,
+              "minWidth": 300,
+              "preferredWidth": 340,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 3,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 3
+                }
+              },
+              "componentIds": [
+                "CMP-WORKFLOW-TIMELINE-EVENT-LOG"
+              ]
+            }
+          ],
+          "componentIds": [
+            "CMP-FILTER-BAR",
+            "CMP-NAV-SECONDARY",
+            "CMP-VIZ-CHART-PANEL",
+            "CMP-VIZ-LINE-CHART",
+            "CMP-VIZ-LEGEND",
+            "CMP-WORKFLOW-TIMELINE-EVENT-LOG"
+          ],
+          "requiredRegions": [
+            "channel or scope rail",
+            "primary plot",
+            "event stream"
+          ],
+          "avoid": [
+            "equal KPI tiles as the main content",
+            "color-only alarms"
+          ]
+        },
+        "supportingViewKinds": [
+          "timeline"
+        ],
+        "supportingLayouts": [
+          {
+            "kind": "timeline",
+            "recipeId": "RCP-TIMELINE-001",
+            "name": "Event timeline",
+            "purpose": "Review ordered events and evidence.",
+            "workspace": {
+              "primaryRegionId": "event-sequence",
+              "primarySurface": "primary-work-surface",
+              "supportingSurface": "structural-pane",
+              "objectSurface": "inset-object",
+              "transientSurface": "overlay",
+              "placement": "explicit-grid",
+              "measurement": {
+                "mode": "prohibited",
+                "approvedDecisionPurpose": null
+              }
+            },
+            "composition": {
+              "navigation": "contextual",
+              "header": "instrument",
+              "actions": "selection-contextual",
+              "surface": "canvas-sections"
+            },
+            "geometry": {
+              "maxContentWidth": 1280,
+              "columns": "minmax(520px, 1fr) minmax(300px, 0.4fr)",
+              "gap": 16,
+              "wideMinimumWidth": 836,
+              "primaryMinWidth": 520,
+              "narrowBreakpoint": 900
+            },
+            "regions": [
+              {
+                "id": "time-controls",
+                "role": "commands",
+                "priority": 1,
+                "minWidth": 300,
+                "preferredWidth": "fluid",
+                "narrowBehavior": "retain",
+                "placement": {
+                  "wide": {
+                    "columnStart": 1,
+                    "columnSpan": 2,
+                    "rowStart": 1
+                  },
+                  "narrow": {
+                    "order": 1
+                  }
+                },
+                "componentIds": [
+                  "CMP-FILTER-BAR",
+                  "CMP-FORM-DATE-TIME-INPUT"
+                ]
+              },
+              {
+                "id": "event-sequence",
+                "role": "primary",
+                "priority": 1,
+                "minWidth": 520,
+                "preferredWidth": "fluid",
+                "narrowBehavior": "retain",
+                "placement": {
+                  "wide": {
+                    "columnStart": 1,
+                    "columnSpan": 1,
+                    "rowStart": 2
+                  },
+                  "narrow": {
+                    "order": 2
+                  }
+                },
+                "componentIds": [
+                  "CMP-WORKFLOW-TIMELINE-EVENT-LOG"
+                ]
+              },
+              {
+                "id": "event-detail",
+                "role": "inspector",
+                "priority": 2,
+                "minWidth": 300,
+                "preferredWidth": 340,
+                "narrowBehavior": "drawer",
+                "placement": {
+                  "wide": {
+                    "columnStart": 2,
+                    "columnSpan": 1,
+                    "rowStart": 2
+                  },
+                  "narrow": {
+                    "order": 3
+                  }
+                },
+                "componentIds": [
+                  "CMP-LAYOUT-DETAIL",
+                  "CMP-ENG-EVIDENCE-CARD"
+                ]
+              }
+            ],
+            "componentIds": [
+              "CMP-FILTER-BAR",
+              "CMP-FORM-DATE-TIME-INPUT",
+              "CMP-WORKFLOW-TIMELINE-EVENT-LOG",
+              "CMP-LAYOUT-DETAIL",
+              "CMP-ENG-EVIDENCE-CARD"
+            ],
+            "requiredRegions": [
+              "time controls",
+              "event sequence",
+              "event detail"
+            ],
+            "avoid": [
+              "unordered event cards",
+              "time encoded by position only"
+            ]
+          }
+        ],
+        "geometry": {
+          "maxContentWidth": "fluid",
+          "columns": "minmax(210px, 0.45fr) minmax(560px, 1.65fr) minmax(300px, 0.65fr)",
+          "gap": 0,
+          "wideMinimumWidth": 1070,
+          "primaryMinWidth": 560,
+          "narrowBreakpoint": 1120
+        },
+        "regions": [
+          {
+            "id": "scope-rail",
+            "role": "context",
+            "priority": 2,
+            "minWidth": 210,
+            "preferredWidth": 240,
+            "narrowBehavior": "drawer",
+            "placement": {
+              "wide": {
+                "columnStart": 1,
+                "columnSpan": 1,
+                "rowStart": 1
+              },
+              "narrow": {
+                "order": 2
+              }
+            },
+            "componentIds": [
+              "CMP-FILTER-BAR",
+              "CMP-NAV-SECONDARY"
+            ]
+          },
+          {
+            "id": "primary-plot",
+            "role": "primary",
+            "priority": 1,
+            "minWidth": 560,
+            "preferredWidth": "fluid",
+            "narrowBehavior": "retain",
+            "placement": {
+              "wide": {
+                "columnStart": 2,
+                "columnSpan": 1,
+                "rowStart": 1
+              },
+              "narrow": {
+                "order": 1
+              }
+            },
+            "componentIds": [
+              "CMP-VIZ-CHART-PANEL",
+              "CMP-VIZ-LINE-CHART",
+              "CMP-VIZ-LEGEND"
+            ]
+          },
+          {
+            "id": "event-stream",
+            "role": "inspector",
+            "priority": 2,
+            "minWidth": 300,
+            "preferredWidth": 340,
+            "narrowBehavior": "drawer",
+            "placement": {
+              "wide": {
+                "columnStart": 3,
+                "columnSpan": 1,
+                "rowStart": 1
+              },
+              "narrow": {
+                "order": 3
+              }
+            },
+            "componentIds": [
+              "CMP-WORKFLOW-TIMELINE-EVENT-LOG"
+            ]
+          }
+        ],
+        "primaryComponentIds": [
+          "CMP-FILTER-BAR",
+          "CMP-NAV-SECONDARY",
+          "CMP-VIZ-CHART-PANEL",
+          "CMP-VIZ-LINE-CHART",
+          "CMP-VIZ-LEGEND",
+          "CMP-WORKFLOW-TIMELINE-EVENT-LOG"
+        ],
+        "supportingComponentIds": [
+          "CMP-FILTER-BAR",
+          "CMP-FORM-DATE-TIME-INPUT",
+          "CMP-WORKFLOW-TIMELINE-EVENT-LOG",
+          "CMP-LAYOUT-DETAIL",
+          "CMP-ENG-EVIDENCE-CARD"
+        ],
+        "componentIds": [
+          "CMP-FILTER-BAR",
+          "CMP-NAV-SECONDARY",
+          "CMP-VIZ-CHART-PANEL",
+          "CMP-VIZ-LINE-CHART",
+          "CMP-VIZ-LEGEND",
+          "CMP-WORKFLOW-TIMELINE-EVENT-LOG"
+        ]
+      }
+    }
   }
 }

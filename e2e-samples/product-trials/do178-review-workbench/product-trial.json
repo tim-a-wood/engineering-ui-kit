@@ -20,7 +20,7 @@
   "accent": "#7c8cff",
   "accentRgb": "124, 140, 255",
   "homeTitle": "Review control",
-  "eyebrow": "SOFTWARE REVIEW · SRR-24-017",
+  "eyebrow": "Software review · SRR-24-017",
   "headline": "Review software design data",
   "subhead": "Review the change set, record objective evidence, and protect reviewer independence.",
   "nav": [
@@ -29,8 +29,8 @@
     "Findings",
     "Review records"
   ],
-  "metricPurpose": "Show review readiness and independence before approval.",
-  "metrics": [
+  "decisionPurpose": "Show review readiness and independence before approval.",
+  "decisionFacts": [
     [
       "Review coverage",
       "92%",
@@ -239,26 +239,966 @@
     "contractId": "EUIT-FRONTEND-001",
     "iconFamily": "lucide",
     "paletteId": "midnight",
-    "fontId": "inter",
+    "fontId": "system",
     "defaultMode": "dark",
     "density": "compact",
+    "viewKinds": [
+      "workbench",
+      "case",
+      "table"
+    ],
     "palette": "Midnight blue",
-    "darkCanvas": "#080d14",
-    "darkSurface": "#111923",
-    "darkSurfaceSubtle": "#111923",
-    "darkSurfaceRaised": "#111923",
-    "darkBorder": "#263344",
-    "darkBorderStrong": "#5d6c7e",
-    "lightNavigation": "#145ea8",
-    "darkNavigation": "#080d14",
-    "darkNavigationMuted": "#b8c0ca",
-    "darkOnAccent": "#080d14",
-    "lightAccent": "#145ea8",
-    "darkAccent": "#70a0cf",
-    "lightSoft": "#e4eef9",
-    "darkSoft": "#111923",
-    "lightRgb": "20, 94, 168",
-    "darkRgb": "112, 160, 207",
-    "fontStack": "Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+    "fontStack": "ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+    "config": {
+      "schemaVersion": "1.1",
+      "contractId": "EUIT-FRONTEND-001",
+      "writingProfileId": "EUIT-STE-001",
+      "palette": {
+        "id": "midnight",
+        "name": "Midnight blue",
+        "description": "Neutral graphite surfaces with restrained blue actions and emphasis.",
+        "light": {
+          "canvas": "#f6f8fa",
+          "surface": "#ffffff",
+          "surfaceSubtle": "#ffffff",
+          "surfaceRaised": "#ffffff",
+          "overlay": "#ffffff",
+          "text": "#1f2328",
+          "textMuted": "#59636e",
+          "textQuiet": "#656d76",
+          "border": "#d0d7de",
+          "borderStrong": "#818b98",
+          "accentForeground": "#0969da",
+          "accent": "#0969da",
+          "accentHover": "#0860ca",
+          "accentActive": "#0757ba",
+          "accentSoft": "#ddf4ff",
+          "action": "#0969da",
+          "actionHover": "#0860ca",
+          "actionActive": "#0757ba",
+          "onAccent": "#ffffff",
+          "control": "#f6f8fa",
+          "controlHover": "#eef1f4",
+          "selected": "#ddf4ff",
+          "selectedBorder": "#0969da",
+          "focus": "#0969da",
+          "success": "#176b3a",
+          "warning": "#805400",
+          "danger": "#b42318",
+          "info": "#0969da",
+          "shadow": "0 12px 32px rgba(31, 35, 40, 0.14)"
+        },
+        "dark": {
+          "canvas": "#0d1117",
+          "surface": "#161b22",
+          "surfaceSubtle": "#161b22",
+          "surfaceRaised": "#161b22",
+          "overlay": "#1c2128",
+          "text": "#f0f6fc",
+          "textMuted": "#b1bac4",
+          "textQuiet": "#8b949e",
+          "border": "#30363d",
+          "borderStrong": "#6e7681",
+          "accentForeground": "#58a6ff",
+          "accent": "#1f6feb",
+          "accentHover": "#1a64d6",
+          "accentActive": "#195bbf",
+          "accentSoft": "#1b2a3a",
+          "action": "#1f6feb",
+          "actionHover": "#1a64d6",
+          "actionActive": "#195bbf",
+          "onAccent": "#ffffff",
+          "control": "#0d1117",
+          "controlHover": "#1c2128",
+          "selected": "#1b2a3a",
+          "selectedBorder": "#58a6ff",
+          "focus": "#58a6ff",
+          "success": "#57c785",
+          "warning": "#e5b95c",
+          "danger": "#ff7b72",
+          "info": "#58a6ff",
+          "shadow": "0 18px 48px rgba(0, 0, 0, 0.38)"
+        }
+      },
+      "typography": {
+        "id": "system",
+        "name": "System sans",
+        "stack": "ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "posture": "Native, fast, and neutral."
+      },
+      "defaultMode": "dark",
+      "density": "compact",
+      "modeToggle": true,
+      "icons": {
+        "family": "lucide",
+        "packageNames": [
+          "lucide",
+          "lucide-react",
+          "@lucide/vue",
+          "@lucide/svelte",
+          "lucide-static"
+        ],
+        "license": "ISC",
+        "viewBox": "0 0 24 24",
+        "strokeWidth": 2,
+        "lineCap": "round",
+        "lineJoin": "round",
+        "sizes": {
+          "inline": 16,
+          "control": 18,
+          "navigation": 20,
+          "feature": 24
+        },
+        "helpIcon": "circle-help"
+      },
+      "workspacePolicy": {
+        "surfaces": {
+          "primary-work-surface": {
+            "elevation": "flat",
+            "scope": "task"
+          },
+          "structural-pane": {
+            "elevation": "flat",
+            "scope": "structure"
+          },
+          "inset-object": {
+            "elevation": "contained",
+            "scope": "object"
+          },
+          "overlay": {
+            "elevation": "raised",
+            "scope": "transient"
+          }
+        },
+        "defaultRegionContainer": "flat",
+        "cardsAsDefaultRegionContainers": false,
+        "titleHierarchy": {
+          "visiblePageHeadingCount": 1,
+          "pageTitleLevel": 1,
+          "pageTitleMustExceedSummary": true,
+          "sectionTitleMustExceedDescription": true
+        }
+      },
+      "viewKinds": [
+        "workbench",
+        "case",
+        "table"
+      ],
+      "layouts": [
+        {
+          "kind": "workbench",
+          "recipeId": "RCP-WORKBENCH-001",
+          "name": "Review workbench",
+          "purpose": "Inspect one artifact and its evidence.",
+          "workspace": {
+            "primaryRegionId": "work-surface",
+            "primarySurface": "primary-work-surface",
+            "supportingSurface": "structural-pane",
+            "objectSurface": "inset-object",
+            "transientSurface": "overlay",
+            "placement": "explicit-grid",
+            "measurement": {
+              "mode": "prohibited",
+              "approvedDecisionPurpose": null
+            }
+          },
+          "composition": {
+            "navigation": "sidebar",
+            "header": "workspace",
+            "actions": "selection-contextual",
+            "surface": "bounded-workbench"
+          },
+          "geometry": {
+            "maxContentWidth": "fluid",
+            "columns": "minmax(220px, 0.7fr) minmax(480px, 1.7fr) minmax(280px, 0.9fr)",
+            "gap": 12,
+            "wideMinimumWidth": 1004,
+            "primaryMinWidth": 480,
+            "narrowBreakpoint": 1024
+          },
+          "regions": [
+            {
+              "id": "context-rail",
+              "role": "context",
+              "priority": 2,
+              "minWidth": 220,
+              "preferredWidth": 260,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 2
+                }
+              },
+              "componentIds": [
+                "CMP-ENG-ARTIFACT-TREE",
+                "CMP-FILTER-BAR"
+              ]
+            },
+            {
+              "id": "work-surface",
+              "role": "primary",
+              "priority": 1,
+              "minWidth": 480,
+              "preferredWidth": "fluid",
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 2,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 1
+                }
+              },
+              "componentIds": [
+                "CMP-ENG-CODE-BLOCK",
+                "CMP-ENG-EVIDENCE-CARD"
+              ]
+            },
+            {
+              "id": "detail-inspector",
+              "role": "inspector",
+              "priority": 2,
+              "minWidth": 280,
+              "preferredWidth": 320,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 3,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 3
+                }
+              },
+              "componentIds": [
+                "CMP-LAYOUT-DETAIL",
+                "CMP-FEEDBACK-VALIDATION-SUMMARY"
+              ]
+            }
+          ],
+          "componentIds": [
+            "CMP-ENG-ARTIFACT-TREE",
+            "CMP-FILTER-BAR",
+            "CMP-ENG-CODE-BLOCK",
+            "CMP-ENG-EVIDENCE-CARD",
+            "CMP-LAYOUT-DETAIL",
+            "CMP-FEEDBACK-VALIDATION-SUMMARY"
+          ],
+          "requiredRegions": [
+            "context rail",
+            "primary work surface",
+            "detail inspector"
+          ],
+          "avoid": [
+            "metric card wall",
+            "equal panels without a task order"
+          ]
+        },
+        {
+          "kind": "case",
+          "recipeId": "RCP-CASE-001",
+          "name": "Case workspace",
+          "purpose": "Investigate and close one case.",
+          "workspace": {
+            "primaryRegionId": "case-evidence",
+            "primarySurface": "primary-work-surface",
+            "supportingSurface": "structural-pane",
+            "objectSurface": "inset-object",
+            "transientSurface": "overlay",
+            "placement": "explicit-grid",
+            "measurement": {
+              "mode": "prohibited",
+              "approvedDecisionPurpose": null
+            }
+          },
+          "composition": {
+            "navigation": "sidebar",
+            "header": "case",
+            "actions": "selection-contextual",
+            "surface": "bounded-workbench"
+          },
+          "geometry": {
+            "maxContentWidth": "fluid",
+            "columns": "minmax(240px, 0.55fr) minmax(520px, 1.45fr) minmax(300px, 0.7fr)",
+            "gap": 12,
+            "wideMinimumWidth": 1084,
+            "primaryMinWidth": 520,
+            "narrowBreakpoint": 1100
+          },
+          "regions": [
+            {
+              "id": "case-list",
+              "role": "context",
+              "priority": 2,
+              "minWidth": 240,
+              "preferredWidth": 280,
+              "narrowBehavior": "route",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 2
+                }
+              },
+              "componentIds": [
+                "CMP-FILTER-BAR",
+                "CMP-TABLE-DATA-TABLE"
+              ]
+            },
+            {
+              "id": "case-evidence",
+              "role": "primary",
+              "priority": 1,
+              "minWidth": 520,
+              "preferredWidth": "fluid",
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 2,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 1
+                }
+              },
+              "componentIds": [
+                "CMP-ENG-EVIDENCE-CARD",
+                "CMP-ENG-CODE-BLOCK",
+                "CMP-WORKFLOW-TIMELINE-EVENT-LOG"
+              ]
+            },
+            {
+              "id": "decision-area",
+              "role": "inspector",
+              "priority": 2,
+              "minWidth": 300,
+              "preferredWidth": 340,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 3,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 3
+                }
+              },
+              "componentIds": [
+                "CMP-LAYOUT-DETAIL",
+                "CMP-NAV-COMMAND-ACTION-BAR"
+              ]
+            }
+          ],
+          "componentIds": [
+            "CMP-FILTER-BAR",
+            "CMP-TABLE-DATA-TABLE",
+            "CMP-ENG-EVIDENCE-CARD",
+            "CMP-ENG-CODE-BLOCK",
+            "CMP-WORKFLOW-TIMELINE-EVENT-LOG",
+            "CMP-LAYOUT-DETAIL",
+            "CMP-NAV-COMMAND-ACTION-BAR"
+          ],
+          "requiredRegions": [
+            "case list",
+            "case evidence",
+            "decision or action area"
+          ],
+          "avoid": [
+            "case card grid",
+            "hidden case status"
+          ]
+        },
+        {
+          "kind": "table",
+          "recipeId": "RCP-TABLE-001",
+          "name": "Record table",
+          "purpose": "Find, compare, and act on many records.",
+          "workspace": {
+            "primaryRegionId": "record-table",
+            "primarySurface": "primary-work-surface",
+            "supportingSurface": "structural-pane",
+            "objectSurface": "inset-object",
+            "transientSurface": "overlay",
+            "placement": "explicit-grid",
+            "measurement": {
+              "mode": "prohibited",
+              "approvedDecisionPurpose": null
+            }
+          },
+          "composition": {
+            "navigation": "sidebar",
+            "header": "workspace",
+            "actions": "selection-contextual",
+            "surface": "canvas-sections"
+          },
+          "geometry": {
+            "maxContentWidth": 1440,
+            "columns": "minmax(0, 1fr) minmax(280px, 0.32fr)",
+            "gap": 16,
+            "wideMinimumWidth": 936,
+            "primaryMinWidth": 640,
+            "narrowBreakpoint": 960
+          },
+          "regions": [
+            {
+              "id": "table-commands",
+              "role": "commands",
+              "priority": 1,
+              "minWidth": 320,
+              "preferredWidth": "fluid",
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 2,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 1
+                }
+              },
+              "componentIds": [
+                "CMP-FILTER-BAR",
+                "CMP-NAV-COMMAND-ACTION-BAR"
+              ]
+            },
+            {
+              "id": "record-table",
+              "role": "primary",
+              "priority": 1,
+              "minWidth": 640,
+              "preferredWidth": "fluid",
+              "narrowBehavior": "scroll",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 2
+                },
+                "narrow": {
+                  "order": 2
+                }
+              },
+              "componentIds": [
+                "CMP-TABLE-DATA-TABLE",
+                "CMP-TABLE-PAGINATION"
+              ]
+            },
+            {
+              "id": "selection-detail",
+              "role": "inspector",
+              "priority": 2,
+              "minWidth": 280,
+              "preferredWidth": 320,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 2,
+                  "columnSpan": 1,
+                  "rowStart": 2
+                },
+                "narrow": {
+                  "order": 3
+                }
+              },
+              "componentIds": [
+                "CMP-LAYOUT-DETAIL"
+              ]
+            }
+          ],
+          "componentIds": [
+            "CMP-FILTER-BAR",
+            "CMP-NAV-COMMAND-ACTION-BAR",
+            "CMP-TABLE-DATA-TABLE",
+            "CMP-TABLE-PAGINATION",
+            "CMP-LAYOUT-DETAIL"
+          ],
+          "requiredRegions": [
+            "filter bar",
+            "data table",
+            "row or selection detail"
+          ],
+          "avoid": [
+            "record card grid",
+            "wrapped identifier columns"
+          ]
+        }
+      ],
+      "pagePlan": {
+        "primaryViewKind": "workbench",
+        "primaryLayout": {
+          "kind": "workbench",
+          "recipeId": "RCP-WORKBENCH-001",
+          "name": "Review workbench",
+          "purpose": "Inspect one artifact and its evidence.",
+          "workspace": {
+            "primaryRegionId": "work-surface",
+            "primarySurface": "primary-work-surface",
+            "supportingSurface": "structural-pane",
+            "objectSurface": "inset-object",
+            "transientSurface": "overlay",
+            "placement": "explicit-grid",
+            "measurement": {
+              "mode": "prohibited",
+              "approvedDecisionPurpose": null
+            }
+          },
+          "composition": {
+            "navigation": "sidebar",
+            "header": "workspace",
+            "actions": "selection-contextual",
+            "surface": "bounded-workbench"
+          },
+          "geometry": {
+            "maxContentWidth": "fluid",
+            "columns": "minmax(220px, 0.7fr) minmax(480px, 1.7fr) minmax(280px, 0.9fr)",
+            "gap": 12,
+            "wideMinimumWidth": 1004,
+            "primaryMinWidth": 480,
+            "narrowBreakpoint": 1024
+          },
+          "regions": [
+            {
+              "id": "context-rail",
+              "role": "context",
+              "priority": 2,
+              "minWidth": 220,
+              "preferredWidth": 260,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 2
+                }
+              },
+              "componentIds": [
+                "CMP-ENG-ARTIFACT-TREE",
+                "CMP-FILTER-BAR"
+              ]
+            },
+            {
+              "id": "work-surface",
+              "role": "primary",
+              "priority": 1,
+              "minWidth": 480,
+              "preferredWidth": "fluid",
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 2,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 1
+                }
+              },
+              "componentIds": [
+                "CMP-ENG-CODE-BLOCK",
+                "CMP-ENG-EVIDENCE-CARD"
+              ]
+            },
+            {
+              "id": "detail-inspector",
+              "role": "inspector",
+              "priority": 2,
+              "minWidth": 280,
+              "preferredWidth": 320,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 3,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 3
+                }
+              },
+              "componentIds": [
+                "CMP-LAYOUT-DETAIL",
+                "CMP-FEEDBACK-VALIDATION-SUMMARY"
+              ]
+            }
+          ],
+          "componentIds": [
+            "CMP-ENG-ARTIFACT-TREE",
+            "CMP-FILTER-BAR",
+            "CMP-ENG-CODE-BLOCK",
+            "CMP-ENG-EVIDENCE-CARD",
+            "CMP-LAYOUT-DETAIL",
+            "CMP-FEEDBACK-VALIDATION-SUMMARY"
+          ],
+          "requiredRegions": [
+            "context rail",
+            "primary work surface",
+            "detail inspector"
+          ],
+          "avoid": [
+            "metric card wall",
+            "equal panels without a task order"
+          ]
+        },
+        "supportingViewKinds": [
+          "case",
+          "table"
+        ],
+        "supportingLayouts": [
+          {
+            "kind": "case",
+            "recipeId": "RCP-CASE-001",
+            "name": "Case workspace",
+            "purpose": "Investigate and close one case.",
+            "workspace": {
+              "primaryRegionId": "case-evidence",
+              "primarySurface": "primary-work-surface",
+              "supportingSurface": "structural-pane",
+              "objectSurface": "inset-object",
+              "transientSurface": "overlay",
+              "placement": "explicit-grid",
+              "measurement": {
+                "mode": "prohibited",
+                "approvedDecisionPurpose": null
+              }
+            },
+            "composition": {
+              "navigation": "sidebar",
+              "header": "case",
+              "actions": "selection-contextual",
+              "surface": "bounded-workbench"
+            },
+            "geometry": {
+              "maxContentWidth": "fluid",
+              "columns": "minmax(240px, 0.55fr) minmax(520px, 1.45fr) minmax(300px, 0.7fr)",
+              "gap": 12,
+              "wideMinimumWidth": 1084,
+              "primaryMinWidth": 520,
+              "narrowBreakpoint": 1100
+            },
+            "regions": [
+              {
+                "id": "case-list",
+                "role": "context",
+                "priority": 2,
+                "minWidth": 240,
+                "preferredWidth": 280,
+                "narrowBehavior": "route",
+                "placement": {
+                  "wide": {
+                    "columnStart": 1,
+                    "columnSpan": 1,
+                    "rowStart": 1
+                  },
+                  "narrow": {
+                    "order": 2
+                  }
+                },
+                "componentIds": [
+                  "CMP-FILTER-BAR",
+                  "CMP-TABLE-DATA-TABLE"
+                ]
+              },
+              {
+                "id": "case-evidence",
+                "role": "primary",
+                "priority": 1,
+                "minWidth": 520,
+                "preferredWidth": "fluid",
+                "narrowBehavior": "retain",
+                "placement": {
+                  "wide": {
+                    "columnStart": 2,
+                    "columnSpan": 1,
+                    "rowStart": 1
+                  },
+                  "narrow": {
+                    "order": 1
+                  }
+                },
+                "componentIds": [
+                  "CMP-ENG-EVIDENCE-CARD",
+                  "CMP-ENG-CODE-BLOCK",
+                  "CMP-WORKFLOW-TIMELINE-EVENT-LOG"
+                ]
+              },
+              {
+                "id": "decision-area",
+                "role": "inspector",
+                "priority": 2,
+                "minWidth": 300,
+                "preferredWidth": 340,
+                "narrowBehavior": "drawer",
+                "placement": {
+                  "wide": {
+                    "columnStart": 3,
+                    "columnSpan": 1,
+                    "rowStart": 1
+                  },
+                  "narrow": {
+                    "order": 3
+                  }
+                },
+                "componentIds": [
+                  "CMP-LAYOUT-DETAIL",
+                  "CMP-NAV-COMMAND-ACTION-BAR"
+                ]
+              }
+            ],
+            "componentIds": [
+              "CMP-FILTER-BAR",
+              "CMP-TABLE-DATA-TABLE",
+              "CMP-ENG-EVIDENCE-CARD",
+              "CMP-ENG-CODE-BLOCK",
+              "CMP-WORKFLOW-TIMELINE-EVENT-LOG",
+              "CMP-LAYOUT-DETAIL",
+              "CMP-NAV-COMMAND-ACTION-BAR"
+            ],
+            "requiredRegions": [
+              "case list",
+              "case evidence",
+              "decision or action area"
+            ],
+            "avoid": [
+              "case card grid",
+              "hidden case status"
+            ]
+          },
+          {
+            "kind": "table",
+            "recipeId": "RCP-TABLE-001",
+            "name": "Record table",
+            "purpose": "Find, compare, and act on many records.",
+            "workspace": {
+              "primaryRegionId": "record-table",
+              "primarySurface": "primary-work-surface",
+              "supportingSurface": "structural-pane",
+              "objectSurface": "inset-object",
+              "transientSurface": "overlay",
+              "placement": "explicit-grid",
+              "measurement": {
+                "mode": "prohibited",
+                "approvedDecisionPurpose": null
+              }
+            },
+            "composition": {
+              "navigation": "sidebar",
+              "header": "workspace",
+              "actions": "selection-contextual",
+              "surface": "canvas-sections"
+            },
+            "geometry": {
+              "maxContentWidth": 1440,
+              "columns": "minmax(0, 1fr) minmax(280px, 0.32fr)",
+              "gap": 16,
+              "wideMinimumWidth": 936,
+              "primaryMinWidth": 640,
+              "narrowBreakpoint": 960
+            },
+            "regions": [
+              {
+                "id": "table-commands",
+                "role": "commands",
+                "priority": 1,
+                "minWidth": 320,
+                "preferredWidth": "fluid",
+                "narrowBehavior": "retain",
+                "placement": {
+                  "wide": {
+                    "columnStart": 1,
+                    "columnSpan": 2,
+                    "rowStart": 1
+                  },
+                  "narrow": {
+                    "order": 1
+                  }
+                },
+                "componentIds": [
+                  "CMP-FILTER-BAR",
+                  "CMP-NAV-COMMAND-ACTION-BAR"
+                ]
+              },
+              {
+                "id": "record-table",
+                "role": "primary",
+                "priority": 1,
+                "minWidth": 640,
+                "preferredWidth": "fluid",
+                "narrowBehavior": "scroll",
+                "placement": {
+                  "wide": {
+                    "columnStart": 1,
+                    "columnSpan": 1,
+                    "rowStart": 2
+                  },
+                  "narrow": {
+                    "order": 2
+                  }
+                },
+                "componentIds": [
+                  "CMP-TABLE-DATA-TABLE",
+                  "CMP-TABLE-PAGINATION"
+                ]
+              },
+              {
+                "id": "selection-detail",
+                "role": "inspector",
+                "priority": 2,
+                "minWidth": 280,
+                "preferredWidth": 320,
+                "narrowBehavior": "drawer",
+                "placement": {
+                  "wide": {
+                    "columnStart": 2,
+                    "columnSpan": 1,
+                    "rowStart": 2
+                  },
+                  "narrow": {
+                    "order": 3
+                  }
+                },
+                "componentIds": [
+                  "CMP-LAYOUT-DETAIL"
+                ]
+              }
+            ],
+            "componentIds": [
+              "CMP-FILTER-BAR",
+              "CMP-NAV-COMMAND-ACTION-BAR",
+              "CMP-TABLE-DATA-TABLE",
+              "CMP-TABLE-PAGINATION",
+              "CMP-LAYOUT-DETAIL"
+            ],
+            "requiredRegions": [
+              "filter bar",
+              "data table",
+              "row or selection detail"
+            ],
+            "avoid": [
+              "record card grid",
+              "wrapped identifier columns"
+            ]
+          }
+        ],
+        "geometry": {
+          "maxContentWidth": "fluid",
+          "columns": "minmax(220px, 0.7fr) minmax(480px, 1.7fr) minmax(280px, 0.9fr)",
+          "gap": 12,
+          "wideMinimumWidth": 1004,
+          "primaryMinWidth": 480,
+          "narrowBreakpoint": 1024
+        },
+        "regions": [
+          {
+            "id": "context-rail",
+            "role": "context",
+            "priority": 2,
+            "minWidth": 220,
+            "preferredWidth": 260,
+            "narrowBehavior": "drawer",
+            "placement": {
+              "wide": {
+                "columnStart": 1,
+                "columnSpan": 1,
+                "rowStart": 1
+              },
+              "narrow": {
+                "order": 2
+              }
+            },
+            "componentIds": [
+              "CMP-ENG-ARTIFACT-TREE",
+              "CMP-FILTER-BAR"
+            ]
+          },
+          {
+            "id": "work-surface",
+            "role": "primary",
+            "priority": 1,
+            "minWidth": 480,
+            "preferredWidth": "fluid",
+            "narrowBehavior": "retain",
+            "placement": {
+              "wide": {
+                "columnStart": 2,
+                "columnSpan": 1,
+                "rowStart": 1
+              },
+              "narrow": {
+                "order": 1
+              }
+            },
+            "componentIds": [
+              "CMP-ENG-CODE-BLOCK",
+              "CMP-ENG-EVIDENCE-CARD"
+            ]
+          },
+          {
+            "id": "detail-inspector",
+            "role": "inspector",
+            "priority": 2,
+            "minWidth": 280,
+            "preferredWidth": 320,
+            "narrowBehavior": "drawer",
+            "placement": {
+              "wide": {
+                "columnStart": 3,
+                "columnSpan": 1,
+                "rowStart": 1
+              },
+              "narrow": {
+                "order": 3
+              }
+            },
+            "componentIds": [
+              "CMP-LAYOUT-DETAIL",
+              "CMP-FEEDBACK-VALIDATION-SUMMARY"
+            ]
+          }
+        ],
+        "primaryComponentIds": [
+          "CMP-ENG-ARTIFACT-TREE",
+          "CMP-FILTER-BAR",
+          "CMP-ENG-CODE-BLOCK",
+          "CMP-ENG-EVIDENCE-CARD",
+          "CMP-LAYOUT-DETAIL",
+          "CMP-FEEDBACK-VALIDATION-SUMMARY"
+        ],
+        "supportingComponentIds": [
+          "CMP-FILTER-BAR",
+          "CMP-TABLE-DATA-TABLE",
+          "CMP-ENG-EVIDENCE-CARD",
+          "CMP-ENG-CODE-BLOCK",
+          "CMP-WORKFLOW-TIMELINE-EVENT-LOG",
+          "CMP-LAYOUT-DETAIL",
+          "CMP-NAV-COMMAND-ACTION-BAR",
+          "CMP-TABLE-PAGINATION"
+        ],
+        "componentIds": [
+          "CMP-ENG-ARTIFACT-TREE",
+          "CMP-FILTER-BAR",
+          "CMP-ENG-CODE-BLOCK",
+          "CMP-ENG-EVIDENCE-CARD",
+          "CMP-LAYOUT-DETAIL",
+          "CMP-FEEDBACK-VALIDATION-SUMMARY"
+        ]
+      }
+    }
   }
 }

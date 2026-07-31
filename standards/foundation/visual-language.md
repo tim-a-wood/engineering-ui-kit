@@ -10,19 +10,19 @@ The guidance applies to app shells, panels, forms, tables, charts, overlays, and
 
 ## Visual Direction Summary
 
-The visual language is a modern enterprise workbench. It is restrained, structured, technical, and polished. A midnight-blue dark theme is the default.
+The visual language is a modern enterprise workbench. It is restrained, structured, technical, and polished. A neutral graphite dark theme with blue actions is the default.
 
 ## FND-VIS-001: Dual-mode surface hierarchy
 
-Use semantic surface tokens to create hierarchy. Keep equal visual quality in light and dark modes. Start in dark mode unless a project selects another start mode. The default dark mode shall use one near-black navy canvas and one subtly lighter component surface. Do not add more background tiers, blue panel bands, or decorative gradients. Use a subdued blue accent only for actions, focus, selection, and data emphasis. The light mode shall use white as the dominant surface and a dark-blue accent. A project can select another approved palette before generation. The selected palette shall control the same semantic roles in both modes.
+Use semantic surface tokens to create hierarchy. Keep equal visual quality in light and dark modes. Start in dark mode unless a project selects another start mode. The default dark mode shall use a neutral graphite canvas and one standard component surface. Use a separate overlay surface only for menus, popovers, and dialogs. Do not add blue panel bands or decorative gradients. The light mode shall use a neutral canvas and white as the dominant component surface. A project can select another approved accent before generation. The selected accent shall not recolor the application foundation.
 
 ## FND-VIS-002: Restrained technical accent usage
 
-Accent color shall identify primary actions, focus, active navigation, selected state, or important technical affordances. `semantic.accent.glow` may be used sparingly around active or focused regions; it shall not become decorative neon styling.
+Use the accent foreground for links, icons, and important data. Use the action fill for one primary action in a task region. Use the muted accent surface for selected state. Navigation shall use neutral surfaces by default. Do not use accent glow.
 
 ## FND-VIS-003: Surface and containment discipline
 
-The canvas shall remain visually quiet. Use spacing, alignment, headings, and hairline dividers before adding a panel. Panels are reserved for genuinely bounded tools, previews, forms, or consequential review regions; they shall not wrap every section, row, empty state, or navigation choice. Raised cards are reserved for key decisions or temporary emphasis. Inset surfaces are for code, logs, file-drop targets, preview chrome, or technical data nested inside a bounded region.
+The canvas shall remain visually quiet. Each view shall have one dominant work surface. Structural panes shall use the canvas, spacing, alignment, and hairline dividers. They shall not look like floating cards. Panels are reserved for genuinely bounded objects, tools, previews, forms, or consequential review regions; they shall not wrap every section, row, empty state, or navigation choice. Raised surfaces are reserved for overlays and temporary emphasis. Inset surfaces are for documents, code, logs, file-drop targets, preview chrome, or technical data nested inside a work surface.
 
 ## FND-VIS-004: Typography posture
 
@@ -34,7 +34,7 @@ Compact density is allowed when content remains readable. Use `semantic.density.
 
 ## FND-VIS-006: Borders, elevation, and glow
 
-Borders shall define hierarchy more often than heavy shadows. `semantic.border.subtle` is the default; `semantic.border.strong` is reserved for selected, active, or high-emphasis boundaries. Elevation and glow shall support state, not decoration.
+Borders shall define hierarchy more often than heavy shadows. `semantic.border.subtle` is the default; `semantic.border.strong` is reserved for selected, active, or high-emphasis boundaries. Elevation shall identify overlays, not decorate routine panels.
 
 ## FND-VIS-007: Tables and technical data tone
 
@@ -42,7 +42,7 @@ Tables shall be dense, aligned, and legible. Header rows, status columns, paths,
 
 ## FND-VIS-008: Charts and analytic surfaces
 
-Charts shall sit inside chart panels with title, scope, units, time range or data source, and state. Gridlines, axes, thresholds, and legends shall use chart semantic tokens and shall not compete with status colors.
+Charts shall sit in a named analysis region with a title, scope, units, time range or data source, and state. The analysis region can be the primary work surface and does not need a card around it. Gridlines, axes, thresholds, and legends shall use chart semantic tokens and shall not compete with status colors.
 
 ## FND-VIS-009: Status and severity color discipline
 
@@ -80,15 +80,23 @@ Match each action icon to its verb and keep that meaning stable. Do not reuse a 
 
 Use a short natural noun phrase for an application name. Use a short task label or object name for a page title. Do not start a page title with a count or turn a status count into a dramatic headline. Do not invent a metric, KPI, score, trend, or count. Add a measure only when it changes a decision in the current task, and state that purpose in the design specification. Put the measure beside the work that it explains.
 
+## FND-VIS-018: Deterministic workspace hierarchy
+
+Each page shall have exactly one visible level-one title. The page title shall be larger than its context label and summary. A section title shall be larger than its description. Each layout recipe shall define one primary region, explicit supporting-region positions, and a narrow-width order. Do not position regions only to fill available space. The task sequence and selection context shall determine placement.
+
+## FND-VIS-019: One icon meaning
+
+Use one icon for one semantic action. Different visible actions in the same command group shall not reuse an icon only because the icon is convenient. Use a literal action or object metaphor. Reuse an icon only when the action has the same meaning. Every icon-only control shall have an accessible name and a tooltip.
+
 ## Approved Visual Patterns
 
 | Pattern | Rule |
 |---|---|
-| Dark canvas with bounded panels | Use surface hierarchy tokens. |
+| Dark canvas with one dominant work surface | Use flat structural panes and hairline dividers. |
 | Subtle accent around active navigation or focus | Use accent/focus tokens only. |
 | Compact table with clear status text | Use density and status tokens. |
 | Inset log/code region inside a panel | Use code and inset surface tokens. |
-| Hairline-divided figure strips | Related key figures share one panel, split by 1px subtle borders, labels in small uppercase, values in tabular/mono numerals. |
+| Hairline-divided decision facts | Related facts sit beside the work that they explain, with tabular or monospaced numerals where alignment matters. |
 | Plot drawn on the panel surface | Series draw directly on the panel with recessive gridlines: no boxed inset chart region; a crosshair plus text readout carries exact values. |
 | Machined segmented controls | Window/filter switchers use an inset track whose active segment is raised to the panel-raised surface, not an accent-tinted pill. |
 | Status as dot plus text | Routine statuses render as a status-token dot beside plain text; tinted pills are reserved for a few prominent states such as the run state. |
@@ -128,6 +136,9 @@ Use a short natural noun phrase for an application name. Use a short task label 
 | Fixed toast for routine success | Separates feedback from its cause and can cover active work. |
 | Count-led page title | Turns queue state into a strange slogan and weakens orientation. |
 | Default KPI or metric strip | Adds dashboard noise when the task does not use the measure. |
+| Rounded border around a structural pane | Makes the page look like a card dashboard and weakens the primary task surface. |
+| Subtitle equal to or larger than its title | Inverts orientation and makes scanning harder. |
+| Different commands with the same icon | Hides meaning and makes the command system look generated. |
 
 ## Mockup Calibration Notes
 

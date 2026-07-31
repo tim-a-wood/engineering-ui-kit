@@ -1,0 +1,129 @@
+/* EUIT-FRONTEND-001; palette: Midnight blue; font: System sans. */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --eui-color-canvas: #f6f8fa;
+  --eui-color-surface: #ffffff;
+  --eui-color-surface-subtle: #ffffff;
+  --eui-color-surface-raised: #ffffff;
+  --eui-color-overlay: #ffffff;
+  --eui-color-text: #1f2328;
+  --eui-color-text-muted: #59636e;
+  --eui-color-text-quiet: #656d76;
+  --eui-color-border: #d0d7de;
+  --eui-color-border-strong: #818b98;
+  --eui-color-accent-foreground: #0969da;
+  --eui-color-accent: #0969da;
+  --eui-color-accent-hover: #0860ca;
+  --eui-color-accent-active: #0757ba;
+  --eui-color-accent-soft: #ddf4ff;
+  --eui-color-action: #0969da;
+  --eui-color-action-hover: #0860ca;
+  --eui-color-action-active: #0757ba;
+  --eui-color-on-accent: #ffffff;
+  --eui-color-control: #f6f8fa;
+  --eui-color-control-hover: #eef1f4;
+  --eui-color-selected: #ddf4ff;
+  --eui-color-selected-border: #0969da;
+  --eui-color-focus: #0969da;
+  --eui-color-success: #176b3a;
+  --eui-color-warning: #805400;
+  --eui-color-danger: #b42318;
+  --eui-color-info: #0969da;
+  --eui-shadow-raised: 0 12px 32px rgba(31, 35, 40, 0.14);
+  --eui-font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --eui-font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --eui-control-height: 34px;
+  --eui-row-height: 38px;
+  --eui-space-page: 24px;
+  --eui-radius-control: 6px;
+  --eui-radius-panel: 8px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --eui-color-canvas: #0d1117;
+  --eui-color-surface: #161b22;
+  --eui-color-surface-subtle: #161b22;
+  --eui-color-surface-raised: #161b22;
+  --eui-color-overlay: #1c2128;
+  --eui-color-text: #f0f6fc;
+  --eui-color-text-muted: #b1bac4;
+  --eui-color-text-quiet: #8b949e;
+  --eui-color-border: #30363d;
+  --eui-color-border-strong: #6e7681;
+  --eui-color-accent-foreground: #58a6ff;
+  --eui-color-accent: #1f6feb;
+  --eui-color-accent-hover: #1a64d6;
+  --eui-color-accent-active: #195bbf;
+  --eui-color-accent-soft: #1b2a3a;
+  --eui-color-action: #1f6feb;
+  --eui-color-action-hover: #1a64d6;
+  --eui-color-action-active: #195bbf;
+  --eui-color-on-accent: #ffffff;
+  --eui-color-control: #0d1117;
+  --eui-color-control-hover: #1c2128;
+  --eui-color-selected: #1b2a3a;
+  --eui-color-selected-border: #58a6ff;
+  --eui-color-focus: #58a6ff;
+  --eui-color-success: #57c785;
+  --eui-color-warning: #e5b95c;
+  --eui-color-danger: #ff7b72;
+  --eui-color-info: #58a6ff;
+  --eui-shadow-raised: 0 18px 48px rgba(0, 0, 0, 0.38);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+  --eui-color-canvas: #0d1117;
+  --eui-color-surface: #161b22;
+  --eui-color-surface-subtle: #161b22;
+  --eui-color-surface-raised: #161b22;
+  --eui-color-overlay: #1c2128;
+  --eui-color-text: #f0f6fc;
+  --eui-color-text-muted: #b1bac4;
+  --eui-color-text-quiet: #8b949e;
+  --eui-color-border: #30363d;
+  --eui-color-border-strong: #6e7681;
+  --eui-color-accent-foreground: #58a6ff;
+  --eui-color-accent: #1f6feb;
+  --eui-color-accent-hover: #1a64d6;
+  --eui-color-accent-active: #195bbf;
+  --eui-color-accent-soft: #1b2a3a;
+  --eui-color-action: #1f6feb;
+  --eui-color-action-hover: #1a64d6;
+  --eui-color-action-active: #195bbf;
+  --eui-color-on-accent: #ffffff;
+  --eui-color-control: #0d1117;
+  --eui-color-control-hover: #1c2128;
+  --eui-color-selected: #1b2a3a;
+  --eui-color-selected-border: #58a6ff;
+  --eui-color-focus: #58a6ff;
+  --eui-color-success: #57c785;
+  --eui-color-warning: #e5b95c;
+  --eui-color-danger: #ff7b72;
+  --eui-color-info: #58a6ff;
+  --eui-shadow-raised: 0 18px 48px rgba(0, 0, 0, 0.38);
+  }
+}
+
+body {
+  background: var(--eui-color-canvas);
+  color: var(--eui-color-text);
+  font-family: var(--eui-font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--eui-color-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

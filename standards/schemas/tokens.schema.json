@@ -266,11 +266,13 @@
         "accent": {
           "type": "object",
           "required": [
+            "foreground",
             "primary",
             "primaryHover",
             "primaryActive",
             "secondary",
-            "glow"
+            "muted",
+            "border"
           ],
           "additionalProperties": {
             "$ref": "#/$defs/tokenObject"

@@ -40,7 +40,7 @@ export function buildVisualPackHtml(input: VisualPackInput): string {
 <title>Visual Reference Pack: ${escapeHtml(input.packetId)}</title>
 <style>
   @page { size: 960px 540px; margin: 0; }
-  html, body { margin: 0; padding: 0; width: 960px; height: 540px; background: #07111f; color: #f8fafc;
+  html, body { margin: 0; padding: 0; width: 960px; height: 540px; background: #0d1117; color: #f0f6fc;
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
   .page { display: grid; grid-template-columns: 640px 1fr; gap: 16px; padding: 20px; box-sizing: border-box; height: 100%; }
   .image-panel { display: flex; flex-direction: column; gap: 8px; min-width: 0; }

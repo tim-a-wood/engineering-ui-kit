@@ -19,7 +19,7 @@
   "accent": "#ec4899",
   "accentRgb": "236, 72, 153",
   "homeTitle": "Supplier intake",
-  "eyebrow": "DELIVERY SUP-ACU-241 · REVISION 03",
+  "eyebrow": "Delivery SUP-ACU-241 · Revision 03",
   "headline": "Validate supplier delivery",
   "subhead": "Check identity, completeness, compliance, and provenance before acceptance.",
   "nav": [
@@ -228,26 +228,708 @@
     "contractId": "EUIT-FRONTEND-001",
     "iconFamily": "lucide",
     "paletteId": "midnight",
-    "fontId": "atkinson",
+    "fontId": "system",
     "defaultMode": "dark",
     "density": "comfortable",
+    "viewKinds": [
+      "wizard",
+      "table"
+    ],
     "palette": "Midnight blue",
-    "darkCanvas": "#080d14",
-    "darkSurface": "#111923",
-    "darkSurfaceSubtle": "#111923",
-    "darkSurfaceRaised": "#111923",
-    "darkBorder": "#263344",
-    "darkBorderStrong": "#5d6c7e",
-    "lightNavigation": "#145ea8",
-    "darkNavigation": "#080d14",
-    "darkNavigationMuted": "#b8c0ca",
-    "darkOnAccent": "#080d14",
-    "lightAccent": "#145ea8",
-    "darkAccent": "#70a0cf",
-    "lightSoft": "#e4eef9",
-    "darkSoft": "#111923",
-    "lightRgb": "20, 94, 168",
-    "darkRgb": "112, 160, 207",
-    "fontStack": "\"Atkinson Hyperlegible\", Inter, ui-sans-serif, system-ui, sans-serif"
+    "fontStack": "ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+    "config": {
+      "schemaVersion": "1.1",
+      "contractId": "EUIT-FRONTEND-001",
+      "writingProfileId": "EUIT-STE-001",
+      "palette": {
+        "id": "midnight",
+        "name": "Midnight blue",
+        "description": "Neutral graphite surfaces with restrained blue actions and emphasis.",
+        "light": {
+          "canvas": "#f6f8fa",
+          "surface": "#ffffff",
+          "surfaceSubtle": "#ffffff",
+          "surfaceRaised": "#ffffff",
+          "overlay": "#ffffff",
+          "text": "#1f2328",
+          "textMuted": "#59636e",
+          "textQuiet": "#656d76",
+          "border": "#d0d7de",
+          "borderStrong": "#818b98",
+          "accentForeground": "#0969da",
+          "accent": "#0969da",
+          "accentHover": "#0860ca",
+          "accentActive": "#0757ba",
+          "accentSoft": "#ddf4ff",
+          "action": "#0969da",
+          "actionHover": "#0860ca",
+          "actionActive": "#0757ba",
+          "onAccent": "#ffffff",
+          "control": "#f6f8fa",
+          "controlHover": "#eef1f4",
+          "selected": "#ddf4ff",
+          "selectedBorder": "#0969da",
+          "focus": "#0969da",
+          "success": "#176b3a",
+          "warning": "#805400",
+          "danger": "#b42318",
+          "info": "#0969da",
+          "shadow": "0 12px 32px rgba(31, 35, 40, 0.14)"
+        },
+        "dark": {
+          "canvas": "#0d1117",
+          "surface": "#161b22",
+          "surfaceSubtle": "#161b22",
+          "surfaceRaised": "#161b22",
+          "overlay": "#1c2128",
+          "text": "#f0f6fc",
+          "textMuted": "#b1bac4",
+          "textQuiet": "#8b949e",
+          "border": "#30363d",
+          "borderStrong": "#6e7681",
+          "accentForeground": "#58a6ff",
+          "accent": "#1f6feb",
+          "accentHover": "#1a64d6",
+          "accentActive": "#195bbf",
+          "accentSoft": "#1b2a3a",
+          "action": "#1f6feb",
+          "actionHover": "#1a64d6",
+          "actionActive": "#195bbf",
+          "onAccent": "#ffffff",
+          "control": "#0d1117",
+          "controlHover": "#1c2128",
+          "selected": "#1b2a3a",
+          "selectedBorder": "#58a6ff",
+          "focus": "#58a6ff",
+          "success": "#57c785",
+          "warning": "#e5b95c",
+          "danger": "#ff7b72",
+          "info": "#58a6ff",
+          "shadow": "0 18px 48px rgba(0, 0, 0, 0.38)"
+        }
+      },
+      "typography": {
+        "id": "system",
+        "name": "System sans",
+        "stack": "ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "posture": "Native, fast, and neutral."
+      },
+      "defaultMode": "dark",
+      "density": "comfortable",
+      "modeToggle": true,
+      "icons": {
+        "family": "lucide",
+        "packageNames": [
+          "lucide",
+          "lucide-react",
+          "@lucide/vue",
+          "@lucide/svelte",
+          "lucide-static"
+        ],
+        "license": "ISC",
+        "viewBox": "0 0 24 24",
+        "strokeWidth": 2,
+        "lineCap": "round",
+        "lineJoin": "round",
+        "sizes": {
+          "inline": 16,
+          "control": 18,
+          "navigation": 20,
+          "feature": 24
+        },
+        "helpIcon": "circle-help"
+      },
+      "workspacePolicy": {
+        "surfaces": {
+          "primary-work-surface": {
+            "elevation": "flat",
+            "scope": "task"
+          },
+          "structural-pane": {
+            "elevation": "flat",
+            "scope": "structure"
+          },
+          "inset-object": {
+            "elevation": "contained",
+            "scope": "object"
+          },
+          "overlay": {
+            "elevation": "raised",
+            "scope": "transient"
+          }
+        },
+        "defaultRegionContainer": "flat",
+        "cardsAsDefaultRegionContainers": false,
+        "titleHierarchy": {
+          "visiblePageHeadingCount": 1,
+          "pageTitleLevel": 1,
+          "pageTitleMustExceedSummary": true,
+          "sectionTitleMustExceedDescription": true
+        }
+      },
+      "viewKinds": [
+        "wizard",
+        "table"
+      ],
+      "layouts": [
+        {
+          "kind": "wizard",
+          "recipeId": "RCP-WIZARD-001",
+          "name": "Guided task",
+          "purpose": "Complete a gated sequence.",
+          "workspace": {
+            "primaryRegionId": "current-step",
+            "primarySurface": "primary-work-surface",
+            "supportingSurface": "structural-pane",
+            "objectSurface": "inset-object",
+            "transientSurface": "overlay",
+            "placement": "explicit-grid",
+            "measurement": {
+              "mode": "prohibited",
+              "approvedDecisionPurpose": null
+            }
+          },
+          "composition": {
+            "navigation": "top",
+            "header": "portal",
+            "actions": "step-gated",
+            "surface": "bounded-workbench"
+          },
+          "geometry": {
+            "maxContentWidth": 960,
+            "columns": "minmax(320px, 720px)",
+            "gap": 20,
+            "wideMinimumWidth": 320,
+            "primaryMinWidth": 320,
+            "narrowBreakpoint": 720
+          },
+          "regions": [
+            {
+              "id": "task-progress",
+              "role": "status",
+              "priority": 2,
+              "minWidth": 280,
+              "preferredWidth": 720,
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 1
+                }
+              },
+              "componentIds": [
+                "CMP-WORKFLOW-STEP-INDICATOR"
+              ]
+            },
+            {
+              "id": "current-step",
+              "role": "primary",
+              "priority": 1,
+              "minWidth": 320,
+              "preferredWidth": 720,
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 2
+                },
+                "narrow": {
+                  "order": 2
+                }
+              },
+              "componentIds": [
+                "CMP-FORM-FIELD",
+                "CMP-FEEDBACK-VALIDATION-SUMMARY"
+              ]
+            },
+            {
+              "id": "step-actions",
+              "role": "commands",
+              "priority": 1,
+              "minWidth": 280,
+              "preferredWidth": 720,
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 3
+                },
+                "narrow": {
+                  "order": 3
+                }
+              },
+              "componentIds": [
+                "CMP-NAV-COMMAND-ACTION-BAR"
+              ]
+            }
+          ],
+          "componentIds": [
+            "CMP-WORKFLOW-STEP-INDICATOR",
+            "CMP-FORM-FIELD",
+            "CMP-FEEDBACK-VALIDATION-SUMMARY",
+            "CMP-NAV-COMMAND-ACTION-BAR"
+          ],
+          "requiredRegions": [
+            "progress",
+            "current step",
+            "back and next actions"
+          ],
+          "avoid": [
+            "all steps on one screen",
+            "stepper for two simple modes"
+          ]
+        },
+        {
+          "kind": "table",
+          "recipeId": "RCP-TABLE-001",
+          "name": "Record table",
+          "purpose": "Find, compare, and act on many records.",
+          "workspace": {
+            "primaryRegionId": "record-table",
+            "primarySurface": "primary-work-surface",
+            "supportingSurface": "structural-pane",
+            "objectSurface": "inset-object",
+            "transientSurface": "overlay",
+            "placement": "explicit-grid",
+            "measurement": {
+              "mode": "prohibited",
+              "approvedDecisionPurpose": null
+            }
+          },
+          "composition": {
+            "navigation": "sidebar",
+            "header": "workspace",
+            "actions": "selection-contextual",
+            "surface": "canvas-sections"
+          },
+          "geometry": {
+            "maxContentWidth": 1440,
+            "columns": "minmax(0, 1fr) minmax(280px, 0.32fr)",
+            "gap": 16,
+            "wideMinimumWidth": 936,
+            "primaryMinWidth": 640,
+            "narrowBreakpoint": 960
+          },
+          "regions": [
+            {
+              "id": "table-commands",
+              "role": "commands",
+              "priority": 1,
+              "minWidth": 320,
+              "preferredWidth": "fluid",
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 2,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 1
+                }
+              },
+              "componentIds": [
+                "CMP-FILTER-BAR",
+                "CMP-NAV-COMMAND-ACTION-BAR"
+              ]
+            },
+            {
+              "id": "record-table",
+              "role": "primary",
+              "priority": 1,
+              "minWidth": 640,
+              "preferredWidth": "fluid",
+              "narrowBehavior": "scroll",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 2
+                },
+                "narrow": {
+                  "order": 2
+                }
+              },
+              "componentIds": [
+                "CMP-TABLE-DATA-TABLE",
+                "CMP-TABLE-PAGINATION"
+              ]
+            },
+            {
+              "id": "selection-detail",
+              "role": "inspector",
+              "priority": 2,
+              "minWidth": 280,
+              "preferredWidth": 320,
+              "narrowBehavior": "drawer",
+              "placement": {
+                "wide": {
+                  "columnStart": 2,
+                  "columnSpan": 1,
+                  "rowStart": 2
+                },
+                "narrow": {
+                  "order": 3
+                }
+              },
+              "componentIds": [
+                "CMP-LAYOUT-DETAIL"
+              ]
+            }
+          ],
+          "componentIds": [
+            "CMP-FILTER-BAR",
+            "CMP-NAV-COMMAND-ACTION-BAR",
+            "CMP-TABLE-DATA-TABLE",
+            "CMP-TABLE-PAGINATION",
+            "CMP-LAYOUT-DETAIL"
+          ],
+          "requiredRegions": [
+            "filter bar",
+            "data table",
+            "row or selection detail"
+          ],
+          "avoid": [
+            "record card grid",
+            "wrapped identifier columns"
+          ]
+        }
+      ],
+      "pagePlan": {
+        "primaryViewKind": "wizard",
+        "primaryLayout": {
+          "kind": "wizard",
+          "recipeId": "RCP-WIZARD-001",
+          "name": "Guided task",
+          "purpose": "Complete a gated sequence.",
+          "workspace": {
+            "primaryRegionId": "current-step",
+            "primarySurface": "primary-work-surface",
+            "supportingSurface": "structural-pane",
+            "objectSurface": "inset-object",
+            "transientSurface": "overlay",
+            "placement": "explicit-grid",
+            "measurement": {
+              "mode": "prohibited",
+              "approvedDecisionPurpose": null
+            }
+          },
+          "composition": {
+            "navigation": "top",
+            "header": "portal",
+            "actions": "step-gated",
+            "surface": "bounded-workbench"
+          },
+          "geometry": {
+            "maxContentWidth": 960,
+            "columns": "minmax(320px, 720px)",
+            "gap": 20,
+            "wideMinimumWidth": 320,
+            "primaryMinWidth": 320,
+            "narrowBreakpoint": 720
+          },
+          "regions": [
+            {
+              "id": "task-progress",
+              "role": "status",
+              "priority": 2,
+              "minWidth": 280,
+              "preferredWidth": 720,
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 1
+                },
+                "narrow": {
+                  "order": 1
+                }
+              },
+              "componentIds": [
+                "CMP-WORKFLOW-STEP-INDICATOR"
+              ]
+            },
+            {
+              "id": "current-step",
+              "role": "primary",
+              "priority": 1,
+              "minWidth": 320,
+              "preferredWidth": 720,
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 2
+                },
+                "narrow": {
+                  "order": 2
+                }
+              },
+              "componentIds": [
+                "CMP-FORM-FIELD",
+                "CMP-FEEDBACK-VALIDATION-SUMMARY"
+              ]
+            },
+            {
+              "id": "step-actions",
+              "role": "commands",
+              "priority": 1,
+              "minWidth": 280,
+              "preferredWidth": 720,
+              "narrowBehavior": "retain",
+              "placement": {
+                "wide": {
+                  "columnStart": 1,
+                  "columnSpan": 1,
+                  "rowStart": 3
+                },
+                "narrow": {
+                  "order": 3
+                }
+              },
+              "componentIds": [
+                "CMP-NAV-COMMAND-ACTION-BAR"
+              ]
+            }
+          ],
+          "componentIds": [
+            "CMP-WORKFLOW-STEP-INDICATOR",
+            "CMP-FORM-FIELD",
+            "CMP-FEEDBACK-VALIDATION-SUMMARY",
+            "CMP-NAV-COMMAND-ACTION-BAR"
+          ],
+          "requiredRegions": [
+            "progress",
+            "current step",
+            "back and next actions"
+          ],
+          "avoid": [
+            "all steps on one screen",
+            "stepper for two simple modes"
+          ]
+        },
+        "supportingViewKinds": [
+          "table"
+        ],
+        "supportingLayouts": [
+          {
+            "kind": "table",
+            "recipeId": "RCP-TABLE-001",
+            "name": "Record table",
+            "purpose": "Find, compare, and act on many records.",
+            "workspace": {
+              "primaryRegionId": "record-table",
+              "primarySurface": "primary-work-surface",
+              "supportingSurface": "structural-pane",
+              "objectSurface": "inset-object",
+              "transientSurface": "overlay",
+              "placement": "explicit-grid",
+              "measurement": {
+                "mode": "prohibited",
+                "approvedDecisionPurpose": null
+              }
+            },
+            "composition": {
+              "navigation": "sidebar",
+              "header": "workspace",
+              "actions": "selection-contextual",
+              "surface": "canvas-sections"
+            },
+            "geometry": {
+              "maxContentWidth": 1440,
+              "columns": "minmax(0, 1fr) minmax(280px, 0.32fr)",
+              "gap": 16,
+              "wideMinimumWidth": 936,
+              "primaryMinWidth": 640,
+              "narrowBreakpoint": 960
+            },
+            "regions": [
+              {
+                "id": "table-commands",
+                "role": "commands",
+                "priority": 1,
+                "minWidth": 320,
+                "preferredWidth": "fluid",
+                "narrowBehavior": "retain",
+                "placement": {
+                  "wide": {
+                    "columnStart": 1,
+                    "columnSpan": 2,
+                    "rowStart": 1
+                  },
+                  "narrow": {
+                    "order": 1
+                  }
+                },
+                "componentIds": [
+                  "CMP-FILTER-BAR",
+                  "CMP-NAV-COMMAND-ACTION-BAR"
+                ]
+              },
+              {
+                "id": "record-table",
+                "role": "primary",
+                "priority": 1,
+                "minWidth": 640,
+                "preferredWidth": "fluid",
+                "narrowBehavior": "scroll",
+                "placement": {
+                  "wide": {
+                    "columnStart": 1,
+                    "columnSpan": 1,
+                    "rowStart": 2
+                  },
+                  "narrow": {
+                    "order": 2
+                  }
+                },
+                "componentIds": [
+                  "CMP-TABLE-DATA-TABLE",
+                  "CMP-TABLE-PAGINATION"
+                ]
+              },
+              {
+                "id": "selection-detail",
+                "role": "inspector",
+                "priority": 2,
+                "minWidth": 280,
+                "preferredWidth": 320,
+                "narrowBehavior": "drawer",
+                "placement": {
+                  "wide": {
+                    "columnStart": 2,
+                    "columnSpan": 1,
+                    "rowStart": 2
+                  },
+                  "narrow": {
+                    "order": 3
+                  }
+                },
+                "componentIds": [
+                  "CMP-LAYOUT-DETAIL"
+                ]
+              }
+            ],
+            "componentIds": [
+              "CMP-FILTER-BAR",
+              "CMP-NAV-COMMAND-ACTION-BAR",
+              "CMP-TABLE-DATA-TABLE",
+              "CMP-TABLE-PAGINATION",
+              "CMP-LAYOUT-DETAIL"
+            ],
+            "requiredRegions": [
+              "filter bar",
+              "data table",
+              "row or selection detail"
+            ],
+            "avoid": [
+              "record card grid",
+              "wrapped identifier columns"
+            ]
+          }
+        ],
+        "geometry": {
+          "maxContentWidth": 960,
+          "columns": "minmax(320px, 720px)",
+          "gap": 20,
+          "wideMinimumWidth": 320,
+          "primaryMinWidth": 320,
+          "narrowBreakpoint": 720
+        },
+        "regions": [
+          {
+            "id": "task-progress",
+            "role": "status",
+            "priority": 2,
+            "minWidth": 280,
+            "preferredWidth": 720,
+            "narrowBehavior": "retain",
+            "placement": {
+              "wide": {
+                "columnStart": 1,
+                "columnSpan": 1,
+                "rowStart": 1
+              },
+              "narrow": {
+                "order": 1
+              }
+            },
+            "componentIds": [
+              "CMP-WORKFLOW-STEP-INDICATOR"
+            ]
+          },
+          {
+            "id": "current-step",
+            "role": "primary",
+            "priority": 1,
+            "minWidth": 320,
+            "preferredWidth": 720,
+            "narrowBehavior": "retain",
+            "placement": {
+              "wide": {
+                "columnStart": 1,
+                "columnSpan": 1,
+                "rowStart": 2
+              },
+              "narrow": {
+                "order": 2
+              }
+            },
+            "componentIds": [
+              "CMP-FORM-FIELD",
+              "CMP-FEEDBACK-VALIDATION-SUMMARY"
+            ]
+          },
+          {
+            "id": "step-actions",
+            "role": "commands",
+            "priority": 1,
+            "minWidth": 280,
+            "preferredWidth": 720,
+            "narrowBehavior": "retain",
+            "placement": {
+              "wide": {
+                "columnStart": 1,
+                "columnSpan": 1,
+                "rowStart": 3
+              },
+              "narrow": {
+                "order": 3
+              }
+            },
+            "componentIds": [
+              "CMP-NAV-COMMAND-ACTION-BAR"
+            ]
+          }
+        ],
+        "primaryComponentIds": [
+          "CMP-WORKFLOW-STEP-INDICATOR",
+          "CMP-FORM-FIELD",
+          "CMP-FEEDBACK-VALIDATION-SUMMARY",
+          "CMP-NAV-COMMAND-ACTION-BAR"
+        ],
+        "supportingComponentIds": [
+          "CMP-FILTER-BAR",
+          "CMP-NAV-COMMAND-ACTION-BAR",
+          "CMP-TABLE-DATA-TABLE",
+          "CMP-TABLE-PAGINATION",
+          "CMP-LAYOUT-DETAIL"
+        ],
+        "componentIds": [
+          "CMP-WORKFLOW-STEP-INDICATOR",
+          "CMP-FORM-FIELD",
+          "CMP-FEEDBACK-VALIDATION-SUMMARY",
+          "CMP-NAV-COMMAND-ACTION-BAR"
+        ]
+      }
+    }
   }
 }

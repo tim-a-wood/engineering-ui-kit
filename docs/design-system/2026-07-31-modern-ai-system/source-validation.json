@@ -1,0 +1,593 @@
+{
+  "generatedAt": "2026-07-31T15:50:00.240Z",
+  "contractId": "EUIT-FRONTEND-001",
+  "writingProfileId": "EUIT-STE-001",
+  "products": 10,
+  "layouts": [
+    "fracas",
+    "hil",
+    "impact",
+    "load",
+    "review",
+    "sessions",
+    "supplier",
+    "telemetry",
+    "trade",
+    "writing"
+  ],
+  "defaultPalettes": [
+    "midnight"
+  ],
+  "configurablePalettes": [
+    "midnight",
+    "graphite",
+    "teal",
+    "violet",
+    "amber"
+  ],
+  "paletteContrast": {
+    "midnight": {
+      "light": {
+        "textOnCanvas": 14.84,
+        "mutedTextOnSurface": 6.11,
+        "quietTextOnSurface": 5.25,
+        "accentForegroundOnCanvas": 4.88,
+        "textOnAction": 5.19,
+        "strongBorderOnSurface": 3.45,
+        "focusOnCanvas": 4.88
+      },
+      "dark": {
+        "textOnCanvas": 17.39,
+        "mutedTextOnSurface": 8.81,
+        "quietTextOnSurface": 5.62,
+        "accentForegroundOnCanvas": 7.49,
+        "textOnAction": 4.63,
+        "strongBorderOnSurface": 3.77,
+        "focusOnCanvas": 7.49
+      }
+    },
+    "graphite": {
+      "light": {
+        "textOnCanvas": 14.84,
+        "mutedTextOnSurface": 6.11,
+        "quietTextOnSurface": 5.25,
+        "accentForegroundOnCanvas": 4.88,
+        "textOnAction": 4.52,
+        "strongBorderOnSurface": 3.45,
+        "focusOnCanvas": 4.88
+      },
+      "dark": {
+        "textOnCanvas": 17.39,
+        "mutedTextOnSurface": 8.81,
+        "quietTextOnSurface": 5.62,
+        "accentForegroundOnCanvas": 7.49,
+        "textOnAction": 4.63,
+        "strongBorderOnSurface": 3.77,
+        "focusOnCanvas": 7.49
+      }
+    },
+    "teal": {
+      "light": {
+        "textOnCanvas": 14.84,
+        "mutedTextOnSurface": 6.11,
+        "quietTextOnSurface": 5.25,
+        "accentForegroundOnCanvas": 5.99,
+        "textOnAction": 6.37,
+        "strongBorderOnSurface": 3.45,
+        "focusOnCanvas": 4.75
+      },
+      "dark": {
+        "textOnCanvas": 17.39,
+        "mutedTextOnSurface": 8.81,
+        "quietTextOnSurface": 5.62,
+        "accentForegroundOnCanvas": 10.54,
+        "textOnAction": 4.88,
+        "strongBorderOnSurface": 3.77,
+        "focusOnCanvas": 10.54
+      }
+    },
+    "violet": {
+      "light": {
+        "textOnCanvas": 14.84,
+        "mutedTextOnSurface": 6.11,
+        "quietTextOnSurface": 5.25,
+        "accentForegroundOnCanvas": 6.12,
+        "textOnAction": 6.51,
+        "strongBorderOnSurface": 3.45,
+        "focusOnCanvas": 6.12
+      },
+      "dark": {
+        "textOnCanvas": 17.39,
+        "mutedTextOnSurface": 8.81,
+        "quietTextOnSurface": 5.62,
+        "accentForegroundOnCanvas": 6.63,
+        "textOnAction": 5.05,
+        "strongBorderOnSurface": 3.77,
+        "focusOnCanvas": 6.63
+      }
+    },
+    "amber": {
+      "light": {
+        "textOnCanvas": 14.84,
+        "mutedTextOnSurface": 6.11,
+        "quietTextOnSurface": 5.25,
+        "accentForegroundOnCanvas": 6.66,
+        "textOnAction": 4.87,
+        "strongBorderOnSurface": 3.45,
+        "focusOnCanvas": 4.57
+      },
+      "dark": {
+        "textOnCanvas": 17.39,
+        "mutedTextOnSurface": 8.81,
+        "quietTextOnSurface": 5.62,
+        "accentForegroundOnCanvas": 7.5,
+        "textOnAction": 4.65,
+        "strongBorderOnSurface": 3.77,
+        "focusOnCanvas": 7.5
+      }
+    }
+  },
+  "productsWithMetrics": 0,
+  "productsWithoutMetrics": 10,
+  "productsWithDecisionFacts": 5,
+  "productsWithoutDecisionFacts": 5,
+  "defaultFonts": [
+    "system"
+  ],
+  "configurableFonts": [
+    "system",
+    "inter",
+    "ibm-plex",
+    "source-sans",
+    "atkinson"
+  ],
+  "startModes": [
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "blockingFindings": 0,
+  "warningFindings": 0,
+  "visualGrammarGates": {
+    "pageHeading": "Exactly one h1. Runtime size must exceed the page summary.",
+    "panelHierarchy": "Every panel title must be larger than its subtitle.",
+    "headerMetrics": "A header metric strip requires the product task-decision purpose.",
+    "structuralSurfaces": "Primary workspace structure must use flat regions and no more than two opaque neutral backgrounds.",
+    "deterministicLayout": "Structural siblings must be stable and non-overlapping at 1440, 1024, 768, and 390 pixels.",
+    "actionIcons": "Distinct actions in one visible group must use distinct semantic icons."
+  },
+  "results": [
+    {
+      "slug": "do178-review-workbench",
+      "productKind": "review",
+      "architecture": "layered review system",
+      "moduleCount": 4,
+      "scenarioCount": 8,
+      "visibleActionCount": 2,
+      "commandActionCount": 8,
+      "shellMode": "review",
+      "layoutRecipe": "RCP-WORKBENCH-001",
+      "primaryView": "workbench",
+      "regionCount": 3,
+      "primaryActionIcon": "message-square-plus",
+      "metricSurfaceCount": 0,
+      "decisionFactSurfaceCount": 1,
+      "decisionPurpose": "Show review readiness and independence before approval.",
+      "visualGrammar": {
+        "h1Count": 1,
+        "h1Text": "Review software design data",
+        "panelCount": 3,
+        "panelTitleCount": 3,
+        "panelSubtitleCount": 3,
+        "headerMetricSurfaceCount": 0,
+        "approvedHeaderMetricPurpose": null,
+        "actionGroupCount": 1,
+        "visibleActionIconMetadata": {
+          "data-icon-name": 2,
+          "data-action-icon": 0,
+          "svg-class": 0,
+          "missing": 0
+        },
+        "duplicateActionIcons": []
+      },
+      "design": {
+        "palette": "Midnight blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "401891813b1df48e4132498cb12feaa3f92283af2216ea67b09fb4f5b20c6109",
+      "findings": []
+    },
+    {
+      "slug": "copilot-session-hub",
+      "productKind": "sessions",
+      "architecture": "event-driven work tracker",
+      "moduleCount": 4,
+      "scenarioCount": 9,
+      "visibleActionCount": 1,
+      "commandActionCount": 9,
+      "shellMode": "sessions",
+      "layoutRecipe": "RCP-BOARD-001",
+      "primaryView": "board",
+      "regionCount": 3,
+      "primaryActionIcon": "play",
+      "metricSurfaceCount": 0,
+      "decisionFactSurfaceCount": 0,
+      "decisionPurpose": null,
+      "visualGrammar": {
+        "h1Count": 1,
+        "h1Text": "Review active sessions",
+        "panelCount": 3,
+        "panelTitleCount": 3,
+        "panelSubtitleCount": 3,
+        "headerMetricSurfaceCount": 0,
+        "approvedHeaderMetricPurpose": null,
+        "actionGroupCount": 1,
+        "visibleActionIconMetadata": {
+          "data-icon-name": 1,
+          "data-action-icon": 0,
+          "svg-class": 0,
+          "missing": 0
+        },
+        "duplicateActionIcons": []
+      },
+      "design": {
+        "palette": "Midnight blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "563a494a3b49a640ea0ba06348d5f97fa24c28bc0136a23d35f84c71252d9208",
+      "findings": []
+    },
+    {
+      "slug": "technical-writing-desk",
+      "productKind": "writing",
+      "architecture": "document-centered authoring system",
+      "moduleCount": 3,
+      "scenarioCount": 7,
+      "visibleActionCount": 2,
+      "commandActionCount": 7,
+      "shellMode": "editor",
+      "layoutRecipe": "RCP-EDITOR-001",
+      "primaryView": "editor",
+      "regionCount": 3,
+      "primaryActionIcon": "spell-check-2",
+      "metricSurfaceCount": 0,
+      "decisionFactSurfaceCount": 0,
+      "decisionPurpose": null,
+      "visualGrammar": {
+        "h1Count": 1,
+        "h1Text": "Edit flight control note",
+        "panelCount": 3,
+        "panelTitleCount": 3,
+        "panelSubtitleCount": 3,
+        "headerMetricSurfaceCount": 0,
+        "approvedHeaderMetricPurpose": null,
+        "actionGroupCount": 1,
+        "visibleActionIconMetadata": {
+          "data-icon-name": 2,
+          "data-action-icon": 0,
+          "svg-class": 0,
+          "missing": 0
+        },
+        "duplicateActionIcons": []
+      },
+      "design": {
+        "palette": "Midnight blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "d65442d77c5792933b4f2c3e787eac544d26930ad0a64e87da2a4ba02ad05395",
+      "findings": []
+    },
+    {
+      "slug": "flight-test-telemetry",
+      "productKind": "telemetry",
+      "architecture": "stream-processing investigation system",
+      "moduleCount": 5,
+      "scenarioCount": 8,
+      "visibleActionCount": 3,
+      "commandActionCount": 8,
+      "shellMode": "instrument",
+      "layoutRecipe": "RCP-MONITOR-001",
+      "primaryView": "monitor",
+      "regionCount": 3,
+      "primaryActionIcon": "brackets",
+      "metricSurfaceCount": 0,
+      "decisionFactSurfaceCount": 1,
+      "decisionPurpose": "Show data health and triage scope for the selected flight.",
+      "visualGrammar": {
+        "h1Count": 1,
+        "h1Text": "Review acceleration exceedance",
+        "panelCount": 3,
+        "panelTitleCount": 3,
+        "panelSubtitleCount": 3,
+        "headerMetricSurfaceCount": 0,
+        "approvedHeaderMetricPurpose": null,
+        "actionGroupCount": 1,
+        "visibleActionIconMetadata": {
+          "data-icon-name": 3,
+          "data-action-icon": 0,
+          "svg-class": 0,
+          "missing": 0
+        },
+        "duplicateActionIcons": []
+      },
+      "design": {
+        "palette": "Midnight blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "bc6d9ddc3cd2d0c3b3df22326fb3aedbd3ae5bd126419caa5c98f7619cc359ab",
+      "findings": []
+    },
+    {
+      "slug": "aircraft-trade-study",
+      "productKind": "trade",
+      "architecture": "analysis pipeline",
+      "moduleCount": 4,
+      "scenarioCount": 6,
+      "visibleActionCount": 2,
+      "commandActionCount": 6,
+      "shellMode": "analysis",
+      "layoutRecipe": "RCP-WORKBENCH-001",
+      "primaryView": "workbench",
+      "regionCount": 3,
+      "primaryActionIcon": "play",
+      "metricSurfaceCount": 0,
+      "decisionFactSurfaceCount": 0,
+      "decisionPurpose": null,
+      "visualGrammar": {
+        "h1Count": 1,
+        "h1Text": "Compare aircraft options",
+        "panelCount": 3,
+        "panelTitleCount": 3,
+        "panelSubtitleCount": 3,
+        "headerMetricSurfaceCount": 0,
+        "approvedHeaderMetricPurpose": null,
+        "actionGroupCount": 1,
+        "visibleActionIconMetadata": {
+          "data-icon-name": 2,
+          "data-action-icon": 0,
+          "svg-class": 0,
+          "missing": 0
+        },
+        "duplicateActionIcons": []
+      },
+      "design": {
+        "palette": "Midnight blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "a73998a78cf5204d74ae1bd0edaed502236b2f99a2cc6a470e86842fd127ce3a",
+      "findings": []
+    },
+    {
+      "slug": "hil-campaign-orchestrator",
+      "productKind": "hil",
+      "architecture": "distributed execution control",
+      "moduleCount": 5,
+      "scenarioCount": 9,
+      "visibleActionCount": 3,
+      "commandActionCount": 9,
+      "shellMode": "control",
+      "layoutRecipe": "RCP-WORKBENCH-001",
+      "primaryView": "workbench",
+      "regionCount": 3,
+      "primaryActionIcon": "play",
+      "metricSurfaceCount": 0,
+      "decisionFactSurfaceCount": 1,
+      "decisionPurpose": "Show campaign progress, bench state, and remaining test time.",
+      "visualGrammar": {
+        "h1Count": 1,
+        "h1Text": "Run HIL test campaign",
+        "panelCount": 3,
+        "panelTitleCount": 3,
+        "panelSubtitleCount": 3,
+        "headerMetricSurfaceCount": 0,
+        "approvedHeaderMetricPurpose": null,
+        "actionGroupCount": 1,
+        "visibleActionIconMetadata": {
+          "data-icon-name": 3,
+          "data-action-icon": 0,
+          "svg-class": 0,
+          "missing": 0
+        },
+        "duplicateActionIcons": []
+      },
+      "design": {
+        "palette": "Midnight blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "d48a9104983039eb85114a6b06bf9260b15c2c7e5e0bf494b6d1cb1204245d60",
+      "findings": []
+    },
+    {
+      "slug": "supplier-intake-portal",
+      "productKind": "supplier",
+      "architecture": "case-management portal",
+      "moduleCount": 4,
+      "scenarioCount": 7,
+      "visibleActionCount": 2,
+      "commandActionCount": 7,
+      "shellMode": "portal",
+      "layoutRecipe": "RCP-WIZARD-001",
+      "primaryView": "wizard",
+      "regionCount": 3,
+      "primaryActionIcon": "badge-check",
+      "metricSurfaceCount": 0,
+      "decisionFactSurfaceCount": 0,
+      "decisionPurpose": null,
+      "visualGrammar": {
+        "h1Count": 1,
+        "h1Text": "Validate supplier delivery",
+        "panelCount": 3,
+        "panelTitleCount": 3,
+        "panelSubtitleCount": 3,
+        "headerMetricSurfaceCount": 0,
+        "approvedHeaderMetricPurpose": null,
+        "actionGroupCount": 1,
+        "visibleActionIconMetadata": {
+          "data-icon-name": 2,
+          "data-action-icon": 0,
+          "svg-class": 0,
+          "missing": 0
+        },
+        "duplicateActionIcons": []
+      },
+      "design": {
+        "palette": "Midnight blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "972333e47c65b90e4ae3e3686aaaf579cc1e59d4c7192d006364e8c1b47928ce",
+      "findings": []
+    },
+    {
+      "slug": "requirements-impact-workbench",
+      "productKind": "impact",
+      "architecture": "graph-analysis decision system",
+      "moduleCount": 4,
+      "scenarioCount": 8,
+      "visibleActionCount": 2,
+      "commandActionCount": 8,
+      "shellMode": "graph",
+      "layoutRecipe": "RCP-GRAPH-001",
+      "primaryView": "graph",
+      "regionCount": 3,
+      "primaryActionIcon": "git-branch",
+      "metricSurfaceCount": 0,
+      "decisionFactSurfaceCount": 1,
+      "decisionPurpose": "Show the change scope for planning and approval.",
+      "visualGrammar": {
+        "h1Count": 1,
+        "h1Text": "Assess requirement change",
+        "panelCount": 3,
+        "panelTitleCount": 3,
+        "panelSubtitleCount": 3,
+        "headerMetricSurfaceCount": 0,
+        "approvedHeaderMetricPurpose": null,
+        "actionGroupCount": 1,
+        "visibleActionIconMetadata": {
+          "data-icon-name": 2,
+          "data-action-icon": 0,
+          "svg-class": 0,
+          "missing": 0
+        },
+        "duplicateActionIcons": []
+      },
+      "design": {
+        "palette": "Midnight blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "9e01158a87ec19d03986bc086b825a4746d10fcc1dc4d7cd8fba707544eebce8",
+      "findings": []
+    },
+    {
+      "slug": "avionics-load-manager",
+      "productKind": "load",
+      "architecture": "transactional release system",
+      "moduleCount": 5,
+      "scenarioCount": 7,
+      "visibleActionCount": 2,
+      "commandActionCount": 7,
+      "shellMode": "secure",
+      "layoutRecipe": "RCP-WIZARD-001",
+      "primaryView": "wizard",
+      "regionCount": 3,
+      "primaryActionIcon": "key-round",
+      "metricSurfaceCount": 0,
+      "decisionFactSurfaceCount": 0,
+      "decisionPurpose": null,
+      "visualGrammar": {
+        "h1Count": 1,
+        "h1Text": "Approve software load",
+        "panelCount": 3,
+        "panelTitleCount": 3,
+        "panelSubtitleCount": 3,
+        "headerMetricSurfaceCount": 0,
+        "approvedHeaderMetricPurpose": null,
+        "actionGroupCount": 1,
+        "visibleActionIconMetadata": {
+          "data-icon-name": 2,
+          "data-action-icon": 0,
+          "svg-class": 0,
+          "missing": 0
+        },
+        "duplicateActionIcons": []
+      },
+      "design": {
+        "palette": "Midnight blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "4aa45fb7a34c3797d393ffcefc6934d93cc2847ebf305f3291291bf584ba6ff0",
+      "findings": []
+    },
+    {
+      "slug": "fracas-investigation",
+      "productKind": "fracas",
+      "architecture": "closed-loop reliability system",
+      "moduleCount": 5,
+      "scenarioCount": 9,
+      "visibleActionCount": 3,
+      "commandActionCount": 9,
+      "shellMode": "case",
+      "layoutRecipe": "RCP-CASE-001",
+      "primaryView": "case",
+      "regionCount": 3,
+      "primaryActionIcon": "git-branch",
+      "metricSurfaceCount": 0,
+      "decisionFactSurfaceCount": 1,
+      "decisionPurpose": "Show reliability risk that changes case priority.",
+      "visualGrammar": {
+        "h1Count": 1,
+        "h1Text": "Investigate connector failures",
+        "panelCount": 3,
+        "panelTitleCount": 3,
+        "panelSubtitleCount": 3,
+        "headerMetricSurfaceCount": 0,
+        "approvedHeaderMetricPurpose": null,
+        "actionGroupCount": 1,
+        "visibleActionIconMetadata": {
+          "data-icon-name": 3,
+          "data-action-icon": 0,
+          "svg-class": 0,
+          "missing": 0
+        },
+        "duplicateActionIcons": []
+      },
+      "design": {
+        "palette": "Midnight blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "650ce6ef88e9b52e27d0a9c4e32521a41c758c435d3fc71858aad11dbab10e07",
+      "findings": []
+    }
+  ]
+}

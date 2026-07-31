@@ -34,7 +34,7 @@ Use the system color mode before the user selects a mode. Provide a labeled mode
 
 ## FND-TOK-006: Surface tokens
 
-Use `semantic.surface.canvas`, `semantic.surface.panel`, `semantic.surface.panelRaised`, `semantic.surface.inset`, `semantic.surface.overlay`, and `semantic.surface.scrim` to express hierarchy.
+Use `semantic.surface.canvas` for the page and its structural panes. Use `semantic.surface.panel` only for a bounded object or tool. Use `semantic.surface.inset` for documents, code, plots, and diagrams. Reserve `semantic.surface.overlay` and `semantic.surface.scrim` for content above the workspace. Do not create routine surface tiers from the accent color. Do not apply a panel background merely because an element occupies a layout region.
 
 ## FND-TOK-007: Text tokens
 
@@ -46,7 +46,7 @@ Use `semantic.border.subtle`, `semantic.border.strong`, `semantic.border.focus`,
 
 ## FND-TOK-009: Accent tokens
 
-Use `semantic.accent.primary`, `semantic.accent.primaryHover`, `semantic.accent.primaryActive`, `semantic.accent.secondary`, and `semantic.accent.glow` only for active, selected, focus, or primary-command emphasis.
+Use `semantic.accent.foreground` for links, icons, and data emphasis. Use `semantic.accent.primary`, `semantic.accent.primaryHover`, and `semantic.accent.primaryActive` for filled primary actions. Use `semantic.accent.muted` and `semantic.accent.border` for selected state. Do not use an accent value as both small foreground text and a filled control background.
 
 ## FND-TOK-010: Status tokens
 

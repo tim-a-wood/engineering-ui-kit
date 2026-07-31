@@ -103,7 +103,7 @@ export function buildReviewContactSheetHtml(input: ReviewSheetInput): string {
 <title>Review Evidence: ${escapeHtml(input.runId)}</title>
 <style>
   @page { size: 1123px 794px; margin: 0; }
-  html, body { margin: 0; padding: 0; background: #07111f; color: #f8fafc;
+  html, body { margin: 0; padding: 0; background: #0d1117; color: #f0f6fc;
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
   code { font-family: "JetBrains Mono", Consolas, monospace; font-size: 11px; color: #94a3b8; }
   .sheet { width: 1123px; height: 794px; box-sizing: border-box; padding: 28px 32px; page-break-after: always; display: flex; flex-direction: column; gap: 14px; }
@@ -124,7 +124,7 @@ export function buildReviewContactSheetHtml(input: ReviewSheetInput): string {
   .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; min-height: 0; }
   .pane { margin: 0; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
   .pane figcaption { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
-  .pane img { width: 100%; max-height: 560px; object-fit: contain; object-position: top; border: 1px solid rgba(148,163,184,0.22); border-radius: 8px; background: #0f172a; }
+  .pane img { width: 100%; max-height: 560px; object-fit: contain; object-position: top; border: 1px solid #30363d; border-radius: 8px; background: #161b22; }
   .missing { border: 1px dashed rgba(148,163,184,0.34); border-radius: 8px; padding: 24px; color: #94a3b8; font-size: 12px; flex: 1; display: flex; align-items: center; justify-content: center; }
   .alert { border: 1px solid rgba(248,113,113,0.5); background: rgba(248,113,113,0.08); color: #fca5a5; border-radius: 8px; padding: 8px 12px; font-size: 12px; margin: 0; }
   .ok-line { color: #34d399; font-size: 12px; margin: 0; }

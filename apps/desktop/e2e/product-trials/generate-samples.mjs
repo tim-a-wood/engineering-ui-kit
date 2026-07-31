@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { renderFrontendDesignCss } from '../../../../packages/core/dist/index.js'
 import { productTrialSystems } from './systems.mjs'
 import { renderProductDocument } from './ui/product-renderers.mjs'
 
@@ -143,8 +144,10 @@ function writeSystem(system) {
 
   const html = renderProductDocument(system)
   fs.writeFileSync(path.join(sampleUi, 'index.html'), html)
+  fs.writeFileSync(path.join(sampleUi, 'theme.css'), renderFrontendDesignCss(system.design.config))
   fs.copyFileSync(path.join(uiRoot, 'styles.css'), path.join(sampleUi, 'styles.css'))
   fs.copyFileSync(path.join(uiRoot, 'product-layouts.css'), path.join(sampleUi, 'product-layouts.css'))
+  fs.copyFileSync(path.join(uiRoot, 'modern-system.css'), path.join(sampleUi, 'modern-system.css'))
   fs.copyFileSync(path.join(uiRoot, 'runtime.js'), path.join(sampleUi, 'runtime.js'))
   fs.writeFileSync(path.join(path.dirname(sampleUi), 'domain-service.mjs'), domainService(system))
 

@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-07-31T15:51:34.978Z",
+  "products": 10,
+  "requestedEngines": [
+    "webkit"
+  ],
+  "engines": [],
+  "viewportWidths": [
+    390,
+    768,
+    1024,
+    1440
+  ],
+  "desktopStatesPerProduct": [
+    "dark-initial",
+    "light",
+    "dark-action",
+    "dark-help"
+  ],
+  "phoneStatesPerProduct": [
+    "workspace",
+    "open navigation when the product has a drawer"
+  ],
+  "webkitCheck": {
+    "executed": true,
+    "runTimeoutMs": 10000,
+    "maxAttempts": 1,
+    "note": "WebKit provides Safari engine coverage. This run does not claim a test in the Safari application on iPhone."
+  },
+  "visualGrammarGates": {
+    "pageHeading": "Exactly one visible h1. Its computed size must be greater than the product summary.",
+    "panelHierarchy": "Each visible panel title must be larger than its subtitle.",
+    "headerMetrics": "A visible page-header metric strip must match the product task-decision purpose.",
+    "structuralSurfaces": "Structural panes and primary work surfaces must stay flat. Only inset objects and overlays can use contained or raised treatment.",
+    "neutralSurfaces": "Primary content cannot be an all-card wall and can use at most two opaque neutral structural backgrounds.",
+    "deterministicLayout": "Direct primary-workspace regions must be stable and non-overlapping at every matrix width.",
+    "widePlacement": "At 1440px, region boxes must follow their declared wide rows, columns, and spans.",
+    "controlOcclusion": "Visible fixed and sticky controls cannot cover another task region.",
+    "actionIcons": "Distinct visible actions in one group cannot reuse one semantic icon.",
+    "iconMetadata": "Every icon in every visible button must expose data-icon-name. Button metadata must match the rendered icon."
+  },
+  "screenshots": [],
+  "checks": [],
+  "failures": [
+    {
+      "engine": "webkit",
+      "product": "do178-review-workbench",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "check": "isolated render contract",
+      "message": "WebKit exceeded the 10000ms run limit and was restarted. WebKit worker load: context | WebKit worker load: init script | WebKit worker load: page"
+    }
+  ],
+  "passed": false
+}

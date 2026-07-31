@@ -19,7 +19,7 @@ function createWindow(): void {
     height: 1000,
     minWidth: 1200,
     minHeight: 760,
-    backgroundColor: '#07111f',
+    backgroundColor: '#0d1117',
     show: false,
     webPreferences: {
       preload: path.join(here, 'preload', 'preload.cjs'),
