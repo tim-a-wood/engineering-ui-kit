@@ -47,10 +47,7 @@ function StressMatrix() {
           </select>
         </label>
       </header>
-      <UmlDiagramWorkspace
-        diagrams={[fixture.projection]}
-        controlLabelPrefix={`${fixture.context} stress fixture`}
-      />
+      <UmlDiagramWorkspace diagrams={[fixture.projection]} />
     </main>
   )
 }

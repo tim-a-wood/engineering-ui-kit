@@ -53,6 +53,6 @@ body {
 }
 
 .uml-stress-shell .uml-canvas {
-  min-height: 710px;
-  max-height: 710px;
+  min-height: 900px;
+  max-height: 900px;
 }

@@ -9,6 +9,12 @@ coordinates, bend points, layout options, or fixture-specific routing rules.
 Each fixture passes through `layoutUmlDiagram` and `UmlDiagramWorkspace`. The
 test runs each layout two times and checks that the result is deterministic.
 
+Fresh production-renderer screenshots are in
+`docs/use-case-led-workflow/screenshots/uml-stress-2026-07-30`. The capture
+script builds the stress entry point, starts an isolated local server, waits for
+the real JointJS canvas and verified layout state, and then captures the
+workspace with the repository's pinned Chromium.
+
 ## New stress fixtures
 
 | Context | UML type | Shape | Symbols | Connectors | Crossings | Bends | Canvas |
