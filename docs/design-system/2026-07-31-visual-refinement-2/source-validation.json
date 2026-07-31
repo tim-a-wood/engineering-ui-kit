@@ -1,0 +1,255 @@
+{
+  "generatedAt": "2026-07-31T10:59:33.535Z",
+  "contractId": "EUIT-FRONTEND-001",
+  "writingProfileId": "EUIT-STE-001",
+  "products": 10,
+  "layouts": [
+    "fracas",
+    "hil",
+    "impact",
+    "load",
+    "review",
+    "sessions",
+    "supplier",
+    "telemetry",
+    "trade",
+    "writing"
+  ],
+  "palettes": [
+    "amber",
+    "graphite",
+    "gulfstream",
+    "teal",
+    "violet"
+  ],
+  "fonts": [
+    "atkinson",
+    "inter",
+    "plex",
+    "source",
+    "system"
+  ],
+  "startModes": [
+    "dark",
+    "light",
+    "system"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "blockingFindings": 0,
+  "warningFindings": 0,
+  "results": [
+    {
+      "slug": "do178-review-workbench",
+      "productKind": "review",
+      "architecture": "layered review system",
+      "moduleCount": 4,
+      "scenarioCount": 8,
+      "visibleActionCount": 2,
+      "commandActionCount": 8,
+      "shellMode": "review",
+      "composition": "review-compact",
+      "primaryActionIcon": "circle-check",
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "inter",
+        "startMode": "system",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "f745d28a8ef5c20256524a00c0820ec5bc42095c6ee0e35866d2d5c86a874679",
+      "findings": []
+    },
+    {
+      "slug": "copilot-session-hub",
+      "productKind": "sessions",
+      "architecture": "event-driven work tracker",
+      "moduleCount": 4,
+      "scenarioCount": 9,
+      "visibleActionCount": 1,
+      "commandActionCount": 9,
+      "shellMode": "sessions",
+      "composition": "sessions-comfortable",
+      "primaryActionIcon": "play",
+      "design": {
+        "palette": "Technical violet",
+        "font": "source",
+        "startMode": "dark",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "7e95d123625f13c55facca375883e30e2eb72241b36025edef0f664eb8d91829",
+      "findings": []
+    },
+    {
+      "slug": "technical-writing-desk",
+      "productKind": "writing",
+      "architecture": "document-centered authoring system",
+      "moduleCount": 3,
+      "scenarioCount": 7,
+      "visibleActionCount": 2,
+      "commandActionCount": 7,
+      "shellMode": "editor",
+      "composition": "writing-comfortable",
+      "primaryActionIcon": "plus",
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "plex",
+        "startMode": "light",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "76e03c024a2f6762414d232fe9d341899678738cdc83525fd1233e0659f730b4",
+      "findings": []
+    },
+    {
+      "slug": "flight-test-telemetry",
+      "productKind": "telemetry",
+      "architecture": "stream-processing investigation system",
+      "moduleCount": 5,
+      "scenarioCount": 8,
+      "visibleActionCount": 3,
+      "commandActionCount": 8,
+      "shellMode": "instrument",
+      "composition": "telemetry-compact",
+      "primaryActionIcon": "play",
+      "design": {
+        "palette": "Graphite",
+        "font": "inter",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "2830fa1eeddd0c63fbbd2c20dfd79869ac0f9f17db0e60afd391d4ef4abbdaab",
+      "findings": []
+    },
+    {
+      "slug": "aircraft-trade-study",
+      "productKind": "trade",
+      "architecture": "analysis pipeline",
+      "moduleCount": 4,
+      "scenarioCount": 6,
+      "visibleActionCount": 2,
+      "commandActionCount": 6,
+      "shellMode": "analysis",
+      "composition": "trade-compact",
+      "primaryActionIcon": "plus",
+      "design": {
+        "palette": "Deep teal",
+        "font": "source",
+        "startMode": "system",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "23968f798b3f28d15b5293e89d54649a3316c10cfa6db0cba5ab3640ae4d7f47",
+      "findings": []
+    },
+    {
+      "slug": "hil-campaign-orchestrator",
+      "productKind": "hil",
+      "architecture": "distributed execution control",
+      "moduleCount": 5,
+      "scenarioCount": 9,
+      "visibleActionCount": 3,
+      "commandActionCount": 9,
+      "shellMode": "control",
+      "composition": "hil-compact",
+      "primaryActionIcon": "calendar",
+      "design": {
+        "palette": "Flight amber",
+        "font": "plex",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "05ae3d4defbdcf37ca5e9685f064b4310acab9afec4a245dd536adb87383ea75",
+      "findings": []
+    },
+    {
+      "slug": "supplier-intake-portal",
+      "productKind": "supplier",
+      "architecture": "case-management portal",
+      "moduleCount": 4,
+      "scenarioCount": 7,
+      "visibleActionCount": 2,
+      "commandActionCount": 7,
+      "shellMode": "portal",
+      "composition": "supplier-comfortable",
+      "primaryActionIcon": "upload",
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "atkinson",
+        "startMode": "light",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "29e2f1962ab010c7a706032a478dd2afd837e951fd4a7dfd21a0c8c2095fad8c",
+      "findings": []
+    },
+    {
+      "slug": "requirements-impact-workbench",
+      "productKind": "impact",
+      "architecture": "graph-analysis decision system",
+      "moduleCount": 4,
+      "scenarioCount": 8,
+      "visibleActionCount": 2,
+      "commandActionCount": 8,
+      "shellMode": "graph",
+      "composition": "impact-compact",
+      "primaryActionIcon": "upload",
+      "design": {
+        "palette": "Technical violet",
+        "font": "inter",
+        "startMode": "system",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "f56b1c6d54b566665e24234f05a3009c86929961d3f8c650c1603699c5fc2989",
+      "findings": []
+    },
+    {
+      "slug": "avionics-load-manager",
+      "productKind": "load",
+      "architecture": "transactional release system",
+      "moduleCount": 5,
+      "scenarioCount": 7,
+      "visibleActionCount": 3,
+      "commandActionCount": 7,
+      "shellMode": "secure",
+      "composition": "load-compact",
+      "primaryActionIcon": "upload",
+      "design": {
+        "palette": "Flight amber",
+        "font": "system",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "f501c5646769463279d88b91ecb81ab6b5759b6f7d3c4e96615290f3d2ea5021",
+      "findings": []
+    },
+    {
+      "slug": "fracas-investigation",
+      "productKind": "fracas",
+      "architecture": "closed-loop reliability system",
+      "moduleCount": 5,
+      "scenarioCount": 9,
+      "visibleActionCount": 3,
+      "commandActionCount": 9,
+      "shellMode": "case",
+      "composition": "fracas-comfortable",
+      "primaryActionIcon": "plus",
+      "design": {
+        "palette": "Deep teal",
+        "font": "atkinson",
+        "startMode": "system",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "22c820107705945973e0c7cad1b59d7dbad9c262f6af5ed89c690cb02e6f9516",
+      "findings": []
+    }
+  ]
+}

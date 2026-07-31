@@ -2177,6 +2177,129 @@
   font-size: 11px;
 }
 
+/* Outcome grammar v4.
+   Product identity can vary without changing semantic tokens or controls. */
+
+.product-v4 .product-nav.nav-documents,
+.product-v4 .product-nav.nav-trade,
+.product-v4 .product-nav.nav-portal {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.product-v4 .product-nav.nav-portal {
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+
+.product-v4 .product-nav.nav-documents .brand,
+.product-v4 .product-nav.nav-trade .brand,
+.product-v4 .product-nav.nav-portal .brand,
+.product-v4 .product-nav.nav-documents .nav-foot,
+.product-v4 .product-nav.nav-trade .nav-foot,
+.product-v4 .product-nav.nav-portal .nav-foot {
+  border-color: var(--line);
+}
+
+.product-v4 .product-nav.nav-documents .brand-mark,
+.product-v4 .product-nav.nav-trade .brand-mark,
+.product-v4 .product-nav.nav-portal .brand-mark {
+  border-color: rgba(var(--accent-rgb), .32);
+  background: var(--eui-color-accent-soft);
+  color: var(--accent);
+}
+
+.product-v4 .product-nav.nav-documents .brand-copy b,
+.product-v4 .product-nav.nav-trade .brand-copy b,
+.product-v4 .product-nav.nav-portal .brand-copy b,
+.product-v4 .product-nav.nav-documents .nav-item.active,
+.product-v4 .product-nav.nav-trade .nav-item.active,
+.product-v4 .product-nav.nav-portal .nav-item.active {
+  color: var(--text);
+}
+
+.product-v4 .product-nav.nav-documents .brand-copy small,
+.product-v4 .product-nav.nav-trade .brand-copy small,
+.product-v4 .product-nav.nav-portal .brand-copy small,
+.product-v4 .product-nav.nav-documents .nav-item,
+.product-v4 .product-nav.nav-trade .nav-item,
+.product-v4 .product-nav.nav-portal .nav-item,
+.product-v4 .product-nav.nav-documents .nav-foot,
+.product-v4 .product-nav.nav-trade .nav-foot,
+.product-v4 .product-nav.nav-portal .nav-foot {
+  color: var(--muted);
+}
+
+.product-v4 .product-nav.nav-documents .nav-item:hover,
+.product-v4 .product-nav.nav-trade .nav-item:hover,
+.product-v4 .product-nav.nav-portal .nav-item:hover {
+  border-color: var(--line);
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.product-v4 .product-nav.nav-documents .nav-item.active,
+.product-v4 .product-nav.nav-trade .nav-item.active,
+.product-v4 .product-nav.nav-portal .nav-item.active {
+  border-color: rgba(var(--accent-rgb), .34);
+  background: var(--eui-color-accent-soft);
+}
+
+.product-v4 .product-nav.nav-documents .nav-foot b,
+.product-v4 .product-nav.nav-trade .nav-foot b,
+.product-v4 .product-nav.nav-portal .nav-foot b {
+  border-color: var(--line-strong);
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.product-v4 [aria-label="Product actions"] .scenario-result {
+  order: 20;
+  grid-column: 1 / -1;
+  flex: 1 0 100%;
+  width: 100%;
+  min-height: 24px;
+  margin: 1px 0 0;
+  border: 0;
+  padding: 4px 2px 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 11px;
+}
+
+.product-v4 [aria-label="Product actions"] .scenario-result .lucide {
+  width: 15px;
+  height: 15px;
+}
+
+.product-v4 .objective-panel .check-list li,
+.product-v4 .writing-inspector .diagnostics li,
+.product-v4 .writing-inspector .comment-list li {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: transparent;
+}
+
+.product-v4 .supplier-package .intake-list {
+  gap: 0;
+}
+
+.product-v4 .supplier-package .intake-row {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: transparent;
+}
+
+.product-v4 .supplier-package .intake-row.selected {
+  outline: 0;
+  background: var(--eui-color-accent-soft);
+}
+
+.product-v4 .product-topbar .user-chip {
+  font-size: 11px;
+  font-weight: 700;
+}
+
 /* Shared narrow adaptation still preserves each product's task model. */
 
 @media (max-width: 1100px) {

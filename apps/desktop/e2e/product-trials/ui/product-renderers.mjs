@@ -15,10 +15,12 @@ const iconPaths = {
   check: '<path d="m5 12 4 4L19 6"/>',
   'circle-check': '<circle cx="12" cy="12" r="10"/><path d="m8 12 2.5 2.5L16 9"/>',
   'circle-help': '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 1 1 5.8 1c0 2-3 2-3 4"/><path d="M12 18h.01"/>',
+  calendar: '<path d="M8 2v4M16 2v4M3 10h18"/><rect width="18" height="18" x="3" y="4" rx="2"/>',
   activity: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
   boxes: '<path d="m12 2 4 2.3v4.6L12 11 8 8.9V4.3L12 2Z"/><path d="m5 12 4 2.3v4.6L5 21l-4-2.1v-4.6L5 12Z"/><path d="m19 12 4 2.3v4.6L19 21l-4-2.1v-4.6l4-2.3Z"/>',
   'clipboard-check': '<rect width="14" height="18" x="5" y="3" rx="2"/><path d="M9 3.5h6M9 12l2 2 4-4"/>',
   ellipsis: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
   file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h6"/>',
   flask: '<path d="M9 3h6M10 9V3h4v6l5 9a2 2 0 0 1-1.7 3H6.7A2 2 0 0 1 5 18l5-9Z"/><path d="M8 15h8"/>',
   'git-branch': '<line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>',
@@ -29,10 +31,12 @@ const iconPaths = {
   package: '<path d="m7.5 4.3 9 5.2M3.3 7l8.7 5 8.7-5M12 22V12M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>',
   panels: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18M9 9h12"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  play: '<path d="m6 3 14 9-14 9Z"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
   shield: '<path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3z"/><path d="m9 12 2 2 4-4"/>',
   'square-kanban': '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 7v8M12 7v5M16 7v9"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
   users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
 }
@@ -195,7 +199,7 @@ function panelBody(panel) {
 
 function panel(panel, className = '') {
   return `<article class="panel panel-${escapeHtml(panel.type)} ${className}">
-    <header class="panel-header"><div><h3>${escapeHtml(panel.title)}</h3><p>${escapeHtml(panel.subtitle)}</p></div>${iconButton('Open panel menu', 'ellipsis')}</header>
+    <header class="panel-header"><div><h3>${escapeHtml(panel.title)}</h3><p>${escapeHtml(panel.subtitle)}</p></div>${panel.menu === true ? iconButton('Open panel menu', 'ellipsis') : ''}</header>
     ${panelBody(panel)}
   </article>`
 }
@@ -231,10 +235,22 @@ function topbar(system, extra = '', mode = 'workspace') {
   </header>`
 }
 
+function actionIcon(name) {
+  const value = String(name).toLowerCase()
+  if (/\b(run|start)\b/.test(value)) return 'play'
+  if (/\b(load|import|receive|upload)\b/.test(value)) return 'upload'
+  if (/\b(export|download)\b/.test(value)) return 'download'
+  if (/\b(reserve|schedule)\b/.test(value)) return 'calendar'
+  if (/\b(review|check|validate|verify|approve|authorize|accept|resolve|close)\b/.test(value)) return 'circle-check'
+  if (/\b(trace|inspect|analyze|classify|compare)\b/.test(value)) return 'search'
+  if (/\b(record|register|create|add|draft|define|mark)\b/.test(value)) return 'plus'
+  return 'arrow-right'
+}
+
 function actions(system, className = 'domain-actions', visibleCount = 3) {
   const visible = system.scenarios.slice(0, visibleCount)
   return `<div class="${className}" aria-label="Product actions">${visible.map((item, index) =>
-    `<button class="${index === 0 ? 'primary-action' : ''}" type="button" data-scenario-action="${item.actionId}" data-target="${escapeHtml(item.target)}"><span>${index === 0 ? icon('plus', 16) : icon('arrow-right', 16)}</span>${escapeHtml(item.name)}</button>`).join('')}<button class="more-actions" type="button" data-open-commands>${icon('ellipsis', 16)} More actions</button></div>`
+    `<button class="${index === 0 ? 'primary-action' : ''}" type="button" data-scenario-action="${item.actionId}" data-target="${escapeHtml(item.target)}"><span>${icon(actionIcon(item.name), 16)}</span>${escapeHtml(item.name)}</button>`).join('')}<button class="more-actions" type="button" data-open-commands>${icon('ellipsis', 16)} More actions</button></div>`
 }
 
 function metricStrip(system, className = '') {
@@ -399,7 +415,7 @@ const renderers = {
 
 function supportUi(system) {
   return `<section class="scenario-results" aria-live="polite">${system.scenarios.map((item, index) =>
-      `<div class="scenario-result ${index === system.scenarios.length - 1 ? 'is-failure' : ''}" data-scenario-result="${item.actionId}" data-reward="${escapeHtml(system.reward)}">${icon(index === system.scenarios.length - 1 ? 'x' : 'circle-check', 18)}<span>${escapeHtml(item.result)}</span></div>`).join('')}</section>
+      `<div class="scenario-result ${index === system.scenarios.length - 1 ? 'is-failure' : ''}" role="status" data-scenario-result="${item.actionId}" data-reward="${escapeHtml(system.reward)}">${icon(index === system.scenarios.length - 1 ? 'x' : 'circle-check', 18)}<span>${escapeHtml(item.result)}</span></div>`).join('')}</section>
     <details class="activity-drawer"><summary>Activity</summary><ol class="activity-list" data-activity><li><span>Now</span><b>Workspace opened</b><small>${escapeHtml(system.description)}</small></li></ol></details>
     <aside class="help-popover" data-help-popover hidden><header><b>Workspace help</b>${iconButton('Close help', 'x', 'data-close-help')}</header><p>Use the main action to start work. Use the command menu to find other actions.</p><p>Press Escape to close this help.</p></aside>
     <div class="command-dialog" data-command-dialog hidden><section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu"><div class="command-search"><input data-command-input aria-label="Find an action" placeholder="Find an action" />${iconButton('Close command menu', 'x', 'data-close-commands')}</div><ul class="command-list">${system.scenarios.map((item) => `<li data-command-item="${item.actionId}"><button type="button"><span>${escapeHtml(item.name)}</span><small>${escapeHtml(item.target)}</small></button></li>`).join('')}</ul></section></div>`
@@ -435,7 +451,7 @@ export function renderProductDocument(system) {
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./product-layouts.css" />
   </head>
-  <body class="product-v2 product-v3 product-${escapeHtml(system.layout)}" data-density="${escapeHtml(design.density)}" data-composition="${escapeHtml(system.layout)}-${escapeHtml(design.density)}">
+  <body class="product-v2 product-v3 product-v4 product-${escapeHtml(system.layout)}" data-density="${escapeHtml(design.density)}" data-composition="${escapeHtml(system.layout)}-${escapeHtml(design.density)}">
     <div class="app-shell">${render(system)}</div>
     ${supportUi(system)}
     <script id="product-config" type="application/json">${config}</script>

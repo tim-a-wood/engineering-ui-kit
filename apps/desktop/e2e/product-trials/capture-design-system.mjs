@@ -7,8 +7,8 @@ import { productTrialSystems } from './systems.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(here, '../../../..')
-const outputRoot = path.join(repoRoot, 'docs/design-system/2026-07-31-visual-redesign/screenshots')
-const reportPath = path.join(repoRoot, 'docs/design-system/2026-07-31-visual-redesign/browser-validation.json')
+const outputRoot = path.join(repoRoot, 'docs/design-system/2026-07-31-visual-refinement-2/screenshots')
+const reportPath = path.join(repoRoot, 'docs/design-system/2026-07-31-visual-refinement-2/browser-validation.json')
 const failures = []
 const screenshots = []
 const browserResults = []

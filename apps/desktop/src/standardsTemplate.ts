@@ -148,6 +148,7 @@ export const STANDARD_APPROVED_GUIDANCE = [
   'A labeled mode button that stores the user choice.',
   'A project-selected font through one semantic font token.',
   'Lucide icons on a 24 pixel grid with a 2 pixel stroke.',
+  'Action icons that match their verbs; unrelated actions do not reuse a generic plus or arrow.',
   'Tooltips for icon-only controls on pointer hover and keyboard focus.',
   'Context help beside complex domain terms.',
   'Restrained technical accent.',
@@ -161,6 +162,7 @@ export const STANDARD_APPROVED_GUIDANCE = [
   'Monospaced project paths and technical identifiers.',
   'Primary action hierarchy.',
   'Explicit validation and status text.',
+  'Routine success feedback beside the action or object that changed.',
   'Semantic CSS variables.',
   'Dialogs with overlay surface, scrim, focus containment, Escape, and focus return.',
   'Borders and spacing doing more hierarchy work than heavy shadows.',
@@ -221,6 +223,8 @@ export const STANDARD_REJECTED_GUIDANCE = [
   'Em dashes, vague promotional text, and conversational filler in visible copy.',
   'One application shell reused for unrelated products.',
   'The complete action catalog in the page header.',
+  'An overflow menu on every panel when no real secondary panel commands exist.',
+  'A fixed success toast that covers work when the confirmation can sit beside the action.',
   'Normal interface labels, table content, or instructions below 13px.',
 ]
 

@@ -104,6 +104,7 @@ for (const system of productTrialSystems) {
   const visibleActionCount = (renderedHtml.match(/data-scenario-action=/g) ?? []).length
   const moreActionCount = (renderedHtml.match(/class="more-actions"/g) ?? []).length
   const commandActionCount = (renderedHtml.match(/data-command-item=/g) ?? []).length
+  const primaryActionIcon = renderedHtml.match(/class="primary-action"[^>]*data-scenario-action[^>]*>[\s\S]{0,180}?lucide-([a-z-]+)/)?.[1]
   if (!shellMode) throw new Error(`${system.slug} has no shell mode.`)
   if (!composition) throw new Error(`${system.slug} has no composition identity.`)
   if (visibleActionCount < 1 || visibleActionCount > 3) {
@@ -114,6 +115,16 @@ for (const system of productTrialSystems) {
   }
   if (commandActionCount !== system.scenarios.length) {
     throw new Error(`${system.slug} exposes ${commandActionCount} of ${system.scenarios.length} actions in its command menu.`)
+  }
+  if (!/class="[^"]*product-v4/.test(renderedHtml)) {
+    throw new Error(`${system.slug} does not use the current outcome grammar.`)
+  }
+  if (!primaryActionIcon) throw new Error(`${system.slug} has no semantic icon on its primary action.`)
+  if (/Open panel menu/.test(renderedHtml)) {
+    throw new Error(`${system.slug} contains a generic panel menu.`)
+  }
+  if (!/role="status" data-scenario-result=/.test(renderedHtml)) {
+    throw new Error(`${system.slug} has no accessible contextual action result.`)
   }
   if (/reward-toast|reward-spark|reward-track/.test(renderedHtml + sharedSources['styles.css'])) {
     throw new Error(`${system.slug} still contains generic reward UI.`)
@@ -128,6 +139,7 @@ for (const system of productTrialSystems) {
     commandActionCount,
     shellMode,
     composition,
+    primaryActionIcon,
     design: {
       palette: system.design.palette,
       font: system.design.fontId,
@@ -148,6 +160,9 @@ if (new Set(results.map((result) => result.shellMode)).size !== results.length) 
 }
 if (new Set(results.map((result) => result.composition)).size !== results.length) {
   throw new Error('Two product frontends use the same composition identity.')
+}
+if (new Set(results.map((result) => result.primaryActionIcon)).size < 5) {
+  throw new Error('The primary actions do not use enough semantic icon meanings.')
 }
 
 const report = {

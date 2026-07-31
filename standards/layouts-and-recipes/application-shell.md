@@ -85,7 +85,7 @@ Main content shall be canvas-first and keep the primary workflow visually domina
 
 ## Command and Status Regions
 
-Commands and status shall be adjacent to the affected workflow region where possible. Global status is reserved for app-level state.
+Commands and status shall be adjacent to the affected workflow region where possible. Routine success confirmation shall remain beside the action or object that changed and shall not cover the workspace with a fixed toast. Panel overflow menus shall exist only where the panel has real secondary commands. Global status is reserved for app-level state.
 
 ## Density Rules
 

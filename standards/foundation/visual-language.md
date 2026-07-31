@@ -72,6 +72,10 @@ Show one primary page action and no more than two secondary page actions. Put th
 
 Use text of 13 pixels or larger for normal interface content. Reserve text from 10 to 12 pixels for short metadata. Do not compress labels, table content, or instructions to create artificial density.
 
+## FND-VIS-016: Semantic commands and local feedback
+
+Match each action icon to its verb and keep that meaning stable. Do not reuse a generic plus or arrow for unrelated actions. Confirm a routine completed action beside the action or object that changed. Do not cover the workspace with a fixed success toast. Add a panel overflow menu only when that panel has real secondary commands.
+
 ## Approved Visual Patterns
 
 | Pattern | Rule |
@@ -90,6 +94,7 @@ Use text of 13 pixels or larger for normal interface content. Reserve text from 
 | Matched light and dark modes | Both modes preserve hierarchy, contrast, density, and product identity. |
 | Consistent Lucide icons | Icons use one family, one geometry, and one meaning for each action. |
 | Accessible contextual help | Icon-only controls have tooltips. Complex terms have help triggers or persistent helper text. |
+| Local action confirmation | Routine success appears beside the action or affected object and does not cover the workspace. |
 
 ## Rejected Visual Patterns
 
@@ -112,6 +117,9 @@ Use text of 13 pixels or larger for normal interface content. Reserve text from 
 | One shell reused for unrelated products | Removes task identity and makes each product look like a template. |
 | Complete action catalog in the page header | Competes with the main task and makes action priority unclear. |
 | Normal interface text below 13 pixels | Reduces scanability and creates artificial density. |
+| Generic icon reused for unrelated actions | Hides action meaning and makes the interface look templated. |
+| Overflow menu on every panel | Advertises commands that do not exist and adds repeated visual noise. |
+| Fixed toast for routine success | Separates feedback from its cause and can cover active work. |
 
 ## Mockup Calibration Notes
 

@@ -74,6 +74,7 @@ describe('frontend design system', () => {
     }))
 
     expect(prompt).toContain('Use Lucide icons only.')
+    expect(prompt).toContain('Match each action icon to its verb.')
     expect(prompt).toContain('Give each icon-only button a tooltip.')
     expect(prompt).toContain('Put a help icon next to complex domain terms.')
     expect(prompt).toContain('Do not use accent strips on cards, tiles, panels, sections, or summary blocks.')
@@ -83,6 +84,8 @@ describe('frontend design system', () => {
     expect(prompt).toContain('Do not reuse one shell for every product.')
     expect(prompt).toContain('Show one primary page action and no more than two secondary page actions.')
     expect(prompt).toContain('Do not put the complete action catalog in the page header.')
+    expect(prompt).toContain('Do not put an overflow menu on every panel.')
+    expect(prompt).toContain('Do not cover the workspace with a fixed toast.')
     expect(prompt).toContain('Use 13 pixel or larger text for normal interface content.')
   })
 

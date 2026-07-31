@@ -85,6 +85,10 @@ function showResult(id, actionName) {
   results.forEach((item) => item.classList.remove('is-visible'))
   const result = results.find((item) => item.dataset.scenarioResult === id)
   if (!result) return
+  const sourceButton = scenarioButtons.find((button) => button.dataset.scenarioAction === id)
+  const actionRegion = sourceButton?.closest('[aria-label="Product actions"]')
+    ?? document.querySelector('[aria-label="Product actions"]')
+  actionRegion?.append(result)
   result.classList.add('is-visible')
 
   const row = document.createElement('li')
