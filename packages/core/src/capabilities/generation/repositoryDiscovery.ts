@@ -3,8 +3,8 @@
  * `repositoryDiscovery.ts`, §11.2 repository path proposal).
  *
  * This module never touches the filesystem. Callers (desktop/main process
- * code) collect a `RepositoryEvidence` snapshot — a file list plus parsed
- * manifest/CI contents — and pass it in. Given identical evidence, discovery
+ * code) collect a `RepositoryEvidence` snapshot: a file list plus parsed
+ * manifest/CI contents: and pass it in. Given identical evidence, discovery
  * output is byte-identical regardless of array ordering or host path
  * separators (CAP-TEST-048/049).
  */

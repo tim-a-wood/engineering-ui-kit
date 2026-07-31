@@ -22,51 +22,52 @@ backends.
 - The selected screen is Create Task Packet on route `/` with no router dependency.
 - Domain behavior for task sections, validation, preview, and export must remain
   reviewable and protected during later Copilot transformation.
-- Engineering UI Kit v0.1 is dark-first for transformed output. The Phase 1 baseline
-  remains deliberately plain so improvement can be measured.
+- Generated frontends support light and dark modes.
+- The default palette uses Gulfstream blue and white.
+- The selected palette and font remain configurable.
 
 ## Required Architecture
 
-### ARCH-FE-001 — View, component, and module boundaries
+### ARCH-FE-001: View, component, and module boundaries
 
 Keep presentation in view modules such as `App.tsx`. Keep serializable domain
 behavior, sample data, validation, and Markdown export in dedicated modules such as
 `taskPacket.ts`. Do not bury packet rules inside CSS or presentational markup.
 
-### ARCH-FE-002 — React state ownership
+### ARCH-FE-002: React state ownership
 
 Own interactive UI state in the nearest React view that needs it. For the trial,
 `App.tsx` owns edit mode, draft values, dialog visibility, and status messages.
 `taskPacket.ts` owns the packet shape and pure functions that derive validation and
 export content.
 
-### ARCH-FE-003 — DOM and accessibility posture
+### ARCH-FE-003: DOM and accessibility posture
 
 Use semantic HTML for shell, navigation, headings, lists, forms, status, and dialogs.
 Interactive controls must be keyboard reachable, expose visible focus, and convey
 status with text as well as color. Dialogs must support Escape and Close dismissal
 and return focus to the invoking control where practical.
 
-### ARCH-FE-004 — TypeScript strictness
+### ARCH-FE-004: TypeScript strictness
 
 Trial and future renderer code shall use TypeScript strict mode. Public packet and
 validation types must be explicit. Avoid `any` for packet state, validation results,
 or export helpers.
 
-### ARCH-FE-005 — Serialization separated from presentation
+### ARCH-FE-005: Serialization separated from presentation
 
 Task-packet types, sample data, validation, and Markdown serialization shall live
 outside visual components. Presentation may call those functions but must not redefine
 section headings, required-field rules, or export filenames.
 
-### ARCH-FE-006 — Future Electron renderer constraints
+### ARCH-FE-006: Future Electron renderer constraints
 
 When an Electron shell is introduced later, renderer code remains a React/Vite UI.
 Filesystem, process, and privileged operations must cross a typed boundary owned by
 the main or preload layer. Do not import Node-only APIs into trial or renderer UI
 modules during Phase 1.
 
-### ARCH-FE-007 — No domain behavior in visual-only components
+### ARCH-FE-007: No domain behavior in visual-only components
 
 Visual components may render labels, layout, and controls. They must not invent
 acceptance criteria, alter protected behavior, or silently change export content.

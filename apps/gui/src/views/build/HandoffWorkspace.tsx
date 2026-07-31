@@ -1,5 +1,5 @@
 /**
- * Handoff workspace — transfer ready files to Copilot and apply utilities.
+ * Handoff workspace: transfer ready files to Copilot and apply utilities.
  */
 
 import { useEffect, useState, type ReactNode } from 'react'
@@ -242,7 +242,7 @@ export function HandoffWorkspace(props: BuildWorkspaceProps) {
           <li className="readiness-row">
             <span className={`readiness-tick ${contextReady ? 'ready' : props.contextStale ? 'stale' : 'missing'}`} aria-hidden="true">{contextReady ? '✓' : '·'}</span>
             <div><strong>Context screened</strong><small>{contextDetail}</small></div>
-            <span className="readiness-meta mono">{props.contextResult ? formatBytes(props.contextResult.flatfileBytes) : hasContext ? 'on disk' : '—'}</span>
+            <span className="readiness-meta mono">{props.contextResult ? formatBytes(props.contextResult.flatfileBytes) : hasContext ? 'on disk' : 'None'}</span>
           </li>
           <li className="readiness-row">
             <span className={`readiness-tick ${packetReady ? 'ready' : props.packetStale || props.contextStale ? 'stale' : 'missing'}`} aria-hidden="true">{packetReady ? '✓' : '·'}</span>

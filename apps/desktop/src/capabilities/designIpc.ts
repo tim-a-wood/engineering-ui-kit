@@ -1,12 +1,12 @@
 /**
- * EUC-16 — desktop IPC adapter for the use-case-led Capabilities design
+ * EUC-16: desktop IPC adapter for the use-case-led Capabilities design
  * workflow (§17, §25.3 "IPC, CLI, and machine API return the same structured
  * result for the same operation").
  *
  * One `ipcMain.handle` on `DESIGN_CHANNEL` dispatches every design-workflow
  * operation to the same `DesignOperationsService` (packages/core
  * `capabilities/design/operations.ts`) that `packages/core/src/designCli.ts`
- * and `packages/core/src/designMachineApi.ts` call — no operation is
+ * and `packages/core/src/designMachineApi.ts` call: no operation is
  * reimplemented here, and no operation is added that the service does not
  * already expose (§20.2 "no approval shortcut for agents": an `approve*`
  * request from an agent actor reaches `executeChange`'s own
@@ -23,19 +23,19 @@
  * against the workspace *data directory* (`root` = `dataDir`), and
  * `verifyModule`/`configureBinding`/`verifyConnection`/`runScenario` were
  * entirely unconfigured. Two bugs followed: (1) a real desktop project could
- * never apply a delta into its actual repository — every apply landed inside
+ * never apply a delta into its actual repository: every apply landed inside
  * the app's own data directory instead; (2) `inspectAgentDelta` recorded
  * `workspaceRevisionAtInspection` from the module design's own revision
  * (e.g. `'r1'`, from `deps.workspaceRevisionProvider` being unset, so
  * `operations.ts` fell back to `design?.revision`), while
  * `applyDeltaTransactionally`'s default (`options.currentRevision` omitted)
- * recomputes a *filesystem content hash* — two different value spaces that
+ * recomputes a *filesystem content hash*: two different value spaces that
  * can never agree, so every apply failed as `'stale workspace revision'`
  * before writing a single file.
  *
  * The fix has three parts, all confined to this adapter (no edit to
  * `operations.ts`, `deltaInspector.ts`, `repositoryAdapter.ts`, or
- * `designWorkspace.ts` — all frozen for this packet):
+ * `designWorkspace.ts`: all frozen for this packet):
  *
  *  1. Adapter-level project-repository configuration
  *     (`adapter:configureProjectRepository` / `adapter:getProjectRepository`,
@@ -47,12 +47,12 @@
  *     before it ever reaches `path.join`) and audit-logged through
  *     `workspace.appendAuditEvent` with the same idempotency-key semantics
  *     every §17.2 change operation uses. Only a `user:` actor may configure
- *     a repository — an `agent:` (or `service:`) actor is rejected before
+ *     a repository: an `agent:` (or `service:`) actor is rejected before
  *     anything is written or logged as a rejection.
  *
  *  2. Real executors, built per project from that configured repository
  *     root: `applyDelta` runs `applyDeltaTransactionally` against the real
- *     repository (never the data directory) — with no repository configured
+ *     repository (never the data directory): with no repository configured
  *     it returns a structured `{ applied: false, failure:
  *     'repository-not-configured: ...' }` result rather than silently
  *     touching `dataDir`. `verifyModule` runs the design's configured
@@ -63,7 +63,7 @@
  *
  *     Second-review P1 fix (was DEV-05 "intentionally unconfigured"):
  *     `configureBinding`, `verifyConnection`, and `runScenario` are now real
- *     too — `buildDesktopConnectExecutors` (`designExecutors.ts`), backed by
+ *     too: `buildDesktopConnectExecutors` (`designExecutors.ts`), backed by
  *     `packages/core`'s `capabilities/design/connectExecutors.ts` (see that
  *     module's own doc for exactly what "real" means for each). They are
  *     wired in the same way `applyDelta`/`verifyModule` already are: only
@@ -76,17 +76,17 @@
  *     content-derived hash `repositoryAdapter.ts` defines) for every project
  *     with a configured repository, so `inspectAgentDelta` records the real
  *     repository's revision, and `applyDelta` passes
- *     `options.currentRevision: workspaceRevision(repositoryRoot)` — the
- *     identical computation — so inspect and apply agree on real filesystem
+ *     `options.currentRevision: workspaceRevision(repositoryRoot)`: the
+ *     identical computation: so inspect and apply agree on real filesystem
  *     state instead of comparing a module-design revision string to a
  *     filesystem hash.
  *
  * Because a project's repository root can change between requests (and
  * different requests target different projects sharing one `dataDir`), the
  * `DesignOperationsService` is built fresh per dispatch call from the
- * request's own `projectId` (extracted from `args[0]` — a string for every
+ * request's own `projectId` (extracted from `args[0]`: a string for every
  * §17.1 read, `args[0].projectId` for every §17.2 change operation, exactly
- * the convention `operations.ts` itself uses) — the same per-invocation
+ * the convention `operations.ts` itself uses): the same per-invocation
  * construction `packages/core/src/designCli.ts` already uses, so the
  * in-process idempotency cache never has to survive a stale executor
  * closure; idempotent replay still works because `operations.ts`'s
@@ -152,7 +152,7 @@ function unknownOperationResult(operation: string): DesignBridgeResponse {
 }
 
 // ---------------------------------------------------------------------------
-// §20.2 / §20.3 path-segment validation — copied locally (designWorkspace.ts
+// §20.2 / §20.3 path-segment validation: copied locally (designWorkspace.ts
 // is frozen for this packet; its own `assertSafeSegment` is not exported).
 // Same rule: a single path segment, no separators, no traversal, no leading
 // dot, bounded length, so `projectId` cannot escape
@@ -170,7 +170,7 @@ function isSafeProjectIdSegment(value: unknown): value is string {
   return true
 }
 
-/** `"user"`, `"agent"`, or `"service"` after trim (case-insensitive) — mirrors `operations.ts`'s own actor-format gate, copied locally since it is not exported. */
+/** `"user"`, `"agent"`, or `"service"` after trim (case-insensitive): mirrors `operations.ts`'s own actor-format gate, copied locally since it is not exported. */
 const ACTOR_FORMAT = /^(user|agent|service):\S+$/i
 
 function localActorKind(actor: unknown): 'user' | 'agent' | 'service' | undefined {
@@ -180,11 +180,11 @@ function localActorKind(actor: unknown): 'user' | 'agent' | 'service' | undefine
 }
 
 // ---------------------------------------------------------------------------
-// §4, §20.2, §17.3 (second-review P1 finding — trusted principal at the
+// §4, §20.2, §17.3 (second-review P1 finding: trusted principal at the
 // adapter boundary)
 //
 // Trust model: an Electron renderer process is not a separate authenticated
-// party from the desktop app's own OS user — it runs inside the same
+// party from the desktop app's own OS user: it runs inside the same
 // process tree, as the same OS account, in the same session. What it is NOT
 // is a *trustworthy reporter of its own identity*: nothing stops a hostile
 // or buggy renderer from attaching `actor: 'agent:copilot'` (to reach for
@@ -193,7 +193,7 @@ function localActorKind(actor: unknown): 'user' | 'agent' | 'service' | undefine
 // request body. `main.ts`'s single `ipcMain.handle` is the trust boundary:
 // everything that arrives on `DESIGN_CHANNEL` is, by construction, a request
 // from *this* desktop process's own OS user, so this adapter derives that
-// identity itself — once per dispatcher — and stamps/overrides it onto
+// identity itself: once per dispatcher: and stamps/overrides it onto
 // every request's `actor` field before it reaches the service or the
 // adapter-owned repository-configuration operations. A request's own
 // claimed `actor` is decorative only; when it differs from the stamped
@@ -202,10 +202,10 @@ function localActorKind(actor: unknown): 'user' | 'agent' | 'service' | undefine
 // without blocking the call.
 // ---------------------------------------------------------------------------
 
-/** `"user:<id>"` after trim — the only principal shape this adapter stamps onto a request. */
+/** `"user:<id>"` after trim: the only principal shape this adapter stamps onto a request. */
 const PRINCIPAL_FORMAT = /^user:\S+$/
 
-/** The OS process identity, `user:<os.userInfo().username>` — derived once per dispatcher (see block doc above), never per request. */
+/** The OS process identity, `user:<os.userInfo().username>`: derived once per dispatcher (see block doc above), never per request. */
 function deriveOsPrincipal(): string {
   const username = os.userInfo().username?.trim()
   return `user:${username && username.length > 0 ? username : 'unknown'}`
@@ -242,7 +242,7 @@ function stampPrincipalOnArgs(args: unknown[], principal: string, workspace: Des
     const projectId = typeof first.projectId === 'string' ? first.projectId : undefined
     // Only log the mismatch when `projectId` is itself a safe path segment
     // (the same check `configureProjectRepository`/the workspace path
-    // helpers apply) — an unsafe `projectId` is the *request's* own
+    // helpers apply): an unsafe `projectId` is the *request's* own
     // validation failure, reported by the dispatched operation itself; this
     // non-blocking diagnostic must never throw ahead of that, and never let
     // an unvalidated value reach a persisted path.
@@ -258,7 +258,7 @@ function stampPrincipalOnArgs(args: unknown[], principal: string, workspace: Des
           evidenceRefs: [claimed],
         })
       } catch {
-        // Best-effort diagnostic only — never blocks or fails the dispatch.
+        // Best-effort diagnostic only: never blocks or fails the dispatch.
       }
     }
   }
@@ -286,7 +286,7 @@ function repositoryConfigPath(dataDir: string, projectId: string): string {
   return path.join(repositoryConfigDir(dataDir, projectId), 'repository.json')
 }
 
-/** Returns `undefined` for a missing, unreadable, or malformed config — never throws. */
+/** Returns `undefined` for a missing, unreadable, or malformed config: never throws. */
 function readProjectRepositoryConfig(dataDir: string, projectId: string): ProjectRepositoryConfig | undefined {
   if (!isSafeProjectIdSegment(projectId)) return undefined
   const file = repositoryConfigPath(dataDir, projectId)
@@ -338,12 +338,12 @@ function appendAdapterAuditEvent(
 }
 
 /**
- * `adapter:configureProjectRepository` — persists `<dataDir>/projects/
+ * `adapter:configureProjectRepository`: persists `<dataDir>/projects/
  * <projectId>/design-adapter/repository.json` and appends a
  * `DesignAuditEvent` (idempotency-key deduplicated, exactly like every §17.2
  * change operation). Rejects a malformed `projectId`, a malformed or
  * non-`user:` actor, a missing `idempotencyKey`, and a `repositoryRoot` that
- * is not an absolute, existing directory — never writes or logs a partial
+ * is not an absolute, existing directory: never writes or logs a partial
  * configuration.
  */
 function configureProjectRepository(dataDir: string, workspace: DesignWorkspace, rawInput: unknown): AdapterConfigurationResponse {
@@ -378,7 +378,7 @@ function configureProjectRepository(dataDir: string, workspace: DesignWorkspace,
   }
 
   // §20.2 "external agents shall receive a packet, not unrestricted project
-  // authority" — only a genuine user may configure the repository an
+  // authority": only a genuine user may configure the repository an
   // agent's own deltas will be applied against; agent and service actors
   // are rejected the same way every approve* operation rejects them.
   if (kind !== 'user') {
@@ -441,11 +441,11 @@ function configureProjectRepository(dataDir: string, workspace: DesignWorkspace,
 }
 
 /**
- * `adapter:configureProjectRoles` — grants the given actor the listed §4
+ * `adapter:configureProjectRoles`: grants the given actor the listed §4
  * approval authorities for one project via `DesignWorkspace.saveProjectRoles`.
  * User-only (the stamped principal), idempotency-key deduplicated, and
  * audit-logged like every other adapter configuration. When `grantee` is
- * omitted the grant targets the stamped principal itself — the common
+ * omitted the grant targets the stamped principal itself: the common
  * "grant design authorities to this session user" setup action.
  */
 function configureProjectRoles(workspace: DesignWorkspace, rawInput: unknown): AdapterConfigurationResponse {
@@ -497,12 +497,12 @@ function configureProjectRoles(workspace: DesignWorkspace, rawInput: unknown): A
   return { ok: true, projectId, auditEventId: event.eventId } as AdapterConfigurationResponse
 }
 
-/** `adapter:getPrincipal` — a read returning the principal this dispatcher stamps onto every change operation. */
+/** `adapter:getPrincipal`: a read returning the principal this dispatcher stamps onto every change operation. */
 function getPrincipalResponse(principal: string): DesignBridgeResponse {
   return { ok: true, principal }
 }
 
-/** `adapter:getProjectRepository` — a read; no actor/idempotencyKey required, consistent with every §17.1 read operation. */
+/** `adapter:getProjectRepository`: a read; no actor/idempotencyKey required, consistent with every §17.1 read operation. */
 function getProjectRepository(dataDir: string, rawInput: unknown): AdapterConfigurationResponse {
   const input = (rawInput ?? {}) as Partial<GetProjectRepositoryInput>
   if (!isSafeProjectIdSegment(input.projectId)) {
@@ -715,7 +715,7 @@ function getEvidenceArtifact(dataDir: string, rawInput: unknown): EvidenceArtifa
 const REPOSITORY_NOT_CONFIGURED_MESSAGE =
   'repository-not-configured: no repository root is configured for this project; call the adapter:configureProjectRepository operation (or, for the machine API/CLI adapters, pass a repositoryRoot option) with a real repository path before applying a delta'
 
-/** Small stable hash for a diagnostic id suffix — copied from `designMachineApi.ts`'s local helper (that file is not importable from `apps/desktop`, only the package "." barrel is). */
+/** Small stable hash for a diagnostic id suffix: copied from `designMachineApi.ts`'s local helper (that file is not importable from `apps/desktop`, only the package "." barrel is). */
 function shortHash(text: string): string {
   let hash = 0
   for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0
@@ -730,7 +730,7 @@ function buildExecutors(
 ): DesignOperationExecutors {
   if (!repositoryRoot) {
     return {
-      // §12.2 "apply ... against the real filesystem" — with no repository
+      // §12.2 "apply ... against the real filesystem": with no repository
       // configured this must fail honestly rather than silently touching
       // the workspace data directory (the reviewer P1 finding).
       applyDelta: (plan) => ({
@@ -742,14 +742,14 @@ function buildExecutors(
         completedAt: new Date().toISOString(),
       }),
       // verifyModule/configureBinding/verifyConnection/runScenario stay
-      // unconfigured — operations.ts's own EUC16-EXECUTOR-NOT-CONFIGURED
+      // unconfigured: operations.ts's own EUC16-EXECUTOR-NOT-CONFIGURED
       // diagnostic already names the missing hook.
     }
   }
   return {
     applyDelta: (plan, delta) =>
       applyDeltaTransactionally(plan, delta, repositoryRoot, {
-        // §11.6/§12.2 revision-alignment fix — the *same* deterministic
+        // §11.6/§12.2 revision-alignment fix: the *same* deterministic
         // computation `workspaceRevisionProvider` below supplies at
         // inspection time, so inspect and apply agree on real filesystem
         // state instead of comparing a module-design revision string to a
@@ -758,7 +758,7 @@ function buildExecutors(
       }),
     // Second-review P1 fix (was DEV-05): real configureBinding/
     // verifyConnection/runScenario, scoped to the same configured
-    // repository root — see the module doc and `designExecutors.ts`.
+    // repository root: see the module doc and `designExecutors.ts`.
     ...buildDesktopConnectExecutors(workspace, dataDir, repositoryRoot, captureScreenshot),
     verifyModule: ({ design }, context) => {
       const commands = design.verification.configuredCommands
@@ -822,17 +822,17 @@ function extractProjectId(args: unknown[]): string | undefined {
 
 /**
  * Builds one `DesignWorkspace` for `dataDir` and returns a plain dispatch
- * function — no Electron dependency, so tests can call it directly.
+ * function: no Electron dependency, so tests can call it directly.
  *
  * A fresh `DesignOperationsService` is built per dispatch call, scoped to
- * the request's `projectId` (see module doc — every project can have its
+ * the request's `projectId` (see module doc: every project can have its
  * own configured repository root, and `DesignOperationExecutors` carries no
  * `projectId` parameter of its own, so the executors must be selected
  * before the service is constructed).
  *
  * `options.principal` is a test/embedder-only override for the stamped
  * identity (see the "trusted principal at the adapter boundary" block doc
- * above) — `registerDesignIpcHandlers` never supplies one, so the real
+ * above): `registerDesignIpcHandlers` never supplies one, so the real
  * desktop app always derives it from the OS process identity.
  */
 export function createDesignIpcDispatch(
@@ -840,7 +840,7 @@ export function createDesignIpcDispatch(
   options: { principal?: string; captureScreenshot?: ConnectExecutorDeps['captureScreenshot'] } = {},
 ): (request: DesignBridgeRequest) => DesignBridgeResponse {
   const workspace = new DesignWorkspace(dataDir)
-  // §4, §20.2, §17.3 — derived ONCE per dispatcher (per process, in
+  // §4, §20.2, §17.3: derived ONCE per dispatcher (per process, in
   // production), never per request; a request's own claimed `actor` never
   // decides this.
   const principal = resolveDispatchPrincipal(options.principal)
@@ -894,8 +894,7 @@ export function createDesignIpcDispatch(
     if (typeof byName[operation] !== 'function') {
       return unknownOperationResult(operation)
     }
-    // `stampedArgs` is spread positionally onto the named service method —
-    // the exact same call shape `designCli.ts` and `designMachineApi.ts`
+    // `stampedArgs` is spread positionally onto the named service method:     // the exact same call shape `designCli.ts` and `designMachineApi.ts`
     // use, so the same operation with the same args produces the same
     // result regardless of which adapter is called (§25.3), modulo the
     // `actor` stamp every adapter now applies at its own trust boundary.
@@ -905,7 +904,7 @@ export function createDesignIpcDispatch(
 
 /**
  * Registers the single `DESIGN_CHANNEL` handler. `getDataDir` is called at
- * most once per process — the `DesignWorkspace` is created lazily on the
+ * most once per process: the `DesignWorkspace` is created lazily on the
  * first request and reused for the life of the process; each request still
  * builds its own project-scoped `DesignOperationsService` (see
  * `createDesignIpcDispatch`).

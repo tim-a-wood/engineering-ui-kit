@@ -37,7 +37,7 @@ export function buildVisualPackHtml(input: VisualPackInput): string {
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Visual Reference Pack — ${escapeHtml(input.packetId)}</title>
+<title>Visual Reference Pack: ${escapeHtml(input.packetId)}</title>
 <style>
   @page { size: 960px 540px; margin: 0; }
   html, body { margin: 0; padding: 0; width: 960px; height: 540px; background: #07111f; color: #f8fafc;

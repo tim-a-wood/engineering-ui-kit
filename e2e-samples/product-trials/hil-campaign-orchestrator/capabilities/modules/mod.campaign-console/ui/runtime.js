@@ -12,8 +12,62 @@ const commandDialog = document.querySelector('[data-command-dialog]')
 const commandInput = document.querySelector('[data-command-input]')
 const commandItems = [...document.querySelectorAll('[data-command-item]')]
 const activity = document.querySelector('[data-activity]')
+const themeToggle = document.querySelector('[data-theme-toggle]')
+const helpTrigger = document.querySelector('[data-help-trigger]')
+const helpPopover = document.querySelector('[data-help-popover]')
+const tooltipTriggers = [...document.querySelectorAll('[data-tooltip-trigger]')]
 let completedActions = 0
 let rewardTimer
+
+function activeTheme() {
+  const explicit = document.documentElement.dataset.theme
+  if (explicit === 'light' || explicit === 'dark') return explicit
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+function updateThemeControl() {
+  if (!themeToggle) return
+  const label = activeTheme() === 'dark' ? 'Use light mode' : 'Use dark mode'
+  themeToggle.setAttribute('aria-label', label)
+  const tooltip = themeToggle.querySelector('[role="tooltip"]')
+  if (tooltip) tooltip.textContent = label
+}
+
+function setTheme(mode) {
+  document.documentElement.dataset.theme = mode
+  localStorage.setItem('eui-color-mode', mode)
+  updateThemeControl()
+}
+
+themeToggle?.addEventListener('click', () => {
+  setTheme(activeTheme() === 'dark' ? 'light' : 'dark')
+})
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateThemeControl)
+
+function closeHelp() {
+  if (!helpPopover || !helpTrigger) return
+  helpPopover.hidden = true
+  helpTrigger.setAttribute('aria-expanded', 'false')
+}
+
+helpTrigger?.addEventListener('click', () => {
+  const willOpen = helpPopover?.hidden ?? false
+  if (!helpPopover) return
+  helpPopover.hidden = !willOpen
+  helpTrigger.setAttribute('aria-expanded', String(willOpen))
+})
+
+document.querySelector('[data-close-help]')?.addEventListener('click', () => {
+  closeHelp()
+  helpTrigger?.focus()
+})
+
+tooltipTriggers.forEach((trigger) => {
+  const restoreTooltip = () => trigger.classList.remove('tooltip-suppressed')
+  trigger.addEventListener('blur', restoreTooltip)
+  trigger.addEventListener('mouseleave', restoreTooltip)
+})
 
 function setActiveView(view) {
   const normalizedView = String(view || '').replace(/[^a-z0-9]+/gi, '').toLowerCase()
@@ -40,7 +94,7 @@ function showResult(id, actionName) {
   result.classList.add('is-visible')
   completedActions = Math.min(config.scenarios.length, completedActions + 1)
   rewardLabel.textContent = result.dataset.reward || config.reward
-  rewardCount.textContent = `${completedActions} of ${config.scenarios.length} actions evidenced`
+  rewardCount.textContent = `${completedActions} of ${config.scenarios.length} actions complete`
   rewardBar.style.width = `${Math.round((completedActions / config.scenarios.length) * 100)}%`
   reward.classList.remove('show')
   requestAnimationFrame(() => reward.classList.add('show'))
@@ -104,6 +158,9 @@ document.addEventListener('keydown', (event) => {
   }
   if (event.key === 'Escape') {
     closeCommands()
+    closeHelp()
+    const activeControl = document.activeElement?.closest?.('[data-tooltip-trigger]')
+    activeControl?.classList.add('tooltip-suppressed')
     shell.classList.remove('menu-open')
   }
 })
@@ -113,3 +170,4 @@ commandDialog.addEventListener('click', (event) => {
 })
 
 setActiveView(navButtons[0]?.dataset.navTarget)
+updateThemeControl()

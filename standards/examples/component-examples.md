@@ -55,7 +55,7 @@ Compliant because status and evidence are inspectable.
 ```text
 JobStatusIndicator
   Label: Running validation
-  Detail: Gate F — Component manifest integrity
+  Detail: Gate F: Component manifest integrity
   Link: Open log
 ```
 

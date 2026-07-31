@@ -22,7 +22,7 @@ secret detection.
 
 ## Default Excluded Names and Patterns
 
-### AI-HANDOFF-020 — Exact default excluded names
+### AI-HANDOFF-020: Exact default excluded names
 
 Exclude these names wherever they appear as path segments or filenames:
 
@@ -65,7 +65,7 @@ id_ecdsa
 id_ed25519
 ```
 
-### AI-HANDOFF-021 — Default excluded glob-like patterns
+### AI-HANDOFF-021: Default excluded glob-like patterns
 
 ```text
 **/.git/**
@@ -137,7 +137,7 @@ task packet explicitly expands scope.
 
 ## Exclusions Are Not Secret Detection
 
-### AI-HANDOFF-022 — No secret-detection guarantee
+### AI-HANDOFF-022: No secret-detection guarantee
 
 These exclusions reduce accidental inclusion of common secret and bulk paths. They do
 not guarantee that all secrets are removed. The user must review the exported
@@ -145,7 +145,7 @@ flatfile before upload.
 
 ## User Review Before Upload
 
-### AI-HANDOFF-023 — Review steps
+### AI-HANDOFF-023: Review steps
 
 1. Generate or assemble `repo-flatfile.txt` using the exclusions above.
 2. Search the flatfile for tokens such as `API_KEY`, `TOKEN`, `PASSWORD`, `SECRET`,
@@ -155,14 +155,14 @@ flatfile before upload.
 
 ## Binary Omission
 
-### AI-HANDOFF-024 — Binary rules
+### AI-HANDOFF-024: Binary rules
 
 Binary files are omitted from `repo-flatfile.txt` by default. Visual references are
 delivered through `visual-reference-pack.pdf`, not through the flatfile.
 
 ## Unusually Large Text Files
 
-### AI-HANDOFF-025 — Large text handling
+### AI-HANDOFF-025: Large text handling
 
 If a text file exceeds 200 KB or is mostly generated content, exclude it by default
 and note the omission in the review summary. Include it only when the task packet
@@ -170,7 +170,7 @@ explicitly requires that file.
 
 ## Explicit Include Exceptions
 
-### AI-HANDOFF-026 — Exception behavior
+### AI-HANDOFF-026: Exception behavior
 
 An excluded path may be included only when:
 
@@ -188,7 +188,7 @@ Exceptions never override secret or credential files.
 - Generated at: <ISO-8601 timestamp>
 - Included files: <count>
 - Excluded categories: git, dependencies, build output, binaries, archives, env/secrets
-- Explicit exceptions: none | <path> — <reason>
+- Explicit exceptions: none | <path>: <reason>
 - Secret review: completed by <name>
 - Ready for upload: yes | no
 ```

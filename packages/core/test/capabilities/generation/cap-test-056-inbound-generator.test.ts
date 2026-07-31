@@ -119,7 +119,7 @@ describe('CAP-TEST-056 inbound.ts adapter planning', () => {
     ['ui', UI_BINDING],
   ] as const)('%s: carries the do-not-edit header and references the frozen operation id/version', (_kind, binding) => {
     const result = planInboundAdapter(baseInput(binding))
-    expect(result.file.contents).toContain('GENERATED FILE — DO NOT EDIT.')
+    expect(result.file.contents).toContain('GENERATED FILE: DO NOT EDIT.')
     expect(result.file.contents).toContain('orders.create@1.0.0')
   })
 

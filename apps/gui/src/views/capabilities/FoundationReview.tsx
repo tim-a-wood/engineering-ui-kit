@@ -1,9 +1,9 @@
 /**
- * Foundation plan review (WP5A — CAP-TEST-074/075).
+ * Foundation plan review (WP5A: CAP-TEST-074/075).
  *
- * Renders ONE canonical `FoundationPlan` — the proposed deployables, the
+ * Renders ONE canonical `FoundationPlan`: the proposed deployables, the
  * module→deployable allocation rationale, and any unresolved ambiguity
- * questions — identically from Guided and Design (bullet f: both projections
+ * questions: identically from Guided and Design (bullet f: both projections
  * show the same records; only copy/detail density differs). Answering a
  * question re-derives the plan through the same pure `proposeFoundation`
  * core function and persists the draft; approval is only possible once
@@ -22,7 +22,7 @@ import { humanizeIdentifier } from './capabilityPresentation'
 type Props = {
   bridge: EuikBridge
   projectId: string
-  /** The current draft (preferred) or approved plan to review — undefined until first proposed. */
+  /** The current draft (preferred) or approved plan to review: undefined until first proposed. */
   plan: FoundationPlan | undefined
   approvedFoundation: FoundationPlan | undefined
   approvedArchitecture: ArchitectureSpecification
@@ -552,7 +552,7 @@ export function FoundationReview({
 
           {projection === 'design' ? (
             <p className="capabilities-note" role="status">
-              {gate.enabled ? 'Ready for Build.' : `Build is not ready yet — ${gate.reason}`}
+              {gate.enabled ? 'Ready for Build.' : `Build is not ready yet: ${gate.reason}`}
             </p>
           ) : null}
 

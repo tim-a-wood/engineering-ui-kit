@@ -1,5 +1,5 @@
 /**
- * §8, §9, §18 Design workspace — the use-case-led Design view. Contains the
+ * §8, §9, §18 Design workspace: the use-case-led Design view. Contains the
  * system canvas (§8.2) and the module-design workspace (§9): a module queue,
  * the current module's session, and system context (§18.2).
  */
@@ -330,7 +330,7 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
     openWorkspaceTab('design')
   }
 
-  // §17.3, §4, §20.2 — the Setup tab (repository root, session principal,
+  // §17.3, §4, §20.2: the Setup tab (repository root, session principal,
   // project roles) only makes sense once there is a real project behind the
   // bridge; `sample` mode has no adapter to configure (second-review P1
   // finding).
@@ -351,7 +351,7 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
     (id) => state.progress.modules.find((entry) => entry.moduleId === id)?.name ?? id,
   )
 
-  // Blocked-state guidance (§17.3, §4 — second-review P1): a rejected
+  // Blocked-state guidance (§17.3, §4: second-review P1): a rejected
   // approval whose diagnostics include `EUC16-AUTHORITY-NOT-CONFIGURED`
   // gets an explicit link back to the Setup tab instead of a dead end.
   const authorityNotConfigured = state.mode === 'project' && state.lastOperationDiagnostics.some((d) => d.code === AUTHORITY_NOT_CONFIGURED_CODE)
@@ -609,7 +609,7 @@ export function DesignWorkspaceView(props: DesignWorkspaceViewProps) {
           {narrow && (
             <button type="button" className="design-queue-drawer-toggle" aria-expanded={queueOpen} onClick={() => setQueueOpen((v) => !v)}>
               {queueOpen ? 'Hide module list' : 'Show module list'}
-              {selectedEntry ? ` — current: ${selectedEntry.name}` : ''}
+              {selectedEntry ? `: current: ${selectedEntry.name}` : ''}
             </button>
           )}
 

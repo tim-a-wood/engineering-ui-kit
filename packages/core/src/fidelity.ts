@@ -2,7 +2,7 @@
  * Visual-fidelity census.
  *
  * Counts user-visible markup elements in text sources (TSX/JSX/HTML/etc.) and
- * in rendered DOM snapshots so the workflow can detect *loss* — an overlay or
+ * in rendered DOM snapshots so the workflow can detect *loss*: an overlay or
  * transformation that silently drops icons, images, or interactive elements.
  * Static counts are heuristics over source text, not a render; they exist to
  * catch the common failure where a model regenerates a file and elides
@@ -48,7 +48,7 @@ export function isProbablyText(data: Buffer): boolean {
  * Count opening tags for each census element in source text. Matches
  * `<svg>`, `<svg …`, and `<svg/>` forms; case-insensitive so plain HTML and
  * JSX both count. Custom components (`<Icon …>`) are intentionally not
- * counted — only concrete elements render pixels.
+ * counted: only concrete elements render pixels.
  */
 export function countMarkupElements(source: string): ElementCensus {
   const census: ElementCensus = {}

@@ -12,63 +12,63 @@ The rules apply to standards prose, component specs, page recipes, generated CSS
 
 `tokens.json` is the source of truth for token names and values. `schemas/tokens.schema.json` defines the expected contract shape.
 
-## FND-TOK-001 — Use semantic tokens in component and page guidance
+## FND-TOK-001: Use semantic tokens in component and page guidance
 
 Component and layout guidance shall reference semantic tokens such as `{semantic.surface.panel}` rather than primitive values.
 
-## FND-TOK-002 — Primitive tokens are implementation backing values
+## FND-TOK-002: Primitive tokens are implementation backing values
 
 Primitive tokens may back implementation output, but prose standards should avoid exposing primitives unless explaining the token model.
 
-## FND-TOK-003 — Raw color values are not allowed in component specs
+## FND-TOK-003: Raw color values are not allowed in component specs
 
 Component and page specs shall not use raw hex, RGB, HSL, or named color values where a token exists.
 
-## FND-TOK-004 — Dark mode is normative
+## FND-TOK-004: Both modes are normative
 
-The dark token mode is the normative Phase 3 theme. Reviewers shall treat dark-first drift as a material issue.
+Light and dark token modes are normative. The same semantic roles and hierarchy apply in both modes.
 
-## FND-TOK-005 — Light mode is non-normative until separately authored
+## FND-TOK-005: Use the system mode
 
-Light mode may remain present in the contract as a future or secondary mode, but Phase 3 does not author full light-mode behavior.
+Use the system color mode before the user selects a mode. Provide a labeled mode button. Store the user choice.
 
-## FND-TOK-006 — Surface tokens
+## FND-TOK-006: Surface tokens
 
 Use `semantic.surface.canvas`, `semantic.surface.panel`, `semantic.surface.panelRaised`, `semantic.surface.inset`, `semantic.surface.overlay`, and `semantic.surface.scrim` to express hierarchy.
 
-## FND-TOK-007 — Text tokens
+## FND-TOK-007: Text tokens
 
 Use `semantic.text.primary`, `semantic.text.secondary`, `semantic.text.muted`, `semantic.text.disabled`, and `semantic.text.inverse` based on content importance.
 
-## FND-TOK-008 — Border and focus tokens
+## FND-TOK-008: Border and focus tokens
 
 Use `semantic.border.subtle`, `semantic.border.strong`, `semantic.border.focus`, `semantic.border.danger`, `semantic.focus.ring`, and `semantic.focus.ringOffset` for boundaries and focus.
 
-## FND-TOK-009 — Accent tokens
+## FND-TOK-009: Accent tokens
 
 Use `semantic.accent.primary`, `semantic.accent.primaryHover`, `semantic.accent.primaryActive`, `semantic.accent.secondary`, and `semantic.accent.glow` only for active, selected, focus, or primary-command emphasis.
 
-## FND-TOK-010 — Status tokens
+## FND-TOK-010: Status tokens
 
 Use `semantic.status.success`, `semantic.status.warning`, `semantic.status.danger`, `semantic.status.info`, `semantic.status.neutral`, `semantic.status.running`, and `semantic.status.pending` with text labels.
 
-## FND-TOK-011 — Spacing and density tokens
+## FND-TOK-011: Spacing and density tokens
 
 Use `semantic.spacing.*` for general spacing and `semantic.density.compact.*` / `semantic.density.comfortable.*` for controls, rows, and panel padding.
 
-## FND-TOK-012 — Radius and shadow tokens
+## FND-TOK-012: Radius and shadow tokens
 
 Use `semantic.radius.*` and `semantic.shadow.*` for bounded surfaces. Avoid creating local radii or shadow values.
 
-## FND-TOK-013 — Typography tokens
+## FND-TOK-013: Typography tokens
 
 Use `semantic.typography.family.*`, `semantic.typography.size.*`, and `semantic.typography.weight.*`. Use monospaced typography for code, paths, IDs, commands, and log fragments.
 
-## FND-TOK-014 — Motion and z-index tokens
+## FND-TOK-014: Motion and z-index tokens
 
 Use `semantic.motion.*` and `semantic.zIndex.*`. Motion shall clarify state; z-index shall follow overlay, modal, and toast rules.
 
-## FND-TOK-015 — Chart tokens
+## FND-TOK-015: Chart tokens
 
 Use `semantic.charts.grid`, `semantic.charts.axis`, and `semantic.charts.series.*` for visualization. Use `semantic.charts.crosshair` for the hover/keyboard crosshair rule and the active-point halo; the crosshair shall always be paired with a text readout or tooltip carrying the exact values, and hover shall never be the only way to access critical data. Chart status overlays shall still include labels or summaries.
 
@@ -84,6 +84,8 @@ Component aliases such as `componentAliases.button.primary.background`, `compone
 
 - Token names match `tokens.json`.
 - Component docs use semantic or component alias tokens, not raw values.
-- Dark mode remains normative.
+- Light and dark modes remain normative.
+- A mode button is present and keyboard accessible.
+- The app stores the user choice.
 - New local token names are not invented.
 - Generated code can trace styling back to token references.

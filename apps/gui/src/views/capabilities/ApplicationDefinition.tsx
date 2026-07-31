@@ -1,5 +1,5 @@
 /**
- * Application definition — product interview export/import/approve (CAP-PKT-008).
+ * Application definition: product interview export/import/approve (CAP-PKT-008).
  */
 
 import { useEffect, useState } from 'react'
@@ -191,7 +191,7 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
       setMessage(
         imported.valid
           ? unresolvedCount
-            ? `Interview imported. ${unresolvedCount} open question${unresolvedCount === 1 ? '' : 's'} remain — continue in Copilot to finish the plan.`
+            ? `Interview imported. ${unresolvedCount} open question${unresolvedCount === 1 ? '' : 's'} remain: continue in Copilot to finish the plan.`
             : 'Interview imported. Review the definition, then approve it.'
           : 'Imported invalid response as draft with diagnostics. Approval remains blocked.',
       )
@@ -520,15 +520,15 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
         <div className="capabilities-state-columns" aria-label="Interview field states">
           <section>
             <h3>Confirmed</h3>
-            <ul>{confirmed.length === 0 ? <li>—</li> : confirmed.map(([path]) => <li key={path}>{path}</li>)}</ul>
+            <ul>{confirmed.length === 0 ? <li>None</li> : confirmed.map(([path]) => <li key={path}>{path}</li>)}</ul>
           </section>
           <section>
             <h3>Proposed</h3>
-            <ul>{proposed.length === 0 ? <li>—</li> : proposed.map(([path]) => <li key={path}>{path}</li>)}</ul>
+            <ul>{proposed.length === 0 ? <li>None</li> : proposed.map(([path]) => <li key={path}>{path}</li>)}</ul>
           </section>
           <section>
             <h3>Unresolved</h3>
-            <ul>{unresolved.length === 0 ? <li>—</li> : unresolved.map(([path]) => <li key={path}>{path}</li>)}</ul>
+            <ul>{unresolved.length === 0 ? <li>None</li> : unresolved.map(([path]) => <li key={path}>{path}</li>)}</ul>
           </section>
         </div>
       )}
@@ -585,7 +585,7 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
             </tbody>
           </table>
           <p className="capabilities-note">
-            Approved revision {approved?.revision ?? '—'} is unchanged until you explicitly approve.
+            Approved revision {approved?.revision ?? 'None'} is unchanged until you explicitly approve.
           </p>
         </section>
       ) : null}
@@ -641,7 +641,7 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
           <div>
             <dt>Draft</dt>
             <dd>
-              {draft ? `${draft.id} @ ${draft.revision} (${draft.contentHash.slice(0, 12)}…)` : '—'}
+              {draft ? `${draft.id} @ ${draft.revision} (${draft.contentHash.slice(0, 12)}…)` : 'None'}
             </dd>
           </div>
           <div>
@@ -649,7 +649,7 @@ export function ApplicationDefinition({ bridge, projectId, project, projection, 
             <dd>
               {approved
                 ? `${approved.id} @ ${approved.revision} (${approved.contentHash.slice(0, 12)}…)`
-                : '—'}
+                : 'None'}
             </dd>
           </div>
         </dl>

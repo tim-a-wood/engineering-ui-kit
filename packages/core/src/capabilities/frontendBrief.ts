@@ -16,6 +16,14 @@ import type {
   ModuleDesignSpecification,
 } from './types.js'
 import { allUseCasePaths, materializeUseCaseDefinitions } from './useCaseAnalysis.js'
+import {
+  buildFrontendDesignPrompt,
+  inferFrontendViewKinds,
+  resolveFrontendDesignSystem,
+  type FrontendDesignPreferences,
+  type FrontendDesignSystemConfig,
+  type FrontendViewKind,
+} from './frontendDesignSystem.js'
 
 export type FrontendBriefFields = {
   taskTitle: string
@@ -52,7 +60,9 @@ export type FrontendBrief = {
     bindingIds: string[]
     routes: string[]
     useCaseIds: string[]
+    viewKinds: FrontendViewKind[]
   }
+  designSystem: FrontendDesignSystemConfig
   fields: FrontendBriefFields
   gaps: FrontendBriefGap[]
 }
@@ -171,6 +181,7 @@ export function compileFrontendBrief(input: {
   moduleDesigns?: ModuleDesignSpecification[]
   bindings?: (FrontendBinding | InboundBinding)[]
   targetModuleIds?: string[]
+  designPreferences?: FrontendDesignPreferences
   steLexicon?: SteLexicon
   generatedAt?: string
 }): FrontendBrief {
@@ -204,16 +215,16 @@ export function compileFrontendBrief(input: {
   )
   const moduleName = (moduleId: string) => definitionById.get(moduleId)?.name ?? moduleId
   const moduleLines = selectedModules.map((module) =>
-    `${module.name} (${module.moduleId} @ ${module.moduleVersion}) — ${module.responsibility}`)
+    `${module.name} (${module.moduleId} @ ${module.moduleVersion}): ${module.responsibility}`)
   const provided = selectedModules.flatMap((module) => module.providedOperations.map((operation) =>
     `${module.name}: ${operation.operationId} @ ${operation.contractVersion}`))
   const required = selectedModules.flatMap((module) => module.requiredOperations.map((operation) =>
-    `${module.name}: ${operation.operationId} ${operation.acceptedContractRange} — ${operation.reason}`))
+    `${module.name}: ${operation.operationId} ${operation.acceptedContractRange}. ${operation.reason}`))
   const bindingLines = relevantBindings.map((binding) =>
     `${bindingVisibleTarget(binding)} → ${binding.operationId} @ ${binding.operationVersion}`
       + `${bindingRoute(binding) ? ` on ${bindingRoute(binding)}` : ''}`)
   const behaviorLines = relevantBindings.flatMap((binding) =>
-    bindingBehaviors(binding).map((behavior) => `${bindingVisibleTarget(binding)} — ${behavior}`))
+    bindingBehaviors(binding).map((behavior) => `${bindingVisibleTarget(binding)}: ${behavior}`))
   const routes = unique(relevantBindings.flatMap((binding) => {
     const route = bindingRoute(binding)
     return route ? [route] : []
@@ -238,6 +249,21 @@ export function compileFrontendBrief(input: {
   ])
   const ownedPaths = unique(selectedModules.flatMap((module) => module.ownedPaths))
   const acceptanceCases = input.application?.acceptanceCases ?? []
+  const inferredViewKinds = inferFrontendViewKinds([
+    input.application?.purpose ?? '',
+    ...(input.application?.outcomes ?? []),
+    ...(input.application?.goals ?? []).map((item) => item.text),
+    ...useCases.map((item) => item.text),
+    ...selectedModules.flatMap((module) => [module.name, module.responsibility]),
+    ...routes,
+    ...relevantBindings.map(bindingVisibleTarget),
+  ])
+  const designSystem = resolveFrontendDesignSystem({
+    ...input.designPreferences,
+    viewKinds: input.designPreferences?.viewKinds?.length
+      ? input.designPreferences.viewKinds
+      : inferredViewKinds,
+  })
   const gaps: FrontendBriefGap[] = []
   if (!input.application) {
     gaps.push({
@@ -292,6 +318,7 @@ export function compileFrontendBrief(input: {
       `## Bound interactions\n${bullets(bindingLines, 'No UI binding is recorded. Use replaceable interaction targets that match the repository.')}`,
       `## Required interaction behavior\n${bullets(behaviorLines, 'Define intentional loading, validation, rejection, failure, cancellation, retry, and duplicate-action behavior for every operation.')}`,
       '## Experience quality\n- Make the main journey clear. Make the next action clear.\n- Provide the necessary initial, loading, ready, empty, partial, validation, rejection, technical-failure, canceled, retrying, and success states.\n- Preserve user input after recoverable failures. Prevent duplicate submissions.\n- Use progressive disclosure for dense engineering detail. Keep routine actions quick.\n- Build responsive and keyboard-complete interactions. Provide visible focus, screen-reader support, and text status cues.',
+      buildFrontendDesignPrompt(designSystem),
     ].join('\n\n'),
     scope: [
       'Implement the selected frontend modules, views, reusable presentation components, state models, adapters, and focused tests.',
@@ -311,7 +338,7 @@ export function compileFrontendBrief(input: {
         : []),
     ].join('\n'),
     acceptanceCriteria: [
-      numbered(acceptanceCases.map((item) => `${item.id}: ${item.description} — ${item.expectedOutcome}`), 'The selected module responsibilities and operation boundaries are visibly implemented.'),
+      numbered(acceptanceCases.map((item) => `${item.id}: ${item.description}. ${item.expectedOutcome}`), 'The selected module responsibilities and operation boundaries are visibly implemented.'),
       '- Every bound operation has a discoverable interaction, explicit progress, and a visible outcome.',
       '- Loading, empty, validation, rejection, technical failure, cancellation, retry, duplicate action, and success behaviors match the approved bindings where relevant.',
       '- The implementation is responsive and fully usable with keyboard and assistive technology.',
@@ -323,6 +350,9 @@ export function compileFrontendBrief(input: {
       ...selectedModules.map((module) => `Module: ${module.moduleId} @ ${module.moduleVersion}`),
       ...selectedDesigns.map((design) => `Module design: ${design.module.moduleId} @ ${design.revision} (${design.contentHash})`),
       ...relevantBindings.map((binding) => `Binding: ${binding.bindingId} @ ${binding.version} → ${binding.operationId} @ ${binding.operationVersion}`),
+      `Design contract: ${designSystem.contractId}`,
+      `Color palette: ${designSystem.palette.name}`,
+      `Font style: ${designSystem.typography.name}`,
     ].join('\n'),
     intentProfile: {
       delivery: 'existing-api-ui',
@@ -355,7 +385,9 @@ export function compileFrontendBrief(input: {
         ...useCases.map((item) => item.id),
         ...workflowTraces.map((trace) => trace.useCaseId),
       ]),
+      viewKinds: [...designSystem.viewKinds],
     },
+    designSystem,
     fields,
     gaps,
   }

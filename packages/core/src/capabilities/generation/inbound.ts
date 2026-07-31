@@ -3,10 +3,10 @@
  * `inbound.ts`, §10.3 host behavior).
  *
  * Pure: given one `InboundBinding` (discriminated on `kind`), plans the
- * generated inbound-adapter TypeScript source for that kind — `ui`
+ * generated inbound-adapter TypeScript source for that kind: `ui`
  * (framework-neutral client/controller wiring), `http` (route -> dispatch),
  * `cli` (command -> dispatch), `schedule` (cron -> dispatch), and
- * `embedded-library` (exported callable) — wired to the composition root's
+ * `embedded-library` (exported callable): wired to the composition root's
  * resolved operation instance and to
  * `@engineering-ui-kit/capabilities-runtime`'s host foundations. Given
  * identical inputs, output is byte-identical regardless of input array
@@ -220,7 +220,7 @@ function planScheduleAdapter(
   const diagnostics: string[] = []
 
   // CAP-CONTRACT-028 overlap/misfire policy values are consumed directly by the
-  // reconciled runtime OverlapPolicy/MisfirePolicy unions (SCHED-ENUM) — no remapping, no loss.
+  // reconciled runtime OverlapPolicy/MisfirePolicy unions (SCHED-ENUM): no remapping, no loss.
   const overlapPolicy = binding.overlapPolicy
   const misfirePolicy = binding.misfirePolicy
 

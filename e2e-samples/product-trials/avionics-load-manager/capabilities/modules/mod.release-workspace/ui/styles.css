@@ -1,21 +1,100 @@
-:root {
+/* EUIT-FRONTEND-001: semantic dual-mode token entry point. */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --eui-color-canvas: #f5f8fa;
+  --eui-color-surface: #ffffff;
+  --eui-color-surface-subtle: #edf3f6;
+  --eui-color-surface-raised: #ffffff;
+  --eui-color-text: #102536;
+  --eui-color-text-muted: #526978;
+  --eui-color-text-quiet: #6d808c;
+  --eui-color-border: #c8d5dc;
+  --eui-color-border-strong: #8da2ae;
+  --eui-color-accent: var(--eui-brand-accent-light, #003767);
+  --eui-color-accent-hover: color-mix(in srgb, var(--eui-color-accent) 88%, black);
+  --eui-color-accent-active: color-mix(in srgb, var(--eui-color-accent) 76%, black);
+  --eui-color-accent-soft: var(--eui-brand-soft-light, #e2eef5);
+  --eui-color-on-accent: #ffffff;
+  --eui-color-focus: #0069aa;
+  --eui-color-success: #176b3a;
+  --eui-color-warning: #805400;
+  --eui-color-danger: #b42318;
+  --eui-color-info: #005c96;
+  --eui-shadow-raised: 0 12px 32px rgba(16, 37, 54, 0.12);
+  --eui-accent-rgb: var(--eui-brand-rgb-light, 0, 55, 103);
+  --eui-font-sans: var(--eui-font-config, Inter, ui-sans-serif, system-ui, sans-serif);
+}
+
+:root[data-theme="dark"] {
   color-scheme: dark;
-  --accent: #7c8cff;
-  --accent-rgb: 124, 140, 255;
-  --bg: #070b13;
-  --surface: #0d1320;
-  --surface-raised: #121a29;
-  --surface-soft: #101725;
-  --line: #202b3c;
-  --line-strong: #334259;
-  --text: #f4f7fb;
-  --muted: #8e9caf;
-  --quiet: #637187;
-  --green: #45d6a5;
-  --amber: #f2bb62;
-  --red: #ff7184;
-  --blue: #61b7ff;
-  --shadow: 0 20px 55px rgba(0, 0, 0, 0.28);
+  --eui-color-canvas: #071521;
+  --eui-color-surface: #0c2030;
+  --eui-color-surface-subtle: #112a3d;
+  --eui-color-surface-raised: #153247;
+  --eui-color-text: #f4f8fb;
+  --eui-color-text-muted: #adc0cb;
+  --eui-color-text-quiet: #8299a7;
+  --eui-color-border: #29475a;
+  --eui-color-border-strong: #4e6d7e;
+  --eui-color-accent: var(--eui-brand-accent-dark, #70b7e6);
+  --eui-color-accent-hover: color-mix(in srgb, var(--eui-color-accent) 84%, white);
+  --eui-color-accent-active: color-mix(in srgb, var(--eui-color-accent) 82%, black);
+  --eui-color-accent-soft: var(--eui-brand-soft-dark, #0d3854);
+  --eui-color-on-accent: #071521;
+  --eui-color-focus: #8ac9f0;
+  --eui-color-success: #63d69b;
+  --eui-color-warning: #f2c46d;
+  --eui-color-danger: #ff8c85;
+  --eui-color-info: #70b7e6;
+  --eui-shadow-raised: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --eui-accent-rgb: var(--eui-brand-rgb-dark, 112, 183, 230);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --eui-color-canvas: #071521;
+    --eui-color-surface: #0c2030;
+    --eui-color-surface-subtle: #112a3d;
+    --eui-color-surface-raised: #153247;
+    --eui-color-text: #f4f8fb;
+    --eui-color-text-muted: #adc0cb;
+    --eui-color-text-quiet: #8299a7;
+    --eui-color-border: #29475a;
+    --eui-color-border-strong: #4e6d7e;
+    --eui-color-accent: var(--eui-brand-accent-dark, #70b7e6);
+    --eui-color-accent-hover: color-mix(in srgb, var(--eui-color-accent) 84%, white);
+    --eui-color-accent-active: color-mix(in srgb, var(--eui-color-accent) 82%, black);
+    --eui-color-accent-soft: var(--eui-brand-soft-dark, #0d3854);
+    --eui-color-on-accent: #071521;
+    --eui-color-focus: #8ac9f0;
+    --eui-color-success: #63d69b;
+    --eui-color-warning: #f2c46d;
+    --eui-color-danger: #ff8c85;
+    --eui-color-info: #70b7e6;
+    --eui-shadow-raised: 0 18px 48px rgba(0, 0, 0, 0.32);
+    --eui-accent-rgb: var(--eui-brand-rgb-dark, 112, 183, 230);
+  }
+}
+
+:root {
+  --accent: var(--eui-color-accent);
+  --accent-rgb: var(--eui-accent-rgb);
+  --bg: var(--eui-color-canvas);
+  --surface: var(--eui-color-surface);
+  --surface-raised: var(--eui-color-surface-raised);
+  --surface-soft: var(--eui-color-surface-subtle);
+  --line: var(--eui-color-border);
+  --line-strong: var(--eui-color-border-strong);
+  --text: var(--eui-color-text);
+  --muted: var(--eui-color-text-muted);
+  --quiet: var(--eui-color-text-quiet);
+  --green: var(--eui-color-success);
+  --amber: var(--eui-color-warning);
+  --red: var(--eui-color-danger);
+  --blue: var(--eui-color-info);
+  --shadow: var(--eui-shadow-raised);
 }
 
 * {
@@ -31,11 +110,9 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 55% -20%, rgba(var(--accent-rgb), 0.08), transparent 38rem),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--eui-font-sans);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
@@ -70,8 +147,7 @@ input:focus-visible {
   height: 100vh;
   flex-direction: column;
   border-right: 1px solid var(--line);
-  background: rgba(8, 13, 22, 0.96);
-  backdrop-filter: blur(18px);
+  background: var(--surface);
 }
 
 .brand {
@@ -270,8 +346,7 @@ input:focus-visible {
   gap: 18px;
   padding: 0 32px;
   border-bottom: 1px solid var(--line);
-  background: rgba(7, 11, 19, 0.9);
-  backdrop-filter: blur(18px);
+  background: var(--surface);
 }
 
 .topbar-left {
@@ -290,7 +365,7 @@ input:focus-visible {
   white-space: nowrap;
 }
 
-.mobile-menu {
+[data-mobile-menu] {
   display: none;
   width: 36px;
   height: 36px;
@@ -507,24 +582,11 @@ main {
   gap: 11px;
   margin-bottom: 18px;
   padding: 12px 15px;
-  border: 1px solid rgba(69, 214, 165, 0.28);
+  border: 1px solid color-mix(in srgb, var(--green) 38%, var(--line));
   border-radius: 9px;
-  background: rgba(69, 214, 165, 0.08);
-  color: #b9f4de;
+  background: color-mix(in srgb, var(--green) 10%, var(--surface));
+  color: var(--green);
   font-weight: 700;
-}
-
-.scenario-result::before {
-  display: grid;
-  width: 22px;
-  height: 22px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--green);
-  color: #062219;
-  content: "✓";
-  font-size: 12px;
 }
 
 .scenario-result.is-visible {
@@ -533,15 +595,9 @@ main {
 }
 
 .scenario-result.is-failure {
-  border-color: rgba(255, 113, 132, 0.32);
-  background: rgba(255, 113, 132, 0.08);
-  color: #ffc5ce;
-}
-
-.scenario-result.is-failure::before {
-  background: var(--red);
-  color: #2a080e;
-  content: "!";
+  border-color: color-mix(in srgb, var(--red) 38%, var(--line));
+  background: color-mix(in srgb, var(--red) 10%, var(--surface));
+  color: var(--red);
 }
 
 @keyframes slide-in {
@@ -771,16 +827,6 @@ main {
   line-height: 1.4;
 }
 
-.kanban-card::before {
-  display: block;
-  width: 20px;
-  height: 2px;
-  margin-bottom: 8px;
-  border-radius: 2px;
-  background: var(--accent);
-  content: "";
-}
-
 .timeline li {
   position: relative;
   grid-template-columns: 48px 1fr;
@@ -826,8 +872,7 @@ main {
   padding: 28px clamp(24px, 6vw, 68px);
   border: 1px solid var(--line);
   border-radius: 9px;
-  background: #111a28;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  background: var(--surface-raised);
 }
 
 .editor-sheet h4 {
@@ -839,7 +884,7 @@ main {
 .editor-sheet p {
   position: relative;
   margin: 0 0 14px;
-  color: #c7d0dd;
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.75;
 }
@@ -1096,7 +1141,7 @@ main {
 .pipeline-dot.complete {
   border-color: var(--green);
   background: var(--green);
-  color: #062219;
+  color: var(--surface);
 }
 
 .pipeline-dot.running {
@@ -1119,8 +1164,8 @@ main {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #070c13;
-  color: #9dcbbd;
+  background: var(--surface-soft);
+  color: var(--green);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 9px;
   line-height: 2;
@@ -1353,8 +1398,11 @@ main {
 
 .investigation-row {
   padding: 11px 12px;
-  border-left: 2px solid var(--accent);
-  background: rgba(var(--accent-rgb), 0.05);
+  border-top: 1px solid var(--line);
+}
+
+.investigation-row:first-child {
+  border-top: 0;
 }
 
 .investigation-row span {
@@ -1422,7 +1470,7 @@ main {
   padding: 15px;
   border: 1px solid rgba(var(--accent-rgb), 0.42);
   border-radius: 12px;
-  background: rgba(16, 23, 37, 0.96);
+  background: var(--surface-raised);
   box-shadow: var(--shadow);
   opacity: 0;
   pointer-events: none;
@@ -1492,7 +1540,6 @@ main {
   place-items: start center;
   padding-top: min(16vh, 150px);
   background: rgba(2, 5, 10, 0.72);
-  backdrop-filter: blur(8px);
 }
 
 .command-dialog[hidden] {
@@ -1525,14 +1572,93 @@ main {
   outline: 0;
 }
 
-.command-close {
-  width: 30px;
-  height: 30px;
+.lucide {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.icon-button {
+  position: relative;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 7px;
   background: var(--surface);
-  color: var(--quiet);
+  color: var(--muted);
   cursor: pointer;
+}
+
+.icon-button:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.control-tooltip {
+  position: absolute;
+  z-index: 150;
+  top: calc(100% + 8px);
+  right: 0;
+  width: max-content;
+  max-width: 180px;
+  padding: 6px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-2px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.icon-button:is(:hover, :focus-visible):not(.tooltip-suppressed) .control-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.panel-header .control-tooltip {
+  top: auto;
+  right: 0;
+  bottom: calc(100% + 8px);
+}
+
+.help-popover {
+  position: fixed;
+  z-index: 95;
+  top: 70px;
+  right: 24px;
+  width: min(340px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+}
+
+.help-popover[hidden] {
+  display: none;
+}
+
+.help-popover header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.help-popover p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .command-list {
@@ -1612,7 +1738,7 @@ main {
     min-width: 0;
   }
 
-  .mobile-menu {
+  [data-mobile-menu] {
     display: grid;
     place-items: center;
   }

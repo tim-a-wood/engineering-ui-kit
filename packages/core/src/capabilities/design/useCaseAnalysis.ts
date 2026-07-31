@@ -1,5 +1,5 @@
 /**
- * EUC-01 — Use-case analysis core.
+ * EUC-01: Use-case analysis core.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §5, §7, §16,
  * §25.3 (EUC-01). Builds and evolves the canonical `UseCaseAnalysis` record
@@ -28,7 +28,7 @@ import { checkSteText, type SteTextClass } from '../simplifiedTechnicalEnglish.j
 
 export { canonicalHash }
 
-/** §7.1 / §7.3 — stable diagnostic codes owned by EUC-01. */
+/** §7.1 / §7.3: stable diagnostic codes owned by EUC-01. */
 export const EUC01_DIAGNOSTIC_CODES = {
   sourceFailedOptional: 'EUC01-SOURCE-FAILED-OPTIONAL',
   sourceFailedRequired: 'EUC01-SOURCE-FAILED-REQUIRED',
@@ -68,7 +68,7 @@ export type UseCaseAnalysisInput = {
   }[]
 }
 
-/** Uniform result shape for every EUC-01 operation — never throws for a
+/** Uniform result shape for every EUC-01 operation: never throws for a
  * domain rejection; the caller inspects `diagnostics` instead. */
 export type UseCaseAnalysisResult = {
   analysis: UseCaseAnalysis
@@ -138,7 +138,7 @@ export function sortDesignDiagnostics(diagnostics: DesignDiagnostic[]): DesignDi
 
 /** Convert a Plan-gate diagnostic (CapDiagnostic, no severity) to the
  * DesignDiagnostic shape operations return. Gate diagnostics are always
- * treated as blocking — the gate itself only carries blocking conditions. */
+ * treated as blocking: the gate itself only carries blocking conditions. */
 export function toDesignDiagnostic(capDiagnostic: CapDiagnostic): DesignDiagnostic {
   return {
     id: capDiagnostic.fieldPath ? `${capDiagnostic.code}:${capDiagnostic.fieldPath}` : capDiagnostic.code,
@@ -182,7 +182,7 @@ function evaluatePlanSte(analysis: UseCaseAnalysis): CapDiagnostic[] {
 }
 
 /**
- * §7.3 — Plan gate (CAP-PLAN-015, CAP-PLAN-016). Blocks approval when a main
+ * §7.3: Plan gate (CAP-PLAN-015, CAP-PLAN-016). Blocks approval when a main
  * use case lacks an actor, result/output, or acceptance check, or when a
  * material question, required-source failure, or conflicting item is open.
  */
@@ -417,7 +417,7 @@ function inferredFailureScenario(prohibitedResult: string, index: number, useCas
 }
 
 /**
- * §7.1 / §7.2 — build the first use-case draft from a plain work description.
+ * §7.1 / §7.2: build the first use-case draft from a plain work description.
  * Deterministic: the same input produces the same ids and contentHash. Always
  * generates at least one main use case with stable scenario/step IDs
  * (CAP-PLAN-001, CAP-PLAN-004).
@@ -572,7 +572,7 @@ export function createUseCaseDraft(input: UseCaseAnalysisInput): UseCaseAnalysis
 
   const analysis = finalizeAnalysis(base)
 
-  // CAP-PLAN-005 / CAP-PLAN-006 — a failed optional source warns but stays
+  // CAP-PLAN-005 / CAP-PLAN-006: a failed optional source warns but stays
   // valid; a failed required source is also surfaced here for visibility (the
   // Plan gate blocks approval on it independently).
   const sourceDiagnostics = sortDesignDiagnostics(
@@ -593,7 +593,7 @@ export function createUseCaseDraft(input: UseCaseAnalysisInput): UseCaseAnalysis
   return { analysis, diagnostics: sourceDiagnostics }
 }
 
-/** §7.3 — counts by item status, not a completion percentage (CAP-PLAN-010,
+/** §7.3: counts by item status, not a completion percentage (CAP-PLAN-010,
  * CAP-PLAN-011). */
 export function reviewCounts(analysis: UseCaseAnalysis): AnalysisReviewCounts {
   const counts: AnalysisReviewCounts = {
@@ -643,13 +643,13 @@ function transformAnalysisItem(
   return { analysis: updated, diagnostics: [] }
 }
 
-/** CAP-PLAN-013 — accept an inferred (or sourced) item: marks it confirmed. */
+/** CAP-PLAN-013: accept an inferred (or sourced) item: marks it confirmed. */
 export function acceptAnalysisItem(analysis: UseCaseAnalysis, itemId: string, actor: string): UseCaseAnalysisResult {
   void actor
   return transformAnalysisItem(analysis, itemId, (item) => ({ ...item, status: 'confirmed' }))
 }
 
-/** CAP-PLAN-013 — correct an item's text: marks it changed. */
+/** CAP-PLAN-013: correct an item's text: marks it changed. */
 export function correctAnalysisItem(
   analysis: UseCaseAnalysis,
   itemId: string,
@@ -660,7 +660,7 @@ export function correctAnalysisItem(
   return transformAnalysisItem(analysis, itemId, (item) => ({ ...item, text, status: 'changed' }))
 }
 
-/** CAP-PLAN-013 — reject an item: it no longer counts toward Plan-gate
+/** CAP-PLAN-013: reject an item: it no longer counts toward Plan-gate
  * content but stays visible for audit. */
 export function rejectAnalysisItem(analysis: UseCaseAnalysis, itemId: string, actor: string): UseCaseAnalysisResult {
   void actor
@@ -754,7 +754,7 @@ export function updateUseCaseContent(
   return { analysis: withNextRevision(analysis, { useCases }), diagnostics: [] }
 }
 
-/** CAP-PLAN-014 — answer a question; only material questions block
+/** CAP-PLAN-014: answer a question; only material questions block
  * readyForReview, but any question can be answered. */
 export function answerQuestion(
   analysis: UseCaseAnalysis,
@@ -783,7 +783,7 @@ export function answerQuestion(
 }
 
 /**
- * §3.2 / §5.3 / §9.10-equivalent for Plan — approve a use-case analysis.
+ * §3.2 / §5.3 / §9.10-equivalent for Plan: approve a use-case analysis.
  * Allowed only from `readyForReview` with a passing Plan gate; rejects agent
  * actors (§4, §2.2) and idempotent re-approval attempts. Preserves the exact
  * source set and freezes its hashes in the approval record.
@@ -792,7 +792,7 @@ export function approveUseCaseAnalysis(
   analysis: UseCaseAnalysis,
   input: { approvedBy: string; authority: string; at: string },
 ): UseCaseAnalysisResult {
-  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // §4, §17.3 (second-review finding: self-asserted approval identity):
   // case-insensitive after trim, and rejects a `service:` actor the same as
   // an `agent:` actor.
   if (isNonHumanActor(input.approvedBy)) {

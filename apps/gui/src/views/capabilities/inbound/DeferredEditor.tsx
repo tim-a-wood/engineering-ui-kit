@@ -1,6 +1,6 @@
 /**
  * "Decide later" panel (CAP-ERA-001 §5.4/§12.4). Deferring never completes or
- * completes Build — the affected deployable stays visibly incomplete in Needs
+ * completes Build: the affected deployable stays visibly incomplete in Needs
  * attention until a real entry point is configured and approved.
  */
 

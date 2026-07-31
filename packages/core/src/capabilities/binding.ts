@@ -1,6 +1,6 @@
 /**
  * Frontend binding validation, connection packets, and simulation modes.
- * CAP-PKT-024 / CAP-PKT-025 — CAP-CONTRACT-013, CAP-UX-006, CAP-RUN-005, CAP-SEC-002.
+ * CAP-PKT-024 / CAP-PKT-025: CAP-CONTRACT-013, CAP-UX-006, CAP-RUN-005, CAP-SEC-002.
  */
 
 import { diagnostic, sortDiagnostics, type CapDiagnostic } from './diagnostics.js'
@@ -66,7 +66,7 @@ export function frontendBindingToInboundBinding(
   }
 }
 
-/** Inverse of frontendBindingToInboundBinding — recovers the original FrontendBinding. */
+/** Inverse of frontendBindingToInboundBinding: recovers the original FrontendBinding. */
 export function inboundBindingToFrontendBinding(binding: UiInboundBinding): FrontendBinding {
   return {
     schemaVersion: '1.0',
@@ -455,7 +455,7 @@ export function simulateBindingMode(input: {
 
   // Simulated modes never call adapters and never earn connected verification.
   if (input.adapter) {
-    // Intentionally do not push to adapter.calls — isolation guarantee.
+    // Intentionally do not push to adapter.calls: isolation guarantee.
   }
 
   let envelope: ResultEnvelope

@@ -253,5 +253,21 @@
       ]
     ]
   },
-  "productKind": "impact"
+  "productKind": "impact",
+  "design": {
+    "contractId": "EUIT-FRONTEND-001",
+    "iconFamily": "lucide",
+    "paletteId": "violet",
+    "fontId": "inter",
+    "defaultMode": "system",
+    "density": "compact",
+    "palette": "Technical violet",
+    "lightAccent": "#4f3698",
+    "darkAccent": "#b5a0f4",
+    "lightSoft": "#eee9f8",
+    "darkSoft": "#2a2245",
+    "lightRgb": "79, 54, 152",
+    "darkRgb": "181, 160, 244",
+    "fontStack": "Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+  }
 }

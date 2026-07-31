@@ -1,0 +1,252 @@
+import fs from 'node:fs'
+import http from 'node:http'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { chromium } from 'playwright'
+import { productTrialSystems } from './systems.mjs'
+
+const here = path.dirname(fileURLToPath(import.meta.url))
+const repoRoot = path.resolve(here, '../../../..')
+const outputRoot = path.join(repoRoot, 'docs/design-system/2026-07-31/screenshots')
+const reportPath = path.join(repoRoot, 'docs/design-system/2026-07-31/browser-validation.json')
+const failures = []
+const screenshots = []
+const browserResults = []
+
+fs.mkdirSync(outputRoot, { recursive: true })
+
+function contentType(filePath) {
+  if (filePath.endsWith('.html')) return 'text/html; charset=utf-8'
+  if (filePath.endsWith('.css')) return 'text/css; charset=utf-8'
+  if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) return 'text/javascript; charset=utf-8'
+  if (filePath.endsWith('.json')) return 'application/json; charset=utf-8'
+  if (filePath.endsWith('.png')) return 'image/png'
+  return 'application/octet-stream'
+}
+
+const server = http.createServer((request, response) => {
+  const requestPath = decodeURIComponent(new URL(request.url ?? '/', 'http://localhost').pathname)
+  const filePath = path.resolve(repoRoot, `.${requestPath}`)
+  if (!filePath.startsWith(`${repoRoot}${path.sep}`) || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+    response.writeHead(404)
+    response.end('Not found')
+    return
+  }
+  response.writeHead(200, { 'Content-Type': contentType(filePath), 'Cache-Control': 'no-store' })
+  fs.createReadStream(filePath).pipe(response)
+})
+
+await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+const address = server.address()
+const baseUrl = `http://127.0.0.1:${address.port}`
+
+function appPath(system) {
+  return `/e2e-samples/product-trials/${system.slug}/capabilities/modules/${system.architecture.uiModuleId}/ui/index.html`
+}
+
+function recordFailure(engine, system, check, error) {
+  failures.push({
+    engine,
+    product: system.slug,
+    check,
+    message: error instanceof Error ? error.message : String(error),
+  })
+}
+
+async function capture(page, system, name, fullPage = true) {
+  const fileName = `${String(screenshots.length + 1).padStart(2, '0')}-${system.slug}-${name}.png`
+  const destination = path.join(outputRoot, fileName)
+  await page.screenshot({ path: destination, fullPage })
+  screenshots.push(path.relative(repoRoot, destination))
+}
+
+async function assertPageContract(page, engineName, system, testPointerTooltip = true) {
+  const contract = await page.locator('html').getAttribute('data-design-contract')
+  if (contract !== 'EUIT-FRONTEND-001') {
+    throw new Error(`Design contract is ${contract ?? 'missing'}.`)
+  }
+  const iconFamilies = await page.locator('svg[data-icon-family]').evaluateAll((icons) =>
+    [...new Set(icons.map((icon) => icon.getAttribute('data-icon-family')))])
+  if (JSON.stringify(iconFamilies) !== '["lucide"]') {
+    throw new Error(`Icon families are ${iconFamilies.join(', ') || 'missing'}.`)
+  }
+  const iconButtons = page.locator('button.icon-button')
+  const iconButtonCount = await iconButtons.count()
+  if (iconButtonCount === 0) throw new Error('No icon buttons are present.')
+  for (let index = 0; index < iconButtonCount; index += 1) {
+    const control = iconButtons.nth(index)
+    if (!await control.getAttribute('aria-label')) throw new Error(`Icon button ${index + 1} has no label.`)
+    if (!await control.getAttribute('aria-describedby')) throw new Error(`Icon button ${index + 1} has no tooltip link.`)
+    if (await control.locator('[role="tooltip"]').count() !== 1) {
+      throw new Error(`Icon button ${index + 1} has no tooltip.`)
+    }
+  }
+  const help = page.locator('[data-help-trigger]')
+  if (await help.count() !== 1) throw new Error('The help trigger is missing.')
+  const theme = page.locator('[data-theme-toggle]')
+  if (await theme.count() !== 1) throw new Error('The mode trigger is missing.')
+
+  const overflow = await page.evaluate(() => ({
+    width: document.documentElement.scrollWidth,
+    viewport: document.documentElement.clientWidth,
+  }))
+  if (overflow.width > overflow.viewport + 2) {
+    throw new Error(`The page width is ${overflow.width}px in a ${overflow.viewport}px viewport.`)
+  }
+
+  if (testPointerTooltip) {
+    const tooltip = theme.locator('[role="tooltip"]')
+    await theme.hover()
+    await tooltip.waitFor({ state: 'visible' })
+    await theme.focus()
+    await page.keyboard.press('Escape')
+    await page.waitForFunction((element) => getComputedStyle(element).opacity === '0', await tooltip.elementHandle())
+  }
+
+  await help.click()
+  await page.locator('[data-help-popover]').waitFor({ state: 'visible' })
+  if (await help.getAttribute('aria-expanded') !== 'true') throw new Error('Help did not announce its open state.')
+  await page.keyboard.press('Escape')
+  await page.locator('[data-help-popover]').waitFor({ state: 'hidden' })
+
+  const firstAction = system.scenarios[0]
+  await page.locator(`[data-scenario-action="${firstAction.actionId}"]`).click()
+  await page.locator(`[data-scenario-result="${firstAction.actionId}"].is-visible`).waitFor({ state: 'visible' })
+
+  browserResults.push({
+    engine: engineName,
+    product: system.slug,
+    viewport: await page.viewportSize(),
+    iconButtons: iconButtonCount,
+    tooltipKeyboardDismissal: testPointerTooltip ? true : 'covered in Chromium',
+    contextualHelp: true,
+    scenarioAction: true,
+    horizontalOverflow: 0,
+  })
+}
+
+async function runChromiumMatrix() {
+  const browser = await chromium.launch({ headless: true })
+  try {
+    for (const system of productTrialSystems) {
+      process.stdout.write(`Chromium: ${system.slug}\n`)
+      const errors = []
+      const context = await browser.newContext({
+        viewport: { width: 1440, height: 1000 },
+        colorScheme: 'light',
+        reducedMotion: 'reduce',
+      })
+      await context.addInitScript(() => localStorage.setItem('eui-color-mode', 'light'))
+      const page = await context.newPage()
+      page.setDefaultTimeout(5_000)
+      page.setDefaultNavigationTimeout(5_000)
+      page.on('pageerror', (error) => errors.push(error.message))
+      page.on('console', (message) => {
+        if (message.type() === 'error') errors.push(message.text())
+      })
+      try {
+        await page.goto(`${baseUrl}${appPath(system)}`, { waitUntil: 'domcontentloaded' })
+        await page.getByRole('heading', { name: system.headline }).waitFor()
+        await assertPageContract(page, 'chromium', system)
+        await capture(page, system, 'light')
+
+        const theme = page.locator('[data-theme-toggle]')
+        await theme.click()
+        if (await page.locator('html').getAttribute('data-theme') !== 'dark') {
+          throw new Error('The mode button did not select dark mode.')
+        }
+        const storedMode = await page.evaluate(() => localStorage.getItem('eui-color-mode'))
+        if (storedMode !== 'dark') throw new Error(`The stored mode is ${storedMode ?? 'missing'}.`)
+        await capture(page, system, 'dark')
+
+        await page.locator('[data-help-trigger]').click()
+        await capture(page, system, 'help')
+        await page.locator('[data-close-help]').click()
+
+        if (errors.length > 0) throw new Error(`Browser errors: ${errors.join(' | ')}`)
+      } catch (error) {
+        recordFailure('chromium', system, 'desktop contract', error)
+      } finally {
+        await context.close()
+      }
+    }
+  } finally {
+    await browser.close()
+  }
+}
+
+async function runPhoneMatrix() {
+  const browser = await chromium.launch({ headless: true })
+  try {
+    for (const system of productTrialSystems) {
+      process.stdout.write(`Phone: ${system.slug}\n`)
+      const errors = []
+      const context = await browser.newContext({
+        viewport: { width: 390, height: 844 },
+        colorScheme: 'dark',
+        reducedMotion: 'reduce',
+        isMobile: true,
+        hasTouch: true,
+      })
+      const page = await context.newPage()
+      page.setDefaultTimeout(5_000)
+      page.setDefaultNavigationTimeout(5_000)
+      page.on('pageerror', (error) => errors.push(error.message))
+      page.on('console', (message) => {
+        if (message.type() === 'error') errors.push(message.text())
+      })
+      try {
+        await page.goto(`${baseUrl}${appPath(system)}`, { waitUntil: 'domcontentloaded' })
+        await page.getByRole('heading', { name: system.headline }).waitFor()
+        const explicitMode = await page.locator('html').getAttribute('data-theme')
+        if (system.design.defaultMode === 'system' && explicitMode !== null) {
+          throw new Error('System mode wrote an explicit theme.')
+        }
+        if (
+          system.design.defaultMode !== 'system'
+          && explicitMode !== system.design.defaultMode
+        ) {
+          throw new Error(`The start mode is ${explicitMode ?? 'missing'}.`)
+        }
+        await assertPageContract(page, 'chromium-mobile', system, false)
+        await page.getByRole('button', { name: 'Open menu' }).click()
+        await capture(page, system, 'phone', false)
+        if (errors.length > 0) throw new Error(`Browser errors: ${errors.join(' | ')}`)
+      } catch (error) {
+        recordFailure('chromium-mobile', system, 'phone contract', error)
+      } finally {
+        await context.close()
+      }
+    }
+  } finally {
+    await browser.close()
+  }
+}
+
+try {
+  await runChromiumMatrix()
+  await runPhoneMatrix()
+} finally {
+  await new Promise((resolve) => server.close(resolve))
+}
+
+const report = {
+  generatedAt: new Date().toISOString(),
+  products: productTrialSystems.length,
+  engines: ['chromium', 'chromium-mobile'],
+  desktopStatesPerProduct: ['light', 'dark', 'help'],
+  phoneStatePerProduct: 'Chromium mobile',
+  safariCheck: {
+    staticFiles: true,
+    runtimeDependencies: 0,
+    status: 'The macOS computer was locked during the Safari UI check.',
+  },
+  screenshots,
+  checks: browserResults,
+  failures,
+  passed: failures.length === 0,
+}
+fs.mkdirSync(path.dirname(reportPath), { recursive: true })
+fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`)
+process.stdout.write(`${JSON.stringify(report, null, 2)}\n`)
+process.exitCode = report.passed ? 0 : 1

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://engineering-ui-kit/standards/schemas/capabilities/composition-manifest.schema.json",
   "title": "CompositionManifest",
-  "description": "CAP-CONTRACT-027 — one deployable composition manifest.",
+  "description": "CAP-CONTRACT-027: one deployable composition manifest.",
   "type": "object",
   "additionalProperties": false,
   "required": [

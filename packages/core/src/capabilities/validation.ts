@@ -83,7 +83,7 @@ export function validateContractRecord(
   for (const [key, allowed] of Object.entries(ENUMS)) {
     if (record[key] === undefined || !allowed) continue
     if (typeof record[key] === 'string' && !allowed.includes(record[key] as string)) {
-      // job state vs matlab state are overlapping keys — only enforce when contract matches
+      // job state vs matlab state are overlapping keys: only enforce when contract matches
       if (key === 'state') {
         if (contractId === 'CAP-CONTRACT-007' && !JOB_STATES.includes(record[key] as never)) {
           diagnostics.push(

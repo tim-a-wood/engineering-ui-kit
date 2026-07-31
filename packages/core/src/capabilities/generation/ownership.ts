@@ -55,7 +55,7 @@ export type OwnershipConflict = {
 
 /**
  * Detect generated files whose current content hash no longer matches the
- * last-recorded ownership hash — i.e. the file was modified outside
+ * last-recorded ownership hash: i.e. the file was modified outside
  * generation since it was last applied (CAP-CONTRACT-026 invariant).
  *
  * `currentContentHashesByPath` is supplied by the caller (e.g. computed from

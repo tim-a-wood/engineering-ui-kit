@@ -25,14 +25,14 @@ It does not automate packet generation, submit work to Copilot, or apply overlay
 
 ## Folder Map
 
-- `handoff-model.md` — producers, consumers, precedence, and authority.
-- `three-file-upload-strategy.md` — exact input variants and budget rules.
-- `implementation-instructions.md` — constraints embedded in implementation work.
-- `review-instructions.md` — post-overlay review responsibilities.
-- `visual-reference-strategy.md` — labeling and citation of approved mockups.
-- `context-exclusions.md` — deterministic exclusion rules for repo context.
-- `overlay-safety.md` — hard blockers and warning-only conditions.
-- `contracts/` — artifact contracts for each handoff input and the returned overlay.
+- `handoff-model.md`: producers, consumers, precedence, and authority.
+- `three-file-upload-strategy.md`: exact input variants and budget rules.
+- `implementation-instructions.md`: constraints embedded in implementation work.
+- `review-instructions.md`: post-overlay review responsibilities.
+- `visual-reference-strategy.md`: labeling and citation of approved mockups.
+- `context-exclusions.md`: deterministic exclusion rules for repo context.
+- `overlay-safety.md`: hard blockers and warning-only conditions.
+- `contracts/`: artifact contracts for each handoff input and the returned overlay.
 
 ## Trial Application
 

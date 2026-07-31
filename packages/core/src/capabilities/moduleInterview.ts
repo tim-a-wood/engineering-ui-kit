@@ -1,5 +1,5 @@
 /**
- * Type-specific module interviews — CAP-PKT-011 / CAP-GATE-003.
+ * Type-specific module interviews: CAP-PKT-011 / CAP-GATE-003.
  * One bounded interview depth and one ModuleManifest schema across types.
  */
 
@@ -89,7 +89,7 @@ export type ModuleImportResult = {
   reviewDiagnostics?: SteReviewDiagnostic[]
 }
 
-/** Single interview depth — applicable detail IDs per module type. */
+/** Single interview depth: applicable detail IDs per module type. */
 export const MODULE_APPLICABLE_DETAILS: Record<ModuleType, readonly string[]> = {
   domain: [
     'responsibility',

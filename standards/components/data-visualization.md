@@ -62,7 +62,7 @@ Charts shall provide accessible names, text summaries, data-table alternatives w
 - Unlabeled axes or hidden units.
 
 
-## CMP-VIZ-CHART-PANEL — Chart Panel
+## CMP-VIZ-CHART-PANEL: Chart Panel
 
 ### Purpose
 CMP-VIZ-CHART-PANEL defines a panel that frames a chart with title, legend, controls, and status. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -104,17 +104,17 @@ Compliant use: `Chart Panel` appears in a dark engineering panel, uses manifest 
 Non-compliant use: `Chart Panel` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-VIZ-CHART-PANEL` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-VIZ-CHART-PANEL` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-VIZ-CHART-PANEL` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-VIZ-LINE-CHART — Line Chart
+## CMP-VIZ-LINE-CHART: Line Chart
 
 ### Purpose
 CMP-VIZ-LINE-CHART defines time-series or ordered numeric trend visualization. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -156,17 +156,17 @@ Compliant use: `Line Chart` appears in a dark engineering panel, uses manifest I
 Non-compliant use: `Line Chart` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-VIZ-LINE-CHART` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-VIZ-LINE-CHART` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-VIZ-LINE-CHART` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-VIZ-BAR-CHART — Bar Chart
+## CMP-VIZ-BAR-CHART: Bar Chart
 
 ### Purpose
 CMP-VIZ-BAR-CHART defines categorical comparison visualization. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -208,17 +208,17 @@ Compliant use: `Bar Chart` appears in a dark engineering panel, uses manifest ID
 Non-compliant use: `Bar Chart` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-VIZ-BAR-CHART` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-VIZ-BAR-CHART` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-VIZ-BAR-CHART` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: reference-backed-standard, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: reference-backed-standard, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-VIZ-LEGEND — Legend
+## CMP-VIZ-LEGEND: Legend
 
 ### Purpose
 CMP-VIZ-LEGEND defines mapping between chart encodings and series meaning. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -260,17 +260,17 @@ Compliant use: `Legend` appears in a dark engineering panel, uses manifest ID `C
 Non-compliant use: `Legend` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-VIZ-LEGEND` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-VIZ-LEGEND` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-VIZ-LEGEND` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-VIZ-CHART-TOOLTIP — Chart Tooltip
+## CMP-VIZ-CHART-TOOLTIP: Chart Tooltip
 
 ### Purpose
 CMP-VIZ-CHART-TOOLTIP defines precise data values on hover or focus. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -312,17 +312,17 @@ Compliant use: `Chart Tooltip` appears in a dark engineering panel, uses manifes
 Non-compliant use: `Chart Tooltip` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-VIZ-CHART-TOOLTIP` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-VIZ-CHART-TOOLTIP` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-VIZ-CHART-TOOLTIP` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: reference-backed-standard.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-VIZ-THRESHOLD-BAND — Threshold Band
+## CMP-VIZ-THRESHOLD-BAND: Threshold Band
 
 ### Purpose
 CMP-VIZ-THRESHOLD-BAND is reserved for visual warning, tolerance, or pass/fail region in charts. It exists for ID stability and future planning, not as a fully validated Phase 3 standard.

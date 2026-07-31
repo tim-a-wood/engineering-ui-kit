@@ -1,5 +1,5 @@
 /**
- * EUC-12 — Verification planner.
+ * EUC-12: Verification planner.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §14 (all),
  * §25.3 (EUC-12). Builds the scenario-to-test plan, the module acceptance
@@ -49,7 +49,7 @@ function sortDesignDiagnostics(diagnostics: DesignDiagnostic[]): DesignDiagnosti
 }
 
 // ---------------------------------------------------------------------------
-// §14.1 — Scenario generation
+// §14.1: Scenario generation
 // ---------------------------------------------------------------------------
 
 export type ScenarioAutomationAction = { stepId: string; action: string }
@@ -77,7 +77,7 @@ export type ScenarioTestPlan = {
 }
 
 /**
- * §14.1 — one automated end-to-end test per approved main, alternate,
+ * §14.1: one automated end-to-end test per approved main, alternate,
  * failure, or recovery scenario. A scenario without steps cannot receive a
  * test; it produces a diagnostic instead of an entry.
  */
@@ -184,7 +184,7 @@ export function buildModuleAcceptancePlan(design: ModuleDesignSpecification): Mo
 }
 
 // ---------------------------------------------------------------------------
-// §14.2 — Step evidence
+// §14.2: Step evidence
 // ---------------------------------------------------------------------------
 
 export type StepEvidencePolicy = {
@@ -200,7 +200,7 @@ export type EvidenceExpectationPlan = {
 }
 
 /**
- * §14.2 — screenshot evidence when the step result is visible, structured
+ * §14.2: screenshot evidence when the step result is visible, structured
  * evidence otherwise; a visible step that cannot be captured must record
  * `screenshotNotApplicableReason` and falls back to structured evidence.
  */
@@ -218,7 +218,7 @@ export function buildEvidenceExpectationPlan(scenario: UseCaseScenario): Evidenc
 }
 
 // ---------------------------------------------------------------------------
-// §14.3 — Scenario run identity
+// §14.3: Scenario run identity
 // ---------------------------------------------------------------------------
 
 export type ScenarioRunIdentityInput = {
@@ -244,7 +244,7 @@ function sortedRecord(record: Record<string, string>): Record<string, string> {
   return sorted
 }
 
-/** §14.3 — assembles the full scenario-run identity block. */
+/** §14.3: assembles the full scenario-run identity block. */
 export function scenarioRunIdentity(input: ScenarioRunIdentityInput): ScenarioRun['identity'] {
   return {
     useCaseAnalysisRevision: input.useCaseAnalysisRevision,
@@ -312,7 +312,7 @@ export function currentResultState(run: ScenarioRun, currentRevisions: CurrentRe
 }
 
 // ---------------------------------------------------------------------------
-// §14.4 — Verify view
+// §14.4: Verify view
 // ---------------------------------------------------------------------------
 
 export type VerifySummaryInput = {
@@ -344,7 +344,7 @@ export type VerifySummary = {
   designLinks: string[]
 }
 
-/** §14.4 — Verify view counts, current-versus-old, and links to Design records. */
+/** §14.4: Verify view counts, current-versus-old, and links to Design records. */
 export function buildVerifySummary(runs: ScenarioRun[], plans: VerifySummaryInput): VerifySummary {
   const orderedRuns = stableSortBy(runs, (r) => r.runId)
 

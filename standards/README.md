@@ -1,20 +1,20 @@
 # Engineering UI Kit Standards
 
 **Package version:** 0.3.0  
-**Phase:** Phase 3 — Core Standards Authoring  
+**Phase:** Phase 3: Core Standards Authoring
 **Status:** core standards authored  
 **Operational readiness:** unproven; evidence-first vertical slice required
-**Primary posture:** dark-first, engineering-focused, app-lightweight
+**Primary posture:** dual-mode, engineering-focused, app-lightweight
 
 ## Purpose
 
-This package defines the authored core standards for Engineering UI Kit screens. It is intended to constrain human and AI-generated UI work so that output stays aligned with the approved dark-first engineering workbench direction rather than drifting into generic SaaS dashboard output.
+This package defines the core standards for Engineering UI Kit screens. It constrains human and generated work to one modern enterprise design contract.
 
 ## What v0.3 Contains
 
 Version 0.3 contains authored prose standards for:
 
-- foundation principles, visual language, tokens, accessibility, content, and interaction;
+- foundation principles, visual language, tokens, icons, help, accessibility, content, and interaction;
 - component behavior, states, usage, accessibility, and token expectations;
 - forms, tables, navigation, feedback, overlays, and data visualization;
 - application shell and page layout recipes;
@@ -50,14 +50,20 @@ The active roadmap is `engineering-ui-kit-high-level-delivery-plan-v0.2.md`.
 
 ## Package Structure
 
-- `foundation/` — operating doctrine, visual language, accessibility, content, interaction, and token usage rules.
-- `components/` — component manifest explanation and operational component standards.
-- `layouts-and-recipes/` — screen composition recipes and reusable state patterns.
-- `examples/` — approved and rejected examples for review and implementation guidance.
-- `validation/` — rubrics, checklists, and mechanical validation scripts.
-- `schemas/`, `tokens.json`, `component-manifest.json` — Phase 2 contract backbone preserved for Phase 3.
-- `assets/`, `research/`, `prompts/`, `copilot-handoff/`, `reference-architecture/` — supporting material, including the Phase 1 trial-critical architecture, handoff, safety, and prompt contracts.
+- `foundation/`: operating doctrine, visual language, accessibility, content, interaction, and token usage rules.
+- `components/`: component manifest explanation and operational component standards.
+- `layouts-and-recipes/`: screen composition recipes and reusable state patterns.
+- `examples/`: approved and rejected examples for review and implementation guidance.
+- `validation/`: rubrics, checklists, and mechanical validation scripts.
+- `schemas/`, `tokens.json`, `component-manifest.json`: Phase 2 contract backbone preserved for Phase 3.
+- `assets/`, `research/`, `prompts/`, `copilot-handoff/`, `reference-architecture/`: supporting material, including the Phase 1 trial-critical architecture, handoff, safety, and prompt contracts.
 
 ## Use Guidance
 
-For implementation work, start with `foundation/principles.md`, `foundation/visual-language.md`, `foundation/tokens.md`, `component-manifest.json`, and the relevant component or layout recipe. For review work, use `validation/ui-compliance-rubric.md`, `validation/visual-drift-checklist.md`, and `validation/component-completeness-checklist.md`.
+For implementation work, start with `foundation/principles.md`,
+`foundation/visual-language.md`, `foundation/tokens.md`,
+`foundation/icons-and-help.md`, `foundation/content-and-language.md`,
+`component-manifest.json`, and the relevant component or layout recipe. For
+review work, use `validation/ui-compliance-rubric.md`,
+`validation/visual-drift-checklist.md`, and
+`validation/component-completeness-checklist.md`.

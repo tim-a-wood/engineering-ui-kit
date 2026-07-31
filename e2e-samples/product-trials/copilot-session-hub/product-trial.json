@@ -253,5 +253,21 @@
       ]
     ]
   },
-  "productKind": "sessions"
+  "productKind": "sessions",
+  "design": {
+    "contractId": "EUIT-FRONTEND-001",
+    "iconFamily": "lucide",
+    "paletteId": "violet",
+    "fontId": "source",
+    "defaultMode": "dark",
+    "density": "comfortable",
+    "palette": "Technical violet",
+    "lightAccent": "#4f3698",
+    "darkAccent": "#b5a0f4",
+    "lightSoft": "#eee9f8",
+    "darkSoft": "#2a2245",
+    "lightRgb": "79, 54, 152",
+    "darkRgb": "181, 160, 244",
+    "fontStack": "\"Source Sans 3\", Inter, ui-sans-serif, system-ui, sans-serif"
+  }
 }

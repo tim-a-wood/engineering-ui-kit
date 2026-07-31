@@ -1,5 +1,5 @@
 /**
- * Task authoring panel — all Create Task Packet capabilities in the Build main column.
+ * Task authoring panel: all Create Task Packet capabilities in the Build main column.
  */
 
 import { Icon } from '../../icons'
@@ -202,7 +202,7 @@ export function BuildTaskPanel(props: BuildTaskPanelProps) {
 
       {props.packetStale && (
         <p className="muted" style={{ fontSize: 12, marginTop: 12 }} role="status">
-          Task details changed since the last export — regenerate the task packet in Hand off to Copilot.
+          Task details changed since the last export: regenerate the task packet in Hand off to Copilot.
         </p>
       )}
 

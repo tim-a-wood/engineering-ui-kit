@@ -1,5 +1,5 @@
 /**
- * Needs attention panel — dependency-ordered actionable items.
+ * Needs attention panel: dependency-ordered actionable items.
  * Guided mode humanizes the module name and state and offers exactly one next
  * action per item; raw reason codes and blocker ids stay in Design mode.
  */
@@ -46,7 +46,7 @@ export function NeedsAttention({ items, projection, onNextAction }: Props) {
             ) : null}
             {!guided ? (
               <p className="capabilities-note">
-                Reasons: {item.reasonCodes.join(', ') || '—'}
+                Reasons: {item.reasonCodes.join(', ') || 'None'}
                 {item.blocker ? `; blocker ${item.blocker}` : ''}
               </p>
             ) : null}

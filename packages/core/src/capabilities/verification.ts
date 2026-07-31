@@ -185,7 +185,7 @@ export type RunModuleVerificationInput = {
   moduleType: ModuleType
   manifest?: ModuleManifest
   inputHashes: Record<string, string>
-  /** Injected command results — core does not spawn processes. */
+  /** Injected command results: core does not spawn processes. */
   commands: CommandOutcome[]
   startedAt?: string
   completedAt?: string

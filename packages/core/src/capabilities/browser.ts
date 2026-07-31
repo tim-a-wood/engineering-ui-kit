@@ -2,8 +2,8 @@
  * Browser-safe capability surface (CAP package boundary).
  *
  * This barrel contains ONLY contracts and pure logic that are safe to bundle in
- * the renderer. Node-owned modules — persistence, filesystem, runs, migration,
- * journeys, and the Playwright journey harness — must never be re-exported here,
+ * the renderer. Node-owned modules: persistence, filesystem, runs, migration,
+ * journeys, and the Playwright journey harness: must never be re-exported here,
  * or the renderer bundle will pull `node:*`/Playwright/fsevents (see the GUI
  * production build). Desktop/core code continues to import those Node modules
  * from `./index.js` or directly.
@@ -39,6 +39,7 @@ export * from './connectEntryPoints.js'
 export * from './batchPlanning.js'
 export * from './implementationWave.js'
 export * from './frontendBrief.js'
+export * from './frontendDesignSystem.js'
 export * from './useCaseAnalysis.js'
 export * from './activityGraph.js'
 export * from './applicationWorkflow.js'

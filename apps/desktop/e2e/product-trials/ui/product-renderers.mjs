@@ -10,6 +10,35 @@ const slug = (value) => String(value)
   .replace(/[^a-z0-9]+/g, '-')
   .replace(/^-|-$/g, '')
 
+const iconPaths = {
+  'arrow-right': '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  'circle-check': '<circle cx="12" cy="12" r="10"/><path d="m8 12 2.5 2.5L16 9"/>',
+  'circle-help': '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 1 1 5.8 1c0 2-3 2-3 4"/><path d="M12 18h.01"/>',
+  ellipsis: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+  lock: '<rect width="16" height="12" x="4" y="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  moon: '<path d="M20.9 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.7 9.8Z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3z"/><path d="m9 12 2 2 4-4"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+}
+
+function icon(name, size = 18) {
+  const paths = iconPaths[name]
+  if (!paths) throw new Error(`Unknown interface icon: ${name}`)
+  return `<svg class="lucide lucide-${name}" data-icon-family="lucide" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`
+}
+
+let controlSequence = 0
+function iconButton(label, iconName, attributes = '') {
+  controlSequence += 1
+  const tooltipId = `tooltip-${slug(label)}-${controlSequence}`
+  return `<button class="icon-button" type="button" aria-label="${escapeHtml(label)}" aria-describedby="${tooltipId}" data-tooltip-trigger ${attributes}>${icon(iconName)}<span id="${tooltipId}" class="control-tooltip" role="tooltip">${escapeHtml(label)}</span></button>`
+}
+
 function table(panel, compact = false) {
   const headers = panel.headers ?? ['Resource', 'Assignment', 'Remaining', 'State']
   return `<div class="panel-body table-scroll ${compact ? 'is-compact' : ''}">
@@ -58,7 +87,7 @@ function panelBody(panel) {
   }
   if (panel.type === 'checklist') {
     return `<div class="panel-body"><ul class="check-list">${panel.items.map(([label, done]) =>
-      `<li><span class="check-mark ${done ? 'done' : ''}">${done ? '✓' : ''}</span><span>${escapeHtml(label)}</span></li>`).join('')}</ul></div>`
+      `<li><span class="check-mark ${done ? 'done' : ''}">${done ? icon('check', 14) : ''}</span><span>${escapeHtml(label)}</span></li>`).join('')}</ul></div>`
   }
   if (panel.type === 'kanban') {
     return `<div class="panel-body board-scroll"><div class="kanban">${panel.columns.map(([title, cards]) =>
@@ -101,7 +130,7 @@ function panelBody(panel) {
   if (panel.type === 'pipeline') {
     return `<div class="panel-body"><ol class="pipeline">${panel.items.map(([label, state], index) => {
       const stateClass = /complete/i.test(state) ? 'complete' : /running|review/i.test(state) ? 'running' : ''
-      return `<li><span class="pipeline-dot ${stateClass}">${stateClass === 'complete' ? '✓' : index + 1}</span><b>${escapeHtml(label)}</b><small>${escapeHtml(state)}</small></li>`
+      return `<li><span class="pipeline-dot ${stateClass}">${stateClass === 'complete' ? icon('check', 14) : index + 1}</span><b>${escapeHtml(label)}</b><small>${escapeHtml(state)}</small></li>`
     }).join('')}</ol></div>`
   }
   if (panel.type === 'console') {
@@ -155,7 +184,7 @@ function panelBody(panel) {
 
 function panel(panel, className = '') {
   return `<article class="panel panel-${escapeHtml(panel.type)} ${className}">
-    <header class="panel-header"><div><h3>${escapeHtml(panel.title)}</h3><p>${escapeHtml(panel.subtitle)}</p></div><button type="button" aria-label="Open panel menu">•••</button></header>
+    <header class="panel-header"><div><h3>${escapeHtml(panel.title)}</h3><p>${escapeHtml(panel.subtitle)}</p></div>${iconButton('Open panel menu', 'ellipsis')}</header>
     ${panelBody(panel)}
   </article>`
 }
@@ -171,14 +200,14 @@ function nav(system, mode = 'rail') {
 
 function topbar(system, extra = '') {
   return `<header class="product-topbar">
-    <div><button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button><span class="crumb">${escapeHtml(system.shortName)}</span><span class="crumb-divider">/</span><h1 data-view-title>${escapeHtml(system.homeTitle)}</h1></div>
-    <div class="topbar-tools">${extra}<button class="command-button" type="button" data-open-commands aria-label="Open command menu"><span>Search or run</span><kbd>⌘ K</kbd></button><span class="user-chip">TW</span></div>
+    <div>${iconButton('Open menu', 'menu', 'data-mobile-menu')}<span class="crumb">${escapeHtml(system.shortName)}</span><span class="crumb-divider">/</span><h1 data-view-title>${escapeHtml(system.homeTitle)}</h1></div>
+    <div class="topbar-tools">${extra}<button class="command-button" type="button" data-open-commands aria-label="Open command menu">${icon('search', 16)}<span>Find or run</span><kbd>⌘ K</kbd></button>${iconButton('Open help', 'circle-help', 'data-help-trigger aria-expanded="false"')}${iconButton('Use dark mode', 'moon', 'data-theme-toggle')}<span class="user-chip">TW</span></div>
   </header>`
 }
 
 function actions(system, className = 'domain-actions') {
   return `<div class="${className}" aria-label="Product actions">${system.scenarios.map((item, index) =>
-    `<button class="${index === 0 ? 'primary-action' : ''} ${index === system.scenarios.length - 1 ? 'protected-action' : ''}" type="button" data-scenario-action="${item.actionId}" data-target="${escapeHtml(item.target)}"><span>${index === 0 ? '+' : index === system.scenarios.length - 1 ? '◇' : '→'}</span>${escapeHtml(item.name)}</button>`).join('')}</div>`
+    `<button class="${index === 0 ? 'primary-action' : ''} ${index === system.scenarios.length - 1 ? 'protected-action' : ''}" type="button" data-scenario-action="${item.actionId}" data-target="${escapeHtml(item.target)}"><span>${index === 0 ? icon('plus', 16) : index === system.scenarios.length - 1 ? icon('shield', 16) : icon('arrow-right', 16)}</span>${escapeHtml(item.name)}</button>`).join('')}</div>`
 }
 
 function metricStrip(system, className = '') {
@@ -189,7 +218,7 @@ function metricStrip(system, className = '') {
 function reviewSurface(system) {
   return `${nav(system, 'review')}
     <section class="product-workspace">
-      ${topbar(system, '<span class="independence-pill">✓ Independent reviewer</span>')}
+      ${topbar(system, `<span class="independence-pill">${icon('check', 14)} Independent reviewer</span>`)}
       <main class="review-layout">
         <header class="review-context">
           <div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>
@@ -211,7 +240,7 @@ function reviewSurface(system) {
 function sessionSurface(system) {
   return `${nav(system, 'sessions')}
     <section class="product-workspace">
-      ${topbar(system, '<span class="focus-clock">FOCUS · 42 MIN</span>')}
+      ${topbar(system, '<span class="focus-clock">Focus: 42 min</span>')}
       <main class="session-layout">
         <header class="session-heading"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>${metricStrip(system, 'session-stats')}</header>
         <section class="session-board">${panel(system.panels[0], 'board-panel')}</section>
@@ -235,7 +264,7 @@ function writingSurface(system) {
 
 function telemetrySurface(system) {
   return `<section class="product-workspace telemetry-shell">
-      ${topbar(system, '<span class="recording-pill"><i></i> RECORDED DATA</span>')}
+      ${topbar(system, '<span class="recording-pill"><i></i> Recorded data</span>')}
       <main class="telemetry-layout">
         <header class="telemetry-head"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2></div>${actions(system, 'telemetry-actions')}</header>
         <aside class="channel-rail sidebar" data-product-nav><h3>Channels</h3><label>Find channel<input value="normal accel" readonly /></label><ul><li class="active"><b>NZ</b><span>Normal acceleration</span><em>2.61 g</em></li><li><b>ELE</b><span>Elevator position</span><em>8.4°</em></li><li><b>CAS</b><span>Calibrated airspeed</span><em>241 kt</em></li><li><b>AP</b><span>Autopilot state</span><em>OFF</em></li></ul>${metricStrip(system, 'channel-stats')}</aside>
@@ -249,7 +278,7 @@ function telemetrySurface(system) {
 function tradeSurface(system) {
   return `${nav(system, 'study')}
     <section class="product-workspace">
-      ${topbar(system, '<span class="model-state">MATLAB · READY</span>')}
+      ${topbar(system, '<span class="model-state">MATLAB ready</span>')}
       <main class="trade-layout">
         <header class="trade-head"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>${actions(system, 'trade-actions')}</header>
         <aside class="parameter-drawer"><h3>Case inputs</h3><label>Gross weight<span><input value="18,240" readonly /> kg</span></label><label>Cruise altitude<span><input value="35,000" readonly /> ft</span></label><label>Drag factor<span><input value="1.012" readonly /></span></label><label>Fuel reserve<span><input value="45" readonly /> min</span></label><button type="button">Compare assumptions</button>${metricStrip(system, 'parameter-stats')}</aside>
@@ -303,7 +332,7 @@ function impactSurface(system) {
 function loadSurface(system) {
   return `${nav(system, 'release')}
     <section class="product-workspace">
-      ${topbar(system, '<span class="secure-state">🔒 SECURE LOAD MODE</span>')}
+      ${topbar(system, `<span class="secure-state">${icon('lock', 14)} Secure load mode</span>`)}
       <main class="load-layout">
         <header class="load-head"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>${metricStrip(system, 'load-metrics')}</header>
         <section class="load-stepper">${panel(system.panels[0], 'release-panel')}</section>
@@ -343,31 +372,44 @@ const renderers = {
 
 function supportUi(system) {
   return `<section class="scenario-results" aria-live="polite">${system.scenarios.map((item, index) =>
-      `<div class="scenario-result ${index === system.scenarios.length - 1 ? 'is-failure' : ''}" data-scenario-result="${item.actionId}" data-reward="${escapeHtml(system.reward)}">${escapeHtml(item.result)}</div>`).join('')}</section>
+      `<div class="scenario-result ${index === system.scenarios.length - 1 ? 'is-failure' : ''}" data-scenario-result="${item.actionId}" data-reward="${escapeHtml(system.reward)}">${icon(index === system.scenarios.length - 1 ? 'x' : 'circle-check', 18)}<span>${escapeHtml(item.result)}</span></div>`).join('')}</section>
     <details class="activity-drawer"><summary>Activity</summary><ol class="activity-list" data-activity><li><span>Now</span><b>Workspace opened</b><small>${escapeHtml(system.description)}</small></li></ol></details>
-    <aside class="reward-toast" data-reward aria-live="polite"><div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>${escapeHtml(system.reward)}</b><small data-reward-count>0 of ${system.scenarios.length} actions evidenced</small></span></div><div class="reward-track"><i data-reward-bar></i></div></aside>
-    <div class="command-dialog" data-command-dialog hidden><section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu"><div class="command-search"><input data-command-input aria-label="Find an action" placeholder="Find an action…" /><button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button></div><ul class="command-list">${system.scenarios.map((item) => `<li data-command-item="${item.actionId}"><button type="button"><span>${escapeHtml(item.name)}</span><small>${escapeHtml(item.target)}</small></button></li>`).join('')}</ul></section></div>`
+    <aside class="reward-toast" data-reward aria-live="polite"><div class="reward-head"><span class="reward-spark">${icon('circle-check', 18)}</span><span><b data-reward-label>${escapeHtml(system.reward)}</b><small data-reward-count>0 of ${system.scenarios.length} actions complete</small></span></div><div class="reward-track"><i data-reward-bar></i></div></aside>
+    <aside class="help-popover" data-help-popover hidden><header><b>Workspace help</b>${iconButton('Close help', 'x', 'data-close-help')}</header><p>Use the main action to start work. Use the command menu to find other actions.</p><p>Press Escape to close this help.</p></aside>
+    <div class="command-dialog" data-command-dialog hidden><section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu"><div class="command-search"><input data-command-input aria-label="Find an action" placeholder="Find an action" />${iconButton('Close command menu', 'x', 'data-close-commands')}</div><ul class="command-list">${system.scenarios.map((item) => `<li data-command-item="${item.actionId}"><button type="button"><span>${escapeHtml(item.name)}</span><small>${escapeHtml(item.target)}</small></button></li>`).join('')}</ul></section></div>`
 }
 
 export function renderProductDocument(system) {
   const render = renderers[system.layout]
   if (!render) throw new Error(`No product renderer for ${system.layout}`)
+  const design = system.design
+  if (!design) throw new Error(`No design profile for ${system.slug}`)
   const config = JSON.stringify({
     name: system.name,
     reward: system.reward,
     scenarios: system.scenarios,
     architecture: system.architecture,
+    design,
   }).replaceAll('<', '\\u003c')
   return `<!doctype html>
-<html lang="en" style="--accent:${system.accent};--accent-rgb:${system.accentRgb}">
+<html lang="en" data-design-contract="EUIT-FRONTEND-001" style="--eui-brand-accent-light:${design.lightAccent};--eui-brand-accent-dark:${design.darkAccent};--eui-brand-soft-light:${design.lightSoft};--eui-brand-soft-dark:${design.darkSoft};--eui-brand-rgb-light:${design.lightRgb};--eui-brand-rgb-dark:${design.darkRgb};--eui-font-config:${escapeHtml(design.fontStack)}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${escapeHtml(system.name)}</title>
+    <script>
+      (() => {
+        const savedMode = localStorage.getItem('eui-color-mode')
+        const startMode = savedMode || ${JSON.stringify(design.defaultMode)}
+        if (startMode === 'light' || startMode === 'dark') {
+          document.documentElement.dataset.theme = startMode
+        }
+      })()
+    </script>
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./product-layouts.css" />
   </head>
-  <body class="product-v2 product-${escapeHtml(system.layout)}">
+  <body class="product-v2 product-${escapeHtml(system.layout)}" data-density="${escapeHtml(design.density)}">
     <div class="app-shell">${render(system)}</div>
     ${supportUi(system)}
     <script id="product-config" type="application/json">${config}</script>

@@ -121,7 +121,7 @@ describe('CAP-TEST-063 python.ts inbound adapter planning', () => {
     ['ui', UI_BINDING],
   ] as const)('%s: carries the do-not-edit header', (_kind, binding) => {
     const result = planPythonInboundAdapter(baseInput(binding))
-    expect(result.file.contents).toContain('# GENERATED FILE — DO NOT EDIT.')
+    expect(result.file.contents).toContain('# GENERATED FILE: DO NOT EDIT.')
   })
 
   it('http: emits a register_*_route function wiring HttpOperationHost.add_operation to the imported operation', () => {

@@ -81,7 +81,7 @@ export function DiagramDetailModal(props: DiagramDetailModalProps) {
   }
 
   return (
-    <Dialog title={`${label} — ${props.diagramTitle}`} onClose={props.onClose} wide>
+    <Dialog title={`${label}: ${props.diagramTitle}`} onClose={props.onClose} wide>
       <section className="design-diagram-detail-summary">
         <div>
           <span className="design-state-badge">{umlType}</span>
@@ -140,7 +140,7 @@ export function DiagramDetailModal(props: DiagramDetailModalProps) {
             <ul>
               {props.pendingImpact.items.map((item, index) => (
                 <li key={`${item.category}.${item.targetId}.${index}`}>
-                  <strong>{item.category}</strong> {item.targetId} — {item.reason} ({item.invalidation})
+                  <strong>{item.category}</strong> {item.targetId}: {item.reason} ({item.invalidation})
                 </li>
               ))}
             </ul>

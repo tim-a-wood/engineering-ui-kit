@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CAP-PKT-020/021/022 — Real MATLAB Engine worker (CAP-DEC-013).
+CAP-PKT-020/021/022: Real MATLAB Engine worker (CAP-DEC-013).
 
 The Electron desktop process owns the MATLAB boundary. It spawns this script as a
 child process and speaks newline-delimited JSON over stdio. One worker == one

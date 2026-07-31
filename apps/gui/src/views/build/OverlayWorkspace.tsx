@@ -1,5 +1,5 @@
 /**
- * Overlay workspace tab — full Apply Zip Overlay capabilities.
+ * Overlay workspace tab: full Apply Zip Overlay capabilities.
  */
 
 import { useState } from 'react'
@@ -80,7 +80,7 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
             <h3 id="inspection-heading">Inspection result</h3>
             {inspection.canApply
               ? inspection.warnings.length > 0
-                ? <span className="badge badge-warning"><span className="badge-dot" aria-hidden="true" /> Warning — review required</span>
+                ? <span className="badge badge-warning"><span className="badge-dot" aria-hidden="true" /> Warning: review required</span>
                 : <span className="badge badge-success"><span className="badge-dot" aria-hidden="true" /> Pass</span>
               : <span className="badge badge-danger"><span className="badge-dot" aria-hidden="true" /> Blocked</span>}
           </div>
@@ -101,7 +101,7 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
                         <span className="status-dot" aria-hidden="true" /> {overwrite ? 'Overwrite' : 'New file'}
                       </span>
                     </td>
-                    <td className="cell-num">{entry.sizeBytes !== undefined ? formatBytes(entry.sizeBytes) : '—'}</td>
+                    <td className="cell-num">{entry.sizeBytes !== undefined ? formatBytes(entry.sizeBytes) : 'None'}</td>
                   </tr>
                 )
               })}
@@ -113,7 +113,7 @@ export function OverlayWorkspace(props: BuildWorkspaceProps) {
               <h3>{Icon.alertTriangle(14)} Apply blockers</h3>
               <ul>
                 {inspection.hardBlockers.map((b, i) => (
-                  <li key={i}><code>{b.ruleId}</code> {b.path ? <code className="path-wrap">{b.path}</code> : null} — {b.message}</li>
+                  <li key={i}><code>{b.ruleId}</code> {b.path ? <code className="path-wrap">{b.path}</code> : null}: {b.message}</li>
                 ))}
               </ul>
               <div className="hstack" style={{ marginTop: 12, flexWrap: 'wrap' }}>

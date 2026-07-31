@@ -8,7 +8,7 @@ Dashboard recipes define operational summaries for engineering work.
 
 Dashboards may summarize standards readiness, validation status, package health, component coverage, recent outputs, or workflow queues. They shall not become decorative KPI walls.
 
-## RCP-DASH-001 — Engineering dashboard
+## RCP-DASH-001: Engineering dashboard
 
 ### Purpose
 Show the current engineering state and provide entry points to underlying evidence.
@@ -97,7 +97,7 @@ Dashboard regions shall use headings and accessible summaries.
 
 ## Approved Dashboard Pattern
 
-Approved: operational status, evidence links, compact summary, dark-first panels.
+Approved: operational status, evidence links, compact summary, dual-mode panels.
 
 ## Rejected Dashboard Patterns
 

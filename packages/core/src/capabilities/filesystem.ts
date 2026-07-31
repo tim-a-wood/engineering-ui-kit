@@ -73,8 +73,8 @@ export function isWithinProjectRoot(projectRoot: string, resolvedPath: string): 
 }
 
 /**
- * Symlink-safe containment (CAP-TEST-025). Resolves the on-disk real path of `absPath` — or, when
- * the leaf does not yet exist, its nearest existing ancestor — and confirms it stays within the
+ * Symlink-safe containment (CAP-TEST-025). Resolves the on-disk real path of `absPath`: or, when
+ * the leaf does not yet exist, its nearest existing ancestor: and confirms it stays within the
  * real project root. A pure string prefix check (see `isWithinProjectRoot`) passes a symlink that
  * points outside the project because `path.resolve` does not follow links; this does not.
  */

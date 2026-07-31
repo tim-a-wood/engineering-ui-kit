@@ -2,7 +2,7 @@
  * Task templates: prefilled section sets for the repeatable Copilot handoff
  * jobs. Selecting one fills every packet section in one click; users tweak
  * rather than author. `Settings.preferredTemplate` selects the default
- * (PRD §28.8 — this is the consumer of that setting).
+ * (PRD §28.8: this is the consumer of that setting).
  */
 import type { TaskIntentProfile } from '@engineering-ui-kit/core'
 import { buildStePromptRules } from '@engineering-ui-kit/core/browser'
@@ -22,7 +22,7 @@ export type TaskTemplate = {
    * When set, choosing this template seeds the project's launch config (if it
    * has none) so the finished app runs from the workbench with no manual
    * setup. Only methods that produce a self-serving app (the monolith) declare
-   * this — the port here must match the port the template tells Copilot to use.
+   * this: the port here must match the port the template tells Copilot to use.
    */
   launchDefaults?: { url: string; command: string }
 }
@@ -115,12 +115,12 @@ const SHARED_CONSTRAINTS = [
   STE_CONSTRAINT,
   'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.',
   'Do not add dependencies, a router, or a state library unless the task explicitly allows them.',
-  'Use dark-first semantic tokens as CSS custom properties. Do not use raw colors outside the token entry point.',
+  'Use dual-mode semantic tokens as CSS custom properties. Do not use raw colors outside the token entry point.',
 ]
 
 const SHARED_ACCEPTANCE = [
   'npm run typecheck and npm run build pass after overlay application.',
-  'Use a dark-first shell with semantic surface hierarchy. Do not use light-mode surfaces.',
+  'Use a dual-mode shell with semantic surface hierarchy. Do not use light-mode surfaces.',
   'Provide complete keyboard operation with visible focus. Status and validation use text and not color alone.',
 ]
 
@@ -155,7 +155,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     title: 'From spec',
     summary: 'New screen or small app from a written spec, using sample data only.',
     taskTitle: 'Build {project} from spec',
-    goal: 'Implement a new dark-first UI for {project} from the spec below, using local sample data only — no backend, network, or filesystem access.',
+    goal: 'Implement a new dual-mode UI for {project} from the spec below, using local sample data only: no backend, network, or filesystem access.',
     scope: [
       'REPLACE: one-paragraph description of the screen(s) to build and the user problem they solve.',
       'New view components, a single token entry stylesheet, and sample data modules.',
@@ -181,7 +181,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     title: 'Existing API UI',
     summary: 'Connect new screens to an existing API through a thin typed client. Do not change the API.',
     taskTitle: 'Build {project} UI',
-    goal: 'Implement a new dark-first UI for {project} that consumes the existing backend/API exactly as documented below, without modifying the API, its contracts, or server code.',
+    goal: 'Implement a new dual-mode UI for {project} that consumes the existing backend/API exactly as documented below, without modifying the API, its contracts, or server code.',
     scope: [
       'REPLACE: list the screens to build and the API endpoints/types each consumes.',
       'A thin typed API client module (fetch-based), view components, and a single token entry stylesheet.',
@@ -205,11 +205,11 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   {
     id: 'requirements-from-brief',
     title: 'Write requirements',
-    summary: 'Turn a few sentences of product intent into a complete REQUIREMENTS.md — run this handoff first, then build from the document it returns.',
+    summary: 'Turn a few sentences of product intent into a complete REQUIREMENTS.md: run this handoff first, then build from the document it returns.',
     taskTitle: 'Write {project} requirements',
     goal: 'Produce a complete, buildable requirements document for {project} from the short brief below. The next handoff will build the app from that document alone, so it must be self-sufficient.',
     scope: [
-      'REPLACE: 3–6 sentences of product intent — who uses it, the question it answers, the 2–4 screens you imagine, and the data it manages.',
+      'REPLACE: 3–6 sentences of product intent: who uses it, the question it answers, the 2–4 screens you imagine, and the data it manages.',
       'Return exactly one file: REQUIREMENTS.md at the repository root (as the zip overlay).',
       'Document structure: one context paragraph.',
       'Add numbered requirements. Use one verifiable requirement for each capability.',
@@ -222,10 +222,10 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     ].join('\n'),
     constraints: [
       STE_CONSTRAINT,
-      'No implementation and no code — the requirements document only.',
+      'No implementation and no code: the requirements document only.',
       'Invent nothing beyond the brief silently: collect anything you had to assume in an "Assumptions" section for review.',
       'The document must stand alone: the build handoff will see only REQUIREMENTS.md plus the standard pack.',
-      'The quality-bar section shall reference the dark-first Engineering UI Kit standards (tables not card stacks, engineering charts, compact controls, text-backed status).',
+      'The quality-bar section shall reference the dual-mode Engineering UI Kit standards (tables not card stacks, engineering charts, compact controls, text-backed status).',
     ].join('\n'),
     acceptanceCriteria: [
       'Every capability in the brief appears as a numbered requirement with verifiable detail.',
@@ -249,20 +249,20 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
       'Frontend: app shell (top bar, primary navigation, page header), the core screens, semantic token entry stylesheet.',
       'Backend: minimal Node server with a typed JSON API and simple file-based persistence.',
       'Shared TypeScript types between client and server in one module.',
-      'One-command run: an `npm start` script that runs the Node server, which serves the built frontend from `dist/` and the JSON API on one port — `process.env.PORT` or 4180 (reachable at http://localhost:4180). Add the `start` script to package.json (a script addition, not a dependency change).',
+      'One-command run: an `npm start` script that runs the Node server, which serves the built frontend from `dist/` and the JSON API on one port: `process.env.PORT` or 4180 (reachable at http://localhost:4180). Add the `start` script to package.json (a script addition, not a dependency change).',
     ].join('\n'),
     constraints: [
       STE_CONSTRAINT,
       'Use only React, Vite, TypeScript, and the Node standard library. Explain any additional dependency in the response.',
       'Use only the typed JSON API for the frontend and backend boundary. Do not import server modules in the renderer.',
-      'Use dark-first semantic tokens as CSS custom properties. Do not use raw colors outside the token entry point.',
+      'Use dual-mode semantic tokens as CSS custom properties. Do not use raw colors outside the token entry point.',
       'No auth, telemetry, or deployment tooling in this pass.',
-      'Keep the tsconfig include limited to source directories — leave vite.config.ts out of the typecheck project (repos hosted inside a workspace/monorepo hit duplicate-vite type-identity errors otherwise).',
+      'Keep the tsconfig include limited to source directories: leave vite.config.ts out of the typecheck project (repos hosted inside a workspace/monorepo hit duplicate-vite type-identity errors otherwise).',
     ].join('\n'),
     acceptanceCriteria: [
       'npm run typecheck and npm run build pass. Then, npm start serves the built frontend and API at http://localhost:4180. PORT can override this port.',
       'Core screens perform their create/read/update flows end to end against the local API.',
-      'Use a dark-first shell with semantic surface hierarchy. Provide complete keyboard operation with visible focus.',
+      'Use a dual-mode shell with semantic surface hierarchy. Provide complete keyboard operation with visible focus.',
       'Loading, empty, and error states exist for every remote data region.',
     ].join('\n'),
     references: [
@@ -307,7 +307,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     constraints: [
       'Address only the feedback points in Scope. Do not redesign, rescaffold, or make unrelated refactors.',
       'Preserve the previously delivered structure: routes, API contracts, data shapes, file layout, and naming.',
-      'Return only changed or new files — files absent from the zip remain untouched.',
+      'Return only changed or new files: files absent from the zip remain untouched.',
       ...SHARED_CONSTRAINTS,
     ].join('\n'),
     acceptanceCriteria: [
@@ -316,7 +316,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
       'npm run typecheck and npm run build still pass after overlay application.',
     ].join('\n'),
     references: [
-      'The previous task packet for this run — its requirements and constraints still apply.',
+      'The previous task packet for this run: its requirements and constraints still apply.',
       'standard-pack.md (attached): rule IDs, component IDs, token table.',
     ].join('\n'),
   },
@@ -351,9 +351,9 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   {
     id: 'data-viz-screen',
     title: 'Data chart',
-    summary: 'Chart-centric screen (XY plot, series, stats) rendered from a supplied dataset — SVG, no chart library.',
+    summary: 'Chart-centric screen (XY plot, series, stats) rendered from a supplied dataset: SVG, no chart library.',
     taskTitle: 'Build {project} chart',
-    goal: 'Implement a dark-first data visualization screen for {project} that renders the supplied dataset as an accessible SVG chart with axis ticks, series legend, and summary statistics.',
+    goal: 'Implement a dual-mode data visualization screen for {project} that renders the supplied dataset as an accessible SVG chart with axis ticks, series legend, and summary statistics.',
     scope: [
       'REPLACE: describe the dataset (fields, units) and the chart type (XY scatter/line, bar, etc.).',
       'One visualization view: chart region (inset technical surface), dataset selector, summary stats, and a data table fallback.',
@@ -361,7 +361,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     ].join('\n'),
     constraints: [
       'Do not use chart libraries. Use SVG primitives and semantic color tokens.',
-      'The chart must not be the only representation — provide a data table or text summary for accessibility.',
+      'The chart must not be the only representation: provide a data table or text summary for accessibility.',
       ...SHARED_CONSTRAINTS,
     ].join('\n'),
     acceptanceCriteria: [
@@ -379,7 +379,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
     title: 'Form-heavy CRUD screen',
     summary: 'Create/edit forms with validation, list view, and non-destructive delete flows over local state.',
     taskTitle: 'CRUD screen for {project}',
-    goal: 'Implement a dark-first create/read/update/delete screen for {project} with labeled validated forms, a records list, and confirmation before destructive actions — over local state or the documented API.',
+    goal: 'Implement a dual-mode create/read/update/delete screen for {project} with labeled validated forms, a records list, and confirmation before destructive actions: over local state or the documented API.',
     scope: [
       'REPLACE: name the record type and its fields (types, required/optional, validation rules).',
       'List view with status badges, create/edit form (field wrapper, labels, errors, helper text), delete with confirmation dialog.',
@@ -423,8 +423,7 @@ export function applyTemplate(template: TaskTemplate, projectName: string): {
 }
 
 /**
- * Parse `user-review-notes.md` (append-only, `## <ISO timestamp>` headers —
- * see the saveFeedback IPC handler) into timestamped feedback entries.
+ * Parse `user-review-notes.md` (append-only, `## <ISO timestamp>` headers:  * see the saveFeedback IPC handler) into timestamped feedback entries.
  */
 export function parseFeedbackEntries(notes: string): { at: string; text: string }[] {
   const entries: { at: string; text: string }[] = []

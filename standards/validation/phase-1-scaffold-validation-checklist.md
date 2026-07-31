@@ -6,14 +6,14 @@ Validate that the Phase 1 scaffold satisfies the implementation specification be
 
 ## Scope
 
-This checklist applies to `engineering-ui-kit-standards-v0.1-dark-first-scaffold.zip` and the `standards/` folder inside it.
+This checklist applies to `engineering-ui-kit-standards-v0.1-dual-mode-scaffold.zip` and the `standards/` folder inside it.
 
 ## Source Inputs
 
 - `MOCK-*`: approved hi-fi mockups used as app-specific visual calibration references, not exhaustive standards.
 - `engineering-ui-kit-prd-v7-final-contracts-incorporated.md`.
 - `engineering-ui-kit-gap-analysis-v4-final-contracts.md`.
-- `engineering-ui-kit-public-reuse-research-report-v3-dark-first-hi-fi-aligned.md`.
+- `engineering-ui-kit-public-reuse-research-report-v3-dual-mode-hi-fi-aligned.md`.
 - `engineering-ui-kit-high-level-delivery-plan-v0.1.md`.
 - `engineering-ui-kit-phase-1-implementation-spec-v0.1.md`.
 
@@ -35,9 +35,9 @@ This checklist applies to `engineering-ui-kit-standards-v0.1-dark-first-scaffold
 
 ## C. Dark-First Alignment
 
-- [ ] `standards/README.md` states the dark-first contract.
-- [ ] `package-metadata.json` states `themeStrategy` as `dark-first`.
-- [ ] Required dark-first files include dark-first language.
+- [ ] `standards/README.md` states the dual-mode contract.
+- [ ] `package-metadata.json` states `themeStrategy` as `dual-mode`.
+- [ ] Required dual-mode files include dual-mode language.
 - [ ] Visual drift checks include light-first framing, default light-theme assumption, generic white-card SaaS dashboard styling, uncontrolled imported design-system visual identity, neon/cyberpunk over-styling, low-fidelity wireframe placeholder look, inconsistent status/accent colors, and arbitrary raw colors outside semantic tokens.
 
 ## D. Traceability
@@ -67,7 +67,7 @@ This checklist applies to `engineering-ui-kit-standards-v0.1-dark-first-scaffold
 
 - [ ] Defects are classified as critical, major, minor, or observation.
 - [ ] Critical and major defects are corrected before packaging.
-- [ ] Final result is one of: `Pass`, `Pass with minor corrections`, or `Fail — restructure required`.
+- [ ] Final result is one of: `Pass`, `Pass with minor corrections`, or `Fail: restructure required`.
 
 ## Traceability Notes
 

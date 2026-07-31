@@ -13,7 +13,7 @@ This directory README defines the operative ownership boundary for this director
 - `MOCK-*`: approved hi-fi mockups used as app-specific visual calibration references, not exhaustive standards.
 - `engineering-ui-kit-prd-v7-final-contracts-incorporated.md`.
 - `engineering-ui-kit-gap-analysis-v4-final-contracts.md`.
-- `engineering-ui-kit-public-reuse-research-report-v3-dark-first-hi-fi-aligned.md`.
+- `engineering-ui-kit-public-reuse-research-report-v3-dual-mode-hi-fi-aligned.md`.
 - `engineering-ui-kit-high-level-delivery-plan-v0.1.md`.
 - `engineering-ui-kit-phase-1-implementation-spec-v0.1.md`.
 

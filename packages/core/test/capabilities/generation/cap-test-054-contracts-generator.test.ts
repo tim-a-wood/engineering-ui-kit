@@ -90,8 +90,8 @@ describe('CAP-TEST-054 contracts.ts generator', () => {
 
   it('emits a do-not-edit header on both files', () => {
     const result = planContractTypes(buildInput())
-    expect(result.typesFile.contents).toContain('GENERATED FILE — DO NOT EDIT.')
-    expect(result.operationsFile.contents).toContain('GENERATED FILE — DO NOT EDIT.')
+    expect(result.typesFile.contents).toContain('GENERATED FILE: DO NOT EDIT.')
+    expect(result.operationsFile.contents).toContain('GENERATED FILE: DO NOT EDIT.')
   })
 
   it('emits correct type declarations from the canonical schemas, with required/optional distinguished', () => {

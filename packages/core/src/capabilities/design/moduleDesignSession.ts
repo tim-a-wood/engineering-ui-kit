@@ -1,5 +1,5 @@
 /**
- * EUC-04 — Module-design session (§9.3, §16.3, §18.1, §18.3).
+ * EUC-04: Module-design session (§9.3, §16.3, §18.1, §18.3).
  *
  * The six-step, resumable module-design session. Sessions are plain data
  * (`ModuleDesignSession`, §16.3) so they serialize cleanly to JSON for
@@ -22,7 +22,7 @@ export type CreateModuleDesignSessionInput = {
   now: string
 }
 
-/** §9.3 — creates a session at step 1 ("Review boundary"), state `created`. */
+/** §9.3: creates a session at step 1 ("Review boundary"), state `created`. */
 export function createSession(input: CreateModuleDesignSessionInput): ModuleDesignSession {
   return {
     id: input.id ?? childId(input.projectId, 'module-design-session', input.moduleId),
@@ -44,7 +44,7 @@ export function createSession(input: CreateModuleDesignSessionInput): ModuleDesi
 export type GoToStepResult = { ok: boolean; session: ModuleDesignSession; diagnostics: DesignDiagnostic[] }
 
 /**
- * §9.3 — any completed step is openable, and the current step is always
+ * §9.3: any completed step is openable, and the current step is always
  * openable. Returning to an earlier step never drops later draft data:
  * `answers` and `diagnostics` are never cleared by navigation.
  */
@@ -87,7 +87,7 @@ export function answerSessionQuestion(session: ModuleDesignSession, answer: Answ
 }
 
 /**
- * §9.3 — marks `step` complete and, if it was the current step, advances to
+ * §9.3: marks `step` complete and, if it was the current step, advances to
  * the next step in the fixed six-step order. Marks the session `completed`
  * once every step has been completed at least once.
  */
@@ -105,7 +105,7 @@ export function completeStep(session: ModuleDesignSession, step: ModuleDesignSte
   }
 }
 
-/** §18.3 — the exact incomplete step a resume action should return to. */
+/** §18.3: the exact incomplete step a resume action should return to. */
 export function resumePoint(session: ModuleDesignSession): ModuleDesignStep {
   for (const step of MODULE_DESIGN_STEPS) {
     if (!session.completedSteps.includes(step)) return step
@@ -118,7 +118,7 @@ function requiredOpenQuestionCount(design: ModuleDesignSpecification): number {
 }
 
 /**
- * §9.3 — the single primary action label for the session. Examples:
+ * §9.3: the single primary action label for the session. Examples:
  * `Create module draft`, `Answer 2 required questions`, `Review contracts`,
  * `Fix 1 design error`, `Approve module`, `Create implementation handoff`.
  */
@@ -141,7 +141,7 @@ export function sessionPrimaryAction(
   // A live preview evaluation can contain expected first-pass blockers (for
   // example, operation hashes are stamped by analyzeModuleDesign itself).
   // Until a persisted checks gate exists, the useful action is to run the
-  // checks—not to tell the user to fix an issue the checks operation resolves.
+  // checks:not to tell the user to fix an issue the checks operation resolves.
   if (session.currentStep === 'checks' && !session.completedSteps.includes('checks') && design.gates.length === 0) {
     return 'Run design checks'
   }

@@ -1,5 +1,5 @@
 /**
- * EUC-04 — pure compilers from `ModuleDesignSpecification` to the current
+ * EUC-04: pure compilers from `ModuleDesignSpecification` to the current
  * module records (§26 Increment 1): `ModuleManifest`, `OperationContract`,
  * and `ModuleImplementationSpecification`.
  *
@@ -52,7 +52,7 @@ function normalizeCancellable(text: string): boolean {
   return !/^(none|not cancellable|no)$/.test(normalized)
 }
 
-/** §26 Increment 1 — `ModuleDesignSpecification` -> `ModuleManifest` (CAP-CONTRACT-003). */
+/** §26 Increment 1: `ModuleDesignSpecification` -> `ModuleManifest` (CAP-CONTRACT-003). */
 export function compileModuleManifest(design: ModuleDesignSpecification): ModuleManifest {
   return {
     schemaVersion: '1.0',
@@ -82,7 +82,7 @@ export function compileModuleManifest(design: ModuleDesignSpecification): Module
 }
 
 /**
- * §26 Increment 1 / §9.7 — provided `OperationContractRef`s + design
+ * §26 Increment 1 / §9.7: provided `OperationContractRef`s + design
  * behavior -> `OperationContract[]` skeletons. When `registry` already
  * contains a full contract for an exact `operationId@version`, that
  * contract is preserved as-is (version identity is never changed by the
@@ -127,7 +127,7 @@ function toImplementationMateriality(materiality: 'material' | 'nonmaterial'): '
 }
 
 /**
- * §26 Increment 1 — `ModuleDesignSpecification` -> `ModuleImplementationSpecification`
+ * §26 Increment 1: `ModuleDesignSpecification` -> `ModuleImplementationSpecification`
  * (CAP-CONTRACT-031), mapping boundary/behavior/data/runtime/verification.
  */
 export function compileModuleImplementationSpecification(design: ModuleDesignSpecification): ModuleImplementationSpecification {

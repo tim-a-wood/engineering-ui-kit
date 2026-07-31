@@ -109,7 +109,7 @@ export function groupInspectionWarnings(warnings: OverlayInspectionSummary['warn
     const label = reviewCode ?? warning.ruleId
     const key = `${warning.ruleId}.${label}`
     const summary = reviewCode
-      ? warning.message.replace(/^.*?\bSTE-[A-Z0-9-]+\b\s*—\s*/, '')
+      ? warning.message.replace(/^.*?\bSTE-[A-Z0-9-]+\b\s*(?:\u2014|:)\s*/, '')
       : warning.message
     const group = groups.get(key) ?? { key, label, summary, warnings: [] }
     group.warnings.push(warning)
@@ -186,7 +186,7 @@ export function draftPacketMarkdown(fields: TaskPacketFields): string {
   ].join('\n')
 }
 
-/** PRD §13.4 — defaults to rendered Preview; secondary Code tab; Copy/Download/Close. */
+/** PRD §13.4: defaults to rendered Preview; secondary Code tab; Copy/Download/Close. */
 export function TaskPacketPreviewModal(props: { text: string; onClose: () => void }) {
   const [tab, setTab] = useState<'preview' | 'code'>('preview')
   const [copied, setCopied] = useState(false)
@@ -286,7 +286,7 @@ export function buildBlockerFixPrompt(
   lexicon?: SteLexicon,
 ): string {
   const blockers = summary.hardBlockers
-    .map((b, i) => `${i + 1}. ${b.ruleId}${b.path ? ` — \`${b.path}\`` : ''}: ${b.message}`)
+    .map((b, i) => `${i + 1}. ${b.ruleId}${b.path ? `: \`${b.path}\`` : ''}: ${b.message}`)
     .join('\n')
   return withStePrompt([
     'The `ui-overlay.zip` you returned was refused by our overlay inspector before a single file was extracted. Violations found:',
@@ -294,7 +294,7 @@ export function buildBlockerFixPrompt(
     blockers,
     '',
     'Return a corrected `ui-overlay.zip` that fixes every violation above:',
-    '- Keep the same intended file changes from the attached task packet — change only what the violations require.',
+    '- Keep the same intended file changes from the attached task packet: change only what the violations require.',
     '- Include only changed or new files, at repo-relative paths (no absolute paths, no `..` traversal).',
     '- Never include `.git/`, dependencies (`node_modules/`), build output (`dist/`, `build/`), caches, lockfiles, environment or secret files, or a dump of the whole repository.',
     '- An optional `apply-notes.md` may describe what was fixed.',
@@ -325,7 +325,7 @@ export function EvidenceSection(props: {
   project: Project
   phase: 'before' | 'after'
   onNavigate: (view: ViewId) => void
-  /** Render without the panel frame — for embedding inside a dialog. */
+  /** Render without the panel frame: for embedding inside a dialog. */
   frameless?: boolean
 }) {
   const [evidence, setEvidence] = useState<RunEvidence | null>(null)
@@ -350,7 +350,7 @@ export function EvidenceSection(props: {
       setEvidence(await props.bridge.getEvidence(props.run.id))
       setNote(result.ok
         ? { tone: 'success', text: `${result.views.length} view${result.views.length === 1 ? '' : 's'} captured with rendered element census.` }
-        : { tone: 'error', text: 'Some views failed to capture — check that the target app is running at the launch URL.' })
+        : { tone: 'error', text: 'Some views failed to capture: check that the target app is running at the launch URL.' })
     } catch (error) {
       setNote({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
     } finally {
@@ -370,7 +370,7 @@ export function EvidenceSection(props: {
           </h2>
           <p className="panel-desc" style={{ marginBottom: 0 }}>
             {props.phase === 'before'
-              ? 'Screenshots and a rendered element census of each target view, captured before any change. The review packet compares against these. Building a new UI from requirements? Skip this — there is no baseline for a green-field build.'
+              ? 'Screenshots and a rendered element census of each target view, captured before any change. The review packet compares against these. Building a new UI from requirements? Skip this: there is no baseline for a green-field build.'
               : 'The same views after applying the overlay. Lost elements (icons, images, buttons, inputs) are flagged per view.'}
           </p>
         </div>
@@ -423,7 +423,7 @@ export function EvidenceSection(props: {
                   src={view.beforeShot}
                   error={view.beforeError}
                   {...(props.phase === 'after' && !view.beforeShot && !view.beforeError
-                    ? { missingLabel: 'No baseline — this run builds a new UI, so there was nothing to capture before.' }
+                    ? { missingLabel: 'No baseline: this run builds a new UI, so there was nothing to capture before.' }
                     : {})}
                 />
                 {props.phase === 'after' && <EvidenceShot label="After" src={view.afterShot} error={view.afterError} />}

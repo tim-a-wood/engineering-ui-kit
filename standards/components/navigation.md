@@ -54,13 +54,13 @@ Use landmarks, lists, buttons, links, or tabs according to behavior. Do not rend
 - Redundant Continue buttons inside already-clickable project rows.
 
 
-## CMP-SHELL-APP — App Shell
+## CMP-SHELL-APP: App Shell
 
 ### Purpose
-CMP-SHELL-APP defines a persistent application frame for dark-first engineering workflows. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
+CMP-SHELL-APP defines a persistent application frame for dual-mode engineering workflows. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
 
 ### When to use
-Use app shell when the interface needs a persistent application frame for dark-first engineering workflows.
+Use app shell when the interface needs a persistent application frame for dual-mode engineering workflows.
 
 ### When not to use
 Avoid app shell when a simpler native element or existing component communicates the same intent with less complexity.
@@ -96,17 +96,17 @@ Compliant use: `App Shell` appears in a dark engineering panel, uses manifest ID
 Non-compliant use: `App Shell` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-SHELL-APP` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-SHELL-APP` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-SHELL-APP` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-SHELL-TOP-BAR — Top Bar
+## CMP-SHELL-TOP-BAR: Top Bar
 
 ### Purpose
 CMP-SHELL-TOP-BAR defines a persistent top region for product context, global actions, and status. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -148,17 +148,17 @@ Compliant use: `Top Bar` appears in a dark engineering panel, uses manifest ID `
 Non-compliant use: `Top Bar` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-SHELL-TOP-BAR` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-SHELL-TOP-BAR` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-SHELL-TOP-BAR` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-SHELL-PAGE-HEADER — Page Header
+## CMP-SHELL-PAGE-HEADER: Page Header
 
 ### Purpose
 CMP-SHELL-PAGE-HEADER defines a consistent title, subtitle, metadata, and page action region. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -200,17 +200,17 @@ Compliant use: `Page Header` appears in a dark engineering panel, uses manifest 
 Non-compliant use: `Page Header` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-SHELL-PAGE-HEADER` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-SHELL-PAGE-HEADER` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-SHELL-PAGE-HEADER` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-NAV-PRIMARY — Primary Navigation
+## CMP-NAV-PRIMARY: Primary Navigation
 
 ### Purpose
 CMP-NAV-PRIMARY defines top-level movement between major application areas. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -252,17 +252,17 @@ Compliant use: `Primary Navigation` appears in a dark engineering panel, uses ma
 Non-compliant use: `Primary Navigation` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-NAV-PRIMARY` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-NAV-PRIMARY` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-NAV-PRIMARY` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-NAV-SECONDARY — Secondary Navigation
+## CMP-NAV-SECONDARY: Secondary Navigation
 
 ### Purpose
 CMP-NAV-SECONDARY defines movement within a page, workspace, or secondary workflow context. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -304,17 +304,17 @@ Compliant use: `Secondary Navigation` appears in a dark engineering panel, uses 
 Non-compliant use: `Secondary Navigation` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-NAV-SECONDARY` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-NAV-SECONDARY` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-NAV-SECONDARY` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: partially-observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: partially-observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-NAV-BREADCRUMBS — Breadcrumbs
+## CMP-NAV-BREADCRUMBS: Breadcrumbs
 
 ### Purpose
 CMP-NAV-BREADCRUMBS defines hierarchical location context for nested artifacts or records. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -356,17 +356,17 @@ Compliant use: `Breadcrumbs` appears in a dark engineering panel, uses manifest 
 Non-compliant use: `Breadcrumbs` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-NAV-BREADCRUMBS` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-NAV-BREADCRUMBS` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-NAV-BREADCRUMBS` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: reference-backed-standard, inferred-engineering-need.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: reference-backed-standard, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-NAV-COMMAND-ACTION-BAR — Command Action Bar
+## CMP-NAV-COMMAND-ACTION-BAR: Command Action Bar
 
 ### Purpose
 CMP-NAV-COMMAND-ACTION-BAR defines a grouped action region for page-level commands and workflow actions. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -408,11 +408,11 @@ Compliant use: `Command Action Bar` appears in a dark engineering panel, uses ma
 Non-compliant use: `Command Action Bar` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-NAV-COMMAND-ACTION-BAR` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-NAV-COMMAND-ACTION-BAR` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-NAV-COMMAND-ACTION-BAR` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.

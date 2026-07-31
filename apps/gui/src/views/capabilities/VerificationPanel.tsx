@@ -1,5 +1,5 @@
 /**
- * Module verification panel — real approved-module verification (CAP-PKT-014 / Packet 5).
+ * Module verification panel: real approved-module verification (CAP-PKT-014 / Packet 5).
  *
  * The renderer supplies only project ID, module ID, and explicit confirmation. The desktop
  * loads the approved manifest, computes every input hash, and executes the project's configured
@@ -81,8 +81,8 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
           : projection === 'guided'
             ? `Verification needs attention: ${OUTCOME_LABEL[next.record.outcome] ?? 'the checks did not pass'}.`
             : next.eligibleForReady
-          ? `Verification ${next.record.verificationId} passed — eligible for ready.`
-          : `Verification ${next.record.verificationId} outcome ${next.record.outcome} — not eligible for ready.`,
+          ? `Verification ${next.record.verificationId} passed: eligible for ready.`
+          : `Verification ${next.record.verificationId} outcome ${next.record.outcome}: not eligible for ready.`,
       )
       await onVerified()
     } catch (error) {
@@ -183,7 +183,7 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
           <h3>Result</h3>
           {isSetupFailure ? (
             <p className="capabilities-note" role="alert">
-              Setup failure — the module's checks could not be prepared or executed. This is distinct
+              Setup failure: the module's checks could not be prepared or executed. This is distinct
               from a technical or behavioral failure.
             </p>
           ) : null}
@@ -209,8 +209,8 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
               <ul>
                 {result.record.commandResults.map((c, i) => (
                   <li key={`${c.label}-${i}`}>
-                    <code>{c.label}</code> — {c.passed ? 'passed' : `failed (exit ${c.exitCode})`}
-                    {c.outputSummary ? ` — ${c.outputSummary}` : ''}
+                    <code>{c.label}</code>: {c.passed ? 'passed' : `failed (exit ${c.exitCode})`}
+                    {c.outputSummary ? `: ${c.outputSummary}` : ''}
                   </li>
                 ))}
               </ul>
@@ -221,25 +221,25 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
             <dl className="capabilities-ids">
               <div>
                 <dt>Suites</dt>
-                <dd>{result.record.suiteIds.join(', ') || '—'}</dd>
+                <dd>{result.record.suiteIds.join(', ') || 'None'}</dd>
               </div>
               <div>
                 <dt>Input hashes</dt>
                 <dd>
                   {Object.entries(result.record.inputHashes)
                     .map(([k, v]) => `${k}=${v}`)
-                    .join('; ') || '—'}
+                    .join('; ') || 'None'}
                 </dd>
               </div>
               <div>
                 <dt>Evidence references</dt>
-                <dd>{result.record.artifacts.join(', ') || '—'}</dd>
+                <dd>{result.record.artifacts.join(', ') || 'None'}</dd>
               </div>
               <div>
                 <dt>Diagnostics</dt>
                 <dd>
                   {result.record.diagnostics.length === 0
-                    ? '—'
+                    ? 'None'
                     : result.record.diagnostics.map((d) => d.message).join('; ')}
                 </dd>
               </div>
@@ -275,12 +275,12 @@ export function VerificationPanel({ bridge, projectId, projection, records, onVe
           <dl className="capabilities-ids">
             <div><dt>Verification ID</dt><dd><code>{result.record.verificationId}</code></dd></div>
             <div><dt>Outcome</dt><dd>{result.record.outcome}</dd></div>
-            <div><dt>Suites</dt><dd>{result.record.suiteIds.join(', ') || '—'}</dd></div>
-            <div><dt>Input hashes</dt><dd>{Object.entries(result.record.inputHashes).map(([key, value]) => `${key}=${value}`).join('; ') || '—'}</dd></div>
-            <div><dt>Evidence references</dt><dd>{result.record.artifacts.join(', ') || '—'}</dd></div>
-            <div><dt>Diagnostics</dt><dd>{result.record.diagnostics.map((diagnostic) => diagnostic.message).join('; ') || '—'}</dd></div>
+            <div><dt>Suites</dt><dd>{result.record.suiteIds.join(', ') || 'None'}</dd></div>
+            <div><dt>Input hashes</dt><dd>{Object.entries(result.record.inputHashes).map(([key, value]) => `${key}=${value}`).join('; ') || 'None'}</dd></div>
+            <div><dt>Evidence references</dt><dd>{result.record.artifacts.join(', ') || 'None'}</dd></div>
+            <div><dt>Diagnostics</dt><dd>{result.record.diagnostics.map((diagnostic) => diagnostic.message).join('; ') || 'None'}</dd></div>
           </dl>
-          <section aria-label="Verification commands"><h3>Commands</h3>{result.record.commandResults.length ? <ul>{result.record.commandResults.map((command, index) => <li key={`${command.label}-${index}`}><code>{command.label}</code> — {command.passed ? 'passed' : `failed (exit ${command.exitCode})`}{command.outputSummary ? ` — ${command.outputSummary}` : ''}</li>)}</ul> : <p>No commands recorded.</p>}</section>
+          <section aria-label="Verification commands"><h3>Commands</h3>{result.record.commandResults.length ? <ul>{result.record.commandResults.map((command, index) => <li key={`${command.label}-${index}`}><code>{command.label}</code>: {command.passed ? 'passed' : `failed (exit ${command.exitCode})`}{command.outputSummary ? `: ${command.outputSummary}` : ''}</li>)}</ul> : <p>No commands recorded.</p>}</section>
           {result.repairContext ? <section aria-label="Repair details"><h3>Repair details</h3><pre>{JSON.stringify(result.repairContext, null, 2)}</pre></section> : null}
         </Dialog>
       ) : null}

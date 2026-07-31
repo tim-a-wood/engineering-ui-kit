@@ -164,7 +164,7 @@ describe('CAP-TEST-055 composition.ts composition-root planning', () => {
   it('emits a do-not-edit header, LifecycleContainer imports, one ServiceToken per contractId, and lifecycle-correct registrations', () => {
     const result = planCompositionRootModule(buildRootInput(buildManifest()))
     const contents = result.file.contents
-    expect(contents).toContain('GENERATED FILE — DO NOT EDIT.')
+    expect(contents).toContain('GENERATED FILE: DO NOT EDIT.')
     expect(contents).toContain("import { LifecycleContainer, createToken } from '@engineering-ui-kit/capabilities-runtime'")
     expect(contents).toContain('export const ordersRepositoryToken: ServiceToken<ReturnType<typeof createOrdersRepository>> = createToken("orders.repository")')
     expect(contents).toContain('export const ordersServiceToken: ServiceToken<ReturnType<typeof createOrdersService>> = createToken("orders.service")')

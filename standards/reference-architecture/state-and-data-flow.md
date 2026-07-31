@@ -23,38 +23,38 @@ It does not define backend persistence models or product-specific APIs.
 
 ## Required Architecture
 
-### ARCH-STATE-001 — Local UI state
+### ARCH-STATE-001: Local UI state
 
 Transient interaction state such as edit mode, draft text, dialog open/closed, and
 status messages belongs in local React state owned by the view.
 
-### ARCH-STATE-002 — Serializable task-packet state
+### ARCH-STATE-002: Serializable task-packet state
 
 Task-packet section values must be plain serializable data. The trial packet contains
 string fields for Goal, Scope, Constraints, Acceptance Criteria, and References.
 
-### ARCH-STATE-003 — Derived validation state
+### ARCH-STATE-003: Derived validation state
 
 Validation results are derived from current packet values through pure functions.
 Do not store a separate mutable “isValid” flag that can drift from the packet.
 
-### ARCH-STATE-004 — Immutable update expectations
+### ARCH-STATE-004: Immutable update expectations
 
 Updates replace packet fields immutably. Save commits the draft into packet state.
 Cancel discards the draft and restores the previous committed value.
 
-### ARCH-STATE-005 — No global state library for the trial
+### ARCH-STATE-005: No global state library for the trial
 
 Do not introduce Redux, Zustand, MobX, Recoil, or similar libraries in the Phase 1
 target app. Local React state is sufficient.
 
-### ARCH-STATE-006 — Future backend data crosses a typed IPC boundary
+### ARCH-STATE-006: Future backend data crosses a typed IPC boundary
 
 When privileged or remote data is introduced later, it must enter the renderer through
 an explicit typed contract. Renderer code must not reach directly into OS filesystem
 or process APIs.
 
-### ARCH-STATE-007 — Error and stale-state ownership
+### ARCH-STATE-007: Error and stale-state ownership
 
 The view owns user-visible status and validation messages. Serialization helpers may
 return data or throw only for programming errors. Do not silently swallow validation

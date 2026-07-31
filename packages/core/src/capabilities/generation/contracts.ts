@@ -5,8 +5,8 @@
  * Pure: given a frozen `OperationContract` (CAP-CONTRACT-004) list and the
  * canonical JSON-Schema-shaped type descriptions its `inputSchemaRef` /
  * `outputSchemaRef` resolve to, plans deterministic generated TypeScript
- * source — type declarations, operation interfaces, and typed-outcome
- * aliases — targeting `@engineering-ui-kit/capabilities-runtime`. Given
+ * source: type declarations, operation interfaces, and typed-outcome
+ * aliases: targeting `@engineering-ui-kit/capabilities-runtime`. Given
  * identical inputs, output is byte-identical regardless of input array
  * ordering. Never imports `node:*`; never calls
  * `Date.now()`/`Math.random()`/`crypto`.
@@ -26,7 +26,7 @@ import {
 } from './typescript.js'
 
 /**
- * A minimal, deterministic JSON-Schema-shaped node — sufficient to plan a
+ * A minimal, deterministic JSON-Schema-shaped node: sufficient to plan a
  * generated TypeScript type declaration. This is the generator's own
  * canonical intermediate form, not a full JSON Schema implementation: a
  * caller (e.g. a JSON Schema 2020-12 document loader) reduces the schemas it

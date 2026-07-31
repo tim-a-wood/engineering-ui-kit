@@ -635,7 +635,7 @@ describe('module isolation', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Compile frontend brief' }))
     const dialog = await screen.findByRole('dialog', { name: 'Review frontend brief' })
-    expect(within(dialog).getByText(/2 operation\(s\)/)).toBeTruthy()
+    expect(within(dialog).getByText(/2 operations/)).toBeTruthy()
     fireEvent.change(within(dialog).getByLabelText('Task title'), { target: { value: 'Build polished flight planner' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Open build brief' }))
     await waitFor(() => expect(onStartUiBuild).toHaveBeenCalledTimes(1))

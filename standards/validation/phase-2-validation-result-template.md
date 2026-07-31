@@ -9,15 +9,15 @@
 
 | Gate | Result | Notes |
 |---|---|---|
-| Gate A — Package structure |  |  |
-| Gate B — JSON parseability |  |  |
-| Gate C — Schema validation |  |  |
-| Gate D — Token contract completeness |  |  |
-| Gate E — Component manifest completeness |  |  |
-| Gate F — Token-reference integrity |  |  |
-| Gate G — Source-framing correctness |  |  |
-| Gate H — Reference map coverage |  |  |
-| Gate I — Handoff readiness |  |  |
+| Gate A: Package structure |  |  |
+| Gate B: JSON parseability |  |  |
+| Gate C: Schema validation |  |  |
+| Gate D: Token contract completeness |  |  |
+| Gate E: Component manifest completeness |  |  |
+| Gate F: Token-reference integrity |  |  |
+| Gate G: Source-framing correctness |  |  |
+| Gate H: Reference map coverage |  |  |
+| Gate I: Handoff readiness |  |  |
 
 ## Findings
 

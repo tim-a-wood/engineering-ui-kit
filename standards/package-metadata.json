@@ -1,11 +1,11 @@
 {
   "packageName": "engineering-ui-kit-standards",
   "packageVersion": "0.5.0",
-  "phase": "Phase 5 \u2014 Product Visual Language Alignment",
+  "phase": "Phase 5: Product Visual Language Alignment",
   "status": "operational-handoff-package-v0.1",
   "operationalReadiness": "proven-one-vertical-slice-trial-13-of-13-acceptance-criteria",
   "activeRoadmapPhase": "v0.5 visual language aligned to the production workbench",
-  "themePosture": "dark-first",
+  "themePosture": "dual-mode",
   "mockupPosture": "app-visual-calibration-not-exhaustive-standard",
   "companyStandardsPosture": "not-claimed-unless-formally-supplied",
   "primaryContracts": [
@@ -22,7 +22,7 @@
   "deliveryPlanSource": "engineering-ui-kit-high-level-delivery-plan-v0.2.md",
   "activePhaseSpec": "engineering-ui-kit-roadmap-phase-2-three-file-handoff-cursor-agent-spec-v0.1.md",
   "activeAgentHandoff": "engineering-ui-kit-roadmap-phase-2-three-file-handoff-cursor-agent-spec-v0.1.md",
-  "researchSource": "engineering-ui-kit-public-reuse-research-report-v3-dark-first-hi-fi-aligned.md",
+  "researchSource": "docs/design-system/2026-07-31/research-and-validation.md",
   "visualCalibrationSource": "approved hi-fi mockup image set",
   "sourceOfTruthHierarchy": [
     "Product requirements and closed project decisions",
@@ -47,6 +47,7 @@
     "Implementation agent for the trial was Claude (Fable 5) substituting for Microsoft 365 Copilot under product-owner decision PO-1; Copilot-specific behavior remains unmeasured.",
     "Roadmap Phase 4 operational revision complete: routing standard authored (ARCH-ROUTE-001..006), visual-drift prompt completed, qualitative verification checklist added, scaffold banners retired.",
     "Roadmap Phases 5-7 complete 2026-07-06: core library (44 tests, trial reproduced via CLI), Electron workbench (28/28 renderer, 13/13 end-to-end handoff), v0.1 validation review, release notes, and packaging configuration. See product-owner-decision-log.md.",
-    "Visual language revision 0.5.0 aligns generated apps with the evolved production workbench: canvas-first composition, restrained containment, integrated title icons, full-row navigation, native file handoff, proportional workflow navigation, and explicit preview placeholders."
+    "Visual language revision 0.5.0 aligns generated apps with the evolved production workbench: canvas-first composition, restrained containment, integrated title icons, full-row navigation, native file handoff, proportional workflow navigation, and explicit preview placeholders.",
+    "The frontend contract now requires light and dark modes, configurable palettes and fonts, Lucide icons, accessible help, STE copy, and task-specific layouts."
   ]
 }

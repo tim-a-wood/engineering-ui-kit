@@ -1,7 +1,7 @@
 /**
  * Shared, pure helpers for the generalized Build entry-point editors
  * (CAP-ERA-001 §12.4, CAP-PKT WP6B). Consumes the frozen CAP-CONTRACT-028
- * `InboundBinding` discriminated union — never redefines it.
+ * `InboundBinding` discriminated union: never redefines it.
  *
  * No React here: kept pure and unit-testable, matching capabilityPresentation.ts.
  */
@@ -141,7 +141,7 @@ export function createUiBinding(
 
 /**
  * Plain-language validation for approval readiness. Complements (does not
- * replace) any server/mock-side schema validation — every message here is
+ * replace) any server/mock-side schema validation: every message here is
  * safe to show directly in Guided copy (no CAP-* codes).
  */
 export function validateInboundBindingDraft(binding: InboundBinding): string[] {

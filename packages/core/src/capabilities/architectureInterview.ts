@@ -1,5 +1,5 @@
 /**
- * Architecture planning interview — CAP-PKT-009 / CAP-GATE-002.
+ * Architecture planning interview: CAP-PKT-009 / CAP-GATE-002.
  * One bounded interview depth; no diagram editing.
  */
 

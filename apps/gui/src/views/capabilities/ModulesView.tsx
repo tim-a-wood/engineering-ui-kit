@@ -1,5 +1,5 @@
 /**
- * Module interview workflows — type-specific export/import/approve (CAP-PKT-011).
+ * Module interview workflows: type-specific export/import/approve (CAP-PKT-011).
  * One interview depth; five module types share CAP-CONTRACT-003.
  *
  * State-safety: all per-module transient state lives in <ModuleWorkspace/>, which is keyed by
@@ -8,7 +8,7 @@
  * are additionally guarded so a record can only be committed against its own module + project.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import type {
   ArchitectureSpecification,
   CapabilityRunScope,
@@ -16,6 +16,8 @@ import type {
   CapDiagnostic,
   FoundationPlan,
   FrontendBrief,
+  FrontendDesignPreferences,
+  FrontendViewKind,
   ImplementationWavePlan,
   InterviewPacket,
   ModuleManifest,
@@ -27,9 +29,17 @@ import {
   applicableDetailsFor,
   buildModuleInterviewPacket,
   evaluateModuleSte,
+  FRONTEND_DEFAULT_MODES,
+  FRONTEND_DENSITIES,
+  FRONTEND_FONTS,
+  FRONTEND_LAYOUT_RULES,
+  FRONTEND_PALETTES,
+  FRONTEND_VIEW_KINDS,
+  frontendPreferencesFromConfig,
   inferModuleType,
   importModuleInterviewResponse,
   normalizeWorkLifecycleState,
+  resolveFrontendDesignSystem,
   type ModuleInterviewResponse,
 } from '@engineering-ui-kit/core/browser'
 import type {
@@ -64,9 +74,9 @@ type Props = {
   progressive?: boolean
   onOpenArchitecture?: () => void
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
-  /** WP5A (CAP-TEST-070/WP5B backing) — the project-approved foundation plan, if any, for From-spec deployment enrichment. */
+  /** WP5A (CAP-TEST-070/WP5B backing): the project-approved foundation plan, if any, for From-spec deployment enrichment. */
   approvedFoundation?: FoundationPlan
-  /** WP5A bullet (d) — blocks the implementation handoff (agent build / implementation packet) until an approved, non-stale foundation exists. Defaults to enabled for callers that predate foundation planning. */
+  /** WP5A bullet (d): blocks the implementation handoff (agent build / implementation packet) until an approved, non-stale foundation exists. Defaults to enabled for callers that predate foundation planning. */
   foundationGate?: { enabled: boolean; reason?: string }
   /** Rich use-case workspaces require an approved current module design before handoff. */
   requireModuleDesigns?: boolean
@@ -607,6 +617,12 @@ function ModuleWorkspace(props: {
   const [technicalOpen, setTechnicalOpen] = useState(false)
   const [frontendBrief, setFrontendBrief] = useState<FrontendBrief>()
   const [frontendFields, setFrontendFields] = useState<TaskPacketFields>()
+  const [frontendDesign, setFrontendDesign] = useState<FrontendDesignPreferences>({
+    paletteId: 'gulfstream',
+    fontId: 'inter',
+    defaultMode: 'system',
+    density: 'compact',
+  })
   const mounted = useRef(false)
   useEffect(() => {
     mounted.current = true
@@ -725,7 +741,7 @@ function ModuleWorkspace(props: {
       if (!result.ok) {
         setDiagnostics(((result.gate as { diagnostics?: CapDiagnostic[] })?.diagnostics) ?? [])
         setGatePassed(false)
-        setMessage(guided ? 'Not ready to approve — resolve the issues above first.' : 'CAP-GATE-003 blocked module approval.')
+        setMessage(guided ? 'Not ready to approve: resolve the issues above first.' : 'CAP-GATE-003 blocked module approval.')
         return
       }
       await props.onChanged()
@@ -768,19 +784,28 @@ function ModuleWorkspace(props: {
     }
   }
 
-  async function startUiAgentBuild() {
+  async function compileUiAgentBuild(designPreferences?: FrontendDesignPreferences) {
     const manifest = record?.approved
     if (busy || !manifest || !architecture || !props.onStartUiBuild || handoffBlocked) return
     setBusy(true)
-    setMessage('Compiling product, capability, operation, and binding evidence into the frontend brief…')
+    setMessage('Compile the frontend brief.')
     try {
       const deployment = deploymentContextFor(props.approvedFoundation, manifest.moduleId, manifest)
       const compiled = await bridge.capabilitiesCompileFrontendBrief({
         projectId,
         targetModuleIds: [manifest.moduleId],
+        designPreferences,
       })
+      const resolvedDesignSystem = compiled.designSystem
+        ?? resolveFrontendDesignSystem(designPreferences)
+      const resolvedPreferences = frontendPreferencesFromConfig(resolvedDesignSystem)
+      const normalizedBrief: FrontendBrief = {
+        ...compiled,
+        designSystem: resolvedDesignSystem,
+      }
       const fields: TaskPacketFields = {
         ...compiled.fields,
+        frontendDesign: resolvedPreferences,
         references: [
           compiled.fields.references,
           ...(deployment
@@ -794,14 +819,23 @@ function ModuleWorkspace(props: {
             : []),
         ].filter(Boolean).join('\n'),
       }
-      setFrontendBrief(compiled)
+      setFrontendBrief(normalizedBrief)
       setFrontendFields(fields)
+      setFrontendDesign(resolvedPreferences)
       setMessage('')
     } catch (error) {
       if (mounted.current) setMessage(error instanceof Error ? error.message : String(error))
     } finally {
       if (mounted.current) setBusy(false)
     }
+  }
+
+  async function startUiAgentBuild() {
+    await compileUiAgentBuild()
+  }
+
+  async function applyFrontendDesign() {
+    await compileUiAgentBuild(frontendDesign)
   }
 
   async function openCompiledFrontendBuild() {
@@ -1187,7 +1221,7 @@ function ModuleWorkspace(props: {
                 <CapabilityHandoffCard bridge={bridge} projectId={projectId} result={implementationExport} projection="guided" />
               ) : (
                 <ul aria-label="Implementation handoff files">
-                  {implementationExport.files.map((file) => <li key={file.path}><code>{file.path}</code> — {file.bytes} bytes — {file.sha256.slice(0, 12)}…</li>)}
+                  {implementationExport.files.map((file) => <li key={file.path}><code>{file.path}</code>: {file.bytes} bytes: {file.sha256.slice(0, 12)}…</li>)}
                 </ul>
               )
             ) : null}
@@ -1204,7 +1238,7 @@ function ModuleWorkspace(props: {
       ) : null}
 
       {response && guided ? (
-        <p className="capabilities-note">Draft {humanizeIdentifier(response.moduleId)} ({moduleTypeLabel(response.moduleType)}) — {response.answers.length} answers.</p>
+        <p className="capabilities-note">Draft {humanizeIdentifier(response.moduleId)} ({moduleTypeLabel(response.moduleType)}): {response.answers.length} answers.</p>
       ) : null}
 
       {frontendBrief && frontendFields ? (
@@ -1240,9 +1274,9 @@ function ModuleWorkspace(props: {
         >
           <div className="frontend-brief-summary">
             <p className="lede">
-              Compiled from {frontendBrief.coverage.moduleIds.length} module(s),{' '}
-              {frontendBrief.coverage.operationIds.length} operation(s), and{' '}
-              {frontendBrief.coverage.bindingIds.length} approved UI binding(s). Edit any section before continuing.
+              The brief uses {frontendBrief.coverage.moduleIds.length} modules,{' '}
+              {frontendBrief.coverage.operationIds.length} operations, and{' '}
+              {frontendBrief.coverage.bindingIds.length} approved UI bindings.
             </p>
             <div className="frontend-brief-coverage" aria-label="Frontend brief coverage">
               <span>{frontendBrief.coverage.routes.length} route(s)</span>
@@ -1257,8 +1291,110 @@ function ModuleWorkspace(props: {
                   </li>
                 ))}
               </ul>
-            ) : <p className="cap-batch-clear">All available capability and binding evidence is included.</p>}
+            ) : <p className="cap-batch-clear">The brief includes all available evidence.</p>}
           </div>
+          <section className="frontend-design-config" aria-labelledby="frontend-design-title">
+            <div className="frontend-design-config-head">
+              <div>
+                <h3 id="frontend-design-title">Frontend design</h3>
+                <p>Set the visual contract for this frontend.</p>
+              </div>
+              <div
+                className="frontend-palette-preview"
+                aria-label={`${frontendBrief.designSystem.palette.name} preview`}
+                style={{
+                  '--preview-canvas': frontendBrief.designSystem.palette.light.canvas,
+                  '--preview-surface': frontendBrief.designSystem.palette.light.surface,
+                  '--preview-accent': frontendBrief.designSystem.palette.light.accent,
+                } as CSSProperties}
+              >
+                <span />
+                <span />
+                <span />
+              </div>
+            </div>
+            <div className="frontend-design-fields">
+              <label>
+                <span>Color palette</span>
+                <select
+                  value={frontendDesign.paletteId ?? 'gulfstream'}
+                  onChange={(event) => setFrontendDesign((current) => ({
+                    ...current,
+                    paletteId: event.target.value as Exclude<FrontendDesignPreferences['paletteId'], undefined>,
+                  }))}
+                >
+                  {Object.values(FRONTEND_PALETTES).map((palette) => (
+                    <option key={palette.id} value={palette.id}>{palette.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Font style</span>
+                <select
+                  value={frontendDesign.fontId ?? 'inter'}
+                  onChange={(event) => setFrontendDesign((current) => ({
+                    ...current,
+                    fontId: event.target.value as Exclude<FrontendDesignPreferences['fontId'], undefined>,
+                  }))}
+                >
+                  {Object.values(FRONTEND_FONTS).map((font) => (
+                    <option key={font.id} value={font.id}>{font.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Start mode</span>
+                <select
+                  value={frontendDesign.defaultMode ?? 'system'}
+                  onChange={(event) => setFrontendDesign((current) => ({
+                    ...current,
+                    defaultMode: event.target.value as Exclude<FrontendDesignPreferences['defaultMode'], undefined>,
+                  }))}
+                >
+                  {FRONTEND_DEFAULT_MODES.map((mode) => (
+                    <option key={mode} value={mode}>{mode === 'system' ? 'Use system mode' : mode === 'light' ? 'Light mode' : 'Dark mode'}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Display density</span>
+                <select
+                  value={frontendDesign.density ?? 'compact'}
+                  onChange={(event) => setFrontendDesign((current) => ({
+                    ...current,
+                    density: event.target.value as Exclude<FrontendDesignPreferences['density'], undefined>,
+                  }))}
+                >
+                  {FRONTEND_DENSITIES.map((density) => (
+                    <option key={density} value={density}>{density === 'compact' ? 'Compact' : 'Comfortable'}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Primary layout</span>
+                <select
+                  value={frontendDesign.viewKinds?.[0] ?? 'workbench'}
+                  onChange={(event) => setFrontendDesign((current) => ({
+                    ...current,
+                    viewKinds: [event.target.value as FrontendViewKind],
+                  }))}
+                >
+                  {FRONTEND_VIEW_KINDS.map((kind) => (
+                    <option key={kind} value={kind}>{FRONTEND_LAYOUT_RULES[kind].name}</option>
+                  ))}
+                </select>
+              </label>
+              <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void applyFrontendDesign()}>
+                Apply design
+              </button>
+            </div>
+            <div className="frontend-design-summary">
+              <span>{frontendBrief.designSystem.contractId}</span>
+              <span>Lucide icons</span>
+              <span>Light and dark modes</span>
+              <span>STE copy gate</span>
+            </div>
+          </section>
           <div className="frontend-brief-editor">
             {([
               ['taskTitle', 'Task title'],

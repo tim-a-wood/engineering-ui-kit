@@ -70,7 +70,7 @@ Review requirements:
 - Check every acceptance criterion as pass, fail, or not evidenced.
 - Check overlay scope against expected files and overlay-safety rules.
 - Confirm protected behavior is preserved.
-- Identify visual drift from dark-first engineering workbench direction.
+- Identify visual drift from dual-mode engineering workbench direction.
 - Identify accessibility issues including keyboard, focus, dialog behavior, and status
   text.
 - Distinguish findings as blocker, warning, or note.
@@ -100,7 +100,7 @@ Required response shape:
 
 ```text
 {{PROJECT_NAME}} = UI Overlay / trials/vertical-slice-01/target-app (selected-project sample: signal-analyzer-refresh)
-{{TASK_GOAL}} = Refresh UI Overlay's Create Task Packet screen to Engineering UI Kit dark-first standards while preserving all existing domain behavior.
+{{TASK_GOAL}} = Refresh UI Overlay's Create Task Packet screen to Engineering UI Kit dual-mode standards while preserving all existing domain behavior.
 {{EXPECTED_CHANGED_FILES}} = src/App.tsx; src/styles.css; optional new token entry stylesheet referenced by the app
 {{PROTECTED_BEHAVIOR}} = Edit/Save/Cancel for task sections; required-field validation; preview dialog content from current packet values; Escape and Close dismiss preview; focus returns to Preview; browser-only export of task-packet.md with the five section headings; no network or filesystem access
 {{ACCEPTANCE_CRITERIA}} = TRIAL-AC-001 through TRIAL-AC-013 in trials/vertical-slice-01/acceptance-criteria.md

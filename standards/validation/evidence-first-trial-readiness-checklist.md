@@ -41,11 +41,11 @@ No unchecked blocking item may be labeled ready.
 
 | Gate | Result | Evidence |
 |---|---|---|
-| Gate A — Target Safety | pass | disposable target app builds and is fully reviewable |
-| Gate B — Contract Completeness | pass | three inputs and overlay contracts complete |
-| Gate C — Scope Discipline | pass | only trial-critical architecture, handoff, safety, prompts, and records authored |
-| Gate D — Safety | pass | context exclusions and overlay blockers/warnings explicit |
-| Gate E — Trial Reproducibility | pass | trial records and contracts support second-person packet preparation |
+| Gate A: Target Safety | pass | disposable target app builds and is fully reviewable |
+| Gate B: Contract Completeness | pass | three inputs and overlay contracts complete |
+| Gate C: Scope Discipline | pass | only trial-critical architecture, handoff, safety, prompts, and records authored |
+| Gate D: Safety | pass | context exclusions and overlay blockers/warnings explicit |
+| Gate E: Trial Reproducibility | pass | trial records and contracts support second-person packet preparation |
 
 ## Readiness Decision
 

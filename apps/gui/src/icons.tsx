@@ -1,5 +1,5 @@
 /**
- * Inline SVG icon set (stroke: currentColor) — a consistent 16px / 1.5px-stroke
+ * Inline SVG icon set (stroke: currentColor): a consistent 16px / 1.5px-stroke
  * outline family on a 24px grid. No icon-font or dependency; every icon is
  * aria-hidden and always paired with a visible or sr-only text label (or a
  * [data-tip] tooltip) at the call site.

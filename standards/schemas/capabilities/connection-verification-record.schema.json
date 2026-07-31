@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://engineering-ui-kit/standards/schemas/capabilities/connection-verification-record.schema.json",
   "title": "ConnectionVerificationRecord",
-  "description": "CAP-CONTRACT-029 — real connection verification evidence.",
+  "description": "CAP-CONTRACT-029: real connection verification evidence.",
   "type": "object",
   "additionalProperties": false,
   "required": [

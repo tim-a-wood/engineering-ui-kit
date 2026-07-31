@@ -247,7 +247,7 @@ export function IntegrationWorkspace({ bridge, projectId, state, projection, ent
               </div>
               {state.migrationPreview.blockedAmbiguities.length ? <ul className="cap-issue-list">{state.migrationPreview.blockedAmbiguities.map((ambiguity) => <li key={ambiguity.id}>{ambiguity.description}</li>)}</ul> : null}
               <details open><summary>Preserved files and proposed transformations</summary><ul>{state.migrationPreview.fileTransformations.map((change) => (
-                <li key={`${change.path}-${change.action}`}><code>{change.path}</code> — {change.action}: {change.description}</li>
+                <li key={`${change.path}-${change.action}`}><code>{change.path}</code>: {change.action}: {change.description}</li>
               ))}</ul></details>
               <dl className="capabilities-ids">
                 <div><dt>Migration plan</dt><dd><code>{state.migrationPreview.migrationPlanId}</code></dd></div>
@@ -285,7 +285,7 @@ export function IntegrationWorkspace({ bridge, projectId, state, projection, ent
                         <div><dt>Generator</dt><dd>{plan.generatorVersion}</dd></div>
                         <div><dt>Profile</dt><dd>{plan.referenceProfileVersion}</dd></div>
                       </dl>
-                      {plan.fileChanges.length ? <details open><summary>Files and ownership</summary><ul>{plan.fileChanges.map((file) => <li key={file.path}><code>{file.path}</code> — {file.action}, {file.ownership}</li>)}</ul></details> : null}
+                      {plan.fileChanges.length ? <details open><summary>Files and ownership</summary><ul>{plan.fileChanges.map((file) => <li key={file.path}><code>{file.path}</code>: {file.action}, {file.ownership}</li>)}</ul></details> : null}
                       {plan.commands.length ? <details><summary>Commands after apply</summary><ol>{plan.commands.map((command) => <li key={command}><code>{command}</code></li>)}</ol></details> : null}
                       {plan.warnings.length ? <ul>{plan.warnings.map((warning) => <li key={warning}>Warning: {warning}</li>)}</ul> : null}
                       {plan.blockers.length ? <ul className="cap-issue-list">{plan.blockers.map((blocker) => <li key={blocker}>{blocker}</li>)}</ul> : null}
@@ -293,7 +293,7 @@ export function IntegrationWorkspace({ bridge, projectId, state, projection, ent
                     </div>
                   ) : null}
                   {deployable.latestCommandRun ? <div className={`cap-command-run ${deployable.latestCommandRun.status}`}><strong>Install/build/test: {deployable.latestCommandRun.status}</strong><ul>{deployable.latestCommandRun.results.map((result) => (
-                    <li key={`${result.label}-${result.startedAt}`}><code>{result.command}</code> — {result.status}{result.exitCode === null ? '' : ` (${result.exitCode})`}</li>
+                    <li key={`${result.label}-${result.startedAt}`}><code>{result.command}</code>: {result.status}{result.exitCode === null ? '' : ` (${result.exitCode})`}</li>
                   ))}</ul></div> : null}
                   {apply?.status === 'failed' ? <div className="cap-apply-failure" role="alert"><strong>Apply failed and the transaction restored the repository.</strong><p>{apply.error ?? 'No additional failure detail was recorded.'}</p></div> : null}
                   {messages[deployable.deployableId] ? <p role="status" className="capabilities-note">{messages[deployable.deployableId]}</p> : null}

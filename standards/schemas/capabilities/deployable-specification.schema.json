@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://engineering-ui-kit/standards/schemas/capabilities/deployable-specification.schema.json",
   "title": "DeployableSpecification",
-  "description": "CAP-CONTRACT-024 — one executable or library deployable.",
+  "description": "CAP-CONTRACT-024: one executable or library deployable.",
   "type": "object",
   "additionalProperties": false,
   "required": [

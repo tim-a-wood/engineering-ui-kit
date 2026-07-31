@@ -1,4 +1,4 @@
-# Assets — Mockup Traceability
+# Assets: Mockup Traceability
 
 ## Purpose
 

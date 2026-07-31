@@ -149,7 +149,7 @@
           "type": "string"
         },
         "themePosture": {
-          "const": "dark-first"
+          "const": "dual-mode"
         },
         "mockupPosture": {
           "const": "app-visual-calibration-not-exhaustive-standard"
@@ -169,7 +169,11 @@
       ],
       "properties": {
         "primary": {
-          "const": "dark"
+          "enum": [
+            "system",
+            "light",
+            "dark"
+          ]
         },
         "dark": {
           "type": "object",

@@ -192,7 +192,7 @@ export function WorkflowEvidenceView({ store, initialRunId, onRunSelected, onOpe
               </header>
               {selectedCurrency === 'old' && (
                 <p className="design-result-currency-warning" role="note">
-                  Old result — these immutable artifacts remain valid for the recorded run, but its revisions no longer match the current design.
+                  Old result: these immutable artifacts remain valid for the recorded run, but its revisions no longer match the current design.
                 </p>
               )}
 

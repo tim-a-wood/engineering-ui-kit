@@ -148,12 +148,12 @@ TRIAL_CRITICAL_PATTERNS = {
 }
 
 REQUIRED_HEADINGS = {
-    'foundation/principles.md': ['# Foundation Principles','## Purpose','## Scope','## Source Inputs','## Principles Summary','## FND-PRI-001 — Engineering workbench over generic dashboard','## FND-PRI-010 — Mockups calibrate visual direction but do not exhaust the standard','## Approved Patterns','## Rejected Patterns','## Traceability Notes'],
-    'foundation/visual-language.md': ['# Visual Language','## Visual Direction Summary','## FND-VIS-001 — Dark-first surface hierarchy','## FND-VIS-010 — What visual drift looks like','## Approved Visual Patterns','## Rejected Visual Patterns','## Mockup Calibration Notes'],
-    'foundation/tokens.md': ['# Tokens','## Token Contract Source','## FND-TOK-001 — Use semantic tokens in component and page guidance','## FND-TOK-015 — Chart tokens','## Token Reference Syntax','## Component Alias Usage','## Token Review Checklist'],
-    'foundation/accessibility.md': ['# Accessibility','## Authority','## FND-A11Y-001 — WCAG 2.2 AA target','## FND-A11Y-012 — Target sizes and dense UI exceptions','## Component Accessibility Matrix','## Accessibility Anti-Patterns','## Accessibility Validation Notes'],
-    'foundation/content-and-language.md': ['# Content and Language','## FND-CONTENT-001 — Use direct engineering language','## FND-CONTENT-009 — Confirmation copy','## Approved Copy Examples','## Rejected Copy Examples'],
-    'foundation/interaction-model.md': ['# Interaction Model','## FND-INT-001 — Manual control for consequential actions','## FND-INT-010 — Toasts, alerts, and persistent feedback','## Interaction Anti-Patterns'],
+    'foundation/principles.md': ['# Foundation Principles','## Purpose','## Scope','## Source Inputs','## Principles Summary','## FND-PRI-001: Engineering workbench over generic dashboard','## FND-PRI-010: Mockups calibrate visual direction but do not exhaust the standard','## Approved Patterns','## Rejected Patterns','## Traceability Notes'],
+    'foundation/visual-language.md': ['# Visual Language','## Visual Direction Summary','## FND-VIS-001: Dual-mode surface hierarchy','## FND-VIS-010: What visual drift looks like','## Approved Visual Patterns','## Rejected Visual Patterns','## Mockup Calibration Notes'],
+    'foundation/tokens.md': ['# Tokens','## Token Contract Source','## FND-TOK-001: Use semantic tokens in component and page guidance','## FND-TOK-015: Chart tokens','## Token Reference Syntax','## Component Alias Usage','## Token Review Checklist'],
+    'foundation/accessibility.md': ['# Accessibility','## Authority','## FND-A11Y-001: WCAG 2.2 AA target','## FND-A11Y-012: Target sizes and dense UI exceptions','## Component Accessibility Matrix','## Accessibility Anti-Patterns','## Accessibility Validation Notes'],
+    'foundation/content-and-language.md': ['# Content and Language','## FND-CONTENT-001: Use direct engineering language','## FND-CONTENT-009: Confirmation copy','## Approved Copy Examples','## Rejected Copy Examples'],
+    'foundation/interaction-model.md': ['# Interaction Model','## FND-INT-001: Manual control for consequential actions','## FND-INT-010: Toasts, alerts, and persistent feedback','## Interaction Anti-Patterns'],
     'components/manifest.md': ['# Component Manifest','## Manifest Source','## Coverage Classification Definitions','## Category Definitions','## Component ID Stability Rules','## Phase 3 Authoring Depth Rules','## Component-to-Document Map','## Reserved Component Rule'],
     'components/component-specs.md': ['# Component Specifications','## Component Spec Template','## Shared Component Rules','## Action Components','## Surface Components','## Content Components','## Status Components','## Workflow Components','## Engineering Artifact Components','## Code and Log Components','## Reserved Component Notes','## Component Compliance Checklist'],
     'components/forms.md': ['# Forms','## Form Field Anatomy','## Text Input','## Number Input','## Select','## Combobox','## Textarea','## Checkbox','## Radio Group','## Switch','## Date Time Input','## File Dropzone','## Validation Summary','## Accessibility Rules','## Approved Form Patterns','## Rejected Form Patterns'],
@@ -162,20 +162,20 @@ REQUIRED_HEADINGS = {
     'components/feedback-and-status.md': ['# Feedback and Status','## Status Vocabulary','## Status Badge','## Job Status Indicator','## Loading State','## Error State','## Alert','## Toast','## Progress Indicator','## Validation Summary','## Persistent vs Temporary Feedback','## Accessibility Rules','## Approved Feedback Patterns','## Rejected Feedback Patterns'],
     'components/overlays-and-dialogs.md': ['# Overlays and Dialogs','## Dialog','## Confirmation Dialog','## Drawer','## Popover','## Tooltip','## Context Menu','## Overlay Layering','## Dismissal Rules','## Focus Management','## Accessibility Rules','## Approved Overlay Patterns','## Rejected Overlay Patterns'],
     'components/data-visualization.md': ['# Data Visualization','## Chart Selection Rules','## Chart Panel','## Line Chart','## Bar Chart','## Legend','## Chart Tooltip','## Threshold Band','## Chart States','## Status and Severity in Charts','## Accessibility Rules','## Approved Chart Patterns','## Rejected Chart Patterns'],
-    'layouts-and-recipes/application-shell.md': ['# Application Shell','## LAY-SHELL-001 — Standard engineering app shell','## Persistent Regions','## Page Header Rules','## Navigation Region Rules','## Main Content Region Rules','## Command and Status Regions','## Density Rules','## Responsive Behavior','## Accessibility Notes','## Approved Shell Pattern','## Rejected Shell Patterns'],
-    'layouts-and-recipes/dashboard-layouts.md': ['# Dashboard Layouts','## RCP-DASH-001 — Engineering dashboard','## Metric Card Use','## Status Summary Use','## Chart Panel Use','## Table Summary Use','## Empty/Loading/Error States','## Density and Responsiveness','## Accessibility Notes','## Approved Dashboard Pattern','## Rejected Dashboard Patterns'],
-    'layouts-and-recipes/detail-pages.md': ['# Detail Pages','## RCP-DETAIL-001 — Entity detail page','## Header and Metadata Region','## Primary Detail Region','## Supporting Evidence Region','## Related Items Region','## Actions','## State Handling','## Accessibility Notes','## Approved Detail Pattern','## Rejected Detail Patterns'],
-    'layouts-and-recipes/workflow-pages.md': ['# Workflow Pages','## RCP-WORKFLOW-001 — Multi-step engineering workflow','## Step Indicator Use','## Current Step Region','## Preview and Review Region','## Command/Action Region','## Status and Evidence Region','## Error and Blocked States','## Accessibility Notes','## Approved Workflow Pattern','## Rejected Workflow Patterns'],
-    'layouts-and-recipes/split-panel-layouts.md': ['# Split Panel Layouts','## RCP-SPLIT-001 — List/detail split panel','## RCP-SPLIT-002 — Compare/review split panel','## Panel Roles','## Resize Rules','## Selection State','## Empty and Error States','## Accessibility Notes','## Approved Split Panel Pattern','## Rejected Split Panel Patterns'],
+    'layouts-and-recipes/application-shell.md': ['# Application Shell','## LAY-SHELL-001: Standard engineering app shell','## Persistent Regions','## Page Header Rules','## Navigation Region Rules','## Main Content Region Rules','## Command and Status Regions','## Density Rules','## Responsive Behavior','## Accessibility Notes','## Approved Shell Pattern','## Rejected Shell Patterns'],
+    'layouts-and-recipes/dashboard-layouts.md': ['# Dashboard Layouts','## RCP-DASH-001: Engineering dashboard','## Metric Card Use','## Status Summary Use','## Chart Panel Use','## Table Summary Use','## Empty/Loading/Error States','## Density and Responsiveness','## Accessibility Notes','## Approved Dashboard Pattern','## Rejected Dashboard Patterns'],
+    'layouts-and-recipes/detail-pages.md': ['# Detail Pages','## RCP-DETAIL-001: Entity detail page','## Header and Metadata Region','## Primary Detail Region','## Supporting Evidence Region','## Related Items Region','## Actions','## State Handling','## Accessibility Notes','## Approved Detail Pattern','## Rejected Detail Patterns'],
+    'layouts-and-recipes/workflow-pages.md': ['# Workflow Pages','## RCP-WORKFLOW-001: Multi-step engineering workflow','## Step Indicator Use','## Current Step Region','## Preview and Review Region','## Command/Action Region','## Status and Evidence Region','## Error and Blocked States','## Accessibility Notes','## Approved Workflow Pattern','## Rejected Workflow Patterns'],
+    'layouts-and-recipes/split-panel-layouts.md': ['# Split Panel Layouts','## RCP-SPLIT-001: List/detail split panel','## RCP-SPLIT-002: Compare/review split panel','## Panel Roles','## Resize Rules','## Selection State','## Empty and Error States','## Accessibility Notes','## Approved Split Panel Pattern','## Rejected Split Panel Patterns'],
     'layouts-and-recipes/empty-loading-error-states.md': ['# Empty, Loading, and Error States','## Empty State Pattern','## Loading State Pattern','## Skeleton Pattern','## Error State Pattern','## Partial Data Pattern','## Offline/Stale Data Pattern','## Blocked State Pattern','## Accessibility Notes','## Approved State Patterns','## Rejected State Patterns'],
-    'examples/approved-patterns.md': ['# Approved Patterns','## EX-APPROVED-001 — Dark engineering app shell','## EX-APPROVED-007 — Empty state with next action','## Traceability'],
-    'examples/rejected-patterns.md': ['# Rejected Patterns','## EX-REJECTED-001 — Generic SaaS dashboard drift','## EX-REJECTED-007 — Unstructured dense technical page','## Traceability'],
-    'validation/ui-compliance-rubric.md': ['# UI Compliance Rubric','## Rating Model','## Blocking Failures','## VAL-UI-001 — Source alignment','## VAL-UI-010 — AI handoff suitability','## Review Procedure','## Result Template'],
+    'examples/approved-patterns.md': ['# Approved Patterns','## EX-APPROVED-001: Dark engineering app shell','## EX-APPROVED-007: Empty state with next action','## Traceability'],
+    'examples/rejected-patterns.md': ['# Rejected Patterns','## EX-REJECTED-001: Generic SaaS dashboard drift','## EX-REJECTED-007: Unstructured dense technical page','## Traceability'],
+    'validation/ui-compliance-rubric.md': ['# UI Compliance Rubric','## Rating Model','## Blocking Failures','## VAL-UI-001: Source alignment','## VAL-UI-010: AI handoff suitability','## Review Procedure','## Result Template'],
     'validation/accessibility-checklist.md': ['# Accessibility Checklist','## Keyboard','## Focus','## Semantics','## Forms','## Tables and Data Grids','## Overlays','## Status and Feedback','## Charts','## Motion','## Content','## Result Classification'],
     'validation/visual-drift-checklist.md': ['# Visual Drift Checklist','## Dark-First Drift','## Generic Dashboard Drift','## Token Drift','## Mockup Traceability Drift','## Result Classification'],
     'validation/component-completeness-checklist.md': ['# Component Completeness Checklist','## Manifest Coverage','## Component Spec Coverage','## Token Reference Coverage','## State Coverage','## Accessibility Coverage','## Example Coverage','## Reserved Component Honesty','## Result Classification'],
     'validation/implementation-readiness-checklist.md': ['# Implementation Readiness Checklist','## Standards Readiness','## Contract Readiness','## Minimum Trial Contract','## Validation Readiness','## Known Deferrals Before the Trial','## Readiness Decision'],
-    'validation/phase-3-core-standards-validation-checklist.md': ['# Phase 3 Core Standards Validation Checklist','## Gate A — Baseline integrity','## Gate N — Evidence-first trial readiness','## Result Summary'],
+    'validation/phase-3-core-standards-validation-checklist.md': ['# Phase 3 Core Standards Validation Checklist','## Gate A: Baseline integrity','## Gate N: Evidence-first trial readiness','## Result Summary'],
     'validation/phase-3-validation-result-template.md': ['# Phase 3 Validation Result','## Package Reviewed','## Validation Date','## Validator','## Summary Verdict','## Gate Results','## Blockers','## Warnings','## Notes','## Corrective Actions','## Evidence-First Trial Readiness Recommendation'],
 }
 
@@ -215,12 +215,12 @@ try:
     metadata = json.loads(read('package-metadata.json'))
     if metadata.get('packageVersion') != '0.5.0':
         errors.append('package-metadata.json packageVersion is not 0.5.0')
-    if metadata.get('phase') != 'Phase 5 — Product Visual Language Alignment':
-        errors.append('package-metadata.json phase is not Phase 5 — Product Visual Language Alignment')
+    if metadata.get('phase') != 'Phase 5: Product Visual Language Alignment':
+        errors.append('package-metadata.json phase is not Phase 5: Product Visual Language Alignment')
     if metadata.get('status') != 'operational-handoff-package-v0.1':
         errors.append('package-metadata.json status is not operational-handoff-package-v0.1')
-    if metadata.get('themePosture') != 'dark-first':
-        errors.append('themePosture is not dark-first')
+    if metadata.get('themePosture') != 'dual-mode':
+        errors.append('themePosture is not dual-mode')
 except Exception:
     pass
 
@@ -282,7 +282,7 @@ for cid in component_ids:
 
 for c in manifest.get('components', []):
     if 'reserved-for-future-validation' in c.get('coverage', []):
-        marker = f'## {c["id"]} — {c["name"]}'
+        marker = f'## {c["id"]}: {c["name"]}'
         idx = component_doc_text.find(marker)
         if idx < 0:
             errors.append(f'reserved component spec missing: {c["id"]}')

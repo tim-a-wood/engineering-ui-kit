@@ -219,7 +219,7 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
                 <ul className="design-context-manifest">
                   {handoff.manifest.entries.map((entry) => (
                     <li key={entry.ref}>
-                      [{entry.kind}] {entry.ref} — {entry.inclusionReason} ({entry.bytes} bytes)
+                      [{entry.kind}] {entry.ref}: {entry.inclusionReason} ({entry.bytes} bytes)
                     </li>
                   ))}
                 </ul>
@@ -240,7 +240,7 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
                   <ul>
                     {handoff.limitReport.safeExclusionChoices.map((choice) => (
                       <li key={choice.ref}>
-                        {choice.ref} — {choice.reason}
+                        {choice.ref}: {choice.reason}
                       </li>
                     ))}
                   </ul>
@@ -418,7 +418,7 @@ export function BuildHandoffView(props: BuildHandoffViewProps) {
                   <ul>
                     {deltaFlow.inspection.testResults.map((result) => (
                       <li key={result.command}>
-                        {result.command}: {result.passed ? 'passed' : 'failed'} — {result.summary}
+                        {result.command}: {result.passed ? 'passed' : 'failed'}: {result.summary}
                       </li>
                     ))}
                   </ul>

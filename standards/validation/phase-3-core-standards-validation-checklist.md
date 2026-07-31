@@ -4,23 +4,23 @@
 
 This checklist validates the Phase 3 core standards package.
 
-## Gate A — Baseline integrity
+## Gate A: Baseline integrity
 
 - Phase 2 package extracted successfully.
 - Phase 2 validation passed before Phase 3 edits.
 - Required Phase 2 files remain present.
 
-## Gate B — Required files authored
+## Gate B: Required files authored
 
 - Required foundation, component, layout, example, and validation files exist.
 - Files contain substantive Phase 3 prose.
 
-## Gate C — Scaffold language removed or contained
+## Gate C: Scaffold language removed or contained
 
 - Authored files do not retain stale scaffold-only language.
 - Historical references, if any, are clearly marked.
 
-## Gate D — Rule IDs present
+## Gate D: Rule IDs present
 
 - Foundation files use `FND-*` rule IDs.
 - Component docs use manifest `CMP-*` IDs.
@@ -28,51 +28,51 @@ This checklist validates the Phase 3 core standards package.
 - Examples use `EX-*` IDs.
 - Validation docs use `VAL-*` IDs where applicable.
 
-## Gate E — Token contract preserved
+## Gate E: Token contract preserved
 
 - `tokens.json` parses.
 - `tokens.schema.json` parses.
-- Dark-first posture preserved.
+- Dual-mode posture preserved.
 - No raw-color component guidance introduced.
 
-## Gate F — Component manifest preserved
+## Gate F: Component manifest preserved
 
 - `component-manifest.json` parses.
 - No manifest components removed.
 - Component IDs remain stable.
 - Reserved components remain reserved.
 
-## Gate G — Component prose coverage
+## Gate G: Component prose coverage
 
 - Every manifest component appears in component prose.
 - Tier 1/2/3 treatments are appropriate.
 
-## Gate H — Layout recipe coverage
+## Gate H: Layout recipe coverage
 
 - Application shell, dashboard, detail, workflow, split-panel, and state recipes are authored.
 
-## Gate I — Accessibility coverage
+## Gate I: Accessibility coverage
 
 - Foundation accessibility and checklist are authored.
 - Forms, tables, overlays, charts, and status include accessibility rules.
 
-## Gate J — Visual language coverage
+## Gate J: Visual language coverage
 
-- Dark-first hierarchy, accent discipline, density, and drift rules are clear.
+- Dual-mode hierarchy, accent discipline, density, and drift rules are clear.
 
-## Gate K — Examples coverage
+## Gate K: Examples coverage
 
 - Approved and rejected patterns are authored and rule-linked.
 
-## Gate L — Validation coverage
+## Gate L: Validation coverage
 
 - UI rubric, accessibility, visual drift, component completeness, implementation readiness, Phase 3 checklist, and result template exist.
 
-## Gate M — Overengineering guardrail
+## Gate M: Overengineering guardrail
 
 - No app implementation, Storybook, website scaffolding, speculative component explosion, or full light-mode system is introduced.
 
-## Gate N — Evidence-first trial readiness
+## Gate N: Evidence-first trial readiness
 
 - Core standards are authored.
 - Examples and validation checks are available.

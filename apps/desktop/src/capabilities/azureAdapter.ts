@@ -178,7 +178,7 @@ function toErrorRecord(error: unknown): ErrorRecord {
       diagnosticRefs: [],
     }
   }
-  // Unknown throwable — fall back to the core sanitizer.
+  // Unknown throwable: fall back to the core sanitizer.
   return sanitizeBoundaryError(error)
 }
 
@@ -340,7 +340,7 @@ type AzureContext = {
 
 /**
  * Parses (and validates) the non-secret config INSIDE the try, runs the producer,
- * and converts every throwable — including missing-config/missing-project — into a
+ * and converts every throwable: including missing-config/missing-project: into a
  * sanitized ResultEnvelope. This guarantees synchronous configuration errors never
  * escape as raw exceptions and that provenance never carries the PAT.
  */

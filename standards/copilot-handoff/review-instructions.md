@@ -23,7 +23,7 @@ corrective-action output. Reusable prompt wording lives in
 
 ## Required Architecture
 
-### AI-REVIEW-000 — Check the technical writing policy
+### AI-REVIEW-000: Check the technical writing policy
 
 Check all reviewed user-interface text, diagrams, and documents against the project
 Engineering UI Kit writing profile based on ASD-STE100 Issue 9. Require American English and active
@@ -32,43 +32,43 @@ Require names and diagram labels in `VERB + OBJECT` form with no more than four
 words. Require the same technical term for the same concept. Report contractions and
 semicolons. Give each writing finding a direct correction.
 
-### AI-REVIEW-001 — Review only provided changed files and evidence
+### AI-REVIEW-001: Review only provided changed files and evidence
 
 Do not assume unstated repository changes. Use the overlay contents, local diff,
 build/typecheck output, and recorded screenshots or notes.
 
-### AI-REVIEW-002 — Check every acceptance criterion
+### AI-REVIEW-002: Check every acceptance criterion
 
 Evaluate each `TRIAL-AC-*` or task-specific criterion as pass, fail, or not evidenced.
 Missing evidence is not a pass.
 
-### AI-REVIEW-003 — Check overlay scope and protected behavior
+### AI-REVIEW-003: Check overlay scope and protected behavior
 
 Confirm the overlay stays within expected files, uses repo-relative paths, and does
 not alter protected domain behavior.
 
-### AI-REVIEW-004 — Distinguish blocker, warning, and note
+### AI-REVIEW-004: Distinguish blocker, warning, and note
 
 - Blocker: prevents apply or trial success.
 - Warning: apply may proceed only with explicit human acceptance and follow-up.
 - Note: non-blocking observation.
 
-### AI-REVIEW-005 — Identify visual and accessibility drift
+### AI-REVIEW-005: Identify visual and accessibility drift
 
-Check dark-first hierarchy, semantic tokens, workflow stepper, focus, keyboard and
+Check dual-mode hierarchy, semantic tokens, workflow stepper, focus, keyboard and
 dialog behavior, and status text. Flag generic SaaS, neon, or untokenized styling.
 
-### AI-REVIEW-006 — Avoid proposing broad rewrites
+### AI-REVIEW-006: Avoid proposing broad rewrites
 
 Review output should list concise corrective actions suitable for a follow-up packet.
 Do not propose repository-wide redesigns.
 
-### AI-REVIEW-007 — Return a corrective-action list
+### AI-REVIEW-007: Return a corrective-action list
 
 Each failed or warning item should include the affected files, the violated rule or
 criterion ID, and the smallest corrective action.
 
-### AI-REVIEW-008 — No success claim without verification evidence
+### AI-REVIEW-008: No success claim without verification evidence
 
 A review may say the overlay appears compliant only when build/typecheck, inspection,
 and acceptance evidence are present.

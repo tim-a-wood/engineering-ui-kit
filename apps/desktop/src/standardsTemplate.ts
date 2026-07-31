@@ -6,7 +6,11 @@
 
 import {
   buildStePromptRules,
+  buildFrontendDesignPrompt,
+  resolveFrontendDesignSystem,
   withStePrompt,
+  type FrontendDesignPreferences,
+  type FrontendDesignSystemConfig,
   type SteLexicon,
   type TaskDefinition,
 } from '@engineering-ui-kit/core'
@@ -21,7 +25,7 @@ function steVocabulary(
   }
 }
 
-export const STANDARD_TOKEN_ROWS: TaskDefinition['tokenRows'] = [
+const STANDARD_BASE_TOKEN_ROWS: TaskDefinition['tokenRows'] = [
   { path: 'semantic.surface.canvas', value: '#07111f', requiredUse: 'Root app canvas background' },
   { path: 'semantic.surface.panel', value: '#0f172a', requiredUse: 'Primary bounded panels' },
   { path: 'semantic.surface.panelRaised', value: '#111827', requiredUse: 'Emphasized summary or action regions' },
@@ -87,10 +91,67 @@ export const STANDARD_TOKEN_ROWS: TaskDefinition['tokenRows'] = [
   { path: 'semantic.charts.series.danger', value: '#f87171', requiredUse: 'Danger-classified series or points (with text label)' },
 ]
 
+function colorTokenRows(config: FrontendDesignSystemConfig): TaskDefinition['tokenRows'] {
+  return (['light', 'dark'] as const).flatMap((modeName) => {
+    const mode = config.palette[modeName]
+    return [
+      { path: `semantic.mode.${modeName}.color.canvas`, value: mode.canvas, requiredUse: `${modeName} application canvas` },
+      { path: `semantic.mode.${modeName}.color.surface`, value: mode.surface, requiredUse: `${modeName} bounded surface` },
+      { path: `semantic.mode.${modeName}.color.surfaceSubtle`, value: mode.surfaceSubtle, requiredUse: `${modeName} inset surface` },
+      { path: `semantic.mode.${modeName}.color.surfaceRaised`, value: mode.surfaceRaised, requiredUse: `${modeName} raised surface` },
+      { path: `semantic.mode.${modeName}.color.text`, value: mode.text, requiredUse: `${modeName} primary text` },
+      { path: `semantic.mode.${modeName}.color.textMuted`, value: mode.textMuted, requiredUse: `${modeName} support text` },
+      { path: `semantic.mode.${modeName}.color.textQuiet`, value: mode.textQuiet, requiredUse: `${modeName} quiet text` },
+      { path: `semantic.mode.${modeName}.color.border`, value: mode.border, requiredUse: `${modeName} default border` },
+      { path: `semantic.mode.${modeName}.color.borderStrong`, value: mode.borderStrong, requiredUse: `${modeName} strong border` },
+      { path: `semantic.mode.${modeName}.color.accent`, value: mode.accent, requiredUse: `${modeName} primary action` },
+      { path: `semantic.mode.${modeName}.color.accentHover`, value: mode.accentHover, requiredUse: `${modeName} action hover` },
+      { path: `semantic.mode.${modeName}.color.accentActive`, value: mode.accentActive, requiredUse: `${modeName} action press` },
+      { path: `semantic.mode.${modeName}.color.accentSoft`, value: mode.accentSoft, requiredUse: `${modeName} selected state` },
+      { path: `semantic.mode.${modeName}.color.focus`, value: mode.focus, requiredUse: `${modeName} focus outline` },
+      { path: `semantic.mode.${modeName}.color.success`, value: mode.success, requiredUse: `${modeName} success status` },
+      { path: `semantic.mode.${modeName}.color.warning`, value: mode.warning, requiredUse: `${modeName} warning status` },
+      { path: `semantic.mode.${modeName}.color.danger`, value: mode.danger, requiredUse: `${modeName} danger status` },
+      { path: `semantic.mode.${modeName}.color.info`, value: mode.info, requiredUse: `${modeName} information status` },
+      { path: `semantic.mode.${modeName}.shadow.raised`, value: mode.shadow, requiredUse: `${modeName} raised surface shadow` },
+    ]
+  })
+}
+
+export function buildStandardTokenRows(
+  preferences?: FrontendDesignPreferences,
+): TaskDefinition['tokenRows'] {
+  const config = resolveFrontendDesignSystem(preferences)
+  const shared = STANDARD_BASE_TOKEN_ROWS.filter((row) =>
+    !/^semantic\.(?:surface|text|border|focus|accent|status|charts)\./.test(row.path)
+    && row.path !== 'semantic.shadow.sm'
+    && row.path !== 'semantic.shadow.md'
+    && row.path !== 'semantic.shadow.overlay'
+    && row.path !== 'semantic.typography.family.sans')
+  return [
+    ...colorTokenRows(config),
+    {
+      path: 'semantic.typography.family.sans',
+      value: config.typography.stack,
+      requiredUse: 'User interface text',
+    },
+    ...shared,
+  ]
+}
+
+export const STANDARD_TOKEN_ROWS: TaskDefinition['tokenRows'] = buildStandardTokenRows()
+
 export const STANDARD_APPROVED_GUIDANCE = [
-  'Dark engineering workbench.',
+  'Modern enterprise workbench.',
+  'Gulfstream blue and white default palette.',
+  'Equal quality in light and dark modes.',
+  'A labeled mode button that stores the user choice.',
+  'A project-selected font through one semantic font token.',
+  'Lucide icons on a 24 pixel grid with a 2 pixel stroke.',
+  'Tooltips for icon-only controls on pointer hover and keyboard focus.',
+  'Context help beside complex domain terms.',
   'Restrained technical accent.',
-  'Dark canvas with quiet, canvas-first hierarchy.',
+  'Quiet canvas with a task-first hierarchy.',
   'Stable left navigation, visible active state, collapsible to a compact rail with a persisted, keyboard-accessible toggle.',
   'Concise page header.',
   'Compact but readable bounded tools; whitespace and hairlines for ordinary grouping.',
@@ -100,8 +161,8 @@ export const STANDARD_APPROVED_GUIDANCE = [
   'Semantic CSS variables.',
   'Dialogs with overlay surface, scrim, focus containment, Escape, and focus return.',
   'Borders and spacing doing more hierarchy work than heavy shadows.',
-  'One page grid with shared column edges; sibling panels share padding, heading scale, and vertical rhythm — panels sitting side by side stretch to share top and bottom edges.',
-  'Structure from typography, spacing, and hairline rules — bounded panels are reserved for true surfaces (tables, charts, inset technical content, rails, dialogs, empty states); forms and prose compose directly on the canvas under small uppercase section headers.',
+  'One page grid with shared column edges; sibling panels share padding, heading scale, and vertical rhythm: panels sitting side by side stretch to share top and bottom edges.',
+  'Structure from typography, spacing, and hairline rules: bounded panels are reserved for true surfaces (tables, charts, inset technical content, rails, dialogs, empty states); forms and prose compose directly on the canvas under small uppercase section headers.',
   'Status summaries on working screens are one slim stat row attached to the working surface (labels with mono values at body scale); a large instrument strip is reserved for true monitoring dashboards.',
   'Every size from the spacing scale; numeric cells right-aligned in tabular numerals.',
   'Charts framed in a chart panel: title, units, legend, state, and a text summary or table fallback beside them.',
@@ -116,7 +177,7 @@ export const STANDARD_APPROVED_GUIDANCE = [
 ]
 
 export const STANDARD_REJECTED_GUIDANCE = [
-  'Light mode.',
+  'A frontend that supports only one color mode.',
   'Generic white-card dashboard.',
   'Marketing hero layout.',
   'Arbitrary gradients.',
@@ -128,27 +189,33 @@ export const STANDARD_REJECTED_GUIDANCE = [
   'Icon-only unlabeled controls.',
   'Raw repeated colors instead of token variables.',
   'One-click automation that hides validation or review.',
-  'Decorative KPI tile walls — status tiles only for 3–5 true peer metrics that answer an engineering question.',
-  'Billboard KPI strips on working screens — oversized stat values for counts that belong in a slim one-line summary row; process state (like a selection count) is never a stat cell.',
-  'Side-by-side panels with mismatched heights — a row of sibling panels stretches to share top and bottom edges.',
-  'Panel-heavy composition — a uniform bordered box around every region reads as generated output; a panel never nests inside another panel, and a form never lives in a heavy box when a section header and hairline rule carry the same structure.',
-  'Record lists rendered as card stacks — lists of records are data tables (dense rows, right-aligned numerics), never tiles.',
-  'Content clipped by its container — a column that cannot fit its longest value must be resized or its content abbreviated, never cut.',
-  'Default browser control chrome — native number-input spinners, oversized rounded inputs, or default focus outlines instead of token-styled compact controls.',
-  'Unnecessary workflow steppers — two named modes use a quiet text-and-arrow transition in the page header, not a wizard or segmented state control.',
-  'Sequential phases rendered side by side as parallel panels — a multi-phase task is a stepped wizard, one phase at a time.',
-  'Uniform full-width controls regardless of content — a five-digit number does not get a 600px input; size controls to what they hold.',
-  'Content stranded in a narrow strip while the viewport sits empty — compose grouped, content-sized rows to the working width.',
+  'Decorative KPI tile walls: status tiles only for 3–5 true peer metrics that answer an engineering question.',
+  'Billboard KPI strips on working screens: oversized stat values for counts that belong in a slim one-line summary row; process state (like a selection count) is never a stat cell.',
+  'Side-by-side panels with mismatched heights: a row of sibling panels stretches to share top and bottom edges.',
+  'Panel-heavy composition: a uniform bordered box around every region reads as generated output; a panel never nests inside another panel, and a form never lives in a heavy box when a section header and hairline rule carry the same structure.',
+  'Record lists rendered as card stacks: lists of records are data tables (dense rows, right-aligned numerics), never tiles.',
+  'Content clipped by its container: a column that cannot fit its longest value must be resized or its content abbreviated, never cut.',
+  'Default browser control chrome: native number-input spinners, oversized rounded inputs, or default focus outlines instead of token-styled compact controls.',
+  'Unnecessary workflow steppers: two named modes use a quiet text-and-arrow transition in the page header, not a wizard or segmented state control.',
+  'Sequential phases rendered side by side as parallel panels: a multi-phase task is a stepped wizard, one phase at a time.',
+  'Uniform full-width controls regardless of content: a five-digit number does not get a 600px input; size controls to what they hold.',
+  'Content stranded in a narrow strip while the viewport sits empty: compose grouped, content-sized rows to the working width.',
   'Unlabeled placeholder wireframes or first-run preview failures presented as alarming error slabs.',
   'Redundant Open or Continue buttons inside rows that already have one destination.',
   'A bordered or raised tile around a page-title icon.',
-  'Multi-column tables squeezed into narrow rails — wrapped three-to-four-line rows forced in to keep a dashboard silhouette, instead of a compact synced readout or a detail view.',
-  'Column budgets that exceed the container — cells wrapping labels, configurations, or identifiers into multi-line lattices instead of merging into meta lines, truncating with ellipsis, or scrolling horizontally.',
+  'Multi-column tables squeezed into narrow rails: wrapped three-to-four-line rows forced in to keep a dashboard silhouette, instead of a compact synced readout or a detail view.',
+  'Column budgets that exceed the container: cells wrapping labels, configurations, or identifiers into multi-line lattices instead of merging into meta lines, truncating with ellipsis, or scrolling horizontally.',
   'Misaligned panel edges, mixed sibling paddings, or arbitrary component sizes off the spacing scale.',
   'Chart points connected in record/insertion order instead of sorted by the x-value.',
   'Axis ticks at raw data values (min/mid/max) instead of round engineering steps.',
   'Color-only status encoding in charts; legends detached from the chart they describe.',
   'Large empty plot regions caused by unclamped axis ranges or missing gridlines.',
+  'Mixed icon families, emoji icons, or inconsistent icon stroke widths.',
+  'Icon-only controls without an accessible name and tooltip.',
+  'Essential instructions that exist only in a tooltip.',
+  'Decorative accent strips on cards, tiles, panels, sections, summaries, wells, or callouts.',
+  'Ornamental sparkles, magic wands, or AI gradient effects.',
+  'Em dashes, vague promotional text, and conversational filler in visible copy.',
 ]
 
 export const STANDARD_ACCESSIBILITY_REQUIREMENTS = [
@@ -179,7 +246,15 @@ export const STANDARD_CONSTRAINTS = [
     ],
   }),
   'Use semantic CSS custom properties traceable to the supplied token table.',
-  'Dark-first only; do not implement light mode.',
+  'Implement light and dark modes. Add a labeled mode button.',
+  'Use the system color mode until the user selects a mode.',
+  'Store the user color mode choice.',
+  'Apply the configured palette and font through semantic tokens.',
+  'Use Lucide icons only. Follow the supplied icon geometry.',
+  'Add accessible tooltips to all icon-only controls.',
+  'Add contextual help for complex domain terms.',
+  'Do not use common generated-interface tropes.',
+  'Do not use em dashes in visible text.',
   'No raw color scattering outside the supplied CSS variable definitions.',
   'No routers, state libraries, component libraries, CSS frameworks, chart libraries, network clients, PDF libraries, or test frameworks.',
   'No dependency or lockfile changes.',
@@ -197,6 +272,7 @@ export const STANDARD_RULE_IDS = [
   'ARCH-FE-001', 'ARCH-FE-002', 'ARCH-FE-003', 'ARCH-FE-004', 'ARCH-FE-005', 'ARCH-FE-007',
   'ARCH-THEME-001', 'ARCH-THEME-002', 'ARCH-THEME-003', 'ARCH-THEME-004', 'ARCH-THEME-005', 'ARCH-THEME-006', 'ARCH-THEME-007',
   'ARCH-STATE-001', 'ARCH-STATE-002', 'ARCH-STATE-003', 'ARCH-STATE-004', 'ARCH-STATE-005', 'ARCH-STATE-007',
+  'FND-ICON-001', 'FND-HELP-001', 'FND-COPY-001', 'FND-TROPE-001',
 ]
 
 export const STANDARD_COMPONENT_IDS = [
@@ -210,15 +286,33 @@ export const STANDARD_COMPONENT_IDS = [
 export const STANDARD_EXCERPTS: TaskDefinition['standardsExcerpts'] = [
   {
     id: 'FND-VIS-001',
-    title: 'Dark-first surface hierarchy',
-    body: 'Implementations shall use semantic surface tokens to create hierarchy: `semantic.surface.canvas` for the root canvas, `semantic.surface.panel` for ordinary bounded regions, `semantic.surface.panelRaised` for emphasized cards, `semantic.surface.inset` for embedded technical content, and `semantic.surface.overlay` for dialogs and drawers.',
+    title: 'Dual-mode surface hierarchy',
+    body: 'Use semantic surface tokens in light and dark modes. Keep the same hierarchy and task order in both modes.',
     source: 'standards/foundation/visual-language.md',
   },
   {
     id: 'FND-TOK-004',
-    title: 'Dark mode is normative',
-    body: 'The dark token mode is the normative theme. Reviewers shall treat dark-first drift as a material issue.',
+    title: 'Both modes are normative',
+    body: 'Light and dark modes are normative. Reviewers shall treat a missing or lower-quality mode as a material issue.',
     source: 'standards/foundation/tokens.md',
+  },
+  {
+    id: 'FND-ICON-001',
+    title: 'Consistent icon system',
+    body: 'Use Lucide icons on a 24 pixel grid. Use a 2 pixel stroke with round line caps and joins.',
+    source: 'standards/foundation/icons-and-help.md',
+  },
+  {
+    id: 'FND-HELP-001',
+    title: 'Accessible help',
+    body: 'Add a tooltip to each icon-only control. Add contextual help for complex terms. Keep required instructions visible.',
+    source: 'standards/foundation/icons-and-help.md',
+  },
+  {
+    id: 'FND-TROPE-001',
+    title: 'Reject common tropes',
+    body: 'Reject accent-strip tiles, ornamental sparkles, card walls, em dashes, glass effects, and vague promotional copy.',
+    source: 'standards/foundation/visual-language.md',
   },
   {
     id: 'ARCH-THEME-001',
@@ -242,10 +336,10 @@ export const STANDARD_EXCERPTS: TaskDefinition['standardsExcerpts'] = [
     id: 'RCP-DASH-001',
     title: 'Layout and composition discipline',
     body: [
-      'Dashboards and screens shall not become decorative KPI walls. Compose every page on one grid: panel edges align to shared columns, sibling panels share padding (`semantic.density.compact.panelPadding`), heading scale, and vertical rhythm; all gaps and sizes come from the spacing scale — no arbitrary pixel values.',
+      'Dashboards and screens shall not become decorative KPI walls. Compose every page on one grid: panel edges align to shared columns, sibling panels share padding (`semantic.density.compact.panelPadding`), heading scale, and vertical rhythm; all gaps and sizes come from the spacing scale: no arbitrary pixel values.',
       'Status tiles are justified only for 3–5 true peer metrics that answer a standing engineering question; otherwise integrate status into the working surface (table rows, badges, callouts). A chart never floats alone: it sits in a chart panel adjacent to the data table or summary that carries the same information as text. Numeric table cells right-align in tabular numerals; date and identifier cells never wrap mid-value.',
       'Cards may wrap responsively, but tables and charts shall remain legible; hide secondary charts before hiding status or evidence.',
-      'Boxes are not structure: reserve bounded panels for true surfaces — tables, charts, inset technical content, side rails, dialogs, and empty states. Forms, prose, and section groupings compose directly on the canvas under small uppercase section headers separated by hairline rules; a panel shall never nest inside another panel. A page that wraps every region in a uniform bordered box reads as generated output, not an engineering tool.',
+      'Boxes are not structure: reserve bounded panels for true surfaces: tables, charts, inset technical content, side rails, dialogs, and empty states. Forms, prose, and section groupings compose directly on the canvas under small uppercase section headers separated by hairline rules; a panel shall never nest inside another panel. A page that wraps every region in a uniform bordered box reads as generated output, not an engineering tool.',
     ].join(' '),
     source: 'standards/layouts-and-recipes/dashboard-layouts.md',
   },
@@ -253,8 +347,8 @@ export const STANDARD_EXCERPTS: TaskDefinition['standardsExcerpts'] = [
     id: 'LAY-SHELL-001',
     title: 'Application shell and collapsible navigation',
     body: [
-      'The shell is a stable left primary navigation beside the working canvas — and the navigation pane is collapsible by default: a persistent, keyboard-accessible toggle at the rail edge switches it between the full pane and a compact rail (~56–64px).',
-      'Collapsed items keep an affordance (glyph or monogram), their accessible name (aria-label/title), visible focus, and the active indicator — collapse never costs state visibility. The preference persists across sessions, and the content grid reclaims the freed width.',
+      'The shell is a stable left primary navigation beside the working canvas: and the navigation pane is collapsible by default: a persistent, keyboard-accessible toggle at the rail edge switches it between the full pane and a compact rail (~56–64px).',
+      'Collapsed items keep an affordance (glyph or monogram), their accessible name (aria-label/title), visible focus, and the active indicator: collapse never costs state visibility. The preference persists across sessions, and the content grid reclaims the freed width.',
     ].join(' '),
     source: 'standards/layouts-and-recipes/application-shell.md + standards/components/navigation.md (CMP-NAV-PRIMARY, collapsed state)',
   },
@@ -274,7 +368,7 @@ export const STANDARD_EXCERPTS: TaskDefinition['standardsExcerpts'] = [
     body: [
       'Rows scan in one line, plus at most one muted meta line under the primary cell. Identifier, numeric, and date cells never wrap mid-value; long labels truncate to a single line with an ellipsis and expose the full value via title/tooltip.',
       'Budget columns to the space they actually get: merge secondary attributes (configuration, location, family) into the meta line of the primary cell, or defer them to a detail view; prefer horizontal scroll over wrapped cells. A lattice of 3–4-line wrapped rows means the table has too many columns for its container.',
-      'A multi-column table is the right text alternative for a chart only where it genuinely fits. In a narrow side rail, use a compact synced readout list instead — primary label (one line, ellipsized), the key value pair in mono figures, and a short text status — with the full table one view away. Never squeeze a miniature table into a rail to preserve a dashboard silhouette.',
+      'A multi-column table is the right text alternative for a chart only where it genuinely fits. In a narrow side rail, use a compact synced readout list instead: primary label (one line, ellipsized), the key value pair in mono figures, and a short text status: with the full table one view away. Never squeeze a miniature table into a rail to preserve a dashboard silhouette.',
     ].join(' '),
     source: 'standards/components/tables.md + standards/layouts-and-recipes/dashboard-layouts.md',
   },
@@ -283,9 +377,9 @@ export const STANDARD_EXCERPTS: TaskDefinition['standardsExcerpts'] = [
     title: 'Form and control craft',
     body: [
       'A form field is label + control + a persistent hint/error slot: the slot renders even when empty so sibling rows in a form grid always align; units belong in the label ("Aircraft weight (lb)"), never floating beside the control. Labels are 13px medium in `semantic.text.secondary`; hints 12px in `semantic.text.muted`; errors replace the hint in the same slot, text-first.',
-      'Controls are compact and token-styled — never default browser chrome: height `semantic.density.compact.controlHeight` (32px), background `semantic.surface.inset`, 1px `semantic.border.subtle` border, `semantic.radius.sm`, focus via the focus-ring tokens (no default outlines). Number inputs suppress native spinner chrome (`appearance: none`) unless purpose-built steppers are designed; numeric values may use the mono family with tabular figures. Selects share the input metrics with a drawn chevron.',
+      'Controls are compact and token-styled: never default browser chrome: height `semantic.density.compact.controlHeight` (32px), background `semantic.surface.inset`, 1px `semantic.border.subtle` border, `semantic.radius.sm`, focus via the focus-ring tokens (no default outlines). Number inputs suppress native spinner chrome (`appearance: none`) unless purpose-built steppers are designed; numeric values may use the mono family with tabular figures. Selects share the input metrics with a drawn chevron.',
       'Controls size to their expected content: numeric inputs around 10–14 characters wide, selects to their longest option, identifiers around 20 characters; only free-text names and notes span a column. Uniform full-width controls regardless of content read as generated output.',
-      'Forms beyond ~6 fields organize into labeled groups — a small uppercase group header over a hairline, related fields together in content-sized rows — and the grouped rows compose to fill the working width; never a narrow strip of stacked fields stranding the rest of the viewport. Use step indicators only for genuinely sequential flows with three or more gated phases. Empty states preserve the affected region and use a title, one hint line, and an optional action; they do not require a separate panel when the canvas already provides context.',
+      'Forms beyond ~6 fields organize into labeled groups: a small uppercase group header over a hairline, related fields together in content-sized rows: and the grouped rows compose to fill the working width; never a narrow strip of stacked fields stranding the rest of the viewport. Use step indicators only for genuinely sequential flows with three or more gated phases. Empty states preserve the affected region and use a title, one hint line, and an optional action; they do not require a separate panel when the canvas already provides context.',
     ].join(' '),
     source: 'standards/components/forms.md + standards/components/component-specs.md',
   },
@@ -293,9 +387,9 @@ export const STANDARD_EXCERPTS: TaskDefinition['standardsExcerpts'] = [
     id: 'CMP-VIZ-CHART-PANEL',
     title: 'Engineering chart craft',
     body: [
-      'Every chart is framed by a chart panel with title, data source or scope, units, legend, explicit state (empty/loading/error/stale), and a text summary or table fallback — the chart is never the only representation.',
+      'Every chart is framed by a chart panel with title, data source or scope, units, legend, explicit state (empty/loading/error/stale), and a text summary or table fallback: the chart is never the only representation.',
       'Axes: visible titles with units; ticks at round engineering steps (never raw data min/mid/max); gridlines at every major tick using `semantic.charts.grid`; axis text in `semantic.charts.axis`; tabular numerals.',
-      'Series: line charts only for x-ordered continuous data, always sorted by the x-value before drawing; discrete or unrelated records render as scatter points, never chained into a polyline in insertion order. A family of related cases (e.g. a parameter sweep) is one named series; standalone cases are individual points. Series colors come from `semantic.charts.series.*`; status-classified points (warning/danger) additionally carry a text label or legend entry — never color alone.',
+      'Series: line charts only for x-ordered continuous data, always sorted by the x-value before drawing; discrete or unrelated records render as scatter points, never chained into a polyline in insertion order. A family of related cases (e.g. a parameter sweep) is one named series; standalone cases are individual points. Series colors come from `semantic.charts.series.*`; status-classified points (warning/danger) additionally carry a text label or legend entry: never color alone.',
       'Readout: pair pointer hover with a crosshair rule and active-point halo in `semantic.charts.crosshair`, snap to the nearest point, and provide an equivalent keyboard path (arrow keys or focusable points) with a visible readout mirroring the exact values. The reference implementation is the bench-monitor trace chart.',
     ].join(' '),
     source: 'standards/components/data-visualization.md + standards/foundation/tokens.md',
@@ -307,8 +401,10 @@ export function buildRecommendedPrompt(input: {
   taskTitle: string
   goal: string
   uploadFiles: string[]
+  designPreferences?: FrontendDesignPreferences
   steLexicon?: SteLexicon
 }): string {
+  const designSystem = resolveFrontendDesignSystem(input.designPreferences)
   return withStePrompt([
     `You are implementing a focused UI transformation for \`${input.targetApplication}\`.`,
     '',
@@ -324,8 +420,8 @@ export function buildRecommendedPrompt(input: {
     '',
     '- Constrain changes to the expected files and task scope defined in the pack.',
     '- Preserve domain behavior and protected interactions.',
-    '- Implement dark-first styling with semantic tokens as CSS custom properties.',
-    '- Do not implement light mode.',
+    '- Apply the approved frontend design contract.',
+    buildFrontendDesignPrompt(designSystem),
     '- Return only `ui-overlay.zip` containing changed and new files with repo-relative paths.',
     '- Do not return a full repository, `.git` content, dependencies, build output, or secrets.',
     '- If requirements are missing or conflicting, report limitations instead of inventing them.',
@@ -434,14 +530,22 @@ export function buildTaskPacketMarkdown(input: {
 export function buildStandardPackMarkdown(input: {
   standardsVersion: string
   generatedAt: string
+  designPreferences?: FrontendDesignPreferences
   steLexicon?: SteLexicon
 }): string {
+  const designSystem = resolveFrontendDesignSystem(input.designPreferences)
+  const tokenRows = buildStandardTokenRows(input.designPreferences)
   const lines: string[] = [
     '# Standard Pack',
     '',
     `- standardsPackage: \`engineering-ui-kit-standards\``,
     `- standardsVersion: \`${input.standardsVersion}\``,
-    `- themePosture: \`dark-first\``,
+    `- themePosture: \`dual-mode\``,
+    `- designContract: \`${designSystem.contractId}\``,
+    `- palette: \`${designSystem.palette.name}\``,
+    `- font: \`${designSystem.typography.name}\``,
+    `- defaultMode: \`${designSystem.defaultMode}\``,
+    `- density: \`${designSystem.density}\``,
     `- generatedAt: \`${input.generatedAt}\``,
     '',
     '## Writing Policy',
@@ -458,6 +562,21 @@ export function buildStandardPackMarkdown(input: {
       'user interface',
     ], input.steLexicon)),
     '',
+    '## Design Contract',
+    '',
+    buildFrontendDesignPrompt(designSystem),
+    '',
+    '## Icon Guide',
+    '',
+    `- Family: \`${designSystem.icons.family}\`.`,
+    `- License: \`${designSystem.icons.license}\`.`,
+    `- Grid: \`${designSystem.icons.viewBox}\`.`,
+    `- Stroke: \`${designSystem.icons.strokeWidth}px\`.`,
+    `- Line cap: \`${designSystem.icons.lineCap}\`.`,
+    `- Line join: \`${designSystem.icons.lineJoin}\`.`,
+    `- Sizes: inline ${designSystem.icons.sizes.inline}px, control ${designSystem.icons.sizes.control}px, navigation ${designSystem.icons.sizes.navigation}px, feature ${designSystem.icons.sizes.feature}px.`,
+    `- Help icon: \`${designSystem.icons.helpIcon}\`.`,
+    '',
     '## Applicable Rule IDs',
     '',
     ...STANDARD_RULE_IDS.map((id) => `- \`${id}\``),
@@ -470,7 +589,7 @@ export function buildStandardPackMarkdown(input: {
     '',
     '| Token path | Resolved value | Required use |',
     '|---|---|---|',
-    ...STANDARD_TOKEN_ROWS.map((r) => `| \`${r.path}\` | \`${r.value}\` | ${r.requiredUse} |`),
+    ...tokenRows.map((r) => `| \`${r.path}\` | \`${r.value}\` | ${r.requiredUse} |`),
     '',
     '## Approved Guidance',
     '',
@@ -488,7 +607,7 @@ export function buildStandardPackMarkdown(input: {
     '',
   ]
   for (const excerpt of STANDARD_EXCERPTS) {
-    lines.push(`### ${excerpt.id} — ${excerpt.title}`, '', excerpt.body, '', `Source: \`${excerpt.source}\``, '')
+    lines.push(`### ${excerpt.id}: ${excerpt.title}`, '', excerpt.body, '', `Source: \`${excerpt.source}\``, '')
   }
   return lines.join('\n')
 }
@@ -529,7 +648,7 @@ export function buildReviewPacketMarkdown(input: {
     `You are reviewing implementation output for \`${input.targetApplication}\`.`,
     'Review only the provided changed files and evidence. Do not assume unstated repository changes.',
     'Classify each finding as blocker, warning, or note, with a corrective action.',
-    'Do not approve output that violates dark-first, token, scope, or protected-behavior rules.',
+    'Do not approve output that violates mode, token, icon, copy, scope, or protected-behavior rules.',
     '',
     '## Acceptance Criteria Under Review',
     '',

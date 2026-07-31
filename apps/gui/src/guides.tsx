@@ -342,7 +342,7 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
     steps: [
       { title: 'Create the handoff', body: 'Generate the product-interview files and open them in Copilot with the recommended prompt.' },
       { title: 'Send interview files', body: 'Attach the files in Copilot. Paste the prompt. Let Copilot draft the definition.' },
-      { title: 'Import the response', body: 'Bring the response file back. Review proposed and unresolved items — unresolved first.' },
+      { title: 'Import the response', body: 'Bring the response file back. Review proposed and unresolved items: unresolved first.' },
       { title: 'Approve', body: 'When the application plan is complete, approve it to unlock Design.' },
     ],
   },
@@ -397,7 +397,7 @@ const CAPABILITIES_TOPICS: GuideTopic[] = [
     blurb: 'When something changes, assess its impact, approve it, then work the affected modules one at a time. Each delta target must verify before the next unlocks.',
     art: <CapChangesArt />,
     steps: [
-      { title: 'Assess impact', body: 'Calculate which modules a change affects and which it does not — each with a reason.' },
+      { title: 'Assess impact', body: 'Calculate which modules a change affects and which it does not: each with a reason.' },
       { title: 'Approve impact', body: 'Review affected and unaffected capabilities. Then, approve the impact.' },
       { title: 'Process one target', body: 'The delta queue shows the provider-first order. Only the next target is available. Later targets stay locked.' },
       { title: 'Verify target', body: 'Export, apply, and verify each target before the next target becomes available.' },
@@ -426,7 +426,7 @@ export const GUIDE_TOPICS: GuideTopic[] = [
     blurb: 'A project is a repository and its running application. Configure it one time. Each handoff uses the same configuration.',
     art: <SetupArt />,
     steps: [
-      { title: 'Create the project', body: 'Projects → + New Project, point it at a React/Vite/TypeScript repo on disk. No repo handy? Use the built-in sample at examples/work-orders-monolith — a full multi-page work-order app made to be restyled.' },
+      { title: 'Create the project', body: 'Projects → + New Project, point it at a React/Vite/TypeScript repo on disk. No repo handy? Use the built-in sample at examples/work-orders-monolith: a full multi-page work-order app made to be restyled.' },
       { title: 'Set launch URL', body: 'Open Launch and evidence in Projects. Enter the URL for the development server. The Launch App button and evidence capture use this URL.' },
       { title: 'List target views', body: 'In the same dialog, add one line for each important view. The workbench captures these views before and after each handoff.' },
       { title: 'Start a handoff', body: 'Select Start handoff in the Hub. The stepper shows your position. Each step keeps its artifacts in the run folder.' },
@@ -468,7 +468,7 @@ export const GUIDE_TOPICS: GuideTopic[] = [
     steps: [
       { title: 'Hard blockers', body: 'Absolute paths, traversal, git metadata, dependency folders, secret-shaped files, and repo dumps are rejected outright (rules AI-HANDOFF-030…039). These can never be applied.' },
       { title: 'Review fidelity', body: 'Warning AI-HANDOFF-048 identifies lost icons, images, buttons, or inputs before the application writes a file.' },
-      { title: 'Accept knowingly', body: 'Warnings list every overwrite, config change, and asset addition. Applying requires ticking the acceptance box — and the applier only creates or overwrites files, never deletes.' },
+      { title: 'Accept knowingly', body: 'Warnings list every overwrite, config change, and asset addition. Applying requires ticking the acceptance box: and the applier only creates or overwrites files, never deletes.' },
     ],
   },
   {
@@ -480,7 +480,7 @@ export const GUIDE_TOPICS: GuideTopic[] = [
     art: <EvidenceArt />,
     steps: [
       { title: 'Run checks', body: 'Typecheck and build use the project commands. The application saves the output in the run folder.' },
-      { title: 'Capture After', body: 'The same target views are screenshotted again. Any rendered element loss against the baseline is badged per view — this is what catches "the icons disappeared".' },
+      { title: 'Capture After', body: 'The same target views are screenshotted again. Any rendered element loss against the baseline is badged per view: this is what catches "the icons disappeared".' },
       { title: 'Create review packet', body: 'One action creates review-packet.md, review-evidence.pdf, and changes.zip. A reviewer can assess these three files without repository access.' },
       { title: 'Approve result', body: 'Approve the result when it is correct. Add feedback when it needs more work. Then, create a new task packet.' },
     ],

@@ -1,6 +1,6 @@
 /**
  * HTTP inbound-binding editor (CAP-CONTRACT-028 `http` variant, CAP-ERA-001 §12.4).
- * Surfaces only the fields that are genuinely ambiguous — method and path;
+ * Surfaces only the fields that are genuinely ambiguous: method and path;
  * every behavior field is pre-filled with a sensible default.
  */
 

@@ -40,7 +40,7 @@
       "enum": [
         "Pass",
         "Pass with minor corrections",
-        "Fail \u2014 restructure required"
+        "Fail: restructure required"
       ]
     }
   },

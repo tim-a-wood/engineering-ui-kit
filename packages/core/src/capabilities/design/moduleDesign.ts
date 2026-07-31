@@ -1,5 +1,5 @@
 /**
- * EUC-04 — Module-design core.
+ * EUC-04: Module-design core.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §3, §5, §9,
  * §16.1-16.5, §18.1, §24.1, §25.3 (EUC-04).
@@ -187,7 +187,7 @@ function emptyPlatformDetail(): PlatformModuleDetail {
   }
 }
 
-/** §9.6 — an empty (all-fields-blank) detail block for the applicable type. */
+/** §9.6: an empty (all-fields-blank) detail block for the applicable type. */
 export function emptyTypeSpecificDetail(moduleType: ModuleType): TypeSpecificDetail {
   switch (moduleType) {
     case 'experience':
@@ -390,7 +390,7 @@ export type UpdateModuleDesignItemResult = {
 
 /**
  * Pure field update that returns a new draft revision. Never mutates
- * `design`. Rejects updates to an approved record — the caller must
+ * `design`. Rejects updates to an approved record: the caller must
  * `reopenModuleDesign` first (§9.11).
  */
 export function updateModuleDesignItem(
@@ -516,7 +516,7 @@ const PLATFORM_FIELDS: (keyof PlatformModuleDetail)[] = [
   'testImplementation',
 ]
 
-/** §9.6 — the field names of the applicable `TypeSpecificDetail` block. */
+/** §9.6: the field names of the applicable `TypeSpecificDetail` block. */
 export function requiredTypeSpecificFields(moduleType: ModuleType): string[] {
   switch (moduleType) {
     case 'experience':
@@ -538,7 +538,7 @@ function isEmptyDetailValue(value: unknown): boolean {
   return value === undefined || value === null
 }
 
-/** §9.6 — diagnostics for each missing applicable type-specific field. */
+/** §9.6: diagnostics for each missing applicable type-specific field. */
 export function evaluateTypeSpecificCompleteness(design: ModuleDesignSpecification): DesignDiagnostic[] {
   const fields = requiredTypeSpecificFields(design.module.moduleType)
   const detail = design.typeSpecific.detail as unknown as Record<string, unknown>
@@ -608,7 +608,7 @@ export function toGateResult(evaluation: ModuleDesignCheckEvaluation): GateResul
   }
 }
 
-/** §9.9 — every blocking and warning module-design check. */
+/** §9.9: every blocking and warning module-design check. */
 export function evaluateModuleDesignChecks(
   design: ModuleDesignSpecification,
   context: ModuleDesignCheckContext = {},
@@ -794,7 +794,7 @@ export function evaluateModuleDesignChecks(
   }
 
   // an owned path overlaps another module (§9.9; overlap is containment-aware,
-  // not exact string equality — see identity.ts `ownedPathsOverlap`)
+  // not exact string equality: see identity.ts `ownedPathsOverlap`)
   for (const other of otherDesigns) {
     if (other.module.moduleId === moduleId) continue
     for (const path of design.boundary.ownedPaths) {
@@ -849,7 +849,7 @@ export function evaluateModuleDesignChecks(
     )
   }
 
-  // UML semantic validation failure hook — pluggable diagramDiagnostics input
+  // UML semantic validation failure hook: pluggable diagramDiagnostics input
   for (const diagram of context.diagramDiagnostics ?? []) {
     if (diagram.severity === 'blocker') blockers.push(diagram)
     else if (diagram.severity === 'warning') warnings.push(diagram)
@@ -904,7 +904,7 @@ export function evaluateModuleDesignChecks(
 
 /**
  * Runs §9.9 checks and recomputes `status`/`gates` (the "Run checks" step,
- * §9.3 step 5). Not valid on an approved design — reopen it first.
+ * §9.3 step 5). Not valid on an approved design: reopen it first.
  */
 export function applyModuleDesignChecks(
   design: ModuleDesignSpecification,
@@ -950,7 +950,7 @@ export function approveModuleDesign(
   approval: ApproveModuleDesignInput,
   context: ModuleDesignCheckContext = {},
 ): ApproveModuleDesignResult {
-  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // §4, §17.3 (second-review finding: self-asserted approval identity):
   // case-insensitive after trim, and rejects a `service:` actor the same as
   // an `agent:` actor.
   if (isNonHumanActor(approval.approvedBy)) {
@@ -1077,7 +1077,7 @@ export type UpstreamChange = {
   description: string
 }
 
-/** §5.2 / §9.11 — marks a design stale because an upstream approved record changed. Approval history is preserved. */
+/** §5.2 / §9.11: marks a design stale because an upstream approved record changed. Approval history is preserved. */
 export function markStale(design: ModuleDesignSpecification, upstreamChange: UpstreamChange): ModuleDesignSpecification {
   const item: UnresolvedDesignItem = {
     id: childId(design.id, 'stale', `${upstreamChange.recordId}-${upstreamChange.toRevision}`),
@@ -1100,7 +1100,7 @@ export function staleUpstreamChanges(design: ModuleDesignSpecification): Unresol
 
 export type ConflictInfo = { description: string; conflictingRecordIds: string[] }
 
-/** §5.2 — two requirements or decisions cannot both apply. */
+/** §5.2: two requirements or decisions cannot both apply. */
 export function markConflict(design: ModuleDesignSpecification, conflict: ConflictInfo): ModuleDesignSpecification {
   const item: UnresolvedDesignItem = {
     id: childId(design.id, 'conflict', conflict.description),
@@ -1117,7 +1117,7 @@ export function markConflict(design: ModuleDesignSpecification, conflict: Confli
 
 export type WithdrawInfo = { by: string; at: string; reason: string }
 
-/** §5.2 — an authorized user stopped work on this draft. */
+/** §5.2: an authorized user stopped work on this draft. */
 export function withdraw(design: ModuleDesignSpecification, info: WithdrawInfo): ModuleDesignSpecification {
   const item: UnresolvedDesignItem = {
     id: childId(design.id, 'withdrawn', `${info.by}-${info.at}`),
@@ -1187,7 +1187,7 @@ function progressValidNextActions(state: ModuleDesignProgressEntry['state'], blo
   }
 }
 
-/** §16.5 — module queue and progress read model, combining architecture, designs, and sessions. */
+/** §16.5: module queue and progress read model, combining architecture, designs, and sessions. */
 export function computeModuleDesignProgress(
   architecture: ArchitectureSpecification,
   designs: ModuleDesignSpecification[],
@@ -1283,7 +1283,7 @@ export type ModuleQueueFilter =
   | 'old'
   | 'blocked'
 
-/** §9.2 — module queue filters. `old` is an alias for the `stale` state. */
+/** §9.2: module queue filters. `old` is an alias for the `stale` state. */
 export function filterModuleQueue(progress: ModuleDesignProgress, filter: ModuleQueueFilter): ModuleDesignProgressEntry[] {
   if (filter === 'all') return progress.modules
   if (filter === 'old') return progress.modules.filter((entry) => entry.state === 'stale')
@@ -1291,7 +1291,7 @@ export function filterModuleQueue(progress: ModuleDesignProgress, filter: Module
 }
 
 /**
- * §9.2 — default module selection: 1) the canvas selection, 2) the first
+ * §9.2: default module selection: 1) the canvas selection, 2) the first
  * incomplete dependency, 3) the first incomplete module in stable sort
  * order, 4) the first approved module.
  */

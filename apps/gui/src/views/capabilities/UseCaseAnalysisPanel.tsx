@@ -640,7 +640,7 @@ export function UseCaseAnalysisPanel({ specification, approved, steLexicon, onSa
           <ul>
             {evaluation.diagnostics.map((diagnostic, index) => (
               <li key={`${diagnostic.code}-${diagnostic.fieldPath}-${index}`}>
-                {diagnostic.message}{diagnostic.fieldPath ? ` — ${diagnostic.fieldPath}` : ''}
+                {diagnostic.message}{diagnostic.fieldPath ? `: ${diagnostic.fieldPath}` : ''}
               </li>
             ))}
           </ul>
@@ -653,7 +653,7 @@ export function UseCaseAnalysisPanel({ specification, approved, steLexicon, onSa
           <ul>
             {steEvaluation.diagnostics.map((item, index) => (
               <li key={`${item.code}-${item.fieldPath}-${index}`}>
-                {item.message}{item.fieldPath ? ` — ${item.fieldPath}` : ''}
+                {item.message}{item.fieldPath ? `: ${item.fieldPath}` : ''}
               </li>
             ))}
           </ul>
@@ -666,7 +666,7 @@ export function UseCaseAnalysisPanel({ specification, approved, steLexicon, onSa
           <ul>
             {steEvaluation.reviewDiagnostics.map((item, index) => (
               <li key={`${item.code}-${item.fieldPath}-${index}`}>
-                {item.message}{item.fieldPath ? ` — ${item.fieldPath}` : ''}
+                {item.message}{item.fieldPath ? `: ${item.fieldPath}` : ''}
               </li>
             ))}
           </ul>

@@ -83,7 +83,7 @@ Fields shall have accessible names, linked descriptions and errors, keyboard ope
 - Invisible validation that appears only after export fails.
 
 
-## CMP-FORM-FIELD — Form Field
+## CMP-FORM-FIELD: Form Field
 
 ### Purpose
 CMP-FORM-FIELD defines a label, description, control, error, and helper-text wrapper. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -125,17 +125,17 @@ Compliant use: `Form Field` appears in a dark engineering panel, uses manifest I
 Non-compliant use: `Form Field` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FORM-FIELD` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FORM-FIELD` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FORM-FIELD` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FORM-TEXT-INPUT — Text Input
+## CMP-FORM-TEXT-INPUT: Text Input
 
 ### Purpose
 CMP-FORM-TEXT-INPUT defines single-line text entry. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -177,17 +177,17 @@ Compliant use: `Text Input` appears in a dark engineering panel, uses manifest I
 Non-compliant use: `Text Input` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FORM-TEXT-INPUT` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FORM-TEXT-INPUT` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FORM-TEXT-INPUT` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FORM-NUMBER-INPUT — Number Input
+## CMP-FORM-NUMBER-INPUT: Number Input
 
 ### Purpose
 CMP-FORM-NUMBER-INPUT defines numeric entry with validation and formatting expectations. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -229,17 +229,17 @@ Compliant use: `Number Input` appears in a dark engineering panel, uses manifest
 Non-compliant use: `Number Input` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FORM-NUMBER-INPUT` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FORM-NUMBER-INPUT` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FORM-NUMBER-INPUT` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: partially-observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: partially-observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FORM-SELECT — Select
+## CMP-FORM-SELECT: Select
 
 ### Purpose
 CMP-FORM-SELECT defines selection from a constrained list of values. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -281,17 +281,17 @@ Compliant use: `Select` appears in a dark engineering panel, uses manifest ID `C
 Non-compliant use: `Select` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FORM-SELECT` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FORM-SELECT` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FORM-SELECT` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FORM-COMBOBOX — Combobox
+## CMP-FORM-COMBOBOX: Combobox
 
 ### Purpose
 CMP-FORM-COMBOBOX defines searchable selection for long or dynamic option lists. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -333,17 +333,17 @@ Compliant use: `Combobox` appears in a dark engineering panel, uses manifest ID 
 Non-compliant use: `Combobox` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FORM-COMBOBOX` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FORM-COMBOBOX` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FORM-COMBOBOX` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: reference-backed-standard, inferred-engineering-need.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: reference-backed-standard, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FORM-TEXTAREA — Textarea
+## CMP-FORM-TEXTAREA: Textarea
 
 ### Purpose
 CMP-FORM-TEXTAREA defines multi-line free-text entry for notes, comments, and descriptions. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -385,17 +385,17 @@ Compliant use: `Textarea` appears in a dark engineering panel, uses manifest ID 
 Non-compliant use: `Textarea` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FORM-TEXTAREA` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FORM-TEXTAREA` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FORM-TEXTAREA` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: reference-backed-standard, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: reference-backed-standard, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FORM-CHECKBOX — Checkbox
+## CMP-FORM-CHECKBOX: Checkbox
 
 ### Purpose
 CMP-FORM-CHECKBOX defines binary or multi-select boolean selection. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -437,17 +437,17 @@ Compliant use: `Checkbox` appears in a dark engineering panel, uses manifest ID 
 Non-compliant use: `Checkbox` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FORM-CHECKBOX` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FORM-CHECKBOX` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FORM-CHECKBOX` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: reference-backed-standard, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: reference-backed-standard, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FORM-RADIO-GROUP — Radio Group
+## CMP-FORM-RADIO-GROUP: Radio Group
 
 ### Purpose
 CMP-FORM-RADIO-GROUP defines exclusive selection from a small set of choices. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -489,17 +489,17 @@ Compliant use: `Radio Group` appears in a dark engineering panel, uses manifest 
 Non-compliant use: `Radio Group` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FORM-RADIO-GROUP` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FORM-RADIO-GROUP` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FORM-RADIO-GROUP` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: reference-backed-standard.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FORM-SWITCH — Switch
+## CMP-FORM-SWITCH: Switch
 
 ### Purpose
 CMP-FORM-SWITCH defines immediate binary setting toggle. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -541,17 +541,17 @@ Compliant use: `Switch` appears in a dark engineering panel, uses manifest ID `C
 Non-compliant use: `Switch` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FORM-SWITCH` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FORM-SWITCH` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FORM-SWITCH` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: reference-backed-standard.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FORM-DATE-TIME-INPUT — Date Time Input
+## CMP-FORM-DATE-TIME-INPUT: Date Time Input
 
 ### Purpose
 CMP-FORM-DATE-TIME-INPUT defines date, time, or timestamp entry for engineering records and filters. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -593,17 +593,17 @@ Compliant use: `Date Time Input` appears in a dark engineering panel, uses manif
 Non-compliant use: `Date Time Input` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FORM-DATE-TIME-INPUT` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FORM-DATE-TIME-INPUT` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FORM-DATE-TIME-INPUT` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: reference-backed-standard, inferred-engineering-need.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: reference-backed-standard, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FORM-FILE-DROPZONE — File Dropzone
+## CMP-FORM-FILE-DROPZONE: File Dropzone
 
 ### Purpose
 CMP-FORM-FILE-DROPZONE defines drag-and-drop or browse file intake for artifacts and imports. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -645,17 +645,17 @@ Compliant use: `File Dropzone` appears in a dark engineering panel, uses manifes
 Non-compliant use: `File Dropzone` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FORM-FILE-DROPZONE` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FORM-FILE-DROPZONE` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FORM-FILE-DROPZONE` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: prd-required, inferred-engineering-need.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: prd-required, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FILTER-SEARCH-FIELD — Search Field
+## CMP-FILTER-SEARCH-FIELD: Search Field
 
 ### Purpose
 CMP-FILTER-SEARCH-FIELD defines keyword filtering across tables, artifacts, and records. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -697,17 +697,17 @@ Compliant use: `Search Field` appears in a dark engineering panel, uses manifest
 Non-compliant use: `Search Field` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FILTER-SEARCH-FIELD` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FILTER-SEARCH-FIELD` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FILTER-SEARCH-FIELD` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FILTER-BAR — Filter Bar
+## CMP-FILTER-BAR: Filter Bar
 
 ### Purpose
 CMP-FILTER-BAR defines a compact control region for filtering high-density datasets. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -749,17 +749,17 @@ Compliant use: `Filter Bar` appears in a dark engineering panel, uses manifest I
 Non-compliant use: `Filter Bar` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FILTER-BAR` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FILTER-BAR` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FILTER-BAR` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FILTER-CHIP — Filter Chip
+## CMP-FILTER-CHIP: Filter Chip
 
 ### Purpose
 CMP-FILTER-CHIP defines a compact representation of an active filter. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -801,11 +801,11 @@ Compliant use: `Filter Chip` appears in a dark engineering panel, uses manifest 
 Non-compliant use: `Filter Chip` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FILTER-CHIP` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FILTER-CHIP` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FILTER-CHIP` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.

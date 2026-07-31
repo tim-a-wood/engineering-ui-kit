@@ -1,17 +1,17 @@
 /**
- * CAP-PKT-020/021/022 — Real production MATLAB adapter (CAP-DEC-012 / CAP-DEC-013).
+ * CAP-PKT-020/021/022: Real production MATLAB adapter (CAP-DEC-012 / CAP-DEC-013).
  *
  * The desktop (Node) process owns the MATLAB Engine API boundary. This module
  * spawns a Python worker (`matlab_bridge.py`, using `matlab.engine`) as a child
  * process and talks to it over newline-delimited JSON on stdio. The renderer
- * never receives an engine handle — it only ever sees serializable result
+ * never receives an engine handle: it only ever sees serializable result
  * envelopes produced here.
  *
  * The adapter logic (per-project serialization, allowlists, value validation,
  * snapshots, health/crash state, envelopes) is worker-agnostic. Two workers
  * implement the same private protocol:
- *   - RealMatlabWorker  — spawns matlab_bridge.py; used when the Engine is present.
- *   - FakeMatlabWorker   — deterministic in-process emulator; used under
+ *   - RealMatlabWorker: spawns matlab_bridge.py; used when the Engine is present.
+ *   - FakeMatlabWorker: deterministic in-process emulator; used under
  *                          EUIK_TEST_MODE=1 or whenever discovery genuinely fails.
  * Because both share one code path, the real implementation stays present and
  * reachable while the fake path keeps tests hermetic with no MATLAB installed.
@@ -47,7 +47,7 @@ const SNAPSHOT_SCHEMA_VERSION = '1.0' as const
 
 export type MatlabToolboxReadiness = { name: string; ready: boolean }
 
-/** CAP-CONTRACT-019 — carries no engine handle. */
+/** CAP-CONTRACT-019: carries no engine handle. */
 export type MatlabSessionRecord = {
   schemaVersion: '1.0'
   projectId: string
@@ -78,7 +78,7 @@ export type MatlabDiscovery = {
 export type MatlabAllowlist = {
   /** Approved named functions callable via callFunction. */
   functions?: readonly string[]
-  /** Approved scripts by id — the adapter never runs raw script text. */
+  /** Approved scripts by id: the adapter never runs raw script text. */
   scripts?: Readonly<Record<string, string>>
   /** Allowlisted expression shape; defaults to arithmetic-only. */
   expression?: RegExp
@@ -383,7 +383,7 @@ class FakeMatlabWorker implements MatlabWorker {
     }
   }
 
-  /** Safe arithmetic evaluator — no JS eval. Supports + - * / ( ) and scalar vars. */
+  /** Safe arithmetic evaluator: no JS eval. Supports + - * / ( ) and scalar vars. */
   private evalArithmetic(expression: string): number {
     const tokens = expression.match(/\d+\.?\d*|[a-zA-Z_]\w*|[+\-*/()]/g) ?? []
     let pos = 0
@@ -478,7 +478,7 @@ function flatten(value: unknown): number[] {
 }
 
 // ---------------------------------------------------------------------------
-// Value validation — supported types only, never silently stringified.
+// Value validation: supported types only, never silently stringified.
 // ---------------------------------------------------------------------------
 
 function assertSupportedValue(value: unknown, pathLabel = 'value'): void {

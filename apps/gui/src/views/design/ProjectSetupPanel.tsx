@@ -1,16 +1,16 @@
 /**
- * §4, §17.3, §20.2, §25.3 — project setup panel, `project` mode only.
+ * §4, §17.3, §20.2, §25.3: project setup panel, `project` mode only.
  *
  * Second-review P1 finding: "the GUI routes configured projects through the
  * bridge, but nothing configures the repository adapter or project roles."
  * This panel is the fix: it shows and configures the project's real
  * repository root (`adapter:configureProjectRepository` /
- * `adapter:getProjectRepository` — shipped, see `designIpc.ts`), shows the
+ * `adapter:getProjectRepository`: shipped, see `designIpc.ts`), shows the
  * real session principal (`adapter:getPrincipal`), and grants the full §4
  * authority list to that principal (`adapter:configureProjectRoles`). The
  * latter two operation names are reserved in `ADAPTER_OPERATIONS`
  * (`apps/desktop/src/capabilities/designBridge.ts`) but not implemented in
- * `designIpc.ts` as of this packet — every read/action below degrades to an
+ * `designIpc.ts` as of this packet: every read/action below degrades to an
  * honest "requires a newer desktop build" message on the adapter's
  * `EUC16-UNKNOWN-OPERATION` response instead of failing silently or
  * pretending to succeed (see `designState.ts` `readPrincipal` /
@@ -34,7 +34,7 @@ export function ProjectSetupPanel(props: ProjectSetupPanelProps) {
   useEffect(() => {
     void store.loadProjectSetup()
     // Reload once per mounted panel instance (e.g. every time the user opens
-    // the Setup tab) — never on every render.
+    // the Setup tab): never on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store])
 

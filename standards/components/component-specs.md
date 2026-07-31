@@ -71,7 +71,7 @@ Reserved components keep IDs stable but shall not be implemented as finalized co
 - Reserved components remain marked as reserved.
 
 
-## CMP-SURFACE-PANEL — Panel
+## CMP-SURFACE-PANEL: Panel
 
 ### Purpose
 CMP-SURFACE-PANEL defines a default bounded container for related engineering UI content. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -113,17 +113,17 @@ Compliant use: `Panel` appears in a dark engineering panel, uses manifest ID `CM
 Non-compliant use: `Panel` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-SURFACE-PANEL` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-SURFACE-PANEL` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-SURFACE-PANEL` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-SURFACE-RAISED-CARD — Raised Card
+## CMP-SURFACE-RAISED-CARD: Raised Card
 
 ### Purpose
 CMP-SURFACE-RAISED-CARD defines a higher-emphasis surface for metrics, summaries, or selected records. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -165,17 +165,17 @@ Compliant use: `Raised Card` appears in a dark engineering panel, uses manifest 
 Non-compliant use: `Raised Card` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-SURFACE-RAISED-CARD` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-SURFACE-RAISED-CARD` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-SURFACE-RAISED-CARD` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-SURFACE-INSET-PANEL — Inset Panel
+## CMP-SURFACE-INSET-PANEL: Inset Panel
 
 ### Purpose
 CMP-SURFACE-INSET-PANEL defines a recessed container nested inside a parent panel. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -217,17 +217,17 @@ Compliant use: `Inset Panel` appears in a dark engineering panel, uses manifest 
 Non-compliant use: `Inset Panel` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-SURFACE-INSET-PANEL` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-SURFACE-INSET-PANEL` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-SURFACE-INSET-PANEL` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-LAYOUT-SECTION-HEADER — Section Header
+## CMP-LAYOUT-SECTION-HEADER: Section Header
 
 ### Purpose
 CMP-LAYOUT-SECTION-HEADER defines a labeled divider for major page or panel sections. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -269,17 +269,17 @@ Compliant use: `Section Header` appears in a dark engineering panel, uses manife
 Non-compliant use: `Section Header` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-LAYOUT-SECTION-HEADER` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-LAYOUT-SECTION-HEADER` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-LAYOUT-SECTION-HEADER` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-LAYOUT-TOOLBAR — Toolbar
+## CMP-LAYOUT-TOOLBAR: Toolbar
 
 ### Purpose
 CMP-LAYOUT-TOOLBAR defines a compact horizontal region for controls that affect a nearby panel or table. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -321,17 +321,17 @@ Compliant use: `Toolbar` appears in a dark engineering panel, uses manifest ID `
 Non-compliant use: `Toolbar` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-LAYOUT-TOOLBAR` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-LAYOUT-TOOLBAR` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-LAYOUT-TOOLBAR` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-LAYOUT-SPLIT-PANEL — Split Panel
+## CMP-LAYOUT-SPLIT-PANEL: Split Panel
 
 ### Purpose
 CMP-LAYOUT-SPLIT-PANEL defines side-by-side regions for comparing lists, details, artifacts, or evidence. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -373,17 +373,17 @@ Compliant use: `Split Panel` appears in a dark engineering panel, uses manifest 
 Non-compliant use: `Split Panel` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-LAYOUT-SPLIT-PANEL` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-LAYOUT-SPLIT-PANEL` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-LAYOUT-SPLIT-PANEL` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: partially-observed-in-mockups, inferred-engineering-need.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: partially-observed-in-mockups, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-LAYOUT-RESIZABLE-PANEL — Resizable Panel
+## CMP-LAYOUT-RESIZABLE-PANEL: Resizable Panel
 
 ### Purpose
 CMP-LAYOUT-RESIZABLE-PANEL is reserved for adjustable regions for dense technical review workflows. It exists for ID stability and future planning, not as a fully validated Phase 3 standard.
@@ -433,7 +433,7 @@ Implementation agents shall preserve the ID but shall not generate a production 
 - Confirm no app feature is added solely to justify the reserved component.
 
 
-## CMP-LAYOUT-DASHBOARD-GRID — Dashboard Grid
+## CMP-LAYOUT-DASHBOARD-GRID: Dashboard Grid
 
 ### Purpose
 CMP-LAYOUT-DASHBOARD-GRID defines a responsive grid for metrics, charts, summaries, and status panels. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -475,17 +475,17 @@ Compliant use: `Dashboard Grid` appears in a dark engineering panel, uses manife
 Non-compliant use: `Dashboard Grid` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-LAYOUT-DASHBOARD-GRID` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-LAYOUT-DASHBOARD-GRID` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-LAYOUT-DASHBOARD-GRID` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-LAYOUT-DETAIL — Detail Layout
+## CMP-LAYOUT-DETAIL: Detail Layout
 
 ### Purpose
 CMP-LAYOUT-DETAIL defines a structured detail page composition with summary, metadata, tabs, and related panels. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -527,17 +527,17 @@ Compliant use: `Detail Layout` appears in a dark engineering panel, uses manifes
 Non-compliant use: `Detail Layout` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-LAYOUT-DETAIL` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-LAYOUT-DETAIL` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-LAYOUT-DETAIL` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: partially-observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: partially-observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-ENG-ARTIFACT-TREE — Artifact Tree
+## CMP-ENG-ARTIFACT-TREE: Artifact Tree
 
 ### Purpose
 CMP-ENG-ARTIFACT-TREE defines hierarchical browsing of project, package, file, or evidence artifacts. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -579,17 +579,17 @@ Compliant use: `Artifact Tree` appears in a dark engineering panel, uses manifes
 Non-compliant use: `Artifact Tree` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-ENG-ARTIFACT-TREE` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-ENG-ARTIFACT-TREE` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-ENG-ARTIFACT-TREE` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: prd-required, inferred-engineering-need.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: prd-required, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-ENG-TRACE-MATRIX — Traceability Matrix
+## CMP-ENG-TRACE-MATRIX: Traceability Matrix
 
 ### Purpose
 CMP-ENG-TRACE-MATRIX is reserved for matrix view connecting requirements, tests, evidence, and outcomes. It exists for ID stability and future planning, not as a fully validated Phase 3 standard.
@@ -639,7 +639,7 @@ Implementation agents shall preserve the ID but shall not generate a production 
 - Confirm no app feature is added solely to justify the reserved component.
 
 
-## CMP-ENG-EVIDENCE-CARD — Evidence Card
+## CMP-ENG-EVIDENCE-CARD: Evidence Card
 
 ### Purpose
 CMP-ENG-EVIDENCE-CARD defines summary card for generated evidence, attachments, validation outcome, and review state. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -681,17 +681,17 @@ Compliant use: `Evidence Card` appears in a dark engineering panel, uses manifes
 Non-compliant use: `Evidence Card` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-ENG-EVIDENCE-CARD` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-ENG-EVIDENCE-CARD` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-ENG-EVIDENCE-CARD` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: prd-required, inferred-engineering-need.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: prd-required, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-ENG-REQUIREMENT-LINK — Requirement Link
+## CMP-ENG-REQUIREMENT-LINK: Requirement Link
 
 ### Purpose
 CMP-ENG-REQUIREMENT-LINK defines linked reference to a requirement, design item, test, or evidence artifact. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -733,17 +733,17 @@ Compliant use: `Requirement Link` appears in a dark engineering panel, uses mani
 Non-compliant use: `Requirement Link` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-ENG-REQUIREMENT-LINK` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-ENG-REQUIREMENT-LINK` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-ENG-REQUIREMENT-LINK` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: prd-required, inferred-engineering-need.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: prd-required, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-ENG-RUN-TEST-RESULT-SUMMARY — Run Test Result Summary
+## CMP-ENG-RUN-TEST-RESULT-SUMMARY: Run Test Result Summary
 
 ### Purpose
 CMP-ENG-RUN-TEST-RESULT-SUMMARY defines compact pass, fail, warning, not-run, and coverage summary for execution results. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -785,17 +785,17 @@ Compliant use: `Run Test Result Summary` appears in a dark engineering panel, us
 Non-compliant use: `Run Test Result Summary` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-ENG-RUN-TEST-RESULT-SUMMARY` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-ENG-RUN-TEST-RESULT-SUMMARY` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-ENG-RUN-TEST-RESULT-SUMMARY` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: prd-required, observed-in-mockups.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: prd-required, observed-in-mockups.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-ENG-DIFF-VIEWER — Diff Viewer
+## CMP-ENG-DIFF-VIEWER: Diff Viewer
 
 ### Purpose
 CMP-ENG-DIFF-VIEWER is reserved for side-by-side or inline comparison of technical text, generated output, or configuration. It exists for ID stability and future planning, not as a fully validated Phase 3 standard.
@@ -845,7 +845,7 @@ Implementation agents shall preserve the ID but shall not generate a production 
 - Confirm no app feature is added solely to justify the reserved component.
 
 
-## CMP-ENG-LOG-VIEWER — Log Viewer
+## CMP-ENG-LOG-VIEWER: Log Viewer
 
 ### Purpose
 CMP-ENG-LOG-VIEWER defines scrollable technical log output with severity, timestamp, and filtering support. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -887,17 +887,17 @@ Compliant use: `Log Viewer` appears in a dark engineering panel, uses manifest I
 Non-compliant use: `Log Viewer` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-ENG-LOG-VIEWER` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-ENG-LOG-VIEWER` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-ENG-LOG-VIEWER` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: prd-required, inferred-engineering-need.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: prd-required, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-ENG-CODE-BLOCK — Code Block
+## CMP-ENG-CODE-BLOCK: Code Block
 
 ### Purpose
 CMP-ENG-CODE-BLOCK defines monospaced display of commands, IDs, paths, snippets, and structured text. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -939,11 +939,11 @@ Compliant use: `Code Block` appears in a dark engineering panel, uses manifest I
 Non-compliant use: `Code Block` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-ENG-CODE-BLOCK` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-ENG-CODE-BLOCK` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-ENG-CODE-BLOCK` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: reference-backed-standard, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: reference-backed-standard, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.

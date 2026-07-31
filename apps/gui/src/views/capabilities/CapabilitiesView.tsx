@@ -5,7 +5,7 @@
  * four-step journey (Plan → Design → Build → Verify) and gates
  * locked stages so impossible downstream workflows can never be opened. Design
  * exposes the same records as the five canonical areas. No projection
- * or stepper state is persisted (CAP-DEC-001/002) — the journey is derived on
+ * or stepper state is persisted (CAP-DEC-001/002): the journey is derived on
  * every render from canonical records.
  */
 
@@ -343,7 +343,7 @@ export function CapabilitiesView({
     }
   }, [viewing, projection, guidedPanel, projectId, loadState])
 
-  /** Background refresh after a child mutation — gen-guarded so it cannot clobber a switch. */
+  /** Background refresh after a child mutation: gen-guarded so it cannot clobber a switch. */
   const refresh = useCallback(async () => {
     const expectedProjectId = projectId
     if (!expectedProjectId || expectedProjectId !== activeProjectRef.current) return
@@ -381,7 +381,7 @@ export function CapabilitiesView({
   const applicationSpec = (application.approved ?? application.draft) as ApplicationSpecification | undefined
   const requireModuleDesigns = Boolean(applicationSpec?.useCaseDefinitions?.length)
 
-  /** WP5A bullet (d) — blocks the module implementation/From-spec-Build handoff until an approved, non-stale foundation exists. */
+  /** WP5A bullet (d): blocks the module implementation/From-spec-Build handoff until an approved, non-stale foundation exists. */
   const foundationGate = useMemo(() => {
     if (!approvedArchSpec) {
       return { enabled: false, reason: 'Architecture must be approved before the foundation can be planned.' }

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://engineering-ui-kit/standards/schemas/capabilities/module-implementation-specification.schema.json",
   "title": "ModuleImplementationSpecification",
-  "description": "CAP-CONTRACT-031 — canonical, implementation-ready module specification.",
+  "description": "CAP-CONTRACT-031: canonical, implementation-ready module specification.",
   "type": "object",
   "additionalProperties": false,
   "required": [

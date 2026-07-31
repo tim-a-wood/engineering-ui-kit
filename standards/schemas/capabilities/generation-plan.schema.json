@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://engineering-ui-kit/standards/schemas/capabilities/generation-plan.schema.json",
   "title": "GenerationPlan",
-  "description": "CAP-CONTRACT-025 — deterministic generation plan.",
+  "description": "CAP-CONTRACT-025: deterministic generation plan.",
   "type": "object",
   "additionalProperties": false,
   "required": [

@@ -8,7 +8,7 @@ Split-panel recipes support list/detail and compare/review workflows.
 
 Use split panels for artifact browsing, component inspection, standards review, generated output comparison, and evidence inspection.
 
-## RCP-SPLIT-001 — List/detail split panel
+## RCP-SPLIT-001: List/detail split panel
 
 ### Purpose
 Show a selectable collection and the details for the selected item in one workflow.
@@ -67,7 +67,7 @@ Do not add resizable behavior unless validated. Use fixed or responsive panels f
 - Empty and error states scoped.
 - Resizable behavior not assumed unless validated.
 
-## RCP-SPLIT-002 — Compare/review split panel
+## RCP-SPLIT-002: Compare/review split panel
 
 ### Purpose
 Show source and generated/reviewed content side by side.

@@ -28,9 +28,9 @@ export function ProjectsView(props: {
   const [page, setPage] = useState(1)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [launchUrlProject, setLaunchUrlProject] = useState<Project | null>(null)
-  // Null until an action produces feedback — no filler status banner.
+  // Null until an action produces feedback: no filler status banner.
   const [status, setStatus] = useState<Status | null>(null)
-  // Projects with an open run resume at their persisted step — label them so.
+  // Projects with an open run resume at their persisted step: label them so.
   const [openProjects, setOpenProjects] = useState<Set<string>>(new Set())
   useEffect(() => {
     let cancelled = false
@@ -224,7 +224,7 @@ export function ProjectsView(props: {
                                 setStatus({ tone: 'info', text: `Opening ${project.name}…` })
                                 try {
                                   const result = await props.bridge.launchApp(project.id)
-                                  setStatus({ tone: 'success', text: result.started ? `Dev server started — ${project.name} opened at ${result.url}.` : `${project.name} opened at ${result.url}.` })
+                                  setStatus({ tone: 'success', text: result.started ? `Dev server started: ${project.name} opened at ${result.url}.` : `${project.name} opened at ${result.url}.` })
                                 } catch (error) {
                                   setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
                                 }
@@ -360,7 +360,7 @@ function RowMenu(props: { items: { label: string; onSelect: () => void }[] }) {
   )
 }
 
-/** PRD §27.5 + R1 — per-project launch URL, launch command, evidence views. */
+/** PRD §27.5 + R1: per-project launch URL, launch command, evidence views. */
 export function LaunchUrlDialog(props: {
   project: Project
   onClose: () => void
@@ -380,9 +380,9 @@ export function LaunchUrlDialog(props: {
       const line = raw.trim()
       if (!line) continue
       const [labelPart, pathPart] = line.split('|').map((s) => s.trim())
-      // Hash-routed apps use "#/screen" (or "/#/screen") paths — both valid.
+      // Hash-routed apps use "#/screen" (or "/#/screen") paths: both valid.
       if (!labelPart || !pathPart || !/^[/#]/.test(pathPart)) {
-        setError(`Each view line must be "Label | /path" (or "Label | #/screen" for hash-routed apps) — problem line: "${line}"`)
+        setError(`Each view line must be "Label | /path" (or "Label | #/screen" for hash-routed apps): problem line: "${line}"`)
         return null
       }
       let id = labelPart.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'view'

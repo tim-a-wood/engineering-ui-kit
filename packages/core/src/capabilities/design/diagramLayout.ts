@@ -1,12 +1,12 @@
 /**
- * EUC-09 — Diagram layout adapter.
+ * EUC-09: Diagram layout adapter.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §15.2, §24.1,
  * §25.3 (EUC-08/09). Pure, deterministic layout of a `DiagramProjection` into
  * a `DiagramLayout`: no DOM, no I/O, no randomness, no wall-clock reads.
  *
  * Collision avoidance is enforced by construction (layered/column placement
- * with dedicated, node-free routing corridors — see `routeGeneric` below) and
+ * with dedicated, node-free routing corridors: see `routeGeneric` below) and
  * verified with `checkLayout`. A layout failure produces a diagnostic; it
  * never drops a relationship (`layout.edges.length === projection.relationships.length`
  * always holds).
@@ -1197,7 +1197,7 @@ function onSegment(p: Point, q: Point, r: Point): boolean {
   )
 }
 
-/** Proper (transversal) intersection only — collinear/overlapping shared rails are not "crossings" (§15.2). */
+/** Proper (transversal) intersection only: collinear/overlapping shared rails are not "crossings" (§15.2). */
 function properIntersect(p1: Point, p2: Point, p3: Point, p4: Point): boolean {
   const o1 = orientation(p1, p2, p3)
   const o2 = orientation(p1, p2, p4)
@@ -1206,7 +1206,7 @@ function properIntersect(p1: Point, p2: Point, p3: Point, p4: Point): boolean {
   return o1 !== 0 && o2 !== 0 && o3 !== 0 && o4 !== 0 && o1 !== o2 && o3 !== o4
 }
 
-/** Intersection or touch (including collinear overlap) — used for zero-distance short-circuiting. */
+/** Intersection or touch (including collinear overlap): used for zero-distance short-circuiting. */
 function segmentsIntersectOrTouch(p1: Point, p2: Point, p3: Point, p4: Point): boolean {
   const o1 = orientation(p1, p2, p3)
   const o2 = orientation(p1, p2, p4)
@@ -1399,11 +1399,11 @@ export function analyzeLayoutQuality(
 }
 
 // ---------------------------------------------------------------------------
-// checkLayout — collision/clearance/crossing/label diagnostics
+// checkLayout: collision/clearance/crossing/label diagnostics
 // ---------------------------------------------------------------------------
 
 /**
- * §15.2 — verifies a layout: no node-node overlap, minimum edge/unrelated-node
+ * §15.2: verifies a layout: no node-node overlap, minimum edge/unrelated-node
  * clearance, crossing count vs. the configured threshold, and labels that do
  * not cover node boxes. A failing check produces a diagnostic; it never
  * removes a relationship (the caller keeps every edge regardless).
@@ -1490,7 +1490,7 @@ export function checkLayout(layout: DiagramLayout, projection: DiagramProjection
 // ---------------------------------------------------------------------------
 
 /**
- * §15.2 — deterministic layout: the same `projection.contentHash` and
+ * §15.2: deterministic layout: the same `projection.contentHash` and
  * `viewportClass` always produce the same layout (seed derived from both).
  * Narrow viewports never shrink nodes below the configured minimum size;
  * content may exceed the viewport width and is expected to pan horizontally.

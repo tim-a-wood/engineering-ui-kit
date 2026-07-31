@@ -1,15 +1,15 @@
 /**
- * EUC-16 — real Connect executors (`configureBinding`, `verifyConnection`,
+ * EUC-16: real Connect executors (`configureBinding`, `verifyConnection`,
  * `runScenario`) for the `DesignOperationExecutors` seam `operations.ts`
  * defines (§13, §14.1-14.3, §17.2, §19).
  *
  * Second-review P1 fix: before this module existed, every desktop, CLI, and
- * machine-API adapter left these three executors unconfigured — a user
+ * machine-API adapter left these three executors unconfigured: a user
  * reaching Connect in the deployed app could never actually configure or
  * verify a real binding, or run an approved scenario, through a production
  * entry point; the only exercised path was an injected test executor
  * (`product-scenarios.test.ts` S26/S27). This module is a Node adapter-layer
- * module (the same category as `repositoryAdapter.ts` — it uses `node:fs`
+ * module (the same category as `repositoryAdapter.ts`: it uses `node:fs`
  * and `node:child_process` directly and must never be imported from a
  * browser entry) that gives every adapter (`apps/desktop/src/capabilities/
  * designExecutors.ts`, `designMachineApi.ts`, `designCli.ts`) the same real
@@ -27,7 +27,7 @@
  *    deployable (`deps.getModuleDesign`), and persists the validated binding
  *    atomically under `<dataDir>/projects/<projectId>/design-adapter/
  *    bindings/<bindingId>.json` plus a small `by-module/<moduleId>.json`
- *    index — the same adapter-owned-JSON-store pattern `designIpc.ts` already
+ *    index: the same adapter-owned-JSON-store pattern `designIpc.ts` already
  *    uses for `repository.json`. An invalid or unapproved binding is
  *    rejected with real diagnostics; nothing is ever persisted on failure.
  *
@@ -38,7 +38,7 @@
  *    persisted `DeployableSpecification`/launch-command record in this
  *    workflow to draw a separate "deployable commands" list from, so this
  *    reuses the exact commands `verifyModule`'s own executor already treats
- *    as the module's real, configured, allowlisted commands — see the
+ *    as the module's real, configured, allowlisted commands: see the
  *    "design decisions" note below), then actually launches the first
  *    configured command and sends a real trigger:
  *      - `cli`: runs the launch/health command via `runConfiguredCommandSync`
@@ -50,29 +50,29 @@
  *        `fetch` until ready or a 5s deadline, sends one real request to
  *        `localBaseUrl + binding.path` with `binding.method`, records the
  *        response status, and always terminates the spawned process.
- *        `localBaseUrl` must resolve to `127.0.0.1`/`localhost` — this
+ *        `localBaseUrl` must resolve to `127.0.0.1`/`localhost`: this
  *        executor never dials any other host (§20.2 "no network beyond
  *        localhost" for this executor).
  *    Every executor slot `operations.ts` defines here is synchronous (no
  *    `Promise` in `DesignOperationExecutors`), so the HTTP probe cannot use
  *    `fetch` directly in-process; `syncFetchLocalhost` below spawns a short
  *    Node child process that awaits a real `fetch` and prints its JSON
- *    result, then blocks on it with `spawnSync` — the same "spawn and block"
+ *    result, then blocks on it with `spawnSync`: the same "spawn and block"
  *    technique `runConfiguredCommandSync` already uses, just wrapping a
  *    network probe instead of a configured command.
  *    A missing binding, an unsupported kind, or no configured commands all
- *    return `ok:false` naming exactly what is missing — this never fabricates
+ *    return `ok:false` naming exactly what is missing: this never fabricates
  *    a passing verification.
  *
  *  - `runScenario` executes a scenario's real steps: `input.entry` (a
  *    `VerificationPlanner.ScenarioTestPlanEntry`) carries only
  *    `useCaseId`/`scenarioId` identifiers, not the steps themselves (see
- *    `verificationPlanner.ts` — `buildScenarioTestPlan` deliberately keeps
+ *    `verificationPlanner.ts`: `buildScenarioTestPlan` deliberately keeps
  *    the entry lightweight), so the real `ScenarioStep[]` are looked up from
  *    `input.analysis` (exactly how `product-scenarios.test.ts`'s S27 fixture
  *    does it). There is no committed field anywhere that names which
  *    `verification.configuredCommands` entry (if any) verifies which
- *    specific scenario step — `ModuleVerificationSpecification` only carries
+ *    specific scenario step: `ModuleVerificationSpecification` only carries
  *    a flat `configuredCommands: string[]`. Rather than fabricate a 'passed'
  *    outcome for a step with no way to really check it, this module defines
  *    one explicit, documented convention: a configured command formatted as
@@ -80,7 +80,7 @@
  *    step, across every approved module design in the project
  *    (`deps.listApprovedModuleDesigns`). A step with no matching entry is
  *    reported `outcome: 'skipped'` with an honest `structuredEvidenceRef`
- *    explaining why — never a fabricated `'passed'`. This convention is a
+ *    explaining why: never a fabricated `'passed'`. This convention is a
  *    deliberate adapter-layer design decision (not a spec-mandated schema)
  *    and is called out as a contract-change candidate in the packet report:
  *    a future packet that owns `records.ts` could add a real
@@ -114,7 +114,7 @@ import { toDesignDiagnostic } from './useCaseAnalysis.js'
 
 // ---------------------------------------------------------------------------
 // Small local helpers (mirrors of the local copies `designIpc.ts` and
-// `designMachineApi.ts` already keep — no shared helper is exported from
+// `designMachineApi.ts` already keep: no shared helper is exported from
 // either of those adapter files for this module to reuse).
 // ---------------------------------------------------------------------------
 
@@ -149,7 +149,7 @@ function parseCommandLine(line: string): { command: string; args: string[] } {
 // ---------------------------------------------------------------------------
 // Adapter-owned binding store: `<dataDir>/projects/<projectId>/
 // design-adapter/bindings/<bindingId>.json` (+ a `by-module/<moduleId>.json`
-// index) — the same atomic-write, adapter-owned-JSON pattern `designIpc.ts`
+// index): the same atomic-write, adapter-owned-JSON pattern `designIpc.ts`
 // already uses for `repository.json`.
 // ---------------------------------------------------------------------------
 
@@ -258,9 +258,9 @@ function validateBindingShape(raw: unknown): { ok: boolean; binding?: InboundBin
 export type ConnectExecutorDeps = {
   /** Absolute directory the adapter-owned `design-adapter/` store lives under (the design workspace's own data directory). */
   dataDir: string
-  /** The project's real repository root — every real command this module runs uses this as `cwd`/`root`. */
+  /** The project's real repository root: every real command this module runs uses this as `cwd`/`root`. */
   repositoryRoot: string
-  /** Reads a module design (approved preferred, else draft) — a plain function so this module is testable without a real `DesignWorkspace`. */
+  /** Reads a module design (approved preferred, else draft): a plain function so this module is testable without a real `DesignWorkspace`. */
   getModuleDesign: (projectId: string, moduleId: string) => ModuleDesignSpecification | undefined
   /** Reads the project's approved operation contracts (`operationId`/`version` pairs only). */
   listApprovedOperations: (projectId: string) => { operationId: string; version: string }[]
@@ -373,7 +373,7 @@ function buildVerificationRecord(input: RecordInput): ConnectionVerificationReco
       operation: `${input.binding.operationId}@${input.binding.operationVersion}`,
       architecture: input.design.architecture.contentHash,
       // No persisted CompositionManifest/GeneratedOwnershipManifest exists in
-      // this workflow to draw a real hash from — left honestly empty rather
+      // this workflow to draw a real hash from: left honestly empty rather
       // than fabricated (see module doc).
       composition: '',
       generatedOwnership: '',
@@ -470,7 +470,7 @@ function runCliConnectionCheck(
   })
 }
 
-/** Blocking sleep via `Atomics.wait` — the only way to pause inside a synchronous executor slot. */
+/** Blocking sleep via `Atomics.wait`: the only way to pause inside a synchronous executor slot. */
 function syncSleep(ms: number): void {
   if (ms <= 0) return
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
@@ -481,7 +481,7 @@ type SyncFetchResult = { ok: boolean; status?: number; error?: string; durationM
 /**
  * A real, bounded HTTP probe from inside a synchronous executor slot: spawns
  * a short-lived Node child process that awaits a real `fetch(...)` and
- * prints its JSON outcome, then blocks on it with `spawnSync` — the same
+ * prints its JSON outcome, then blocks on it with `spawnSync`: the same
  * "spawn and block" shape `runConfiguredCommandSync` already uses for a
  * configured command, applied to a network probe instead.
  */
@@ -510,7 +510,7 @@ function syncFetchLocalhost(url: string, method: string, timeoutMs: number): Syn
 function assertLocalOrigin(rawUrl: string): URL {
   const url = new URL(rawUrl)
   if (url.hostname !== '127.0.0.1' && url.hostname !== 'localhost') {
-    throw new Error(`localBaseUrl must target 127.0.0.1 or localhost — no network beyond localhost is permitted (received "${rawUrl}")`)
+    throw new Error(`localBaseUrl must target 127.0.0.1 or localhost: no network beyond localhost is permitted (received "${rawUrl}")`)
   }
   return url
 }
@@ -1115,7 +1115,7 @@ function runScenarioExecutor(deps: ConnectExecutorDeps) {
             stepId: step.id,
             action: step.action,
             expectedResult: step.expectedResult,
-            actualResult: '(not executed — cancellation requested)',
+            actualResult: '(not executed: cancellation requested)',
             startedAt: stepStartedAt,
             endedAt: new Date().toISOString(),
             outcome: 'cancelled',

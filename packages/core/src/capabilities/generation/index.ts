@@ -5,9 +5,8 @@
  * canonical schema/operation TS planning (`contracts.ts`), composition-root
  * planning (`composition.ts`), inbound-adapter planning (`inbound.ts`), and
  * their shared deterministic virtual-file emission helpers (`typescript.ts`).
- * (WP4B-gen) Python-target planning — Pydantic v2 models/operation
- * `Protocol`s, inbound adapters, and OpenAPI 3.1 emission (`python.ts`) —
- * and its shared deterministic Python emission helpers (`python-emit.ts`).
+ * (WP4B-gen) Python-target planning: Pydantic v2 models/operation
+ * `Protocol`s, inbound adapters, and OpenAPI 3.1 emission (`python.ts`):  * and its shared deterministic Python emission helpers (`python-emit.ts`).
  *
  * Every module in this directory is filesystem-independent (no `node:*`
  * imports) and safe to bundle in the renderer; see `./browser.js`.

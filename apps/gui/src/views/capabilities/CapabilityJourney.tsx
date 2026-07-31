@@ -23,7 +23,7 @@ function LockGlyph() {
 function marker(stage: JourneyStage, index: number) {
   if (stage.state === 'complete') return Icon.check(13)
   if (stage.state === 'locked') return <LockGlyph />
-  if (stage.state === 'not-applicable') return <span aria-hidden="true">—</span>
+  if (stage.state === 'not-applicable') return <span aria-hidden="true">None</span>
   return <span aria-hidden="true">{index + 1}</span>
 }
 

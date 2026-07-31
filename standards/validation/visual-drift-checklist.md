@@ -10,7 +10,7 @@ Use it for mockups, implementation screenshots, generated component output, and 
 
 ## Dark-First Drift
 
-- Root canvas uses dark-first posture.
+- Root canvas uses dual-mode posture.
 - Panels, insets, and overlays follow surface hierarchy.
 - Output does not default to light cards or white admin templates.
 

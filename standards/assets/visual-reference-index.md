@@ -1,4 +1,4 @@
-# Assets — Visual Reference Index
+# Assets: Visual Reference Index
 
 ## Purpose
 
@@ -8,7 +8,7 @@ This file indexes visual references used to calibrate the Engineering UI Kit app
 
 Approved hi-fi mockups are app-specific visual calibration references. They guide:
 
-- dark-first surface hierarchy;
+- dual-mode surface hierarchy;
 - information density;
 - panel and card treatment;
 - engineering-dashboard polish;

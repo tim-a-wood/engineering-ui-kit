@@ -1,11 +1,11 @@
 /**
- * §8.2 Architecture canvas — one system canvas inside the Design view.
+ * §8.2 Architecture canvas: one system canvas inside the Design view.
  *
  * The system-level projection (elements = one component per module, edges =
  * `architecture.dependencyEdges`) is built locally (module-scoped
  * `projectComponentDiagram` does not cover the whole system) and then laid
  * out with the real, deterministic `layoutDiagram` from
- * `@engineering-ui-kit/core/design-browser` — the same layout engine used
+ * `@engineering-ui-kit/core/design-browser`: the same layout engine used
  * for every other UML projection, so node placement, orthogonal routing, and
  * crossing/clearance checks are the product's real rules, not a bespoke
  * canvas-only approximation.
@@ -84,7 +84,7 @@ function buildSystemProjection(architecture: SystemStructureSpecification): Diag
     diagnostics: [],
     textAlternative,
   }
-  // Deterministic content hash without pulling in the hash helper here — the
+  // Deterministic content hash without pulling in the hash helper here: the
   // exact hash value does not matter for the canvas, only the input to
   // `layoutDiagram`'s seed derivation being stable across rerenders.
   const contentHash = `${architecture.contentHash}:${elements.length}:${relationships.length}`
@@ -284,7 +284,7 @@ export type SystemCanvasProps = {
   progress: ModuleDesignProgress
   selectedModuleId?: string
   onSelectModule: (moduleId: string) => void
-  /** §8.2 "use focus mode by default" — controlled so it survives a rerender (§18.1). */
+  /** §8.2 "use focus mode by default": controlled so it survives a rerender (§18.1). */
   focusMode: boolean
   onFocusModeChange: (focusMode: boolean) => void
   listView: boolean

@@ -1,12 +1,12 @@
 /**
- * EUC-16 — desktop IPC bridge contract for the use-case-led Capabilities
+ * EUC-16: desktop IPC bridge contract for the use-case-led Capabilities
  * design workflow (§17, §25.3 "IPC, CLI, and machine API return the same
  * structured result for the same operation").
  *
  * A single operation-envelope channel, not one channel per operation: the
  * renderer sends `{ operation, args }` and gets back exactly what the named
  * `DesignOperationsService` method (packages/core
- * `capabilities/design/operations.ts`) returns for those `args` — a §17.1
+ * `capabilities/design/operations.ts`) returns for those `args`: a §17.1
  * read value or a §17.3 `DesignOperationResult`. `designIpc.ts` is the only
  * file that dispatches this envelope to the real service; this file only
  * declares the wire contract, so it stays trivially serializable (no
@@ -21,7 +21,7 @@ export const DESIGN_CHANNEL = 'design:operation' as const
  * (`packages/core/src/capabilities/design/operations.ts`, `createDesignOperations`
  * return value), spelled exactly as the service exports them. `designIpc.ts`
  * validates every incoming request's `operation` against this list before
- * calling the service — the adapter never adds an operation the service does
+ * calling the service: the adapter never adds an operation the service does
  * not already expose, so no channel can bypass the service's own approval
  * checks (§20.2 "no approval shortcut for agents").
  */
@@ -73,7 +73,7 @@ export type DesignOperationName = (typeof DESIGN_OPERATIONS)[number]
 
 /**
  * Operation-envelope request. `args` is spread positionally onto the named
- * `DesignOperationsService` method — e.g. `{ operation: 'getWorkflowStatus',
+ * `DesignOperationsService` method: e.g. `{ operation: 'getWorkflowStatus',
  * args: ['project-1'] }`, or `{ operation: 'createUseCaseDraft', args: [{
  * projectId, actor, idempotencyKey, workDescription }] }` for a §17.2 change
  * operation (which always takes one input object).
@@ -84,15 +84,15 @@ export type DesignBridgeRequest = {
 }
 
 /**
- * The result is exactly what the named service method returns — no
- * envelope wrapping, no channel-specific reshaping — plus the one adapter-only
+ * The result is exactly what the named service method returns: no
+ * envelope wrapping, no channel-specific reshaping: plus the one adapter-only
  * case (`operation` not in `DESIGN_OPERATIONS`), which returns a structured
  * `{ ok: false, diagnostics: [...] }` error rather than throwing.
  */
 export type DesignBridgeResponse = unknown
 
 /**
- * Reviewer P1 fix (designIpc.ts ~line 54) — adapter-level project-repository
+ * Reviewer P1 fix (designIpc.ts ~line 54): adapter-level project-repository
  * configuration. These two operation names are deliberately **not** part of
  * `DESIGN_OPERATIONS`: they configure *this desktop adapter's* per-project
  * repository root (§11.6 "if the workspace changes after inspection, the
@@ -100,7 +100,7 @@ export type DesignBridgeResponse = unknown
  * revision" / "apply ... against the real filesystem", §17.3, §25.3) so the
  * `applyDelta`/`verifyModule`/`readRepositoryContext` executors `designIpc.ts`
  * builds for a project operate on that project's real repository instead of
- * the workspace's own data directory — no `DesignOperationsService` method is
+ * the workspace's own data directory: no `DesignOperationsService` method is
  * added or bypassed by adding these two adapter operations.
  *
  * They still travel over the same `DESIGN_CHANNEL` envelope (`{ operation,
@@ -127,7 +127,7 @@ export type AdapterOperationName = (typeof ADAPTER_OPERATIONS)[number]
 /**
  * `adapter:configureProjectRepository` request payload. `actor` is validated
  * the same way every §17.2 change-operation actor is (`"user:<id>"`,
- * `"agent:<id>"`, or `"service:<id>"`) — but unlike a §17.2 change operation,
+ * `"agent:<id>"`, or `"service:<id>"`): but unlike a §17.2 change operation,
  * only a `user:` actor may configure a project's repository root; an
  * `agent:` (or `service:`) actor is rejected, mirroring §20.2 "external
  * agents shall receive a packet, not unrestricted project authority".
@@ -140,7 +140,7 @@ export type ConfigureProjectRepositoryInput = {
   repositoryRoot: string
 }
 
-/** `adapter:getProjectRepository` request payload — a read, so no actor/idempotencyKey is required (consistent with every §17.1 read operation). */
+/** `adapter:getProjectRepository` request payload: a read, so no actor/idempotencyKey is required (consistent with every §17.1 read operation). */
 export type GetProjectRepositoryInput = {
   projectId: string
 }
@@ -202,7 +202,7 @@ export type EvidenceArtifactResponse =
     }
   | { ok: false; diagnostics: { id: string; code: string; severity: 'blocker' | 'warning' | 'info'; message: string; target?: string }[] }
 
-/** Structured response shape both adapter operations return — never a throw. */
+/** Structured response shape both adapter operations return: never a throw. */
 export type AdapterConfigurationResponse =
   | { ok: true; projectId: string; repositoryRoot: string; auditEventId?: string; idempotentReplay?: boolean }
   | { ok: false; diagnostics: { id: string; code: string; severity: 'blocker' | 'warning' | 'info'; message: string; target?: string }[] }

@@ -1,5 +1,5 @@
 /**
- * §22 Lifecycle Explorer sample — browse sample evidence by lifecycle
+ * §22 Lifecycle Explorer sample: browse sample evidence by lifecycle
  * phase: the five required §22.3 defects (broken trace, MATLAB/Simulink
  * timeout, invalid column mapping, rejected non-independent review, old
  * package after a baseline change), plus valid, old, failed-refresh,
@@ -50,22 +50,22 @@ export function EvidenceExplorer(props: EvidenceExplorerProps) {
       <p className="secondary-text">{state.syntheticDataStatement}</p>
 
       <div className="design-evidence-phase" role="region" aria-label="Refresh evidence defects">
-        <h3>Refresh evidence — defects</h3>
+        <h3>Refresh evidence: defects</h3>
         <ul className="design-evidence-list">
           <li>
-            <strong>Broken trace</strong> — {evidenceGraphBrokenTrace.summary}
+            <strong>Broken trace</strong>: {evidenceGraphBrokenTrace.summary}
             <button type="button" className="btn btn-secondary" onClick={() => props.onFollowTrace(evidenceGraphBrokenTrace.moduleId)}>
               Follow trace to {nameOf(evidenceGraphBrokenTrace.moduleId)}
             </button>
           </li>
           <li>
-            <strong>MATLAB and Simulink timeout</strong> ({verificationOutcomeLabel(matlabAdapterTimeout.outcome)}) — {matlabAdapterTimeout.summary}
+            <strong>MATLAB and Simulink timeout</strong> ({verificationOutcomeLabel(matlabAdapterTimeout.outcome)}): {matlabAdapterTimeout.summary}
             <button type="button" className="btn btn-secondary" onClick={() => props.onFollowTrace(matlabAdapterTimeout.moduleId)}>
               Follow trace to {nameOf(matlabAdapterTimeout.moduleId)}
             </button>
           </li>
           <li>
-            <strong>Invalid column mapping</strong> — {spreadsheetInvalidMapping.summary}
+            <strong>Invalid column mapping</strong>: {spreadsheetInvalidMapping.summary}
             <button type="button" className="btn btn-secondary" onClick={() => props.onFollowTrace(spreadsheetInvalidMapping.moduleId)}>
               Follow trace to {nameOf(spreadsheetInvalidMapping.moduleId)}
             </button>
@@ -74,9 +74,9 @@ export function EvidenceExplorer(props: EvidenceExplorerProps) {
       </div>
 
       <div className="design-evidence-phase" role="region" aria-label="Review finding defects">
-        <h3>Review finding — defects</h3>
+        <h3>Review finding: defects</h3>
         <p>
-          <strong>Rejected — reviewer not independent</strong> — {findingReviewRejectedDecision.diagnosticCodes.join(', ')} (target {findingReviewRejectedDecision.targetRecordId})
+          <strong>Rejected: reviewer not independent</strong>: {findingReviewRejectedDecision.diagnosticCodes.join(', ')} (target {findingReviewRejectedDecision.targetRecordId})
         </p>
         {findingModuleId && (
           <button type="button" className="btn btn-secondary" onClick={() => props.onFollowTrace(findingModuleId)}>
@@ -86,9 +86,9 @@ export function EvidenceExplorer(props: EvidenceExplorerProps) {
       </div>
 
       <div className="design-evidence-phase" role="region" aria-label="Export package defects">
-        <h3>Export package — defects</h3>
+        <h3>Export package: defects</h3>
         <p>
-          <strong>Old package after baseline change</strong> — run {packageExportOldResult.run.runId} is {packageExportOldResult.currentState === 'old' ? stateLabel('stale') : 'Current'}.
+          <strong>Old package after baseline change</strong>: run {packageExportOldResult.run.runId} is {packageExportOldResult.currentState === 'old' ? stateLabel('stale') : 'Current'}.
         </p>
         {packageExportModuleId && (
           <button type="button" className="btn btn-secondary" onClick={() => props.onFollowTrace(packageExportModuleId)}>
@@ -177,7 +177,7 @@ export function EvidenceExplorer(props: EvidenceExplorerProps) {
       <div className="design-evidence-phase" role="region" aria-label="Design baseline">
         <h3>Design baseline</h3>
         <p>
-          {state.designBaseline.id} revision {state.designBaseline.revision} — {state.designBaseline.status}. {state.designBaseline.requiredModuleIds.length} required modules,{' '}
+          {state.designBaseline.id} revision {state.designBaseline.revision}: {state.designBaseline.status}. {state.designBaseline.requiredModuleIds.length} required modules,{' '}
           {state.designBaseline.missingModuleIds.length} missing.
         </p>
       </div>

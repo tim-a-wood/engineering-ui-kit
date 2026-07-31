@@ -1,5 +1,5 @@
 /**
- * Consolidated Build view — Prepare Context + Task Packet + Copilot + Overlay.
+ * Consolidated Build view: Prepare Context + Task Packet + Copilot + Overlay.
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -109,7 +109,7 @@ export function BuildView(props: BuildViewProps) {
           tone: 'info',
           text: `Iteration packet uses ${fresh.length} saved feedback note${fresh.length === 1 ? '' : 's'}. The scope contains your feedback. The constraints preserve the previous design. Review and export the packet.`,
         })
-      } catch { /* notes unreadable — keep the regular prefill */ }
+      } catch { /* notes unreadable: keep the regular prefill */ }
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -245,7 +245,7 @@ export function BuildView(props: BuildViewProps) {
           launchCommand: template.launchDefaults.command,
         })
         await props.refreshProjects()
-        launchNote = ` Launch App is pre-configured for ${template.launchDefaults.url} — after Verify builds it, open the running app from Test.`
+        launchNote = ` Launch App is pre-configured for ${template.launchDefaults.url}: after Verify builds it, open the running app from Test.`
       } catch { /* non-fatal */ }
     }
     setStatus({ tone: 'success', text: `Template applied: ${template.title}. Review the REPLACE markers and tweak before export.${launchNote}` })
@@ -266,7 +266,7 @@ export function BuildView(props: BuildViewProps) {
       setStatus(
         summary.canApply
           ? summary.warnings.length > 0
-            ? { tone: 'info', text: `Inspection verdict: warning — ${summary.warnings.length} warnings require explicit acceptance.` }
+            ? { tone: 'info', text: `Inspection verdict: warning: ${summary.warnings.length} warnings require explicit acceptance.` }
             : { tone: 'success', text: 'Inspection verdict: pass.' }
           : { tone: 'error', text: `Inspection verdict: blocked. The overlay has ${summary.hardBlockers.length} hard blockers. Copy the fix prompt to get a corrected zip from Copilot.` },
       )

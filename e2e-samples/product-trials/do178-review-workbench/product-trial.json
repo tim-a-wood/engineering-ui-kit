@@ -233,5 +233,21 @@
       ]
     ]
   },
-  "productKind": "review"
+  "productKind": "review",
+  "design": {
+    "contractId": "EUIT-FRONTEND-001",
+    "iconFamily": "lucide",
+    "paletteId": "gulfstream",
+    "fontId": "inter",
+    "defaultMode": "system",
+    "density": "compact",
+    "palette": "Gulfstream blue",
+    "lightAccent": "#003767",
+    "darkAccent": "#70b7e6",
+    "lightSoft": "#e2eef5",
+    "darkSoft": "#0d3854",
+    "lightRgb": "0, 55, 103",
+    "darkRgb": "112, 183, 230",
+    "fontStack": "Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+  }
 }

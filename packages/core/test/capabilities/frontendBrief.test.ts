@@ -135,13 +135,46 @@ describe('frontend brief compiler', () => {
       bindingIds: ['binding.evidence-list'],
       routes: ['/evidence'],
       useCaseIds: ['review-evidence'],
+      viewKinds: ['workbench', 'wizard', 'case'],
     })
     expect(brief.fields.goal).toContain('Evidence explorer → evidence.list @ 1.0 on /evidence')
     expect(brief.fields.goal).toContain('Show skeleton rows.')
+    expect(brief.fields.goal).toContain('Use design contract EUIT-FRONTEND-001.')
+    expect(brief.fields.goal).toContain('Provide light and dark modes.')
     expect(brief.fields.references).toContain('binding.evidence-list @ 2')
+    expect(brief.designSystem.palette.id).toBe('gulfstream')
+    expect(brief.designSystem.typography.id).toBe('inter')
+    expect(brief.designSystem.defaultMode).toBe('system')
+    expect(brief.designSystem.modeToggle).toBe(true)
+    expect(brief.designSystem.icons.family).toBe('lucide')
     expect(brief.gaps).toEqual([])
     expect(lintTaskPacket(brief.fields)).toEqual({ valid: true, diagnostics: [] })
     expect(evaluateFrontendBriefSte(brief).diagnostics).toEqual([])
+  })
+
+  it('compiles approved palette, font, mode, density, and view choices', () => {
+    const brief = compileFrontendBrief({
+      projectId: 'project-1',
+      application,
+      architecture,
+      modules: [experience],
+      bindings: [binding],
+      designPreferences: {
+        paletteId: 'teal',
+        fontId: 'atkinson',
+        defaultMode: 'dark',
+        density: 'comfortable',
+        viewKinds: ['monitor'],
+      },
+    })
+
+    expect(brief.coverage.viewKinds).toEqual(['monitor'])
+    expect(brief.designSystem.palette.id).toBe('teal')
+    expect(brief.designSystem.typography.id).toBe('atkinson')
+    expect(brief.designSystem.defaultMode).toBe('dark')
+    expect(brief.designSystem.density).toBe('comfortable')
+    expect(brief.designSystem.layouts.map((layout) => layout.kind)).toEqual(['monitor'])
+    expect(brief.fields.goal).toContain('Use Live monitor for watch state and investigate change over time.')
   })
 
   it('marks a missing experience target as blocking and a missing binding as reviewable', () => {

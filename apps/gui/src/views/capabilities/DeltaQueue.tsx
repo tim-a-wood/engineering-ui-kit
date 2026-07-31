@@ -107,7 +107,7 @@ export function DeltaQueue({ bridge, projectId, projection }: Props) {
       setQueue(next)
       setStatus(
         next.done
-          ? `Delta queue complete — all ${next.completedTargets.length} targets processed.`
+          ? `Delta queue complete: all ${next.completedTargets.length} targets processed.`
           : `Completed ${target}; next target is ${next.nextTarget}.`,
       )
     } catch (error) {
@@ -154,7 +154,7 @@ export function DeltaQueue({ bridge, projectId, projection }: Props) {
             <ul>
               {impact.affectedModules.map((m) => (
                 <li key={m.moduleId}>
-                  <code>{m.moduleId}</code> — {m.reason}
+                  <code>{m.moduleId}</code>: {m.reason}
                 </li>
               ))}
             </ul>
@@ -167,7 +167,7 @@ export function DeltaQueue({ bridge, projectId, projection }: Props) {
               <ul>
                 {impact.unaffectedModules.map((m) => (
                   <li key={m.moduleId}>
-                    <code>{m.moduleId}</code> — {m.reason}
+                    <code>{m.moduleId}</code>: {m.reason}
                   </li>
                 ))}
               </ul>
@@ -186,14 +186,14 @@ export function DeltaQueue({ bridge, projectId, projection }: Props) {
               const state = done ? 'complete' : isNext ? 'actionable' : 'blocked'
               return (
                 <li key={target} data-state={state} aria-current={isNext ? 'step' : undefined}>
-                  <code>{target}</code> — <span>{done ? '✓ complete' : isNext ? '→ next' : '· blocked'}</span>
+                  <code>{target}</code>: <span>{done ? '✓ complete' : isNext ? '→ next' : '· blocked'}</span>
                 </li>
               )
             })}
           </ol>
 
           {queue.done ? (
-            <p role="status">Queue exhausted — every approved target has been processed.</p>
+            <p role="status">Queue exhausted: every approved target has been processed.</p>
           ) : (
             <div className="capabilities-toolbar" role="group" aria-label="Delta actions">
               <button type="button" className="btn btn-primary btn-compact" disabled={busy} onClick={exportNext}>

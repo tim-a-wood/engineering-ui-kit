@@ -1,6 +1,5 @@
 /**
- * Curated references per PRD §13.8/§13.9: the five approved recipes (usable —
- * a recipe prefills the task packet) and the eight curated components with
+ * Curated references per PRD §13.8/§13.9: the five approved recipes (usable:  * a recipe prefills the task packet) and the eight curated components with
  * live token-styled demos, plus a compact searchable reference over the full
  * 68-component manifest (generated from standards/component-manifest.json).
  */
@@ -28,10 +27,10 @@ export const RECIPES: Recipe[] = [
     title: 'Engineering App Shell',
     description: 'A foundational app shell with global navigation, header, and content area.',
     componentsUsed: ['CMP-SHELL-APP', 'CMP-NAV-PRIMARY', 'CMP-SHELL-PAGE-HEADER', 'CMP-SURFACE-PANEL'],
-    goal: 'Implement the standard dark-first engineering app shell: persistent top bar, left primary navigation with visible active state, and a page content region with a consistent header.',
+    goal: 'Implement the standard dual-mode engineering app shell: persistent top bar, left primary navigation with visible active state, and a page content region with a consistent header.',
     scope: 'Application shell only: top bar, primary navigation, page header, and content container.\nNo feature screens beyond a placeholder content area.',
     constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library.',
-    acceptanceCriteria: 'Shell renders with semantic surface hierarchy (canvas, panel).\nNavigation exposes the active item semantically and by keyboard.\nPage header shows title, subtitle, and action region.\nUse only dark-first tokens. Do not use raw colors outside the token entry point.',
+    acceptanceCriteria: 'Shell renders with semantic surface hierarchy (canvas, panel).\nNavigation exposes the active item semantically and by keyboard.\nPage header shows title, subtitle, and action region.\nUse only dual-mode tokens. Do not use raw colors outside the token entry point.',
     references: 'LAY-SHELL-001 (standards/layouts-and-recipes/application-shell.md)\nCMP-SHELL-APP, CMP-NAV-PRIMARY, CMP-SHELL-PAGE-HEADER',
     thumbnail: thumb(
       <>
@@ -50,10 +49,10 @@ export const RECIPES: Recipe[] = [
     title: 'Dashboard',
     description: 'A dashboard layout with summary cards, charts, and key metrics.',
     componentsUsed: ['CMP-SURFACE-PANEL', 'CMP-DATA-CHART-LINE', 'CMP-FEEDBACK-BADGE', 'CMP-SHELL-PAGE-HEADER'],
-    goal: 'Implement a dark-first engineering dashboard with summary stat cards, a primary chart region, and a recent-activity list.',
+    goal: 'Implement a dual-mode engineering dashboard with summary stat cards, a primary chart region, and a recent-activity list.',
     scope: 'One dashboard screen: stat card row, chart panel, activity panel.\nUse only static or sample data. Do not add data services.',
     constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library.',
-    acceptanceCriteria: 'Stat cards use raised panels with text labels beside every value.\nChart region uses an inset technical surface.\nStatus indicators carry text, never color alone.\nDark-first tokens only.',
+    acceptanceCriteria: 'Stat cards use raised panels with text labels beside every value.\nChart region uses an inset technical surface.\nStatus indicators carry text, never color alone.\nDual-mode tokens only.',
     references: 'RCP-DASH-001 (standards/layouts-and-recipes/workflow-pages.md)\nApproved mockup: Dashboard recipe row',
     thumbnail: thumb(
       <>
@@ -74,7 +73,7 @@ export const RECIPES: Recipe[] = [
     goal: 'Implement a two-pane workspace: a primary working pane and a contextual details pane, with a clear focus hierarchy.',
     scope: 'One workspace screen with a list or tree in the left pane and a detail editor in the right pane.\nUse selection state only. Do not add persistence.',
     constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library.',
-    acceptanceCriteria: 'Two panes with visible boundary and correct keyboard traversal order.\nDetail pane updates from selection with status text.\nDark-first tokens only.',
+    acceptanceCriteria: 'Two panes with visible boundary and correct keyboard traversal order.\nDetail pane updates from selection with status text.\nDual-mode tokens only.',
     references: 'RCP-SPLIT-001 / RCP-SPLIT-002 (standards/layouts-and-recipes/workflow-pages.md)',
     thumbnail: thumb(
       <>
@@ -97,7 +96,7 @@ export const RECIPES: Recipe[] = [
     goal: 'Implement a dense, readable engineering data table with search, status badges, and pagination.',
     scope: 'One table screen: toolbar (search + filter), table with sortable headers, status column, pagination.\nSample data only.',
     constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library.',
-    acceptanceCriteria: 'Table uses semantic headers and caption.\nRow status shown as text badges.\nKeyboard operable controls with visible focus.\nDark-first tokens only.',
+    acceptanceCriteria: 'Table uses semantic headers and caption.\nRow status shown as text badges.\nKeyboard operable controls with visible focus.\nDual-mode tokens only.',
     references: 'RCP-TABLE-001 (standards/layouts-and-recipes/workflow-pages.md)\nApproved mockup: Projects table',
     thumbnail: thumb(
       <>
@@ -118,7 +117,7 @@ export const RECIPES: Recipe[] = [
     goal: 'Implement a multi-step execution screen with a step indicator, per-step status, and explicit progress text.',
     scope: 'One workflow screen with an ordered stepper, current-step panel, and status region.\nStep state driven by existing app state only.',
     constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library.',
-    acceptanceCriteria: 'Stepper shows completed, current, and pending states with text.\nProgress is announced in text, not color alone.\nDark-first tokens only.',
+    acceptanceCriteria: 'Stepper shows completed, current, and pending states with text.\nProgress is announced in text, not color alone.\nDual-mode tokens only.',
     references: 'RCP-WORKFLOW-001 (standards/layouts-and-recipes/workflow-pages.md)\nApproved mockup: workflow stepper',
     thumbnail: thumb(
       <>
@@ -139,9 +138,9 @@ export const RECIPES: Recipe[] = [
     title: 'Entity Detail Page',
     description: 'A structured detail page with summary, metadata, tabs, and related panels.',
     componentsUsed: ['CMP-LAYOUT-DETAIL', 'CMP-SHELL-PAGE-HEADER', 'CMP-NAV-TABS', 'CMP-CONTENT-KEY-VALUE-LIST'],
-    goal: 'Implement a dark-first entity detail page: identity header, key-value metadata, tabbed sections, and related-record panels.',
+    goal: 'Implement a dual-mode entity detail page: identity header, key-value metadata, tabbed sections, and related-record panels.',
     scope: 'REPLACE: name the entity and its fields.\nOne detail view: header with title and status, metadata list, and two or three tabbed sections.\nKeep this view read-only. Show actions as stubs.',
-    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library unless the task allows them.\nUse only dark-first semantic tokens. Do not use raw colors outside the token entry point.',
+    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library unless the task allows them.\nUse only dual-mode semantic tokens. Do not use raw colors outside the token entry point.',
     acceptanceCriteria: 'npm run typecheck and npm run build pass after overlay application.\nHeader, metadata, and tabs render from the entity data with text status badges.\nProvide complete keyboard operation and visible focus. Tabs follow the established keyboard pattern.',
     references: 'RCP-DETAIL-001 (standards/layouts-and-recipes/workflow-pages.md)',
     thumbnail: thumb(
@@ -163,9 +162,9 @@ export const RECIPES: Recipe[] = [
     title: 'Review differences',
     description: 'A side-by-side compare/review layout for diffs, evidence, and approval decisions.',
     componentsUsed: ['CMP-LAYOUT-SPLIT-PANEL', 'CMP-ENG-DIFF-VIEWER', 'CMP-FEEDBACK-VALIDATION-SUMMARY', 'CMP-ACTION-BUTTON'],
-    goal: 'Implement a dark-first compare/review screen: two synchronized panes for before/after content with a decision bar (approve, reject, notes).',
+    goal: 'Implement a dual-mode compare/review screen: two synchronized panes for before/after content with a decision bar (approve, reject, notes).',
     scope: 'REPLACE: name the artifacts being compared.\nTwo-pane compare region, difference highlights, decision action bar with confirmation.',
-    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library unless the task allows them.\nUse only dark-first semantic tokens. Do not use raw colors outside the token entry point.',
+    constraints: 'Do not change domain logic, calculation logic, API contracts, test data, or unrelated screens.\nDo not add dependencies, a router, or a state library unless the task allows them.\nUse only dual-mode semantic tokens. Do not use raw colors outside the token entry point.',
     acceptanceCriteria: 'npm run typecheck and npm run build pass after overlay application.\nBoth panes render with clear labels. Differences use text markers and not color alone.\nDecision actions require explicit confirmation.',
     references: 'RCP-SPLIT-002 (standards/layouts-and-recipes/workflow-pages.md)',
     thumbnail: thumb(

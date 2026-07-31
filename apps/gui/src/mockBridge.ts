@@ -115,11 +115,11 @@ type CapProjectState = {
   bindingDrafts: Map<string, FrontendBinding>
   bindingApproved: Map<string, FrontendBinding>
   freshness: Map<string, FreshnessRecord>
-  /** CAP-ERA-001 §5.1/§12.4 — deployables this mock synthesizes for Build entry points (WP5B/WP7 own real generation-time deployables). */
+  /** CAP-ERA-001 §5.1/§12.4: deployables this mock synthesizes for Build entry points (WP5B/WP7 own real generation-time deployables). */
   deployables: Map<string, CapabilityDeployableSummary>
   inboundBindingDrafts: Map<string, InboundBinding>
   inboundBindingApproved: Map<string, InboundBinding>
-  /** WP5A — the project's single foundation-planning draft/approved record (CAP-TEST-074/075). */
+  /** WP5A: the project's single foundation-planning draft/approved record (CAP-TEST-074/075). */
   foundationDraft?: FoundationPlan
   foundationApproved?: FoundationPlan
   generationPlans: Map<string, GenerationPlan>
@@ -938,7 +938,7 @@ export function installMockBridge(): EuikBridge {
   /**
    * Synthesizes this project's deployables (CAP-ERA-001 §5.1) on first access.
    * The mock has no persisted `DeployableSpecification` generation pipeline
-   * (that is WP5B/WP7 real-IPC scope) — it derives a defensible minimal set:
+   * (that is WP5B/WP7 real-IPC scope): it derives a defensible minimal set:
    * a `browser` UI deployable when the project has a configured application UI
    * or an approved `experience`-type module, plus always one headless deployable
    * so every project has at least one entry point that requires connecting.
@@ -1427,7 +1427,7 @@ ${mockFeedback.map((item) => item.text).join('\n\n') || '_No manual feedback is 
     async copyUploadSet(runId) {
       const run = runs.get(runId)
       if (!run) throw new Error(`run not found: ${runId}`)
-      if (!run.repoFlatfilePath) throw new Error('no upload files for this run yet — prepare context and build the task packet first')
+      if (!run.repoFlatfilePath) throw new Error('no upload files for this run yet: prepare context and build the task packet first')
       return { files: 2 }
     },
     async openExternal() { /* no-op in mock */ },
@@ -1883,6 +1883,7 @@ ${mockFeedback.map((item) => item.text).join('\n\n') || '_No manual feedback is 
         moduleDesigns: [...state.moduleDesignApproved.values()],
         bindings: [...inbound, ...legacy],
         targetModuleIds: input.targetModuleIds,
+        designPreferences: input.designPreferences,
         steLexicon: state.steLexicon,
       })
     },
@@ -2229,7 +2230,7 @@ ${mockFeedback.map((item) => item.text).join('\n\n') || '_No manual feedback is 
       }))
     },
     async capabilitiesSaveInboundBindingDraft(projectId, draft) {
-      // Missing/omitted exposure is always treated as private (§5.1) — never silently escalated.
+      // Missing/omitted exposure is always treated as private (§5.1): never silently escalated.
       const binding: InboundBinding = { ...draft, exposure: draft.exposure ?? 'private' }
       ensureCap(projectId).inboundBindingDrafts.set(binding.bindingId, binding)
       return { ok: true as const }
@@ -2243,7 +2244,7 @@ ${mockFeedback.map((item) => item.text).join('\n\n') || '_No manual feedback is 
         ...evaluateInboundBindingSte(binding, state.steLexicon).diagnostics,
       ]
       if (diagnostics.length > 0) return { ok: false, diagnostics }
-      // Multiple bindings may target the same operation — none are deduplicated (§12.4).
+      // Multiple bindings may target the same operation: none are deduplicated (§12.4).
       state.inboundBindingApproved.set(binding.bindingId, binding)
       state.inboundBindingDrafts.delete(binding.bindingId)
       return { ok: true, approved: binding }

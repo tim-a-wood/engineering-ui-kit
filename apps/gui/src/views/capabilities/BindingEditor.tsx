@@ -1,5 +1,5 @@
 /**
- * Preview binding editor — CAP-PKT-024 / CAP-PKT-025.
+ * Preview binding editor: CAP-PKT-024 / CAP-PKT-025.
  * Collects required behavior fields, resolves ambiguity, labels mode, shows outcomes.
  * Selection evidence may be supplied by PreviewBindingPicker (separate) via props.
  */
@@ -33,7 +33,7 @@ type Props = {
   initialBinding?: Partial<FrontendBinding>
   architectureVersion?: string
   architectureHash?: string
-  /** Approved module records — the only source of selectable operations. */
+  /** Approved module records: the only source of selectable operations. */
   records?: CapabilityModuleRecord[]
   onChanged?: () => void | Promise<void>
 }
@@ -114,7 +114,7 @@ export function BindingEditor({
   )
   const [ambiguities, setAmbiguities] = useState<MappingAmbiguity[]>([])
   const [steLexicon, setSteLexicon] = useState<SteLexicon | undefined>()
-  const [status, setStatus] = useState('Draft binding — complete all behavior fields to approve.')
+  const [status, setStatus] = useState('Draft binding: complete all behavior fields to approve.')
   const [packetJson, setPacketJson] = useState<string>('')
   const [lastResult, setLastResult] = useState<{
     modeLabel: string
@@ -281,7 +281,7 @@ export function BindingEditor({
     setStatus(
       qualifies
         ? `Connected invoke succeeded for ${binding.operationId}`
-        : `Simulated ${result.modeLabel} — outcome ${envelope.outcome}`,
+        : `Simulated ${result.modeLabel}: outcome ${envelope.outcome}`,
     )
   }
 
@@ -406,7 +406,7 @@ export function BindingEditor({
       <dl className="capabilities-ids">
         <div>
           <dt>Route</dt>
-          <dd>{binding.selectionEvidence.route || '—'}</dd>
+          <dd>{binding.selectionEvidence.route || 'None'}</dd>
         </div>
         {guided && binding.selectionEvidence.visibleText ? (
           <div>
@@ -423,7 +423,7 @@ export function BindingEditor({
             <div>
               <dt>Selector</dt>
               <dd>
-                <code>{binding.selectionEvidence.selector || '—'}</code>
+                <code>{binding.selectionEvidence.selector || 'None'}</code>
               </dd>
             </div>
             <div>
@@ -432,11 +432,11 @@ export function BindingEditor({
             </div>
             <div>
               <dt>Element tag</dt>
-              <dd>{binding.selectionEvidence.elementTag || '—'}</dd>
+              <dd>{binding.selectionEvidence.elementTag || 'None'}</dd>
             </div>
             <div>
               <dt>Capture time</dt>
-              <dd>{binding.selectionEvidence.captureTime || '—'}</dd>
+              <dd>{binding.selectionEvidence.captureTime || 'None'}</dd>
             </div>
           </>
         ) : null}

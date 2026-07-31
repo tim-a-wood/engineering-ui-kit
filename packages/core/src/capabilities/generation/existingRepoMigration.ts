@@ -2,14 +2,14 @@
  * Pure existing-repository migration planning (CAP-ERA-001 §14.3 existing
  * source repositories, §11.2 repository path proposal, §9 CAP-CONTRACT-030).
  *
- * This is PLANNING only — it never touches the filesystem and never applies
+ * This is PLANNING only: it never touches the filesystem and never applies
  * anything (applying a `CapabilityMigrationPlan` is WP7/WP9B's concern). Given
  * a `RepositoryEvidence` snapshot (from the frozen `repositoryDiscovery.ts`)
  * plus minimal capability records describing the modules being adopted, this
  * module produces a reviewable, additive `CapabilityMigrationPlan`:
  *
  * - generated composition roots are proposed as new (`create`) files;
- * - existing entry points are proposed as `update` (wrap/extend) — an
+ * - existing entry points are proposed as `update` (wrap/extend): an
  *   existing entry point is NEVER proposed for `delete` or wholesale
  *   replacement;
  * - conventions the plan preserves (package manager, source/test roots,
@@ -18,11 +18,11 @@
  *   deleted or overwritten destructively by this planner;
  * - only genuinely evidence-backed ambiguity (from `discoverRepository`,
  *   `proposeDeployables`, or an ambiguity the caller explicitly flagged on a
- *   capability record) becomes a `blockedAmbiguities` entry — never
+ *   capability record) becomes a `blockedAmbiguities` entry: never
  *   fabricated.
  *
  * Design note: `proposeDeployables` (frozen, WP2) places every deployable's
- * default composition root under `discovery.sourceRoots[0]` — a reasonable
+ * default composition root under `discovery.sourceRoots[0]`: a reasonable
  * single-root default for foundation generation, but one that would collapse
  * a mixed-language existing repository's generated HTTP boundary (e.g. a
  * TypeScript UI and a Python API) into a single source root. This module
@@ -30,7 +30,7 @@
  * language, and module allocation, but computes the migration's *target
  * path* itself from language-specific evidence, so a Python deployable's
  * generated file lands in a Python source root and a TypeScript deployable's
- * generated file lands in a TypeScript source root — never both in the same
+ * generated file lands in a TypeScript source root: never both in the same
  * one. `deployables.ts` itself is not modified.
  */
 
@@ -188,7 +188,7 @@ function recordToModuleDefinition(record: ExistingRepoCapabilityRecord): Archite
  * (wrap/extend, never `delete` or wholesale replacement); conventions the
  * plan preserves are recorded; data loss is always assessed as none; and
  * only genuinely evidence-backed ambiguity becomes a `blockedAmbiguities`
- * entry. Pure — reads only the supplied evidence and records.
+ * entry. Pure: reads only the supplied evidence and records.
  */
 export function planExistingRepoMigration(input: ExistingRepoMigrationInput): CapabilityMigrationPlan {
   const files = input.evidence.files.map((file) => normalizeRepoRelativePath(file.path))
@@ -236,7 +236,7 @@ export function planExistingRepoMigration(input: ExistingRepoMigrationInput): Ca
     }
   }
 
-  // Existing entry points: `update` only — wrap/extend through an explicit
+  // Existing entry points: `update` only: wrap/extend through an explicit
   // edit, never `delete` or wholesale replacement (§14.3).
   for (const entryPoint of discovery.entryPoints) {
     fileTransformations.push({

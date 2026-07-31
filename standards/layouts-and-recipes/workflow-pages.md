@@ -8,7 +8,7 @@ Workflow page recipes define multi-step engineering flows such as package valida
 
 This recipe aligns with Copilot/AI handoff hub workflows from the PRD without generating final Phase 4 handoff files.
 
-## RCP-WORKFLOW-001 — Multi-step engineering workflow
+## RCP-WORKFLOW-001: Multi-step engineering workflow
 
 ### Purpose
 Guide users through ordered technical work while preserving reviewability and explicit status.
@@ -69,7 +69,7 @@ Preserve manual control. Do not auto-apply generated output or hide validation f
 
 ## Step Indicator Use
 
-Use step indicators for three or more ordered, gated phases—not for tab-like local navigation or a two-mode Build/Test relationship.
+Use step indicators for three or more ordered, gated phases:not for tab-like local navigation or a two-mode Build/Test relationship.
 
 ## Current Step Region
 
@@ -103,12 +103,12 @@ Approved: explicit steps, preview, validation, evidence, deliberate export.
 
 Rejected: hidden automation, ambiguous one-click consequential actions, and output with no review state.
 
-## RCP-TABLE-001 — Data table view
+## RCP-TABLE-001: Data table view
 
 ### Purpose
 
 Present dense structured records with search, filters, sortable columns, text status
-badges, and pagination, following the dark-first table standards.
+badges, and pagination, following the dual-mode table standards.
 
 ### Required components
 

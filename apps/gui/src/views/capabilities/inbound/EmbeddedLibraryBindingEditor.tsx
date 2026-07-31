@@ -2,7 +2,7 @@
  * Embedded-library inbound-binding editor (CAP-CONTRACT-028 `embedded-library`
  * variant, CAP-ERA-001 §12.4). This is the one kind that intentionally has no
  * externally reachable entry point at all, so an explicit reason is always
- * required — never inferred or defaulted.
+ * required: never inferred or defaulted.
  */
 
 import { useState, type ChangeEvent } from 'react'

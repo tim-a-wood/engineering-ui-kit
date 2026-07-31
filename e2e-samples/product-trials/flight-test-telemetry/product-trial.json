@@ -246,5 +246,21 @@
       ]
     ]
   },
-  "productKind": "telemetry"
+  "productKind": "telemetry",
+  "design": {
+    "contractId": "EUIT-FRONTEND-001",
+    "iconFamily": "lucide",
+    "paletteId": "graphite",
+    "fontId": "inter",
+    "defaultMode": "dark",
+    "density": "compact",
+    "palette": "Graphite",
+    "lightAccent": "#24292f",
+    "darkAccent": "#58a6ff",
+    "lightSoft": "#eaeef2",
+    "darkSoft": "#132f4c",
+    "lightRgb": "36, 41, 47",
+    "darkRgb": "88, 166, 255",
+    "fontStack": "Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+  }
 }

@@ -1,5 +1,5 @@
 /**
- * Context & privacy dialog — include categories, exclusions, warnings, generate.
+ * Context & privacy dialog: include categories, exclusions, warnings, generate.
  */
 
 import { useState } from 'react'
@@ -78,7 +78,7 @@ export function ContextPrivacyDialog(props: {
         <div>
           {result
             ? result.warnings.length === 0
-              ? <p className="muted" style={{ margin: 0 }}>None — no secret-pattern matches detected.</p>
+              ? <p className="muted" style={{ margin: 0 }}>None: no secret-pattern matches detected.</p>
               : (
                 <ul style={{ margin: 0, paddingLeft: 18 }}>
                   {result.warnings.map((w) => (

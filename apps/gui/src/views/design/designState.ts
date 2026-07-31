@@ -20,7 +20,7 @@
  * part of the state so the UI can show it. On construction the store reads
  * any persisted draft for the same project and restores it, including the
  * last-selected module and each module's session step (§19 "Lost client
- * session" — "Restore persisted draft and last selected module").
+ * session": "Restore persisted draft and last selected module").
  */
 
 import { useSyncExternalStore } from 'react'
@@ -119,19 +119,19 @@ import {
 } from './designBridgeClient'
 
 /**
- * §4 "Users and authority" — the full authority list, mirrored from
+ * §4 "Users and authority": the full authority list, mirrored from
  * `records.ts` `APPROVAL_AUTHORITIES` (re-exported by
  * `@engineering-ui-kit/core/design-browser`, imported directly above so this
  * never drifts from the canonical list). `ProjectSetupPanel`'s "Grant design
  * authorities to this session user" action requests every one of these for
- * the current principal — the coordinator's `adapter:configureProjectRoles`
+ * the current principal: the coordinator's `adapter:configureProjectRoles`
  * implementation, not this GUI, decides whether the request is honored.
  */
 export const ALL_DESIGN_AUTHORITIES: readonly ApprovalAuthority[] = APPROVAL_AUTHORITIES
 
 /**
  * Local mirror of `getWorkflowStatus`'s return shape
- * (`packages/core/src/capabilities/design/operations.ts`) — renderer-safe
+ * (`packages/core/src/capabilities/design/operations.ts`): renderer-safe
  * duplication, the same pattern `bridge.ts` uses for `bridgeApi.ts`.
  */
 type WorkflowStatusResult = {
@@ -155,7 +155,7 @@ export type DiagramElementTarget = {
   diagramKind: DiagramKind
   elementId: string
   elementLabel: string
-  /** True only for the module's own "self" component element — the one demonstrable rename target. */
+  /** True only for the module's own "self" component element: the one demonstrable rename target. */
   isRenameable: boolean
 }
 
@@ -176,7 +176,7 @@ export type ModuleHandoffResult = {
 
 /**
  * §3.3 real, per-user checkbox state for a multi-module handoff (review
- * finding #2) — never hardcoded. `WavesView` renders one "I confirm these
+ * finding #2): never hardcoded. `WavesView` renders one "I confirm these
  * modules are independent" checkbox (`userConfirmedIndependence`) and one
  * per-module "Fixtures and external resources are isolated" checkbox
  * (`fixtureIsolationConfirmedByModuleId`), plus a third confirmation for
@@ -209,7 +209,7 @@ function emptyDeltaFlow(): DeltaFlowState {
 export type SaveState = 'idle' | 'saving' | 'saved'
 
 /**
- * §22.1 "sample ONLY when no project is configured" — the workspace has two
+ * §22.1 "sample ONLY when no project is configured": the workspace has two
  * explicit modes: `'sample'` is the in-browser demo store (this file's
  * original behavior, unchanged); `'project'` means every read and change
  * operation is routed through the desktop bridge's `design:operation`
@@ -237,7 +237,7 @@ export type EvidenceArtifactLoadResult =
   | { ok: false; message: string }
 
 // ---------------------------------------------------------------------------
-// Project setup (§4, §17.3, §20.2, §25.3 — second-review P1: "nothing
+// Project setup (§4, §17.3, §20.2, §25.3: second-review P1: "nothing
 // configures the repository adapter or project roles")
 // ---------------------------------------------------------------------------
 
@@ -248,14 +248,14 @@ export type RepositoryConfigState =
   | { status: 'not-configured'; message: string }
   | { status: 'error'; message: string }
 
-/** `adapter:getPrincipal` cache — `'unavailable'` is the graceful fallback for a desktop build that has not implemented the operation yet (`EUC16-UNKNOWN-OPERATION`). */
+/** `adapter:getPrincipal` cache: `'unavailable'` is the graceful fallback for a desktop build that has not implemented the operation yet (`EUC16-UNKNOWN-OPERATION`). */
 export type PrincipalState =
   | { status: 'idle' | 'loading' }
   | { status: 'ready'; principal: string }
   | { status: 'unavailable'; message: string }
   | { status: 'error'; message: string }
 
-/** `adapter:configureProjectRoles` cache — same `'unavailable'` graceful fallback. */
+/** `adapter:configureProjectRoles` cache: same `'unavailable'` graceful fallback. */
 export type RolesGrantState =
   | { status: 'idle' | 'loading' }
   | { status: 'granted'; principal: string; authorities: string[] }
@@ -287,17 +287,17 @@ export type ScenarioActionState = {
   runId?: string
 }
 
-/** §17.3 "actor... does not hold... an authority" — the exact diagnostic code the Blocked-state guidance watches for. */
+/** §17.3 "actor... does not hold... an authority": the exact diagnostic code the Blocked-state guidance watches for. */
 export const AUTHORITY_NOT_CONFIGURED_CODE = 'EUC16-AUTHORITY-NOT-CONFIGURED'
 
 export type DesignState = {
   mode: DesignWorkspaceMode
-  /** `project` mode only — the last bridge transport/service-level error, rendered verbatim; cleared on the next successful call. */
+  /** `project` mode only: the last bridge transport/service-level error, rendered verbatim; cleared on the next successful call. */
   bridgeError?: string
   bridgeStatus: BridgeStatus
-  /** `project` mode only — drives button enablement (§17.3 "return valid next actions"); never computed locally. */
+  /** `project` mode only: drives button enablement (§17.3 "return valid next actions"); never computed locally. */
   validNextActions: ValidNextAction[]
-  /** `project` mode only — diagnostics from the most recent change operation, rendered verbatim (§17.3 "return structured diagnostics"). */
+  /** `project` mode only: diagnostics from the most recent change operation, rendered verbatim (§17.3 "return structured diagnostics"). */
   lastOperationDiagnostics: DesignDiagnostic[]
   projectId: string
   syntheticDataStatement: string
@@ -392,13 +392,13 @@ function writePersisted(projectId: string, payload: PersistedShape): void {
   try {
     window.localStorage.setItem(storageKey(projectId), JSON.stringify(payload))
   } catch {
-    /* private-mode / quota — autosave silently degrades, draft stays in memory */
+    /* private-mode / quota: autosave silently degrades, draft stays in memory */
   }
 }
 
 /** A module blocks (§9.2 `Waiting for dependency`) when it has never been
  * approved and at least one direct dependency has never been approved.
- * Returns the blocking *module ids* (not prose) — the view layer resolves
+ * Returns the blocking *module ids* (not prose): the view layer resolves
  * names for the explanation text. */
 function computeBlockers(
   architecture: SystemStructureSpecification,
@@ -517,7 +517,7 @@ function loadDefaultSnapshot(): {
 }
 
 /**
- * A valid, empty `SystemStructureSpecification` — the placeholder used only
+ * A valid, empty `SystemStructureSpecification`: the placeholder used only
  * before the first `project`-mode `getWorkflowStatus` response arrives, or
  * when a real project has no approved (and no draft) system structure yet.
  * Every consuming view (`SystemCanvas`, `ModuleQueue`, ...) already renders
@@ -620,7 +620,7 @@ function emptyPolicy(projectId: string, actor: string, now: string): DesignWorkf
  * §22.1's `SampleDefects` / `IncrementalPreview` / `PackageExportOldResult`
  * types are documented in `packages/core/src/capabilities/design/
  * sampleAuditHub.ts` as "sample-specific supporting types (not canonical
- * records)" — there is no bridge operation that could honestly populate
+ * records)": there is no bridge operation that could honestly populate
  * them for a real project, and this store never fabricates defect or
  * defect-demo content for one. These placeholders exist only so
  * `DesignState`'s shared type can retain the sample-only defect gallery in
@@ -664,7 +664,7 @@ function emptyScenarioRun(projectId: string, now: string): ScenarioRun {
   }
 }
 
-/** The synchronous placeholder state used the instant a `project`-mode store is constructed, before its first bridge round trip resolves — see `DesignStore.ready`. */
+/** The synchronous placeholder state used the instant a `project`-mode store is constructed, before its first bridge round trip resolves: see `DesignStore.ready`. */
 function emptyProjectState(projectId: string, actor: string = LOCAL_USER_ACTOR): DesignState {
   const now = new Date().toISOString()
   const architecture = emptySystemStructure(projectId)
@@ -728,7 +728,7 @@ function emptyProjectState(projectId: string, actor: string = LOCAL_USER_ACTOR):
 /** `project`-mode connection: which real project to talk to, over which bridge caller. */
 export type DesignStoreBridgeOptions = {
   projectId: string
-  /** Defaults to `LOCAL_USER_ACTOR` — see `designBridgeClient.ts` for why. */
+  /** Defaults to `LOCAL_USER_ACTOR`: see `designBridgeClient.ts` for why. */
   actor?: string
   call: DesignBridgeCaller
 }
@@ -741,7 +741,7 @@ export type DesignStoreOptions = {
   /**
    * `project` mode (§17, §22.1): when provided, the store never loads the
    * sample and never calls a core pure function to decide a canonical
-   * outcome — every read and change goes through `bridge.call` and the
+   * outcome: every read and change goes through `bridge.call` and the
    * store becomes a thin cache of the results. Omit for `sample` mode
    * (default; unchanged in-browser demo behavior).
    */
@@ -767,7 +767,7 @@ export class DesignStore {
   /** `project` mode only; unset in `sample` mode. */
   private readonly bridgeClient?: DesignBridgeClient
   /**
-   * `project` mode only — resolves once the first `getWorkflowStatus` /
+   * `project` mode only: resolves once the first `getWorkflowStatus` /
    * `listModuleDesigns` / `getImplementationWaves` / `getValidNextActions`
    * round trip has been applied to state. Tests await this instead of
    * polling; `sample` mode resolves it immediately (nothing to load).
@@ -776,7 +776,7 @@ export class DesignStore {
   /**
    * `project` mode only. Every method with a synchronous, pre-existing
    * return type (kept unchanged so `sample`-mode callers and tests are
-   * unaffected — see review finding #1 acceptance notes) dispatches its
+   * unaffected: see review finding #1 acceptance notes) dispatches its
    * bridge round trip in the background and records it here; production
    * code observes the result through `subscribe`/`getState()` as usual,
    * and tests can `await store.waitForPendingOperation()` for a
@@ -937,7 +937,7 @@ export class DesignStore {
       diagramImpacts: {},
       moduleHandoffs: {},
       deltaFlows: {},
-      // `sample` mode never talks to the bridge/adapter — these stay `idle`
+      // `sample` mode never talks to the bridge/adapter: these stay `idle`
       // and `ProjectSetupPanel`/`project`-mode Verify are never rendered.
       repositoryConfig: { status: 'idle' },
       principal: { status: 'idle' },
@@ -994,14 +994,13 @@ export class DesignStore {
   }
 
   // ---------------------------------------------------------------------
-  // `project` mode — bridge plumbing (§17, §22.1, review finding #1)
+  // `project` mode: bridge plumbing (§17, §22.1, review finding #1)
   //
   // Every method below either issues exactly one `DesignBridgeClient` call
   // (a real `design:operation` round trip) or is a pure, non-authoritative
   // presentation projection over data the bridge already returned
   // (`materializeSession`, `systemStructureStatus`, `selectDefaultModule`).
-  // None of them decide an approval, a check outcome, or a gate result —
-  // those always come back from the service's own `DesignOperationResult`.
+  // None of them decide an approval, a check outcome, or a gate result:   // those always come back from the service's own `DesignOperationResult`.
   // ---------------------------------------------------------------------
 
   isProjectMode(): boolean {
@@ -1026,7 +1025,7 @@ export class DesignStore {
     return this.bridgeClient
   }
 
-  /** One `getModuleDesign` read — fetches and caches the current full record for one module. */
+  /** One `getModuleDesign` read: fetches and caches the current full record for one module. */
   private async loadModuleDesign(moduleId: string): Promise<ModuleDesignSpecification | undefined> {
     const client = this.requireBridge()
     const design = await client.read<ModuleDesignSpecification | undefined>('getModuleDesign', [client.projectId, moduleId])
@@ -1035,7 +1034,7 @@ export class DesignStore {
     return design
   }
 
-  /** Caches a design record returned by the bridge and derives its session step locally (no bridge op exists for session-step navigation — see file header). */
+  /** Caches a design record returned by the bridge and derives its session step locally (no bridge op exists for session-step navigation: see file header). */
   private applyDesignRecord(design: ModuleDesignSpecification): void {
     this.touchDesign(design)
     if (design.status === 'approved') {
@@ -1068,7 +1067,7 @@ export class DesignStore {
    * The one full-workspace refresh: `getWorkflowStatus`, `listModuleDesigns`,
    * `getImplementationWaves`, `getValidNextActions` (§17.1). Called once at
    * construction and again after every mutating call, so the workspace
-   * always reflects the service's own current state — never a locally
+   * always reflects the service's own current state: never a locally
    * computed approximation.
    */
   private async refreshProjectState(): Promise<void> {
@@ -1191,7 +1190,7 @@ export class DesignStore {
 
   /**
    * `sample` mode: emit + schedule the local-storage autosave (§18.1).
-   * `project` mode: emit only — there is no browser-local draft to persist;
+   * `project` mode: emit only: there is no browser-local draft to persist;
    * every change already went through a bridge round trip that the service
    * itself persisted (§17.3 "write an audit event").
    */
@@ -1209,8 +1208,8 @@ export class DesignStore {
   }
 
   // ---------------------------------------------------------------------
-  // Project setup — repository root, session principal, project roles
-  // (§4, §17.3, §20.2, §25.3 — second-review P1: "nothing configures the
+  // Project setup: repository root, session principal, project roles
+  // (§4, §17.3, §20.2, §25.3: second-review P1: "nothing configures the
   // repository adapter or project roles"). `project` mode only; every
   // method here is a no-op outside `project` mode. `adapter:*` operations
   // never appear in `getValidNextActions` (they are adapter-owned, not
@@ -1245,7 +1244,7 @@ export class DesignStore {
 
   private async readPrincipal(client: DesignBridgeClient): Promise<PrincipalState> {
     try {
-      // `adapter:getPrincipal` takes no args — the principal is the
+      // `adapter:getPrincipal` takes no args: the principal is the
       // dispatcher's own OS-derived identity, not scoped to a project.
       const response = await client.read<AdapterPrincipalResponse>('adapter:getPrincipal', [])
       if (isUnknownOperationResponse(response)) {
@@ -1380,7 +1379,7 @@ export class DesignStore {
   /**
    * `ProjectSetupPanel`'s "Grant design authorities to this session user"
    * action. Requests every §4 authority (`ALL_DESIGN_AUTHORITIES`) for the
-   * current principal — loads the principal first if it has not been read
+   * current principal: loads the principal first if it has not been read
    * yet, then sends both `grantee` and `authorities` explicitly (rather
    * than relying on `adapter:configureProjectRoles`'s own "defaults to the
    * stamped principal / all authorities" server-side default) so the
@@ -1388,7 +1387,7 @@ export class DesignStore {
    * (`{ ok, auditEventId }`) does not echo what was granted, so the granted
    * `principal`/`authorities` shown afterward are what this call requested,
    * not a server echo. Gracefully reports `'unavailable'` on an
-   * `EUC16-UNKNOWN-OPERATION` response — a defensive fallback for an older
+   * `EUC16-UNKNOWN-OPERATION` response: a defensive fallback for an older
    * desktop build (§17.3, `designBridgeClient.ts`).
    */
   async grantDesignAuthoritiesToSessionUser(): Promise<RolesGrantState> {
@@ -1439,7 +1438,7 @@ export class DesignStore {
   }
 
   // ---------------------------------------------------------------------
-  // Verify (`project` mode) — §14.4, §17.1. `getScenarioCoverage` returns
+  // Verify (`project` mode): §14.4, §17.1. `getScenarioCoverage` returns
   // the same `VerifySummary` shape `buildVerifySummary` computes locally
   // for `sample` mode (`packages/core` `verificationPlanner.ts`), so
   // `DesignVerifyView` renders both from one shared summary shape.
@@ -1861,7 +1860,7 @@ export class DesignStore {
     return session
   }
 
-  /** §9.4 — creates a module draft from the approved system structure. */
+  /** §9.4: creates a module draft from the approved system structure. */
   ensureDraft(moduleId: string): ModuleDesignSpecification | undefined {
     const existing = this.getDesign(moduleId)
     if (existing) {
@@ -1904,7 +1903,7 @@ export class DesignStore {
     )
   }
 
-  /** §9.3 — open a completed or current step without losing later draft data. */
+  /** §9.3: open a completed or current step without losing later draft data. */
   goToStep(moduleId: string, step: ModuleDesignStep): void {
     const session = this.state.sessions[moduleId]
     if (!session) return
@@ -1960,7 +1959,7 @@ export class DesignStore {
     this.commit()
   }
 
-  /** §9.9 — "Run module checks" (Appendix C label). */
+  /** §9.9: "Run module checks" (Appendix C label). */
   runChecks(moduleId: string): ModuleDesignCheckEvaluation | undefined {
     const design = this.getDesign(moduleId)
     if (!design) return undefined
@@ -1987,7 +1986,7 @@ export class DesignStore {
     return evaluation
   }
 
-  /** §9.10 — approval of one module never touches another module's record. */
+  /** §9.10: approval of one module never touches another module's record. */
   approveModule(moduleId: string, approvedBy = 'you'): { ok: boolean; diagnostics: readonly { message: string }[] } {
     const design = this.getDesign(moduleId)
     if (!design) return { ok: false, diagnostics: [] }
@@ -2056,9 +2055,9 @@ export class DesignStore {
 
   /**
    * `project` mode: the workspace's one action for this module, taken
-   * verbatim from the service's own `getValidNextActions` (§17.3) — never
+   * verbatim from the service's own `getValidNextActions` (§17.3): never
    * computed locally. Falls back to a step-navigation label (no service
-   * action targets this module — e.g. mid-edit on a `draft`) using the same
+   * action targets this module: e.g. mid-edit on a `draft`) using the same
    * pure `sessionPrimaryAction` projection `sample` mode uses, since the
    * session step itself is not a canonical record (see file header).
    */
@@ -2092,7 +2091,7 @@ export class DesignStore {
   /**
    * Dispatches the single primary action. `project` mode: only dispatches a
    * bridge change when the matching `getValidNextActions` entry says
-   * `enabled: true` — an explicit server-computed decision, never a local
+   * `enabled: true`: an explicit server-computed decision, never a local
    * approval/gate re-check (§17.3 "return valid next actions").
    */
   primaryAction(moduleId: string): void {
@@ -2130,7 +2129,7 @@ export class DesignStore {
             this.createModuleHandoff(moduleId)
             return
           default:
-            // answerModuleDesignQuestion / reopenModuleDesign — no single
+            // answerModuleDesignQuestion / reopenModuleDesign: no single
             // bridge call corresponds to "the" action; direct the user to
             // the step that handles it instead of guessing an edit.
             this.announce(action.label)
@@ -2173,7 +2172,7 @@ export class DesignStore {
   // Diagram discussion / propose-change (§9.8, §15, §10)
   // ---------------------------------------------------------------------
 
-  /** Appends one bridge-returned discussion entry to the local cache — a pure presentation cache, never an authoritative record (the service already persisted `entry` via `workspace.saveDiagramDiscussionEntry`). */
+  /** Appends one bridge-returned discussion entry to the local cache: a pure presentation cache, never an authoritative record (the service already persisted `entry` via `workspace.saveDiagramDiscussionEntry`). */
   private appendDiagramDiscussionEntry(elementId: string, entry: DiagramDiscussionEntry): void {
     const existing = this.state.diagramDiscussions[elementId] ?? []
     this.patch({ diagramDiscussions: { ...this.state.diagramDiscussions, [elementId]: [...existing, entry] } })
@@ -2181,7 +2180,7 @@ export class DesignStore {
 
   /**
    * `project` mode: `proposeVisualChange` then, on success, `analyzeVisualChange`
-   * (§17.2) — the same two-step service split sample mode's single local call
+   * (§17.2): the same two-step service split sample mode's single local call
    * (`analyzeDesignChange` + two synthesized entries) combines into one user
    * action. Both calls' returned records (`DiagramDiscussionEntry`,
    * `DesignImpactRecord`) are cached and rendered verbatim; the local
@@ -2190,7 +2189,7 @@ export class DesignStore {
    * records its own `impactAnalysis` entry but `analyzeVisualChange` returns
    * only the impact record, not that entry, so `DiagramDetailModal`'s
    * existing "find the impact via the discussion history" lookup has
-   * something bridge-derived to find) — never a fabricated approval or
+   * something bridge-derived to find): never a fabricated approval or
    * check outcome.
    */
   private async proposeDiagramChangeProject(design: ModuleDesignSpecification, target: DiagramElementTarget, description: string): Promise<void> {
@@ -2231,7 +2230,7 @@ export class DesignStore {
     this.emit()
   }
 
-  /** Impact analysis runs BEFORE any record change — this method never mutates `design` (§9.8, §10). */
+  /** Impact analysis runs BEFORE any record change: this method never mutates `design` (§9.8, §10). */
   proposeDiagramChange(moduleId: string, target: DiagramElementTarget, description: string): DesignImpactRecord | undefined {
     const design = this.getDesign(moduleId)
     if (!design || !description.trim()) return undefined
@@ -2291,7 +2290,7 @@ export class DesignStore {
 
   /**
    * `project` mode: `approveChangePlan` (§17.2) against the pending impact
-   * record's id (found the same way sample mode finds it — the last
+   * record's id (found the same way sample mode finds it: the last
    * `impactAnalysis` discussion entry). `approvedBy` in the resulting
    * discussion entry is read from the service's own returned
    * `DesignImpactRecord.approval.approvedBy` (§20.2 "no approval shortcut",
@@ -2330,7 +2329,7 @@ export class DesignStore {
     this.emit()
   }
 
-  /** User action — records approval for the exact analyzed impact. Execution remains a separate action (§9.8, §9.11). */
+  /** User action: records approval for the exact analyzed impact. Execution remains a separate action (§9.8, §9.11). */
   approveDiagramChangePlan(moduleId: string, target: DiagramElementTarget): void {
     const design = this.getDesign(moduleId)
     if (!design) return
@@ -2452,7 +2451,7 @@ export class DesignStore {
   }
 
   /**
-   * `project` mode: `proposeVisualChange` (§17.2) — the closest matching
+   * `project` mode: `proposeVisualChange` (§17.2): the closest matching
    * bridge operation, since the service exposes no separate freeform
    * "discussion" write; the returned `DiagramDiscussionEntry` (kind
    * `'proposedChange'`) is rendered verbatim exactly as the service
@@ -2538,10 +2537,10 @@ export class DesignStore {
   }
 
   /**
-   * §6.2 Build gate for one module — verbatim blocking reasons. `sample`
+   * §6.2 Build gate for one module: verbatim blocking reasons. `sample`
    * mode only: `project` mode has no bridge preview for this (the service
    * evaluates the gate itself, inside `createModuleImplementationPacket`,
-   * and returns its diagnostics verbatim from that one call — see
+   * and returns its diagnostics verbatim from that one call: see
    * `createModuleHandoff`); this never re-derives an approximate answer
    * locally for a real project.
    */
@@ -2584,9 +2583,9 @@ export class DesignStore {
   }
 
   /**
-   * §11.2 / §11.3 / §6.2 — the real one-module Copilot handoff (default: exactly one module). A
+   * §11.2 / §11.3 / §6.2: the real one-module Copilot handoff (default: exactly one module). A
    * draft or in-review design gets a design packet (never grants approval authority); an approved
-   * design gets an implementation packet, gated by `evaluateBuildGate` — a blocked gate never
+   * design gets an implementation packet, gated by `evaluateBuildGate`: a blocked gate never
    * produces a packet, and its diagnostics are shown verbatim.
    */
   createModuleHandoff(moduleId: string, limitBytes = 200_000): ModuleHandoffResult {
@@ -2717,7 +2716,7 @@ export class DesignStore {
     }
   }
 
-  /** §11.7 multi-pass continuation — creates a new implementation packet referencing the previous one. */
+  /** §11.7 multi-pass continuation: creates a new implementation packet referencing the previous one. */
   continueModuleHandoff(moduleId: string, passKind: ModuleImplementationPacket['passKind'], limitBytes = 200_000): ModuleHandoffResult | undefined {
     const design = this.getDesign(moduleId)
     const priorHandoff = this.state.moduleHandoffs[moduleId]
@@ -2757,19 +2756,19 @@ export class DesignStore {
   }
 
   /**
-   * §3.3 — explicit multi-module handoff; any violation returns diagnostics
+   * §3.3: explicit multi-module handoff; any violation returns diagnostics
    * and no packets. `confirmations` must come from real, rendered checkbox
    * state (`WavesView`'s "I confirm these modules are independent" and
-   * per-module "Fixtures and external resources are isolated" — review
+   * per-module "Fixtures and external resources are isolated": review
    * finding #2): an unchecked box means `false` reaches
    * `buildMultiModulePacket` exactly as `false`, which its own runtime check
-   * rejects with a diagnostic — this method never substitutes `true` for a
+   * rejects with a diagnostic: this method never substitutes `true` for a
    * confirmation the user did not actually give.
    */
   createMultiModuleHandoff(moduleIds: string[], confirmations: MultiModuleConfirmations, limitBytes = 200_000): BuildMultiModulePacketResult {
     if (this.isProjectMode()) {
       // No bridge operation exists yet for a combined multi-module handoff
-      // (§17.2 lists no such operation) — this never falls back to a local
+      // (§17.2 lists no such operation): this never falls back to a local
       // packet build against a real project (§17, review finding #1).
       const result: BuildMultiModulePacketResult = {
         ok: false,
@@ -2876,7 +2875,7 @@ export class DesignStore {
     return { ok: true }
   }
 
-  /** Sample-only demo button (`deterministicTestProvider`) — clearly labeled in the UI as a sample, never real implementation output; never available in `project` mode. */
+  /** Sample-only demo button (`deterministicTestProvider`): clearly labeled in the UI as a sample, never real implementation output; never available in `project` mode. */
   async importSampleReturnedDelta(moduleId: string): Promise<{ ok: boolean; error?: string }> {
     if (this.isProjectMode()) {
       const message = 'Sample delta import is only available in sample mode.'
@@ -2907,12 +2906,12 @@ export class DesignStore {
       applyResult: undefined,
       rolledBack: false,
     })
-    this.announce('Imported a sample deterministic-test-provider delta — this is a labeled sample, not real implementation output.')
+    this.announce('Imported a sample deterministic-test-provider delta: this is a labeled sample, not real implementation output.')
     this.commit()
     return { ok: true }
   }
 
-  /** §11.6 — the full inspection shown before approve/apply. */
+  /** §11.6: the full inspection shown before approve/apply. */
   inspectReturnedDelta(moduleId: string): DeltaInspection | undefined {
     const flow = this.deltaFlowFor(moduleId)
     const design = this.getDesign(moduleId)
@@ -2965,7 +2964,7 @@ export class DesignStore {
     return result
   }
 
-  /** §12.2 apply — simulated in the browser; a real filesystem apply is desktop-side. */
+  /** §12.2 apply: simulated in the browser; a real filesystem apply is desktop-side. */
   applyReturnedDelta(moduleId: string): DeltaApplyResult | undefined {
     const flow = this.deltaFlowFor(moduleId)
     if (!flow.approved || !flow.inspection || !flow.delta) return undefined
@@ -2995,7 +2994,7 @@ export class DesignStore {
   /** Restores the pre-apply simulated file map (rollback demonstration). */
   rollbackReturnedDelta(moduleId: string): void {
     if (this.isProjectMode()) {
-      // §12.2 "Transactional apply" — the service rolls back a failed
+      // §12.2 "Transactional apply": the service rolls back a failed
       // `applyAgentDelta` itself; there is no separate bridge operation for
       // an after-the-fact manual rollback of an already-applied delta, and
       // this never simulates one locally against a real project.

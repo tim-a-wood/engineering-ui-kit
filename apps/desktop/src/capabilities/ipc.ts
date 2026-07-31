@@ -74,6 +74,7 @@ import {
   type FoundationPlan,
   type FreshnessRecord,
   type FrontendBrief,
+  type FrontendDesignPreferences,
   type FrontendBinding,
   type InboundBinding,
   type JobRecord,
@@ -596,7 +597,11 @@ export function registerCapabilityIpcHandlers(
 
   ipcMain.handle(CAP_CHANNELS.compileFrontendBrief, (
     _e,
-    input: { projectId: string; targetModuleIds?: string[] },
+    input: {
+      projectId: string
+      targetModuleIds?: string[]
+      designPreferences?: FrontendDesignPreferences
+    },
   ): FrontendBrief => {
     const projectId = requireString(input.projectId, 'projectId')
     const architecture = caps.getApprovedArchitecture(projectId)
@@ -627,6 +632,7 @@ export function registerCapabilityIpcHandlers(
       moduleDesigns,
       bindings: [...inbound, ...legacy],
       targetModuleIds: input.targetModuleIds,
+      designPreferences: input.designPreferences,
       steLexicon: caps.getSteLexicon(projectId),
     })
   })
@@ -2437,7 +2443,7 @@ export function registerCapabilityIpcHandlers(
     if (!languageEvaluation.passed) {
       return { ok: false as const, diagnostics: languageEvaluation.diagnostics }
     }
-    // Multiple inbound bindings may target the same operation — never deduplicated (CAP-ERA-001 §12.4).
+    // Multiple inbound bindings may target the same operation: never deduplicated (CAP-ERA-001 §12.4).
     return { ok: true as const, approved: caps.approveInboundBinding(projectId, draft) }
   })
 

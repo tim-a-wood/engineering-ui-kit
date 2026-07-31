@@ -6,7 +6,7 @@
  * operation whose arguments and results are serializable contracts.
  */
 
-// EUC-16 — design-workflow bridge contract (value import: DESIGN_CHANNEL is used below).
+// EUC-16: design-workflow bridge contract (value import: DESIGN_CHANNEL is used below).
 import { DESIGN_CHANNEL, type DesignBridgeRequest, type DesignBridgeResponse } from './capabilities/designBridge.js'
 
 import type {
@@ -20,6 +20,7 @@ import type {
   EvidenceCapture,
   FoundationPlan,
   FrontendBrief,
+  FrontendDesignPreferences,
   HandoffRun,
   InboundBinding,
   ImplementationWavePlan,
@@ -79,6 +80,7 @@ export type TaskPacketFields = {
   acceptanceCriteria: string
   references: string
   intentProfile?: TaskIntentProfile
+  frontendDesign?: FrontendDesignPreferences
 }
 
 export type PrepareContextResult = {
@@ -277,6 +279,7 @@ export type EuikBridge = {
   capabilitiesCompileFrontendBrief(input: {
     projectId: string
     targetModuleIds?: string[]
+    designPreferences?: FrontendDesignPreferences
   }): Promise<FrontendBrief>
   capabilitiesListModules(projectId: string): Promise<CapabilityModuleRecord[]>
   capabilitiesListModuleDesigns(projectId: string): Promise<{
@@ -415,7 +418,7 @@ export type EuikBridge = {
   }): Promise<unknown>
   capabilitiesSaveBindingDraft(projectId: string, draft: unknown): Promise<{ ok: true }>
   capabilitiesApproveBinding(projectId: string, draft: unknown): Promise<{ ok: boolean; diagnostics?: unknown; approved?: unknown }>
-  /** CAP-ERA-001 §5.1/§12.4 — deployables this project's architecture allocates. Not yet backed by real IPC (WP5B/WP7). */
+  /** CAP-ERA-001 §5.1/§12.4: deployables this project's architecture allocates. Not yet backed by real IPC (WP5B/WP7). */
   capabilitiesListDeployables(projectId: string): Promise<CapabilityDeployableSummary[]>
   /** CAP-CONTRACT-028 inbound bindings across every deployable/kind. Not yet backed by real IPC (WP5B/WP7). */
   capabilitiesListInboundBindings(projectId: string): Promise<InboundBindingReadRecord[]>
@@ -452,7 +455,7 @@ export type EuikBridge = {
     moduleId: string
     explicit: boolean
   }): Promise<RunModuleVerificationResult>
-  /** WP5A — foundation planning (CAP-TEST-074/075). See `apps/gui/src/bridge.ts` for the renderer-facing contract. */
+  /** WP5A: foundation planning (CAP-TEST-074/075). See `apps/gui/src/bridge.ts` for the renderer-facing contract. */
   capabilitiesProposeFoundation(input: {
     projectId: string
     answers?: { id: string; choice: string }[]
@@ -506,7 +509,7 @@ export type EuikBridge = {
     explicit: boolean
   }): Promise<import('@engineering-ui-kit/core').IntegrationCommandRun>
 
-  /** EUC-16 — single operation-envelope channel for the design workflow (see `capabilities/designBridge.ts`). */
+  /** EUC-16: single operation-envelope channel for the design workflow (see `capabilities/designBridge.ts`). */
   designOperation(request: DesignBridgeRequest): Promise<DesignBridgeResponse>
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copilot workspace tab — full Run in Copilot capabilities.
+ * Copilot workspace tab: full Run in Copilot capabilities.
  */
 
 import { useState } from 'react'

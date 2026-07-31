@@ -266,5 +266,21 @@
       ]
     ]
   },
-  "productKind": "fracas"
+  "productKind": "fracas",
+  "design": {
+    "contractId": "EUIT-FRONTEND-001",
+    "iconFamily": "lucide",
+    "paletteId": "teal",
+    "fontId": "atkinson",
+    "defaultMode": "system",
+    "density": "comfortable",
+    "palette": "Deep teal",
+    "lightAccent": "#075e61",
+    "darkAccent": "#62d0ca",
+    "lightSoft": "#e0f1f0",
+    "darkSoft": "#103c3d",
+    "lightRgb": "7, 94, 97",
+    "darkRgb": "98, 208, 202",
+    "fontStack": "\"Atkinson Hyperlegible\", Inter, ui-sans-serif, system-ui, sans-serif"
+  }
 }

@@ -2,61 +2,61 @@
 
 ## Purpose
 
-This file defines the visual standard for dark-first Engineering UI Kit screens.
+This file defines the visual standard for Engineering UI Kit screens.
 
 ## Scope
 
-The guidance applies to app shells, panels, forms, tables, charts, overlays, and validation workflows. It does not define a brand campaign, public website, or full light-mode system.
+The guidance applies to app shells, panels, forms, tables, charts, overlays, and validation workflows. It does not define a brand campaign or public website.
 
 ## Visual Direction Summary
 
-The visual language is a dark engineering workbench: restrained, structured, technical, and polished. It should look complete and intentional, but not consumerized or decorative.
+The visual language is a modern enterprise workbench. It is restrained, structured, technical, and polished. Gulfstream blue and white are the default.
 
-## FND-VIS-001 — Dark-first surface hierarchy
+## FND-VIS-001: Dual-mode surface hierarchy
 
-Implementations shall use semantic surface tokens to create hierarchy: `semantic.surface.canvas` for the root canvas, `semantic.surface.panel` for ordinary bounded regions, `semantic.surface.panelRaised` for emphasized cards, `semantic.surface.inset` for embedded technical content, and `semantic.surface.overlay` for dialogs and drawers.
+Use semantic surface tokens to create hierarchy. Keep equal visual quality in light and dark modes.
 
-## FND-VIS-002 — Restrained technical accent usage
+## FND-VIS-002: Restrained technical accent usage
 
 Accent color shall identify primary actions, focus, active navigation, selected state, or important technical affordances. `semantic.accent.glow` may be used sparingly around active or focused regions; it shall not become decorative neon styling.
 
-## FND-VIS-003 — Surface and containment discipline
+## FND-VIS-003: Surface and containment discipline
 
 The canvas shall remain visually quiet. Use spacing, alignment, headings, and hairline dividers before adding a panel. Panels are reserved for genuinely bounded tools, previews, forms, or consequential review regions; they shall not wrap every section, row, empty state, or navigation choice. Raised cards are reserved for key decisions or temporary emphasis. Inset surfaces are for code, logs, file-drop targets, preview chrome, or technical data nested inside a bounded region.
 
-## FND-VIS-004 — Typography posture
+## FND-VIS-004: Typography posture
 
 Typography shall prioritize scanability and technical precision. Use semantic typography tokens, short headings, stable artifact names, and monospaced treatment for code, paths, commands, and IDs.
 
-## FND-VIS-005 — Density and spacing posture
+## FND-VIS-005: Density and spacing posture
 
 Compact density is allowed when content remains readable. Use `semantic.density.compact.*` and `semantic.spacing.*` tokens instead of arbitrary compression. Primary workflow regions should have enough padding to distinguish them from nested technical content.
 
-## FND-VIS-006 — Borders, elevation, and glow
+## FND-VIS-006: Borders, elevation, and glow
 
 Borders shall define hierarchy more often than heavy shadows. `semantic.border.subtle` is the default; `semantic.border.strong` is reserved for selected, active, or high-emphasis boundaries. Elevation and glow shall support state, not decoration.
 
-## FND-VIS-007 — Tables and technical data tone
+## FND-VIS-007: Tables and technical data tone
 
 Tables shall be dense, aligned, and legible. Header rows, status columns, paths, timestamps, and action columns shall be visually predictable. Decorative table striping or oversized rows that reduce engineering density should be avoided.
 
-## FND-VIS-008 — Charts and analytic surfaces
+## FND-VIS-008: Charts and analytic surfaces
 
 Charts shall sit inside chart panels with title, scope, units, time range or data source, and state. Gridlines, axes, thresholds, and legends shall use chart semantic tokens and shall not compete with status colors.
 
-## FND-VIS-009 — Status and severity color discipline
+## FND-VIS-009: Status and severity color discipline
 
 Status colors shall be used with text labels and icons or shapes where useful. Pass/fail, warning, blocked, and running states shall not rely on color alone, and screens shall avoid traffic-light noise from excessive severity badges.
 
-## FND-VIS-010 — What visual drift looks like
+## FND-VIS-010: What visual drift looks like
 
-Drift includes generic light cards, a page made from stacked rounded panels, arbitrary gradients, excessive glassmorphism, cyberpunk neon, huge marketing typography, unlabeled placeholder wireframes, hidden metadata, inconsistent borders, and raw colors that bypass tokens.
+Drift includes card walls, accent-strip tiles, arbitrary gradients, glass effects, ornamental sparkles, large marketing text, vague copy, mixed icons, and raw colors.
 
-## FND-VIS-011 — Quiet workspace composition
+## FND-VIS-011: Quiet workspace composition
 
 Landing views and project choosers should resemble a native workbench rather than a dashboard: concise page header, generous canvas, one obvious primary action, and full-row navigation separated by hairlines. Avoid summary cards that merely repeat destinations or workflow stages already available elsewhere.
 
-## FND-VIS-012 — Integrated page identity
+## FND-VIS-012: Integrated page identity
 
 Major workflow pages may pair the title with one unboxed semantic icon. The icon shall sit directly in the title bar without a card, tile, glow, or decorative container. A short text-and-arrow transition may appear opposite the title when moving between two closely related modes.
 
@@ -69,18 +69,21 @@ Major workflow pages may pair the title with one unboxed semantic icon. The icon
 | Compact table with clear status text | Use density and status tokens. |
 | Inset log/code region inside a panel | Use code and inset surface tokens. |
 | Hairline-divided figure strips | Related key figures share one panel, split by 1px subtle borders, labels in small uppercase, values in tabular/mono numerals. |
-| Plot drawn on the panel surface | Series draw directly on the panel with recessive gridlines — no boxed inset chart region; a crosshair plus text readout carries exact values. |
+| Plot drawn on the panel surface | Series draw directly on the panel with recessive gridlines: no boxed inset chart region; a crosshair plus text readout carries exact values. |
 | Machined segmented controls | Window/filter switchers use an inset track whose active segment is raised to the panel-raised surface, not an accent-tinted pill. |
 | Status as dot plus text | Routine statuses render as a status-token dot beside plain text; tinted pills are reserved for a few prominent states such as the run state. |
 | Quiet clickable project row | The entire row is the target; use a hairline divider, subtle hover, visible focus, and at most a quiet chevron. Do not add a redundant Continue button. |
 | Integrated workflow title icon | One unboxed icon sits beside the page title; the title and subtitle remain the primary orientation. |
 | Clearly labeled preview placeholder | Before an app exists, preview chrome contains a subdued mock shell and explicit `Placeholder preview` label rather than an error slab or ambiguous blank region. |
+| Matched light and dark modes | Both modes preserve hierarchy, contrast, density, and product identity. |
+| Consistent Lucide icons | Icons use one family, one geometry, and one meaning for each action. |
+| Accessible contextual help | Icon-only controls have tooltips. Complex terms have help triggers or persistent helper text. |
 
 ## Rejected Visual Patterns
 
 | Pattern | Reason |
 |---|---|
-| Generic white-card dashboard | Violates dark-first engineering posture. |
+| Generic white-card dashboard | Replaces the task with uniform cards. |
 | Arbitrary gradient hero blocks | Adds marketing tone and no engineering value. |
 | Decorative neon glow everywhere | Dilutes focus and active-state meaning. |
 | Low-fidelity placeholder components in hi-fi output | Fails the standard for polished implementation guidance. |
@@ -90,6 +93,10 @@ Major workflow pages may pair the title with one unboxed semantic icon. The icon
 | Proportional numerals in readings, tables, or timestamps | Measured values must align digit-for-digit; use tabular numerals or the mono family. |
 | A rounded panel around every section | Creates visual noise and weakens hierarchy; use the canvas and hairline dividers for ordinary grouping. |
 | Destination card plus button for the same action | Duplicates interaction; make the row or card itself the accessible target. |
+| Accent strip on a card, tile, panel, section, summary, well, or callout | Reads as generated template output and adds no task meaning. Use spacing, a hairline divider, or an explicit status icon and text. A selection rail is permitted only on a control that is actually selected. |
+| Ornamental sparkle or magic icon | Signals generic AI branding instead of product meaning. |
+| Em dash in visible copy | Breaks the controlled writing profile and often joins unrelated ideas. |
+| Mixed icon families | Creates inconsistent stroke, weight, geometry, and meaning. |
 
 ## Mockup Calibration Notes
 

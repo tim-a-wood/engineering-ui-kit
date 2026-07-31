@@ -266,7 +266,7 @@ function ScenarioWorkspace(props: DesignVerifyViewProps) {
               {selectedAction?.status === 'approved' && <p className="design-approval-confirmation" role="status">{selectedAction.message}</p>}
               {selectedResultState === 'old' && (
                 <p className="design-result-currency-warning" role="note">
-                  Old result — its recorded revisions no longer match the current design. Rerun this scenario before relying on it.
+                  Old result: its recorded revisions no longer match the current design. Rerun this scenario before relying on it.
                 </p>
               )}
 

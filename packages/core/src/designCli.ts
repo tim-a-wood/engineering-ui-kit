@@ -1,5 +1,5 @@
 /**
- * EUC-16 — CLI adapter for the use-case-led Capabilities design workflow
+ * EUC-16: CLI adapter for the use-case-led Capabilities design workflow
  * (§17, §25.3 "IPC, CLI, and machine API return the same structured result
  * for the same operation").
  *
@@ -8,7 +8,7 @@
  * `apps/desktop/src/capabilities/designIpc.ts` and `designMachineApi.ts`
  * call, dispatches to the named operation with the args array from `--json`,
  * and prints the operation's result to stdout with a stable (canonical
- * key order) `JSON.stringify` — the same JSON shape the other two adapters
+ * key order) `JSON.stringify`: the same JSON shape the other two adapters
  * produce for the same operation and arguments.
  *
  *   euik-design <operation> --json '<argsJson>' [--data-dir path]
@@ -20,19 +20,19 @@
  * for a §17.2 change operation (which always takes one input object).
  *
  * Reviewer P1 fix (mirrors `apps/desktop/src/capabilities/designIpc.ts` and
- * `designMachineApi.ts` — see those files' module docs): `DesignCliOptions.
+ * `designMachineApi.ts`: see those files' module docs): `DesignCliOptions.
  * repositoryRoot` (a single path, or a `{ [projectId]: path }` map) supplies
  * the project's real repository root for the `applyDelta`/`verifyModule`/
  * `readRepositoryContext` executors `buildDefaultExecutors`
- * (`designMachineApi.ts`) builds — never `dataDir`. With no `repositoryRoot`
+ * (`designMachineApi.ts`) builds: never `dataDir`. With no `repositoryRoot`
  * resolved for the invocation's project, `applyDelta` fails honestly
  * (`'repository-not-configured: ...'`) instead of silently applying into
  * `dataDir`.
  *
  * Second-review P1 fix (trusted principal at the adapter boundary, mirrors
- * `designMachineApi.ts` — see its module doc "Trust model"):
+ * `designMachineApi.ts`: see its module doc "Trust model"):
  * `DesignCliOptions.principal` (`"user:<id>"`) stamps/overrides the `actor`
- * field of every §17.2 change-operation request this CLI dispatches — a
+ * field of every §17.2 change-operation request this CLI dispatches: a
  * `--json` argument cannot assert an arbitrary actor. `principal` is opt-in
  * (see `designMachineApi.ts`'s module doc for why the default is not
  * automatic): a real `euik-design` binary wrapper should pass
@@ -59,18 +59,18 @@ import {
 // Second-review P1 fix (was DEV-05): `buildDefaultExecutors` now also wires
 // real `configureBinding`/`verifyConnection`/`runScenario` executors
 // (`capabilities/design/connectExecutors.ts`) whenever a `{ workspace,
-// dataDir }` pair is supplied — see `designMachineApi.ts`'s module doc. This
+// dataDir }` pair is supplied: see `designMachineApi.ts`'s module doc. This
 // CLI adapter supplies it below the same way `createDesignMachineApi` does.
 
 export type DesignCliOptions = {
   dataDir: string
   stdout: (s: string) => void
   stderr: (s: string) => void
-  /** Test hook — overrides the default filesystem-backed executors. */
+  /** Test hook: overrides the default filesystem-backed executors. */
   executors?: DesignOperationExecutors
-  /** The project's real repository root(s) — see module doc. */
+  /** The project's real repository root(s): see module doc. */
   repositoryRoot?: RepositoryRootOption
-  /** §4, §20.2 (finding — trusted principal at the adapter boundary) — see module doc. Opt-in: no stamping when omitted. */
+  /** §4, §20.2 (finding: trusted principal at the adapter boundary): see module doc. Opt-in: no stamping when omitted. */
   principal?: string
 }
 
@@ -83,10 +83,10 @@ const USAGE = "usage: euik-design <operation> --json '<argsJson>' [--data-dir pa
 
 /**
  * Runs one CLI invocation. Exit codes: `0` when the result is not an
- * explicit rejection (`result.ok !== false` — true for every §17.1 read
+ * explicit rejection (`result.ok !== false`: true for every §17.1 read
  * result, which has no `ok` field), `1` when `result.ok === false`, `2` for
  * a usage error (missing/unknown operation, malformed `--json`, missing flag
- * value) — never a thrown exception.
+ * value): never a thrown exception.
  */
 export async function runDesignCli(argv: string[], opts: DesignCliOptions): Promise<number> {
   const [operation, ...rest] = argv
@@ -122,7 +122,7 @@ export async function runDesignCli(argv: string[], opts: DesignCliOptions): Prom
   const workspace = new DesignWorkspace(dataDir)
 
   if (operation === 'list-operations') {
-    // No real executors needed to enumerate operation names — they do not
+    // No real executors needed to enumerate operation names: they do not
     // change which methods the service exposes.
     const names = Object.keys(createDesignOperations({ workspace }))
     opts.stdout(stableStringify(names) + '\n')
@@ -148,9 +148,9 @@ export async function runDesignCli(argv: string[], opts: DesignCliOptions): Prom
     args = parsed
   }
 
-  // §4, §20.2 (finding — trusted principal at the adapter boundary):
+  // §4, §20.2 (finding: trusted principal at the adapter boundary):
   // resolved once per invocation, from `opts.principal` (the embedder's
-  // authenticated caller) — opt-in; see `designMachineApi.ts` module doc.
+  // authenticated caller): opt-in; see `designMachineApi.ts` module doc.
   let principal: string | undefined
   try {
     principal = resolvePrincipal(opts.principal)

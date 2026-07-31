@@ -84,7 +84,7 @@
       "name": "App Shell",
       "category": "shell",
       "status": "required",
-      "description": "a persistent application frame for dark-first engineering workflows."
+      "description": "a persistent application frame for dual-mode engineering workflows."
     },
     {
       "id": "CMP-SHELL-TOP-BAR",

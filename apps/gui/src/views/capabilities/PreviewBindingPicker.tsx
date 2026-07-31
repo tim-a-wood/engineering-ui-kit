@@ -48,7 +48,7 @@ export function PreviewBindingPicker({
     if (requiresSourceTargetConfirmation(evidence)) {
       setPending(evidence)
       setProposedTarget(evidence.selector)
-      setError('Unmarked element — confirm the proposed source target before continuing.')
+      setError('Unmarked element: confirm the proposed source target before continuing.')
       return
     }
     onEvidenceReady?.(evidence)

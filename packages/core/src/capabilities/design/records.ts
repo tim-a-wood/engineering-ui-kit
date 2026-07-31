@@ -1,5 +1,5 @@
 /**
- * Use-case-led Capabilities workflow — canonical record contracts.
+ * Use-case-led Capabilities workflow: canonical record contracts.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §5, §16.
  * These records are canonical; generated text, diagrams, prompts, and handoff
@@ -14,7 +14,7 @@ import type { GateResult } from '../gates.js'
 
 export type { GateResult }
 
-/** §5.2 — states for draftable records. */
+/** §5.2: states for draftable records. */
 export const DESIGN_RECORD_STATES = [
   'notStarted',
   'draft',
@@ -28,7 +28,7 @@ export const DESIGN_RECORD_STATES = [
 ] as const
 export type DesignRecordState = (typeof DESIGN_RECORD_STATES)[number]
 
-/** §5.2 — additional states for implementation work. */
+/** §5.2: additional states for implementation work. */
 export const IMPLEMENTATION_WORK_STATES = [
   'handoffCreated',
   'responseReturned',
@@ -39,7 +39,7 @@ export const IMPLEMENTATION_WORK_STATES = [
 ] as const
 export type ImplementationWorkState = (typeof IMPLEMENTATION_WORK_STATES)[number]
 
-/** §3.2 / §9.10 — an approval identifies the exact record revision and hash. */
+/** §3.2 / §9.10: an approval identifies the exact record revision and hash. */
 export type DesignApproval = {
   approvedBy: string
   /** §4 role that authorizes this approval, e.g. "software-architect". */
@@ -54,7 +54,7 @@ export type DesignApproval = {
   openNonblockingItemIds?: string[]
 }
 
-/** §20.3 — immutable audit record of an operation and result. */
+/** §20.3: immutable audit record of an operation and result. */
 export type DesignAuditEvent = {
   eventId: string
   projectId: string
@@ -88,7 +88,7 @@ export type DesignDiagnostic = {
   target?: string
 }
 
-/** §7.1 — item review status inside a use-case analysis (CAP-PLAN-010). */
+/** §7.1: item review status inside a use-case analysis (CAP-PLAN-010). */
 export const ANALYSIS_ITEM_STATUSES = [
   'sourced',
   'inferred',
@@ -143,7 +143,7 @@ export type UseCaseScenario = {
   steps: ScenarioStep[]
 }
 
-/** §7.2 — required use-case content. */
+/** §7.2: required use-case content. */
 export type UseCaseDefinition = {
   id: string
   name: string
@@ -172,7 +172,7 @@ export type UseCaseDefinition = {
   reviewStates?: Record<string, AnalysisItemStatus>
 }
 
-/** §5.1 — users, tasks, paths, rules, quality needs, and acceptance. */
+/** §5.1: users, tasks, paths, rules, quality needs, and acceptance. */
 export type UseCaseAnalysis = {
   schemaVersion: '1.0'
   projectId: string
@@ -338,7 +338,7 @@ export type UnresolvedDesignItem = {
 }
 
 /**
- * §9.6 — type-specific detail blocks. Exactly one block applies per module
+ * §9.6: type-specific detail blocks. Exactly one block applies per module
  * type; the applicable block is required for readyForReview.
  */
 export type ExperienceModuleDetail = {
@@ -441,7 +441,7 @@ export type TypeSpecificDetail =
   | { moduleType: 'connection'; detail: ConnectionModuleDetail }
   | { moduleType: 'platform'; detail: PlatformModuleDetail }
 
-/** §16.1 — complete design for one module. */
+/** §16.1: complete design for one module. */
 export type ModuleDesignSpecification = {
   schemaVersion: '1.0'
   projectId: string
@@ -524,7 +524,7 @@ export const MODULE_DESIGN_STEPS = [
 ] as const
 export type ModuleDesignStep = (typeof MODULE_DESIGN_STEPS)[number]
 
-/** §16.3 — resumable six-step module-design session. */
+/** §16.3: resumable six-step module-design session. */
 export type ModuleDesignSession = {
   id: string
   projectId: string
@@ -549,7 +549,7 @@ export type ModuleDesignSession = {
   updatedAt: string
 }
 
-/** §16.4 — deterministic context manifest. */
+/** §16.4: deterministic context manifest. */
 export type ContextManifestEntry = {
   kind: 'record' | 'contract' | 'schema' | 'source' | 'pattern' | 'test'
   ref: string
@@ -570,7 +570,7 @@ export type ContextManifest = {
   contentHash: string
 }
 
-/** §16.5 — module queue read model. */
+/** §16.5: module queue read model. */
 export type ModuleDesignProgressEntry = {
   moduleId: string
   name: string
@@ -601,7 +601,7 @@ export type ModuleDesignProgress = {
   modules: ModuleDesignProgressEntry[]
 }
 
-/** §16.6 — approved set of one system structure and required module designs. */
+/** §16.6: approved set of one system structure and required module designs. */
 export type DesignBaseline = {
   schemaVersion: '1.0'
   projectId: string
@@ -631,7 +631,7 @@ export type DesignBaseline = {
   contentHash: string
 }
 
-/** §16.7 — project Design-to-Build gate mode. */
+/** §16.7: project Design-to-Build gate mode. */
 export type DesignWorkflowPolicy = {
   projectId: string
   mode: 'completeBaseline' | 'incrementalModules'
@@ -640,7 +640,7 @@ export type DesignWorkflowPolicy = {
   changedBy: string
 }
 
-/** §23.3 — project feature flag for the use-case-led workflow. */
+/** §23.3: project feature flag for the use-case-led workflow. */
 export type DesignFeatureFlag = {
   projectId: string
   enabled: boolean
@@ -706,7 +706,7 @@ export type UmlRelationship = {
   sourceRecordId: string
 }
 
-/** §5.1 DiagramProjection — semantic projection of canonical records. */
+/** §5.1 DiagramProjection: semantic projection of canonical records. */
 export type DiagramProjection = {
   diagramId: string
   kind: DiagramKind
@@ -753,7 +753,7 @@ export type DiagramLayout = {
 // Packets, deltas, impact (EUC-10 / EUC-11 / EUC-07)
 // ---------------------------------------------------------------------------
 
-/** §11.2 — one-module design handoff. */
+/** §11.2: one-module design handoff. */
 export type ModuleDesignPacket = {
   schemaVersion: '1.0'
   packetId: string
@@ -785,7 +785,7 @@ export type ModuleDesignPacket = {
   contentHash: string
 }
 
-/** §11.3 — immutable one-module implementation packet. */
+/** §11.3: immutable one-module implementation packet. */
 export type ModuleImplementationPacket = {
   schemaVersion: '1.0'
   packetId: string
@@ -842,7 +842,7 @@ export type ReturnedFileChange = {
   content?: string
 }
 
-/** §11.5 — returned delta from an external agent or provider. */
+/** §11.5: returned delta from an external agent or provider. */
 export type ReturnedDelta = {
   schemaVersion: '1.0'
   deltaId: string
@@ -871,7 +871,7 @@ export type DeltaRejectionReason =
   | 'path-traversal'
   | 'record-change-not-allowed'
 
-/** §11.6 — inspection result shown before approve/apply. */
+/** §11.6: inspection result shown before approve/apply. */
 export type DeltaInspection = {
   inspectionId: string
   deltaId: string
@@ -896,7 +896,7 @@ export type DeltaInspection = {
   inspectedAt: string
 }
 
-/** §12.2 — transactional apply plan and result. */
+/** §12.2: transactional apply plan and result. */
 export type DeltaApplyPlan = {
   planId: string
   inspectionId: string
@@ -918,7 +918,7 @@ export type DeltaApplyResult = {
   completedAt: string
 }
 
-/** §10.2 — impact categories a design change identifies. */
+/** §10.2: impact categories a design change identifies. */
 export type DesignImpactItem = {
   category:
     | 'useCase'
@@ -967,7 +967,7 @@ export type DesignChangeKind =
   | 'rename'
   | 'portChange'
 
-/** §10 — impact of one proposed or returned change. */
+/** §10: impact of one proposed or returned change. */
 export type DesignImpactRecord = {
   schemaVersion: '1.0'
   impactId: string
@@ -1089,7 +1089,7 @@ export type ScenarioStepEvidence = {
   evidenceHash?: string
 }
 
-/** §5.1 / §14.3 — one immutable end-to-end scenario execution. */
+/** §5.1 / §14.3: one immutable end-to-end scenario execution. */
 export type ScenarioRun = {
   schemaVersion: '1.0'
   runId: string
@@ -1129,7 +1129,7 @@ export type ValidNextAction = {
   blockedReason?: string
 }
 
-/** §17.3 — uniform result of every change operation. */
+/** §17.3: uniform result of every change operation. */
 export type DesignOperationResult<T = unknown> = {
   ok: boolean
   value?: T
@@ -1155,19 +1155,18 @@ export const APPROVAL_AUTHORITIES = [
 ] as const
 export type ApprovalAuthority = (typeof APPROVAL_AUTHORITIES)[number]
 
-/** §4 — agents create drafts and changes; they hold no approval authority. */
+/** §4: agents create drafts and changes; they hold no approval authority. */
 export const AGENT_ACTOR_PREFIX = 'agent:'
-/** §4, §20.2 — a provider/service integration also holds no approval authority. */
+/** §4, §20.2: a provider/service integration also holds no approval authority. */
 export const SERVICE_ACTOR_PREFIX = 'service:'
 
 const NON_HUMAN_ACTOR_PREFIXES = [AGENT_ACTOR_PREFIX, SERVICE_ACTOR_PREFIX]
 
 /**
- * §4, §17.3, §20.2 (second-review finding — self-asserted approval identity)
- * — true when `actor` is not a human user principal: an `agent:` or
+ * §4, §17.3, §20.2 (second-review finding: self-asserted approval identity)
+ *: true when `actor` is not a human user principal: an `agent:` or
  * `service:` actor. Detection trims surrounding whitespace and is
- * case-insensitive, so `'Agent:copilot'` and `' SERVICE:bot '` both match —
- * a caller cannot defeat the default-deny rule below by varying
+ * case-insensitive, so `'Agent:copilot'` and `' SERVICE:bot '` both match:  * a caller cannot defeat the default-deny rule below by varying
  * capitalization or padding. Every approval function (and every consumer
  * contract acknowledgement, §9.7) must default-deny when this returns true,
  * independent of any authority the actor claims to hold.
@@ -1178,7 +1177,7 @@ export function isNonHumanActor(actor: string): boolean {
 }
 
 /**
- * @deprecated Case-sensitive and blind to `service:` actors — kept only as
+ * @deprecated Case-sensitive and blind to `service:` actors: kept only as
  * an alias so an existing import keeps compiling. Use
  * {@link isNonHumanActor} for every new and updated call site.
  */

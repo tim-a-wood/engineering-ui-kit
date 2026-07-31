@@ -19,39 +19,39 @@ scope discipline, and the separation between inputs and the returned overlay.
 
 ## Required Architecture
 
-### AI-HANDOFF-010 — Strict three-file budget
+### AI-HANDOFF-010: Strict three-file budget
 
 Every implementation handoff uploads exactly three files. Additional context must be
 compressed into those files rather than attached separately.
 
-### AI-HANDOFF-011 — Text-only variant
+### AI-HANDOFF-011: Text-only variant
 
-1. `repo-flatfile.txt` — filtered repository context.
-2. `task-packet.md` — task scope, constraints, acceptance criteria, and verification.
-3. `standards-pack.md` — applicable standards excerpts only.
+1. `repo-flatfile.txt`: filtered repository context.
+2. `task-packet.md`: task scope, constraints, acceptance criteria, and verification.
+3. `standards-pack.md`: applicable standards excerpts only.
 
 Use this variant when no visual reference pack is required.
 
-### AI-HANDOFF-012 — Visual/mockup variant
+### AI-HANDOFF-012: Visual/mockup variant
 
-1. `repo-flatfile.txt` — filtered repository context.
-2. `task-and-standard-pack.md` — combined task and standards contracts.
-3. `visual-reference-pack.pdf` — labeled primary visual reference pages.
+1. `repo-flatfile.txt`: filtered repository context.
+2. `task-and-standard-pack.md`: combined task and standards contracts.
+3. `visual-reference-pack.pdf`: labeled primary visual reference pages.
 
 Use this variant for Vertical Slice 01.
 
-### AI-HANDOFF-013 — Standards are excerpted, not uploaded whole
+### AI-HANDOFF-013: Standards are excerpted, not uploaded whole
 
 Do not upload the entire `standards/` package. Include only applicable rule IDs,
 component IDs, token paths, approved/rejected guidance, and accessibility requirements
 for the selected screen.
 
-### AI-HANDOFF-014 — Overlay is output, not input
+### AI-HANDOFF-014: Overlay is output, not input
 
 Copilot must return `ui-overlay.zip` containing changed and new files only. The
 overlay is inspected locally and is never one of the three upload files.
 
-### AI-HANDOFF-015 — Manual authority remains
+### AI-HANDOFF-015: Manual authority remains
 
 The user reviews exported context before upload and reviews the overlay before apply.
 Exclusions reduce risk but do not replace review.

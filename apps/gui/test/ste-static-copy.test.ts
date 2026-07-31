@@ -14,6 +14,26 @@ function source(relativePath: string): string {
 }
 
 describe('STE static workflow copy', () => {
+  it('does not use an em dash in frontend source', () => {
+    const violations: string[] = []
+    const visit = (directory: string) => {
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        if (/ 2\.[^.]+$/i.test(entry.name)) continue
+        const absolutePath = path.join(directory, entry.name)
+        if (entry.isDirectory()) visit(absolutePath)
+        else if (/\.(?:html|jsx|tsx|vue|svelte|astro|js|ts|json)$/i.test(entry.name)) {
+          const content = fs.readFileSync(absolutePath, 'utf8')
+          if (content.includes('\u2014')) {
+            violations.push(path.relative(appSourceRoot, absolutePath).replaceAll(path.sep, '/'))
+          }
+        }
+      }
+    }
+    visit(appSourceRoot)
+
+    expect(violations).toEqual([])
+  })
+
   it('blocks deterministic STE defects in all generated-code text sinks', () => {
     const sourceFiles: string[] = []
     const visit = (directory: string) => {

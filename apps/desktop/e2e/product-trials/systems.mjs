@@ -445,7 +445,7 @@ const productTrialSystemsBase = [
         title: 'Bench schedule',
         subtitle: 'Reserved assets and current campaign state.',
         rows: [
-          ['Bench 01', 'Available', '—', 'Ready'],
+          ['Bench 01', 'Available', 'None', 'Ready'],
           ['Bench 02', 'NAV regression', '01:10', 'Running'],
           ['Bench 03', 'Maintenance', '06:00', 'Blocked'],
           ['Bench 04', 'FCS campaign', '02:18', 'Running'],
@@ -1011,11 +1011,91 @@ const architecturePlans = {
   },
 }
 
-export const productTrialSystems = productTrialSystemsBase.map((system) => ({
+const paletteProfiles = {
+  gulfstream: {
+    palette: 'Gulfstream blue',
+    lightAccent: '#003767',
+    darkAccent: '#70b7e6',
+    lightSoft: '#e2eef5',
+    darkSoft: '#0d3854',
+    lightRgb: '0, 55, 103',
+    darkRgb: '112, 183, 230',
+  },
+  graphite: {
+    palette: 'Graphite',
+    lightAccent: '#24292f',
+    darkAccent: '#58a6ff',
+    lightSoft: '#eaeef2',
+    darkSoft: '#132f4c',
+    lightRgb: '36, 41, 47',
+    darkRgb: '88, 166, 255',
+  },
+  teal: {
+    palette: 'Deep teal',
+    lightAccent: '#075e61',
+    darkAccent: '#62d0ca',
+    lightSoft: '#e0f1f0',
+    darkSoft: '#103c3d',
+    lightRgb: '7, 94, 97',
+    darkRgb: '98, 208, 202',
+  },
+  violet: {
+    palette: 'Technical violet',
+    lightAccent: '#4f3698',
+    darkAccent: '#b5a0f4',
+    lightSoft: '#eee9f8',
+    darkSoft: '#2a2245',
+    lightRgb: '79, 54, 152',
+    darkRgb: '181, 160, 244',
+  },
+  amber: {
+    palette: 'Flight amber',
+    lightAccent: '#7a4b00',
+    darkAccent: '#f0bd62',
+    lightSoft: '#f8edda',
+    darkSoft: '#3e2c14',
+    lightRgb: '122, 75, 0',
+    darkRgb: '240, 189, 98',
+  },
+}
+
+const fontProfiles = {
+  system: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  inter: 'Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  plex: '"IBM Plex Sans", Inter, ui-sans-serif, system-ui, sans-serif',
+  source: '"Source Sans 3", Inter, ui-sans-serif, system-ui, sans-serif',
+  atkinson: '"Atkinson Hyperlegible", Inter, ui-sans-serif, system-ui, sans-serif',
+}
+
+const productDesignProfiles = {
+  review: { paletteId: 'gulfstream', fontId: 'inter', defaultMode: 'system', density: 'compact' },
+  sessions: { paletteId: 'violet', fontId: 'source', defaultMode: 'dark', density: 'comfortable' },
+  writing: { paletteId: 'gulfstream', fontId: 'plex', defaultMode: 'light', density: 'comfortable' },
+  telemetry: { paletteId: 'graphite', fontId: 'inter', defaultMode: 'dark', density: 'compact' },
+  trade: { paletteId: 'teal', fontId: 'source', defaultMode: 'system', density: 'compact' },
+  hil: { paletteId: 'amber', fontId: 'plex', defaultMode: 'dark', density: 'compact' },
+  supplier: { paletteId: 'gulfstream', fontId: 'atkinson', defaultMode: 'light', density: 'comfortable' },
+  impact: { paletteId: 'violet', fontId: 'inter', defaultMode: 'system', density: 'compact' },
+  load: { paletteId: 'amber', fontId: 'system', defaultMode: 'dark', density: 'compact' },
+  fracas: { paletteId: 'teal', fontId: 'atkinson', defaultMode: 'system', density: 'comfortable' },
+}
+
+export const productTrialSystems = productTrialSystemsBase.map((system) => {
+  const profile = productDesignProfiles[system.layout]
+  const palette = paletteProfiles[profile.paletteId]
+  return {
   ...system,
   architecture: architecturePlans[system.slug],
   productKind: system.layout,
-}))
+    design: {
+      contractId: 'EUIT-FRONTEND-001',
+      iconFamily: 'lucide',
+      ...profile,
+      ...palette,
+      fontStack: fontProfiles[profile.fontId],
+    },
+  }
+})
 
 export function systemBySlug(slug) {
   return productTrialSystems.find((system) => system.slug === slug)

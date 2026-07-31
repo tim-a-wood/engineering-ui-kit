@@ -1,5 +1,5 @@
 /**
- * Project context panel — repo identity + three disclosure/dialog entry points.
+ * Project context panel: repo identity + three disclosure/dialog entry points.
  */
 
 import { useState } from 'react'

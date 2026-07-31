@@ -89,10 +89,10 @@ export const CAPABILITY_RUN_KINDS = [
   'verification',
 ] as const
 
-/** CAP-ERA-001 §5.1/§7.1 — first-release runtime languages. */
+/** CAP-ERA-001 §5.1/§7.1: first-release runtime languages. */
 export const RUNTIME_LANGUAGES = ['typescript', 'python'] as const
 
-/** CAP-ERA-001 §5.1 — first-release deployable/host kinds. */
+/** CAP-ERA-001 §5.1: first-release deployable/host kinds. */
 export const DEPLOYABLE_KINDS = [
   'browser',
   'electron-main',
@@ -102,46 +102,46 @@ export const DEPLOYABLE_KINDS = [
   'embedded-library',
 ] as const
 
-/** CAP-ERA-001 §10.2 — explicit lifecycle registrations. */
+/** CAP-ERA-001 §10.2: explicit lifecycle registrations. */
 export const LIFECYCLE_KINDS = ['singleton', 'request-job', 'transient'] as const
 
-/** CAP-ERA-001 §5.5/§15.2 — inbound exposure visibility, private by default. */
+/** CAP-ERA-001 §5.5/§15.2: inbound exposure visibility, private by default. */
 export const EXPOSURE_LEVELS = ['private', 'protected', 'public'] as const
 
-/** CAP-ERA-001 §9 CAP-CONTRACT-028 — discriminated inbound binding kinds. */
+/** CAP-ERA-001 §9 CAP-CONTRACT-028: discriminated inbound binding kinds. */
 export const INBOUND_BINDING_KINDS = ['ui', 'http', 'cli', 'schedule', 'embedded-library'] as const
 
-/** CAP-ERA-001 §9/§10.3 — UI inbound transport. */
+/** CAP-ERA-001 §9/§10.3: UI inbound transport. */
 export const UI_TRANSPORT_KINDS = ['browser-local', 'electron-ipc', 'generated-http-client'] as const
 
-/** CAP-ERA-001 §9 CAP-CONTRACT-028 http variant — bounded HTTP verbs. */
+/** CAP-ERA-001 §9 CAP-CONTRACT-028 http variant: bounded HTTP verbs. */
 export const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const
 
-/** CAP-ERA-001 §9 CAP-CONTRACT-028 schedule variant — overlap policy. */
+/** CAP-ERA-001 §9 CAP-CONTRACT-028 schedule variant: overlap policy. */
 export const OVERLAP_POLICIES = ['skip', 'queue', 'allow-concurrent'] as const
 
-/** CAP-ERA-001 §9 CAP-CONTRACT-028 schedule variant — misfire policy. */
+/** CAP-ERA-001 §9 CAP-CONTRACT-028 schedule variant: misfire policy. */
 export const MISFIRE_POLICIES = ['run-once', 'skip', 'run-all'] as const
 
-/** CAP-ERA-001 §9 CAP-CONTRACT-024 — proposed repository location approval. */
+/** CAP-ERA-001 §9 CAP-CONTRACT-024: proposed repository location approval. */
 export const PROPOSED_LOCATION_APPROVAL_STATUSES = ['proposed', 'approved', 'rejected'] as const
 
-/** CAP-ERA-001 §9 CAP-CONTRACT-025 — target repository clean/dirty state. */
+/** CAP-ERA-001 §9 CAP-CONTRACT-025: target repository clean/dirty state. */
 export const CLEAN_STATES = ['clean', 'dirty'] as const
 
-/** CAP-ERA-001 §9 CAP-CONTRACT-025 — ordered file change action. */
+/** CAP-ERA-001 §9 CAP-CONTRACT-025: ordered file change action. */
 export const FILE_CHANGE_ACTIONS = ['create', 'update', 'delete'] as const
 
-/** CAP-ERA-001 §7.2 — generated vs editable file classification. */
+/** CAP-ERA-001 §7.2: generated vs editable file classification. */
 export const GENERATED_CLASSIFICATIONS = ['generated', 'editable'] as const
 
-/** CAP-ERA-001 §9 CAP-CONTRACT-029 — external evidence status. */
+/** CAP-ERA-001 §9 CAP-CONTRACT-029: external evidence status. */
 export const EXTERNAL_EVIDENCE_STATUSES = ['complete', 'outstanding', 'not-applicable'] as const
 
-/** CAP-ERA-001 §9 CAP-CONTRACT-029 — pass/fail/partial connection verification. */
+/** CAP-ERA-001 §9 CAP-CONTRACT-029: pass/fail/partial connection verification. */
 export const CONNECTION_VERIFICATION_STATUSES = ['pass', 'fail', 'partial'] as const
 
-/** CAP-ERA-001 §9 CAP-CONTRACT-031 — unresolved item materiality. */
+/** CAP-ERA-001 §9 CAP-CONTRACT-031: unresolved item materiality. */
 export const MATERIALITY_LEVELS = ['material', 'non-material'] as const
 
 export const CONTRACT_IDS = [

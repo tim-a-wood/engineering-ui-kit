@@ -76,7 +76,7 @@ export type ProfileSelectionCriteria = {
 
 /**
  * Select a profile by id (and optionally exact version) from a candidate set.
- * Throws when no candidate matches — profile selection is never silently ambiguous.
+ * Throws when no candidate matches: profile selection is never silently ambiguous.
  */
 export function selectReferenceArchitectureProfile(
   profiles: readonly ReferenceArchitectureProfile[],

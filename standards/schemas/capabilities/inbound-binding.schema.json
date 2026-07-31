@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://engineering-ui-kit/standards/schemas/capabilities/inbound-binding.schema.json",
   "title": "InboundBinding",
-  "description": "CAP-CONTRACT-028 — inbound binding discriminated on kind. Supersedes CAP-CONTRACT-013.",
+  "description": "CAP-CONTRACT-028: inbound binding discriminated on kind. Supersedes CAP-CONTRACT-013.",
   "type": "object",
   "additionalProperties": false,
   "required": [

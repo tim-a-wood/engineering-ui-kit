@@ -8,7 +8,7 @@ Detail page recipes define how to inspect a single engineering entity.
 
 Entities may include artifacts, projects, runs, files, components, recipes, validation gates, or handoff packets.
 
-## RCP-DETAIL-001 — Entity detail page
+## RCP-DETAIL-001: Entity detail page
 
 ### Purpose
 Expose one entity’s identity, metadata, status, evidence, relationships, and actions.

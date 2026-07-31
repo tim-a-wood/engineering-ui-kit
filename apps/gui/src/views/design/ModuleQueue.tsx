@@ -1,5 +1,5 @@
 /**
- * §9.2 Module queue — left side of the wide-screen Design workspace (§18.2),
+ * §9.2 Module queue: left side of the wide-screen Design workspace (§18.2),
  * or a drawer/selector on a narrow screen.
  */
 

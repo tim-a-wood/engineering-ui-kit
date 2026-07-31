@@ -99,7 +99,7 @@ class ViewErrorBoundary extends Component<{ viewKey: string; children: ReactNode
 
 export default function App() {
   const bridge = useMemo(() => getBridge(), [])
-  // §17, §22.1 — the Design workspace's 'project' mode is available only
+  // §17, §22.1: the Design workspace's 'project' mode is available only
   // when the desktop bridge exposes `designOperation` (see
   // `designBridgeClient.ts`); this is stable for the app's lifetime.
   const designBridgeCaller = useMemo(() => detectDesignBridgeCaller(), [])
@@ -156,8 +156,7 @@ export default function App() {
 
   const startRun = useCallback(
     async (projectId: string) => {
-      // Opening a project resumes its open run at the step the user was at —
-      // a fresh run is created only when none is open. Furthest progress
+      // Opening a project resumes its open run at the step the user was at:       // a fresh run is created only when none is open. Furthest progress
       // first, then most recently touched, so an accidentally created empty
       // run can never hijack resume from the run with real work in it.
       const open = (await bridge.listRuns(projectId))
@@ -301,7 +300,7 @@ export default function App() {
   }, [capabilitiesProjectId, projects, selectCapabilitiesProject])
 
   /**
-   * §22.1 "sample ONLY when no project is configured" — 'project' mode
+   * §22.1 "sample ONLY when no project is configured": 'project' mode
    * requires BOTH the desktop bridge and a configured/selected project.
    * Project selection belongs to the Capabilities workflow itself; it is not
    * coupled to an unrelated open Build & Test run.

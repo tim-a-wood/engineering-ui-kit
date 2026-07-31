@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define how implementations consume semantic tokens, preserve dark-first posture, and
+Define how implementations consume semantic tokens, preserve dual-mode quality, and
 avoid visual drift during the vertical-slice trial and later Engineering UI Kit work.
 
 ## Scope
@@ -11,12 +11,13 @@ This standard covers semantic tokens as CSS custom properties, token layering, t
 global token entry point, component style consumption, raw-color restrictions, focus,
 status, density, and reduced-motion handling.
 
-It does not author a light-mode standard or implement a coded theme package.
+It defines light and dark mode behavior. It does not require one frontend framework.
 
 ## Controlling Decisions
 
-- Engineering UI Kit v0.1 is dark-first. Light mode is not part of the v0.1
-  implementation contract.
+- Light and dark modes are part of the implementation contract.
+- Gulfstream blue and white are the default palette.
+- Each frontend can select another approved palette and font.
 - `standards/tokens.json` is the token source of truth.
 - The Phase 1 baseline app intentionally uses plain system styling so Phase 3 can
   measure standards-driven transformation.
@@ -25,13 +26,13 @@ It does not author a light-mode standard or implement a coded theme package.
 
 ## Required Architecture
 
-### ARCH-THEME-001 — Semantic tokens as CSS custom properties
+### ARCH-THEME-001: Semantic tokens as CSS custom properties
 
 Map semantic token leaves from `tokens.json` to CSS custom properties. Component and
 page styles shall reference those variables, not primitive palette literals, except
 inside the single token entry point.
 
-### ARCH-THEME-002 — Primitive-to-semantic-to-component layering
+### ARCH-THEME-002: Primitive-to-semantic-to-component layering
 
 Preserve three layers:
 
@@ -41,35 +42,35 @@ Preserve three layers:
 
 Do not skip the semantic layer by wiring components directly to primitives.
 
-### ARCH-THEME-003 — One global token entry point
+### ARCH-THEME-003: One global token entry point
 
 Introduce one global stylesheet or module that defines the semantic CSS variables for
 the app. Trial transformation should add or replace that entry point rather than
 scattering token declarations across unrelated files.
 
-### ARCH-THEME-004 — Components consume semantic variables
+### ARCH-THEME-004: Components consume semantic variables
 
 Buttons, panels, navigation, workflow markers, status regions, and dialogs shall use
 semantic variables for color, border, spacing density, and focus treatment.
 
-### ARCH-THEME-005 — Raw color restrictions
+### ARCH-THEME-005: Raw color restrictions
 
 Raw hex, `rgb()`, or named colors outside the token entry point are review findings
 unless they are part of a documented visualization scale that cannot yet be expressed
 as a semantic token. Baseline plain styling is allowed only before the transformation
 trial.
 
-### ARCH-THEME-006 — Focus, status, density, and reduced motion
+### ARCH-THEME-006: Focus, status, density, and reduced motion
 
 - Focus indicators must remain visible and must not rely on color alone.
 - Status and validation must include text or iconography in addition to color.
 - Density should favor readable engineering workbench spacing over marketing sparsity.
 - Honor `prefers-reduced-motion` by avoiding non-essential animation.
 
-### ARCH-THEME-007 — No light-mode implementation in v0.1
+### ARCH-THEME-007: Mode control
 
-Do not add a light theme, theme toggle, or light-mode token set during the trial.
-Dark-first is the only supported transformed posture.
+Provide a labeled mode button. Use the system mode before the user selects a mode.
+Store the user choice. Apply the mode before the first paint when possible.
 
 ## Allowed Patterns
 
@@ -83,22 +84,20 @@ Dark-first is the only supported transformed posture.
 - Generic SaaS white-card dashboards as the transformed target.
 - Neon accents, glow effects, or decorative gradients not supported by standards.
 - Hard-coded colors in component files after transformation.
-- Light-mode implementation or dual-theme scaffolding in v0.1.
+- A frontend that supports only one color mode.
 - Treating approved mockups as an excuse to invent untokenized colors.
 
 ## Trial Application
 
-- Phase 1 baseline: plain system font, light/neutral surfaces, basic borders, no
-  Engineering UI Kit tokens.
-- Phase 3 transformation target: dark-first shell and hierarchy aligned to
-  `project-sources/visual-references/1F2214C9-D849-41CA-9435-68F0A0032EEB.jpeg`
-  and applicable `FND-VIS-*`, `FND-TOK-*`, and layout rules.
+- The transformation target uses both mode token sets and the selected font.
+- The layout follows the task-specific recipe and applicable `FND-VIS-*` rules.
 - Expected style changes are limited to presentation files listed in the task packet.
 
 ## Validation Checks
 
 - Transformed styles reference semantic variables.
-- No light-mode artifacts are introduced.
+- Light and dark modes pass the same checks.
+- The mode button works with a pointer and a keyboard.
 - Focus and status remain perceivable without color alone.
 - Visual drift checklist findings are recorded against acceptance criteria.
 

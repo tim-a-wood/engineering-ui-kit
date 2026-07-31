@@ -1,7 +1,7 @@
 /**
  * GUI-side detector + thin envelope caller for the desktop design bridge
  * (`window.euik.designOperation`, one channel, `{ operation, args }` in →
- * exactly what `DesignOperationsService` returns out — see
+ * exactly what `DesignOperationsService` returns out: see
  * `apps/desktop/src/capabilities/designBridge.ts` `DESIGN_CHANNEL` and
  * `apps/desktop/src/bridgeApi.ts`). This file mirrors that wire contract
  * locally, the same way `apps/gui/src/bridge.ts` mirrors `bridgeApi.ts`: the
@@ -13,7 +13,7 @@
  * §17.3 (idempotency key, expected base revision, structured diagnostics).
  */
 
-/** Wire request — identical shape to `apps/desktop/src/capabilities/designBridge.ts` `DesignBridgeRequest`. */
+/** Wire request: identical shape to `apps/desktop/src/capabilities/designBridge.ts` `DesignBridgeRequest`. */
 export type DesignBridgeRequest = {
   operation: string
   args: unknown[]
@@ -27,14 +27,14 @@ export type DesignBridgeCaller = (request: DesignBridgeRequest) => Promise<unkno
  * synchronous, pre-load `project`-mode state (`emptyProjectState` /
  * `emptyPolicy` in `designState.ts`) before the first bridge round trip
  * resolves. It is NEVER sent over the wire and NEVER rendered as an
- * approver, actor, or "approved by" value anywhere in the UI — see the
+ * approver, actor, or "approved by" value anywhere in the UI: see the
  * `change()` doc below for why, and `ProjectSetupPanel` for the real
  * session identity (`adapter:getPrincipal`).
  *
  * Second-review P1 fix: the desktop IPC (`apps/desktop/src/capabilities/
  * designIpc.ts`, `stampPrincipalOnArgs`) now derives the real OS-process
  * identity itself and stamps/overrides it onto every request's `actor`
- * field — a request's own claimed `actor` is decorative on the Electron
+ * field: a request's own claimed `actor` is decorative on the Electron
  * path (it is never trusted, and mismatches are only logged, never
  * blocking). This GUI no longer invents a `user:local` identity and claims
  * it as the actor of any bridge call.
@@ -43,12 +43,12 @@ export const LOCAL_USER_ACTOR = 'user:local'
 
 /**
  * Detects the desktop design bridge the same way other GUI views detect the
- * desktop bridge (`window.euikMode === 'electron'` — see `App.tsx`,
+ * desktop bridge (`window.euikMode === 'electron'`: see `App.tsx`,
  * `views/workflow.tsx`, `views/capabilities/CapabilityPreview.tsx`), plus a
  * runtime check that `designOperation` is actually present on `window.euik`.
  * Returns `undefined` in plain-browser dev, qualitative-UI validation (the
  * in-memory mock bridge), and any environment where the channel is not
- * wired up — callers fall back to sample mode in that case (§22.1).
+ * wired up: callers fall back to sample mode in that case (§22.1).
  */
 export function detectDesignBridgeCaller(win: (Window & typeof globalThis) | undefined = typeof window === 'undefined' ? undefined : window): DesignBridgeCaller | undefined {
   if (!win) return undefined
@@ -62,8 +62,7 @@ export function detectDesignBridgeCaller(win: (Window & typeof globalThis) | und
 let idempotencyCounter = 0
 
 /**
- * A fresh idempotency key per action (§17.3 "require an idempotency key") —
- * never reused across calls, even for the same operation on the same
+ * A fresh idempotency key per action (§17.3 "require an idempotency key"):  * never reused across calls, even for the same operation on the same
  * record, so a retried click never replays the first click's result.
  */
 export function freshIdempotencyKey(operation: string): string {
@@ -84,7 +83,7 @@ export type BridgeChangeInput = Record<string, unknown>
 
 /**
  * Thin client over one `DesignBridgeCaller`. Every method sends exactly one
- * envelope call and returns exactly what the service returned for it — no
+ * envelope call and returns exactly what the service returned for it: no
  * local reshaping, no local approval/validation logic (review finding #1).
  */
 export class DesignBridgeClient {
@@ -94,7 +93,7 @@ export class DesignBridgeClient {
     readonly actor: string,
   ) {}
 
-  /** One §17.1 read operation — `args` positional, exactly as the service expects. */
+  /** One §17.1 read operation: `args` positional, exactly as the service expects. */
   async read<T>(operation: string, args: unknown[]): Promise<T> {
     return (await this.caller({ operation, args })) as T
   }
@@ -102,7 +101,7 @@ export class DesignBridgeClient {
   /**
    * One §17.2 change operation, OR one adapter-owned change operation
    * (`adapter:configureProjectRepository`, `adapter:configureProjectRoles`
-   * — see `ADAPTER_OPERATIONS` in `apps/desktop/src/capabilities/
+   *: see `ADAPTER_OPERATIONS` in `apps/desktop/src/capabilities/
    * designBridge.ts`; both take the same one-input-object shape a §17.2
    * change does). `input` is the operation's single input object; a fresh
    * `idempotencyKey` is always attached (§17.3 "require an idempotency
@@ -112,8 +111,8 @@ export class DesignBridgeClient {
    * value) rather than omitted or defaulted to a locally-invented identity
    * (second-review P1 fix, `LOCAL_USER_ACTOR` doc above): the desktop IPC's
    * `stampPrincipalOnArgs` recognizes a request as a change-operation input
-   * to stamp by checking `'actor' in args[0]` — regardless of that key's
-   * value — then overwrites it with the real, OS-derived principal before
+   * to stamp by checking `'actor' in args[0]`: regardless of that key's
+   * value: then overwrites it with the real, OS-derived principal before
    * the request ever reaches the service or the adapter-owned repository/
    * roles configuration. Sending no `actor` key at all would make
    * `stampPrincipalOnArgs` treat the request as a bare read and leave the
@@ -134,7 +133,7 @@ export class DesignBridgeClient {
 }
 
 // ---------------------------------------------------------------------------
-// Adapter operation wire-shape mirrors (§4, §17.3, §20.2, §25.3 — second-
+// Adapter operation wire-shape mirrors (§4, §17.3, §20.2, §25.3: second-
 // review P1 finding: "nothing configures the repository adapter or project
 // roles"). All four adapter operations
 // (`configureProjectRepository`/`getProjectRepository`/
@@ -149,28 +148,28 @@ export class DesignBridgeClient {
 /** One structured diagnostic, as every adapter operation response returns it (never a throw). */
 export type AdapterDiagnostic = { id: string; code: string; severity: 'blocker' | 'warning' | 'info'; message: string; target?: string }
 
-/** Local mirror of `designBridge.ts` `AdapterConfigurationResponse` — the shipped shape both `adapter:configureProjectRepository` and `adapter:getProjectRepository` return. */
+/** Local mirror of `designBridge.ts` `AdapterConfigurationResponse`: the shipped shape both `adapter:configureProjectRepository` and `adapter:getProjectRepository` return. */
 export type AdapterConfigurationResponse =
   | { ok: true; projectId: string; repositoryRoot: string; auditEventId?: string; idempotentReplay?: boolean }
   | { ok: false; diagnostics: AdapterDiagnostic[] }
 
 /**
- * `adapter:getPrincipal` — takes NO args (`args: []`; the principal is the
+ * `adapter:getPrincipal`: takes NO args (`args: []`; the principal is the
  * dispatcher's own OS-derived identity, not scoped to a project) and
- * returns `{ ok, principal }` on success — the same real, OS-derived
+ * returns `{ ok, principal }` on success: the same real, OS-derived
  * principal `stampPrincipalOnArgs` already stamps onto every change
  * request, so the UI can display it without inventing one.
  */
 export type AdapterPrincipalResponse = { ok: true; principal: string } | { ok: false; diagnostics: AdapterDiagnostic[] }
 
 /**
- * `adapter:configureProjectRoles` — `{ projectId, actor, idempotencyKey,
+ * `adapter:configureProjectRoles`: `{ projectId, actor, idempotencyKey,
  * grantee?, authorities? }`; omitting `authorities` grants the stamped
  * principal every §4 authority by default. This GUI always sends both
- * explicitly ("Grant design authorities to this session user" — the full
+ * explicitly ("Grant design authorities to this session user": the full
  * §4 list, for the just-read principal) rather than relying on the
  * server-side default, so the action's effect matches its label exactly.
- * Returns `{ ok, auditEventId }` on success — no echo of what was granted,
+ * Returns `{ ok, auditEventId }` on success: no echo of what was granted,
  * so the UI displays what it requested, not a server echo.
  */
 export type ConfigureProjectRolesInput = { projectId: string; actor?: string; idempotencyKey: string; grantee?: string; authorities?: string[] }
@@ -197,7 +196,7 @@ export type AdapterConnectionStateResponse =
 
 /**
  * True when a bridge response is the adapter's `EUC16-UNKNOWN-OPERATION`
- * rejection (`designIpc.ts` `unknownOperationResult`) — the graceful
+ * rejection (`designIpc.ts` `unknownOperationResult`): the graceful
  * "not available yet" signal for `adapter:configureProjectRoles` /
  * `adapter:getPrincipal` until the coordinator implements them.
  */

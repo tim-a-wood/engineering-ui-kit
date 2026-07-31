@@ -57,7 +57,7 @@ export function designContentHash(record: object): string {
   return canonicalHash(rest)
 }
 
-/** Stable sort for string keys — deterministic across platforms (§24.1). */
+/** Stable sort for string keys: deterministic across platforms (§24.1). */
 export function stableSortStrings(values: readonly string[]): string[] {
   return [...values].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
 }
@@ -82,7 +82,7 @@ function normalizeOwnedPathSegments(path: string): string[] {
 }
 
 /**
- * §6.2, §9.9 — two owned paths overlap when they are equal, or when one is a
+ * §6.2, §9.9: two owned paths overlap when they are equal, or when one is a
  * directory-prefix of the other (comparing normalized path segments, so
  * `src/adapters` and `src/adapters/git` overlap but `src/adapters` and
  * `src/adapters-extra` do not). Paths are normalized first: backslashes are

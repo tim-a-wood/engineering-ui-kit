@@ -136,7 +136,7 @@ export function buildContext(repoPath: string, options: ContextBuildOptions): Co
     includedFiles: included.length,
     excludedSummary:
       'git metadata, dependencies, lockfile, build output, caches, binaries, archives, env/secrets, and all files outside the target app',
-    secretsGuarantee: 'none — exclusions reduce risk but are not secret detection',
+    secretsGuarantee: 'none: exclusions reduce risk but are not secret detection',
   }
 
   const entries: FlatfileEntry[] = included.map((f) => ({ path: f.path, content: f.content }))

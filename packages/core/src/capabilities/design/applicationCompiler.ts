@@ -1,5 +1,5 @@
 /**
- * EUC-02 — Application compiler.
+ * EUC-02: Application compiler.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §5, §6.1,
  * §16, §25.3 (EUC-02). Pure `compileApplication` operation that maps an
@@ -31,7 +31,7 @@ import { designDiagnostic, sortDesignDiagnostics, toDesignDiagnostic } from './u
 import { validateContractRecord } from '../validation.js'
 import { compileWorkflowScenarioDefinitions } from '../applicationWorkflow.js'
 
-/** §25.3 EUC-02 — stable diagnostic codes owned by the application compiler. */
+/** §25.3 EUC-02: stable diagnostic codes owned by the application compiler. */
 export const EUC02_DIAGNOSTIC_CODES = {
   notApproved: 'EUC02-ANALYSIS-NOT-APPROVED',
   missingActors: 'EUC02-MISSING-ACTORS',
@@ -205,7 +205,7 @@ function compileApplicationWorkflows(useCases: ApplicationUseCaseDefinition[]): 
 }
 
 /**
- * §6.1 step 5, §25.3 EUC-02 — compile an approved use-case analysis to the
+ * §6.1 step 5, §25.3 EUC-02: compile an approved use-case analysis to the
  * current application specification. Deterministic: the same approved
  * analysis and options always produce the same `contentHash`. A missing
  * required item (no active actor, no use case, no acceptance case) returns a

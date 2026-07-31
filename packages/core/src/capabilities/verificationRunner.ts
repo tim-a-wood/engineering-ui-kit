@@ -11,7 +11,7 @@
  *
  * A caller that only has a direct-dispatch/in-memory result (no real
  * transport, no real process) must use `runSimulatedConnectionVerification`
- * instead, which is hard-coded to never report `'pass'` — see its doc comment.
+ * instead, which is hard-coded to never report `'pass'`: see its doc comment.
  *
  * Every spawned process is always terminated (success, error, and timeout
  * paths) and every in-process host's `close()` is always invoked, so callers
@@ -26,7 +26,7 @@ import { redactSensitiveText } from './redaction.js'
 import type { ConnectionVerificationRecord, DeployableSpecification, InboundBinding } from './types.js'
 
 // ---------------------------------------------------------------------------
-// Trigger descriptors — what real interaction to perform against the target.
+// Trigger descriptors: what real interaction to perform against the target.
 // ---------------------------------------------------------------------------
 
 export type HttpTrigger = {
@@ -65,7 +65,7 @@ export type EvidenceProcessTrigger = {
 export type VerificationTrigger = HttpTrigger | CliTrigger | InProcessTrigger | EvidenceProcessTrigger
 
 // ---------------------------------------------------------------------------
-// Launch descriptors — how to bring the real target up.
+// Launch descriptors: how to bring the real target up.
 // ---------------------------------------------------------------------------
 
 export type SpawnLaunch = {
@@ -168,7 +168,7 @@ function triggerInputForRedaction(trigger: VerificationTrigger): unknown {
  * (e.g. `"apiKey":"..."`, `"authorization":"Bearer ..."`) survive naive
  * stringify+redact. This walks the trigger payload first and masks any
  * value whose *key* looks sensitive, before `redactSensitiveText` runs its
- * own text-pattern pass over the remainder — defense in depth so no secret
+ * own text-pattern pass over the remainder: defense in depth so no secret
  * value can leak into `redactedTriggerInput` regardless of shape.
  */
 const SENSITIVE_KEY_PATTERN = /(api[_-]?key|token|password|secret|authorization|credential)/i
@@ -239,7 +239,7 @@ async function waitForReady(port: number, launch: SpawnLaunch): Promise<boolean>
     try {
       if (await probe(port)) return true
     } catch {
-      // not ready yet — keep polling until the deadline.
+      // not ready yet: keep polling until the deadline.
     }
     if (Date.now() >= deadline) return false
     await new Promise((resolve) => setTimeout(resolve, 50))
@@ -555,13 +555,12 @@ async function runInProcessTrigger(
  *
  * `verificationStatus === 'pass'` only when the real launch reached readiness
  * (or the in-process host started) AND the real trigger reached the
- * operation. Any launch/trigger failure — including a readiness timeout —
- * yields `'fail'`; `usedTestAdapter: true` downgrades an otherwise-passing
+ * operation. Any launch/trigger failure: including a readiness timeout:  * yields `'fail'`; `usedTestAdapter: true` downgrades an otherwise-passing
  * result to `'partial'` with `externalEvidenceStatus: 'outstanding'` because a
  * faithful TEST adapter stood in for a live external dependency.
  *
  * The spawned process (or in-process host) is always terminated, on every
- * path — success, trigger failure, and readiness timeout.
+ * path: success, trigger failure, and readiness timeout.
  */
 export async function runConnectionVerification(
   input: RunConnectionVerificationInput,
@@ -644,7 +643,7 @@ export async function runConnectionVerification(
 }
 
 // ---------------------------------------------------------------------------
-// Simulation / direct-dispatch — deliberately never 'pass'.
+// Simulation / direct-dispatch: deliberately never 'pass'.
 // ---------------------------------------------------------------------------
 
 export type SimulatedConnectionVerificationInput = {
@@ -662,7 +661,7 @@ export type SimulatedConnectionVerificationInput = {
 
 /**
  * Builds a CAP-CONTRACT-029 record for a direct-dispatch / no-process
- * "simulation" path — e.g. a caller that already has an in-memory dispatch
+ * "simulation" path: e.g. a caller that already has an in-memory dispatch
  * `Outcome` but never launched a real process or sent a real trigger.
  *
  * This is deliberately incapable of reporting `'pass'`: it always returns
@@ -683,7 +682,7 @@ export function runSimulatedConnectionVerification(
     bindingId: input.binding.bindingId,
     deployableId: input.deployable.deployableId,
     hashes: input.hashes,
-    launchCommand: '(none: direct-dispatch simulation — no process was launched)',
+    launchCommand: '(none: direct-dispatch simulation: no process was launched)',
     triggerKind: input.triggerKind,
     redactedTriggerInput: redactSensitiveText('(simulation: no real trigger input was captured)'),
     outcomeSummary: redactSensitiveText(

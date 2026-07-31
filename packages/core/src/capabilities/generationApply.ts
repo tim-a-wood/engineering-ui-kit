@@ -3,7 +3,7 @@
  * §9 CAP-CONTRACT-025, §11.3 apply protocol).
  *
  * This module mutates a target repository on disk and is therefore
- * Node-only (`node:fs`/`node:path`) — unlike `generation/*` (which stays
+ * Node-only (`node:fs`/`node:path`): unlike `generation/*` (which stays
  * `node:*`-free so it can bundle into the renderer), it lives directly under
  * `capabilities/` alongside `overlay.ts`/`persistence.ts` and is exported
  * only from `capabilities/index.ts`, never `browser.ts`.
@@ -42,7 +42,7 @@ export type ApplyGenerationPlanInput = {
   /**
    * Deterministic run identity. Not part of the abbreviated §11.3 signature
    * sketch but required for a deterministic, test-injectable staging/rollback
-   * directory name (`.../staging/<runId>`, `.../rollback/<runId>`) — see
+   * directory name (`.../staging/<runId>`, `.../rollback/<runId>`): see
    * HANDOFF "signature completion" note. Must be a plain identifier (no path
    * separators or traversal).
    */
@@ -326,7 +326,7 @@ function removeDirIfEmpty(dirAbs: string, stopAtAbs: string): void {
  * is restored to its exact pre-apply state and a `GenerationApplyRolledBackError`
  * (or `GenerationApplyRefusedError`, if revalidation itself failed) is thrown.
  *
- * `plan.commands` are returned verbatim but never executed — the caller (or
+ * `plan.commands` are returned verbatim but never executed: the caller (or
  * the desktop process) runs them.
  */
 export function applyGenerationPlan(input: ApplyGenerationPlanInput): ApplyGenerationPlanResult {
@@ -443,7 +443,7 @@ export function applyGenerationPlan(input: ApplyGenerationPlanInput): ApplyGener
     throw new GenerationApplyRolledBackError((err as Error).message, { cause: err })
   }
 
-  // Step 6 (verify) — each applied file's on-disk hash must equal postimageHash.
+  // Step 6 (verify): each applied file's on-disk hash must equal postimageHash.
   try {
     for (const { change, relPath, absPath } of resolved) {
       if (change.action === 'create' || change.action === 'update') {

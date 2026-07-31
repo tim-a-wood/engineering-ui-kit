@@ -1,5 +1,5 @@
 /**
- * Output & upload set dialog — flatfile/JSON formats and slot accounting.
+ * Output & upload set dialog: flatfile/JSON formats and slot accounting.
  * Visual reference picker: N/A (none exists in Prepare Context today).
  */
 
@@ -50,7 +50,7 @@ export function OutputUploadDialog(props: {
           Intended upload set: <code>repo-flatfile.txt</code>
           {props.packetReady ? ', ' : ' and '}
           {props.packetReady && <code>task-and-standard-pack.md</code>}
-          {' '}({props.uploadSlotCount} of 3 slots — third free for a visual reference)
+          {' '}({props.uploadSlotCount} of 3 slots: third free for a visual reference)
         </p>
         <p className="muted" style={{ fontSize: 13 }}>
           Visual reference attachment: not available in the current Prepare Context flow (N/A).

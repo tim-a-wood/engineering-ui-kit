@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://engineering-ui-kit/standards/schemas/capabilities/reference-architecture-profile.schema.json",
   "title": "ReferenceArchitectureProfile",
-  "description": "CAP-CONTRACT-023 — immutable reference-architecture profile.",
+  "description": "CAP-CONTRACT-023: immutable reference-architecture profile.",
   "type": "object",
   "additionalProperties": false,
   "required": [

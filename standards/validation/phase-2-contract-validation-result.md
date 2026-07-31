@@ -1,6 +1,6 @@
 # Phase 2 Contract Validation Result
 
-**Package:** `engineering-ui-kit-standards-v0.2-dark-first-contracts.zip`  
+**Package:** `engineering-ui-kit-standards-v0.2-dual-mode-contracts.zip`
 **Date:** 2026-07-03  
 **Validator:** Phase 2 helper script plus manual package inspection  
 **Overall result:** PASS
@@ -9,15 +9,15 @@
 
 | Gate | Result | Notes |
 |---|---|---|
-| Gate A — Package structure | PASS | Package contains a single `standards/` root and excludes planning docs, raw mockup images, nested zips, and temporary folders. |
-| Gate B — JSON parseability | PASS | `tokens.json`, `component-manifest.json`, both schemas, and package metadata parse as valid JSON. |
-| Gate C — Schema validation | PASS | Tokens validate against `tokens.schema.json`; component manifest validates against `component-manifest.schema.json`. |
-| Gate D — Token contract completeness | PASS | Required semantic groups and mandatory token paths are present. Semantic/component-facing tokens include required metadata. |
-| Gate E — Component manifest completeness | PASS | Manifest contains 68 components across 15 categories; IDs are stable and unique. |
-| Gate F — Token-reference integrity | PASS | Component token references resolve to semantic token paths; no raw colors are used in component token references. |
-| Gate G — Source-framing correctness | PASS | Mockups are framed as app visual calibration, not exhaustive standards or company-wide standards. |
-| Gate H — Reference map coverage | PASS | `research/component-reference-map.md` covers required families and flags engineering-specific later-validation items. |
-| Gate I — Handoff readiness | PASS | Three-file strategy is preserved and primary contracts are agent-consumable without embedding planning archives. |
+| Gate A: Package structure | PASS | Package contains a single `standards/` root and excludes planning docs, raw mockup images, nested zips, and temporary folders. |
+| Gate B: JSON parseability | PASS | `tokens.json`, `component-manifest.json`, both schemas, and package metadata parse as valid JSON. |
+| Gate C: Schema validation | PASS | Tokens validate against `tokens.schema.json`; component manifest validates against `component-manifest.schema.json`. |
+| Gate D: Token contract completeness | PASS | Required semantic groups and mandatory token paths are present. Semantic/component-facing tokens include required metadata. |
+| Gate E: Component manifest completeness | PASS | Manifest contains 68 components across 15 categories; IDs are stable and unique. |
+| Gate F: Token-reference integrity | PASS | Component token references resolve to semantic token paths; no raw colors are used in component token references. |
+| Gate G: Source-framing correctness | PASS | Mockups are framed as app visual calibration, not exhaustive standards or company-wide standards. |
+| Gate H: Reference map coverage | PASS | `research/component-reference-map.md` covers required families and flags engineering-specific later-validation items. |
+| Gate I: Handoff readiness | PASS | Three-file strategy is preserved and primary contracts are agent-consumable without embedding planning archives. |
 
 ## Metrics
 

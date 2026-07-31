@@ -76,7 +76,7 @@ export type CapabilityDeployableRecord = {
 
 /**
  * A CAP-CONTRACT-028 `InboundBinding` projection used for Build completeness.
- * Multiple records may share the same `deployableId`/`operationId` — the model
+ * Multiple records may share the same `deployableId`/`operationId`: the model
  * never deduplicates bindings targeting the same operation (§12.4).
  */
 export type CapabilityInboundBindingRecord = {
@@ -86,7 +86,7 @@ export type CapabilityInboundBindingRecord = {
   operationVersion?: string
   /** A binding counts toward completeness once reviewed/approved; drafts remain visible but not valid. */
   approved: boolean
-  /** Omitted exposure is treated as `private` (§5.1/§15.2) — never silently escalated. */
+  /** Omitted exposure is treated as `private` (§5.1/§15.2): never silently escalated. */
   exposure?: ExposureLevel
 }
 
@@ -112,7 +112,7 @@ export type JourneyInput = {
    * (superseded by CAP-CONTRACT-028 `InboundBinding` via `inboundBindings`).
    */
   bindings: CapabilityBindingRecord[]
-  /** Deployables the architecture allocates (§5.1) — drives entry-point applicability/completeness. */
+  /** Deployables the architecture allocates (§5.1): drives entry-point applicability/completeness. */
   deployables?: CapabilityDeployableRecord[]
   /** Inbound bindings (CAP-CONTRACT-028) targeting those deployables. */
   inboundBindings?: CapabilityInboundBindingRecord[]

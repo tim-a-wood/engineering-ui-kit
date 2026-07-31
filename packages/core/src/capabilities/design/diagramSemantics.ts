@@ -1,5 +1,5 @@
 /**
- * EUC-08 — Diagram semantics.
+ * EUC-08: Diagram semantics.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §9.8, §15
  * (all), §24.1, §25.3 (EUC-08/09). Compiles canonical records
@@ -87,7 +87,7 @@ function buildTextAlternative(elements: readonly UmlElement[], relationships: re
   return relationships.map((rel) => {
     switch (rel.kind) {
       case 'dependency':
-        return `${label(rel.fromId)} depends on ${label(rel.toId)}${rel.label ? ` — ${rel.label}` : ''}`
+        return `${label(rel.fromId)} depends on ${label(rel.toId)}${rel.label ? `: ${rel.label}` : ''}`
       case 'provides':
         return `${label(rel.fromId)} provides ${label(rel.toId)}`
       case 'requires':
@@ -109,7 +109,7 @@ function buildTextAlternative(elements: readonly UmlElement[], relationships: re
         return `${label(rel.fromId)} «extend» ${label(rel.toId)}`
       case 'association':
       default:
-        return `${label(rel.fromId)} — ${label(rel.toId)}`
+        return `${label(rel.fromId)}: ${label(rel.toId)}`
     }
   })
 }
@@ -137,8 +137,7 @@ function referencePattern(id: string): RegExp {
 // ---------------------------------------------------------------------------
 
 /**
- * §15.1 / §9.9 "UML semantic validation fails for a required diagram" —
- * validates a diagram projection against the supported UML 2.5.1 subset.
+ * §15.1 / §9.9 "UML semantic validation fails for a required diagram":  * validates a diagram projection against the supported UML 2.5.1 subset.
  * Returns stable-coded diagnostics; never mutates the projection.
  */
 export function validateUmlProjection(
@@ -243,7 +242,7 @@ export type ComponentDiagramInput = {
   allDesigns?: readonly ModuleDesignSpecification[]
 }
 
-/** §9.8 row 1 — selected module, direct consumers, direct dependencies, provided/required interfaces, dependency relationships. */
+/** §9.8 row 1: selected module, direct consumers, direct dependencies, provided/required interfaces, dependency relationships. */
 export function projectComponentDiagram(input: ComponentDiagramInput): DiagramProjection {
   const { design, architecture, allDesigns = [] } = input
   const designByModuleId = new Map(allDesigns.map((peer) => [peer.module.moduleId, peer]))
@@ -353,7 +352,7 @@ export function projectComponentDiagram(input: ComponentDiagramInput): DiagramPr
   return finalizeProjection({
     diagramId,
     kind: 'component',
-    title: `${design.module.name} — component diagram`,
+    title: `${design.module.name}: component diagram`,
     sourceRecordId: design.id,
     sourceRevision: design.revision,
     sourceContentHash: design.contentHash,
@@ -382,7 +381,7 @@ const ACTIVITY_UML_TYPE: Record<ActivityActionDefinition['kind'], string> = {
   final: 'activity final',
 }
 
-/** §9.8 row 2 — main operation or workflow: actions, decisions, guards, recovery, final node. Selects `activityId`, defaulting to the first activity. */
+/** §9.8 row 2: main operation or workflow: actions, decisions, guards, recovery, final node. Selects `activityId`, defaulting to the first activity. */
 export function projectActivityDiagram(design: ModuleDesignSpecification, activityId?: string): DiagramProjection {
   const activities = design.behavior.activities ?? []
   const activity = activityId ? activities.find((candidate) => candidate.id === activityId) : activities[0]
@@ -431,7 +430,7 @@ export function projectActivityDiagram(design: ModuleDesignSpecification, activi
   return finalizeProjection({
     diagramId,
     kind: 'activity',
-    title: `${design.module.name} — ${activity?.name ?? 'activity'} diagram`,
+    title: `${design.module.name}: ${activity?.name ?? 'activity'} diagram`,
     sourceRecordId: design.id,
     sourceRevision: design.revision,
     sourceContentHash: design.contentHash,
@@ -450,7 +449,7 @@ function formatTransitionLabel(transition: StateTransitionDefinition): string {
   return `${transition.trigger}${guardPart}${effectPart}`
 }
 
-/** §9.8 row 3 / §15.1 `trigger [guard] / effect` — selects `recordName`, defaulting to the first state definition. */
+/** §9.8 row 3 / §15.1 `trigger [guard] / effect`: selects `recordName`, defaulting to the first state definition. */
 export function projectStateMachineDiagram(design: ModuleDesignSpecification, recordName?: string): DiagramProjection {
   const states = design.behavior.states ?? []
   const stateDef = recordName ? states.find((candidate) => candidate.recordName === recordName) : states[0]
@@ -528,7 +527,7 @@ export function projectStateMachineDiagram(design: ModuleDesignSpecification, re
   return finalizeProjection({
     diagramId,
     kind: 'stateMachine',
-    title: `${design.module.name} — ${stateDef?.recordName ?? 'state'} state machine`,
+    title: `${design.module.name}: ${stateDef?.recordName ?? 'state'} state machine`,
     sourceRecordId: design.id,
     sourceRevision: design.revision,
     sourceContentHash: design.contentHash,
@@ -541,7 +540,7 @@ export function projectStateMachineDiagram(design: ModuleDesignSpecification, re
 // §9.8 / §15.1 Sequence diagram
 // ---------------------------------------------------------------------------
 
-/** §9.8 row 4 — lifelines, solid calls, dashed replies (ordered top to bottom), labeled combined fragments. Selects `interactionId`, defaulting to the first interaction. */
+/** §9.8 row 4: lifelines, solid calls, dashed replies (ordered top to bottom), labeled combined fragments. Selects `interactionId`, defaulting to the first interaction. */
 export function projectSequenceDiagram(design: ModuleDesignSpecification, interactionId?: string): DiagramProjection {
   const interactions = design.behavior.interactions ?? []
   const interaction = interactionId ? interactions.find((candidate) => candidate.id === interactionId) : interactions[0]
@@ -575,7 +574,7 @@ export function projectSequenceDiagram(design: ModuleDesignSpecification, intera
       })
     }
 
-    // Messages preserve `interaction.messages` order — the canonical top-to-bottom order (§15.1).
+    // Messages preserve `interaction.messages` order: the canonical top-to-bottom order (§15.1).
     for (const message of interaction.messages) {
       relationships.push({
         id: childId(design.id, 'relationship', `message.${interaction.id}.${message.id}`),
@@ -591,7 +590,7 @@ export function projectSequenceDiagram(design: ModuleDesignSpecification, intera
   return finalizeProjection({
     diagramId,
     kind: 'sequence',
-    title: `${design.module.name} — ${interaction?.name ?? 'sequence'} diagram`,
+    title: `${design.module.name}: ${interaction?.name ?? 'sequence'} diagram`,
     sourceRecordId: design.id,
     sourceRevision: design.revision,
     sourceContentHash: design.contentHash,
@@ -610,7 +609,7 @@ export type UseCaseDiagramInput = {
 }
 
 /**
- * §9.8 row 5 — actors outside the system boundary, use cases served inside
+ * §9.8 row 5: actors outside the system boundary, use cases served inside
  * it, `«include»`/`«extend»` labeled. Include/extend relationships are
  * derived heuristically: a scenario step in `mainFlow` (include) or in an
  * `alternatePaths`/`failurePaths` scenario (extend) that references another
@@ -753,7 +752,7 @@ export function projectUseCaseDiagram(input: UseCaseDiagramInput): DiagramProjec
   return finalizeProjection({
     diagramId,
     kind: 'useCase',
-    title: `${design.module.name} — use case diagram`,
+    title: `${design.module.name}: use case diagram`,
     sourceRecordId: design.id,
     sourceRevision: design.revision,
     sourceContentHash: design.contentHash,

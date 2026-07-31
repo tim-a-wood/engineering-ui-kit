@@ -1,5 +1,5 @@
 /**
- * EUC-06 — Design baseline.
+ * EUC-06: Design baseline.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §3.5, §6.2,
  * §16.6, §16.7, §25.3 (EUC-06). Creates and approves the exact architecture
@@ -30,7 +30,7 @@ function moduleIdOf(design: ModuleDesignSpecification): string {
 }
 
 // ---------------------------------------------------------------------------
-// §16.6 — Complete Design baseline
+// §16.6: Complete Design baseline
 // ---------------------------------------------------------------------------
 
 export type CreateDesignBaselineInput = {
@@ -156,7 +156,7 @@ export type ApproveDesignBaselineResult = {
   diagnostics: CapDiagnostic[]
 }
 
-/** §16.6 — approve only when `missingModuleIds` is empty and every blocking gate passes. */
+/** §16.6: approve only when `missingModuleIds` is empty and every blocking gate passes. */
 export function approveDesignBaseline(
   baseline: DesignBaseline,
   approval: ApproveDesignBaselineInput,
@@ -167,7 +167,7 @@ export function approveDesignBaseline(
       diagnostics: [diagnostic('CAP-DES-BASE-ALREADY-APPROVED', 'the Design baseline is already approved', { relatedIds: [baseline.id] })],
     }
   }
-  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // §4, §17.3 (second-review finding: self-asserted approval identity):
   // case-insensitive after trim, and rejects a `service:` actor the same as
   // an `agent:` actor.
   if (isNonHumanActor(approval.approvedBy)) {
@@ -230,7 +230,7 @@ export function baselineStaleness(
 }
 
 // ---------------------------------------------------------------------------
-// §3.5 / §16.7 — Design workflow (gate-mode) policy
+// §3.5 / §16.7: Design workflow (gate-mode) policy
 // ---------------------------------------------------------------------------
 
 export function createDefaultPolicy(
@@ -246,7 +246,7 @@ export type ChangeGateModeResult = { ok: boolean; policy?: DesignWorkflowPolicy;
 /**
  * A change to `incrementalModules` shall be an approved project decision
  * (§3.5). Changing the policy shall not change an existing record approval
- * (§16.7) — this function only ever returns a new policy value.
+ * (§16.7): this function only ever returns a new policy value.
  */
 export function changeGateMode(
   policy: DesignWorkflowPolicy,
@@ -255,7 +255,7 @@ export function changeGateMode(
   actor: string,
   changedAt = new Date(0).toISOString(),
 ): ChangeGateModeResult {
-  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // §4, §17.3 (second-review finding: self-asserted approval identity):
   // case-insensitive after trim, and rejects a `service:` actor the same as
   // an `agent:` actor.
   if (isNonHumanActor(actor)) {
@@ -293,7 +293,7 @@ export function changeGateMode(
 }
 
 // ---------------------------------------------------------------------------
-// §6.2 — Build gate
+// §6.2: Build gate
 // ---------------------------------------------------------------------------
 
 export type BuildGateInput = {
@@ -309,7 +309,7 @@ export type BuildGateInput = {
 export type BuildGateResult = { ok: boolean; diagnostics: CapDiagnostic[] }
 
 /**
- * §6.2 — in `completeBaseline` mode, implementation handoffs remain blocked
+ * §6.2: in `completeBaseline` mode, implementation handoffs remain blocked
  * until the complete Design baseline is approved. In `incrementalModules`
  * mode, a module can enter Build only when every dependency-closed
  * eligibility condition holds; every failing condition is returned so the
@@ -385,7 +385,7 @@ export function evaluateBuildGate(input: BuildGateInput): BuildGateResult {
       }),
     )
   }
-  // §6.2 — owned-path conflict against another active module; overlap is
+  // §6.2: owned-path conflict against another active module; overlap is
   // containment-aware, not exact string equality (see identity.ts
   // `ownedPathsOverlap`).
   const ownedPaths = input.moduleDesign.boundary.ownedPaths

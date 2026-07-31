@@ -22,7 +22,7 @@ what context was provided.
 # generated_at: <ISO-8601 timestamp>
 # included_files: <count>
 # excluded_summary: <short summary of exclusion categories>
-# secrets_guarantee: none — exclusions reduce risk but are not secret detection
+# secrets_guarantee: none: exclusions reduce risk but are not secret detection
 
 ===== FILE: <repo-relative-path> =====
 <file contents>
@@ -83,7 +83,7 @@ Rules:
 # generated_at: 2026-07-03T18:00:00Z
 # included_files: 2
 # excluded_summary: git, dependencies, build output, binaries, env/secrets
-# secrets_guarantee: none — exclusions reduce risk but are not secret detection
+# secrets_guarantee: none: exclusions reduce risk but are not secret detection
 
 ===== FILE: package.json =====
 {

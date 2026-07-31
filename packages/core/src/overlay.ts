@@ -23,6 +23,10 @@ import {
   type SteLexicon,
   type SteTextClass,
 } from './capabilities/simplifiedTechnicalEnglish.js'
+import {
+  evaluateFrontendDesignSources,
+  type FrontendDesignSystemConfig,
+} from './capabilities/frontendDesignSystem.js'
 
 export type InspectOptions = {
   runId: string
@@ -37,6 +41,8 @@ export type InspectOptions = {
   now?: () => Date
   /** Optional project-owned vocabulary from a licensed or selected checker. */
   steLexicon?: SteLexicon
+  /** Required visual contract for a complete generated frontend overlay. */
+  frontendDesignContract?: FrontendDesignSystemConfig
 }
 
 const DEFAULT_LARGE_FILE_BYTES = 200 * 1024
@@ -772,7 +778,7 @@ function appendSteOverlayBlockers(
       summary.hardBlockers.push({
         ruleId: 'AI-HANDOFF-STE-001',
         path: normalizedPath,
-        message: `line ${line}, ${fragment.source}: ${steDiagnostic.code} — ${steDiagnostic.message}`,
+        message: `line ${line}, ${fragment.source}: ${steDiagnostic.code}: ${steDiagnostic.message}`,
       })
     }
     for (const reviewDiagnostic of result.reviewDiagnostics) {
@@ -782,7 +788,7 @@ function appendSteOverlayBlockers(
       summary.warnings.push({
         ruleId: 'AI-HANDOFF-STE-REVIEW-001',
         path: normalizedPath,
-        message: `line ${line}, ${fragment.source}: ${reviewDiagnostic.code} — ${reviewDiagnostic.message}`,
+        message: `line ${line}, ${fragment.source}: ${reviewDiagnostic.code}: ${reviewDiagnostic.message}`,
       })
     }
   }
@@ -815,6 +821,7 @@ export function inspectOverlay(zipPath: string, options: InspectOptions): Overla
   const largeFileBytes = options.largeFileBytes ?? DEFAULT_LARGE_FILE_BYTES
   const expected = options.expectedFiles ? new Set(options.expectedFiles) : undefined
   let fileCount = 0
+  const frontendSources: Record<string, string> = {}
 
   for (const entry of zip.getEntries()) {
     const original = entry.entryName
@@ -916,6 +923,7 @@ export function inspectOverlay(zipPath: string, options: InspectOptions): Overla
     const ext = fileName.includes('.') ? fileName.slice(fileName.lastIndexOf('.')).toLowerCase() : ''
     const isBinary = data.includes(0)
     if (!isBinary) {
+        frontendSources[normalized] = data.toString('utf8')
         appendSteOverlayBlockers(
           summary,
           normalized,
@@ -961,6 +969,22 @@ export function inspectOverlay(zipPath: string, options: InspectOptions): Overla
           })
         }
       }
+    }
+  }
+
+  if (options.frontendDesignContract) {
+    const findings = evaluateFrontendDesignSources(
+      frontendSources,
+      options.frontendDesignContract,
+    )
+    for (const finding of findings) {
+      const target = finding.severity === 'blocking'
+        ? summary.hardBlockers
+        : summary.warnings
+      target.push({
+        ruleId: finding.code,
+        message: finding.message,
+      })
     }
   }
 

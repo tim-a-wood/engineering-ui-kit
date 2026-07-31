@@ -157,7 +157,7 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
             <span className="format-radio unselected" aria-hidden="true" />
             <div>
               <h3>Structured (JSON)</h3>
-              <p>File inventory with metadata — generated alongside as <code>repo-inventory.json</code>.</p>
+              <p>File inventory with metadata: generated alongside as <code>repo-inventory.json</code>.</p>
             </div>
           </div>
         </div>
@@ -170,7 +170,7 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
           <dl className="review-list">
             <div><dt>Project / repo</dt><dd><code>{props.project.name}</code></dd></div>
             <div><dt>Task / recipe</dt><dd>{props.run.taskTitle ?? props.recipe?.title ?? 'Defined in the next step'}</dd></div>
-            <div><dt>Intended upload set</dt><dd><code>repo-flatfile.txt</code>, <code>task-and-standard-pack.md</code> (2 of 3 slots — third free for a visual reference)</dd></div>
+            <div><dt>Intended upload set</dt><dd><code>repo-flatfile.txt</code>, <code>task-and-standard-pack.md</code> (2 of 3 slots: third free for a visual reference)</dd></div>
             <div><dt>Included categories</dt><dd>Source code, configuration, assets, documentation</dd></div>
           </dl>
           <dl className="review-list">
@@ -193,7 +193,7 @@ export function PrepareContextView(props: StepProps & { recipe?: RecipePrefill |
               <dd>
                 {result
                   ? result.warnings.length === 0
-                    ? 'None — no secret-pattern matches detected.'
+                    ? 'None: no secret-pattern matches detected.'
                     : (
                       <ul style={{ margin: 0, paddingLeft: 18 }}>
                         {result.warnings.map((w) => <li key={w} className="mono" style={{ fontSize: 12, color: 'var(--semantic-status-warning)' }}>{w}</li>)}
@@ -315,7 +315,7 @@ export function CreateTaskPacketView(props: StepProps & {
           tone: 'info',
           text: `Iteration packet uses ${fresh.length} saved feedback note${fresh.length === 1 ? '' : 's'}. The scope contains your feedback. The constraints preserve the previous design. Review and export the packet.`,
         })
-      } catch { /* notes unreadable — keep the regular prefill */ }
+      } catch { /* notes unreadable: keep the regular prefill */ }
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -432,7 +432,7 @@ export function CreateTaskPacketView(props: StepProps & {
                 setShowValidation(false)
                 // Methods that produce a self-serving app (the monolith) seed the
                 // project's launch config so the finished app runs from the
-                // workbench with no manual setup — unless the user already set one.
+                // workbench with no manual setup: unless the user already set one.
                 let launchNote = ''
                 if (template.launchDefaults && !props.project.launchUrl) {
                   try {
@@ -441,7 +441,7 @@ export function CreateTaskPacketView(props: StepProps & {
                       launchCommand: template.launchDefaults.command,
                     })
                     await props.refreshProjects()
-                    launchNote = ` Launch App is pre-configured for ${template.launchDefaults.url} — after Verify builds it, open the running app from step 5.`
+                    launchNote = ` Launch App is pre-configured for ${template.launchDefaults.url}: after Verify builds it, open the running app from step 5.`
                   } catch { /* non-fatal: user can still set it in the launch dialog */ }
                 }
                 setStatus({ tone: 'success', text: `Template applied: ${template.title}. Review the REPLACE markers and tweak before export.${launchNote}` })
@@ -634,7 +634,7 @@ export function RunInCopilotView(props: StepProps & { packet: BuildPacketResult 
   const copyFiles = async () => {
     try {
       const result = await props.bridge.copyUploadSet(run.id)
-      setStatus({ tone: 'success', text: `${result.files} file${result.files === 1 ? '' : 's'} on the clipboard — paste (Ctrl/Cmd+V) into the Copilot chat.` })
+      setStatus({ tone: 'success', text: `${result.files} file${result.files === 1 ? '' : 's'} on the clipboard: paste (Ctrl/Cmd+V) into the Copilot chat.` })
     } catch (error) {
       setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
     }
@@ -778,7 +778,7 @@ export function ApplyZipOverlayView(props: StepProps) {
       setStatus(
         summary.canApply
           ? summary.warnings.length > 0
-            ? { tone: 'info', text: `Inspection verdict: warning — ${summary.warnings.length} warnings require explicit acceptance.` }
+            ? { tone: 'info', text: `Inspection verdict: warning: ${summary.warnings.length} warnings require explicit acceptance.` }
             : { tone: 'success', text: 'Inspection verdict: pass.' }
           : { tone: 'error', text: `Inspection verdict: blocked. The overlay has ${summary.hardBlockers.length} hard blockers. Copy the fix prompt to get a corrected zip from Copilot.` },
       )
@@ -845,7 +845,7 @@ export function ApplyZipOverlayView(props: StepProps) {
                 <h2 id="inspection-heading">Inspection result</h2>
                 {inspection.canApply
                   ? inspection.warnings.length > 0
-                    ? <span className="badge badge-warning"><span className="badge-dot" aria-hidden="true" /> Warning — review required</span>
+                    ? <span className="badge badge-warning"><span className="badge-dot" aria-hidden="true" /> Warning: review required</span>
                     : <span className="badge badge-success"><span className="badge-dot" aria-hidden="true" /> Pass</span>
                   : <span className="badge badge-danger"><span className="badge-dot" aria-hidden="true" /> Blocked</span>}
               </div>
@@ -866,7 +866,7 @@ export function ApplyZipOverlayView(props: StepProps) {
                             <span className="status-dot" aria-hidden="true" /> {overwrite ? 'Overwrite' : 'New file'}
                           </span>
                         </td>
-                        <td className="cell-num">{entry.sizeBytes !== undefined ? formatBytes(entry.sizeBytes) : '—'}</td>
+                        <td className="cell-num">{entry.sizeBytes !== undefined ? formatBytes(entry.sizeBytes) : 'None'}</td>
                       </tr>
                     )
                   })}
@@ -878,7 +878,7 @@ export function ApplyZipOverlayView(props: StepProps) {
                   <h3>{Icon.alertTriangle(14)} Apply blockers</h3>
                   <ul>
                     {inspection.hardBlockers.map((b, i) => (
-                      <li key={i}><code>{b.ruleId}</code> {b.path ? <code>{b.path}</code> : null} — {b.message}</li>
+                      <li key={i}><code>{b.ruleId}</code> {b.path ? <code>{b.path}</code> : null}: {b.message}</li>
                     ))}
                   </ul>
                   <div className="hstack" style={{ marginTop: 12, flexWrap: 'wrap' }}>
@@ -904,7 +904,7 @@ export function ApplyZipOverlayView(props: StepProps) {
                   <ul style={{ margin: 0, paddingLeft: 18 }}>
                     {inspection.warnings.map((w, i) => (
                       <li key={i} style={{ fontSize: 13 }}>
-                        <code>{w.ruleId}</code> {w.path ? <code>{w.path}</code> : null} — {w.message}
+                        <code>{w.ruleId}</code> {w.path ? <code>{w.path}</code> : null}: {w.message}
                       </li>
                     ))}
                   </ul>
@@ -1115,7 +1115,7 @@ export function VerifyReviewView(props: StepProps) {
           : restoredFailed === 0
             ? { tone: 'success', text: 'All checks passed. Your repository builds and typechecks.' }
             : { tone: 'error', text: `${restoredFailed} of ${restored.length} checks failed on the last run. Re-run after the next overlay.` })
-      } catch { /* artifacts pruned — user can re-run */ }
+      } catch { /* artifacts pruned: user can re-run */ }
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1150,7 +1150,7 @@ export function VerifyReviewView(props: StepProps) {
     try {
       const result = await props.bridge.installDependencies(props.run.id)
       if (result.status !== 'passed') {
-        setStatus({ tone: 'error', text: `Dependency installation failed (exit ${result.exitCode ?? '—'}). Open the project folder and review the package-manager output.` })
+        setStatus({ tone: 'error', text: `Dependency installation failed (exit ${result.exitCode ?? 'None'}). Open the project folder and review the package-manager output.` })
         return
       }
       setStatus({ tone: 'success', text: 'Dependencies installed. Running checks now…' })
@@ -1176,7 +1176,7 @@ export function VerifyReviewView(props: StepProps) {
 
   const saveManualNote = async () => {
     if (!noteDraft.trim()) {
-      setStatus({ tone: 'error', text: 'Note is empty — write something before saving.' })
+      setStatus({ tone: 'error', text: 'Note is empty: write something before saving.' })
       return
     }
     try {
@@ -1193,14 +1193,14 @@ export function VerifyReviewView(props: StepProps) {
   const saveComponentComment = async () => {
     if (!composer || !commentText.trim()) return
     const t = composer
-    const header = `**Component comment** — \`${t.selector}\`${t.text ? ` ("${t.text}")` : ''} — ${t.route}${t.view ? ` · ${t.view}` : ''}`
+    const header = `**Component comment**: \`${t.selector}\`${t.text ? ` ("${t.text}")` : ''}: ${t.route}${t.view ? ` · ${t.view}` : ''}`
     try {
       await props.bridge.saveFeedback(props.run.id, `${header}\n\n${commentText.trim()}`)
       setComposer(null)
       setCommentText('')
       await props.refreshRun()
       await loadNotes()
-      setStatus({ tone: 'success', text: 'Component comment saved — it will anchor the next task packet.' })
+      setStatus({ tone: 'success', text: 'Component comment saved: it will anchor the next task packet.' })
     } catch (error) {
       setStatus({ tone: 'error', text: error instanceof Error ? error.message : String(error) })
     }
@@ -1230,14 +1230,14 @@ export function VerifyReviewView(props: StepProps) {
     try {
       const failedResults = results.filter((result) => result.status !== 'passed')
       const logs = await Promise.all(failedResults.map(async (result) => {
-        if (!result.combinedOutputPath) return `${result.commandLabel}: ${result.status} (exit ${result.exitCode ?? '—'})`
+        if (!result.combinedOutputPath) return `${result.commandLabel}: ${result.status} (exit ${result.exitCode ?? 'None'})`
         const fileName = result.combinedOutputPath.split(/[\\/]/).pop()
         if (!fileName) return `${result.commandLabel}: ${result.status}`
         try {
           const output = await props.bridge.getArtifactText(props.run.id, `verification/${fileName}`)
-          return `## ${result.commandLabel}\nCommand: ${result.commandText}\nExit: ${result.exitCode ?? '—'}\n\n${output}`
+          return `## ${result.commandLabel}\nCommand: ${result.commandText}\nExit: ${result.exitCode ?? 'None'}\n\n${output}`
         } catch {
-          return `${result.commandLabel}: ${result.status} (exit ${result.exitCode ?? '—'})`
+          return `${result.commandLabel}: ${result.status} (exit ${result.exitCode ?? 'None'})`
         }
       }))
       const lexicon = await loadProjectSteLexicon(props.bridge, props.project.id)
@@ -1540,7 +1540,7 @@ export function VerifyReviewView(props: StepProps) {
                         <span className="status-dot" aria-hidden="true" /> {r.status === 'passed' ? 'Passed' : r.status}
                       </span>
                     </td>
-                    <td className="cell-num">{r.exitCode ?? '—'}</td>
+                    <td className="cell-num">{r.exitCode ?? 'None'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1638,7 +1638,7 @@ export function VerifyReviewView(props: StepProps) {
         >
           <p className="secondary-text" style={{ marginTop: 0 }}>
             <code>{composer.selector}</code>
-            {composer.text && <> — “{composer.text}”</>}
+            {composer.text && <>: “{composer.text}”</>}
             <br />
             <span className="muted">{composer.route}{composer.view ? ` · ${composer.view}` : ''}</span>
           </p>
@@ -1684,8 +1684,8 @@ export function VerifyReviewView(props: StepProps) {
               <span key={f}>{i > 0 && ' + '}<code>{f.split(/[\\/]/).pop()}</code></span>
             ))}
             {reviewPacket.contactSheetPath
-              ? ' — includes the before/after visual contact sheet.'
-              : ' — no visual evidence was captured for this run. Capture before and after screenshots to include the contact sheet.'}
+              ? ': includes the before/after visual contact sheet.'
+              : ': no visual evidence was captured for this run. Capture before and after screenshots to include the contact sheet.'}
           </p>
           <div className="preview-scroll"><Markdown text={reviewPacket.text} /></div>
         </Dialog>
@@ -1720,7 +1720,7 @@ export function VerifyReviewView(props: StepProps) {
  * review comment: hover highlights the element under the cursor with a
  * selector tag; click resolves with the element's identity; Escape cancels.
  * Runs entirely inside the guest (our own generated app) and cleans up after
- * itself — capture-phase listeners keep the click from activating the app.
+ * itself: capture-phase listeners keep the click from activating the app.
  */
 const PICKER_JS = `new Promise((resolve) => {
   const hl = document.createElement('div');
@@ -1797,7 +1797,7 @@ function AppPreview(props: {
   /**
    * Electron composites the <webview> guest in its own layer, so host DOM
    * stacked above it (dialogs) bleeds through. While a dialog is open the
-   * preview hides via visibility — the guest stays alive and layout holds.
+   * preview hides via visibility: the guest stays alive and layout holds.
    */
   obscured?: boolean
 }) {
@@ -1818,7 +1818,7 @@ function AppPreview(props: {
     try {
       props.onPicked((await wv.executeJavaScript(PICKER_JS)) as PickedTarget | null)
     } catch {
-      // Guest navigated or reloaded mid-pick — treat as cancelled.
+      // Guest navigated or reloaded mid-pick: treat as cancelled.
       props.onPicked(null)
     }
   }

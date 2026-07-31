@@ -1,8 +1,8 @@
 /**
- * Use-case-led Capabilities workflow — design/ barrel.
+ * Use-case-led Capabilities workflow: design/ barrel.
  *
  * Re-exports the public API of every committed `design/*.ts` module
- * (EUC-01..EUC-17). Adapters (desktop IPC, CLI, machine API — EUC-13..17)
+ * (EUC-01..EUC-17). Adapters (desktop IPC, CLI, machine API: EUC-13..17)
  * should import from this barrel rather than reaching into individual
  * module files.
  *

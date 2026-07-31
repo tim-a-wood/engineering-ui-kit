@@ -66,7 +66,7 @@ Tables shall use semantic table structure where possible. Interactive grids shal
 - Action menus with unlabeled destructive operations.
 
 
-## CMP-TABLE-DATA-TABLE — Data Table
+## CMP-TABLE-DATA-TABLE: Data Table
 
 ### Purpose
 CMP-TABLE-DATA-TABLE defines structured tabular presentation of records. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -108,17 +108,17 @@ Compliant use: `Data Table` appears in a dark engineering panel, uses manifest I
 Non-compliant use: `Data Table` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-TABLE-DATA-TABLE` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-TABLE-DATA-TABLE` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-TABLE-DATA-TABLE` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-TABLE-DATA-GRID — Data Grid
+## CMP-TABLE-DATA-GRID: Data Grid
 
 ### Purpose
 CMP-TABLE-DATA-GRID defines interactive tabular review with sorting, selection, and dense engineering metadata. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -160,17 +160,17 @@ Compliant use: `Data Grid` appears in a dark engineering panel, uses manifest ID
 Non-compliant use: `Data Grid` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-TABLE-DATA-GRID` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-TABLE-DATA-GRID` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-TABLE-DATA-GRID` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: partially-observed-in-mockups, reference-backed-standard, inferred-engineering-need.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: partially-observed-in-mockups, reference-backed-standard, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-TABLE-COLUMN-HEADER — Column Header
+## CMP-TABLE-COLUMN-HEADER: Column Header
 
 ### Purpose
 CMP-TABLE-COLUMN-HEADER defines labeled table columns with sorting and alignment metadata. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -212,17 +212,17 @@ Compliant use: `Column Header` appears in a dark engineering panel, uses manifes
 Non-compliant use: `Column Header` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-TABLE-COLUMN-HEADER` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-TABLE-COLUMN-HEADER` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-TABLE-COLUMN-HEADER` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-TABLE-ROW-ACTION-MENU — Row Action Menu
+## CMP-TABLE-ROW-ACTION-MENU: Row Action Menu
 
 ### Purpose
 CMP-TABLE-ROW-ACTION-MENU defines per-row contextual actions without overcrowding the table. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -264,17 +264,17 @@ Compliant use: `Row Action Menu` appears in a dark engineering panel, uses manif
 Non-compliant use: `Row Action Menu` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-TABLE-ROW-ACTION-MENU` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-TABLE-ROW-ACTION-MENU` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-TABLE-ROW-ACTION-MENU` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: partially-observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: partially-observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-TABLE-PAGINATION — Pagination
+## CMP-TABLE-PAGINATION: Pagination
 
 ### Purpose
 CMP-TABLE-PAGINATION defines navigation across large record sets. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -316,11 +316,11 @@ Compliant use: `Pagination` appears in a dark engineering panel, uses manifest I
 Non-compliant use: `Pagination` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-TABLE-PAGINATION` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-TABLE-PAGINATION` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-TABLE-PAGINATION` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: reference-backed-standard, inferred-engineering-need.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: reference-backed-standard, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.

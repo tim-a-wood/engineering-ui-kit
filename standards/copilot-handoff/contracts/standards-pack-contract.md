@@ -32,7 +32,7 @@ traceability.
 ## Required Metadata
 
 - package name and version from `standards/package-metadata.json`
-- theme posture: dark-first
+- theme posture: dual-mode
 - selected screen or task name
 - explicit statement that unrelated standards are omitted
 
@@ -66,7 +66,7 @@ traceability.
 ## Package Metadata
 - packageName: engineering-ui-kit-standards
 - packageVersion: 0.3.0
-- themePosture: dark-first
+- themePosture: dual-mode
 - screen: Create Task Packet
 
 ## Applicable Rule IDs
@@ -102,7 +102,7 @@ Generic SaaS white cards, neon accents, and untokenized hard-coded colors.
 Keyboard access, visible focus, dialog Escape/Close, status not by color alone.
 
 ## Excerpts
-FND-VIS-001 — Dark-first surface hierarchy.
+FND-VIS-001: Dual-mode surface hierarchy.
 ```
 
 ## Invalid Example

@@ -32,7 +32,7 @@ documents, module descriptions, and implementation guidance.
 - Use American English, active voice, simple verb forms, and one action per sentence.
 - Limit instructions to 20 words and descriptions to 25 words per sentence.
 - Write names and diagram labels as `VERB + OBJECT` with no more than four words.
-- Use one technical term for one concept. Do not use contractions or semicolons.
+- Use one technical term for one concept. Do not use contractions, semicolons, or em dashes.
 - Check all generated text against these rules before you return the result.
 
 Before editing anything, inspect all three uploaded inputs:
@@ -70,8 +70,13 @@ Hard requirements:
 
 - Constrain changes to the expected files and task scope only.
 - Preserve domain behavior and protected interactions.
-- Implement dark-first styling with semantic tokens as CSS custom properties.
-- Do not implement light mode.
+- Implement light and dark modes with semantic CSS variables.
+- Add a labeled mode button. Store the user choice.
+- Use the system mode before the user selects a mode.
+- Apply the selected palette, font, density, and view layout.
+- Use Lucide icons only. Add tooltips to icon-only controls.
+- Add contextual help for complex domain terms.
+- Reject common generated-interface tropes.
 - Use the primary visual page as calibration, not as an exhaustive component catalog.
 - Preserve or improve accessibility: keyboard access, visible focus, labeled controls,
   dialog Escape/Close, focus return, and status text that is not color-only.
@@ -91,7 +96,7 @@ Hard requirements:
 
 ```text
 {{PROJECT_NAME}} = UI Overlay / trials/vertical-slice-01/target-app (selected-project sample: signal-analyzer-refresh)
-{{TASK_GOAL}} = Refresh UI Overlay's Create Task Packet screen to Engineering UI Kit dark-first standards while preserving all existing domain behavior.
+{{TASK_GOAL}} = Refresh UI Overlay's Create Task Packet screen to Engineering UI Kit dual-mode standards while preserving all existing domain behavior.
 {{EXPECTED_CHANGED_FILES}} = src/App.tsx; src/styles.css; optional new token entry stylesheet referenced by the app
 {{PROTECTED_BEHAVIOR}} = Edit/Save/Cancel for task sections; required-field validation; preview dialog content from current packet values; Escape and Close dismiss preview; focus returns to Preview; browser-only export of task-packet.md with the five section headings; no network or filesystem access
 {{ACCEPTANCE_CRITERIA}} = TRIAL-AC-001 through TRIAL-AC-013 in trials/vertical-slice-01/acceptance-criteria.md
@@ -104,7 +109,8 @@ Hard requirements:
 
 - Output stays inside expected files.
 - Protected behavior is preserved.
-- Dark-first semantic tokens are used.
+- Light and dark semantic tokens are used.
+- Icons, tooltips, help, and visible copy pass their gates.
 - Accessibility behaviors remain intact.
 - Overlay matches `ui-overlay.zip` contract.
 - Limitations are disclosed rather than hidden.

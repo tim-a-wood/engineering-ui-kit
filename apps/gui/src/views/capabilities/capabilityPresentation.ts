@@ -232,7 +232,7 @@ export function fileNameOf(path: string): string {
 
 /** Compact human-readable byte size, e.g. 2048 → "2 KB". */
 export function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes < 0) return '—'
+  if (!Number.isFinite(bytes) || bytes < 0) return 'None'
   if (bytes < 1024) return `${bytes} B`
   const kb = bytes / 1024
   if (kb < 1024) return `${trimZero(kb < 10 ? kb.toFixed(1) : String(Math.round(kb)))} KB`

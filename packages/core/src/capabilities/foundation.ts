@@ -1,9 +1,9 @@
 /**
  * Foundation planning (WP5A-core): the pure orchestration layer that turns an
  * approved `ArchitectureSpecification` plus optional repository-discovery
- * evidence into a single reviewable `FoundationPlan` — deployable proposals,
+ * evidence into a single reviewable `FoundationPlan`: deployable proposals,
  * module-to-deployable allocation explanations, and ambiguity
- * question/answer resolution — before any generation occurs.
+ * question/answer resolution: before any generation occurs.
  *
  * This module is a NON-contract wrapper: `FoundationPlan` is not a frozen
  * CAP-CONTRACT record. It reuses `proposeDeployables` (`generation/deployables.ts`)
@@ -42,7 +42,7 @@ export type FoundationPlan = {
   projectId: string
   architectureId: string
   architectureRevision: string
-  /** The `ArchitectureSpecification.contentHash` this plan was derived from — used for staleness detection. */
+  /** The `ArchitectureSpecification.contentHash` this plan was derived from: used for staleness detection. */
   architectureHash: string
   deployables: DeployableSpecification[]
   allocations: ModuleAllocationExplanation[]

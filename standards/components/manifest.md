@@ -45,82 +45,82 @@ Component IDs shall be treated as stable contract names. They shall not be renam
 
 | Treatment | Meaning |
 |---|---|
-| Tier 1 — full operational specification | Component is observed in mockups, PRD-required, or required by the manifest. It needs behavior, states, accessibility, token use, examples, and validation checks. |
-| Tier 2 — standard specification | Component is reference-backed or inferred. It needs useful usage, state, accessibility, and token rules but not speculative detail. |
-| Tier 3 — reserved specification | Component remains reserved for future validation. Prose shall preserve the ID but explicitly prohibit treating it as a finalized standard. |
+| Tier 1: full operational specification | Component is observed in mockups, PRD-required, or required by the manifest. It needs behavior, states, accessibility, token use, examples, and validation checks. |
+| Tier 2: standard specification | Component is reference-backed or inferred. It needs useful usage, state, accessibility, and token rules but not speculative detail. |
+| Tier 3: reserved specification | Component remains reserved for future validation. Prose shall preserve the ID but explicitly prohibit treating it as a finalized standard. |
 
 ## Component-to-Document Map
 
 | Component ID | Name | Category | Coverage | Phase 3 treatment | Owner document |
 |---|---|---|---|---|---|
-| `CMP-SHELL-APP` | App Shell | `shell` | observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/navigation.md` |
-| `CMP-SHELL-TOP-BAR` | Top Bar | `shell` | observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/navigation.md` |
-| `CMP-NAV-PRIMARY` | Primary Navigation | `navigation` | observed-in-mockups, prd-required, reference-backed-standard | Tier 1 — full operational specification | `components/navigation.md` |
-| `CMP-NAV-SECONDARY` | Secondary Navigation | `navigation` | partially-observed-in-mockups, reference-backed-standard | Tier 2 — standard specification | `components/navigation.md` |
-| `CMP-NAV-BREADCRUMBS` | Breadcrumbs | `navigation` | reference-backed-standard, inferred-engineering-need | Tier 2 — standard specification | `components/navigation.md` |
-| `CMP-SHELL-PAGE-HEADER` | Page Header | `shell` | observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/navigation.md` |
-| `CMP-NAV-COMMAND-ACTION-BAR` | Command Action Bar | `navigation` | observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/navigation.md` |
-| `CMP-SURFACE-PANEL` | Panel | `surface` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-SURFACE-RAISED-CARD` | Raised Card | `surface` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-SURFACE-INSET-PANEL` | Inset Panel | `surface` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-LAYOUT-SECTION-HEADER` | Section Header | `layout` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-LAYOUT-TOOLBAR` | Toolbar | `layout` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-LAYOUT-SPLIT-PANEL` | Split Panel | `layout` | partially-observed-in-mockups, inferred-engineering-need | Tier 2 — standard specification | `components/component-specs.md` |
-| `CMP-LAYOUT-RESIZABLE-PANEL` | Resizable Panel | `layout` | inferred-engineering-need, reserved-for-future-validation | Tier 3 — reserved specification | `components/component-specs.md` |
-| `CMP-LAYOUT-DASHBOARD-GRID` | Dashboard Grid | `layout` | observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-LAYOUT-DETAIL` | Detail Layout | `layout` | partially-observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-FORM-FIELD` | Form Field | `forms` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/forms.md` |
-| `CMP-FORM-TEXT-INPUT` | Text Input | `forms` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/forms.md` |
-| `CMP-FORM-NUMBER-INPUT` | Number Input | `forms` | partially-observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/forms.md` |
-| `CMP-FORM-SELECT` | Select | `forms` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/forms.md` |
-| `CMP-FORM-COMBOBOX` | Combobox | `forms` | reference-backed-standard, inferred-engineering-need | Tier 2 — standard specification | `components/forms.md` |
-| `CMP-FORM-TEXTAREA` | Textarea | `forms` | reference-backed-standard, prd-required | Tier 1 — full operational specification | `components/forms.md` |
-| `CMP-FORM-CHECKBOX` | Checkbox | `forms` | reference-backed-standard, prd-required | Tier 1 — full operational specification | `components/forms.md` |
-| `CMP-FORM-RADIO-GROUP` | Radio Group | `forms` | reference-backed-standard | Tier 2 — standard specification | `components/forms.md` |
-| `CMP-FORM-SWITCH` | Switch | `forms` | reference-backed-standard | Tier 2 — standard specification | `components/forms.md` |
-| `CMP-FORM-DATE-TIME-INPUT` | Date Time Input | `forms` | reference-backed-standard, inferred-engineering-need | Tier 2 — standard specification | `components/forms.md` |
-| `CMP-FILTER-SEARCH-FIELD` | Search Field | `filters` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/forms.md` |
-| `CMP-FILTER-BAR` | Filter Bar | `filters` | observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/forms.md` |
-| `CMP-FILTER-CHIP` | Filter Chip | `filters` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/forms.md` |
-| `CMP-FORM-FILE-DROPZONE` | File Dropzone | `forms` | prd-required, inferred-engineering-need | Tier 1 — full operational specification | `components/forms.md` |
-| `CMP-TABLE-DATA-TABLE` | Data Table | `tables` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/tables.md` |
-| `CMP-TABLE-DATA-GRID` | Data Grid | `tables` | partially-observed-in-mockups, reference-backed-standard, inferred-engineering-need | Tier 2 — standard specification | `components/tables.md` |
-| `CMP-TABLE-COLUMN-HEADER` | Column Header | `tables` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/tables.md` |
-| `CMP-TABLE-ROW-ACTION-MENU` | Row Action Menu | `tables` | partially-observed-in-mockups, reference-backed-standard | Tier 2 — standard specification | `components/tables.md` |
-| `CMP-TABLE-PAGINATION` | Pagination | `tables` | reference-backed-standard, inferred-engineering-need | Tier 2 — standard specification | `components/tables.md` |
-| `CMP-CONTENT-EMPTY-STATE` | Empty State | `content` | reference-backed-standard, prd-required | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-FEEDBACK-LOADING-STATE` | Loading State | `feedback` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-FEEDBACK-ERROR-STATE` | Error State | `feedback` | reference-backed-standard, prd-required | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-CONTENT-METRIC-CARD` | Metric Card | `content` | observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-CONTENT-KEY-VALUE-LIST` | Key Value List | `content` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-STATUS-BADGE` | Status Badge | `status` | observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-FEEDBACK-ALERT` | Alert | `feedback` | reference-backed-standard, prd-required | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-FEEDBACK-TOAST` | Toast | `feedback` | reference-backed-standard | Tier 2 — standard specification | `components/feedback-and-status.md` |
-| `CMP-FEEDBACK-PROGRESS-INDICATOR` | Progress Indicator | `feedback` | observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-STATUS-JOB-INDICATOR` | Job Status Indicator | `status` | observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-FEEDBACK-VALIDATION-SUMMARY` | Validation Summary | `feedback` | prd-required, reference-backed-standard | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-WORKFLOW-STEP-INDICATOR` | Step Indicator | `workflow` | reference-backed-standard, prd-required | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-WORKFLOW-TIMELINE-EVENT-LOG` | Timeline Event Log | `workflow` | prd-required, inferred-engineering-need | Tier 1 — full operational specification | `components/feedback-and-status.md` |
-| `CMP-OVERLAY-DIALOG` | Dialog | `overlays` | reference-backed-standard, prd-required | Tier 1 — full operational specification | `components/overlays-and-dialogs.md` |
-| `CMP-OVERLAY-CONFIRMATION-DIALOG` | Confirmation Dialog | `overlays` | reference-backed-standard, prd-required | Tier 1 — full operational specification | `components/overlays-and-dialogs.md` |
-| `CMP-OVERLAY-DRAWER` | Drawer | `overlays` | partially-observed-in-mockups, reference-backed-standard | Tier 2 — standard specification | `components/overlays-and-dialogs.md` |
-| `CMP-OVERLAY-POPOVER` | Popover | `overlays` | reference-backed-standard | Tier 2 — standard specification | `components/overlays-and-dialogs.md` |
-| `CMP-OVERLAY-TOOLTIP` | Tooltip | `overlays` | reference-backed-standard | Tier 2 — standard specification | `components/overlays-and-dialogs.md` |
-| `CMP-OVERLAY-CONTEXT-MENU` | Context Menu | `overlays` | reference-backed-standard, inferred-engineering-need | Tier 2 — standard specification | `components/overlays-and-dialogs.md` |
-| `CMP-VIZ-CHART-PANEL` | Chart Panel | `data-visualization` | observed-in-mockups, prd-required | Tier 1 — full operational specification | `components/data-visualization.md` |
-| `CMP-VIZ-LINE-CHART` | Line Chart | `data-visualization` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/data-visualization.md` |
-| `CMP-VIZ-BAR-CHART` | Bar Chart | `data-visualization` | reference-backed-standard, prd-required | Tier 1 — full operational specification | `components/data-visualization.md` |
-| `CMP-VIZ-LEGEND` | Legend | `data-visualization` | observed-in-mockups, reference-backed-standard | Tier 1 — full operational specification | `components/data-visualization.md` |
-| `CMP-VIZ-CHART-TOOLTIP` | Chart Tooltip | `data-visualization` | reference-backed-standard | Tier 2 — standard specification | `components/data-visualization.md` |
-| `CMP-VIZ-THRESHOLD-BAND` | Threshold Band | `data-visualization` | inferred-engineering-need, reserved-for-future-validation | Tier 3 — reserved specification | `components/data-visualization.md` |
-| `CMP-ENG-ARTIFACT-TREE` | Artifact Tree | `engineering-artifacts` | prd-required, inferred-engineering-need | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-ENG-TRACE-MATRIX` | Traceability Matrix | `engineering-artifacts` | prd-required, inferred-engineering-need, reserved-for-future-validation | Tier 3 — reserved specification | `components/component-specs.md` |
-| `CMP-ENG-DIFF-VIEWER` | Diff Viewer | `code-and-logs` | inferred-engineering-need, reserved-for-future-validation | Tier 3 — reserved specification | `components/component-specs.md` |
-| `CMP-ENG-LOG-VIEWER` | Log Viewer | `code-and-logs` | prd-required, inferred-engineering-need | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-ENG-CODE-BLOCK` | Code Block | `code-and-logs` | reference-backed-standard, prd-required | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-ENG-EVIDENCE-CARD` | Evidence Card | `engineering-artifacts` | prd-required, inferred-engineering-need | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-ENG-REQUIREMENT-LINK` | Requirement Link | `engineering-artifacts` | prd-required, inferred-engineering-need | Tier 1 — full operational specification | `components/component-specs.md` |
-| `CMP-ENG-RUN-TEST-RESULT-SUMMARY` | Run Test Result Summary | `engineering-artifacts` | prd-required, observed-in-mockups | Tier 1 — full operational specification | `components/component-specs.md` |
+| `CMP-SHELL-APP` | App Shell | `shell` | observed-in-mockups, prd-required | Tier 1: full operational specification | `components/navigation.md` |
+| `CMP-SHELL-TOP-BAR` | Top Bar | `shell` | observed-in-mockups, prd-required | Tier 1: full operational specification | `components/navigation.md` |
+| `CMP-NAV-PRIMARY` | Primary Navigation | `navigation` | observed-in-mockups, prd-required, reference-backed-standard | Tier 1: full operational specification | `components/navigation.md` |
+| `CMP-NAV-SECONDARY` | Secondary Navigation | `navigation` | partially-observed-in-mockups, reference-backed-standard | Tier 2: standard specification | `components/navigation.md` |
+| `CMP-NAV-BREADCRUMBS` | Breadcrumbs | `navigation` | reference-backed-standard, inferred-engineering-need | Tier 2: standard specification | `components/navigation.md` |
+| `CMP-SHELL-PAGE-HEADER` | Page Header | `shell` | observed-in-mockups, prd-required | Tier 1: full operational specification | `components/navigation.md` |
+| `CMP-NAV-COMMAND-ACTION-BAR` | Command Action Bar | `navigation` | observed-in-mockups, prd-required | Tier 1: full operational specification | `components/navigation.md` |
+| `CMP-SURFACE-PANEL` | Panel | `surface` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-SURFACE-RAISED-CARD` | Raised Card | `surface` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-SURFACE-INSET-PANEL` | Inset Panel | `surface` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-LAYOUT-SECTION-HEADER` | Section Header | `layout` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-LAYOUT-TOOLBAR` | Toolbar | `layout` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-LAYOUT-SPLIT-PANEL` | Split Panel | `layout` | partially-observed-in-mockups, inferred-engineering-need | Tier 2: standard specification | `components/component-specs.md` |
+| `CMP-LAYOUT-RESIZABLE-PANEL` | Resizable Panel | `layout` | inferred-engineering-need, reserved-for-future-validation | Tier 3: reserved specification | `components/component-specs.md` |
+| `CMP-LAYOUT-DASHBOARD-GRID` | Dashboard Grid | `layout` | observed-in-mockups, prd-required | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-LAYOUT-DETAIL` | Detail Layout | `layout` | partially-observed-in-mockups, prd-required | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-FORM-FIELD` | Form Field | `forms` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/forms.md` |
+| `CMP-FORM-TEXT-INPUT` | Text Input | `forms` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/forms.md` |
+| `CMP-FORM-NUMBER-INPUT` | Number Input | `forms` | partially-observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/forms.md` |
+| `CMP-FORM-SELECT` | Select | `forms` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/forms.md` |
+| `CMP-FORM-COMBOBOX` | Combobox | `forms` | reference-backed-standard, inferred-engineering-need | Tier 2: standard specification | `components/forms.md` |
+| `CMP-FORM-TEXTAREA` | Textarea | `forms` | reference-backed-standard, prd-required | Tier 1: full operational specification | `components/forms.md` |
+| `CMP-FORM-CHECKBOX` | Checkbox | `forms` | reference-backed-standard, prd-required | Tier 1: full operational specification | `components/forms.md` |
+| `CMP-FORM-RADIO-GROUP` | Radio Group | `forms` | reference-backed-standard | Tier 2: standard specification | `components/forms.md` |
+| `CMP-FORM-SWITCH` | Switch | `forms` | reference-backed-standard | Tier 2: standard specification | `components/forms.md` |
+| `CMP-FORM-DATE-TIME-INPUT` | Date Time Input | `forms` | reference-backed-standard, inferred-engineering-need | Tier 2: standard specification | `components/forms.md` |
+| `CMP-FILTER-SEARCH-FIELD` | Search Field | `filters` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/forms.md` |
+| `CMP-FILTER-BAR` | Filter Bar | `filters` | observed-in-mockups, prd-required | Tier 1: full operational specification | `components/forms.md` |
+| `CMP-FILTER-CHIP` | Filter Chip | `filters` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/forms.md` |
+| `CMP-FORM-FILE-DROPZONE` | File Dropzone | `forms` | prd-required, inferred-engineering-need | Tier 1: full operational specification | `components/forms.md` |
+| `CMP-TABLE-DATA-TABLE` | Data Table | `tables` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/tables.md` |
+| `CMP-TABLE-DATA-GRID` | Data Grid | `tables` | partially-observed-in-mockups, reference-backed-standard, inferred-engineering-need | Tier 2: standard specification | `components/tables.md` |
+| `CMP-TABLE-COLUMN-HEADER` | Column Header | `tables` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/tables.md` |
+| `CMP-TABLE-ROW-ACTION-MENU` | Row Action Menu | `tables` | partially-observed-in-mockups, reference-backed-standard | Tier 2: standard specification | `components/tables.md` |
+| `CMP-TABLE-PAGINATION` | Pagination | `tables` | reference-backed-standard, inferred-engineering-need | Tier 2: standard specification | `components/tables.md` |
+| `CMP-CONTENT-EMPTY-STATE` | Empty State | `content` | reference-backed-standard, prd-required | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-FEEDBACK-LOADING-STATE` | Loading State | `feedback` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-FEEDBACK-ERROR-STATE` | Error State | `feedback` | reference-backed-standard, prd-required | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-CONTENT-METRIC-CARD` | Metric Card | `content` | observed-in-mockups, prd-required | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-CONTENT-KEY-VALUE-LIST` | Key Value List | `content` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-STATUS-BADGE` | Status Badge | `status` | observed-in-mockups, prd-required | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-FEEDBACK-ALERT` | Alert | `feedback` | reference-backed-standard, prd-required | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-FEEDBACK-TOAST` | Toast | `feedback` | reference-backed-standard | Tier 2: standard specification | `components/feedback-and-status.md` |
+| `CMP-FEEDBACK-PROGRESS-INDICATOR` | Progress Indicator | `feedback` | observed-in-mockups, prd-required | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-STATUS-JOB-INDICATOR` | Job Status Indicator | `status` | observed-in-mockups, prd-required | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-FEEDBACK-VALIDATION-SUMMARY` | Validation Summary | `feedback` | prd-required, reference-backed-standard | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-WORKFLOW-STEP-INDICATOR` | Step Indicator | `workflow` | reference-backed-standard, prd-required | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-WORKFLOW-TIMELINE-EVENT-LOG` | Timeline Event Log | `workflow` | prd-required, inferred-engineering-need | Tier 1: full operational specification | `components/feedback-and-status.md` |
+| `CMP-OVERLAY-DIALOG` | Dialog | `overlays` | reference-backed-standard, prd-required | Tier 1: full operational specification | `components/overlays-and-dialogs.md` |
+| `CMP-OVERLAY-CONFIRMATION-DIALOG` | Confirmation Dialog | `overlays` | reference-backed-standard, prd-required | Tier 1: full operational specification | `components/overlays-and-dialogs.md` |
+| `CMP-OVERLAY-DRAWER` | Drawer | `overlays` | partially-observed-in-mockups, reference-backed-standard | Tier 2: standard specification | `components/overlays-and-dialogs.md` |
+| `CMP-OVERLAY-POPOVER` | Popover | `overlays` | reference-backed-standard | Tier 2: standard specification | `components/overlays-and-dialogs.md` |
+| `CMP-OVERLAY-TOOLTIP` | Tooltip | `overlays` | reference-backed-standard | Tier 2: standard specification | `components/overlays-and-dialogs.md` |
+| `CMP-OVERLAY-CONTEXT-MENU` | Context Menu | `overlays` | reference-backed-standard, inferred-engineering-need | Tier 2: standard specification | `components/overlays-and-dialogs.md` |
+| `CMP-VIZ-CHART-PANEL` | Chart Panel | `data-visualization` | observed-in-mockups, prd-required | Tier 1: full operational specification | `components/data-visualization.md` |
+| `CMP-VIZ-LINE-CHART` | Line Chart | `data-visualization` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/data-visualization.md` |
+| `CMP-VIZ-BAR-CHART` | Bar Chart | `data-visualization` | reference-backed-standard, prd-required | Tier 1: full operational specification | `components/data-visualization.md` |
+| `CMP-VIZ-LEGEND` | Legend | `data-visualization` | observed-in-mockups, reference-backed-standard | Tier 1: full operational specification | `components/data-visualization.md` |
+| `CMP-VIZ-CHART-TOOLTIP` | Chart Tooltip | `data-visualization` | reference-backed-standard | Tier 2: standard specification | `components/data-visualization.md` |
+| `CMP-VIZ-THRESHOLD-BAND` | Threshold Band | `data-visualization` | inferred-engineering-need, reserved-for-future-validation | Tier 3: reserved specification | `components/data-visualization.md` |
+| `CMP-ENG-ARTIFACT-TREE` | Artifact Tree | `engineering-artifacts` | prd-required, inferred-engineering-need | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-ENG-TRACE-MATRIX` | Traceability Matrix | `engineering-artifacts` | prd-required, inferred-engineering-need, reserved-for-future-validation | Tier 3: reserved specification | `components/component-specs.md` |
+| `CMP-ENG-DIFF-VIEWER` | Diff Viewer | `code-and-logs` | inferred-engineering-need, reserved-for-future-validation | Tier 3: reserved specification | `components/component-specs.md` |
+| `CMP-ENG-LOG-VIEWER` | Log Viewer | `code-and-logs` | prd-required, inferred-engineering-need | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-ENG-CODE-BLOCK` | Code Block | `code-and-logs` | reference-backed-standard, prd-required | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-ENG-EVIDENCE-CARD` | Evidence Card | `engineering-artifacts` | prd-required, inferred-engineering-need | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-ENG-REQUIREMENT-LINK` | Requirement Link | `engineering-artifacts` | prd-required, inferred-engineering-need | Tier 1: full operational specification | `components/component-specs.md` |
+| `CMP-ENG-RUN-TEST-RESULT-SUMMARY` | Run Test Result Summary | `engineering-artifacts` | prd-required, observed-in-mockups | Tier 1: full operational specification | `components/component-specs.md` |
 
 ## Component-to-Token Rule
 

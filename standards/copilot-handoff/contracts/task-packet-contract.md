@@ -71,7 +71,7 @@ Path: trials/vertical-slice-01/target-app
 Selected project (sample): signal-analyzer-refresh
 
 ## Goal
-Refresh UI Overlay's Create Task Packet screen to dark-first Engineering UI Kit styling.
+Refresh UI Overlay's Create Task Packet screen to dual-mode Engineering UI Kit styling.
 
 ## Scope
 Presentation and styling for the Create Task Packet screen only.
@@ -82,7 +82,7 @@ Preserve Edit/Save/Cancel, validation, preview, and export behavior.
 ## Acceptance Criteria
 - Typecheck and build pass.
 - Protected interactions still work.
-- Dark-first shell and semantic tokens are present.
+- Dual-mode shell and semantic tokens are present.
 
 ## References
 1F2214C9-D849-41CA-9435-68F0A0032EEB.jpeg

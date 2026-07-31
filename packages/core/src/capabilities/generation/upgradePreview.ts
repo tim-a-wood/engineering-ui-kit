@@ -5,7 +5,7 @@
  *
  * `planRuntimeUpgradePreview` is a PREVIEW only: it never mutates a profile,
  * a `GenerationPlan`, or a target repository, and it always reports
- * `requiresExplicitApproval: true` — there is no code path that applies an
+ * `requiresExplicitApproval: true`: there is no code path that applies an
  * upgrade silently. Given the same `current`/`target` profiles, the preview
  * is byte-identical (deterministic): no `Date.now()`/`Math.random()`, no
  * `node:*` imports, safe to bundle into the renderer (see `../browser.ts`).
@@ -81,7 +81,7 @@ function versionsOf(profile: ReferenceArchitectureProfile): RuntimeUpgradePrevie
 /**
  * Build an explicit, reviewable preview of upgrading from `current` to
  * `target` (CAP-CONTRACT-023). Never mutates either profile. Always requires
- * explicit approval before any apply — this function never applies anything
+ * explicit approval before any apply: this function never applies anything
  * itself, and there is no `apply`-shaped counterpart that skips approval.
  */
 export function planRuntimeUpgradePreview(input: RuntimeUpgradePreviewInput): RuntimeUpgradePreview {

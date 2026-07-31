@@ -1,5 +1,5 @@
 /**
- * EUC-15 — Repository and process adapters.
+ * EUC-15: Repository and process adapters.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §11.6,
  * §12.2, §19 ("MATLAB timeout", "Apply failure", "Verification command
@@ -16,7 +16,7 @@
  * `designWorkspace.ts` (committed siblings); it only imports from them.
  *
  * Do NOT import this module from a browser entry (`src/index.ts` "."/
- * "./browser" exports) — it uses `node:fs` and `node:child_process` directly.
+ * "./browser" exports): it uses `node:fs` and `node:child_process` directly.
  */
 
 import fs from 'node:fs'
@@ -115,7 +115,7 @@ function collectEntry(resolvedRoot: string, absoluteEntry: string, relativeEntry
 }
 
 // ---------------------------------------------------------------------------
-// §20.1 / §20.2 — read-only scoped context
+// §20.1 / §20.2: read-only scoped context
 // ---------------------------------------------------------------------------
 
 export type ReadScopedContextInput = {
@@ -137,7 +137,7 @@ export type ScopedContextCandidate = {
 
 /**
  * §20.1 "Source adapters shall be read-only during Plan and Design analysis"
- * / §20.2 "reject symbolic-link or path-traversal escapes" — reads only
+ * / §20.2 "reject symbolic-link or path-traversal escapes": reads only
  * files under `input.includePaths`, resolved against `input.root`. Rejects
  * an absolute include path, a `..` traversal segment, and any include path
  * or nested entry whose resolved real path escapes the real path of `root`
@@ -179,7 +179,7 @@ export function readScopedContext(input: ReadScopedContextInput): ScopedContextC
 }
 
 // ---------------------------------------------------------------------------
-// §11.6 / §12.2 — deterministic workspace revision
+// §11.6 / §12.2: deterministic workspace revision
 // ---------------------------------------------------------------------------
 
 function fileEntry(resolvedRoot: string, relPath: string): [string, string | null] {
@@ -217,8 +217,7 @@ function expandPathsForRevision(resolvedRoot: string, paths: string[]): string[]
 
 /**
  * §11.6 "If the workspace changes after inspection, the product shall
- * require a new inspection" / §12.2 "verify the base workspace revision" —
- * a deterministic content-derived revision: the canonical hash of the
+ * require a new inspection" / §12.2 "verify the base workspace revision":  * a deterministic content-derived revision: the canonical hash of the
  * sorted relative file paths paired with their content hash (or `null` when
  * a listed path does not currently exist as a file). When `paths` is
  * omitted, every file under `root` is included (noise directories and the
@@ -235,7 +234,7 @@ export function workspaceRevision(root: string, paths?: string[]): string {
 }
 
 // ---------------------------------------------------------------------------
-// §12.2 — transactional apply, backup, and rollback
+// §12.2: transactional apply, backup, and rollback
 // ---------------------------------------------------------------------------
 
 export type DesignOwnershipEntry = {
@@ -256,11 +255,11 @@ function ownershipManifestPath(resolvedRoot: string): string {
 }
 
 /**
- * §12.2 filesystem-safety fix — refuses to write through a symlink. Every
+ * §12.2 filesystem-safety fix: refuses to write through a symlink. Every
  * path this module writes (the ownership manifest, backup files and backup
  * manifest, and each applied delta target) must pass this check
  * immediately before the write: (a) if the target currently exists and is a
- * symbolic link, it is rejected outright — a symlinked control file or
+ * symbolic link, it is rejected outright: a symlinked control file or
  * delta target is never followed, regardless of where it resolves; (b)
  * otherwise the target (or its nearest existing ancestor directory) must
  * resolve, by real path, inside the repository root
@@ -287,8 +286,7 @@ function assertSafeWriteTarget(resolvedRoot: string, absPath: string, label: str
 
 /**
  * Reads the ownership manifest at the root of a repository, if any (§12.2
- * "update ownership manifests"). Rejects — rather than silently following —
- * a `design-ownership.json` that currently exists as a symbolic link: a
+ * "update ownership manifests"). Rejects: rather than silently following:  * a `design-ownership.json` that currently exists as a symbolic link: a
  * control file must be a regular file (§12.2 filesystem-safety fix).
  */
 export function readOwnershipManifest(root: string): DesignOwnershipManifest | undefined {
@@ -404,7 +402,7 @@ function restoreFromBackup(resolvedRoot: string, planId: string): void {
     // §12.2 filesystem-safety fix: restoring from backup must not follow a
     // symlink planted at the restore target after the backup was taken.
     // When the target is currently unsafe, leave it untouched rather than
-    // writing through it — the transactional apply runs the identical
+    // writing through it: the transactional apply runs the identical
     // guard immediately before every write, so an unsafe restore target
     // was never actually written to in the first place.
     try {
@@ -423,7 +421,7 @@ function restoreFromBackup(resolvedRoot: string, planId: string): void {
 }
 
 /**
- * §12.2 "provide rollback instructions" / §19 "Apply failure" — restores
+ * §12.2 "provide rollback instructions" / §19 "Apply failure": restores
  * every path touched by `planId` (and the ownership manifest) from its
  * recoverable backup. Works whether the apply already rolled back mid-apply
  * or the caller is explicitly reverting a previously successful apply.
@@ -445,13 +443,13 @@ function failResult(planId: string, now: string, failure: string): DeltaApplyRes
 }
 
 /**
- * §12.2 — the real filesystem transactional apply. Verifies the base
+ * §12.2: the real filesystem transactional apply. Verifies the base
  * workspace revision (`plan.expectedWorkspaceRevision`) over the delta's
  * touched paths, verifies the inspected delta hash
  * (`plan.expectedDeltaHash`), creates a recoverable backup, then applies
  * every approved change or none: any mid-apply failure (including the
  * `failAfter` test hook, or a delete whose target is missing) restores
- * every touched file — and the ownership manifest — from backup (§19 "Apply
+ * every touched file: and the ownership manifest: from backup (§19 "Apply
  * failure"). Unrelated files are never touched. On success, updates
  * `design-ownership.json` at `root` and returns the `DeltaApplyResult`.
  */
@@ -495,8 +493,7 @@ export function applyDeltaTransactionally(
   try {
     createBackup(resolvedRoot, plan.planId, backupPaths, now)
   } catch (error) {
-    // Nothing has been touched yet (the backup itself failed to write) —
-    // §12.2 filesystem-safety fix: e.g. `.euik-design-backups` or a backup
+    // Nothing has been touched yet (the backup itself failed to write):     // §12.2 filesystem-safety fix: e.g. `.euik-design-backups` or a backup
     // file destination was replaced by a symlink escaping the repository.
     const failure = error instanceof Error ? error.message : String(error)
     return failResult(plan.planId, now, failure)
@@ -513,7 +510,7 @@ export function applyDeltaTransactionally(
       const absPath = path.join(resolvedRoot, change.path)
       // Apply-time re-verification (§12.2): inspection validated
       // `change.path` as a relative, in-root path, but the filesystem may
-      // have changed since then (or since the backup was taken) — re-check
+      // have changed since then (or since the backup was taken): re-check
       // containment and reject a target that is now a symlink immediately
       // before writing or deleting it.
       assertSafeWriteTarget(resolvedRoot, absPath, `delta target "${change.path}"`)
@@ -547,7 +544,7 @@ export function applyDeltaTransactionally(
 }
 
 // ---------------------------------------------------------------------------
-// §20.2 — process isolation
+// §20.2: process isolation
 // ---------------------------------------------------------------------------
 
 export type ProcessIsolationGuardInput = {
@@ -564,7 +561,7 @@ export type ProcessIsolationGuardResult =
 
 /**
  * §20.2 "External agents shall receive a packet, not unrestricted project
- * authority" — confirms a spawned process's working directory stays under
+ * authority": confirms a spawned process's working directory stays under
  * `root` (symlink-safe, §20.2 "reject symbolic-link or path-traversal
  * escapes"), and builds an explicit environment from an allowlist rather
  * than inheriting the full parent environment (no secret inheritance by
@@ -586,7 +583,7 @@ export function processIsolationGuard(input: ProcessIsolationGuardInput): Proces
 }
 
 // ---------------------------------------------------------------------------
-// §19 "Verification command timeout" / §20.2 — configured command runner
+// §19 "Verification command timeout" / §20.2: configured command runner
 // ---------------------------------------------------------------------------
 
 export type RunConfiguredCommandInput = {
@@ -616,9 +613,9 @@ export type RunConfiguredCommandResult = {
 
 /**
  * §19 "Verification command timeout: Stop the command, record timeout, keep
- * module not ready" — spawns `command` (`child_process.spawn`, no shell) and
+ * module not ready": spawns `command` (`child_process.spawn`, no shell) and
  * enforces `timeoutMs` by killing the process and marking `timedOut`. §20.2
- * "reject a command not in [the allowlist]" — rejects (a rejected promise,
+ * "reject a command not in [the allowlist]": rejects (a rejected promise,
  * since this is an async operation) a `command` absent from
  * `allowedCommands` before spawning anything. Honors a shared
  * `cancellation.cancelled` flag by polling and killing the process, marking

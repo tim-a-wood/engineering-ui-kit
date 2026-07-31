@@ -1,6 +1,6 @@
 /**
  * Capabilities MVP TypeScript contracts (CAP-CONTRACT-001–022).
- * CAP-PKT-001 — domain-neutral except adapter-specific 019/020.
+ * CAP-PKT-001: domain-neutral except adapter-specific 019/020.
  */
 
 import type {
@@ -785,7 +785,7 @@ export type SecretReference = {
 
 export type ConfigurationAndSecretReference = ConfigurationRecord | SecretReference
 
-/** CAP-CONTRACT-010 — extension point; no MVP event bus. */
+/** CAP-CONTRACT-010: extension point; no MVP event bus. */
 export type EventEnvelope = {
   schemaVersion: '1.0'
   eventId: string
@@ -801,7 +801,7 @@ export type EventEnvelope = {
   provenance: Provenance
 }
 
-/** CAP-CONTRACT-011 — derived registry entry. */
+/** CAP-CONTRACT-011: derived registry entry. */
 export type RegistryEntry = {
   schemaVersion: '1.0'
   moduleId: string
@@ -977,7 +977,7 @@ export type AdapterConfiguration = {
   contentHash: string
 }
 
-/** CAP-CONTRACT-019 — adapter-specific */
+/** CAP-CONTRACT-019: adapter-specific */
 export type MatlabSessionRecord = {
   schemaVersion: '1.0'
   projectId: string
@@ -994,7 +994,7 @@ export type MatlabSessionRecord = {
   lastDiagnosticId?: string
 }
 
-/** CAP-CONTRACT-020 — adapter-specific */
+/** CAP-CONTRACT-020: adapter-specific */
 export type AzureDevOpsProvenance = {
   schemaVersion: '1.0'
   organization: string
@@ -1066,7 +1066,7 @@ export type ImpactRecord = {
   recalculationEvidence: string[]
 }
 
-/** CAP-CONTRACT-023 — immutable reference-architecture profile. */
+/** CAP-CONTRACT-023: immutable reference-architecture profile. */
 export type ReferenceArchitectureProfile = {
   schemaVersion: '1.0'
   profileId: string
@@ -1094,7 +1094,7 @@ export type ReferenceArchitectureProfile = {
   contentHash: string
 }
 
-/** CAP-CONTRACT-024 — one executable/library deployable. */
+/** CAP-CONTRACT-024: one executable/library deployable. */
 export type ProposedLocation = {
   path: string
   evidence: string
@@ -1122,7 +1122,7 @@ export type DeployableSpecification = {
   proposedLocations: ProposedLocation[]
 }
 
-/** CAP-CONTRACT-025 — deterministic generation plan. */
+/** CAP-CONTRACT-025: deterministic generation plan. */
 export type GenerationDependencyChange = {
   packageName: string
   language: RuntimeLanguage
@@ -1156,7 +1156,7 @@ export type GenerationPlan = {
   planHash: string
 }
 
-/** CAP-CONTRACT-026 — generated file ownership record. */
+/** CAP-CONTRACT-026: generated file ownership record. */
 export type GeneratedOwnershipManifest = {
   schemaVersion: '1.0'
   projectId: string
@@ -1171,7 +1171,7 @@ export type GeneratedOwnershipManifest = {
   safeToDelete: boolean
 }
 
-/** CAP-CONTRACT-027 — one deployable composition manifest. */
+/** CAP-CONTRACT-027: one deployable composition manifest. */
 export type CompositionRegistration = {
   contractId: string
   implementationTarget: string
@@ -1204,7 +1204,7 @@ export type CompositionManifest = {
 }
 
 /**
- * CAP-CONTRACT-028 — inbound binding (discriminated on `kind`).
+ * CAP-CONTRACT-028: inbound binding (discriminated on `kind`).
  * Supersedes the frontend-only FrontendBinding (CAP-CONTRACT-013); the `ui`
  * variant is the compatibility target for migrated frontend bindings.
  */
@@ -1289,7 +1289,7 @@ export type InboundBinding =
   | ScheduleInboundBinding
   | EmbeddedLibraryInboundBinding
 
-/** CAP-CONTRACT-029 — real connection verification evidence. */
+/** CAP-CONTRACT-029: real connection verification evidence. */
 export type ConnectionVerificationRecord = {
   schemaVersion: '1.0'
   verificationId: string
@@ -1327,7 +1327,7 @@ export type ConnectionVerificationRecord = {
   reasonCodes: string[]
 }
 
-/** CAP-CONTRACT-030 — reviewable capability/workspace migration plan. */
+/** CAP-CONTRACT-030: reviewable capability/workspace migration plan. */
 export type CapabilityMigrationPlan = {
   schemaVersion: '1.0'
   migrationPlanId: string
@@ -1351,7 +1351,7 @@ export type CapabilityMigrationPlan = {
   conformanceCommands: string[]
 }
 
-/** CAP-CONTRACT-031 — canonical, implementation-ready module specification. */
+/** CAP-CONTRACT-031: canonical, implementation-ready module specification. */
 export type ModuleImplementationSpecification = {
   schemaVersion: '1.0'
   projectId: string

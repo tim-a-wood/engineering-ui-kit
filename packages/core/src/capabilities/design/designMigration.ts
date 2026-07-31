@@ -1,5 +1,5 @@
 /**
- * EUC-13 — Persistence and migration adapter (migration half).
+ * EUC-13: Persistence and migration adapter (migration half).
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §23 (all).
  *
@@ -7,7 +7,7 @@
  * takes already-loaded records, returning records for a caller to persist
  * through `DesignWorkspace` (`./designWorkspace.js`). Keeping this module
  * pure lets it be unit-tested without a filesystem and keeps the "do not
- * touch legacy approvals" guarantee structural rather than incidental — this
+ * touch legacy approvals" guarantee structural rather than incidental: this
  * module never calls `fs` and never imports `../persistence.ts`.
  */
 
@@ -32,7 +32,7 @@ import type { ApplicationSpecification } from '../types.js'
 import type { DesignWorkspace } from './designWorkspace.js'
 
 // ---------------------------------------------------------------------------
-// §23.1 — migrate an existing project's approved architecture and modules
+// §23.1: migrate an existing project's approved architecture and modules
 // into one draft ModuleDesignSpecification per allocated module.
 // ---------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ export type MigrateExistingProjectInput = {
   now: string
 }
 
-/** §23.1 — one migration-produced draft per module, with provenance for review. */
+/** §23.1: one migration-produced draft per module, with provenance for review. */
 export type DesignMigrationPlan = {
   schemaVersion: '1.0'
   projectId: string
@@ -193,7 +193,7 @@ function migrateOneModule(
     inferredFieldPaths.push('trace.sourceRefs')
   }
 
-  // §23.1 item 5 — identify missing type-specific fields as needsInput diagnostics.
+  // §23.1 item 5: identify missing type-specific fields as needsInput diagnostics.
   const completenessDiagnostics = evaluateTypeSpecificCompleteness(design)
   const missingItems: UnresolvedDesignItem[] = completenessDiagnostics.map((diagnostic) => ({
     id: `migrated.${manifest.moduleId}.${(diagnostic.target ?? diagnostic.code).replace(/[^a-zA-Z0-9._-]+/g, '-')}`,
@@ -203,7 +203,7 @@ function migrateOneModule(
 
   const sortedInferredFieldPaths = stableSortStrings(Array.from(new Set(inferredFieldPaths)))
 
-  // §23.1 item 7 — migrated drafts are drafts; a module with missing required
+  // §23.1 item 7: migrated drafts are drafts; a module with missing required
   // fields is `needsInput`, never `approved`.
   design = {
     ...design,
@@ -217,11 +217,11 @@ function migrateOneModule(
 }
 
 /**
- * §23.1 — for an existing project: preserve the approved architecture, and
+ * §23.1: for an existing project: preserve the approved architecture, and
  * create one draft `ModuleDesignSpecification` per allocated module,
  * populated from the manifest, preserved interview, operation contracts,
  * implementation specification, and repository context where available.
- * Never touches legacy records — this function performs no I/O.
+ * Never touches legacy records: this function performs no I/O.
  */
 export function migrateExistingProject(input: MigrateExistingProjectInput): MigrateExistingProjectResult {
   const moduleDesigns: ModuleDesignSpecification[] = []
@@ -253,7 +253,7 @@ export function migrateExistingProject(input: MigrateExistingProjectInput): Migr
 }
 
 // ---------------------------------------------------------------------------
-// §23.3 — project feature flag.
+// §23.3: project feature flag.
 // ---------------------------------------------------------------------------
 
 /** The flag starts disabled: enabling the design workflow is an explicit, later action (§23.3). */
@@ -270,7 +270,7 @@ export function enableDesignWorkflow(
 }
 
 /**
- * §23.3 "not delete new records when disabled" — this only flips the flag
+ * §23.3 "not delete new records when disabled": this only flips the flag
  * record; the caller's `DesignWorkspace` files are never touched by
  * disabling, so re-enabling later finds every prior record intact.
  */
@@ -301,7 +301,7 @@ export function migrationEvidence(projectId: string, plan: DesignMigrationPlan):
   }
 }
 
-/** §23.3 "support export before disable" — a JSON-serializable snapshot of every design record. */
+/** §23.3 "support export before disable": a JSON-serializable snapshot of every design record. */
 export type DesignExportBundle = {
   schemaVersion: '1.0'
   projectId: string
@@ -365,7 +365,7 @@ export function exportDesignRecords(
 }
 
 // ---------------------------------------------------------------------------
-// §23.2 — existing implementation inspection and migration overlay proposal.
+// §23.2: existing implementation inspection and migration overlay proposal.
 // ---------------------------------------------------------------------------
 
 export type LegacyModuleImplementationInput = {
@@ -404,7 +404,7 @@ export type LegacyImplementationEvidenceReport = {
   behaviorMatchedToAcceptance: BehaviorMatch[]
   implementationWithoutApprovedDesign: ImplementationWithoutDesign[]
   approvedBehaviorWithoutImplementation: ApprovedBehaviorWithoutImplementation[]
-  /** §23.2 "propose a migration overlay" / "require inspection before apply" — reuses the §11.5 ReturnedDelta shape. */
+  /** §23.2 "propose a migration overlay" / "require inspection before apply": reuses the §11.5 ReturnedDelta shape. */
   overlayProposal: ReturnedDelta
   createdAt: string
 }
@@ -415,11 +415,11 @@ function fileLooksLikeEvidenceFor(file: string, acceptanceCaseId: string): boole
 }
 
 /**
- * §23.2 — inspects existing owned paths: links matching behavior to
+ * §23.2: inspects existing owned paths: links matching behavior to
  * proposed acceptance cases, identifies implementation with no approved
  * design source and approved behavior with no implementation, and proposes
  * a migration overlay that requires inspection before apply. User-authored
- * code is never rewritten by this function — it only reports and proposes;
+ * code is never rewritten by this function: it only reports and proposes;
  * an apply is a separate, later, explicitly inspected step (§23.2, §11.6).
  */
 export function migrateLegacyImplementationEvidence(

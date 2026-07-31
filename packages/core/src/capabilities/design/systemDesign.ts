@@ -1,5 +1,5 @@
 /**
- * EUC-03 — System-design core.
+ * EUC-03: System-design core.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §3.1, §6.1,
  * §8, §25.3 (EUC-03). Creates and changes the simplest valid system
@@ -11,7 +11,7 @@
  * the shared design-record approval primitives (./records.ts). This module
  * extends `ArchitectureSpecification` locally with fields the canonical
  * contract does not yet carry (deployables, owned-path allocation, the
- * structure-approval statement) — see the end-of-packet notes for the
+ * structure-approval statement): see the end-of-packet notes for the
  * requested `types.ts` change.
  */
 
@@ -39,7 +39,7 @@ import { isExecutableActivityNode } from '../activityGraph.js'
 // Types
 // ---------------------------------------------------------------------------
 
-/** CAP-DES-SYS-003 — valid reasons for a separate deployable. */
+/** CAP-DES-SYS-003: valid reasons for a separate deployable. */
 export const SPLIT_REASONS = [
   'runtime',
   'trustBoundary',
@@ -75,7 +75,7 @@ export type ModuleOwnedPathAllocation = {
 export type SystemStructureSpecification = ArchitectureSpecification & {
   deployables: DeployableAllocation[]
   modulePaths?: ModuleOwnedPathAllocation[]
-  /** §8.3 — approval must not claim module behavior is complete. */
+  /** §8.3: approval must not claim module behavior is complete. */
   approvalStatement?: string
   approval?: DesignApproval
 }
@@ -148,7 +148,7 @@ const DEFAULT_PRIMARY_MODULE_ID = 'mod.core'
 const DEFAULT_DEPLOYABLE_ID = 'deployable.primary'
 
 /**
- * CAP-DES-SYS-001..008 — deterministic simplest-structure proposal: one
+ * CAP-DES-SYS-001..008: deterministic simplest-structure proposal: one
  * module owns every operation, one deployable holds every module, and one
  * dedicated port + actor-specific adapter module exists per external system.
  */
@@ -302,7 +302,7 @@ export function evaluateSystemStructureGate(
     ...evaluateSolutionAllocations(application, architecture).diagnostics,
   )
 
-  // CAP-DES-SYS-004 (part 1) — dependency cycles block approval.
+  // CAP-DES-SYS-004 (part 1): dependency cycles block approval.
   const graph: CapabilityGraph = {
     nodes: moduleIds.map((id) => ({ id })),
     edges: dependencyEdges.map((e) => ({
@@ -320,7 +320,7 @@ export function evaluateSystemStructureGate(
     )
   }
 
-  // CAP-DES-SYS-004 (part 2) — every operation allocated to exactly one module.
+  // CAP-DES-SYS-004 (part 2): every operation allocated to exactly one module.
   const allocationCounts = new Map<string, number>()
   for (const alloc of architecture.operationAllocations ?? []) {
     allocationCounts.set(alloc.operationId, (allocationCounts.get(alloc.operationId) ?? 0) + 1)
@@ -353,7 +353,7 @@ export function evaluateSystemStructureGate(
     }
   }
 
-  // CAP-DES-SYS-006 — every main use case needs a complete entry-to-output path.
+  // CAP-DES-SYS-006: every main use case needs a complete entry-to-output path.
   const traceByUseCase = new Map((architecture.workflowTraces ?? []).map((t) => [t.useCaseId, t.moduleIds ?? []]))
   for (const useCase of application.useCases ?? []) {
     const path = traceByUseCase.get(useCase.id)
@@ -367,7 +367,7 @@ export function evaluateSystemStructureGate(
     }
   }
 
-  // CAP-DES-SYS-005 — every external system needs exactly one port and one actor-specific adapter.
+  // CAP-DES-SYS-005: every external system needs exactly one port and one actor-specific adapter.
   for (const system of application.externalSystems ?? []) {
     const key = slug(system.id)
     const matches = (architecture.adapterAllocations ?? []).filter(
@@ -390,7 +390,7 @@ export function evaluateSystemStructureGate(
     }
   }
 
-  // CAP-DES-SYS-002/003 — a split (a deployable beyond the first) needs a valid, justified reason.
+  // CAP-DES-SYS-002/003: a split (a deployable beyond the first) needs a valid, justified reason.
   const deployables = architecture.deployables ?? []
   for (let i = 1; i < deployables.length; i++) {
     const deployable = deployables[i]!
@@ -405,7 +405,7 @@ export function evaluateSystemStructureGate(
     }
   }
 
-  // CAP-DES-SYS-007 — every module needs a recorded reason for existing.
+  // CAP-DES-SYS-007: every module needs a recorded reason for existing.
   const reasonById = new Map((architecture.proposals ?? []).map((p) => [p.id, p.text]))
   for (const moduleId of moduleIds) {
     const definition = (architecture.moduleDefinitions ?? []).find((d) => d.moduleId === moduleId)
@@ -463,7 +463,7 @@ export type SystemStructureApprovalResult = {
 }
 
 /**
- * §8.3 — freezes module IDs/names/types/responsibility summaries, dependency
+ * §8.3: freezes module IDs/names/types/responsibility summaries, dependency
  * edges, operation/adapter/deployable/use-case-path allocation. The approval
  * explicitly does not claim module behavior is complete.
  */
@@ -483,7 +483,7 @@ export function approveSystemStructure(
       ],
     }
   }
-  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // §4, §17.3 (second-review finding: self-asserted approval identity):
   // case-insensitive after trim, and rejects a `service:` actor the same as
   // an `agent:` actor.
   if (isNonHumanActor(approval.approvedBy)) {

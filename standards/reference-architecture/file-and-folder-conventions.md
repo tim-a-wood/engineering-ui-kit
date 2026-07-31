@@ -21,38 +21,38 @@ source, and expected future package boundaries without creating those packages n
 
 ## Required Architecture
 
-### ARCH-FILE-001 — Application naming
+### ARCH-FILE-001: Application naming
 
 Use lowercase path segments and descriptive filenames. Trial app source files use
 camelCase or PascalCase TypeScript names (`taskPacket.ts`, `App.tsx`) and a single
 baseline stylesheet (`styles.css`).
 
-### ARCH-FILE-002 — Standards package naming
+### ARCH-FILE-002: Standards package naming
 
 Standards documents use kebab-case Markdown filenames. Stable rule IDs remain inside
 document content and must not be renamed casually. Machine-readable contracts remain
 at `standards/tokens.json` and `standards/component-manifest.json`.
 
-### ARCH-FILE-003 — Component, utility, contract, and trial-fixture placement
+### ARCH-FILE-003: Component, utility, contract, and trial-fixture placement
 
 - Presentation and interaction: target-app `src/` view files.
 - Domain utilities: target-app modules such as `taskPacket.ts`.
 - Artifact contracts: `standards/copilot-handoff/contracts/`.
 - Trial fixtures and records: `trials/vertical-slice-01/`.
 
-### ARCH-FILE-004 — Generated artifacts separated from source
+### ARCH-FILE-004: Generated artifacts separated from source
 
 Handoff outputs such as `repo-flatfile.txt`, compiled packs, and `ui-overlay.zip`
 are generated artifacts. Store them in an explicit export or trial-output location,
 not mixed into standards source or committed as if they were authored standards.
 
-### ARCH-FILE-005 — No generated handoff artifacts in a target repo by default
+### ARCH-FILE-005: No generated handoff artifacts in a target repo by default
 
 Do not write generated packet files into the target application tree unless the user
 explicitly exports them there. The trial app may download `task-packet.md` in the
 browser without persisting it into source control.
 
-### ARCH-FILE-006 — Future monorepo boundaries
+### ARCH-FILE-006: Future monorepo boundaries
 
 Future packages may include standards consumption helpers, a core library, and an
 Electron shell. Phase 1 must not create those packages. Keep the trial app disposable

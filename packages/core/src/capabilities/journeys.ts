@@ -1,6 +1,6 @@
 /**
  * Offline MVP journeys CAP-JRN-001–008 (CAP-PKT-032 / CAP-TEST-040).
- * Uses CapabilityWorkspace + in-process fake adapters — no network, no Electron.
+ * Uses CapabilityWorkspace + in-process fake adapters: no network, no Electron.
  */
 
 import fs from 'node:fs'
@@ -54,7 +54,7 @@ export type JourneyEvidence = {
  * replaces the earlier "does a UI module exist" heuristic: completeness is
  * driven solely by whether each required (non-`embedded-library`) deployable
  * has at least one *valid* `InboundBinding` (CAP-CONTRACT-028), regardless of
- * binding `kind` (ui/http/cli/schedule/embedded-library) — a migrated `ui`
+ * binding `kind` (ui/http/cli/schedule/embedded-library): a migrated `ui`
  * binding counts exactly the same as any other kind. Multiple bindings may
  * target the same operation id/version; none are deduplicated away.
  */
@@ -622,7 +622,7 @@ export function runCapJrn006(matlab: FakeMatlabAdapter, projectId: string): Jour
   const first = matlab.start(projectId)
   const reused = matlab.start(projectId)
   const snapId = matlab.saveSnapshot(projectId, { count: 3, ignored: 'x' })
-  // Only selected variables are restored — caller passes the selected map.
+  // Only selected variables are restored: caller passes the selected map.
   const restored = matlab.restoreSnapshot(projectId, snapId)
   const cross = matlab.restoreSnapshot('other-project', snapId)
   return {
@@ -741,7 +741,7 @@ export function runCapJrn008(
     ],
     contentHash: 'pending',
   }
-  // N+1 refresh creates proposed impact — does not mutate approved revision 1.
+  // N+1 refresh creates proposed impact: does not mutate approved revision 1.
   const approvedBefore = ws.getApprovedApplication(projectId)
   ws.saveApplicationDraft(projectId, linkedDraft)
   const approvedAfter = ws.getApprovedApplication(projectId)

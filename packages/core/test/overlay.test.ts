@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { inspectOverlay, applyOverlay } from '../src/overlay.js'
+import { renderFrontendDesignCss, resolveFrontendDesignSystem } from '../src/capabilities/frontendDesignSystem.js'
 
 let workDir: string
 let targetRoot: string
@@ -496,6 +497,78 @@ describe('inspectOverlay STE gate', () => {
       path: 'src/View.html',
       message: expect.stringContaining('STE-LEXICON-UNKNOWN'),
     }))
+  })
+})
+
+describe('inspectOverlay frontend design gate', () => {
+  it('accepts a complete dual-mode frontend contract', () => {
+    const designSystem = resolveFrontendDesignSystem()
+    const zipPath = makeZip({
+      'src/index.html': [
+        '<html data-design-contract="EUIT-FRONTEND-001">',
+        '<button aria-label="Change mode" data-theme-toggle>',
+        '<svg class="lucide" data-lucide="sun"></svg>',
+        '<span role="tooltip">Change mode</span>',
+        '</button>',
+        '<button aria-label="Open help" data-help-trigger>',
+        '<svg class="lucide" data-lucide="circle-help"></svg>',
+        '<span role="tooltip">Open help</span>',
+        '</button>',
+        '</html>',
+      ].join(''),
+      'src/styles.css': renderFrontendDesignCss(designSystem),
+      'src/runtime.js': "localStorage.setItem('eui-color-mode', 'dark')",
+    })
+
+    const summary = inspectOverlay(zipPath, {
+      ...baseOptions(),
+      frontendDesignContract: designSystem,
+    })
+
+    expect(summary.hardBlockers.filter((item) =>
+      item.ruleId.startsWith('FRONTEND-DESIGN-'))).toEqual([])
+    expect(summary.warnings.filter((item) =>
+      item.ruleId.startsWith('FRONTEND-DESIGN-'))).toEqual([])
+  })
+
+  it('blocks frontend sources that omit the contract and use AI-like tropes', () => {
+    const designSystem = resolveFrontendDesignSystem()
+    const zipPath = makeZip({
+      'src/index.html': [
+        '<html>',
+        '<button aria-label="Change theme"><i class="fa fa-moon"></i></button>',
+        '<svg class="lucide"></svg>',
+        '<p>Review — approve</p>',
+        '</html>',
+      ].join(''),
+      'src/styles.css': [
+        ':root { --eui-color-canvas: #fff; --eui-color-surface: #fff;',
+        '--eui-color-text: #111; --eui-color-accent: #057;',
+        '--eui-font-sans: Inter; }',
+        'body { font-family: var(--eui-font-sans); }',
+        '.tile { border-left: 4px solid var(--eui-color-accent); }',
+        '.hero { background: linear-gradient(red, blue); }',
+      ].join('\n'),
+      'src/runtime.js': "localStorage.setItem('theme', 'dark')",
+    })
+
+    const summary = inspectOverlay(zipPath, {
+      ...baseOptions(),
+      frontendDesignContract: designSystem,
+    })
+
+    expect(summary.canApply).toBe(false)
+    expect(summary.hardBlockers.map((item) => item.ruleId)).toEqual(expect.arrayContaining([
+      'FRONTEND-DESIGN-MODES',
+      'FRONTEND-DESIGN-SYSTEM-MODE',
+      'FRONTEND-DESIGN-CONTRACT',
+      'FRONTEND-DESIGN-ICONS',
+      'FRONTEND-DESIGN-TOOLTIP',
+      'FRONTEND-DESIGN-HELP',
+      'FRONTEND-DESIGN-EM-DASH',
+      'FRONTEND-DESIGN-ACCENT-STRIP',
+      'FRONTEND-DESIGN-EFFECT',
+    ]))
   })
 })
 

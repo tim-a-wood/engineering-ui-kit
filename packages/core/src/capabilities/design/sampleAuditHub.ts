@@ -134,7 +134,7 @@ import type { DiagramLayout } from './records.js'
 import { SAMPLE_EVIDENCE_MANIFEST } from './sampleEvidenceManifest.js'
 
 // ---------------------------------------------------------------------------
-// Fixed clock — deterministic timestamps only (no Date.now / Math.random)
+// Fixed clock: deterministic timestamps only (no Date.now / Math.random)
 // ---------------------------------------------------------------------------
 
 const BASE_EPOCH_MS = Date.parse('2026-07-01T09:00:00.000Z')
@@ -189,7 +189,7 @@ function requiredOp(operationId: string, providerModuleId: string, reason: strin
 }
 
 // ---------------------------------------------------------------------------
-// §22.2 — module catalog constants
+// §22.2: module catalog constants
 // ---------------------------------------------------------------------------
 
 const MOD = {
@@ -223,7 +223,7 @@ const ADAPTER_MODULE_IDS = [
   MOD.objectiveProfileAdapter,
 ]
 
-/** §22.4 — recommended module-design order (exact). */
+/** §22.4: recommended module-design order (exact). */
 const RECOMMENDED_ORDER: string[] = [
   MOD.evidenceStore,
   MOD.jobPackageStore,
@@ -304,29 +304,29 @@ export type SampleDefects = {
 
 export type SampleAuditHub = {
   projectId: string
-  /** §22.1 — the interface must state this is synthetic sample data. */
+  /** §22.1: the interface must state this is synthetic sample data. */
   syntheticDataStatement: string
   useCaseAnalysis: UseCaseAnalysis
   applicationSpecification: ApplicationSpecification
   architecture: SystemStructureSpecification
-  /** Exactly 17 entries — current state, one per §22.2 catalog module. */
+  /** Exactly 17 entries: current state, one per §22.2 catalog module. */
   moduleDesigns: ModuleDesignSpecification[]
   /** The frozen, approved r1 revision per module (used to build the baseline). */
   approvedModuleDesigns: Record<string, ModuleDesignSpecification>
-  /** §22.3 — a draft later revision for at least three modules (reopened). */
+  /** §22.3: a draft later revision for at least three modules (reopened). */
   reopenedModuleDesigns: Record<string, ModuleDesignSpecification>
   operationContracts: ContractRegistry
   sessions: ModuleDesignSession[]
   designBaseline: DesignBaseline
   policy: DesignWorkflowPolicy
-  /** §22.1 — saved `incrementalModules` preview; never applied to the baseline. */
+  /** §22.1: saved `incrementalModules` preview; never applied to the baseline. */
   incrementalPreview: IncrementalPreview
   progress: ModuleDesignProgress
-  /** §22.4 — exact recommended module-design order. */
+  /** §22.4: exact recommended module-design order. */
   recommendedOrder: string[]
-  /** §22.5 — the seven recommended implementation waves. */
+  /** §22.5: the seven recommended implementation waves. */
   wavePlan: ImplementationWavePlan
-  /** §22.5 — the default Copilot action still targets one module per wave. */
+  /** §22.5: the default Copilot action still targets one module per wave. */
   copilotHandoffTargets: { wave: number; moduleId: string }[]
   diagrams: DiagramProjection[]
   diagramLayoutExample: DiagramLayout
@@ -423,7 +423,7 @@ function buildApplicationSpecification(analysis: UseCaseAnalysis): ApplicationSp
 }
 
 // ---------------------------------------------------------------------------
-// Use-case analysis (EUC-01) — refresh evidence, review finding, export
+// Use-case analysis (EUC-01): refresh evidence, review finding, export
 // package, browse lifecycle, each with main/alternate/failure/recovery.
 // ---------------------------------------------------------------------------
 
@@ -719,7 +719,7 @@ function buildUseCaseAnalysis(): UseCaseAnalysis {
   const finalized = finalizeUseCaseAnalysis(base)
   const approved = approveUseCaseAnalysis(finalized, { approvedBy: PRODUCT_LEAD, authority: 'product-lead', at: at(2) })
   if (!approved.diagnostics.length && approved.analysis.status === 'approved') return approved.analysis
-  // Never silently accept an unapproved sample analysis — a build-time signal beats a subtly wrong sample.
+  // Never silently accept an unapproved sample analysis: a build-time signal beats a subtly wrong sample.
   throw new Error(`sample use-case analysis failed to approve: ${JSON.stringify(approved.diagnostics)}`)
 }
 
@@ -730,7 +730,7 @@ function ownedPathOf(moduleId: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// System structure / architecture (EUC-03) — §22.2 catalog wiring
+// System structure / architecture (EUC-03): §22.2 catalog wiring
 // ---------------------------------------------------------------------------
 
 type ModuleDefEntry = { moduleId: string; name: string; moduleType: ModuleType; responsibility: string }
@@ -854,7 +854,7 @@ const WORKFLOW_ACTION_ALLOCATIONS: Record<string, { primaryModuleId: string; ope
  * Note on the §22.2 catalog: Lifecycle Explorer's table row lists `FollowTrace`
  * among its provided operations, but the Evidence Graph row also owns
  * `FollowTrace`. The real `registerContract` (./contractRegistry.ts) enforces
- * "one operation version has exactly one provider module" (§9.7) — a genuine
+ * "one operation version has exactly one provider module" (§9.7): a genuine
  * product rule, not a sample limitation. This sample therefore models
  * Lifecycle Explorer's `FollowTrace` as a *required* (consumed) operation on
  * the Evidence Graph's contract, not a second provided contract. See the
@@ -971,7 +971,7 @@ function buildArchitecture(application: ApplicationSpecification): SystemStructu
 }
 
 // ---------------------------------------------------------------------------
-// Module-design content (§9.5, §9.6) — per-module fill for the draft that
+// Module-design content (§9.5, §9.6): per-module fill for the draft that
 // `createModuleDesignDraft` produces from the approved architecture.
 // ---------------------------------------------------------------------------
 
@@ -1122,7 +1122,7 @@ function lifecycleExplorerContent(): ModuleContent {
     validationMessages: 'Not applicable; this module has no user-entered forms.',
     permissionStates: 'Every signed-in project member can browse; no elevated permission is required.',
     partialDataStates: 'Shows a partial-data banner when one adapter failed on the last refresh.',
-    recoverableFailures: 'Shows "Trace target not found — reported as a defect" and lets the auditor continue browsing.',
+    recoverableFailures: 'Shows "Trace target not found: reported as a defect" and lets the auditor continue browsing.',
     unrecoverableFailures: 'Shows a support-contact message when the Evidence Graph is unreachable.',
     responsiveBehavior: 'Collapses the two-pane trace view into a single pane under 768px.',
     touchTargets: 'Every command target is at least 44x44 CSS pixels.',
@@ -1386,7 +1386,7 @@ function findingReviewContent(): ModuleContent {
     deadlinePropagation: 'Not applicable; this workflow has no long-running external call.',
     resourceLocks: ['One decision at a time per finding.'],
     progressReporting: 'Not applicable; SubmitFindingDecision completes synchronously.',
-    finalOutcomes: ['Decision recorded', 'Decision rejected — not independent', 'Finding closed', 'Finding reopened'],
+    finalOutcomes: ['Decision recorded', 'Decision rejected: not independent', 'Finding closed', 'Finding reopened'],
   }
   return {
     nonResponsibilities: ['Does not own evidence identity.', 'Does not decide package readiness.'],
@@ -1501,7 +1501,7 @@ function packageExportContent(): ModuleContent {
     deadlinePropagation: 'The configured export deadline is propagated to the package job.',
     resourceLocks: ['One package build per baseline at a time.'],
     progressReporting: 'GetPackageStatus reports build progress and the final package hash.',
-    finalOutcomes: ['Package created', 'Package build failed — missing evidence', 'Package cancelled', 'Package result old — baseline changed after the package was built'],
+    finalOutcomes: ['Package created', 'Package build failed: missing evidence', 'Package cancelled', 'Package result old: baseline changed after the package was built'],
   }
   return {
     nonResponsibilities: ['Does not decide DO-178C objective applicability.', 'Does not persist package files itself.'],
@@ -1787,7 +1787,7 @@ const ADAPTER_SPECS: AdapterSpec[] = [
     authenticationRef: 'matlab-license-session',
     licenseOrSessionNeeds: 'Requires a checked-out MATLAB/Simulink license and toolbox readiness before use.',
     timeouts:
-      'Long timeout class; a model load or link query that exceeds the configured MATLAB session timeout is recorded as a timeout run and does not publish — the last valid snapshot is kept (§19, §22.3 defect: one timeout run).',
+      'Long timeout class; a model load or link query that exceeds the configured MATLAB session timeout is recorded as a timeout run and does not publish: the last valid snapshot is kept (§19, §22.3 defect: one timeout run).',
     cancellation: 'Cancellable between model files; the in-flight MATLAB call is abandoned and the session is recycled.',
     retrySafety: 'Not safe to retry automatically after a timeout; a stuck MATLAB session must be restarted first.',
     partialReadBehavior: 'A timeout on one model file preserves already-published models from earlier files in the same refresh.',
@@ -1831,7 +1831,7 @@ const ADAPTER_SPECS: AdapterSpec[] = [
     processIsolation: 'Runs in the desktop process.',
     cleanup: 'Releases the open workbook handle on cancel or completion.',
     representativeFixtures: ['fixtures/spreadsheet/valid-mapping.xlsx', 'fixtures/spreadsheet/invalid-mapping.xlsx'],
-    domainRejections: ['An invalid column mapping — a configured column that does not match the sheet header row — is rejected before any row is published.'],
+    domainRejections: ['An invalid column mapping: a configured column that does not match the sheet header row: is rejected before any row is published.'],
     technicalFailures: ['A corrupt workbook file is reported as a technical failure.'],
     acceptance: [
       ac('spreadsheet-adapter.ac.valid-mapping', 'A configured column mapping matches the sheet header row.', 'Every mapped row is published as evidence.'),
@@ -2153,7 +2153,7 @@ function moduleContentFor(moduleId: string): ModuleContent {
 }
 
 // ---------------------------------------------------------------------------
-// Diagrams (§9.8) — applicable UML projections per module (real projectors)
+// Diagrams (§9.8): applicable UML projections per module (real projectors)
 // ---------------------------------------------------------------------------
 
 const ACTIVITY_MODULE_IDS = new Set<string>([MOD.importAndPublish, MOD.findingReview, MOD.packageExport])
@@ -2251,7 +2251,7 @@ export function buildSampleAuditHub(): SampleAuditHub {
     return { ...merged, contentHash: designContentHash(merged) }
   })
 
-  // 2) diagrams — applicable UML projections per module (§9.8), computed
+  // 2) diagrams: applicable UML projections per module (§9.8), computed
   //    through the real projectors so `validateUmlProjection` actually runs.
   const diagrams: DiagramProjection[] = []
   const withDiagrams: ModuleDesignSpecification[] = filledDrafts.map((draft) => {
@@ -2266,7 +2266,7 @@ export function buildSampleAuditHub(): SampleAuditHub {
     diagramsByDesignId.set(projection.sourceRecordId, list)
   }
 
-  // 3) contract registry — one contract per provided operation, compiled from
+  // 3) contract registry: one contract per provided operation, compiled from
   //    each module's own behavior via the real `compileOperationContracts`,
   //    then registered and approved (§9.7, §22.2 "operationContracts").
   let registry: ContractRegistry = createContractRegistry()
@@ -2315,7 +2315,7 @@ export function buildSampleAuditHub(): SampleAuditHub {
     approvedModuleDesigns[design.module.moduleId] = approval.design
   }
 
-  // 5) design baseline — approved `completeBaseline` (§16.6, §22.1).
+  // 5) design baseline: approved `completeBaseline` (§16.6, §22.1).
   const baselineDraft = createDesignBaseline(architecture, Object.values(approvedModuleDesigns), registry.contracts, {
     baselineId: `${PROJECT_ID}.baseline`,
     revision: 'r1',
@@ -2327,10 +2327,10 @@ export function buildSampleAuditHub(): SampleAuditHub {
   }
   const designBaseline = baselineApproval.baseline
 
-  // 6) policy — `completeBaseline` by default (§22.1).
+  // 6) policy: `completeBaseline` by default (§22.1).
   const policy = createDefaultPolicy(PROJECT_ID, PRODUCT_LEAD, at(7))
 
-  // 7) incremental preview — a saved `incrementalModules` preview that never
+  // 7) incremental preview: a saved `incrementalModules` preview that never
   //    changes the approved baseline (§22.1, §16.7).
   const previewModeResult = changeGateMode(policy, 'incrementalModules', `${PROJECT_ID}.decision.incremental-preview`, PRODUCT_LEAD, at(8))
   if (!previewModeResult.ok || !previewModeResult.policy) {
@@ -2412,7 +2412,7 @@ export function buildSampleAuditHub(): SampleAuditHub {
     description: 'The reopened Evidence Graph design may change FollowTrace behavior that Lifecycle Explorer depends on.',
   })
 
-  // 10) current state per module — exactly 17 entries.
+  // 10) current state per module: exactly 17 entries.
   const currentByModuleId: Record<string, ModuleDesignSpecification> = { ...approvedModuleDesigns }
   currentByModuleId[MOD.evidenceGraph] = evidenceGraphChecked
   currentByModuleId[MOD.packageExport] = packageExportChecked
@@ -2420,7 +2420,7 @@ export function buildSampleAuditHub(): SampleAuditHub {
   currentByModuleId[MOD.lifecycleExplorer] = lifecycleExplorerStale
   const moduleDesigns: ModuleDesignSpecification[] = MODULE_DEFS.map((d) => currentByModuleId[d.moduleId]!)
 
-  // 11) session — one in-progress module-design session for the reopened,
+  // 11) session: one in-progress module-design session for the reopened,
   //     needsInput Evidence Graph revision (§9.3, §16.3).
   const evidenceGraphManifest = buildContextManifest({
     targetRecordId: evidenceGraphChecked.id,
@@ -2472,7 +2472,7 @@ export function buildSampleAuditHub(): SampleAuditHub {
   }
   const sessions: ModuleDesignSession[] = [evidenceGraphSession]
 
-  // 12) progress (§9.2, §16.5) — state variety via a real reopen/stale
+  // 12) progress (§9.2, §16.5): state variety via a real reopen/stale
   //     history plus one externally blocked module.
   const blockers: Record<string, string[]> = {
     [MOD.importAndPublish]: ['Awaiting approval of the reopened Evidence Graph FollowTrace contract before this module can be marked ready.'],
@@ -2543,7 +2543,7 @@ export function buildSampleAuditHub(): SampleAuditHub {
     { wave: 7, moduleId: 'verification.end-to-end-scenarios' },
   ]
 
-  // 14) packets (§11.2, §11.3) — one design packet for the module under
+  // 14) packets (§11.2, §11.3): one design packet for the module under
   //     revision, one implementation packet for an approved module.
   const evidenceGraphPacketResult = buildModuleDesignPacket({
     projectId: PROJECT_ID,
@@ -2602,7 +2602,7 @@ export function buildSampleAuditHub(): SampleAuditHub {
 
   // 15) one returned delta and its inspection (§11.5, §11.6). Authored
   //     directly in the same deterministic shape `deterministicTestProvider`
-  //     would produce — see the module-header deviation note.
+  //     would produce: see the module-header deviation note.
   const deltaContent =
     'Evidence Store implementation notes.\n\nImplemented EvidenceStorePort with an in-memory test double and the durable adapter.\n'
   const deltaFilePath = `${ownedPathOf(MOD.evidenceStore)}IMPLEMENTATION-NOTES.md`
@@ -2663,7 +2663,7 @@ export function buildSampleAuditHub(): SampleAuditHub {
   })
   const impactExamples: DesignImpactRecord[] = [evidenceGraphImpact, packageExportBaselineImpact]
 
-  // 17) scenario runs (§14) — one automated run per approved main/alternate/
+  // 17) scenario runs (§14): one automated run per approved main/alternate/
   //     failure/recovery scenario, with §14.2/§14.3 evidence and identity.
   const scenarioTestPlan = buildScenarioTestPlan(useCaseAnalysis)
   const scenarioById = new Map(
@@ -2812,7 +2812,7 @@ export function buildSampleAuditHub(): SampleAuditHub {
     throw new Error(`sample Package Export result expected state "old" after the baseline change, got ${packageExportCurrentState}`)
   }
 
-  // 18) module verification results (custom sample shape — §19 needs a
+  // 18) module verification results (custom sample shape: §19 needs a
   //     `timeout` outcome no canonical contract carries) and the five
   //     required §22.3 defects.
   function vr(moduleId: string, caseId: string, outcome: ModuleVerificationResult['outcome'], summary: string, evidenceRefs: string[], recordedAt: string): ModuleVerificationResult {
@@ -2880,7 +2880,7 @@ export function buildSampleAuditHub(): SampleAuditHub {
     packageExportOldResult: { run: packageExportRun, currentState: packageExportCurrentState },
   }
 
-  // 19) one diagram-layout example (§9.8/§15 — reuses the real layout engine).
+  // 19) one diagram-layout example (§9.8/§15: reuses the real layout engine).
   const auditWorkspaceComponentDiagram = diagrams.find(
     (d) => d.sourceRecordId === approvedModuleDesigns[MOD.auditWorkspace]!.id && d.kind === 'component',
   )

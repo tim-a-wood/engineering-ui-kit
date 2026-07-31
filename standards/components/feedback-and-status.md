@@ -76,7 +76,7 @@ Use appropriate live regions for timely status updates, but avoid noisy announce
 - Success state that hides warnings or stale source context.
 
 
-## CMP-FEEDBACK-LOADING-STATE — Loading State
+## CMP-FEEDBACK-LOADING-STATE: Loading State
 
 ### Purpose
 CMP-FEEDBACK-LOADING-STATE defines temporary state while content, jobs, or artifacts load. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -118,17 +118,17 @@ Compliant use: `Loading State` appears in a dark engineering panel, uses manifes
 Non-compliant use: `Loading State` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FEEDBACK-LOADING-STATE` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FEEDBACK-LOADING-STATE` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FEEDBACK-LOADING-STATE` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FEEDBACK-ERROR-STATE — Error State
+## CMP-FEEDBACK-ERROR-STATE: Error State
 
 ### Purpose
 CMP-FEEDBACK-ERROR-STATE defines recoverable error presentation for failed loads, validation, or workflows. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -170,17 +170,17 @@ Compliant use: `Error State` appears in a dark engineering panel, uses manifest 
 Non-compliant use: `Error State` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FEEDBACK-ERROR-STATE` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FEEDBACK-ERROR-STATE` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FEEDBACK-ERROR-STATE` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: reference-backed-standard, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: reference-backed-standard, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FEEDBACK-ALERT — Alert
+## CMP-FEEDBACK-ALERT: Alert
 
 ### Purpose
 CMP-FEEDBACK-ALERT defines prominent message for important contextual feedback. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -222,17 +222,17 @@ Compliant use: `Alert` appears in a dark engineering panel, uses manifest ID `CM
 Non-compliant use: `Alert` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FEEDBACK-ALERT` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FEEDBACK-ALERT` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FEEDBACK-ALERT` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: reference-backed-standard, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: reference-backed-standard, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FEEDBACK-TOAST — Toast
+## CMP-FEEDBACK-TOAST: Toast
 
 ### Purpose
 CMP-FEEDBACK-TOAST defines temporary non-blocking system feedback. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -274,17 +274,17 @@ Compliant use: `Toast` appears in a dark engineering panel, uses manifest ID `CM
 Non-compliant use: `Toast` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FEEDBACK-TOAST` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FEEDBACK-TOAST` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FEEDBACK-TOAST` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: reference-backed-standard.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FEEDBACK-PROGRESS-INDICATOR — Progress Indicator
+## CMP-FEEDBACK-PROGRESS-INDICATOR: Progress Indicator
 
 ### Purpose
 CMP-FEEDBACK-PROGRESS-INDICATOR defines linear, circular, or inline indication of task progress. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -326,17 +326,17 @@ Compliant use: `Progress Indicator` appears in a dark engineering panel, uses ma
 Non-compliant use: `Progress Indicator` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FEEDBACK-PROGRESS-INDICATOR` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FEEDBACK-PROGRESS-INDICATOR` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FEEDBACK-PROGRESS-INDICATOR` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-FEEDBACK-VALIDATION-SUMMARY — Validation Summary
+## CMP-FEEDBACK-VALIDATION-SUMMARY: Validation Summary
 
 ### Purpose
 CMP-FEEDBACK-VALIDATION-SUMMARY defines summary of validation errors, warnings, and blocker status. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -378,17 +378,17 @@ Compliant use: `Validation Summary` appears in a dark engineering panel, uses ma
 Non-compliant use: `Validation Summary` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-FEEDBACK-VALIDATION-SUMMARY` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-FEEDBACK-VALIDATION-SUMMARY` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-FEEDBACK-VALIDATION-SUMMARY` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: prd-required, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: prd-required, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-STATUS-BADGE — Status Badge
+## CMP-STATUS-BADGE: Status Badge
 
 ### Purpose
 CMP-STATUS-BADGE defines compact visual state indication. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -430,17 +430,17 @@ Compliant use: `Status Badge` appears in a dark engineering panel, uses manifest
 Non-compliant use: `Status Badge` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-STATUS-BADGE` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-STATUS-BADGE` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-STATUS-BADGE` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-STATUS-JOB-INDICATOR — Job Status Indicator
+## CMP-STATUS-JOB-INDICATOR: Job Status Indicator
 
 ### Purpose
 CMP-STATUS-JOB-INDICATOR defines job execution state for queued, running, completed, or failed work. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -482,17 +482,17 @@ Compliant use: `Job Status Indicator` appears in a dark engineering panel, uses 
 Non-compliant use: `Job Status Indicator` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-STATUS-JOB-INDICATOR` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-STATUS-JOB-INDICATOR` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-STATUS-JOB-INDICATOR` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-WORKFLOW-STEP-INDICATOR — Step Indicator
+## CMP-WORKFLOW-STEP-INDICATOR: Step Indicator
 
 ### Purpose
 CMP-WORKFLOW-STEP-INDICATOR defines visible progress through a multi-step workflow. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -534,17 +534,17 @@ Compliant use: `Step Indicator` appears in a dark engineering panel, uses manife
 Non-compliant use: `Step Indicator` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-WORKFLOW-STEP-INDICATOR` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-WORKFLOW-STEP-INDICATOR` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-WORKFLOW-STEP-INDICATOR` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: reference-backed-standard, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: reference-backed-standard, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-WORKFLOW-TIMELINE-EVENT-LOG — Timeline Event Log
+## CMP-WORKFLOW-TIMELINE-EVENT-LOG: Timeline Event Log
 
 ### Purpose
 CMP-WORKFLOW-TIMELINE-EVENT-LOG defines chronological activity and execution history. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -586,17 +586,17 @@ Compliant use: `Timeline Event Log` appears in a dark engineering panel, uses ma
 Non-compliant use: `Timeline Event Log` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-WORKFLOW-TIMELINE-EVENT-LOG` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-WORKFLOW-TIMELINE-EVENT-LOG` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-WORKFLOW-TIMELINE-EVENT-LOG` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: prd-required, inferred-engineering-need.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: prd-required, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-CONTENT-EMPTY-STATE — Empty State
+## CMP-CONTENT-EMPTY-STATE: Empty State
 
 ### Purpose
 CMP-CONTENT-EMPTY-STATE defines clear guidance when a panel, table, or workflow has no data. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -638,17 +638,17 @@ Compliant use: `Empty State` appears in a dark engineering panel, uses manifest 
 Non-compliant use: `Empty State` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-CONTENT-EMPTY-STATE` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-CONTENT-EMPTY-STATE` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-CONTENT-EMPTY-STATE` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: reference-backed-standard, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: reference-backed-standard, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-CONTENT-METRIC-CARD — Metric Card
+## CMP-CONTENT-METRIC-CARD: Metric Card
 
 ### Purpose
 CMP-CONTENT-METRIC-CARD defines compact summary of a key count, status, or metric. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -690,17 +690,17 @@ Compliant use: `Metric Card` appears in a dark engineering panel, uses manifest 
 Non-compliant use: `Metric Card` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-CONTENT-METRIC-CARD` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-CONTENT-METRIC-CARD` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-CONTENT-METRIC-CARD` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-CONTENT-KEY-VALUE-LIST — Key Value List
+## CMP-CONTENT-KEY-VALUE-LIST: Key Value List
 
 ### Purpose
 CMP-CONTENT-KEY-VALUE-LIST defines compact display of metadata pairs. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -742,11 +742,11 @@ Compliant use: `Key Value List` appears in a dark engineering panel, uses manife
 Non-compliant use: `Key Value List` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-CONTENT-KEY-VALUE-LIST` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-CONTENT-KEY-VALUE-LIST` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-CONTENT-KEY-VALUE-LIST` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.

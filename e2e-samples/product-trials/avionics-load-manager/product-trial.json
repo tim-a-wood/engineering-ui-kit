@@ -251,5 +251,21 @@
       ]
     ]
   },
-  "productKind": "load"
+  "productKind": "load",
+  "design": {
+    "contractId": "EUIT-FRONTEND-001",
+    "iconFamily": "lucide",
+    "paletteId": "amber",
+    "fontId": "system",
+    "defaultMode": "dark",
+    "density": "compact",
+    "palette": "Flight amber",
+    "lightAccent": "#7a4b00",
+    "darkAccent": "#f0bd62",
+    "lightSoft": "#f8edda",
+    "darkSoft": "#3e2c14",
+    "lightRgb": "122, 75, 0",
+    "darkRgb": "240, 189, 98",
+    "fontStack": "ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+  }
 }

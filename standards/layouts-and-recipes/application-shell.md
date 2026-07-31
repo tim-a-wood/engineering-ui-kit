@@ -8,7 +8,7 @@ The application shell defines the standard dark frame for Engineering UI Kit app
 
 The shell applies to lightweight desktop/web-style tools using the standards package. It covers persistent regions, page headers, navigation, main content, command/status regions, density, responsiveness, and accessibility.
 
-## LAY-SHELL-001 — Standard engineering app shell
+## LAY-SHELL-001: Standard engineering app shell
 
 ### Purpose
 The shell shall provide stable orientation, visible app context, and a predictable place for navigation, page metadata, commands, and status.
@@ -64,7 +64,7 @@ Preserve shell regions and component IDs. Do not invent new app-level navigation
 ### Validation checks
 - `LAY-SHELL-001` regions present.
 - Uses shell/navigation component IDs.
-- Dark-first token hierarchy preserved.
+- Dual-mode token hierarchy preserved.
 - Primary actions visible and not hidden in unrelated menus.
 
 ## Persistent Regions

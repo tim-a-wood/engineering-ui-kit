@@ -4,8 +4,7 @@
  * Re-exports ONLY the design-workflow modules that are safe to bundle in the
  * renderer: pure record contracts, identity helpers, and pure business logic.
  * `designWorkspace.ts`, `repositoryAdapter.ts`, and `operations.ts` are
- * filesystem-backed (Node-only) and are intentionally NOT re-exported here —
- * desktop/CLI adapters continue to import those directly from
+ * filesystem-backed (Node-only) and are intentionally NOT re-exported here:  * desktop/CLI adapters continue to import those directly from
  * `./index.js` or the individual module files. `designMigration.ts` and
  * `moduleDesignCompilers.ts` are not re-exported here either; the GUI
  * foundation packet does not need them (module-design compilation and legacy

@@ -1,5 +1,5 @@
 /**
- * Review packet v2 — evidence contact sheet (PRD roadmap R2).
+ * Review packet v2: evidence contact sheet (PRD roadmap R2).
  *
  * Builds the visual half of a review packet: for every target view, the
  * captured BEFORE and AFTER screenshots side by side, held against the task
@@ -100,7 +100,7 @@ export function buildReviewContactSheetHtml(input: ReviewSheetInput): string {
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Review Evidence — ${escapeHtml(input.runId)}</title>
+<title>Review Evidence: ${escapeHtml(input.runId)}</title>
 <style>
   @page { size: 1123px 794px; margin: 0; }
   html, body { margin: 0; padding: 0; background: #07111f; color: #f8fafc;
@@ -135,7 +135,7 @@ export function buildReviewContactSheetHtml(input: ReviewSheetInput): string {
 <body>
 <section class="sheet">
   <header>
-    <h1>Review Evidence — ${escapeHtml(input.taskTitle)}</h1>
+    <h1>Review Evidence: ${escapeHtml(input.taskTitle)}</h1>
     <span class="run-ref">Generated ${escapeHtml(input.generatedAt)}</span>
   </header>
   <p class="meta">Project <code>${escapeHtml(input.projectName)}</code> · Run <code>${escapeHtml(input.runId)}</code> · Standards <code>${escapeHtml(input.standardsPackage)} ${escapeHtml(input.standardsVersion)}</code> · ${input.views.length} target view${input.views.length === 1 ? '' : 's'}</p>

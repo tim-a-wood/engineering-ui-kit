@@ -1,6 +1,6 @@
 /**
  * Product interview import and field-level delta (CAP-PKT-008).
- * Does not mutate approved records — callers persist drafts / approve explicitly.
+ * Does not mutate approved records: callers persist drafts / approve explicitly.
  */
 
 import type {
@@ -397,7 +397,7 @@ function normalizeProductInterviewEnvelope(value: unknown, projectId: string): u
 
 /**
  * Coerce an interview response (or partial object) into an ApplicationSpecification draft.
- * Invalid input is preserved as a draft with diagnostics — never throws for shape errors.
+ * Invalid input is preserved as a draft with diagnostics: never throws for shape errors.
  */
 export function coerceApplicationDraft(
   value: unknown,
@@ -643,7 +643,7 @@ export function buildProductInterviewPacket(input: {
 
 /**
  * Import a product interview response into a draft ApplicationSpecification.
- * Never mutates `approved` — returns delta for review before approval.
+ * Never mutates `approved`: returns delta for review before approval.
  */
 export function importProductInterviewResponse(
   raw: string | object,
@@ -674,7 +674,7 @@ export function importProductInterviewResponse(
   const delta = diffApplicationSpecification(options.approved, draft)
   const fieldStates = deriveFieldStates(draft, options.packet)
 
-  // Upload set: interview packet + response (+ optional third file) — always ≤ budget.
+  // Upload set: interview packet + response (+ optional third file): always ≤ budget.
   const uploadFileCount = options.packet ? 2 : 1
 
   return {

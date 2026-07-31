@@ -1,5 +1,5 @@
 /**
- * Guided Build — module picker above a focused two-column workspace.
+ * Guided Build: module picker above a focused two-column workspace.
  * The selected module/action stays on the left and its interview outcome stays
  * visible on the right. This avoids spending the full page height on a narrow
  * module rail while retaining the first-incomplete default selection.
@@ -22,7 +22,7 @@ type Props = {
   records: CapabilityModuleRecord[]
   onChanged: () => void
   onStartUiBuild?: (projectId: string, fields: TaskPacketFields) => Promise<void>
-  /** WP5A bullet (d)/(e) — the project's approved foundation plan and the build-handoff gate derived from it. */
+  /** WP5A bullet (d)/(e): the project's approved foundation plan and the build-handoff gate derived from it. */
   approvedFoundation?: FoundationPlan
   foundationGate?: { enabled: boolean; reason?: string }
   integrationState?: CapabilityIntegrationState

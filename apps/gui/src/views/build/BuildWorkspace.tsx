@@ -1,4 +1,4 @@
-/** Single Build workspace — prepare, Copilot transfer, and overlay application. */
+/** Single Build workspace: prepare, Copilot transfer, and overlay application. */
 
 import { useId, type KeyboardEvent, type ReactElement } from 'react'
 import { Icon } from '../../icons'
@@ -140,7 +140,7 @@ export function BuildWorkspace(props: BuildWorkspaceProps) {
             {selectedTemplate && (
               <small id={`${baseId}-use-case-summary`}>
                 <strong>{USE_CASE_TILES.find((tile) => tile.id === selectedTemplate.id)?.keyword ?? selectedTemplate.title}</strong>
-                {' — '}
+                {': '}
                 {selectedTemplate.summary}
               </small>
             )}

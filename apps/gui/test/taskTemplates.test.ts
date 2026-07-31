@@ -30,7 +30,7 @@ describe('TASK_TEMPLATES', () => {
 
   it('keeps the standards guardrails in every template', () => {
     for (const t of TASK_TEMPLATES) {
-      expect(t.constraints, t.id).toMatch(/[Dd]ark-first/)
+      expect(t.constraints, t.id).toMatch(/[Dd]ual-mode/)
       expect(t.constraints, t.id).toContain('ASD-STE100')
       expect(t.constraints, t.id).toContain('VERB + OBJECT')
       expect(t.acceptanceCriteria, t.id).toMatch(/typecheck/)

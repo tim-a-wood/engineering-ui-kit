@@ -3,7 +3,7 @@
   "meta": {
     "packageName": "engineering-ui-kit-standards",
     "packageVersion": "0.3.0",
-    "phase": "Phase 3 — Core Standards Authoring",
+    "phase": "Phase 3: Core Standards Authoring",
     "status": "core-standards-authored",
     "sourcePosture": "product-decisions-public-reuse-and-app-visual-calibration",
     "mockupPosture": "app-visual-calibration-not-exhaustive-standard",
@@ -180,9 +180,9 @@
         "observed-in-mockups",
         "prd-required"
       ],
-      "description": "a persistent application frame for dark-first engineering workflows.",
+      "description": "a persistent application frame for dual-mode engineering workflows.",
       "useWhen": [
-        "Use app shell when the interface needs a persistent application frame for dark-first engineering workflows."
+        "Use app shell when the interface needs a persistent application frame for dual-mode engineering workflows."
       ],
       "avoidWhen": [
         "Avoid app shell when a simpler native element or existing component communicates the same intent with less complexity."

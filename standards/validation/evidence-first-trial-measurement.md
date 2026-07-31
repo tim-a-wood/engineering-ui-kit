@@ -51,7 +51,7 @@ Classify each material failure as one of:
 
 Record:
 
-- dark-first compliance findings
+- dual-mode compliance findings
 - semantic token findings
 - visual-drift checklist findings
 - keyboard, focus, dialog, and status findings

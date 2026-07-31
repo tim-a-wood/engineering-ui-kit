@@ -1,5 +1,5 @@
 /**
- * Before-evidence dialog — EvidenceSection phase=before.
+ * Before-evidence dialog: EvidenceSection phase=before.
  */
 
 import type { HandoffRun, Project } from '@engineering-ui-kit/core'

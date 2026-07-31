@@ -1,6 +1,6 @@
 /**
  * IPC handlers: the only place renderer requests touch the filesystem,
- * child processes, or persistence — always through @engineering-ui-kit/core.
+ * child processes, or persistence: always through @engineering-ui-kit/core.
  */
 
 import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell, webContents } from 'electron'
@@ -28,6 +28,7 @@ import {
   diffCensusLosses,
   buildReviewContactSheetHtml,
   renderReviewContactSheetPdf,
+  resolveFrontendDesignSystem,
   buildChangesZip,
   buildRunCompletionRecord,
   WorkflowTelemetryStore,
@@ -118,7 +119,7 @@ function seedSampleProjects(workspace: Workspace): void {
     id: 'plantops-sample',
     name: 'PlantOps (sample)',
     description:
-      'Built-in sample: a multi-page legacy work-order app to explore the whole workflow against. Restyle it, break it, iterate — reset any time from Settings inside the app or with git.',
+      'Built-in sample: a multi-page legacy work-order app to explore the whole workflow against. Restyle it, break it, iterate: reset any time from Settings inside the app or with git.',
     repoPath: plantOpsPath,
     status: 'active',
     isSample: true,
@@ -292,7 +293,7 @@ async function waitUntilReachable(url: string, totalMs: number): Promise<void> {
  * The build portion of a "build then serve" launch command (e.g. `npm run
  * build` from `npm run build && npm start`). A single-segment command is a
  * hot-reloading dev server with nothing to rebuild, so this returns undefined
- * — only build-and-serve apps (whose server serves a static `dist/`) need a
+ *: only build-and-serve apps (whose server serves a static `dist/`) need a
  * rebuild when relaunched over an already-running server.
  */
 function buildStepOf(launchCommand?: string): string | undefined {
@@ -329,7 +330,7 @@ function resolveUploadSet(run: { repoFlatfilePath?: string; taskAndStandardPackP
     : [run.repoFlatfilePath, run.taskPacketPath, run.standardPackPath]
   const existing = candidates.filter((p): p is string => Boolean(p && fs.existsSync(p)))
   if (existing.length === 0) {
-    throw new Error('no upload files for this run yet — prepare context and build the task packet first')
+    throw new Error('no upload files for this run yet: prepare context and build the task packet first')
   }
   return existing
 }
@@ -583,7 +584,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       throw new Error(`task packet export blocked:\n${blockers.join('\n')}`)
     }
     for (const [key, value] of Object.entries(fields)) {
-      if (key === 'references' || key === 'intentProfile') continue
+      if (key === 'references' || key === 'intentProfile' || key === 'frontendDesign') continue
       if (!String(value ?? '').trim()) throw new Error(`required packet field is empty: ${key}`)
     }
 
@@ -614,6 +615,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     const standardPackText = buildStandardPackMarkdown({
       standardsVersion: '0.5.0',
       generatedAt,
+      designPreferences: fields.frontendDesign,
       steLexicon: capabilityWorkspace.getSteLexicon(run.projectId),
     })
 
@@ -635,6 +637,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       taskTitle: fields.taskTitle,
       goal: fields.goal,
       uploadFiles: manifest.map((m) => m.file),
+      designPreferences: fields.frontendDesign,
       steLexicon: capabilityWorkspace.getSteLexicon(run.projectId),
     })
     // Persisted so Open-Copilot can auto-copy the prompt on a revisit of this step.
@@ -687,7 +690,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     return fs.readFileSync(filePath, 'utf8')
   })
 
-  // PRD §13.7 step 2: Add Feedback Manually — appended, timestamped notes file.
+  // PRD §13.7 step 2: Add Feedback Manually: appended, timestamped notes file.
   ipcMain.handle(BRIDGE_CHANNELS.saveFeedback, (_e, runId: string, text: string) => {
     const run = workspace.getRun(runId)
     if (!run) throw new Error(`run not found: ${runId}`)
@@ -714,7 +717,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     const verification = (run.verificationResultPaths ?? [])
       .filter((p) => fs.existsSync(p))
       .map((p) => JSON.parse(fs.readFileSync(p, 'utf8')) as { commandLabel: string; status: string; exitCode: number | null })
-      .map((r) => `- ${r.commandLabel}: ${r.status} (exit ${r.exitCode ?? '—'})`)
+      .map((r) => `- ${r.commandLabel}: ${r.status} (exit ${r.exitCode ?? 'None'})`)
       .join('\n') || '- No verification results recorded yet.'
     const taskPacket = run.taskPacketPath && fs.existsSync(run.taskPacketPath)
       ? fs.readFileSync(run.taskPacketPath, 'utf8')
@@ -915,6 +918,13 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       runId,
       targetRoot: project.repoPath,
       steLexicon: capabilityWorkspace.getSteLexicon(run.projectId),
+      ...(run.taskPacketFields?.frontendDesign
+        ? {
+            frontendDesignContract: resolveFrontendDesignSystem(
+              run.taskPacketFields.frontendDesign,
+            ),
+          }
+        : {}),
     })
     const summaryPath = workspace.saveRunArtifact(runId, 'overlay-inspection-summary.json', summary)
     workspace.updateRun(runId, {
@@ -950,7 +960,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       acceptWarnings,
     })
     const appliedPath = workspace.saveRunArtifact(runId, 'applied-files.json', applied)
-    // Verification results describe the tree before this apply — invalidate
+    // Verification results describe the tree before this apply: invalidate
     // them so the Verify step demands a fresh run instead of showing a stale
     // green verdict (F10).
     workspace.updateRun(runId, {
@@ -1068,7 +1078,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     return result
   })
 
-  // A: native drag-out — the renderer's dragstart hands the drag session to
+  // A: native drag-out: the renderer's dragstart hands the drag session to
   // the OS with the real files attached; drop lands in the Copilot chat.
   ipcMain.handle(BRIDGE_CHANNELS.startUploadDrag, (event, runId: string) => {
     const run = workspace.getRun(runId)
@@ -1130,7 +1140,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
     }
     if (!(await probeUrl(launchUrl, 1_500))) {
       if (!project.launchCommand) {
-        throw new Error(`nothing is serving ${project.launchUrl} and no launch command is configured — start your dev server first`)
+        throw new Error(`nothing is serving ${project.launchUrl} and no launch command is configured: start your dev server first`)
       }
       const existing = launchedApps.get(projectId)
       if (!existing || existing.exitCode !== null) {
@@ -1147,7 +1157,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null, dataD
       started = true
     } else {
       // Server already running. A build-and-serve app serves a static dist/,
-      // so after an overlay apply the running server is stale — rebuild the
+      // so after an overlay apply the running server is stale: rebuild the
       // build step (the server picks it up from disk) instead of silently
       // reopening the old build. Dev servers (no build step) hot-reload.
       const build = buildStepOf(project.launchCommand)

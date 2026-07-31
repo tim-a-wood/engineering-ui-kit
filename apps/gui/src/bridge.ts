@@ -1,7 +1,7 @@
 /**
  * Renderer-side view of the preload bridge (`window.euik`).
  *
- * Mirrors `apps/desktop/src/bridgeApi.ts` — the desktop package owns the
+ * Mirrors `apps/desktop/src/bridgeApi.ts`: the desktop package owns the
  * canonical contract; this copy exists so the renderer never imports
  * Electron-typed modules. When `window.euik` is absent (plain browser dev or
  * qualitative UI validation), the in-memory mock bridge is installed instead.
@@ -18,6 +18,7 @@ import type {
   EvidenceCapture,
   FoundationPlan,
   FrontendBrief,
+  FrontendDesignPreferences,
   HandoffRun,
   InboundBinding,
   ImplementationWavePlan,
@@ -78,8 +79,9 @@ export type TaskPacketFields = {
   acceptanceCriteria: string
   references: string
   intentProfile?: TaskIntentProfile
+  frontendDesign?: FrontendDesignPreferences
 }
-export type TaskPacketTextKey = Exclude<keyof TaskPacketFields, 'intentProfile'>
+export type TaskPacketTextKey = Exclude<keyof TaskPacketFields, 'intentProfile' | 'frontendDesign'>
 
 export type PrepareContextResult = {
   inventory: RepoInventory
@@ -262,6 +264,7 @@ export type EuikBridge = {
   capabilitiesCompileFrontendBrief(input: {
     projectId: string
     targetModuleIds?: string[]
+    designPreferences?: FrontendDesignPreferences
   }): Promise<FrontendBrief>
   capabilitiesListModules(projectId: string): Promise<CapabilityModuleRecord[]>
   capabilitiesListModuleDesigns(projectId: string): Promise<{
@@ -400,9 +403,9 @@ export type EuikBridge = {
   }): Promise<unknown>
   capabilitiesSaveBindingDraft(projectId: string, draft: unknown): Promise<{ ok: true }>
   capabilitiesApproveBinding(projectId: string, draft: unknown): Promise<{ ok: boolean; diagnostics?: unknown; approved?: unknown }>
-  /** CAP-ERA-001 §5.1/§12.4 — deployables this project's architecture allocates (WP6B read-only projection). */
+  /** CAP-ERA-001 §5.1/§12.4: deployables this project's architecture allocates (WP6B read-only projection). */
   capabilitiesListDeployables(projectId: string): Promise<CapabilityDeployableSummary[]>
-  /** CAP-CONTRACT-028 inbound bindings across every deployable/kind — supersedes `capabilitiesListBindings` for Build completeness. */
+  /** CAP-CONTRACT-028 inbound bindings across every deployable/kind: supersedes `capabilitiesListBindings` for Build completeness. */
   capabilitiesListInboundBindings(projectId: string): Promise<InboundBindingReadRecord[]>
   capabilitiesSaveInboundBindingDraft(projectId: string, draft: InboundBinding): Promise<{ ok: true }>
   capabilitiesApproveInboundBinding(
@@ -438,7 +441,7 @@ export type EuikBridge = {
     explicit: boolean
   }): Promise<RunModuleVerificationResult>
   /**
-   * WP5A — foundation planning (CAP-TEST-074/075). Proposes a `FoundationPlan`
+   * WP5A: foundation planning (CAP-TEST-074/075). Proposes a `FoundationPlan`
    * (deployables + module allocations + ambiguity resolution) from the
    * project's approved architecture, resolving any previously surfaced
    * ambiguities named in `answers`. Pure re-derivation: re-running with the

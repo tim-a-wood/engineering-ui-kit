@@ -20,47 +20,59 @@ Use it for mockups, generated app screens, component implementations, page recip
 
 ## Blocking Failures
 
-Automatic blockers include raw colors where tokens are required, generic light dashboard output, inaccessible interactive components, color-only critical status, hidden destructive actions, contract contradictions, and overstated mockup/company-standard authority.
+Automatic blockers include one-mode output, raw colors outside tokens, mixed icons, missing tooltips, non-STE copy, inaccessible controls, and common generated-interface tropes.
 
-## VAL-UI-001 — Source alignment
+## VAL-UI-001: Source alignment
 
 The artifact shall align with PRD decisions, Phase 2 contracts, and Phase 3 authored standards.
 
-## VAL-UI-002 — Dark-first visual language
+## VAL-UI-002: Dual-mode visual language
 
-The artifact shall use dark-first surface hierarchy and shall not drift into generic white-card dashboard styling.
+The artifact shall provide equal quality in light and dark modes. It shall not drift into a generic card dashboard.
 
-## VAL-UI-003 — Token usage
+## VAL-UI-003: Token usage
 
 The artifact shall use semantic or component alias tokens and shall not introduce raw color values where tokens exist.
 
-## VAL-UI-004 — Component usage
+## VAL-UI-004: Component usage
 
 The artifact shall reference manifest component IDs and shall not invent conflicting component concepts.
 
-## VAL-UI-005 — Layout composition
+## VAL-UI-005: Layout composition
 
 The artifact shall follow shell, dashboard, detail, workflow, split-panel, or state recipes as applicable.
 
-## VAL-UI-006 — Engineering density
+## VAL-UI-006: Engineering density
 
 The artifact shall be dense enough for engineering use while preserving readability, labels, and state.
 
-## VAL-UI-007 — Status and feedback clarity
+## VAL-UI-007: Status and feedback clarity
 
 Status, progress, errors, blockers, stale state, and validation results shall be visible and specific.
 
-## VAL-UI-008 — Accessibility minimums
+## VAL-UI-008: Accessibility minimums
 
 Keyboard access, visible focus, accessible names, semantic structure, and non-color status cues shall be present for applicable interactive elements.
 
-## VAL-UI-009 — Content and labeling
+## VAL-UI-009: Content and labeling
 
 Copy shall use direct engineering language, stable nouns, explicit consequences, and specific status labels.
 
-## VAL-UI-010 — AI handoff suitability
+## VAL-UI-010: AI handoff suitability
 
 The artifact shall be specific enough for AI implementation or review without relying on unstated visual intent.
+
+## VAL-UI-011: Icons and help
+
+The artifact shall use one icon family. Icon-only controls shall have accessible names and tooltips.
+
+## VAL-UI-012: Controlled copy
+
+Visible copy shall pass the Engineering UI Kit STE profile. It shall not use em dashes.
+
+## VAL-UI-013: Trope gate
+
+The artifact shall not use accent-strip tiles, ornamental sparkles, card walls, glass effects, or vague promotional copy.
 
 ## Review Procedure
 

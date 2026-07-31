@@ -1,5 +1,5 @@
 /**
- * Typed view-state navigation per ARCH-ROUTE-001/002 — no URL router.
+ * Typed view-state navigation per ARCH-ROUTE-001/002: no URL router.
  * Workflow step preconditions are pure functions of persisted handoff state
  * (ARCH-ROUTE-004) shared by the stepper, guards, and tests.
  *
@@ -26,7 +26,7 @@ export type ViewId =
   | 'apply-zip-overlay'
   | 'verify-review'
 
-/** Internal Build workspace tabs — not workflow steps. */
+/** Internal Build workspace tabs: not workflow steps. */
 export type BuildWorkspaceState = 'handoff' | 'copilot' | 'overlay'
 
 export const NAV_ITEMS: { id: ViewId; label: string; glyph: string }[] = [
@@ -38,7 +38,7 @@ export const NAV_ITEMS: { id: ViewId; label: string; glyph: string }[] = [
   { id: 'settings', label: 'Settings', glyph: '⚙' },
 ]
 
-/** User-facing stepper — exactly Build then Test. */
+/** User-facing stepper: exactly Build then Test. */
 export const WORKFLOW_STEPS: {
   id: ViewId
   index: number
@@ -133,7 +133,7 @@ export function isStepReachable(run: HandoffRun | undefined, view: ViewId): bool
 
   if (resolved === 'build') return true
 
-  // Test / verify-review — same gate as before
+  // Test / verify-review: same gate as before
   return Boolean(run.appliedFilesPath)
 }
 

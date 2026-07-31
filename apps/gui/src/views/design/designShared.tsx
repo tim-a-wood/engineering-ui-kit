@@ -24,7 +24,7 @@ export function blockingModuleNames(entry: ModuleDesignProgressEntry, progress: 
   return entry.blockingIds.map((id) => nameByModuleId.get(id) ?? id)
 }
 
-/** Appendix C row-state label — never the "Do not use" column term. */
+/** Appendix C row-state label: never the "Do not use" column term. */
 export function stateLabel(state: ModuleDesignProgressEntry['state']): string {
   switch (state) {
     case 'notStarted':
@@ -181,7 +181,7 @@ export function approvalCountText(progress: { approved: number; total: number })
 // Build / Verify / Evidence shared labels (§3.5, §6.2, §11, §14, §22)
 // ---------------------------------------------------------------------------
 
-/** §3.5 — the two Design-to-Build gate modes, exact spec wording. */
+/** §3.5: the two Design-to-Build gate modes, exact spec wording. */
 export function gateModeLabel(mode: DesignWorkflowPolicy['mode']): string {
   return mode === 'completeBaseline' ? 'Complete Design baseline' : 'Incremental modules'
 }
@@ -192,7 +192,7 @@ export function gateModeDescription(mode: DesignWorkflowPolicy['mode']): string 
     : 'An approved, dependency-closed module can enter Build before unrelated module designs are complete.'
 }
 
-/** Module-verification outcome label — never "stale" (Appendix C uses "Old" for staleness elsewhere). */
+/** Module-verification outcome label: never "stale" (Appendix C uses "Old" for staleness elsewhere). */
 export function verificationOutcomeLabel(outcome: ModuleVerificationResult['outcome']): string {
   switch (outcome) {
     case 'passed':

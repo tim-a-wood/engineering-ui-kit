@@ -1,5 +1,5 @@
 /**
- * EUC-14 — Provider adapters.
+ * EUC-14: Provider adapters.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §11 (all),
  * §19 (Provider unavailable, Copilot response incomplete, Stale response),
@@ -18,7 +18,7 @@
  *
  * Every function here is pure or purely async: no module-level mutable
  * state, no clock reads, no randomness. A provider outage never loses work
- * because nothing here mutates its inputs — the caller (EUC-13 persistence)
+ * because nothing here mutates its inputs: the caller (EUC-13 persistence)
  * is responsible for storing the packet, the draft, and the provider result
  * so that a retry or manual continuation always has the last known-good
  * state available.
@@ -104,7 +104,7 @@ function missingDeltaFieldDiagnostic(field: string): DesignDiagnostic {
 }
 
 // ---------------------------------------------------------------------------
-// §24.3 — the provider port (all four modes implement the same interface)
+// §24.3: the provider port (all four modes implement the same interface)
 // ---------------------------------------------------------------------------
 
 export type ProviderCallOptions = {
@@ -117,14 +117,14 @@ export type ProviderCallOptions = {
 export type ProviderResult<T> = {
   ok: boolean
   value?: T
-  /** §19 "Provider unavailable" — no response was obtained; nothing was lost. */
+  /** §19 "Provider unavailable": no response was obtained; nothing was lost. */
   unavailable?: boolean
-  /** §19 "Copilot response incomplete" — a response was obtained but some required content is missing. */
+  /** §19 "Copilot response incomplete": a response was obtained but some required content is missing. */
   partial?: boolean
   diagnostics: DesignDiagnostic[]
 }
 
-/** §11.2 response — a candidate module-design draft plus its supporting content. */
+/** §11.2 response: a candidate module-design draft plus its supporting content. */
 export type ModuleDesignResponse = {
   /** Candidate `ModuleDesignSpecification`-shaped payload; validated by `importModuleDesignResponse`. */
   draft: unknown
@@ -137,7 +137,7 @@ export type ModuleDesignResponse = {
 }
 
 /**
- * §24.3 — one interface shared by every provider mode (Copilot handoff,
+ * §24.3: one interface shared by every provider mode (Copilot handoff,
  * in-app, deterministic test, and none). Every implementation is
  * side-effect-free beyond its own I/O: it never mutates the packet it is
  * given and never persists anything itself.
@@ -156,7 +156,7 @@ function cancelledResult<T>(packetId: string): ProviderResult<T> {
 }
 
 // ---------------------------------------------------------------------------
-// Copilot handoff adapter — the current file-drop flow (§11.2, §11.3, Appendix B)
+// Copilot handoff adapter: the current file-drop flow (§11.2, §11.3, Appendix B)
 // ---------------------------------------------------------------------------
 
 export type CopilotIo = {
@@ -199,10 +199,10 @@ function coerceModuleDesignResponse(parsed: Record<string, unknown>): { value: M
 }
 
 /**
- * §11.2 / §11.3 / Appendix B — the current Copilot file-drop flow as a
+ * §11.2 / §11.3 / Appendix B: the current Copilot file-drop flow as a
  * `DesignProvider` adapter. Writes the handoff files, then reads back
  * whatever response is available. An absent response never discards the
- * packet or the caller's draft — it returns `unavailable: true` so the
+ * packet or the caller's draft: it returns `unavailable: true` so the
  * caller can keep working manually or retry later (§19).
  */
 export function copilotHandoffProvider(io: CopilotIo): DesignProvider {
@@ -246,7 +246,7 @@ export function copilotHandoffProvider(io: CopilotIo): DesignProvider {
 }
 
 // ---------------------------------------------------------------------------
-// In-app provider adapter — wraps a supplied generation function
+// In-app provider adapter: wraps a supplied generation function
 // ---------------------------------------------------------------------------
 
 export type InAppGenerator = {
@@ -256,7 +256,7 @@ export type InAppGenerator = {
 
 /**
  * Wraps a supplied in-app generation function as a `DesignProvider`. Any
- * thrown error (or rejected promise) becomes `unavailable: true` — the
+ * thrown error (or rejected promise) becomes `unavailable: true`: the
  * generator never throws through to the caller, so a provider outage never
  * loses the packet or the draft (§19).
  */
@@ -371,7 +371,7 @@ function buildDeterministicReturnedDelta(packet: ModuleImplementationPacket, see
 }
 
 /**
- * §24.3 "a fixed deterministic test provider" — every value is derived
+ * §24.3 "a fixed deterministic test provider": every value is derived
  * purely from the packet's own content (and the optional `seed`), so the
  * same packet always produces a byte-identical response. The generated
  * `ReturnedDelta` stays within `packet.allowedPaths`/`editableSharedPaths`
@@ -396,10 +396,10 @@ export function deterministicTestProvider(seed = 'deterministic-test'): DesignPr
 }
 
 // ---------------------------------------------------------------------------
-// No-provider adapter — manual-work mode
+// No-provider adapter: manual-work mode
 // ---------------------------------------------------------------------------
 
-/** §24.3 "no provider" — always unavailable; the user continues with manual work (§19). */
+/** §24.3 "no provider": always unavailable; the user continues with manual work (§19). */
 export function noProvider(): DesignProvider {
   return {
     providerId: 'none',
@@ -414,7 +414,7 @@ export function noProvider(): DesignProvider {
 }
 
 // ---------------------------------------------------------------------------
-// §19 "Copilot response incomplete" — import, sanitize, and validate
+// §19 "Copilot response incomplete": import, sanitize, and validate
 // ---------------------------------------------------------------------------
 
 const REQUIRED_DRAFT_FIELDS = [
@@ -466,7 +466,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * §19 "Copilot response incomplete" — imports every valid field from a
+ * §19 "Copilot response incomplete": imports every valid field from a
  * candidate response into a draft, lists exactly the missing required
  * fields, and never approves the result:
  *  - `status` and `approval` are always stripped (an agent cannot approve);
@@ -579,7 +579,7 @@ export function importModuleDesignResponse(
 }
 
 // ---------------------------------------------------------------------------
-// §24.3 — canonical shape comparison across every provider mode
+// §24.3: canonical shape comparison across every provider mode
 // ---------------------------------------------------------------------------
 
 export type CanonicalDesignResponseShape = {
@@ -594,7 +594,7 @@ export type CanonicalDesignResponseShape = {
 }
 
 /**
- * §24.3 "all modes create the same canonical record shape" — normalizes a
+ * §24.3 "all modes create the same canonical record shape": normalizes a
  * `ModuleDesignResponse` (from any provider mode) into a comparable shape:
  * which top-level draft fields are present, and how many entries each
  * supporting list has. Deliberately ignores generated content (exact

@@ -3,8 +3,8 @@
    task controls are deliberately specific to each product. */
 
 .product-v2 {
-  --panel: color-mix(in srgb, var(--surface-raised) 86%, black);
-  --panel-quiet: color-mix(in srgb, var(--surface-soft) 92%, black);
+  --panel: var(--surface-raised);
+  --panel-quiet: var(--surface-soft);
   overflow-x: hidden;
 }
 
@@ -73,8 +73,7 @@
   gap: 18px;
   border-bottom: 1px solid var(--line);
   padding: 0 24px;
-  background: rgba(7, 11, 19, 0.86);
-  backdrop-filter: blur(18px);
+  background: var(--surface);
 }
 
 .product-topbar > div,
@@ -218,7 +217,7 @@
 .product-v2 [data-scenario-action].primary-action {
   border-color: var(--accent);
   background: var(--accent);
-  color: #071018;
+  color: var(--eui-color-on-accent);
 }
 
 .product-v2 [data-scenario-action].primary-action > span {
@@ -282,7 +281,7 @@
   opacity: 1;
 }
 
-/* 1 — Review workbench: artifact tree + document + objective inspector. */
+/* 1. Review workbench: artifact tree, document, and objective inspector. */
 
 .product-review .app-shell {
   grid-template-columns: 216px minmax(0, 1fr);
@@ -290,7 +289,7 @@
 
 .product-review .sidebar {
   width: 216px;
-  background: #090e18;
+  background: var(--surface);
 }
 
 .product-review .product-workspace {
@@ -379,7 +378,7 @@
 }
 
 .review-document .document-diff {
-  background: #0d1421;
+  background: var(--surface);
 }
 
 .review-document .panel-header {
@@ -391,7 +390,7 @@
   padding: 38px 42px;
   background:
     linear-gradient(90deg, transparent 70px, rgba(var(--accent-rgb), 0.14) 71px, transparent 72px),
-    repeating-linear-gradient(transparent 0 32px, rgba(255,255,255,.022) 33px);
+    repeating-linear-gradient(transparent 0 32px, var(--line) 33px);
 }
 
 .review-document .diff-line {
@@ -441,7 +440,7 @@
   min-height: 58px;
 }
 
-/* 2 — Session operations: wide flow board with a working inspector. */
+/* 2. Session operations: wide flow board with a working inspector. */
 
 .product-sessions .app-shell {
   grid-template-columns: 76px minmax(0, 1fr);
@@ -535,7 +534,7 @@
 
 .product-sessions .kanban-column {
   border: 0;
-  background: #0a101b;
+  background: var(--surface-soft);
 }
 
 .product-sessions .kanban-column h4 {
@@ -546,7 +545,7 @@
 .product-sessions .kanban-card {
   position: relative;
   min-height: 98px;
-  border-left: 3px solid var(--line-strong);
+  border: 1px solid var(--line);
   padding: 14px;
 }
 
@@ -598,14 +597,7 @@
   height: auto;
 }
 
-/* 3 — Writing desk: document outline, centered page, live policy rail. */
-
-.product-writing {
-  --bg: #0b0d11;
-  --surface: #12151b;
-  --surface-raised: #171b22;
-  --surface-soft: #141820;
-}
+/* 3. Writing desk: document outline, centered page, and live policy rail. */
 
 .product-writing .app-shell {
   grid-template-columns: 206px minmax(0, 1fr);
@@ -623,7 +615,7 @@
   display: grid;
   grid-template-columns: 224px minmax(480px, 1fr) 330px;
   grid-template-rows: auto minmax(730px, calc(100vh - 150px));
-  background: #0e1116;
+  background: var(--surface-soft);
 }
 
 .writing-toolbar {
@@ -634,7 +626,7 @@
   gap: 24px;
   border-bottom: 1px solid var(--line);
   padding: 14px 22px;
-  background: #11151b;
+  background: var(--surface);
 }
 
 .writing-toolbar h2 {
@@ -649,7 +641,7 @@
 .document-outline {
   padding: 24px 16px;
   border-right: 1px solid var(--line);
-  background: #0b0f15;
+  background: var(--surface);
 }
 
 .document-outline > b {
@@ -689,7 +681,7 @@
 .document-canvas {
   overflow: auto;
   padding: 34px 6%;
-  background: #14181e;
+  background: var(--surface-soft);
 }
 
 .document-canvas .panel,
@@ -757,7 +749,7 @@
 .writing-inspector {
   overflow: auto;
   border-left: 1px solid var(--line);
-  background: #0b0f15;
+  background: var(--surface);
 }
 
 .inspector-tabs {
@@ -782,14 +774,14 @@
   background: transparent;
 }
 
-/* 4 — Telemetry: channel browser + synchronized plot + event rail. */
+/* 4. Telemetry: channel browser, synchronized plot, and event rail. */
 
 .product-telemetry .app-shell {
   display: block;
 }
 
 .product-telemetry .product-topbar {
-  background: #05090f;
+  background: var(--surface);
 }
 
 .recording-pill i {
@@ -815,7 +807,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: #080d15;
+  background: var(--surface);
 }
 
 .telemetry-head h2 {
@@ -832,7 +824,7 @@
   width: auto;
   height: auto;
   padding: 18px 12px;
-  background: #070c13;
+  background: var(--surface);
 }
 
 .channel-rail h3 {
@@ -897,13 +889,13 @@
 
 .channel-stats > div {
   padding: 9px;
-  background: #090f18;
+  background: var(--surface-soft);
 }
 
 .telemetry-plot,
 .event-rail,
 .investigation-strip {
-  background: #080d15;
+  background: var(--surface);
 }
 
 .telemetry-plot .panel,
@@ -948,16 +940,7 @@
   border-bottom: 0;
 }
 
-/* 5 — Trade study: parameter canvas and model results. */
-
-.product-trade {
-  --bg: #07100d;
-  --surface: #0c1713;
-  --surface-raised: #101e19;
-  --surface-soft: #0d1a16;
-  --line: #1f332b;
-  --line-strong: #345447;
-}
+/* 5. Trade study: parameter canvas and model results. */
 
 .product-trade .app-shell {
   grid-template-columns: 196px minmax(0, 1fr);
@@ -1104,16 +1087,7 @@
   grid-column: 2 / -1;
 }
 
-/* 6 — HIL: operational control room, not a dashboard. */
-
-.product-hil {
-  --bg: #090b0d;
-  --surface: #111417;
-  --surface-raised: #15191c;
-  --surface-soft: #121619;
-  --line: #282d31;
-  --line-strong: #424a50;
-}
+/* 6. HIL: operational control room, not a dashboard. */
 
 .product-hil .app-shell {
   display: block;
@@ -1134,7 +1108,7 @@
   justify-content: space-between;
   gap: 22px;
   padding: 18px 22px;
-  background: #0a0d0f;
+  background: var(--surface);
 }
 
 .hil-head h2 {
@@ -1148,7 +1122,7 @@
   width: auto;
   height: auto;
   padding: 12px 8px;
-  background: #0a0d0f;
+  background: var(--surface);
 }
 
 .bench-tabs .nav-item {
@@ -1159,7 +1133,7 @@
 .bench-schedule,
 .procedure-run,
 .rig-console {
-  background: #0c1012;
+  background: var(--surface);
 }
 
 .bench-schedule {
@@ -1187,8 +1161,8 @@
   border: 0;
   border-radius: 0;
   padding: 0 20px 20px;
-  background: #050806;
-  color: #9fe9ba;
+  background: var(--surface-soft);
+  color: var(--green);
 }
 
 .console-head {
@@ -1197,27 +1171,27 @@
   align-items: center;
   gap: 6px;
   margin-bottom: 14px;
-  border-bottom: 1px solid #1d2821;
-  color: #6a8c76;
+  border-bottom: 1px solid var(--line);
+  color: var(--quiet);
 }
 
 .console-head i {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #39423d;
+  background: var(--line-strong);
 }
 
 .console-head span {
   margin-left: auto;
-  color: #6a8c76;
+  color: var(--quiet);
   font-size: 8px;
 }
 
 .hil-metrics {
   grid-column: 2 / -1;
   grid-template-columns: repeat(4, 1fr);
-  background: #0a0d0f;
+  background: var(--surface);
 }
 
 .hil-metrics > div {
@@ -1225,14 +1199,7 @@
   border-right: 1px solid var(--line);
 }
 
-/* 7 — Supplier portal: linear intake case with validation gates. */
-
-.product-supplier {
-  --bg: #08101a;
-  --surface: #0e1824;
-  --surface-raised: #121e2c;
-  --surface-soft: #101b28;
-}
+/* 7. Supplier portal: linear intake case with validation gates. */
 
 .product-supplier .app-shell {
   grid-template-columns: 220px minmax(0, 1fr);
@@ -1360,7 +1327,7 @@
   border-bottom: 1px solid var(--line);
 }
 
-/* 8 — Impact workbench: graph canvas with a change and decision rail. */
+/* 8. Impact workbench: graph canvas with a change and decision rail. */
 
 .product-impact .app-shell {
   display: block;
@@ -1380,7 +1347,7 @@
   align-items: end;
   justify-content: space-between;
   padding: 18px 22px;
-  background: #080d15;
+  background: var(--surface);
 }
 
 .impact-head > div {
@@ -1455,11 +1422,10 @@
 .impact-graph {
   overflow: hidden;
   background:
-    radial-gradient(circle at center, rgba(var(--accent-rgb), .07), transparent 55%),
-    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
-    #080d15;
-  background-size: auto, 24px 24px, 24px 24px, auto;
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px),
+    var(--surface-soft);
+  background-size: 24px 24px, 24px 24px, auto;
 }
 
 .impact-graph .panel,
@@ -1502,7 +1468,7 @@
 }
 
 .impact-node rect {
-  fill: #0d1522;
+  fill: var(--surface-raised);
   stroke: var(--line-strong);
   stroke-width: 1.5;
 }
@@ -1549,14 +1515,7 @@
   border-radius: 0;
 }
 
-/* 9 — Load manager: gated release wizard. */
-
-.product-load {
-  --bg: #090b12;
-  --surface: #10131d;
-  --surface-raised: #151925;
-  --surface-soft: #121722;
-}
+/* 9. Load manager: gated release wizard. */
 
 .product-load .app-shell {
   grid-template-columns: 204px minmax(0, 1fr);
@@ -1703,16 +1662,7 @@
   font-weight: 700;
 }
 
-/* 10 — FRACAS: persistent case list with causal analysis. */
-
-.product-fracas {
-  --bg: #100a0b;
-  --surface: #191113;
-  --surface-raised: #201619;
-  --surface-soft: #1c1315;
-  --line: #392328;
-  --line-strong: #5d343d;
-}
+/* 10. FRACAS: persistent case list with causal analysis. */
 
 .product-fracas .app-shell {
   grid-template-columns: 188px minmax(0, 1fr);
@@ -1835,7 +1785,6 @@
 
 .case-analysis .investigation-row.active {
   background: rgba(var(--accent-rgb), .08);
-  box-shadow: inset 3px 0 var(--accent);
 }
 
 .reliability-trend {
@@ -1942,6 +1891,28 @@
 
   .product-v2 .product-topbar {
     padding-inline: 12px;
+  }
+
+  .product-v2 .product-topbar > div:first-child {
+    overflow: hidden;
+    flex: 1 1 auto;
+  }
+
+  .product-v2 .topbar-tools {
+    flex: 0 0 auto;
+    gap: 6px;
+  }
+
+  .product-v2 .product-topbar .command-button {
+    width: 36px;
+    min-width: 36px;
+    flex: 0 0 36px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .product-v2 .user-chip {
+    display: none;
   }
 
   .product-v2 .crumb,

@@ -189,7 +189,7 @@ export function buildTaskAndStandardPack(task: TaskDefinition, options: BuildPac
 
   push('## Standards Excerpts', '')
   for (const excerpt of task.standardsExcerpts) {
-    push(`### ${excerpt.id} — ${excerpt.title}`, '', excerpt.body, '', `Source: \`${excerpt.source}\``)
+    push(`### ${excerpt.id}: ${excerpt.title}`, '', excerpt.body, '', `Source: \`${excerpt.source}\``)
   }
   push('')
 

@@ -121,8 +121,8 @@ describe('CAP-TEST-062 python.ts model + protocol generator', () => {
   it('emits a do-not-edit header on both files', () => {
     const modelsResult = planPythonModels(buildModelsInput())
     const protocolsResult = planPythonProtocols(buildProtocolsInput())
-    expect(modelsResult.file.contents).toContain('# GENERATED FILE — DO NOT EDIT.')
-    expect(protocolsResult.file.contents).toContain('# GENERATED FILE — DO NOT EDIT.')
+    expect(modelsResult.file.contents).toContain('# GENERATED FILE: DO NOT EDIT.')
+    expect(protocolsResult.file.contents).toContain('# GENERATED FILE: DO NOT EDIT.')
   })
 
   it('emits PascalCase BaseModel classes with snake_case fields, required vs Optional, and aliasing for non-snake_case property names', () => {

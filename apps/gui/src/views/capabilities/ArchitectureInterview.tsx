@@ -1,5 +1,5 @@
 /**
- * Architecture interview workflow — export/import/review/approve (CAP-PKT-009).
+ * Architecture interview workflow: export/import/review/approve (CAP-PKT-009).
  */
 
 import { useEffect, useState } from 'react'
@@ -339,7 +339,7 @@ export function ArchitectureInterview({
       setCycles(evaluation.cycles)
       setGatePassed(evaluation.passed)
       if (!evaluation.passed) {
-        setMessage(guided ? 'Not ready to approve — resolve the findings above first.' : 'CAP-GATE-002 blocked approval.')
+        setMessage(guided ? 'Not ready to approve: resolve the findings above first.' : 'CAP-GATE-002 blocked approval.')
         return
       }
       const result = await bridge.capabilitiesApproveArchitecture(projectId, {
@@ -525,12 +525,12 @@ export function ArchitectureInterview({
         <dl className="capabilities-ids" aria-label="Derived graph summary">
           <div>
             <dt>Nodes</dt>
-            <dd>{graph.nodes.map((n) => n.id).join(', ') || '—'}</dd>
+            <dd>{graph.nodes.map((n) => n.id).join(', ') || 'None'}</dd>
           </div>
           <div>
             <dt>Edges</dt>
             <dd>
-              {graph.edges.map((e) => `${e.from}→${e.to}`).join(', ') || '—'}
+              {graph.edges.map((e) => `${e.from}→${e.to}`).join(', ') || 'None'}
             </dd>
           </div>
         </dl>

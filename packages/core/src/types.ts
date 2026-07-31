@@ -6,8 +6,9 @@
  * must round-trip through these shapes.
  */
 import type { TaskIntentProfile } from './packetLint.js'
+import type { FrontendDesignPreferences } from './capabilities/frontendDesignSystem.js'
 
-/** PRD §28.1 — `project.json` */
+/** PRD §28.1: `project.json` */
 /** One capturable view of a target app, resolved against the project's launch URL. */
 export type EvidenceViewSpec = {
   id: string
@@ -57,7 +58,7 @@ export type HandoffStep =
   | 'verify-review'
   | 'complete'
 
-/** PRD §28.2 — `handoff-run.json` */
+/** PRD §28.2: `handoff-run.json` */
 export type HandoffRun = {
   id: string
   projectId: string
@@ -65,7 +66,7 @@ export type HandoffRun = {
   taskTitle?: string
   /** Selected Build & Test authoring mode, persisted so launched/resumed work opens consistently. */
   taskTemplateId?: string
-  /** The packet section text as last exported — prefills packet regeneration. */
+  /** The packet section text as last exported: prefills packet regeneration. */
   taskPacketFields?: {
     taskTitle: string
     goal: string
@@ -74,8 +75,9 @@ export type HandoffRun = {
     acceptanceCriteria: string
     references: string
     intentProfile?: TaskIntentProfile
+    frontendDesign?: FrontendDesignPreferences
   }
-  /** When the packet was last exported — feedback saved after this drives the iteration prefill. */
+  /** When the packet was last exported: feedback saved after this drives the iteration prefill. */
   taskPacketBuiltAt?: string
   /**
    * Immutable origin link when this delivery run was opened from an approved
@@ -120,7 +122,7 @@ export type HandoffRun = {
   completedAt?: string
 }
 
-/** PRD §28.3 — `repo-inventory.json` */
+/** PRD §28.3: `repo-inventory.json` */
 export type RepoInventory = {
   projectId: string
   repoPath: string
@@ -139,7 +141,7 @@ export type RepoInventory = {
   excludedFileCount: number
 }
 
-/** PRD §28.4 — `overlay-inspection-summary.json` */
+/** PRD §28.4: `overlay-inspection-summary.json` */
 export type OverlayInspectionSummary = {
   runId: string
   zipFilename: string
@@ -164,7 +166,7 @@ export type OverlayInspectionSummary = {
   canApply: boolean
 }
 
-/** PRD §28.5 — `verification-result.json` */
+/** PRD §28.5: `verification-result.json` */
 export type VerificationResult = {
   runId: string
   commandLabel: string
@@ -180,7 +182,7 @@ export type VerificationResult = {
   wasCancelledByUser: boolean
 }
 
-/** PRD §28.6 — `applied-files.json` */
+/** PRD §28.6: `applied-files.json` */
 export type AppliedFiles = {
   runId: string
   appliedAt: string
@@ -191,7 +193,7 @@ export type AppliedFiles = {
   }[]
 }
 
-/** PRD §28.7 — `completion-summary.json` */
+/** PRD §28.7: `completion-summary.json` */
 export type CompletionSummary = {
   runId: string
   projectId: string
@@ -213,7 +215,7 @@ export type CompletionSummary = {
   }
 }
 
-/** PRD §28.8 — `settings/app-settings.json` */
+/** PRD §28.8: `settings/app-settings.json` */
 export type Settings = {
   defaultProjectFolder: string
   defaultOutputFolder: string
@@ -249,7 +251,7 @@ export type TaskDefinition = {
   variant: 'text-only' | 'visual'
   standardsPackage: string
   standardsVersion: string
-  themePosture: 'dark-first'
+  themePosture: 'dual-mode' | 'dual-mode'
   targetPackage: string
   targetApplication: string
   selectedProjectSample?: string

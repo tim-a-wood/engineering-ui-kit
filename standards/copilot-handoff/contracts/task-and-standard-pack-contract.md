@@ -48,7 +48,7 @@ All metadata required by both the task-packet and standards-pack contracts:
 
 - application/target name and path
 - selected-project sample name and path, when the target screen displays one
-- package name/version and dark-first posture
+- package name/version and dual-mode posture
 - primary visual reference citation
 - applicable IDs and token paths
 
@@ -81,13 +81,13 @@ All metadata required by both the task-packet and standards-pack contracts:
 ## Package Metadata
 - packageName: engineering-ui-kit-standards
 - packageVersion: 0.3.0
-- themePosture: dark-first
+- themePosture: dual-mode
 - application: UI Overlay
 - path: trials/vertical-slice-01/target-app
 - selectedProjectSample: signal-analyzer-refresh
 
 ## Goal
-Refresh UI Overlay's Create Task Packet screen to dark-first Engineering UI Kit styling.
+Refresh UI Overlay's Create Task Packet screen to dual-mode Engineering UI Kit styling.
 
 ## Scope
 Presentation and styling only.
@@ -96,7 +96,7 @@ Presentation and styling only.
 Preserve packet behavior and export semantics.
 
 ## Acceptance Criteria
-Build passes; protected interactions work; dark-first tokens applied.
+Build passes; protected interactions work; dual-mode tokens applied.
 
 ## References
 Primary visual reference: 1F2214C9-D849-41CA-9435-68F0A0032EEB.jpeg
@@ -134,7 +134,7 @@ Generic SaaS and neon styling.
 Keyboard, focus, dialog dismissal, textual status.
 
 ## Standards Excerpts
-FND-VIS-001 — Dark-first surface hierarchy.
+FND-VIS-001: Dual-mode surface hierarchy.
 ```
 
 ## Invalid Example

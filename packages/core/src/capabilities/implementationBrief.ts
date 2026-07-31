@@ -115,7 +115,7 @@ export type ModuleImplementationBrief = {
    * hosts this module, plus its generated composition root, commands, and
    * generated contract/type targets. Present only when a `deployable` (and,
    * optionally, its `ModuleImplementationSpecification`) is supplied to
-   * `buildModuleImplementationBrief` — omitted for backward compatibility
+   * `buildModuleImplementationBrief`: omitted for backward compatibility
    * otherwise.
    */
   deployment?: {

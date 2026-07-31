@@ -21,7 +21,7 @@ claims.
 
 ## Required Architecture
 
-### AI-HANDOFF-001 — Artifact producers, user actions, and consumers
+### AI-HANDOFF-001: Artifact producers, user actions, and consumers
 
 | Artifact | Producer | User action | Consumer |
 |---|---|---|---|
@@ -34,7 +34,7 @@ claims.
 | `ui-overlay.zip` | Copilot | Download and inspect locally | Human reviewer and local apply workflow |
 | Review prompt | Human, from `standards/prompts/review-prompt.md` | Provide changed files and evidence | Copilot or human review pass |
 
-### AI-HANDOFF-002 — Three-file variants
+### AI-HANDOFF-002: Three-file variants
 
 Text-only variant:
 
@@ -50,7 +50,7 @@ Visual/mockup variant:
 
 Vertical Slice 01 uses the visual/mockup variant.
 
-### AI-HANDOFF-003 — Source precedence
+### AI-HANDOFF-003: Source precedence
 
 When instructions conflict, use:
 
@@ -62,22 +62,22 @@ When instructions conflict, use:
 
 Mockups calibrate visual direction. They do not exhaust component standards.
 
-### AI-HANDOFF-004 — Review-before-apply behavior
+### AI-HANDOFF-004: Review-before-apply behavior
 
 No overlay is applied until a human inspects it against overlay-safety rules, expected
 changed-file scope, and protected behavior. Review may use the review prompt, but the
 apply decision remains manual.
 
-### AI-HANDOFF-005 — No direct Copilot API
+### AI-HANDOFF-005: No direct Copilot API
 
 v0.1 does not integrate a Copilot API. The user performs upload and download in the
 Microsoft 365 Copilot surface.
 
-### AI-HANDOFF-006 — No automatic application
+### AI-HANDOFF-006: No automatic application
 
 v0.1 does not auto-extract or auto-merge `ui-overlay.zip` into the target repo.
 
-### AI-HANDOFF-007 — No success claim before local verification
+### AI-HANDOFF-007: No success claim before local verification
 
 Implementation or review output must not claim success until local typecheck/build,
 overlay inspection, acceptance criteria, and protected-behavior checks are performed.

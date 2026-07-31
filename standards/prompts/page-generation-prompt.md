@@ -9,7 +9,7 @@ Guide generation or refinement of Engineering UI Kit page layouts.
 - Repo or implementation context.
 - Relevant task packet.
 - Relevant Engineering UI Kit standards excerpt or compiled standards pack.
-- Approved dark high-fidelity mockup references when visual fidelity is part of the task.
+- Approved high-fidelity references when visual fidelity is part of the task.
 
 ## Hard Constraints
 
@@ -17,8 +17,11 @@ Guide generation or refinement of Engineering UI Kit page layouts.
 - Use American English, active voice, simple verb forms, and one action per sentence.
 - Limit instructions to 20 words and descriptions to 25 words per sentence.
 - Write names and diagram labels as `VERB + OBJECT` with no more than four words.
-- Use one technical term for one concept. Do not use contractions or semicolons.
-- Engineering UI Kit v0.1 is dark-first. Light mode is not part of the v0.1 implementation contract unless explicitly added later.
+- Use one technical term for one concept. Do not use contractions, semicolons, or em dashes.
+- Implement light and dark modes. Add a labeled mode button.
+- Apply the selected palette, font, density, and view layout.
+- Use Lucide icons only. Add accessible tooltips and contextual help.
+- Do not use accent-strip tiles, ornamental sparkles, card walls, glass effects, or vague promotional copy.
 - Follow the source-of-truth hierarchy.
 - Use semantic tokens once token contracts are available.
 - Do not invent visual features or product scope beyond the task packet.

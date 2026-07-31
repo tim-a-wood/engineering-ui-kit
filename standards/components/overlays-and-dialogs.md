@@ -64,7 +64,7 @@ Overlays shall expose roles, names, descriptions where useful, keyboard operatio
 - Context menu as the only location for destructive actions.
 
 
-## CMP-OVERLAY-DIALOG — Dialog
+## CMP-OVERLAY-DIALOG: Dialog
 
 ### Purpose
 CMP-OVERLAY-DIALOG defines blocking overlay for focused decisions or forms. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -106,17 +106,17 @@ Compliant use: `Dialog` appears in a dark engineering panel, uses manifest ID `C
 Non-compliant use: `Dialog` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-OVERLAY-DIALOG` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-OVERLAY-DIALOG` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-OVERLAY-DIALOG` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: reference-backed-standard, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: reference-backed-standard, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-OVERLAY-CONFIRMATION-DIALOG — Confirmation Dialog
+## CMP-OVERLAY-CONFIRMATION-DIALOG: Confirmation Dialog
 
 ### Purpose
 CMP-OVERLAY-CONFIRMATION-DIALOG defines explicit confirmation before destructive or irreversible actions. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -158,17 +158,17 @@ Compliant use: `Confirmation Dialog` appears in a dark engineering panel, uses m
 Non-compliant use: `Confirmation Dialog` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-OVERLAY-CONFIRMATION-DIALOG` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-OVERLAY-CONFIRMATION-DIALOG` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-OVERLAY-CONFIRMATION-DIALOG` is referenced exactly.
-- Coverage treatment: Tier 1 — full operational specification; manifest coverage: reference-backed-standard, prd-required.
+- Coverage treatment: Tier 1: full operational specification; manifest coverage: reference-backed-standard, prd-required.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-OVERLAY-DRAWER — Drawer
+## CMP-OVERLAY-DRAWER: Drawer
 
 ### Purpose
 CMP-OVERLAY-DRAWER defines side overlay for supplemental details without full page navigation. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -210,17 +210,17 @@ Compliant use: `Drawer` appears in a dark engineering panel, uses manifest ID `C
 Non-compliant use: `Drawer` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-OVERLAY-DRAWER` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-OVERLAY-DRAWER` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-OVERLAY-DRAWER` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: partially-observed-in-mockups, reference-backed-standard.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: partially-observed-in-mockups, reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-OVERLAY-POPOVER — Popover
+## CMP-OVERLAY-POPOVER: Popover
 
 ### Purpose
 CMP-OVERLAY-POPOVER defines small contextual overlay anchored to a control. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -262,17 +262,17 @@ Compliant use: `Popover` appears in a dark engineering panel, uses manifest ID `
 Non-compliant use: `Popover` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-OVERLAY-POPOVER` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-OVERLAY-POPOVER` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-OVERLAY-POPOVER` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: reference-backed-standard.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-OVERLAY-TOOLTIP — Tooltip
+## CMP-OVERLAY-TOOLTIP: Tooltip
 
 ### Purpose
 CMP-OVERLAY-TOOLTIP defines brief non-interactive explanation for controls or data points. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -314,17 +314,17 @@ Compliant use: `Tooltip` appears in a dark engineering panel, uses manifest ID `
 Non-compliant use: `Tooltip` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-OVERLAY-TOOLTIP` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-OVERLAY-TOOLTIP` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-OVERLAY-TOOLTIP` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: reference-backed-standard.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: reference-backed-standard.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.
 
 
-## CMP-OVERLAY-CONTEXT-MENU — Context Menu
+## CMP-OVERLAY-CONTEXT-MENU: Context Menu
 
 ### Purpose
 CMP-OVERLAY-CONTEXT-MENU defines contextual action menu for rows, artifacts, or panes. It shall be used as a stable Engineering UI Kit component reference when this UI need appears in an engineering workflow screen.
@@ -366,11 +366,11 @@ Compliant use: `Context Menu` appears in a dark engineering panel, uses manifest
 Non-compliant use: `Context Menu` is rendered as a generic decorative widget, uses hard-coded colors, hides important state, or has no accessible name.
 
 ### Agent notes
-Implementation agents shall keep `CMP-OVERLAY-CONTEXT-MENU` stable, preserve dark-first token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
+Implementation agents shall keep `CMP-OVERLAY-CONTEXT-MENU` stable, preserve dual-mode token usage, reuse existing layout recipes, and avoid inventing app features to showcase the component.
 
 ### Validation checks
 - Manifest ID `CMP-OVERLAY-CONTEXT-MENU` is referenced exactly.
-- Coverage treatment: Tier 2 — standard specification; manifest coverage: reference-backed-standard, inferred-engineering-need.
+- Coverage treatment: Tier 2: standard specification; manifest coverage: reference-backed-standard, inferred-engineering-need.
 - Uses only approved token names.
 - Supports required states and visible focus.
 - Does not contradict the PRD, mockup calibration posture, or reserved-component rules.

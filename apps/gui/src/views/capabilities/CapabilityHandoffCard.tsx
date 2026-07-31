@@ -26,7 +26,7 @@ export function CapabilityHandoffCard(props: {
   async function openCopilot() {
     try {
       await bridge.openExternal(COPILOT_URL)
-      setStatus({ tone: 'success', text: 'Copilot opened — drag the handoff below directly into the chat.' })
+      setStatus({ tone: 'success', text: 'Copilot opened: drag the handoff below directly into the chat.' })
     } catch {
       setStatus({ tone: 'error', text: 'Could not open Copilot. Open m365.cloud.microsoft/chat manually.' })
     }
@@ -81,7 +81,7 @@ export function CapabilityHandoffCard(props: {
           <span className="drag-file-chip" aria-hidden="true">
             {Icon.file(13)} {fileNameOf(result.files[0].path)} · {formatBytes(result.files[0].bytes)}
           </span>
-          <span className="drag-hint">drag onto the Copilot chat — everything is included</span>
+          <span className="drag-hint">drag onto the Copilot chat: everything is included</span>
         </div>
       ) : null}
 
@@ -106,7 +106,7 @@ export function CapabilityHandoffCard(props: {
           <ul className="cap-handoff-files-raw">
             {result.files.map((f) => (
               <li key={f.path}>
-                <code>{f.path}</code> — {f.bytes} bytes — <code>{f.sha256.slice(0, 16)}…</code>
+                <code>{f.path}</code>: {f.bytes} bytes: <code>{f.sha256.slice(0, 16)}…</code>
               </li>
             ))}
           </ul>

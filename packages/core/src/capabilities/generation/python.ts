@@ -176,7 +176,7 @@ function renderPythonType(
       const properties = dedupeAndSortProperties(node.properties)
       if (properties.length > 0) {
         diagnostics.push(
-          'inline (unnamed) object schema encountered; represented as "Dict[str, Any]" — nested Pydantic model generation for inline object schemas is not supported, only top-level named schemas become BaseModel classes',
+          'inline (unnamed) object schema encountered; represented as "Dict[str, Any]": nested Pydantic model generation for inline object schemas is not supported, only top-level named schemas become BaseModel classes',
         )
       }
       typingImports.add('Dict')
@@ -207,7 +207,7 @@ function renderPythonType(
 }
 
 // ---------------------------------------------------------------------------
-// Group A — Pydantic v2 model emission
+// Group A: Pydantic v2 model emission
 // ---------------------------------------------------------------------------
 
 export type PythonModelsGenerationInput = {
@@ -316,7 +316,7 @@ export function planPythonModels(input: PythonModelsGenerationInput): PythonMode
 }
 
 // ---------------------------------------------------------------------------
-// Group A — operation Protocol + typed-outcome alias emission
+// Group A: operation Protocol + typed-outcome alias emission
 // ---------------------------------------------------------------------------
 
 export type PythonProtocolsGenerationInput = {
@@ -434,7 +434,7 @@ export function planPythonProtocols(input: PythonProtocolsGenerationInput): Pyth
 }
 
 // ---------------------------------------------------------------------------
-// Group B — Python inbound adapters (CAP-CONTRACT-028)
+// Group B: Python inbound adapters (CAP-CONTRACT-028)
 // ---------------------------------------------------------------------------
 
 export type PythonInboundOperationTypeNames = {
@@ -530,8 +530,8 @@ function planHttpAdapter(input: PythonInboundAdapterGenerationInput, binding: Ex
   const functionName = `register_${toSnakeCase(binding.bindingId)}_route`
 
   // Only the input type is actually referenced (for `.model_json_schema()`),
-  // so — unlike `resolveOperationTypes`'s all-four import bag reused by the
-  // other binding kinds below — the http adapter imports just that one name.
+  // so: unlike `resolveOperationTypes`'s all-four import bag reused by the
+  // other binding kinds below: the http adapter imports just that one name.
   const importDecls: PythonImportDeclarationInput[] = [
     { moduleSpecifier: `${runtimePackageName}.http.host`, names: ['HttpOperationHost'] },
     operationImport,
@@ -709,7 +709,7 @@ function planEmbeddedLibraryAdapter(
 
 function planUiAdapter(input: PythonInboundAdapterGenerationInput, binding: Extract<InboundBinding, { kind: 'ui' }>): PythonInboundAdapterGenerationResult {
   const diagnostics: string[] = [
-    `binding "${binding.bindingId}": Python has no UI target; emitting an embedded-library/HTTP-client note only (CAP-ERA-001 §10.3 "React UI" — the browser/TypeScript client reaches this deployable's operation through the generated OpenAPI 3.1 HTTP boundary or an embedded-library export, not Python-generated UI code)`,
+    `binding "${binding.bindingId}": Python has no UI target; emitting an embedded-library/HTTP-client note only (CAP-ERA-001 §10.3 "React UI": the browser/TypeScript client reaches this deployable's operation through the generated OpenAPI 3.1 HTTP boundary or an embedded-library export, not Python-generated UI code)`,
   ]
 
   const note = [
@@ -753,7 +753,7 @@ export function planPythonInboundAdapter(input: PythonInboundAdapterGenerationIn
 }
 
 // ---------------------------------------------------------------------------
-// Group C — OpenAPI 3.1 emission
+// Group C: OpenAPI 3.1 emission
 // ---------------------------------------------------------------------------
 
 /** A minimal JSON-value shape sufficient for a deterministic OpenAPI 3.1 document. */

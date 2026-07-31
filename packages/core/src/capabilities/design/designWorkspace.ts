@@ -1,5 +1,5 @@
 /**
- * EUC-13 — Persistence and migration adapter (workspace half).
+ * EUC-13: Persistence and migration adapter (workspace half).
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §5, §16,
  * §19 ("Lost client session", "Concurrent edit"), §20.3, §21, §25.3
@@ -17,7 +17,7 @@
  * coupling to the legacy schema version gate.
  *
  * Do NOT import this module from a browser entry (`src/index.ts` "."/
- * "./browser" exports) — it uses `node:fs` directly.
+ * "./browser" exports): it uses `node:fs` directly.
  */
 
 import fs from 'node:fs'
@@ -85,7 +85,7 @@ function listJsonRevisions(dirPath: string): string[] {
 
 // ---------------------------------------------------------------------------
 // Path containment (§20.2 "the product shall reject symbolic-link or
-// path-traversal escapes") — every identifier that becomes a filesystem path
+// path-traversal escapes"): every identifier that becomes a filesystem path
 // segment (projectId, moduleId, record ids, packet/delta/scenario/session
 // ids, revision strings, contract operationId/version, actor ids used as a
 // role key) is validated by this single guard *before* it reaches
@@ -110,7 +110,7 @@ export class DesignPathError extends Error {
 }
 
 /**
- * §20.2 / §20.3 — a single path segment: no separators, no traversal, no
+ * §20.2 / §20.3: a single path segment: no separators, no traversal, no
  * NUL, no leading dot, bounded length. Applied at the `DesignWorkspace`
  * boundary to every caller-influenced identifier that is joined into a
  * persisted file path, so a traversal attempt (`'../../escaped-project'`,
@@ -151,11 +151,11 @@ function idFilePath(dirPath: string, kind: string, id: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * §19 "Concurrent edit" — thrown by a `*Draft` save when the caller's
+ * §19 "Concurrent edit": thrown by a `*Draft` save when the caller's
  * `expectedRevision` does not match the revision currently on disk. Carries
  * both revisions and both full records so the caller can offer a three-way
- * comparison (on-disk base, the caller's attempted write, and — for the
- * caller to fetch separately if needed — the record the caller last read).
+ * comparison (on-disk base, the caller's attempted write, and: for the
+ * caller to fetch separately if needed: the record the caller last read).
  */
 export class DesignConflictError<T = unknown> extends Error {
   readonly code = 'stale-revision' as const
@@ -215,7 +215,7 @@ export type DesignModuleIndexEntry = {
   approvedRevisions: string[]
 }
 
-/** Pattern: `CapabilityIndex` (../persistence.ts) — approved-revision pointers per project. */
+/** Pattern: `CapabilityIndex` (../persistence.ts): approved-revision pointers per project. */
 export type DesignIndex = {
   schemaVersion: '1.0'
   useCaseAnalysisApprovedRevision?: string
@@ -232,7 +232,7 @@ export type DesignIndex = {
 export class DesignWorkspace {
   constructor(readonly dataDir: string) {}
 
-  /** `<dataDir>/projects/<projectId>/design` — additive sibling of `capabilities/`. */
+  /** `<dataDir>/projects/<projectId>/design`: additive sibling of `capabilities/`. */
   root(projectId: string): string {
     assertSafeSegment('projectId', projectId)
     return path.join(this.dataDir, 'projects', projectId, 'design')
@@ -358,7 +358,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // System structure / architecture (EUC-03 output). Own subtree — never
+  // System structure / architecture (EUC-03 output). Own subtree: never
   // reads or writes the legacy `capabilities/architecture/` tree.
   // -------------------------------------------------------------------------
 
@@ -401,7 +401,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // ModuleDesignSpecification — draft + immutable approved revision history.
+  // ModuleDesignSpecification: draft + immutable approved revision history.
   // -------------------------------------------------------------------------
 
   private moduleDir(projectId: string, moduleId: string): string {
@@ -433,7 +433,7 @@ export class DesignWorkspace {
 
   /**
    * §5.3 "a new revision shall not change the content of an approved
-   * revision" / §2.2 "never overwrite an earlier approval" — throws if this
+   * revision" / §2.2 "never overwrite an earlier approval": throws if this
    * exact revision was already approved. Keeps full history: every approved
    * revision file is retained (never deleted or replaced) under
    * `approved/<revision>.json`.
@@ -474,7 +474,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // ModuleDesignSession — one resumable session per module (§16.3, §18.3).
+  // ModuleDesignSession: one resumable session per module (§16.3, §18.3).
   // §19 "Lost client session" / §25.3 "restart restores the module session
   // and selected module": persisted at every step transition so a fresh
   // `DesignWorkspace` instance (new process) resumes at the exact step.
@@ -490,7 +490,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // DesignBaseline — draft + immutable approved revisions.
+  // DesignBaseline: draft + immutable approved revisions.
   // -------------------------------------------------------------------------
 
   saveDesignBaselineDraft(projectId: string, draft: DesignBaseline, options: { expectedRevision?: string } = {}): void {
@@ -528,7 +528,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // DesignWorkflowPolicy (§16.7) — single current record per project.
+  // DesignWorkflowPolicy (§16.7): single current record per project.
   // -------------------------------------------------------------------------
 
   saveDesignWorkflowPolicy(projectId: string, policy: DesignWorkflowPolicy): void {
@@ -541,7 +541,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // DesignFeatureFlag (§23.3) — single current record per project. Disabling
+  // DesignFeatureFlag (§23.3): single current record per project. Disabling
   // never deletes any other file in this workspace; only this flag record
   // is overwritten.
   // -------------------------------------------------------------------------
@@ -575,7 +575,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // Packets (§11.2, §11.3) — immutable once written.
+  // Packets (§11.2, §11.3): immutable once written.
   // -------------------------------------------------------------------------
 
   saveModuleDesignPacket(projectId: string, packet: ModuleDesignPacket): void {
@@ -607,7 +607,7 @@ export class DesignWorkspace {
   // -------------------------------------------------------------------------
   // Returned deltas + inspections (§11.5, §11.6, §19 "Stale response").
   // A delta is preserved as evidence even when its inspection later rejects
-  // it — the delta itself is never conditionally written.
+  // it: the delta itself is never conditionally written.
   // -------------------------------------------------------------------------
 
   saveReturnedDelta(projectId: string, delta: ReturnedDelta): void {
@@ -655,7 +655,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // ScenarioRun (§14.3) — immutable once written.
+  // ScenarioRun (§14.3): immutable once written.
   // -------------------------------------------------------------------------
 
   saveScenarioRun(projectId: string, run: ScenarioRun): void {
@@ -678,7 +678,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // Audit events (§20.3) — append-only `audit/events.jsonl`, one JSON object
+  // Audit events (§20.3): append-only `audit/events.jsonl`, one JSON object
   // per line. §5.3 / §17.3 idempotency: a retry with the same
   // `idempotencyKey` returns the first committed event rather than
   // appending a duplicate.
@@ -689,12 +689,12 @@ export class DesignWorkspace {
   }
 
   /**
-   * §5.3 / §17.3 (second-review finding — audit idempotency scope): scoped
+   * §5.3 / §17.3 (second-review finding: audit idempotency scope): scoped
    * by `idempotencyKey` **and** `operation`, the same scope
    * `operations.ts`'s own result-replay cache already uses
    * (`projectId + operation + idempotencyKey`). Two different operations
    * that happen to reuse the same idempotency key are two distinct calls,
-   * never a replay of each other — omitting `operation` previously made
+   * never a replay of each other: omitting `operation` previously made
    * `appendAuditEvent` return the *first* operation's committed event for
    * the *second* operation too, so both operations executed correctly but
    * shared one audit event and one `auditEventId`.
@@ -713,7 +713,7 @@ export class DesignWorkspace {
    * Appends `event` to the append-only audit log. If `event.idempotencyKey`
    * is set and a prior event already committed with that key **for the same
    * operation**, this is a no-op that returns the first committed event
-   * unchanged (§5.3, §17.3) — a different operation reusing the same key
+   * unchanged (§5.3, §17.3): a different operation reusing the same key
    * always writes its own distinct event.
    */
   appendAuditEvent(projectId: string, event: DesignAuditEvent): DesignAuditEvent {
@@ -776,7 +776,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // Workspace UI-resume state (§19 "Lost client session" — "Restore
+  // Workspace UI-resume state (§19 "Lost client session": "Restore
   // persisted draft and last selected module").
   // -------------------------------------------------------------------------
 
@@ -790,7 +790,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // Project roles (§4) — actorId -> held authorities. Authority is never
+  // Project roles (§4): actorId -> held authorities. Authority is never
   // caller-asserted alone: an approval operation checks the acting user's
   // authority against this persisted configuration, not against a claim in
   // the request. Single current record per project.
@@ -806,7 +806,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // Operation results (§5.3, §17.3) — the FULL result of a change operation,
+  // Operation results (§5.3, §17.3): the FULL result of a change operation,
   // persisted by projectId + operation + idempotencyKey so a retry replays
   // the first committed result (value included) even after a process
   // restart, and so the same idempotencyKey used for a different operation
@@ -831,7 +831,7 @@ export class DesignWorkspace {
   }
 
   // -------------------------------------------------------------------------
-  // Contract registry persistence (§9.7, EUC-05) — `RegisteredContract`
+  // Contract registry persistence (§9.7, EUC-05): `RegisteredContract`
   // records keyed by operationId + version. An approved version is
   // immutable: `saveContract` refuses to change the content of a version
   // already on disk with `status: 'approved'`.
@@ -876,7 +876,7 @@ export class DesignWorkspace {
 
   // -------------------------------------------------------------------------
   // Contract consumer acknowledgements (§9.7 "the provider and every known
-  // consumer shall review a changed contract") — recorded per contract
+  // consumer shall review a changed contract"): recorded per contract
   // version + consumer module, either implicitly (a consumer module's
   // `analyzeModuleDesign` run against the current contract version) or
   // explicitly (an ack recorded by `updateModuleDesignItem`).
@@ -907,11 +907,11 @@ export class DesignWorkspace {
 
 export { canonicalHash }
 
-/** §4 — actorId -> the approval authorities that actor holds for this project. */
+/** §4: actorId -> the approval authorities that actor holds for this project. */
 export type ProjectRoles = Record<string, ApprovalAuthority[]>
 
 /**
- * §9.7, §4 (second-review finding — forgeable consumer acks) — a consumer
+ * §9.7, §4 (second-review finding: forgeable consumer acks): a consumer
  * module's recorded review of one contract version. `ackedBy` and
  * `authority` identify the reviewing principal (never a caller-supplied
  * identity attached to an unrelated operation/module), and
@@ -924,7 +924,7 @@ export type ConsumerContractAck = {
   consumerModuleId: string
   ackedAt: string
   source: 'analyze' | 'explicit'
-  /** The actor who performed this review — always a human `user:` actor. */
+  /** The actor who performed this review: always a human `user:` actor. */
   ackedBy: string
   /** The consumer-module authority the acking actor held at review time, when claimed/known. */
   authority?: string

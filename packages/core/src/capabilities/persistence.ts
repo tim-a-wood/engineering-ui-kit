@@ -764,7 +764,7 @@ export class CapabilityWorkspace {
   /**
    * Approves a deployable specification. `DeployableSpecification` (unlike
    * `ModuleManifest`/`FrontendBinding`) has no intrinsic version field, so the
-   * approved revision key is the draft's canonical content hash — re-approving
+   * approved revision key is the draft's canonical content hash: re-approving
    * byte-identical content is a no-op collision (same hash, same file).
    */
   approveDeployable(projectId: string, draft: DeployableSpecification): DeployableSpecification {
@@ -829,7 +829,7 @@ export class CapabilityWorkspace {
   /**
    * Approves a foundation plan. Rejects any plan whose `readiness.status` is
    * not `'ready'` (ambiguous or blocked plans cannot be approved). This is a
-   * separate approval step from `approveArchitecture` — approving the
+   * separate approval step from `approveArchitecture`: approving the
    * architecture never implicitly approves its foundation. On success, also
    * approves every constituent deployable via the existing `approveDeployable`
    * (tolerating a byte-identical re-approval as a no-op, consistent with that
@@ -867,7 +867,7 @@ export class CapabilityWorkspace {
 
   // --- CAP-CONTRACT-028 InboundBinding (WP5B connect backing) --------------
 
-  /** Missing/omitted `exposure` always persists as `private` (§5.1) — never silently escalated. */
+  /** Missing/omitted `exposure` always persists as `private` (§5.1): never silently escalated. */
   saveInboundBindingDraft(projectId: string, draft: InboundBinding): void {
     if (this.isFutureSchemaVersion(projectId)) {
       throw new Error('capability workspace is read-only due to future schema version')
@@ -895,8 +895,7 @@ export class CapabilityWorkspace {
 
   /**
    * Approves an inbound binding. Multiple `InboundBinding`s may legitimately
-   * target the same `operationId`/`operationVersion` (CAP-ERA-001 §12.4) —
-   * bindings are keyed and stored by their own `bindingId`, never deduplicated
+   * target the same `operationId`/`operationVersion` (CAP-ERA-001 §12.4):    * bindings are keyed and stored by their own `bindingId`, never deduplicated
    * by operation.
    */
   approveInboundBinding(projectId: string, draft: InboundBinding): InboundBinding {

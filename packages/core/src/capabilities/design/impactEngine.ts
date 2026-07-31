@@ -1,5 +1,5 @@
 /**
- * EUC-07 — Impact engine.
+ * EUC-07: Impact engine.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §10 (all),
  * §25.3 (EUC-07). Builds a `DesignImpactRecord` for one proposed design
@@ -321,7 +321,7 @@ function requireTarget(target: ImpactChangeTarget | undefined, key: keyof Impact
 }
 
 // ---------------------------------------------------------------------------
-// §10.3 invalidation matrix — one builder per change kind
+// §10.3 invalidation matrix: one builder per change kind
 // ---------------------------------------------------------------------------
 
 function itemsForLabelOnly(input: AnalyzeDesignChangeInput): DesignImpactItem[] {
@@ -405,7 +405,7 @@ function itemsForSchema(input: AnalyzeDesignChangeInput, graph: CapabilityGraph)
   return items
 }
 
-/** Dependency changes touch only the source and target modules — deliberately not propagated
+/** Dependency changes touch only the source and target modules: deliberately not propagated
  * further, so an unrelated module never becomes stale (§10.3 "shall not mark unrelated modules stale"). */
 function itemsForDependency(input: AnalyzeDesignChangeInput): DesignImpactItem[] {
   const source = requireTarget(input.target, 'sourceModuleId', input.changeKind)
@@ -628,7 +628,7 @@ function mergeAndSortItems(items: DesignImpactItem[]): DesignImpactItem[] {
   )
 }
 
-/** §10.4 — ordered required-change plan: modules first, in dependency order, then other required items. */
+/** §10.4: ordered required-change plan: modules first, in dependency order, then other required items. */
 function buildOrderedChangePlan(graph: CapabilityGraph, items: DesignImpactItem[]): DesignImpactRecord['orderedChangePlan'] {
   const required = items.filter((i) => i.invalidation === 'stale' || i.invalidation === 'blocked')
   const moduleIds = [...new Set(required.filter((i) => i.category === 'module').map((i) => i.targetId))]
@@ -738,7 +738,7 @@ export function analyzeDesignChange(input: AnalyzeDesignChangeInput): DesignImpa
 }
 
 // ---------------------------------------------------------------------------
-// Persistence helper (§10 — used later to transition records to stale/review)
+// Persistence helper (§10: used later to transition records to stale/review)
 // ---------------------------------------------------------------------------
 
 export type ApplyImpactResult = {

@@ -52,7 +52,7 @@ Maps every interactive control from the four legacy full-page views to its locat
 | Recommended prompt display | `CopilotWorkspace` | Preserved |
 | Copy Recommended Prompt | Copilot + Handoff | Preserved |
 | Expected-output info banner | `CopilotWorkspace` | Preserved |
-| I have the overlay — Continue | Switches to Overlay tab | Preserved (in-view) |
+| I have the overlay: Continue | Switches to Overlay tab | Preserved (in-view) |
 
 ## ApplyZipOverlayView → OverlayWorkspace
 

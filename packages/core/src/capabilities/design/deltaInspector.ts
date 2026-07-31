@@ -1,5 +1,5 @@
 /**
- * EUC-11 — Delta inspector and apply planner.
+ * EUC-11: Delta inspector and apply planner.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §11.5,
  * §11.6, §12.1, §12.2, §19, §20.2, §24.1, §25.3 (EUC-11).
@@ -61,7 +61,7 @@ function isWithinBoundaries(path: string, boundaries: string[]): boolean {
 }
 
 /**
- * §11.5 / §20.2 — forbidden and protected paths take precedence over
+ * §11.5 / §20.2: forbidden and protected paths take precedence over
  * allowed paths. A file matching a concrete `forbiddenPaths` entry (exact
  * file or directory-prefix match) is rejected even when it also falls
  * inside an allowed directory. The `**` everything-else marker is a
@@ -75,7 +75,7 @@ function isForbiddenPath(path: string, forbiddenPaths: string[]): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// §11.5 — returned-delta rejection rules
+// §11.5: returned-delta rejection rules
 // ---------------------------------------------------------------------------
 
 export type DeltaWorkspaceContext = {
@@ -96,12 +96,12 @@ function emptyFileSummary(): DeltaInspection['fileSummary'] {
 }
 
 // ---------------------------------------------------------------------------
-// Second-review fix (P1) — record-change policy (§11.5, §5.3)
+// Second-review fix (P1): record-change policy (§11.5, §5.3)
 // ---------------------------------------------------------------------------
 
 /**
  * A non-contract record change used to be accepted whenever
- * `recordId === packet.moduleId`, *regardless of kind* — an 'architecture'
+ * `recordId === packet.moduleId`, *regardless of kind*: an 'architecture'
  * record change with `payload.status === 'approved'` was wrongly accepted
  * as in scope. The apply plan then carried only file changes, so the
  * accepted record change was silently discarded: inspected content and
@@ -113,8 +113,7 @@ function emptyFileSummary(): DeltaInspection['fileSummary'] {
  * minimal, documented deviation: it is the kind already used pervasively
  * by frozen, non-owned fixtures (`sampleAuditHub.ts`, `providers.ts`) and
  * by an existing frozen test (`review-fixes-r2.test.ts`) to mean
- * "informational summary text, no structured content to apply" —
- * rejecting it outright would make `buildSampleAuditHub()` throw
+ * "informational summary text, no structured content to apply":  * rejecting it outright would make `buildSampleAuditHub()` throw
  * (cascading failures through dozens of unrelated tests, including this
  * same packet's own §21 measurement harness, which requires a working
  * sample) without closing any real gap: a `'note'` change carries no
@@ -130,7 +129,7 @@ const ALLOWED_SELF_RECORD_KINDS: ReadonlySet<string> = new Set(['moduleDesign', 
 
 /**
  * §5.3 "a record shall move to `approved` only through an explicit
- * approval operation" — true when a record-change payload tries to set
+ * approval operation": true when a record-change payload tries to set
  * `status: 'approved'` or carry an `approval` object of its own.
  */
 function recordChangeSetsApproval(payload: unknown): boolean {
@@ -148,15 +147,15 @@ function recordChangeSetsApproval(payload: unknown): boolean {
  * status". Contract-change request: add `'record-change-sets-approval'`
  * to `DeltaRejectionReason` in records.ts. Until then this module computes
  * reasons using this widened type internally and casts to
- * `DeltaRejectionReason[]` only at the `DeltaInspection` boundary — a
+ * `DeltaRejectionReason[]` only at the `DeltaInspection` boundary: a
  * deliberate, documented escape hatch, not a silent type lie.
  */
 type ExtendedRejectionReason = DeltaRejectionReason | 'record-change-sets-approval'
 
 /**
- * §11.5 — validates a returned delta against the exact rejection rules and
+ * §11.5: validates a returned delta against the exact rejection rules and
  * returns a `DeltaInspection` (accepted flag plus rejection reasons). A
- * rejected delta is never discarded — the caller receives the full
+ * rejected delta is never discarded: the caller receives the full
  * inspection with the response preserved as evidence (§19 "Stale response").
  */
 export function validateReturnedDelta(
@@ -217,14 +216,14 @@ export function validateReturnedDelta(
   if (fileChanges.length === 0 && recordChanges.length === 0) {
     rejectionReasons.push('missing-change-manifest')
   }
-  // required trailer fields — missing any of these is also a "response omits
+  // required trailer fields: missing any of these is also a "response omits
   // its change manifest" case; the inspection is still produced so the
   // response is preserved as evidence rather than discarded (§19).
   if (!delta.returnedAt || !delta.contentHash) {
     rejectionReasons.push('missing-change-manifest')
   }
 
-  // path and ownership checks — forbidden/protected paths take precedence
+  // path and ownership checks: forbidden/protected paths take precedence
   // over allowed paths (§11.5, §20.2): a forbidden match is rejected even
   // when the path also falls inside an allowed directory.
   const approvedDeletes = new Set(workspace.approvedDeletes ?? [])
@@ -264,7 +263,7 @@ export function validateReturnedDelta(
   if (sawPathOutsideAllowed) rejectionReasons.push('path-outside-allowed')
   if (sawUnapprovedDelete) rejectionReasons.push('unapproved-delete')
 
-  // record-change allowlist (§11.5, §5.3) — second-review fix (P1): see
+  // record-change allowlist (§11.5, §5.3): second-review fix (P1): see
   // the `ALLOWED_SELF_RECORD_KINDS` doc comment above for the exact rule
   // and its documented, minimal deviation. Two independent, named
   // rejections close the finding: an out-of-allowlist kind or a
@@ -340,7 +339,7 @@ function sortRejectionReasons(reasons: ExtendedRejectionReason[]): ExtendedRejec
 }
 
 // ---------------------------------------------------------------------------
-// §11.6 — full inspection
+// §11.6: full inspection
 // ---------------------------------------------------------------------------
 
 export type ContractChangeInput = {
@@ -367,7 +366,7 @@ export type InspectDeltaExtras = {
 }
 
 /**
- * §11.6 — the full inspection shown to the user before approve/apply.
+ * §11.6: the full inspection shown to the user before approve/apply.
  * Builds on `validateReturnedDelta` and never auto-approves a partial or
  * rejected response (§19 "Copilot response incomplete").
  */
@@ -420,7 +419,7 @@ export function inspectDelta(
   }
 }
 
-/** §19 "Copilot response incomplete" — the required fields missing from a partial response. */
+/** §19 "Copilot response incomplete": the required fields missing from a partial response. */
 export function missingRequiredDeltaFields(delta: ReturnedDelta): string[] {
   const missing: string[] = []
   if (!delta.deltaId) missing.push('deltaId')
@@ -485,7 +484,7 @@ export function approveDeltaToApply(inspection: DeltaInspection, approval: Appro
   }
   // Second-review fix (P1), requirement 3: a delta whose accepted record
   // changes carry a kind `buildApplyPlanWithRecords` cannot represent (a
-  // kind mismatch that somehow reached this point — e.g. a tampered or
+  // kind mismatch that somehow reached this point: e.g. a tampered or
   // stale inspection object bypassing `validateReturnedDelta`) is refused
   // rather than approved for an apply that would silently drop it again.
   const hasUnrepresentableRecordChange = inspection.recordChanges.some(
@@ -518,7 +517,7 @@ export function approveDeltaToApply(inspection: DeltaInspection, approval: Appro
 }
 
 // ---------------------------------------------------------------------------
-// §12.2 — transactional apply plan
+// §12.2: transactional apply plan
 // ---------------------------------------------------------------------------
 
 export type BuildApplyPlanInput = {
@@ -528,7 +527,7 @@ export type BuildApplyPlanInput = {
   expectedWorkspaceRevision?: string
 }
 
-/** §12.2 — verifies the base workspace revision and the inspected delta hash; deletes are ordered last. */
+/** §12.2: verifies the base workspace revision and the inspected delta hash; deletes are ordered last. */
 export function buildApplyPlan(inspection: DeltaInspection, delta: ReturnedDelta, input: BuildApplyPlanInput): DeltaApplyPlan {
   const creates = (delta.fileChanges ?? []).filter((c) => c.action !== 'delete')
   const deletes = (delta.fileChanges ?? []).filter((c) => c.action === 'delete')
@@ -552,7 +551,7 @@ export function buildApplyPlan(inspection: DeltaInspection, delta: ReturnedDelta
 }
 
 // ---------------------------------------------------------------------------
-// Second-review fix (P1) — carrying accepted record changes into the apply
+// Second-review fix (P1): carrying accepted record changes into the apply
 // plan instead of silently discarding them (§12.2, §5.3)
 // ---------------------------------------------------------------------------
 
@@ -563,7 +562,7 @@ export type PlanRecordChange = { recordId: string; kind: string; summary: string
  * agent; this module never edits records.ts) has no field for accepted
  * record changes, so this fix carries them in this parallel, exported
  * structure instead of leaving the apply plan to silently discard them the
- * way it used to — the exact second-review finding. Contract-change
+ * way it used to: the exact second-review finding. Contract-change
  * request: add `recordChanges: PlanRecordChanges` directly to
  * `DeltaApplyPlan` in records.ts once that file is free to edit; until
  * then, callers use `buildApplyPlanWithRecords` (not `buildApplyPlan`)
@@ -572,7 +571,7 @@ export type PlanRecordChange = { recordId: string; kind: string; summary: string
  *
  * `moduleDesignChanges` (kind `'moduleDesign'`) carry real design content
  * and MUST be persisted as a new **draft** revision (via
- * `applyRecordChangeToDesign`) or the apply must fail — never silently
+ * `applyRecordChangeToDesign`) or the apply must fail: never silently
  * drop them, and never persist them as `approved` (§5.3, §12.2). Every
  * entry here already passed the §11.5 allowlist during inspection, so
  * `buildApplyPlanWithRecords` does not re-validate kind; it trusts an
@@ -592,7 +591,7 @@ export type PlanRecordChanges = {
 export type BuildApplyPlanWithRecordsResult = { plan: DeltaApplyPlan; recordChanges: PlanRecordChanges }
 
 /**
- * §12.2 — `buildApplyPlan` plus the accepted record changes split by kind
+ * §12.2: `buildApplyPlan` plus the accepted record changes split by kind
  * (see `PlanRecordChanges`). Fully backward compatible with
  * `buildApplyPlan`: the returned `plan` is identical to what
  * `buildApplyPlan` would have produced for the same inputs.
@@ -618,19 +617,19 @@ export type RecordChangeInput = { recordId: string; kind: string; summary: strin
 export type ApplyRecordChangeOutcome = { updated: ModuleDesignSpecification; diagnostics: CapDiagnostic[] }
 
 /**
- * §12.2 / §5.3 — pure projection of one accepted `moduleDesign` record
+ * §12.2 / §5.3: pure projection of one accepted `moduleDesign` record
  * change onto the current module design. Always produces DRAFT content:
  * forces `status` to `'draft'` (or `'needsInput'` when the payload itself
  * requests that state) and strips any `approval` object or
  * `status: 'approved'` the payload tries to carry, emitting a diagnostic
- * when it does — a belt-and-braces re-check, since `validateReturnedDelta`
+ * when it does: a belt-and-braces re-check, since `validateReturnedDelta`
  * should already have rejected such a payload with
  * `record-change-sets-approval` before this helper ever runs. The caller
  * (operations layer) persists `updated` as a new draft revision; it must
  * never persist it as `approved` (§5.3 "a record shall move to `approved`
  * only through an explicit approval operation").
  *
- * Only meaningful for a `kind: 'moduleDesign'` change — call only with
+ * Only meaningful for a `kind: 'moduleDesign'` change: call only with
  * entries from `buildApplyPlanWithRecords`'s
  * `recordChanges.moduleDesignChanges`. Any other kind is a caller error:
  * the design is returned unchanged with a diagnostic rather than guessing

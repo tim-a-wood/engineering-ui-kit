@@ -13,7 +13,7 @@ This template applies to the Phase 1 scaffold package and can be copied for futu
 - `MOCK-*`: approved hi-fi mockups used as app-specific visual calibration references, not exhaustive standards.
 - `engineering-ui-kit-prd-v7-final-contracts-incorporated.md`.
 - `engineering-ui-kit-gap-analysis-v4-final-contracts.md`.
-- `engineering-ui-kit-public-reuse-research-report-v3-dark-first-hi-fi-aligned.md`.
+- `engineering-ui-kit-public-reuse-research-report-v3-dual-mode-hi-fi-aligned.md`.
 - `engineering-ui-kit-high-level-delivery-plan-v0.1.md`.
 - `engineering-ui-kit-phase-1-implementation-spec-v0.1.md`.
 
@@ -24,15 +24,15 @@ This template applies to the Phase 1 scaffold package and can be copied for futu
 | Reviewer | `<name>` |
 | Date | `<YYYY-MM-DD>` |
 | Package version | `0.1.0-scaffold` |
-| Package reviewed | `engineering-ui-kit-standards-v0.1-dark-first-scaffold.zip` |
+| Package reviewed | `engineering-ui-kit-standards-v0.1-dual-mode-scaffold.zip` |
 | Input files reviewed | `<list>` |
 | Automated checks result | `<Pass / Fail / Not run>` |
 | Manual checks result | `<Pass / Fail / Not run>` |
-| Dark-first consistency result | `<Pass / Fail>` |
+| Dual-mode consistency result | `<Pass / Fail>` |
 | Source-of-truth consistency result | `<Pass / Fail>` |
 | Defects found | `<summary>` |
 | Corrections applied | `<summary>` |
-| Final result | `<Pass / Pass with minor corrections / Fail — restructure required>` |
+| Final result | `<Pass / Pass with minor corrections / Fail: restructure required>` |
 
 ## Defects Found
 
@@ -44,7 +44,7 @@ This template applies to the Phase 1 scaffold package and can be copied for futu
 
 - `Pass`
 - `Pass with minor corrections`
-- `Fail — restructure required`
+- `Fail: restructure required`
 
 ## Current Phase 1 Execution Record
 
@@ -53,14 +53,14 @@ This template applies to the Phase 1 scaffold package and can be copied for futu
 | Reviewer | ChatGPT execution pass |
 | Date | 2026-07-03 |
 | Package version | `0.1.0-scaffold` |
-| Package reviewed | `engineering-ui-kit-standards-v0.1-dark-first-scaffold.zip` |
+| Package reviewed | `engineering-ui-kit-standards-v0.1-dual-mode-scaffold.zip` |
 | Input files reviewed | Phase 1 implementation spec, high-level delivery plan, PRD, gap analysis, public reuse research report, approved dark hi-fi mockup references |
 | Automated checks result | Pass |
 | Manual checks result | Pass |
-| Dark-first consistency result | Pass |
+| Dual-mode consistency result | Pass |
 | Source-of-truth consistency result | Pass |
 | Defects found | No critical or major defects after correction. |
-| Corrections applied | Scaffold files were populated with required headings, placeholder JSON contracts, schema files, dark-first language, traceability, and handoff constraints before packaging. |
+| Corrections applied | Scaffold files were populated with required headings, placeholder JSON contracts, schema files, dual-mode language, traceability, and handoff constraints before packaging. |
 | Final result | Pass |
 
 ## Traceability Notes

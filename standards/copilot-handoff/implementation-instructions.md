@@ -7,7 +7,7 @@ UI Kit compliant UI changes.
 
 ## Scope
 
-This standard covers implementation constraints, source hierarchy, dark-first and
+This standard covers implementation constraints, source hierarchy, dual-mode and
 token expectations, protected behavior, output shape, and reporting limitations.
 Reusable prompt wording lives in `standards/prompts/implementation-prompt.md`.
 
@@ -23,63 +23,72 @@ Reusable prompt wording lives in `standards/prompts/implementation-prompt.md`.
 
 ## Required Architecture
 
-### AI-IMPL-000 — Enforce the technical writing policy
+### AI-IMPL-000: Enforce the technical writing policy
 
 Apply the Engineering UI Kit writing profile based on ASD-STE100 Issue 9 to all generated
 user-interface text, source-code text, diagrams, and documents. Use American English
 and active voice. Limit instructions to 20 words and descriptions to 25 words per
 sentence. Write names and diagram labels as `VERB + OBJECT` with no more than four
 words. Use the same technical term for the same concept. Do not use contractions or
-semicolons. Check all generated text before returning the overlay.
+semicolons or em dashes. Check all generated text before returning the overlay.
 
-### AI-IMPL-001 — Inspect all three inputs first
+### AI-IMPL-001: Inspect all three inputs first
 
 Before proposing changes, inspect the repo flatfile, the task or combined pack, and
 the standards or visual reference pack. Do not begin from memory or chat history.
 
-### AI-IMPL-002 — Constrain changes to expected files and task scope
+### AI-IMPL-002: Constrain changes to expected files and task scope
 
 Modify only files listed under expected changed files. Do not rename protected modules,
 expand into unrelated screens, or rewrite the repository.
 
-### AI-IMPL-003 — Preserve domain behavior
+### AI-IMPL-003: Preserve domain behavior
 
 Keep task-section behavior, validation rules, preview and export semantics, and any
 other protected behaviors listed in the task packet. Presentation may change; domain
 outcomes must not.
 
-### AI-IMPL-004 — Enforce dark-first semantic tokens
+### AI-IMPL-004: Enforce dual-mode semantic tokens
 
-Transformed UI must be dark-first and must consume semantic tokens through CSS custom
-properties. Do not implement light mode. Do not hard-code decorative colors outside
-the token entry point.
+The frontend must support light and dark modes. It must use semantic CSS variables.
+Add a labeled mode button. Store the user choice. Do not hard-code decorative colors.
 
-### AI-IMPL-005 — Reference the primary visual page and applicable IDs
+### AI-IMPL-004A: Enforce icons and help
+
+Use Lucide icons only. Add a tooltip to each icon-only control. Add contextual help
+for complex domain terms. Keep required instructions visible.
+
+### AI-IMPL-004B: Reject generated-interface tropes
+
+Reject accent-strip tiles, ornamental sparkles, card walls, em dashes, glass effects,
+and vague promotional copy.
+
+### AI-IMPL-005: Reference the primary visual page and applicable IDs
 
 Use the labeled primary visual reference and the supplied standard, component, layout,
 and token IDs. Treat mockups as calibration, not an exhaustive component catalog.
 
-### AI-IMPL-006 — Require accessibility behavior
+### AI-IMPL-006: Require accessibility behavior
 
 Preserve or improve keyboard access, visible focus, dialog dismissal, focus return,
 labels, and status text that does not rely on color alone.
 
-### AI-IMPL-007 — Require `ui-overlay.zip`
+### AI-IMPL-007: Require `ui-overlay.zip`
 
 Return changed and new files only in `ui-overlay.zip` using repo-relative paths. Do
 not return a full repository archive.
 
-### AI-IMPL-008 — Prohibit unrelated rewrites
+### AI-IMPL-008: Prohibit unrelated rewrites
 
 Do not add routers, state libraries, component libraries, network clients, Electron
 code, tests frameworks, or unrelated refactors.
 
-### AI-IMPL-009 — Report limitations instead of inventing requirements
+### AI-IMPL-009: Report limitations instead of inventing requirements
 
 If an input is missing, ambiguous, or conflicting, report the limitation. Do not
 silently invent product requirements or acceptance criteria.
 
-### AI-IMPL-010 — No success claim without local verification
+### AI-IMPL-010: No success claim without local verification
 
 Do not claim the task is complete. Local typecheck, build, overlay inspection, and
 acceptance checks remain human-owned.
@@ -94,7 +103,7 @@ acceptance checks remain human-owned.
 ## Prohibited Patterns
 
 - Full-repo output.
-- Light-mode implementation.
+- A frontend that supports only one color mode.
 - Generic SaaS or neon styling.
 - Changing export filenames or validation rules without explicit permission.
 - Automatic application instructions that bypass human review.

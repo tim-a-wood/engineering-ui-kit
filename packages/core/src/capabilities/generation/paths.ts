@@ -4,7 +4,7 @@
  * Every planning function in this directory must produce byte-identical output
  * regardless of input ordering, host path separators, or locale. This module is
  * the single place that normalizes paths and orders collections so those rules
- * are enforced consistently — never `node:path`, never `Array.prototype.sort`
+ * are enforced consistently: never `node:path`, never `Array.prototype.sort`
  * with `localeCompare` (locale-sensitive), never `Date.now()`/`Math.random()`.
  */
 

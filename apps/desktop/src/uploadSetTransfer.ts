@@ -3,9 +3,9 @@
  *
  * Electron's clipboard API has no cross-platform "write files" call, but each
  * platform accepts a raw buffer in its native format:
- *  - macOS: `NSFilenamesPboardType` — an XML plist array of absolute paths.
- *  - Windows: `CF_HDROP` — a DROPFILES header + double-null-terminated UTF-16LE list.
- *  - Linux: `text/uri-list` — file:// URIs (best-effort; file managers vary).
+ *  - macOS: `NSFilenamesPboardType`: an XML plist array of absolute paths.
+ *  - Windows: `CF_HDROP`: a DROPFILES header + double-null-terminated UTF-16LE list.
+ *  - Linux: `text/uri-list`: file:// URIs (best-effort; file managers vary).
  *
  * Builders are pure so they can be exercised directly in tests without a
  * clipboard or a display server.

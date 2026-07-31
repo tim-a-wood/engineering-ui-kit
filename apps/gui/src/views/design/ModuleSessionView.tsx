@@ -1,5 +1,5 @@
 /**
- * §9.3 Module-design session — six fixed steps, one current step shown,
+ * §9.3 Module-design session: six fixed steps, one current step shown,
  * completed steps openable, returning to an earlier step never drops later
  * draft data (enforced by the core session functions this view calls
  * through the store).
@@ -56,7 +56,7 @@ export type ModuleSessionViewProps = {
   onRunChecks: () => void
   onApprove: () => void
   onCreateHandoff: () => void
-  /** §9.8 diagrams step — omitted only by tests that do not exercise it. */
+  /** §9.8 diagrams step: omitted only by tests that do not exercise it. */
   store?: DesignStore
   architecture?: SystemStructureSpecification
   allDesigns?: ModuleDesignSpecification[]
@@ -224,7 +224,7 @@ function BehaviorStep(props: { design: ModuleDesignSpecification; onAnswerQuesti
         <ul>
           {design.requiredOperations.map((operation) => (
             <li key={operation.operationId}>
-              {operation.operationId} from {operation.providerModuleId ?? 'an unassigned provider'} — {operation.reason}
+              {operation.operationId} from {operation.providerModuleId ?? 'an unassigned provider'}: {operation.reason}
             </li>
           ))}
         </ul>

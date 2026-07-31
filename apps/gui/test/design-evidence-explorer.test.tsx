@@ -26,7 +26,7 @@ describe('Evidence Explorer (§22)', () => {
     expect(screen.getByText('Broken trace')).toBeTruthy()
     expect(screen.getByText('MATLAB and Simulink timeout')).toBeTruthy()
     expect(screen.getByText('Invalid column mapping')).toBeTruthy()
-    expect(screen.getByText('Rejected — reviewer not independent')).toBeTruthy()
+    expect(screen.getByText('Rejected: reviewer not independent')).toBeTruthy()
     expect(screen.getByText('Old package after baseline change')).toBeTruthy()
   })
 

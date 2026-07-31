@@ -1,5 +1,5 @@
 /**
- * EUC-05 — Contract registry.
+ * EUC-05: Contract registry.
  *
  * Normative source: docs/use-case-led-workflow/SPECIFICATION.md §9.7, §25.3
  * (EUC-05). Owns operation-version provider ownership, provider/consumer
@@ -147,9 +147,9 @@ export function approveContract(
   if (!existing) {
     return { ok: false, diagnostics: [diagnostic('CAP-DES-CTR-UNKNOWN', `unknown contract: ${key}`, { relatedIds: [key] })] }
   }
-  // §4, §17.3 (second-review finding — self-asserted approval identity):
+  // §4, §17.3 (second-review finding: self-asserted approval identity):
   // case-insensitive after trim, and rejects a `service:` actor the same as
-  // an `agent:` actor — `'Agent:copilot'` and `' SERVICE:bot '` are both
+  // an `agent:` actor: `'Agent:copilot'` and `' SERVICE:bot '` are both
   // rejected here, not just a lowercase `'agent:...'` string.
   if (isNonHumanActor(approval.approvedBy)) {
     return {
@@ -218,12 +218,12 @@ export type ContractChangeClassification = {
   classification: ContractCompatibility
   newRequiredMigration: boolean
   reasons: string[]
-  /** §25.3 — an incompatible change identifies every known consumer. */
+  /** §25.3: an incompatible change identifies every known consumer. */
   staleConsumerModuleIds: string[]
 }
 
 /**
- * §9.7 — classifies a contract change: additive optional outputs or
+ * §9.7: classifies a contract change: additive optional outputs or
  * postconditions are additive; a new precondition or a tightened input
  * schema is conditionally compatible; a removed operation, a changed
  * behavior type, a removed output, or an incompatible schema reference is

@@ -71,13 +71,13 @@ export function ImpactQueue({ bridge, projectId, records, projection = 'design' 
         <div className="cap-impact-result">
           <p>Kind of change: <strong>{guided ? impactClassificationLabel(proposal.classification) : proposal.classification}</strong></p>
           <h4>Affected</h4>
-          <ul>{proposal.affectedModules.map((item) => <li key={item.moduleId}>{modName(item.moduleId)} — {reasonText(item.reason)}</li>)}</ul>
+          <ul>{proposal.affectedModules.map((item) => <li key={item.moduleId}>{modName(item.moduleId)}: {reasonText(item.reason)}</li>)}</ul>
           <h4>Unaffected</h4>
-          <ul>{proposal.unaffectedModules.map((item) => <li key={item.moduleId}>{modName(item.moduleId)} — {reasonText(item.reason)}</li>)}</ul>
+          <ul>{proposal.unaffectedModules.map((item) => <li key={item.moduleId}>{modName(item.moduleId)}: {reasonText(item.reason)}</li>)}</ul>
           {!guided ? (
             <>
               <h4>Provider-first packet order</h4>
-              <ol>{proposal.proposedPacketOrder.map((id, index) => <li key={id}>{id}{index === 0 ? ' — next actionable' : ' — waiting'}</li>)}</ol>
+              <ol>{proposal.proposedPacketOrder.map((id, index) => <li key={id}>{id}{index === 0 ? ': next actionable' : ': waiting'}</li>)}</ol>
             </>
           ) : null}
         </div>

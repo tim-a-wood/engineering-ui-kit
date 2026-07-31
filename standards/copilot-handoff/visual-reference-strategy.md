@@ -20,12 +20,12 @@ mockup completeness.
 
 ## Required Architecture
 
-### AI-VIS-001 — One primary image per page
+### AI-VIS-001: One primary image per page
 
 Each selected screen has one primary visual reference image. Secondary images are
 included only when the task packet explicitly needs another state or region.
 
-### AI-VIS-002 — Required labels
+### AI-VIS-002: Required labels
 
 Every included reference must record:
 
@@ -36,29 +36,29 @@ Every included reference must record:
 - related acceptance criteria IDs;
 - related standards or component IDs.
 
-### AI-VIS-003 — Source filename stability
+### AI-VIS-003: Source filename stability
 
 Cite the repository source filename. For Vertical Slice 01:
 
 `project-sources/visual-references/1F2214C9-D849-41CA-9435-68F0A0032EEB.jpeg`
 
-### AI-VIS-004 — Visual reference pack is the third file in the visual variant
+### AI-VIS-004: Visual reference pack is the third file in the visual variant
 
 When using the visual/mockup variant, package labeled references as
 `visual-reference-pack.pdf`. Do not upload loose images as extra files.
 
-### AI-VIS-005 — Mockups calibrate, they do not exhaust
+### AI-VIS-005: Mockups calibrate, they do not exhaust
 
 If a control appears in the mockup but lacks a standards rule, follow authored
 standards and report the gap. If a manifest component is absent from the mockup, do
 not invent it unless the task packet requires it.
 
-### AI-VIS-006 — No contact-sheet default
+### AI-VIS-006: No contact-sheet default
 
 Do not substitute a multi-page contact sheet for a labeled primary page reference
 unless the task explicitly requests overview context.
 
-### AI-VIS-007 — Baseline must not pre-imitate the reference
+### AI-VIS-007: Baseline must not pre-imitate the reference
 
 Phase 1 baseline styling remains plain. The reference is for later transformation
 measurement, not for baseline restyling.
@@ -92,7 +92,7 @@ Vertical Slice 01 primary reference:
 
 - Target selection cites the primary reference path.
 - Visual reference pack contract requires labels and forbids contact-sheet default.
-- Acceptance criteria include dark-first and no-drift expectations.
+- Acceptance criteria include dual-mode and no-drift expectations.
 
 ## Traceability
 

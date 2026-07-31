@@ -4,7 +4,7 @@
  *
  * This module is Node-only (reads the target repository for preimages and
  * ownership classification) and is therefore exported from
- * `capabilities/index.ts` only, never `browser.ts` — unlike `generation/*`,
+ * `capabilities/index.ts` only, never `browser.ts`: unlike `generation/*`,
  * which stays filesystem-independent so it can bundle into the renderer.
  *
  * `assembleGenerationPlan` is the thin, deterministic glue between the frozen
@@ -21,7 +21,7 @@
  *    `targetRoot`) to classify each file as `create` (no existing file) or
  *    `update` (existing file, different content) with its `preimageHash`. A
  *    file whose freshly generated content is byte-identical to what is
- *    already on disk is dropped entirely from the plan — this is exactly
+ *    already on disk is dropped entirely from the plan: this is exactly
  *    CAP-ERA-001 §13 impact-scoped regeneration: only the files a change
  *    actually touches ever appear in `fileChanges`.
  * 4. Classify every included file `generated`-owned and assemble the
@@ -37,7 +37,7 @@
  * therefore does not emit a composition-root file; see the module-level
  * `PYTHON_COMPOSITION_GAP_NOTE` below. Running the generated app (actually
  * resolving a real registered implementation at process start) is WP8 scope
- * — `resolved.g.*` here is deterministic DI-wiring glue only.
+ *: `resolved.g.*` here is deterministic DI-wiring glue only.
  */
 
 import fs from 'node:fs'
@@ -227,7 +227,7 @@ function buildResolvedOperationsFileTs(input: {
         [
           `// operation: ${ref.operationId}@${ref.version}`,
           `// no composition registration resolves this operation directly (expects a registration whose contractId`,
-          `// equals the operationId); deferred to full DI wiring — see WP8 runtime integration.`,
+          `// equals the operationId); deferred to full DI wiring: see WP8 runtime integration.`,
           `export const ${exportName}: unknown = undefined`,
         ].join('\n'),
       )
