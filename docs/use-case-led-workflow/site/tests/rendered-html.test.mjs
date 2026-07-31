@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
 const siteRoot = new URL("../", import.meta.url);
@@ -227,4 +227,31 @@ test("publishes the social preview at its declared size", async () => {
   assert.equal(image.toString("ascii", 1, 4), "PNG");
   assert.equal(image.readUInt32BE(16), 1729);
   assert.equal(image.readUInt32BE(20), 910);
+});
+
+test("publishes mobile product-trial galleries with local evidence", async () => {
+  const [sourceGallery, publishedGallery, publishedIndex, umlGallery] =
+    await Promise.all([
+      readFile(
+        new URL(
+          "../../product-trials/2026-07-31-diverse/GALLERY.html",
+          siteRoot,
+        ),
+      ),
+      readFile(new URL("public/trials/GALLERY.html", siteRoot)),
+      readFile(new URL("public/trials/index.html", siteRoot)),
+      readText(new URL("public/trials/UML-GALLERY.html", siteRoot)),
+    ]);
+
+  assert.deepEqual(publishedGallery, sourceGallery);
+  assert.deepEqual(publishedIndex, sourceGallery);
+  assert.match(umlGallery, /UML portfolio gallery/);
+
+  for (const page of ["GALLERY.html", "UML-GALLERY.html"]) {
+    const html = await readText(new URL(`public/trials/${page}`, siteRoot));
+
+    for (const match of html.matchAll(/(?:href|src)="(\.\/evidence\/[^"]+)"/g)) {
+      await access(new URL(match[1], new URL(`public/trials/${page}`, siteRoot)));
+    }
+  }
 });
