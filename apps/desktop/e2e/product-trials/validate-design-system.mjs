@@ -47,6 +47,22 @@ function assertSet(actual, expected, label) {
   }
 }
 
+function relativeLuminance(hex) {
+  const channels = hex.match(/[a-f\d]{2}/gi)?.map((channel) => Number.parseInt(channel, 16) / 255)
+  if (!channels || channels.length !== 3) throw new Error(`Invalid color value: ${hex}`)
+  const linear = channels.map((channel) => (
+    channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+  ))
+  return (0.2126 * linear[0]) + (0.7152 * linear[1]) + (0.0722 * linear[2])
+}
+
+function contrastRatio(foreground, background) {
+  const foregroundLuminance = relativeLuminance(foreground)
+  const backgroundLuminance = relativeLuminance(background)
+  return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05)
+    / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05)
+}
+
 function findUiRoot(system) {
   const modulesRoot = path.join(sampleRoot, system.slug, 'capabilities/modules')
   const uiRoots = fs.readdirSync(modulesRoot)
@@ -75,11 +91,28 @@ if (new Set(configurablePalettes.map((palette) => palette.dark.canvas)).size !==
 const gulfstreamPalette = configurablePalettes.find((palette) => palette.id === 'gulfstream')
 if (
   gulfstreamPalette?.light.surface !== '#ffffff'
-  || gulfstreamPalette.dark.canvas !== '#002846'
-  || gulfstreamPalette.dark.surface !== '#003767'
+  || gulfstreamPalette.dark.canvas !== '#003767'
+  || gulfstreamPalette.dark.surface !== '#063c6b'
   || gulfstreamPalette.dark.text !== '#ffffff'
+  || gulfstreamPalette.dark.accent !== '#ffffff'
 ) {
   throw new Error('The default Gulfstream palette does not preserve white-led light mode and blue-led dark mode.')
+}
+const gulfstreamContrast = {
+  textOnCanvas: contrastRatio(gulfstreamPalette.dark.text, gulfstreamPalette.dark.canvas),
+  mutedTextOnSurface: contrastRatio(gulfstreamPalette.dark.textMuted, gulfstreamPalette.dark.surface),
+  quietTextOnSurface: contrastRatio(gulfstreamPalette.dark.textQuiet, gulfstreamPalette.dark.surface),
+  strongBorderOnSurface: contrastRatio(gulfstreamPalette.dark.borderStrong, gulfstreamPalette.dark.surface),
+  accentOnCanvas: contrastRatio(gulfstreamPalette.dark.accent, gulfstreamPalette.dark.canvas),
+}
+if (gulfstreamContrast.textOnCanvas < 7 || gulfstreamContrast.accentOnCanvas < 7) {
+  throw new Error('The Gulfstream dark palette does not meet the 7:1 enhanced contrast target for white content.')
+}
+if (gulfstreamContrast.mutedTextOnSurface < 4.5 || gulfstreamContrast.quietTextOnSurface < 4.5) {
+  throw new Error('The Gulfstream dark palette does not meet the 4.5:1 contrast target for secondary text.')
+}
+if (gulfstreamContrast.strongBorderOnSurface < 3) {
+  throw new Error('The Gulfstream dark palette does not meet the 3:1 non-text contrast target for strong boundaries.')
 }
 
 const sharedSources = {
@@ -206,6 +239,9 @@ const report = {
   layouts: sortedUnique(results.map((result) => result.productKind)),
   defaultPalettes: sortedUnique(productTrialSystems.map((system) => system.design.paletteId)),
   configurablePalettes: configurablePalettes.map((palette) => palette.id),
+  gulfstreamContrast: Object.fromEntries(
+    Object.entries(gulfstreamContrast).map(([key, value]) => [key, Number(value.toFixed(2))]),
+  ),
   productsWithMetrics: results.filter((result) => result.metricSurfaceCount > 0).length,
   productsWithoutMetrics: results.filter((result) => result.metricSurfaceCount === 0).length,
   fonts: sortedUnique(productTrialSystems.map((system) => system.design.fontId)),

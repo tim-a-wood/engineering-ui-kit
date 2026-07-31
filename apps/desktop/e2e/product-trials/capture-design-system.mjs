@@ -7,8 +7,8 @@ import { productTrialSystems } from './systems.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(here, '../../../..')
-const outputRoot = path.join(repoRoot, 'docs/design-system/2026-07-31-visual-refinement-3/screenshots')
-const reportPath = path.join(repoRoot, 'docs/design-system/2026-07-31-visual-refinement-3/browser-validation.json')
+const outputRoot = path.join(repoRoot, 'docs/design-system/2026-07-31-gulfstream-palette/screenshots')
+const reportPath = path.join(repoRoot, 'docs/design-system/2026-07-31-gulfstream-palette/browser-validation.json')
 const failures = []
 const screenshots = []
 const browserResults = []
@@ -88,6 +88,7 @@ async function assertPaletteMode(page, system, mode) {
       colors.canvas !== system.design.darkCanvas
       || colors.surface !== system.design.darkSurface
       || colors.text !== '#ffffff'
+      || colors.accent !== '#ffffff'
     )
   ) {
     throw new Error(`Dark mode is not Gulfstream-blue-led: ${JSON.stringify(colors)}.`)

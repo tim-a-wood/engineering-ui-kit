@@ -14,7 +14,7 @@ The visual language is a modern enterprise workbench. It is restrained, structur
 
 ## FND-VIS-001: Dual-mode surface hierarchy
 
-Use semantic surface tokens to create hierarchy. Keep equal visual quality in light and dark modes. The default light mode shall use white as the dominant surface and Gulfstream blue as the accent. The default dark mode shall use Gulfstream blue as the dominant surface and white for text and contrast. A project can select another approved palette before generation. The selected palette shall control the same semantic roles in both modes.
+Use semantic surface tokens to create hierarchy. Keep equal visual quality in light and dark modes. The default light mode shall use white as the dominant surface and Gulfstream blue as the accent. The default dark mode shall use Gulfstream blue `#003767` as the base field and white for text, selected controls, focus, and primary action highlights. Dark surface layers shall stay close to the Gulfstream hue. They shall not replace it with cyan or generic navy. A project can select another approved palette before generation. The selected palette shall control the same semantic roles in both modes.
 
 ## FND-VIS-002: Restrained technical accent usage
 

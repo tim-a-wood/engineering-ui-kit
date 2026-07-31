@@ -1,0 +1,287 @@
+{
+  "generatedAt": "2026-07-31T12:54:38.263Z",
+  "contractId": "EUIT-FRONTEND-001",
+  "writingProfileId": "EUIT-STE-001",
+  "products": 10,
+  "layouts": [
+    "fracas",
+    "hil",
+    "impact",
+    "load",
+    "review",
+    "sessions",
+    "supplier",
+    "telemetry",
+    "trade",
+    "writing"
+  ],
+  "defaultPalettes": [
+    "gulfstream"
+  ],
+  "configurablePalettes": [
+    "gulfstream",
+    "graphite",
+    "teal",
+    "violet",
+    "amber"
+  ],
+  "gulfstreamContrast": {
+    "textOnCanvas": 12.05,
+    "mutedTextOnSurface": 8.5,
+    "quietTextOnSurface": 6.23,
+    "strongBorderOnSurface": 3.89,
+    "accentOnCanvas": 12.05
+  },
+  "productsWithMetrics": 5,
+  "productsWithoutMetrics": 5,
+  "fonts": [
+    "atkinson",
+    "inter",
+    "plex",
+    "source",
+    "system"
+  ],
+  "startModes": [
+    "dark",
+    "light",
+    "system"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "blockingFindings": 0,
+  "warningFindings": 0,
+  "results": [
+    {
+      "slug": "do178-review-workbench",
+      "productKind": "review",
+      "architecture": "layered review system",
+      "moduleCount": 4,
+      "scenarioCount": 8,
+      "visibleActionCount": 2,
+      "commandActionCount": 8,
+      "shellMode": "review",
+      "composition": "review-compact",
+      "primaryActionIcon": "circle-check",
+      "metricSurfaceCount": 1,
+      "metricPurpose": "Show review readiness and independence before approval.",
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "inter",
+        "startMode": "system",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "eaebedc01a21d269e661027d5c314796a3094f4702af901c18f7b5c7ec008830",
+      "findings": []
+    },
+    {
+      "slug": "copilot-session-hub",
+      "productKind": "sessions",
+      "architecture": "event-driven work tracker",
+      "moduleCount": 4,
+      "scenarioCount": 9,
+      "visibleActionCount": 1,
+      "commandActionCount": 9,
+      "shellMode": "sessions",
+      "composition": "sessions-comfortable",
+      "primaryActionIcon": "play",
+      "metricSurfaceCount": 0,
+      "metricPurpose": null,
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "source",
+        "startMode": "dark",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "63cef0323421d2560138ed69987b91574610ed0f33b0cb31b861af6a8cd98f25",
+      "findings": []
+    },
+    {
+      "slug": "technical-writing-desk",
+      "productKind": "writing",
+      "architecture": "document-centered authoring system",
+      "moduleCount": 3,
+      "scenarioCount": 7,
+      "visibleActionCount": 2,
+      "commandActionCount": 7,
+      "shellMode": "editor",
+      "composition": "writing-comfortable",
+      "primaryActionIcon": "plus",
+      "metricSurfaceCount": 0,
+      "metricPurpose": null,
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "plex",
+        "startMode": "light",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "593d62032e9fb39e26883d304b7445a25aadb17d4145ffe4cfe1ac4c417e3047",
+      "findings": []
+    },
+    {
+      "slug": "flight-test-telemetry",
+      "productKind": "telemetry",
+      "architecture": "stream-processing investigation system",
+      "moduleCount": 5,
+      "scenarioCount": 8,
+      "visibleActionCount": 3,
+      "commandActionCount": 8,
+      "shellMode": "instrument",
+      "composition": "telemetry-compact",
+      "primaryActionIcon": "play",
+      "metricSurfaceCount": 1,
+      "metricPurpose": "Show data health and triage scope for the selected flight.",
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "inter",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "fe0925359d214a30606aeca2abc5fad17fc4d919239456bde560d3cc4dd535d0",
+      "findings": []
+    },
+    {
+      "slug": "aircraft-trade-study",
+      "productKind": "trade",
+      "architecture": "analysis pipeline",
+      "moduleCount": 4,
+      "scenarioCount": 6,
+      "visibleActionCount": 2,
+      "commandActionCount": 6,
+      "shellMode": "analysis",
+      "composition": "trade-compact",
+      "primaryActionIcon": "plus",
+      "metricSurfaceCount": 0,
+      "metricPurpose": null,
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "source",
+        "startMode": "system",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "85f4c42566232204b50943134cb9e74e783d943cc976e7201c146ead8668fd49",
+      "findings": []
+    },
+    {
+      "slug": "hil-campaign-orchestrator",
+      "productKind": "hil",
+      "architecture": "distributed execution control",
+      "moduleCount": 5,
+      "scenarioCount": 9,
+      "visibleActionCount": 3,
+      "commandActionCount": 9,
+      "shellMode": "control",
+      "composition": "hil-compact",
+      "primaryActionIcon": "calendar",
+      "metricSurfaceCount": 1,
+      "metricPurpose": "Show campaign progress, bench state, and remaining test time.",
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "plex",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "1da956487e9990b25b097afc89e5e4d03a915fa8b123a1d30d7ea3105bec2d00",
+      "findings": []
+    },
+    {
+      "slug": "supplier-intake-portal",
+      "productKind": "supplier",
+      "architecture": "case-management portal",
+      "moduleCount": 4,
+      "scenarioCount": 7,
+      "visibleActionCount": 2,
+      "commandActionCount": 7,
+      "shellMode": "portal",
+      "composition": "supplier-comfortable",
+      "primaryActionIcon": "upload",
+      "metricSurfaceCount": 0,
+      "metricPurpose": null,
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "atkinson",
+        "startMode": "light",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "a71d82acb759a7ef8fdee1465130f1848d2fcc8a82428aa51587acb0c002d78c",
+      "findings": []
+    },
+    {
+      "slug": "requirements-impact-workbench",
+      "productKind": "impact",
+      "architecture": "graph-analysis decision system",
+      "moduleCount": 4,
+      "scenarioCount": 8,
+      "visibleActionCount": 2,
+      "commandActionCount": 8,
+      "shellMode": "graph",
+      "composition": "impact-compact",
+      "primaryActionIcon": "upload",
+      "metricSurfaceCount": 1,
+      "metricPurpose": "Show the change scope for planning and approval.",
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "inter",
+        "startMode": "system",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "823ecabc2e5a9771b56c5120849af1bc6ccdbeb83bb278ce3d9b3bc447a95450",
+      "findings": []
+    },
+    {
+      "slug": "avionics-load-manager",
+      "productKind": "load",
+      "architecture": "transactional release system",
+      "moduleCount": 5,
+      "scenarioCount": 7,
+      "visibleActionCount": 3,
+      "commandActionCount": 7,
+      "shellMode": "secure",
+      "composition": "load-compact",
+      "primaryActionIcon": "upload",
+      "metricSurfaceCount": 0,
+      "metricPurpose": null,
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "49148f1930208ec57ae4cb382c55b504555703d1804f4db6b43e07058ed12db7",
+      "findings": []
+    },
+    {
+      "slug": "fracas-investigation",
+      "productKind": "fracas",
+      "architecture": "closed-loop reliability system",
+      "moduleCount": 5,
+      "scenarioCount": 9,
+      "visibleActionCount": 3,
+      "commandActionCount": 9,
+      "shellMode": "case",
+      "composition": "fracas-comfortable",
+      "primaryActionIcon": "plus",
+      "metricSurfaceCount": 1,
+      "metricPurpose": "Show reliability risk that changes case priority.",
+      "design": {
+        "palette": "Gulfstream blue",
+        "font": "atkinson",
+        "startMode": "system",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "52cb437097afbf2e64b60abc28b8bd5b52e42a93a2220da834ab0d7079febbf7",
+      "findings": []
+    }
+  ]
+}

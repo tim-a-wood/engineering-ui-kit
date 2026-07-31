@@ -17,7 +17,7 @@ It defines light and dark mode behavior. It does not require one frontend framew
 
 - Light and dark modes are part of the implementation contract.
 - White is dominant in the default light mode. Gulfstream blue is the primary accent.
-- Gulfstream blue is dominant in the default dark mode. White provides text and contrast.
+- Gulfstream blue `#003767` is the base field in the default dark mode. White provides text, focus, selected-control, and primary-action highlights.
 - Each frontend can select another approved palette and font.
 - `standards/tokens.json` is the token source of truth.
 - The Phase 1 baseline app intentionally uses plain system styling so Phase 3 can

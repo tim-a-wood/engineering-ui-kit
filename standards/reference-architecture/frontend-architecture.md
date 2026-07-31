@@ -23,8 +23,9 @@ backends.
 - Domain behavior for task sections, validation, preview, and export must remain
   reviewable and protected during later Copilot transformation.
 - Generated frontends support light and dark modes.
-- The default palette uses white as the dominant light-mode color and Gulfstream
-  blue as the dominant dark-mode color.
+- The default palette uses white as the dominant light-mode color. It uses
+  Gulfstream blue `#003767` as the dark-mode base field and white as the
+  interaction highlight.
 - Each generated frontend stores its selected palette and font as project
   configuration. The generator must preserve those selections in every view.
 - Application names and page titles use short natural noun phrases or task labels.
