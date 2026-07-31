@@ -1,0 +1,188 @@
+{
+  "slug": "requirements-impact-workbench",
+  "name": "Requirements Change-Impact Workbench",
+  "shortName": "Impact Workbench",
+  "category": "Change control",
+  "description": "Trace requirement changes through design, interfaces, implementation, verification, and approval.",
+  "workDescription": "A systems engineer traces requirement changes and controls affected software work.",
+  "examples": [
+    "Import requirement change",
+    "Trace affected design",
+    "Review module impact",
+    "Assign rework action",
+    "Approve impact decision"
+  ],
+  "prohibited": "Never delete unreviewed impact",
+  "failureScenario": "Reject unreviewed impact",
+  "layout": "impact",
+  "accent": "#14b8a6",
+  "accentRgb": "20, 184, 166",
+  "homeTitle": "Change impact",
+  "eyebrow": "CHANGE CR-1187 · SYS-NAV-142 · REVISION 6",
+  "headline": "Seven artifacts wait",
+  "subhead": "Follow the change from system intent to affected software and verification evidence.",
+  "nav": [
+    "Change impact",
+    "Change requests",
+    "Affected artifacts",
+    "Decisions"
+  ],
+  "metrics": [
+    [
+      "Affected artifacts",
+      "17",
+      "Seven need action"
+    ],
+    [
+      "Affected modules",
+      "4",
+      "One safety critical"
+    ],
+    [
+      "Test impact",
+      "6",
+      "Two new cases"
+    ],
+    [
+      "Decision state",
+      "Review",
+      "Three owners pending"
+    ]
+  ],
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Impact path",
+      "subtitle": "The selected path reaches implementation and verification.",
+      "nodes": [
+        [
+          "SYS-NAV-142",
+          "System requirement",
+          1
+        ],
+        [
+          "SWR-NAV-388",
+          "Software requirement",
+          2
+        ],
+        [
+          "NAV Monitor",
+          "Software module",
+          3
+        ],
+        [
+          "LLR-NAV-142",
+          "Low-level requirement",
+          4
+        ],
+        [
+          "SVT-NAV-388",
+          "Verification case",
+          5
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Affected artifacts",
+      "subtitle": "Ownership and required action.",
+      "headers": [
+        "Artifact",
+        "Owner",
+        "Impact",
+        "Action"
+      ],
+      "rows": [
+        [
+          "SWR-NAV-388",
+          "Navigation",
+          "Content",
+          "Revise"
+        ],
+        [
+          "ICD-ADC-014",
+          "Air data",
+          "Interface",
+          "Review"
+        ],
+        [
+          "MON-NAV",
+          "Navigation",
+          "Behavior",
+          "Revise"
+        ],
+        [
+          "SVT-NAV-388",
+          "Verification",
+          "Coverage",
+          "Add cases"
+        ]
+      ]
+    },
+    {
+      "type": "decision",
+      "title": "Decision summary",
+      "subtitle": "Proposed scope for approval.",
+      "items": [
+        [
+          "Change class",
+          "Software behavior"
+        ],
+        [
+          "Safety effect",
+          "No increase"
+        ],
+        [
+          "Reapproval",
+          "Four baselines"
+        ],
+        [
+          "Estimated work",
+          "14 engineer-days"
+        ]
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Import requirement change",
+      "actionId": "import-requirement-change",
+      "result": "Requirement change CR-1187 imported",
+      "target": "changes"
+    },
+    {
+      "name": "Trace affected design",
+      "actionId": "trace-affected-design",
+      "result": "Seventeen affected artifacts traced",
+      "target": "artifacts"
+    },
+    {
+      "name": "Review module impact",
+      "actionId": "review-module-impact",
+      "result": "Four module impacts opened",
+      "target": "artifacts"
+    },
+    {
+      "name": "Assign rework action",
+      "actionId": "assign-rework-action",
+      "result": "Rework action assigned",
+      "target": "artifacts"
+    },
+    {
+      "name": "Approve impact decision",
+      "actionId": "approve-impact-decision",
+      "result": "Impact decision approved",
+      "target": "decisions"
+    },
+    {
+      "name": "Reject unreviewed impact",
+      "actionId": "reject-unreviewed-impact",
+      "result": "Unreviewed impact kept open",
+      "target": "decisions"
+    }
+  ],
+  "reward": "Change risk contained",
+  "buyer": "Systems engineering or configuration management lead",
+  "commercialJob": "Reduce change-analysis time and prevent missed downstream work.",
+  "useFrequency": "Daily on active programmes"
+}

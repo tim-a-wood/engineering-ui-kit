@@ -1,0 +1,8 @@
+{
+  "name": "copilot-session-hub",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node ./test-runner.mjs"
+  }
+}

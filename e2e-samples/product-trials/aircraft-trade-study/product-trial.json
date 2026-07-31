@@ -1,0 +1,196 @@
+{
+  "slug": "aircraft-trade-study",
+  "name": "Aircraft Performance Trade-Study Workbench",
+  "shortName": "Trade Study",
+  "category": "Engineering analysis",
+  "description": "Run MATLAB-backed analyses, compare options, review sensitivity, and approve study baselines.",
+  "workDescription": "A performance engineer compares aircraft design options and approves a study baseline.",
+  "examples": [
+    "Define study case",
+    "Run performance analysis",
+    "Compare design options",
+    "Review sensitivity result",
+    "Approve study baseline"
+  ],
+  "prohibited": "Never use stale assumption",
+  "failureScenario": "Reject stale assumption",
+  "layout": "trade",
+  "accent": "#22c55e",
+  "accentRgb": "34, 197, 94",
+  "homeTitle": "Trade study",
+  "eyebrow": "STUDY TS-CRZ-019 · BASELINE B",
+  "headline": "Option C leads",
+  "subhead": "Compare performance, weight, and margin with one controlled assumption set.",
+  "nav": [
+    "Trade study",
+    "Cases",
+    "Results",
+    "Baselines"
+  ],
+  "metrics": [
+    [
+      "Study cases",
+      "18",
+      "Three changed"
+    ],
+    [
+      "Best range",
+      "3,420 nm",
+      "Option C"
+    ],
+    [
+      "Weight margin",
+      "+186 kg",
+      "At design point"
+    ],
+    [
+      "Assumptions",
+      "24 / 25",
+      "One stale input"
+    ]
+  ],
+  "panels": [
+    {
+      "type": "scatter",
+      "title": "Range versus weight",
+      "subtitle": "Each point uses the approved atmospheric model.",
+      "points": [
+        [
+          "A",
+          22,
+          72,
+          "Baseline"
+        ],
+        [
+          "B",
+          46,
+          54,
+          "Balanced"
+        ],
+        [
+          "C",
+          72,
+          32,
+          "Recommended"
+        ],
+        [
+          "D",
+          84,
+          66,
+          "High risk"
+        ]
+      ]
+    },
+    {
+      "type": "matrix",
+      "title": "Option comparison",
+      "subtitle": "Weighted result · higher is better.",
+      "headers": [
+        "Option",
+        "Range",
+        "Field length",
+        "Margin",
+        "Score"
+      ],
+      "rows": [
+        [
+          "A",
+          "3,180 nm",
+          "1,460 m",
+          "+92 kg",
+          "72"
+        ],
+        [
+          "B",
+          "3,310 nm",
+          "1,510 m",
+          "+148 kg",
+          "84"
+        ],
+        [
+          "C",
+          "3,420 nm",
+          "1,535 m",
+          "+186 kg",
+          "91"
+        ],
+        [
+          "D",
+          "3,460 nm",
+          "1,690 m",
+          "+44 kg",
+          "68"
+        ]
+      ]
+    },
+    {
+      "type": "sensitivity",
+      "title": "Sensitivity",
+      "subtitle": "Range response around Option C.",
+      "items": [
+        [
+          "Cruise drag",
+          "-118 nm",
+          82
+        ],
+        [
+          "Empty weight",
+          "-76 nm",
+          58
+        ],
+        [
+          "Fuel reserve",
+          "-54 nm",
+          41
+        ],
+        [
+          "Propulsive efficiency",
+          "+96 nm",
+          71
+        ]
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Define study case",
+      "actionId": "define-study-case",
+      "result": "Study case TS-CRZ-019 defined",
+      "target": "cases"
+    },
+    {
+      "name": "Run performance analysis",
+      "actionId": "run-performance-analysis",
+      "result": "Performance analysis completed",
+      "target": "results"
+    },
+    {
+      "name": "Compare design options",
+      "actionId": "compare-design-options",
+      "result": "Four design options compared",
+      "target": "results"
+    },
+    {
+      "name": "Review sensitivity result",
+      "actionId": "review-sensitivity-result",
+      "result": "Sensitivity result opened",
+      "target": "results"
+    },
+    {
+      "name": "Approve study baseline",
+      "actionId": "approve-study-baseline",
+      "result": "Study baseline B approved",
+      "target": "baselines"
+    },
+    {
+      "name": "Reject stale assumption",
+      "actionId": "reject-stale-assumption",
+      "result": "Stale assumption rejected",
+      "target": "cases"
+    }
+  ],
+  "reward": "Decision confidence gained",
+  "buyer": "Performance engineering manager",
+  "commercialJob": "Make engineering analyses repeatable, comparable, and reviewable.",
+  "useFrequency": "Weekly and at design gates"
+}

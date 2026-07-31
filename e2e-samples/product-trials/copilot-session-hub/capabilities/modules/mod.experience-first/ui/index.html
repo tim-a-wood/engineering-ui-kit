@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" style="--accent:#8b5cf6;--accent-rgb:139, 92, 246">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Copilot Session Operations Hub</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">SH</span>
+          <span class="brand-copy"><b>Session Hub</b><small>Daily productivity</small></span>
+        </div>
+        <nav aria-label="Primary navigation">
+          <button class="nav-item active" type="button" aria-label="Open session command" data-nav-target="session-command" data-nav-title="Session command">
+            <span class="nav-icon">01</span>Session command
+          </button><button class="nav-item " type="button" aria-label="Open active sessions" data-nav-target="active-sessions" data-nav-title="Active sessions">
+            <span class="nav-icon">02</span>Active sessions
+          </button><button class="nav-item " type="button" aria-label="Open issues" data-nav-target="issues" data-nav-title="Issues">
+            <span class="nav-icon">03</span>Issues
+          </button><button class="nav-item " type="button" aria-label="Open history" data-nav-target="history" data-nav-title="History">
+            <span class="nav-icon">04</span>History
+          </button>
+        </nav>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-summary"><span>Current focus</span><strong>3</strong><small>Two code, one design</small></div>
+        <div class="user-row"><span class="avatar">TW</span><span><b>Tim Wood</b><small>Local engineering workspace</small></span></div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button>
+            <h1 data-view-title>Session command</h1>
+          </div>
+          <button class="command-button" type="button" data-open-commands aria-label="Open command menu">
+            <span>Find or run an action</span><kbd>⌘ K</kbd>
+          </button>
+        </header>
+
+        <main>
+          <section class="hero">
+            <div>
+              <p class="eyebrow">TODAY · 12 ACTIVE SESSIONS</p>
+              <h2>Three sessions wait</h2>
+              <p class="hero-copy">Keep every agent run connected to its objective, branch, evidence, and next action.</p>
+            </div>
+            <div class="hero-status"><span class="status-orb"></span>Workspace data is current</div>
+          </section>
+
+          <section class="metrics" aria-label="Current measures">
+            <article class="metric"><span>Active now</span><strong>12</strong><small>Across five projects</small></article><article class="metric"><span>Need review</span><strong>3</strong><small>Two code, one design</small></article><article class="metric"><span>Blocked</span><strong>2</strong><small>18 minutes waiting</small></article><article class="metric"><span>Closed today</span><strong>9</strong><small>+3 from average</small></article>
+          </section>
+
+          <section class="action-deck" aria-label="Scenario actions">
+            <span>Prove the next task</span>
+            <button class="scenario-action" type="button" data-scenario-action="start-copilot-session" data-target="active">Start Copilot session</button><button class="scenario-action" type="button" data-scenario-action="update-session-progress" data-target="active">Update session progress</button><button class="scenario-action" type="button" data-scenario-action="record-session-issue" data-target="issues">Record session issue</button><button class="scenario-action" type="button" data-scenario-action="review-active-sessions" data-target="active">Review active sessions</button><button class="scenario-action" type="button" data-scenario-action="close-completed-session" data-target="history">Close completed session</button><button class="scenario-action" type="button" data-scenario-action="reject-unresolved-session" data-target="issues">Reject unresolved session</button>
+          </section>
+
+          <section class="scenario-results" aria-live="polite">
+            <div class="scenario-result " data-scenario-result="start-copilot-session" data-reward="Momentum gained">Session started with packet PKT-204</div><div class="scenario-result " data-scenario-result="update-session-progress" data-reward="Momentum gained">Progress updated to 68 percent</div><div class="scenario-result " data-scenario-result="record-session-issue" data-reward="Momentum gained">Issue linked to the active session</div><div class="scenario-result " data-scenario-result="review-active-sessions" data-reward="Momentum gained">Twelve active sessions shown</div><div class="scenario-result " data-scenario-result="close-completed-session" data-reward="Momentum gained">Session closed with evidence</div><div class="scenario-result is-failure" data-scenario-result="reject-unresolved-session" data-reward="Momentum gained">Unresolved session kept open</div>
+          </section>
+
+          <section class="panel-grid">
+            <article class="panel panel-kanban">
+    <header class="panel-header"><div><h3>Session flow</h3><p>Work moves from intent to verified completion.</p></div></header>
+    <div class="panel-body"><div class="kanban"><section class="kanban-column"><h4>Running<span>3</span></h4><div class="kanban-card">Refine UML routing</div><div class="kanban-card">Add STE prompt gate</div><div class="kanban-card">Audit coverage adapter</div></section><section class="kanban-column"><h4>Needs you<span>2</span></h4><div class="kanban-card">Review HIL command API</div><div class="kanban-card">Choose evidence schema</div></section><section class="kanban-column"><h4>Verifying<span>2</span></h4><div class="kanban-card">Test Windows package</div><div class="kanban-card">Run medium product walk</div></section><section class="kanban-column"><h4>Complete<span>2</span></h4><div class="kanban-card">Fix port alignment</div><div class="kanban-card">Add session recovery</div></section></div></div>
+  </article><article class="panel panel-timeline">
+    <header class="panel-header"><div><h3>Selected session</h3><p>Refine UML routing · main · 42 minutes</p></div></header>
+    <div class="panel-body"><ol class="timeline"><li><time>09:14</time><span><b>Started</b><small>Prompt and repository context accepted.</small></span></li><li><time>09:28</time><span><b>Changed</b><small>The router now compares four layout strategies.</small></span></li><li><time>09:43</time><span><b>Tested</b><small>Fourteen stress products have no crossings.</small></span></li><li><time>09:56</time><span><b>Needs review</b><small>Hospital access retains four crossings.</small></span></li></ol></div>
+  </article><article class="panel panel-list">
+    <header class="panel-header"><div><h3>Issues to clear</h3><p>Resolve one issue to restore momentum.</p></div></header>
+    <div class="panel-body"><ul class="simple-list"><li><span><b>Hospital graph</b><small>Layout target missed</small></span><em>High</em></li><li><span><b>Windows package</b><small>Runner is unavailable</small></span><em>Medium</em></li><li><span><b>MATLAB proof</b><small>Engine is not connected</small></span><em>Medium</em></li></ul></div>
+  </article>
+          </section>
+
+          <details class="activity-drawer">
+            <summary>Session activity</summary>
+            <ol class="activity-list" data-activity>
+              <li><span>Now</span><b>Workspace opened</b><small>Track Copilot sessions, progress, issues, outputs, and next actions across engineering projects.</small></li>
+            </ol>
+          </details>
+        </main>
+      </section>
+    </div>
+
+    <aside class="reward-toast" data-reward aria-live="polite">
+      <div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>Momentum gained</b><small data-reward-count>0 of 6 actions evidenced</small></span></div>
+      <div class="reward-track"><i data-reward-bar></i></div>
+    </aside>
+
+    <div class="command-dialog" data-command-dialog hidden>
+      <section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu">
+        <div class="command-search">
+          <input data-command-input aria-label="Find an action" placeholder="Find an action…" />
+          <button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button>
+        </div>
+        <ul class="command-list">
+          <li data-command-item="start-copilot-session"><button type="button"><span>Start Copilot session</span><small>active</small></button></li><li data-command-item="update-session-progress"><button type="button"><span>Update session progress</span><small>active</small></button></li><li data-command-item="record-session-issue"><button type="button"><span>Record session issue</span><small>issues</small></button></li><li data-command-item="review-active-sessions"><button type="button"><span>Review active sessions</span><small>active</small></button></li><li data-command-item="close-completed-session"><button type="button"><span>Close completed session</span><small>history</small></button></li><li data-command-item="reject-unresolved-session"><button type="button"><span>Reject unresolved session</span><small>issues</small></button></li>
+        </ul>
+      </section>
+    </div>
+
+    <script id="product-config" type="application/json">{"name":"Copilot Session Operations Hub","reward":"Momentum gained","scenarios":[{"name":"Start Copilot session","actionId":"start-copilot-session","result":"Session started with packet PKT-204","target":"active"},{"name":"Update session progress","actionId":"update-session-progress","result":"Progress updated to 68 percent","target":"active"},{"name":"Record session issue","actionId":"record-session-issue","result":"Issue linked to the active session","target":"issues"},{"name":"Review active sessions","actionId":"review-active-sessions","result":"Twelve active sessions shown","target":"active"},{"name":"Close completed session","actionId":"close-completed-session","result":"Session closed with evidence","target":"history"},{"name":"Reject unresolved session","actionId":"reject-unresolved-session","result":"Unresolved session kept open","target":"issues"}]}</script>
+    <script src="./runtime.js"></script>
+  </body>
+</html>

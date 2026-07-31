@@ -76,23 +76,18 @@ export function InspectionWarningGroups(props: {
   warnings: OverlayInspectionSummary['warnings']
   guided?: boolean
 }) {
-  const groups = [...props.warnings.reduce((map, warning) => {
-    const current = map.get(warning.ruleId) ?? []
-    current.push(warning)
-    map.set(warning.ruleId, current)
-    return map
-  }, new Map<string, OverlayInspectionSummary['warnings']>()).entries()]
+  const groups = groupInspectionWarnings(props.warnings)
   return (
     <div className="inspection-warning-groups">
       <p><b>{props.warnings.length} warning{props.warnings.length === 1 ? '' : 's'}</b> in {groups.length} group{groups.length === 1 ? '' : 's'}.</p>
-      {groups.map(([ruleId, warnings]) => (
-        <details key={ruleId}>
-          <summary><code>{ruleId}</code><span>{warnings[0]?.message}</span><b>{warnings.length}</b></summary>
+      {groups.map((group) => (
+        <details key={group.key}>
+          <summary><code>{group.label}</code><span>{group.summary}</span><b>{group.warnings.length}</b></summary>
           <ul>
-            {warnings.map((warning, index) => (
+            {group.warnings.map((warning, index) => (
               <li key={`${warning.path ?? 'general'}.${index}`}>
                 {warning.path ? <code className="path-wrap">{warning.path}</code> : null}
-                {!props.guided || warning.message !== warnings[0]?.message ? <span>{warning.message}</span> : null}
+                {!props.guided || warning.message !== group.summary ? <span>{warning.message}</span> : null}
               </li>
             ))}
           </ul>
@@ -100,6 +95,27 @@ export function InspectionWarningGroups(props: {
       ))}
     </div>
   )
+}
+
+export function groupInspectionWarnings(warnings: OverlayInspectionSummary['warnings']) {
+  const groups = new Map<string, {
+    key: string
+    label: string
+    summary: string
+    warnings: OverlayInspectionSummary['warnings']
+  }>()
+  for (const warning of warnings) {
+    const reviewCode = warning.message.match(/\b(STE-[A-Z0-9-]+)\b/)?.[1]
+    const label = reviewCode ?? warning.ruleId
+    const key = `${warning.ruleId}.${label}`
+    const summary = reviewCode
+      ? warning.message.replace(/^.*?\bSTE-[A-Z0-9-]+\b\s*—\s*/, '')
+      : warning.message
+    const group = groups.get(key) ?? { key, label, summary, warnings: [] }
+    group.warnings.push(warning)
+    groups.set(key, group)
+  }
+  return [...groups.values()]
 }
 
 export async function copyText(text: string): Promise<boolean> {

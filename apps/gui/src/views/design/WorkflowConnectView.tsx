@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useDesignState, type DesignStore } from './designState'
-import { operationName } from './designShared'
+import { operationName, suggestedScenarioSelector } from './designShared'
 
 type Props = { store: DesignStore }
 type SupportedKind = 'ui' | 'cli' | 'http'
@@ -167,8 +167,8 @@ export function WorkflowConnectView({ store }: Props) {
         approvedAction: item.action,
         approvedResult: entry.checks.find((check) => check.stepId === stepId)?.expectedResult ?? 'Observe the approved result.',
         route: text(saved?.route, '/'),
-        actionSelector: text(saved?.actionSelector, `[data-scenario-step="${stepId}"]`),
-        expectedSelector: text(saved?.expectedSelector, `[data-scenario-result="${stepId}"]`),
+        actionSelector: text(saved?.actionSelector, suggestedScenarioSelector(item.action, 'action')),
+        expectedSelector: text(saved?.expectedSelector, suggestedScenarioSelector(item.action, 'result')),
         expectedText: text(saved?.expectedText),
       }
     })))
@@ -369,8 +369,26 @@ export function WorkflowConnectView({ store }: Props) {
                         <input value={captureSelector} onChange={(event) => setCaptureSelector(event.target.value)} placeholder="main" />
                       </label>
                       <div className="design-connect-ui-steps">
-                        <h4>Scenario actions</h4>
-                        <p>Each row names the real action and the result that the browser must observe.</p>
+                        <div className="hstack between">
+                          <div>
+                            <h4>Scenario actions</h4>
+                            <p>Each row names the real action and the result that the browser must observe.</p>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-compact"
+                            onClick={() => setUiStepActions((current) => current.map((action) => ({
+                              ...action,
+                              actionSelector: suggestedScenarioSelector(action.approvedAction, 'action'),
+                              expectedSelector: suggestedScenarioSelector(action.approvedAction, 'result'),
+                            })))}
+                          >
+                            Suggest selectors
+                          </button>
+                        </div>
+                        <p className="design-connect-suggestion">
+                          The app suggests a stable selector pair from each approved action. Review the suggestions before verification.
+                        </p>
                         {uiStepActions.map((action, index) => (
                           <fieldset key={action.stepId} data-scenario-name={action.scenarioName}>
                             <legend>{action.scenarioName}</legend>

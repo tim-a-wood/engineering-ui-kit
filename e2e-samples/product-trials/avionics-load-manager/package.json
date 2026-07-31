@@ -1,0 +1,8 @@
+{
+  "name": "avionics-load-manager",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node ./test-runner.mjs"
+  }
+}

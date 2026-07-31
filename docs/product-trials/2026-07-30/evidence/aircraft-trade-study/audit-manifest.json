@@ -1,0 +1,135 @@
+{
+  "slug": "aircraft-trade-study",
+  "product": "Aircraft Performance Trade-Study Workbench",
+  "category": "Engineering analysis",
+  "buyer": "Performance engineering manager",
+  "commercialJob": "Make engineering analyses repeatable, comparable, and reviewable.",
+  "useFrequency": "Weekly and at design gates",
+  "passed": true,
+  "packaged": true,
+  "clicks": 66,
+  "screenshots": [
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/02-project-dashboard.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/03-plan-input.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/05-plan-approved.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/05a-application-workflow.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/05b-system-structure.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-application-workflow-component.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-application-workflow-activity.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-application-workflow-state-machine.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-application-workflow-sequence.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-application-workflow-use-case.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/07-application-workflow-approved.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-user-workspace-component.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-user-workspace-activity.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-user-workspace-state-machine.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-user-workspace-sequence.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-user-workspace-use-case.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/07-user-workspace-approved.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/08-build-applied.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/10-product-dashboard.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/11-product-action.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/12-product-protected-action.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/13-product-command-menu.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/14-product-mobile.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/16-connect-verified.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/17-verify-passed.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/18-evidence-trace.png",
+    "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 724,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1262,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 1031,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 337,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 493,
+      "clicks": 3
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 6140,
+      "clicks": 26
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 837,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 2804,
+      "clicks": 7
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 1818,
+      "clicks": 4
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 4110,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 745,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings38 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.38capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-RE"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings38 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.38capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-REVIEW-ACTION-FORM — Review the "
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T02:24:22.884Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-aircraft-trade-study-E0jWTY/aircraft-trade-study",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/aircraft-trade-study",
+  "timeToProductProofMs": 15351,
+  "scenarioSummary": {
+    "scenarioCount": 6,
+    "passedCount": 6,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T02:24:44.970Z",
+  "durationMs": 22086
+}

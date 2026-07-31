@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" style="--accent:#22c55e;--accent-rgb:34, 197, 94">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aircraft Performance Trade-Study Workbench</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">TS</span>
+          <span class="brand-copy"><b>Trade Study</b><small>Engineering analysis</small></span>
+        </div>
+        <nav aria-label="Primary navigation">
+          <button class="nav-item active" type="button" aria-label="Open trade study" data-nav-target="trade-study" data-nav-title="Trade study">
+            <span class="nav-icon">01</span>Trade study
+          </button><button class="nav-item " type="button" aria-label="Open cases" data-nav-target="cases" data-nav-title="Cases">
+            <span class="nav-icon">02</span>Cases
+          </button><button class="nav-item " type="button" aria-label="Open results" data-nav-target="results" data-nav-title="Results">
+            <span class="nav-icon">03</span>Results
+          </button><button class="nav-item " type="button" aria-label="Open baselines" data-nav-target="baselines" data-nav-title="Baselines">
+            <span class="nav-icon">04</span>Baselines
+          </button>
+        </nav>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-summary"><span>Current focus</span><strong>3,420 nm</strong><small>Option C</small></div>
+        <div class="user-row"><span class="avatar">TW</span><span><b>Tim Wood</b><small>Local engineering workspace</small></span></div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button>
+            <h1 data-view-title>Trade study</h1>
+          </div>
+          <button class="command-button" type="button" data-open-commands aria-label="Open command menu">
+            <span>Find or run an action</span><kbd>⌘ K</kbd>
+          </button>
+        </header>
+
+        <main>
+          <section class="hero">
+            <div>
+              <p class="eyebrow">STUDY TS-CRZ-019 · BASELINE B</p>
+              <h2>Option C leads</h2>
+              <p class="hero-copy">Compare performance, weight, and margin with one controlled assumption set.</p>
+            </div>
+            <div class="hero-status"><span class="status-orb"></span>Workspace data is current</div>
+          </section>
+
+          <section class="metrics" aria-label="Current measures">
+            <article class="metric"><span>Study cases</span><strong>18</strong><small>Three changed</small></article><article class="metric"><span>Best range</span><strong>3,420 nm</strong><small>Option C</small></article><article class="metric"><span>Weight margin</span><strong>+186 kg</strong><small>At design point</small></article><article class="metric"><span>Assumptions</span><strong>24 / 25</strong><small>One stale input</small></article>
+          </section>
+
+          <section class="action-deck" aria-label="Scenario actions">
+            <span>Prove the next task</span>
+            <button class="scenario-action" type="button" data-scenario-action="define-study-case" data-target="cases">Define study case</button><button class="scenario-action" type="button" data-scenario-action="run-performance-analysis" data-target="results">Run performance analysis</button><button class="scenario-action" type="button" data-scenario-action="compare-design-options" data-target="results">Compare design options</button><button class="scenario-action" type="button" data-scenario-action="review-sensitivity-result" data-target="results">Review sensitivity result</button><button class="scenario-action" type="button" data-scenario-action="approve-study-baseline" data-target="baselines">Approve study baseline</button><button class="scenario-action" type="button" data-scenario-action="reject-stale-assumption" data-target="cases">Reject stale assumption</button>
+          </section>
+
+          <section class="scenario-results" aria-live="polite">
+            <div class="scenario-result " data-scenario-result="define-study-case" data-reward="Decision confidence gained">Study case TS-CRZ-019 defined</div><div class="scenario-result " data-scenario-result="run-performance-analysis" data-reward="Decision confidence gained">Performance analysis completed</div><div class="scenario-result " data-scenario-result="compare-design-options" data-reward="Decision confidence gained">Four design options compared</div><div class="scenario-result " data-scenario-result="review-sensitivity-result" data-reward="Decision confidence gained">Sensitivity result opened</div><div class="scenario-result " data-scenario-result="approve-study-baseline" data-reward="Decision confidence gained">Study baseline B approved</div><div class="scenario-result is-failure" data-scenario-result="reject-stale-assumption" data-reward="Decision confidence gained">Stale assumption rejected</div>
+          </section>
+
+          <section class="panel-grid">
+            <article class="panel panel-scatter">
+    <header class="panel-header"><div><h3>Range versus weight</h3><p>Each point uses the approved atmospheric model.</p></div></header>
+    <div class="panel-body" style="padding:28px 34px 38px"><div class="scatter"><span class="scatter-point" style="left:22%;bottom:72%">A<small>Baseline</small></span><span class="scatter-point" style="left:46%;bottom:54%">B<small>Balanced</small></span><span class="scatter-point" style="left:72%;bottom:32%">C<small>Recommended</small></span><span class="scatter-point" style="left:84%;bottom:66%">D<small>High risk</small></span></div></div>
+  </article><article class="panel panel-matrix">
+    <header class="panel-header"><div><h3>Option comparison</h3><p>Weighted result · higher is better.</p></div></header>
+    <div class="panel-body" style="padding:0;overflow:auto">
+    <table class="data-table">
+      <thead><tr><th>Option</th><th>Range</th><th>Field length</th><th>Margin</th><th>Score</th></tr></thead>
+      <tbody><tr><td>A</td><td>3,180 nm</td><td>1,460 m</td><td>+92 kg</td><td>72</td></tr><tr><td>B</td><td>3,310 nm</td><td>1,510 m</td><td>+148 kg</td><td>84</td></tr><tr><td>C</td><td>3,420 nm</td><td>1,535 m</td><td>+186 kg</td><td>91</td></tr><tr><td>D</td><td>3,460 nm</td><td>1,690 m</td><td>+44 kg</td><td>68</td></tr></tbody>
+    </table>
+  </div>
+  </article><article class="panel panel-sensitivity">
+    <header class="panel-header"><div><h3>Sensitivity</h3><p>Range response around Option C.</p></div></header>
+    <div class="panel-body sensitivity"><div class="sensitivity-row"><span>Cruise drag</span><div class="sensitivity-track"><i style="width:82%"></i></div><b>-118 nm</b></div><div class="sensitivity-row"><span>Empty weight</span><div class="sensitivity-track"><i style="width:58%"></i></div><b>-76 nm</b></div><div class="sensitivity-row"><span>Fuel reserve</span><div class="sensitivity-track"><i style="width:41%"></i></div><b>-54 nm</b></div><div class="sensitivity-row"><span>Propulsive efficiency</span><div class="sensitivity-track"><i style="width:71%"></i></div><b>+96 nm</b></div></div>
+  </article>
+          </section>
+
+          <details class="activity-drawer">
+            <summary>Session activity</summary>
+            <ol class="activity-list" data-activity>
+              <li><span>Now</span><b>Workspace opened</b><small>Run MATLAB-backed analyses, compare options, review sensitivity, and approve study baselines.</small></li>
+            </ol>
+          </details>
+        </main>
+      </section>
+    </div>
+
+    <aside class="reward-toast" data-reward aria-live="polite">
+      <div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>Decision confidence gained</b><small data-reward-count>0 of 6 actions evidenced</small></span></div>
+      <div class="reward-track"><i data-reward-bar></i></div>
+    </aside>
+
+    <div class="command-dialog" data-command-dialog hidden>
+      <section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu">
+        <div class="command-search">
+          <input data-command-input aria-label="Find an action" placeholder="Find an action…" />
+          <button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button>
+        </div>
+        <ul class="command-list">
+          <li data-command-item="define-study-case"><button type="button"><span>Define study case</span><small>cases</small></button></li><li data-command-item="run-performance-analysis"><button type="button"><span>Run performance analysis</span><small>results</small></button></li><li data-command-item="compare-design-options"><button type="button"><span>Compare design options</span><small>results</small></button></li><li data-command-item="review-sensitivity-result"><button type="button"><span>Review sensitivity result</span><small>results</small></button></li><li data-command-item="approve-study-baseline"><button type="button"><span>Approve study baseline</span><small>baselines</small></button></li><li data-command-item="reject-stale-assumption"><button type="button"><span>Reject stale assumption</span><small>cases</small></button></li>
+        </ul>
+      </section>
+    </div>
+
+    <script id="product-config" type="application/json">{"name":"Aircraft Performance Trade-Study Workbench","reward":"Decision confidence gained","scenarios":[{"name":"Define study case","actionId":"define-study-case","result":"Study case TS-CRZ-019 defined","target":"cases"},{"name":"Run performance analysis","actionId":"run-performance-analysis","result":"Performance analysis completed","target":"results"},{"name":"Compare design options","actionId":"compare-design-options","result":"Four design options compared","target":"results"},{"name":"Review sensitivity result","actionId":"review-sensitivity-result","result":"Sensitivity result opened","target":"results"},{"name":"Approve study baseline","actionId":"approve-study-baseline","result":"Study baseline B approved","target":"baselines"},{"name":"Reject stale assumption","actionId":"reject-stale-assumption","result":"Stale assumption rejected","target":"cases"}]}</script>
+    <script src="./runtime.js"></script>
+  </body>
+</html>

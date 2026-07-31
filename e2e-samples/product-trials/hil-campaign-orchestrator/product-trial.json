@@ -1,0 +1,165 @@
+{
+  "slug": "hil-campaign-orchestrator",
+  "name": "HIL Test Campaign Orchestrator",
+  "shortName": "HIL Campaigns",
+  "category": "Verification operations",
+  "description": "Reserve benches, load configurations, execute procedures, manage failures, and preserve campaign evidence.",
+  "workDescription": "A test engineer runs hardware-in-the-loop campaigns and reviews failed procedures.",
+  "examples": [
+    "Reserve test bench",
+    "Load test configuration",
+    "Start test campaign",
+    "Review failed procedure",
+    "Approve campaign evidence"
+  ],
+  "prohibited": "Never use unreserved bench",
+  "failureScenario": "Reject unreserved bench",
+  "layout": "hil",
+  "accent": "#eab308",
+  "accentRgb": "234, 179, 8",
+  "homeTitle": "Campaign control",
+  "eyebrow": "CAMPAIGN HIL-FCS-088 · NIGHT SHIFT",
+  "headline": "Bench 04 runs",
+  "subhead": "Control configuration, procedures, failures, and evidence from one campaign view.",
+  "nav": [
+    "Campaign control",
+    "Bench schedule",
+    "Procedures",
+    "Evidence"
+  ],
+  "metrics": [
+    [
+      "Procedures",
+      "38 / 52",
+      "73 percent complete"
+    ],
+    [
+      "Passed",
+      "36",
+      "Two need review"
+    ],
+    [
+      "Bench state",
+      "Running",
+      "04 · FCS rig"
+    ],
+    [
+      "Time remaining",
+      "02:18",
+      "Finish at 03:42"
+    ]
+  ],
+  "panels": [
+    {
+      "type": "schedule",
+      "title": "Bench schedule",
+      "subtitle": "Reserved assets and current campaign state.",
+      "rows": [
+        [
+          "Bench 01",
+          "Available",
+          "—",
+          "Ready"
+        ],
+        [
+          "Bench 02",
+          "NAV regression",
+          "01:10",
+          "Running"
+        ],
+        [
+          "Bench 03",
+          "Maintenance",
+          "06:00",
+          "Blocked"
+        ],
+        [
+          "Bench 04",
+          "FCS campaign",
+          "02:18",
+          "Running"
+        ]
+      ]
+    },
+    {
+      "type": "pipeline",
+      "title": "Current procedure",
+      "subtitle": "TC-FCS-118 · Reject invalid air-data source",
+      "items": [
+        [
+          "Load configuration",
+          "Complete"
+        ],
+        [
+          "Start real-time model",
+          "Complete"
+        ],
+        [
+          "Inject stale source",
+          "Complete"
+        ],
+        [
+          "Observe rejection",
+          "Running"
+        ],
+        [
+          "Collect evidence",
+          "Waiting"
+        ]
+      ]
+    },
+    {
+      "type": "console",
+      "title": "Live observations",
+      "subtitle": "Time-synchronised bench output.",
+      "items": [
+        "01:23:18.442  source ADC-B marked stale",
+        "01:23:18.449  monitor rejected sample 008219",
+        "01:23:18.451  source ADC-A remains selected",
+        "01:23:18.612  assertion FCS-118-04 passed"
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Reserve test bench",
+      "actionId": "reserve-test-bench",
+      "result": "Bench 04 reserved",
+      "target": "schedule"
+    },
+    {
+      "name": "Load test configuration",
+      "actionId": "load-test-configuration",
+      "result": "Configuration FCS-24.8 loaded",
+      "target": "campaign"
+    },
+    {
+      "name": "Start test campaign",
+      "actionId": "start-test-campaign",
+      "result": "Campaign HIL-FCS-088 started",
+      "target": "campaign"
+    },
+    {
+      "name": "Review failed procedure",
+      "actionId": "review-failed-procedure",
+      "result": "Failed procedure TC-FCS-104 opened",
+      "target": "procedures"
+    },
+    {
+      "name": "Approve campaign evidence",
+      "actionId": "approve-campaign-evidence",
+      "result": "Campaign evidence approved",
+      "target": "evidence"
+    },
+    {
+      "name": "Reject unreserved bench",
+      "actionId": "reject-unreserved-bench",
+      "result": "Unreserved bench request rejected",
+      "target": "schedule"
+    }
+  ],
+  "reward": "Campaign progress secured",
+  "buyer": "Verification or laboratory manager",
+  "commercialJob": "Increase expensive bench utilisation and preserve trustworthy evidence.",
+  "useFrequency": "Daily in verification laboratories"
+}

@@ -1,0 +1,168 @@
+{
+  "slug": "do178-review-workbench",
+  "name": "DO-178C Review Workbench",
+  "shortName": "Review Workbench",
+  "category": "Design assurance",
+  "description": "Run independent reviews of software lifecycle data and preserve review evidence.",
+  "workDescription": "A software reviewer reviews lifecycle data and closes formal review findings.",
+  "examples": [
+    "Review requirement set",
+    "Record review finding",
+    "Assign finding owner",
+    "Verify finding closure",
+    "Approve review record"
+  ],
+  "prohibited": "Never use author approval",
+  "failureScenario": "Reject author approval",
+  "layout": "review",
+  "accent": "#7c8cff",
+  "accentRgb": "124, 140, 255",
+  "homeTitle": "Review control",
+  "eyebrow": "SOFTWARE REVIEW · SRR-24-017",
+  "headline": "Two findings wait",
+  "subhead": "Review the change set, record objective evidence, and protect reviewer independence.",
+  "nav": [
+    "Review control",
+    "Artifact sets",
+    "Findings",
+    "Review records"
+  ],
+  "metrics": [
+    [
+      "Review coverage",
+      "92%",
+      "148 of 161 objectives"
+    ],
+    [
+      "Open findings",
+      "2",
+      "One high priority"
+    ],
+    [
+      "Independence",
+      "Pass",
+      "All assignments valid"
+    ],
+    [
+      "Due date",
+      "02 Aug",
+      "Three workdays"
+    ]
+  ],
+  "panels": [
+    {
+      "type": "table",
+      "title": "Review queue",
+      "subtitle": "Objective evidence grouped by lifecycle artifact.",
+      "headers": [
+        "Artifact",
+        "Revision",
+        "Coverage",
+        "State"
+      ],
+      "rows": [
+        [
+          "Low-level requirements",
+          "LLR-18",
+          "48 / 48",
+          "Ready"
+        ],
+        [
+          "Software design data",
+          "SDD-12",
+          "31 / 34",
+          "Needs review"
+        ],
+        [
+          "Source code",
+          "BLD-241",
+          "52 / 55",
+          "In review"
+        ],
+        [
+          "Verification cases",
+          "SVCP-09",
+          "17 / 24",
+          "Blocked"
+        ]
+      ]
+    },
+    {
+      "type": "diff",
+      "title": "Selected change",
+      "subtitle": "LLR-NAV-142 · Prevent stale altitude source",
+      "before": "IF source_age > 500 ms THEN use cached altitude.",
+      "after": "IF source_age > 500 ms THEN reject the altitude update.",
+      "note": "The new rule removes an ambiguous fallback and links to test SVT-NAV-388."
+    },
+    {
+      "type": "checklist",
+      "title": "Review objectives",
+      "subtitle": "6 of 8 objectives complete.",
+      "items": [
+        [
+          "The requirement is accurate.",
+          true
+        ],
+        [
+          "The requirement is consistent.",
+          true
+        ],
+        [
+          "The requirement is verifiable.",
+          true
+        ],
+        [
+          "The derived requirement is identified.",
+          false
+        ],
+        [
+          "The trace is complete.",
+          false
+        ]
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Review requirement set",
+      "actionId": "review-requirement-set",
+      "result": "Requirement set opened",
+      "target": "artifacts"
+    },
+    {
+      "name": "Record review finding",
+      "actionId": "record-review-finding",
+      "result": "Finding REV-218 recorded",
+      "target": "findings"
+    },
+    {
+      "name": "Assign finding owner",
+      "actionId": "assign-finding-owner",
+      "result": "Finding assigned to Navigation team",
+      "target": "findings"
+    },
+    {
+      "name": "Verify finding closure",
+      "actionId": "verify-finding-closure",
+      "result": "Closure evidence verified",
+      "target": "findings"
+    },
+    {
+      "name": "Approve review record",
+      "actionId": "approve-review-record",
+      "result": "Review record approved",
+      "target": "records"
+    },
+    {
+      "name": "Reject author approval",
+      "actionId": "reject-author-approval",
+      "result": "Author approval rejected",
+      "target": "records"
+    }
+  ],
+  "reward": "Assurance increased",
+  "buyer": "Software verification lead",
+  "commercialJob": "Reduce review effort and produce defensible review records.",
+  "useFrequency": "Daily during review and certification increments"
+}

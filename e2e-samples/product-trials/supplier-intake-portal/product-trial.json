@@ -1,0 +1,187 @@
+{
+  "slug": "supplier-intake-portal",
+  "name": "Supplier Deliverable Intake Portal",
+  "shortName": "Supplier Intake",
+  "category": "Supply-chain assurance",
+  "description": "Validate supplier packages, record gaps, coordinate correction, and control acceptance.",
+  "workDescription": "A supplier assurance engineer validates software deliveries and records compliance gaps.",
+  "examples": [
+    "Receive supplier package",
+    "Validate package manifest",
+    "Review compliance gap",
+    "Request supplier correction",
+    "Accept supplier delivery"
+  ],
+  "prohibited": "Never use unsigned package",
+  "failureScenario": "Reject unsigned package",
+  "layout": "supplier",
+  "accent": "#ec4899",
+  "accentRgb": "236, 72, 153",
+  "homeTitle": "Supplier intake",
+  "eyebrow": "DELIVERY SUP-ACU-241 · REVISION 03",
+  "headline": "Correct one package",
+  "subhead": "Check identity, completeness, compliance, and provenance before acceptance.",
+  "nav": [
+    "Supplier intake",
+    "Deliveries",
+    "Compliance gaps",
+    "Suppliers"
+  ],
+  "metrics": [
+    [
+      "Received today",
+      "7",
+      "Five suppliers"
+    ],
+    [
+      "Ready to accept",
+      "4",
+      "All checks pass"
+    ],
+    [
+      "Need correction",
+      "2",
+      "Three open gaps"
+    ],
+    [
+      "Quarantined",
+      "1",
+      "Signature missing"
+    ]
+  ],
+  "panels": [
+    {
+      "type": "intake",
+      "title": "Delivery validation",
+      "subtitle": "ACU flight-control software · Build 241",
+      "items": [
+        [
+          "Package signature",
+          "Verified",
+          "Pass"
+        ],
+        [
+          "Manifest completeness",
+          "42 of 42 files",
+          "Pass"
+        ],
+        [
+          "Configuration identity",
+          "Matches CIDL-18",
+          "Pass"
+        ],
+        [
+          "Compliance statement",
+          "Section 7 missing",
+          "Gap"
+        ],
+        [
+          "Malware scan",
+          "No findings",
+          "Pass"
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Recent deliveries",
+      "subtitle": "Current state by supplier and package.",
+      "headers": [
+        "Supplier",
+        "Package",
+        "Received",
+        "State"
+      ],
+      "rows": [
+        [
+          "Aero Controls",
+          "ACU-241",
+          "08:14",
+          "Needs correction"
+        ],
+        [
+          "Vector Systems",
+          "NAV-118",
+          "07:52",
+          "Ready"
+        ],
+        [
+          "Northstar Labs",
+          "IOP-066",
+          "Yesterday",
+          "Accepted"
+        ],
+        [
+          "Actuation Inc.",
+          "ACE-034",
+          "Yesterday",
+          "Quarantined"
+        ]
+      ]
+    },
+    {
+      "type": "comments",
+      "title": "Correction thread",
+      "subtitle": "Gap GAP-ACU-018",
+      "items": [
+        [
+          "Review",
+          "The compliance statement does not identify tool TQL-04.",
+          "09:04"
+        ],
+        [
+          "Supplier",
+          "We will issue revision 04 before 16:00 UTC.",
+          "09:21"
+        ],
+        [
+          "Review",
+          "Keep the package identity and replace only the statement.",
+          "09:28"
+        ]
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Receive supplier package",
+      "actionId": "receive-supplier-package",
+      "result": "Supplier package SUP-ACU-241 received",
+      "target": "deliveries"
+    },
+    {
+      "name": "Validate package manifest",
+      "actionId": "validate-package-manifest",
+      "result": "Package manifest validated",
+      "target": "deliveries"
+    },
+    {
+      "name": "Review compliance gap",
+      "actionId": "review-compliance-gap",
+      "result": "Compliance gap GAP-ACU-018 opened",
+      "target": "gaps"
+    },
+    {
+      "name": "Request supplier correction",
+      "actionId": "request-supplier-correction",
+      "result": "Correction request sent to supplier queue",
+      "target": "gaps"
+    },
+    {
+      "name": "Accept supplier delivery",
+      "actionId": "accept-supplier-delivery",
+      "result": "Supplier delivery accepted",
+      "target": "deliveries"
+    },
+    {
+      "name": "Reject unsigned package",
+      "actionId": "reject-unsigned-package",
+      "result": "Unsigned package quarantined",
+      "target": "deliveries"
+    }
+  ],
+  "reward": "Supply risk reduced",
+  "buyer": "Supplier assurance or programme quality manager",
+  "commercialJob": "Shorten supplier acceptance while retaining defensible provenance.",
+  "useFrequency": "Several times each week"
+}

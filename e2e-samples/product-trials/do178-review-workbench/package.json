@@ -1,0 +1,8 @@
+{
+  "name": "do178-review-workbench",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node ./test-runner.mjs"
+  }
+}

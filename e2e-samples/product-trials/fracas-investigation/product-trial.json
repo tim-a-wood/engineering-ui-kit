@@ -1,0 +1,188 @@
+{
+  "slug": "fracas-investigation",
+  "name": "Reliability and FRACAS Investigation System",
+  "shortName": "FRACAS",
+  "category": "Reliability",
+  "description": "Capture failures, analyse causes, control corrective actions, and verify closure.",
+  "workDescription": "A reliability engineer investigates failures and verifies corrective action closure.",
+  "examples": [
+    "Record failure report",
+    "Classify failure mode",
+    "Analyze root cause",
+    "Assign corrective action",
+    "Verify action closure"
+  ],
+  "prohibited": "Never delete open corrective action",
+  "failureScenario": "Reject open corrective action",
+  "layout": "fracas",
+  "accent": "#ef4444",
+  "accentRgb": "239, 68, 68",
+  "homeTitle": "Reliability control",
+  "eyebrow": "FRACAS · AIR-DATA SYSTEM · LAST 90 DAYS",
+  "headline": "Connector faults increase",
+  "subhead": "Connect failure evidence, causal analysis, action ownership, and recurrence monitoring.",
+  "nav": [
+    "Reliability control",
+    "Failure reports",
+    "Investigations",
+    "Corrective actions"
+  ],
+  "metrics": [
+    [
+      "Open reports",
+      "24",
+      "+4 this month"
+    ],
+    [
+      "Critical",
+      "2",
+      "Both contained"
+    ],
+    [
+      "Actions overdue",
+      "3",
+      "Oldest is 11 days"
+    ],
+    [
+      "Repeat rate",
+      "8.2%",
+      "+1.4 points"
+    ]
+  ],
+  "panels": [
+    {
+      "type": "bars",
+      "title": "Failure modes",
+      "subtitle": "Pareto view · 90-day rolling window.",
+      "items": [
+        [
+          "Connector intermittency",
+          84,
+          "18"
+        ],
+        [
+          "Sensor drift",
+          58,
+          "12"
+        ],
+        [
+          "Power transient",
+          39,
+          "8"
+        ],
+        [
+          "Software timeout",
+          28,
+          "6"
+        ],
+        [
+          "Unknown",
+          18,
+          "4"
+        ]
+      ]
+    },
+    {
+      "type": "investigation",
+      "title": "Selected investigation",
+      "subtitle": "FR-2026-118 · Connector intermittency",
+      "items": [
+        [
+          "Problem",
+          "ADC-B data drops during high vibration."
+        ],
+        [
+          "Containment",
+          "Inspect and reseat connector before flight."
+        ],
+        [
+          "Root cause",
+          "Backshell torque below process limit."
+        ],
+        [
+          "Correction",
+          "Update assembly tool and inspection step."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Corrective actions",
+      "subtitle": "Ownership and recurrence evidence.",
+      "headers": [
+        "Action",
+        "Owner",
+        "Due",
+        "State"
+      ],
+      "rows": [
+        [
+          "Update torque tool",
+          "Manufacturing",
+          "01 Aug",
+          "In work"
+        ],
+        [
+          "Revise assembly step",
+          "Process Eng.",
+          "02 Aug",
+          "Review"
+        ],
+        [
+          "Inspect fleet sample",
+          "Quality",
+          "04 Aug",
+          "Planned"
+        ],
+        [
+          "Monitor recurrence",
+          "Reliability",
+          "30 Sep",
+          "Running"
+        ]
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Record failure report",
+      "actionId": "record-failure-report",
+      "result": "Failure report FR-2026-118 recorded",
+      "target": "reports"
+    },
+    {
+      "name": "Classify failure mode",
+      "actionId": "classify-failure-mode",
+      "result": "Failure mode classified",
+      "target": "reports"
+    },
+    {
+      "name": "Analyze root cause",
+      "actionId": "analyze-root-cause",
+      "result": "Root cause analysis opened",
+      "target": "investigations"
+    },
+    {
+      "name": "Assign corrective action",
+      "actionId": "assign-corrective-action",
+      "result": "Corrective action assigned",
+      "target": "actions"
+    },
+    {
+      "name": "Verify action closure",
+      "actionId": "verify-action-closure",
+      "result": "Action closure verified",
+      "target": "actions"
+    },
+    {
+      "name": "Reject open corrective action",
+      "actionId": "reject-open-corrective-action",
+      "result": "Open corrective action retained",
+      "target": "actions"
+    }
+  ],
+  "reward": "Reliability improved",
+  "buyer": "Reliability, quality, or safety manager",
+  "commercialJob": "Shorten failure closure and detect recurrence before it becomes systemic.",
+  "useFrequency": "Daily"
+}

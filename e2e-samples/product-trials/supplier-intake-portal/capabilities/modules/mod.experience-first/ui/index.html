@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" style="--accent:#ec4899;--accent-rgb:236, 72, 153">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Supplier Deliverable Intake Portal</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">SI</span>
+          <span class="brand-copy"><b>Supplier Intake</b><small>Supply-chain assurance</small></span>
+        </div>
+        <nav aria-label="Primary navigation">
+          <button class="nav-item active" type="button" aria-label="Open supplier intake" data-nav-target="supplier-intake" data-nav-title="Supplier intake">
+            <span class="nav-icon">01</span>Supplier intake
+          </button><button class="nav-item " type="button" aria-label="Open deliveries" data-nav-target="deliveries" data-nav-title="Deliveries">
+            <span class="nav-icon">02</span>Deliveries
+          </button><button class="nav-item " type="button" aria-label="Open compliance gaps" data-nav-target="compliance-gaps" data-nav-title="Compliance gaps">
+            <span class="nav-icon">03</span>Compliance gaps
+          </button><button class="nav-item " type="button" aria-label="Open suppliers" data-nav-target="suppliers" data-nav-title="Suppliers">
+            <span class="nav-icon">04</span>Suppliers
+          </button>
+        </nav>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-summary"><span>Current focus</span><strong>4</strong><small>All checks pass</small></div>
+        <div class="user-row"><span class="avatar">TW</span><span><b>Tim Wood</b><small>Local engineering workspace</small></span></div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button>
+            <h1 data-view-title>Supplier intake</h1>
+          </div>
+          <button class="command-button" type="button" data-open-commands aria-label="Open command menu">
+            <span>Find or run an action</span><kbd>⌘ K</kbd>
+          </button>
+        </header>
+
+        <main>
+          <section class="hero">
+            <div>
+              <p class="eyebrow">DELIVERY SUP-ACU-241 · REVISION 03</p>
+              <h2>Correct one package</h2>
+              <p class="hero-copy">Check identity, completeness, compliance, and provenance before acceptance.</p>
+            </div>
+            <div class="hero-status"><span class="status-orb"></span>Workspace data is current</div>
+          </section>
+
+          <section class="metrics" aria-label="Current measures">
+            <article class="metric"><span>Received today</span><strong>7</strong><small>Five suppliers</small></article><article class="metric"><span>Ready to accept</span><strong>4</strong><small>All checks pass</small></article><article class="metric"><span>Need correction</span><strong>2</strong><small>Three open gaps</small></article><article class="metric"><span>Quarantined</span><strong>1</strong><small>Signature missing</small></article>
+          </section>
+
+          <section class="action-deck" aria-label="Scenario actions">
+            <span>Prove the next task</span>
+            <button class="scenario-action" type="button" data-scenario-action="receive-supplier-package" data-target="deliveries">Receive supplier package</button><button class="scenario-action" type="button" data-scenario-action="validate-package-manifest" data-target="deliveries">Validate package manifest</button><button class="scenario-action" type="button" data-scenario-action="review-compliance-gap" data-target="gaps">Review compliance gap</button><button class="scenario-action" type="button" data-scenario-action="request-supplier-correction" data-target="gaps">Request supplier correction</button><button class="scenario-action" type="button" data-scenario-action="accept-supplier-delivery" data-target="deliveries">Accept supplier delivery</button><button class="scenario-action" type="button" data-scenario-action="reject-unsigned-package" data-target="deliveries">Reject unsigned package</button>
+          </section>
+
+          <section class="scenario-results" aria-live="polite">
+            <div class="scenario-result " data-scenario-result="receive-supplier-package" data-reward="Supply risk reduced">Supplier package SUP-ACU-241 received</div><div class="scenario-result " data-scenario-result="validate-package-manifest" data-reward="Supply risk reduced">Package manifest validated</div><div class="scenario-result " data-scenario-result="review-compliance-gap" data-reward="Supply risk reduced">Compliance gap GAP-ACU-018 opened</div><div class="scenario-result " data-scenario-result="request-supplier-correction" data-reward="Supply risk reduced">Correction request sent to supplier queue</div><div class="scenario-result " data-scenario-result="accept-supplier-delivery" data-reward="Supply risk reduced">Supplier delivery accepted</div><div class="scenario-result is-failure" data-scenario-result="reject-unsigned-package" data-reward="Supply risk reduced">Unsigned package quarantined</div>
+          </section>
+
+          <section class="panel-grid">
+            <article class="panel panel-intake">
+    <header class="panel-header"><div><h3>Delivery validation</h3><p>ACU flight-control software · Build 241</p></div></header>
+    <div class="panel-body intake-list"><div class="intake-row"><b>Package signature</b><span>Verified</span><em class="result-chip pass">Pass</em></div><div class="intake-row"><b>Manifest completeness</b><span>42 of 42 files</span><em class="result-chip pass">Pass</em></div><div class="intake-row"><b>Configuration identity</b><span>Matches CIDL-18</span><em class="result-chip pass">Pass</em></div><div class="intake-row"><b>Compliance statement</b><span>Section 7 missing</span><em class="result-chip gap">Gap</em></div><div class="intake-row"><b>Malware scan</b><span>No findings</span><em class="result-chip pass">Pass</em></div></div>
+  </article><article class="panel panel-table">
+    <header class="panel-header"><div><h3>Recent deliveries</h3><p>Current state by supplier and package.</p></div></header>
+    <div class="panel-body" style="padding:0;overflow:auto">
+    <table class="data-table">
+      <thead><tr><th>Supplier</th><th>Package</th><th>Received</th><th>State</th></tr></thead>
+      <tbody><tr><td>Aero Controls</td><td>ACU-241</td><td>08:14</td><td>Needs correction</td></tr><tr><td>Vector Systems</td><td>NAV-118</td><td>07:52</td><td>Ready</td></tr><tr><td>Northstar Labs</td><td>IOP-066</td><td>Yesterday</td><td>Accepted</td></tr><tr><td>Actuation Inc.</td><td>ACE-034</td><td>Yesterday</td><td>Quarantined</td></tr></tbody>
+    </table>
+  </div>
+  </article><article class="panel panel-comments">
+    <header class="panel-header"><div><h3>Correction thread</h3><p>Gap GAP-ACU-018</p></div></header>
+    <div class="panel-body"><ol class="comment-list"><li><span class="comment-author">RE</span><p><b>Review</b><br>The compliance statement does not identify tool TQL-04.</p><time>09:04</time></li><li><span class="comment-author">SU</span><p><b>Supplier</b><br>We will issue revision 04 before 16:00 UTC.</p><time>09:21</time></li><li><span class="comment-author">RE</span><p><b>Review</b><br>Keep the package identity and replace only the statement.</p><time>09:28</time></li></ol></div>
+  </article>
+          </section>
+
+          <details class="activity-drawer">
+            <summary>Session activity</summary>
+            <ol class="activity-list" data-activity>
+              <li><span>Now</span><b>Workspace opened</b><small>Validate supplier packages, record gaps, coordinate correction, and control acceptance.</small></li>
+            </ol>
+          </details>
+        </main>
+      </section>
+    </div>
+
+    <aside class="reward-toast" data-reward aria-live="polite">
+      <div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>Supply risk reduced</b><small data-reward-count>0 of 6 actions evidenced</small></span></div>
+      <div class="reward-track"><i data-reward-bar></i></div>
+    </aside>
+
+    <div class="command-dialog" data-command-dialog hidden>
+      <section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu">
+        <div class="command-search">
+          <input data-command-input aria-label="Find an action" placeholder="Find an action…" />
+          <button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button>
+        </div>
+        <ul class="command-list">
+          <li data-command-item="receive-supplier-package"><button type="button"><span>Receive supplier package</span><small>deliveries</small></button></li><li data-command-item="validate-package-manifest"><button type="button"><span>Validate package manifest</span><small>deliveries</small></button></li><li data-command-item="review-compliance-gap"><button type="button"><span>Review compliance gap</span><small>gaps</small></button></li><li data-command-item="request-supplier-correction"><button type="button"><span>Request supplier correction</span><small>gaps</small></button></li><li data-command-item="accept-supplier-delivery"><button type="button"><span>Accept supplier delivery</span><small>deliveries</small></button></li><li data-command-item="reject-unsigned-package"><button type="button"><span>Reject unsigned package</span><small>deliveries</small></button></li>
+        </ul>
+      </section>
+    </div>
+
+    <script id="product-config" type="application/json">{"name":"Supplier Deliverable Intake Portal","reward":"Supply risk reduced","scenarios":[{"name":"Receive supplier package","actionId":"receive-supplier-package","result":"Supplier package SUP-ACU-241 received","target":"deliveries"},{"name":"Validate package manifest","actionId":"validate-package-manifest","result":"Package manifest validated","target":"deliveries"},{"name":"Review compliance gap","actionId":"review-compliance-gap","result":"Compliance gap GAP-ACU-018 opened","target":"gaps"},{"name":"Request supplier correction","actionId":"request-supplier-correction","result":"Correction request sent to supplier queue","target":"gaps"},{"name":"Accept supplier delivery","actionId":"accept-supplier-delivery","result":"Supplier delivery accepted","target":"deliveries"},{"name":"Reject unsigned package","actionId":"reject-unsigned-package","result":"Unsigned package quarantined","target":"deliveries"}]}</script>
+    <script src="./runtime.js"></script>
+  </body>
+</html>

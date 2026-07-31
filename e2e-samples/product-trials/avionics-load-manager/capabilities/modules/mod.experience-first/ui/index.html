@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" style="--accent:#3b82f6;--accent-rgb:59, 130, 246">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Avionics Software Load Manager</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">LM</span>
+          <span class="brand-copy"><b>Load Manager</b><small>Configuration control</small></span>
+        </div>
+        <nav aria-label="Primary navigation">
+          <button class="nav-item active" type="button" aria-label="Open load control" data-nav-target="load-control" data-nav-title="Load control">
+            <span class="nav-icon">01</span>Load control
+          </button><button class="nav-item " type="button" aria-label="Open software loads" data-nav-target="software-loads" data-nav-title="Software loads">
+            <span class="nav-icon">02</span>Software loads
+          </button><button class="nav-item " type="button" aria-label="Open aircraft fleet" data-nav-target="aircraft-fleet" data-nav-title="Aircraft fleet">
+            <span class="nav-icon">03</span>Aircraft fleet
+          </button><button class="nav-item " type="button" aria-label="Open install records" data-nav-target="install-records" data-nav-title="Install records">
+            <span class="nav-icon">04</span>Install records
+          </button>
+        </nav>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-summary"><span>Current focus</span><strong>18</strong><small>Tail block 410–427</small></div>
+        <div class="user-row"><span class="avatar">TW</span><span><b>Tim Wood</b><small>Local engineering workspace</small></span></div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button>
+            <h1 data-view-title>Load control</h1>
+          </div>
+          <button class="command-button" type="button" data-open-commands aria-label="Open command menu">
+            <span>Find or run an action</span><kbd>⌘ K</kbd>
+          </button>
+        </header>
+
+        <main>
+          <section class="hero">
+            <div>
+              <p class="eyebrow">LOAD FCS-24.8.3 · RELEASE CANDIDATE</p>
+              <h2>Verify this release</h2>
+              <p class="hero-copy">Protect aircraft compatibility and retain the exact as-loaded configuration.</p>
+            </div>
+            <div class="hero-status"><span class="status-orb"></span>Workspace data is current</div>
+          </section>
+
+          <section class="metrics" aria-label="Current measures">
+            <article class="metric"><span>Release checks</span><strong>11 / 12</strong><small>Independent check open</small></article><article class="metric"><span>Compatible aircraft</span><strong>18</strong><small>Tail block 410–427</small></article><article class="metric"><span>Installations</span><strong>6</strong><small>Two scheduled today</small></article><article class="metric"><span>Rollback ready</span><strong>Yes</strong><small>Load FCS-24.7.9</small></article>
+          </section>
+
+          <section class="action-deck" aria-label="Scenario actions">
+            <span>Prove the next task</span>
+            <button class="scenario-action" type="button" data-scenario-action="register-software-load" data-target="loads">Register software load</button><button class="scenario-action" type="button" data-scenario-action="check-hardware-compatibility" data-target="fleet">Check hardware compatibility</button><button class="scenario-action" type="button" data-scenario-action="authorize-load-release" data-target="loads">Authorize load release</button><button class="scenario-action" type="button" data-scenario-action="record-aircraft-installation" data-target="install">Record aircraft installation</button><button class="scenario-action" type="button" data-scenario-action="verify-loaded-configuration" data-target="install">Verify loaded configuration</button><button class="scenario-action" type="button" data-scenario-action="reject-incompatible-load" data-target="fleet">Reject incompatible load</button>
+          </section>
+
+          <section class="scenario-results" aria-live="polite">
+            <div class="scenario-result " data-scenario-result="register-software-load" data-reward="Configuration secured">Software load FCS-24.8.3 registered</div><div class="scenario-result " data-scenario-result="check-hardware-compatibility" data-reward="Configuration secured">Hardware compatibility checked</div><div class="scenario-result " data-scenario-result="authorize-load-release" data-reward="Configuration secured">Load release authorized</div><div class="scenario-result " data-scenario-result="record-aircraft-installation" data-reward="Configuration secured">Aircraft installation recorded</div><div class="scenario-result " data-scenario-result="verify-loaded-configuration" data-reward="Configuration secured">Loaded configuration verified</div><div class="scenario-result is-failure" data-scenario-result="reject-incompatible-load" data-reward="Configuration secured">Incompatible load rejected</div>
+          </section>
+
+          <section class="panel-grid">
+            <article class="panel panel-release">
+    <header class="panel-header"><div><h3>Release path</h3><p>Each gate preserves a signed configuration record.</p></div></header>
+    <div class="panel-body"><div class="release-path"><article class="release-step"><span>1</span><b>Load identity</b><small>Complete</small></article><article class="release-step"><span>2</span><b>Compatibility</b><small>Complete</small></article><article class="release-step"><span>3</span><b>Verification</b><small>In review</small></article><article class="release-step"><span>4</span><b>Release authority</b><small>Waiting</small></article><article class="release-step"><span>5</span><b>Fleet installation</b><small>Waiting</small></article></div></div>
+  </article><article class="panel panel-compatibility">
+    <header class="panel-header"><div><h3>Compatibility matrix</h3><p>Load FCS-24.8.3 against installed hardware.</p></div></header>
+    <div class="panel-body" style="padding:0;overflow:auto">
+    <table class="data-table">
+      <thead><tr><th>LRU part</th><th>Hardware rev</th><th>Bootloader</th><th>Result</th></tr></thead>
+      <tbody><tr><td>FCCA-410</td><td>H</td><td>3.12</td><td>Compatible</td></tr><tr><td>FCCA-411</td><td>H</td><td>3.12</td><td>Compatible</td></tr><tr><td>FCCA-392</td><td>F</td><td>2.80</td><td>Blocked</td></tr><tr><td>FCCA-425</td><td>J</td><td>3.14</td><td>Compatible</td></tr></tbody>
+    </table>
+  </div>
+  </article><article class="panel panel-timeline">
+    <header class="panel-header"><div><h3>Configuration record</h3><p>Immutable release history.</p></div></header>
+    <div class="panel-body"><ol class="timeline"><li><time>08:04</time><span><b>Registered</b><small>Manifest hash 8a2f…31c0 recorded.</small></span></li><li><time>08:22</time><span><b>Compared</b><small>Hardware compatibility rule set 14 passed.</small></span></li><li><time>09:10</time><span><b>Verified</b><small>Automated evidence set completed.</small></span></li><li><time>Now</time><span><b>Awaiting review</b><small>Independent verifier must approve.</small></span></li></ol></div>
+  </article>
+          </section>
+
+          <details class="activity-drawer">
+            <summary>Session activity</summary>
+            <ol class="activity-list" data-activity>
+              <li><span>Now</span><b>Workspace opened</b><small>Control load identity, compatibility, release authorization, installation, and as-loaded evidence.</small></li>
+            </ol>
+          </details>
+        </main>
+      </section>
+    </div>
+
+    <aside class="reward-toast" data-reward aria-live="polite">
+      <div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>Configuration secured</b><small data-reward-count>0 of 6 actions evidenced</small></span></div>
+      <div class="reward-track"><i data-reward-bar></i></div>
+    </aside>
+
+    <div class="command-dialog" data-command-dialog hidden>
+      <section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu">
+        <div class="command-search">
+          <input data-command-input aria-label="Find an action" placeholder="Find an action…" />
+          <button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button>
+        </div>
+        <ul class="command-list">
+          <li data-command-item="register-software-load"><button type="button"><span>Register software load</span><small>loads</small></button></li><li data-command-item="check-hardware-compatibility"><button type="button"><span>Check hardware compatibility</span><small>fleet</small></button></li><li data-command-item="authorize-load-release"><button type="button"><span>Authorize load release</span><small>loads</small></button></li><li data-command-item="record-aircraft-installation"><button type="button"><span>Record aircraft installation</span><small>install</small></button></li><li data-command-item="verify-loaded-configuration"><button type="button"><span>Verify loaded configuration</span><small>install</small></button></li><li data-command-item="reject-incompatible-load"><button type="button"><span>Reject incompatible load</span><small>fleet</small></button></li>
+        </ul>
+      </section>
+    </div>
+
+    <script id="product-config" type="application/json">{"name":"Avionics Software Load Manager","reward":"Configuration secured","scenarios":[{"name":"Register software load","actionId":"register-software-load","result":"Software load FCS-24.8.3 registered","target":"loads"},{"name":"Check hardware compatibility","actionId":"check-hardware-compatibility","result":"Hardware compatibility checked","target":"fleet"},{"name":"Authorize load release","actionId":"authorize-load-release","result":"Load release authorized","target":"loads"},{"name":"Record aircraft installation","actionId":"record-aircraft-installation","result":"Aircraft installation recorded","target":"install"},{"name":"Verify loaded configuration","actionId":"verify-loaded-configuration","result":"Loaded configuration verified","target":"install"},{"name":"Reject incompatible load","actionId":"reject-incompatible-load","result":"Incompatible load rejected","target":"fleet"}]}</script>
+    <script src="./runtime.js"></script>
+  </body>
+</html>

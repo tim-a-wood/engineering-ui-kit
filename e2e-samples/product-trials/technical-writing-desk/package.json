@@ -1,0 +1,8 @@
+{
+  "name": "technical-writing-desk",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node ./test-runner.mjs"
+  }
+}

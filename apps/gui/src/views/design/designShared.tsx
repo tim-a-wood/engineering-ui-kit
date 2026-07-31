@@ -103,6 +103,20 @@ export function operationName(operationId: string): string {
   return label ? `${label[0]!.toUpperCase()}${label.slice(1)}` : 'Operation'
 }
 
+export function scenarioSelectorToken(action: string): string {
+  return action
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+export function suggestedScenarioSelector(action: string, target: 'action' | 'result'): string {
+  const token = scenarioSelectorToken(action) || 'user-task'
+  return `[data-scenario-${target}="${token}"]`
+}
+
 /** §9.2 queue filter chips, exact spec wording, in spec order. */
 export const QUEUE_FILTERS: { id: ModuleQueueFilter; label: string }[] = [
   { id: 'all', label: 'All' },

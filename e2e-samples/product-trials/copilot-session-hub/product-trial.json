@@ -1,0 +1,181 @@
+{
+  "slug": "copilot-session-hub",
+  "name": "Copilot Session Operations Hub",
+  "shortName": "Session Hub",
+  "category": "Daily productivity",
+  "description": "Track Copilot sessions, progress, issues, outputs, and next actions across engineering projects.",
+  "workDescription": "An engineering lead tracks Copilot sessions and resolves blocked implementation work.",
+  "examples": [
+    "Start Copilot session",
+    "Update session progress",
+    "Record session issue",
+    "Review active sessions",
+    "Close completed session"
+  ],
+  "prohibited": "Never delete unresolved session",
+  "failureScenario": "Reject unresolved session",
+  "layout": "sessions",
+  "accent": "#8b5cf6",
+  "accentRgb": "139, 92, 246",
+  "homeTitle": "Session command",
+  "eyebrow": "TODAY · 12 ACTIVE SESSIONS",
+  "headline": "Three sessions wait",
+  "subhead": "Keep every agent run connected to its objective, branch, evidence, and next action.",
+  "nav": [
+    "Session command",
+    "Active sessions",
+    "Issues",
+    "History"
+  ],
+  "metrics": [
+    [
+      "Active now",
+      "12",
+      "Across five projects"
+    ],
+    [
+      "Need review",
+      "3",
+      "Two code, one design"
+    ],
+    [
+      "Blocked",
+      "2",
+      "18 minutes waiting"
+    ],
+    [
+      "Closed today",
+      "9",
+      "+3 from average"
+    ]
+  ],
+  "panels": [
+    {
+      "type": "kanban",
+      "title": "Session flow",
+      "subtitle": "Work moves from intent to verified completion.",
+      "columns": [
+        [
+          "Running",
+          [
+            "Refine UML routing",
+            "Add STE prompt gate",
+            "Audit coverage adapter"
+          ]
+        ],
+        [
+          "Needs you",
+          [
+            "Review HIL command API",
+            "Choose evidence schema"
+          ]
+        ],
+        [
+          "Verifying",
+          [
+            "Test Windows package",
+            "Run medium product walk"
+          ]
+        ],
+        [
+          "Complete",
+          [
+            "Fix port alignment",
+            "Add session recovery"
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "timeline",
+      "title": "Selected session",
+      "subtitle": "Refine UML routing · main · 42 minutes",
+      "items": [
+        [
+          "09:14",
+          "Started",
+          "Prompt and repository context accepted."
+        ],
+        [
+          "09:28",
+          "Changed",
+          "The router now compares four layout strategies."
+        ],
+        [
+          "09:43",
+          "Tested",
+          "Fourteen stress products have no crossings."
+        ],
+        [
+          "09:56",
+          "Needs review",
+          "Hospital access retains four crossings."
+        ]
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Issues to clear",
+      "subtitle": "Resolve one issue to restore momentum.",
+      "items": [
+        [
+          "Hospital graph",
+          "Layout target missed",
+          "High"
+        ],
+        [
+          "Windows package",
+          "Runner is unavailable",
+          "Medium"
+        ],
+        [
+          "MATLAB proof",
+          "Engine is not connected",
+          "Medium"
+        ]
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Start Copilot session",
+      "actionId": "start-copilot-session",
+      "result": "Session started with packet PKT-204",
+      "target": "active"
+    },
+    {
+      "name": "Update session progress",
+      "actionId": "update-session-progress",
+      "result": "Progress updated to 68 percent",
+      "target": "active"
+    },
+    {
+      "name": "Record session issue",
+      "actionId": "record-session-issue",
+      "result": "Issue linked to the active session",
+      "target": "issues"
+    },
+    {
+      "name": "Review active sessions",
+      "actionId": "review-active-sessions",
+      "result": "Twelve active sessions shown",
+      "target": "active"
+    },
+    {
+      "name": "Close completed session",
+      "actionId": "close-completed-session",
+      "result": "Session closed with evidence",
+      "target": "history"
+    },
+    {
+      "name": "Reject unresolved session",
+      "actionId": "reject-unresolved-session",
+      "result": "Unresolved session kept open",
+      "target": "issues"
+    }
+  ],
+  "reward": "Momentum gained",
+  "buyer": "Engineering lead or senior individual contributor",
+  "commercialJob": "Control parallel AI work without losing decisions, blockers, or evidence.",
+  "useFrequency": "Multiple times each day"
+}

@@ -1,0 +1,8 @@
+{
+  "name": "aircraft-trade-study",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node ./test-runner.mjs"
+  }
+}

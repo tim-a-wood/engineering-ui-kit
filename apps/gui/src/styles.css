@@ -10971,6 +10971,15 @@ code.path-wrap {
 .design-connect-ui-steps { grid-column: 1 / -1; }
 .design-connect-ui-steps { display: grid; gap: var(--semantic-spacing-2); }
 .design-connect-ui-steps > :is(h4, p) { margin: 0; }
+.design-connect-ui-steps > .hstack :is(h4, p) { margin: 0; }
+.design-connect-suggestion {
+  padding: var(--semantic-spacing-2) var(--semantic-spacing-3);
+  border: 1px solid color-mix(in srgb, var(--semantic-accent-primary) 35%, var(--semantic-border-subtle));
+  border-radius: var(--semantic-radius-sm);
+  background: color-mix(in srgb, var(--semantic-accent-primary) 7%, transparent);
+  color: var(--semantic-text-muted);
+  font-size: .8rem;
+}
 .design-connect-ui-steps > fieldset {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

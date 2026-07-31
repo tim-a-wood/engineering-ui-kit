@@ -1,0 +1,135 @@
+{
+  "slug": "fracas-investigation",
+  "product": "Reliability and FRACAS Investigation System",
+  "category": "Reliability",
+  "buyer": "Reliability, quality, or safety manager",
+  "commercialJob": "Shorten failure closure and detect recurrence before it becomes systemic.",
+  "useFrequency": "Daily",
+  "passed": true,
+  "packaged": true,
+  "clicks": 66,
+  "screenshots": [
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/02-project-dashboard.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/03-plan-input.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/05-plan-approved.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/05a-application-workflow.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/05b-system-structure.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-application-workflow-component.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-application-workflow-activity.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-application-workflow-state-machine.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-application-workflow-sequence.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-application-workflow-use-case.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/07-application-workflow-approved.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-user-workspace-component.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-user-workspace-activity.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-user-workspace-state-machine.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-user-workspace-sequence.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-user-workspace-use-case.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/07-user-workspace-approved.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/08-build-applied.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/10-product-dashboard.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/11-product-action.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/12-product-protected-action.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/13-product-command-menu.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/14-product-mobile.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/16-connect-verified.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/17-verify-passed.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/18-evidence-trace.png",
+    "docs/product-trials/2026-07-30/evidence/fracas-investigation/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 665,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1249,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 984,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 306,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 461,
+      "clicks": 3
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 6228,
+      "clicks": 26
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 774,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 2269,
+      "clicks": 7
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 1992,
+      "clicks": 4
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 3947,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 680,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings43 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.43capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-RE"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings43 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.43capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-REVIEW-ACTION-FORM — Review the "
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T02:23:02.139Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-fracas-investigation-MYtjNp/fracas-investigation",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/fracas-investigation",
+  "timeToProductProofMs": 13218,
+  "scenarioSummary": {
+    "scenarioCount": 6,
+    "passedCount": 6,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T02:23:22.052Z",
+  "durationMs": 19913
+}

@@ -1,0 +1,135 @@
+{
+  "slug": "technical-writing-desk",
+  "product": "Technical Writing and Review Desk",
+  "category": "Daily productivity",
+  "buyer": "Technical author or engineering organisation",
+  "commercialJob": "Reduce document review cycles and enforce controlled writing policy.",
+  "useFrequency": "Daily",
+  "passed": true,
+  "packaged": true,
+  "clicks": 66,
+  "screenshots": [
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/02-project-dashboard.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/03-plan-input.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/05-plan-approved.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/05a-application-workflow.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/05b-system-structure.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-application-workflow-component.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-application-workflow-activity.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-application-workflow-state-machine.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-application-workflow-sequence.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-application-workflow-use-case.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/07-application-workflow-approved.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-user-workspace-component.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-user-workspace-activity.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-user-workspace-state-machine.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-user-workspace-sequence.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-user-workspace-use-case.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/07-user-workspace-approved.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/08-build-applied.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/10-product-dashboard.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/11-product-action.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/12-product-protected-action.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/13-product-command-menu.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/14-product-mobile.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/16-connect-verified.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/17-verify-passed.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/18-evidence-trace.png",
+    "docs/product-trials/2026-07-30/evidence/technical-writing-desk/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 704,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1228,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 933,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 335,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 513,
+      "clicks": 3
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 5826,
+      "clicks": 26
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 791,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 2919,
+      "clicks": 7
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 2118,
+      "clicks": 4
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 4193,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 741,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings46 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.46capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ING — Review the -ing word. Use it only in an approved technical noun.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Revie"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings46 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.46capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ING — Review the -ing word. Use it only in an approved technical noun.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the offi"
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T02:19:59.898Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-technical-writing-desk-E8aJU1/technical-writing-desk",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/technical-writing-desk",
+  "timeToProductProofMs": 15364,
+  "scenarioSummary": {
+    "scenarioCount": 6,
+    "passedCount": 6,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T02:20:22.379Z",
+  "durationMs": 22481
+}

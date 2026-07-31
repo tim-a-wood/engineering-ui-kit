@@ -1,0 +1,175 @@
+{
+  "slug": "flight-test-telemetry",
+  "name": "Flight-Test Telemetry Triage Console",
+  "shortName": "Telemetry Triage",
+  "category": "Flight test",
+  "description": "Triage recorded telemetry, exceedances, analysis intervals, and investigation evidence.",
+  "workDescription": "A flight-test engineer reviews telemetry and prepares an exceedance investigation.",
+  "examples": [
+    "Load telemetry run",
+    "Review exceedance event",
+    "Mark analysis interval",
+    "Record engineering note",
+    "Export investigation package"
+  ],
+  "prohibited": "Never show unverified exceedance",
+  "failureScenario": "Reject unverified exceedance",
+  "layout": "telemetry",
+  "accent": "#f97316",
+  "accentRgb": "249, 115, 22",
+  "homeTitle": "Telemetry triage",
+  "eyebrow": "FLIGHT FT-284 · LEG 03 · 46 MINUTES",
+  "headline": "Analyze one exceedance",
+  "subhead": "Correlate aircraft state, mark the valid interval, and preserve the source samples.",
+  "nav": [
+    "Telemetry triage",
+    "Runs",
+    "Events",
+    "Investigations"
+  ],
+  "metrics": [
+    [
+      "Channels",
+      "248",
+      "244 valid"
+    ],
+    [
+      "Exceedances",
+      "3",
+      "One unverified"
+    ],
+    [
+      "Marked time",
+      "04:18",
+      "Across six intervals"
+    ],
+    [
+      "Data health",
+      "98.7%",
+      "Two short dropouts"
+    ]
+  ],
+  "panels": [
+    {
+      "type": "chart",
+      "title": "Normal acceleration",
+      "subtitle": "09:42:10–09:44:00 · 20 Hz",
+      "series": [
+        28,
+        30,
+        31,
+        34,
+        39,
+        51,
+        68,
+        82,
+        74,
+        57,
+        44,
+        40,
+        38,
+        36,
+        35,
+        34
+      ],
+      "threshold": 70,
+      "labels": [
+        "09:42:10",
+        "09:42:40",
+        "09:43:10",
+        "09:43:40"
+      ]
+    },
+    {
+      "type": "events",
+      "title": "Correlated events",
+      "subtitle": "Selected event · EVT-391",
+      "items": [
+        [
+          "09:42:51.220",
+          "NZ exceeded 2.50 g",
+          "Open"
+        ],
+        [
+          "09:42:51.480",
+          "Pilot input reached 84%",
+          "Context"
+        ],
+        [
+          "09:42:52.040",
+          "Autopilot disconnected",
+          "Context"
+        ],
+        [
+          "09:42:55.810",
+          "NZ returned below limit",
+          "Clear"
+        ]
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Investigation status",
+      "subtitle": "Three facts remain.",
+      "items": [
+        [
+          "Interval",
+          "09:42:49–09:42:58",
+          "Set"
+        ],
+        [
+          "Source integrity",
+          "ADC-A dropout absent",
+          "Pass"
+        ],
+        [
+          "Engineering note",
+          "Awaiting review",
+          "Open"
+        ]
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Load telemetry run",
+      "actionId": "load-telemetry-run",
+      "result": "Flight FT-284 loaded",
+      "target": "runs"
+    },
+    {
+      "name": "Review exceedance event",
+      "actionId": "review-exceedance-event",
+      "result": "Exceedance EVT-391 opened",
+      "target": "events"
+    },
+    {
+      "name": "Mark analysis interval",
+      "actionId": "mark-analysis-interval",
+      "result": "Analysis interval marked",
+      "target": "events"
+    },
+    {
+      "name": "Record engineering note",
+      "actionId": "record-engineering-note",
+      "result": "Engineering note linked to EVT-391",
+      "target": "investigations"
+    },
+    {
+      "name": "Export investigation package",
+      "actionId": "export-investigation-package",
+      "result": "Investigation package exported",
+      "target": "investigations"
+    },
+    {
+      "name": "Reject unverified exceedance",
+      "actionId": "reject-unverified-exceedance",
+      "result": "Unverified exceedance withheld",
+      "target": "events"
+    }
+  ],
+  "reward": "Signal understood",
+  "buyer": "Flight-test engineering lead",
+  "commercialJob": "Reduce time from flight data to a reviewable investigation.",
+  "useFrequency": "Daily during flight-test campaigns"
+}

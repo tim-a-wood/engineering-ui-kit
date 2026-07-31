@@ -1,0 +1,1532 @@
+{
+  "generatedAt": "2026-07-31T02:33:51.788Z",
+  "scope": "Ten packaged-app product trials",
+  "summary": {
+    "products": 10,
+    "productsPassed": 10,
+    "scenariosPassed": 60,
+    "screenshots": 280,
+    "averageClicks": 66.2,
+    "averageDurationMs": 20524,
+    "averageTimeToProductProofMs": 13897,
+    "rendererErrors": 0,
+    "productErrors": 0
+  },
+  "portfolioScores": {
+    "problemValue": 8.8,
+    "differentiation": 8.1,
+    "productProof": 8,
+    "pilotReadiness": 7.5,
+    "selfService": 6.5,
+    "enterpriseReadiness": 5.7,
+    "longTermMonetization": 8.6,
+    "scalableRevenue": 6.5,
+    "usability": 8.2,
+    "efficiency": 8,
+    "presentation": 9,
+    "confidence": 8.6,
+    "delight": 7.6
+  },
+  "products": [
+    {
+      "slug": "do178-review-workbench",
+      "product": "DO-178C Review Workbench",
+      "category": "Design assurance",
+      "buyer": "Software verification lead",
+      "commercialJob": "Reduce review effort and produce defensible review records.",
+      "useFrequency": "Daily during review and certification increments",
+      "passed": true,
+      "packaged": true,
+      "clicks": 67,
+      "screenshots": [
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/02-project-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/03-plan-input.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/05-plan-approved.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/05a-application-workflow.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/05b-system-structure.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/06-application-workflow-component.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/06-application-workflow-activity.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/06-application-workflow-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/06-application-workflow-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/06-application-workflow-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/07-application-workflow-approved.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/08-build-applied.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/10-product-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/11-product-action.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/12-product-protected-action.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/13-product-command-menu.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/14-product-mobile.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/16-connect-verified.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/17-verify-passed.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/18-evidence-trace.png",
+        "docs/product-trials/2026-07-30/evidence/do178-review-workbench/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 701,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1237,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 929,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 305,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 445,
+          "clicks": 3
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 5978,
+          "clicks": 26
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 756,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 3008,
+          "clicks": 7
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1359,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4041,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 697,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings38 warnings in 4 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.33capabilities/modules/mod.experience-first/ui/index.htmlline 36, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 47, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 59, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 68, element <h3>: STE-LEXICON-REVIEW — Review the vocabular"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings38 warnings in 4 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.33capabilities/modules/mod.experience-first/ui/index.htmlline 36, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 47, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 59, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 68, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 71, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 76, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 83, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 89, element <summary>: STE-LEXICON-REVIEW —"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T02:29:48.056Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-do178-review-workbench-SI5an1/do178-review-workbench",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/do178-review-workbench",
+      "timeToProductProofMs": 15350,
+      "scenarioSummary": {
+        "scenarioCount": 6,
+        "passedCount": 6,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T02:30:09.568Z",
+      "durationMs": 21512,
+      "scores": {
+        "problemValue": 10,
+        "differentiation": 9,
+        "productProof": 8,
+        "pilotReadiness": 7,
+        "selfService": 6,
+        "enterpriseReadiness": 5,
+        "longTermMonetization": 9,
+        "scalableRevenue": 6,
+        "usability": 8,
+        "efficiency": 7,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 7
+      }
+    },
+    {
+      "slug": "copilot-session-hub",
+      "product": "Copilot Session Operations Hub",
+      "category": "Daily productivity",
+      "buyer": "Engineering lead or senior individual contributor",
+      "commercialJob": "Control parallel AI work without losing decisions, blockers, or evidence.",
+      "useFrequency": "Multiple times each day",
+      "passed": true,
+      "packaged": true,
+      "clicks": 67,
+      "screenshots": [
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/02-project-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/03-plan-input.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/05-plan-approved.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/05a-application-workflow.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/05b-system-structure.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/06-application-workflow-component.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/06-application-workflow-activity.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/06-application-workflow-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/06-application-workflow-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/06-application-workflow-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/07-application-workflow-approved.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/08-build-applied.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/10-product-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/11-product-action.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/12-product-protected-action.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/13-product-command-menu.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/14-product-mobile.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/16-connect-verified.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/17-verify-passed.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/18-evidence-trace.png",
+        "docs/product-trials/2026-07-30/evidence/copilot-session-hub/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 666,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1275,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 1003,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 324,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 488,
+          "clicks": 3
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 6170,
+          "clicks": 26
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 726,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2437,
+          "clicks": 7
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1377,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4034,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 723,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings34 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.30capabilities/modules/mod.experience-first/ui/index.htmlline 36, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 47, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 59, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 68, element <h3>: STE-LEXICON-REVIEW — Review the vocabular"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings34 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.30capabilities/modules/mod.experience-first/ui/index.htmlline 36, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 47, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 59, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 68, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 69, element <h4>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 71, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 74, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 80, element <summary>: STE-LEXICON-REVIEW —"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T02:30:09.720Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-copilot-session-hub-iqBXYg/copilot-session-hub",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/copilot-session-hub",
+      "timeToProductProofMs": 13358,
+      "scenarioSummary": {
+        "scenarioCount": 6,
+        "passedCount": 6,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T02:30:29.283Z",
+      "durationMs": 19563,
+      "scores": {
+        "problemValue": 8,
+        "differentiation": 7,
+        "productProof": 8,
+        "pilotReadiness": 8,
+        "selfService": 7,
+        "enterpriseReadiness": 5,
+        "longTermMonetization": 8,
+        "scalableRevenue": 7,
+        "usability": 9,
+        "efficiency": 9,
+        "presentation": 9,
+        "confidence": 8,
+        "delight": 9
+      }
+    },
+    {
+      "slug": "technical-writing-desk",
+      "product": "Technical Writing and Review Desk",
+      "category": "Daily productivity",
+      "buyer": "Technical author or engineering organisation",
+      "commercialJob": "Reduce document review cycles and enforce controlled writing policy.",
+      "useFrequency": "Daily",
+      "passed": true,
+      "packaged": true,
+      "clicks": 66,
+      "screenshots": [
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/02-project-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/03-plan-input.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/05-plan-approved.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/05a-application-workflow.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/05b-system-structure.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-application-workflow-component.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-application-workflow-activity.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-application-workflow-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-application-workflow-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-application-workflow-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/07-application-workflow-approved.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/08-build-applied.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/10-product-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/11-product-action.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/12-product-protected-action.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/13-product-command-menu.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/14-product-mobile.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/16-connect-verified.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/17-verify-passed.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/18-evidence-trace.png",
+        "docs/product-trials/2026-07-30/evidence/technical-writing-desk/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 704,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1228,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 933,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 335,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 513,
+          "clicks": 3
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 5826,
+          "clicks": 26
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 791,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2919,
+          "clicks": 7
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 2118,
+          "clicks": 4
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4193,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 741,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings46 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.46capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ING — Review the -ing word. Use it only in an approved technical noun.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Revie"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings46 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.46capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ING — Review the -ing word. Use it only in an approved technical noun.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the offi"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T02:19:59.898Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-technical-writing-desk-E8aJU1/technical-writing-desk",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/technical-writing-desk",
+      "timeToProductProofMs": 15364,
+      "scenarioSummary": {
+        "scenarioCount": 6,
+        "passedCount": 6,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T02:20:22.379Z",
+      "durationMs": 22481,
+      "scores": {
+        "problemValue": 8,
+        "differentiation": 8,
+        "productProof": 8,
+        "pilotReadiness": 8,
+        "selfService": 7,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 8,
+        "scalableRevenue": 7,
+        "usability": 9,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 8,
+        "delight": 8
+      }
+    },
+    {
+      "slug": "flight-test-telemetry",
+      "product": "Flight-Test Telemetry Triage Console",
+      "category": "Flight test",
+      "buyer": "Flight-test engineering lead",
+      "commercialJob": "Reduce time from flight data to a reviewable investigation.",
+      "useFrequency": "Daily during flight-test campaigns",
+      "passed": true,
+      "packaged": true,
+      "clicks": 66,
+      "screenshots": [
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/02-project-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/03-plan-input.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/05-plan-approved.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/05a-application-workflow.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/05b-system-structure.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/06-application-workflow-component.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/06-application-workflow-activity.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/06-application-workflow-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/06-application-workflow-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/06-application-workflow-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/07-application-workflow-approved.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/08-build-applied.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/10-product-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/11-product-action.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/12-product-protected-action.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/13-product-command-menu.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/14-product-mobile.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/16-connect-verified.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/17-verify-passed.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/18-evidence-trace.png",
+        "docs/product-trials/2026-07-30/evidence/flight-test-telemetry/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 755,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1244,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 965,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 331,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 447,
+          "clicks": 3
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 5949,
+          "clicks": 26
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 754,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2302,
+          "clicks": 7
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1647,
+          "clicks": 4
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 3979,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 714,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings39 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.39capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-RE"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings39 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.39capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-REVIEW-ACTION-FORM — Review the "
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T02:17:47.734Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-flight-test-telemetry-VGrbS6/flight-test-telemetry",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/flight-test-telemetry",
+      "timeToProductProofMs": 13019,
+      "scenarioSummary": {
+        "scenarioCount": 6,
+        "passedCount": 6,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T02:18:07.141Z",
+      "durationMs": 19407,
+      "scores": {
+        "problemValue": 9,
+        "differentiation": 8,
+        "productProof": 8,
+        "pilotReadiness": 7,
+        "selfService": 6,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 9,
+        "scalableRevenue": 6,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 8,
+        "delight": 8
+      }
+    },
+    {
+      "slug": "aircraft-trade-study",
+      "product": "Aircraft Performance Trade-Study Workbench",
+      "category": "Engineering analysis",
+      "buyer": "Performance engineering manager",
+      "commercialJob": "Make engineering analyses repeatable, comparable, and reviewable.",
+      "useFrequency": "Weekly and at design gates",
+      "passed": true,
+      "packaged": true,
+      "clicks": 66,
+      "screenshots": [
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/02-project-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/03-plan-input.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/05-plan-approved.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/05a-application-workflow.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/05b-system-structure.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-application-workflow-component.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-application-workflow-activity.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-application-workflow-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-application-workflow-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-application-workflow-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/07-application-workflow-approved.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/08-build-applied.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/10-product-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/11-product-action.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/12-product-protected-action.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/13-product-command-menu.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/14-product-mobile.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/16-connect-verified.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/17-verify-passed.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/18-evidence-trace.png",
+        "docs/product-trials/2026-07-30/evidence/aircraft-trade-study/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 724,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1262,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 1031,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 337,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 493,
+          "clicks": 3
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 6140,
+          "clicks": 26
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 837,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2804,
+          "clicks": 7
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1818,
+          "clicks": 4
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4110,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 745,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings38 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.38capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-RE"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings38 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.38capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-REVIEW-ACTION-FORM — Review the "
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T02:24:22.884Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-aircraft-trade-study-E0jWTY/aircraft-trade-study",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/aircraft-trade-study",
+      "timeToProductProofMs": 15351,
+      "scenarioSummary": {
+        "scenarioCount": 6,
+        "passedCount": 6,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T02:24:44.970Z",
+      "durationMs": 22086,
+      "scores": {
+        "problemValue": 8,
+        "differentiation": 7,
+        "productProof": 8,
+        "pilotReadiness": 7,
+        "selfService": 6,
+        "enterpriseReadiness": 5,
+        "longTermMonetization": 8,
+        "scalableRevenue": 6,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 8,
+        "delight": 8
+      }
+    },
+    {
+      "slug": "hil-campaign-orchestrator",
+      "product": "HIL Test Campaign Orchestrator",
+      "category": "Verification operations",
+      "buyer": "Verification or laboratory manager",
+      "commercialJob": "Increase expensive bench utilisation and preserve trustworthy evidence.",
+      "useFrequency": "Daily in verification laboratories",
+      "passed": true,
+      "packaged": true,
+      "clicks": 66,
+      "screenshots": [
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/02-project-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/03-plan-input.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/05-plan-approved.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/05a-application-workflow.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/05b-system-structure.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/06-application-workflow-component.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/06-application-workflow-activity.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/06-application-workflow-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/06-application-workflow-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/06-application-workflow-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/07-application-workflow-approved.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/08-build-applied.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/10-product-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/11-product-action.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/12-product-protected-action.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/13-product-command-menu.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/14-product-mobile.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/16-connect-verified.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/17-verify-passed.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/18-evidence-trace.png",
+        "docs/product-trials/2026-07-30/evidence/hil-campaign-orchestrator/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 701,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1269,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 977,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 309,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 464,
+          "clicks": 3
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 6100,
+          "clicks": 26
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 759,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2389,
+          "clicks": 7
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1911,
+          "clicks": 4
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4133,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 678,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings41 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.41capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-RE"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings41 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.41capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-REVIEW-ACTION-FORM — Review the "
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T02:21:50.144Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-hil-campaign-orchestrator-PV2MH2/hil-campaign-orchestrator",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/hil-campaign-orchestrator",
+      "timeToProductProofMs": 13247,
+      "scenarioSummary": {
+        "scenarioCount": 6,
+        "passedCount": 6,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T02:22:10.171Z",
+      "durationMs": 20027,
+      "scores": {
+        "problemValue": 9,
+        "differentiation": 8,
+        "productProof": 8,
+        "pilotReadiness": 7,
+        "selfService": 6,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 9,
+        "scalableRevenue": 6,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 8
+      }
+    },
+    {
+      "slug": "supplier-intake-portal",
+      "product": "Supplier Deliverable Intake Portal",
+      "category": "Supply-chain assurance",
+      "buyer": "Supplier assurance or programme quality manager",
+      "commercialJob": "Shorten supplier acceptance while retaining defensible provenance.",
+      "useFrequency": "Several times each week",
+      "passed": true,
+      "packaged": true,
+      "clicks": 66,
+      "screenshots": [
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/02-project-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/03-plan-input.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/05-plan-approved.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/05a-application-workflow.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/05b-system-structure.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/06-application-workflow-component.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/06-application-workflow-activity.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/06-application-workflow-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/06-application-workflow-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/06-application-workflow-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/07-application-workflow-approved.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/08-build-applied.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/10-product-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/11-product-action.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/12-product-protected-action.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/13-product-command-menu.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/14-product-mobile.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/16-connect-verified.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/17-verify-passed.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/18-evidence-trace.png",
+        "docs/product-trials/2026-07-30/evidence/supplier-intake-portal/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 747,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1266,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 1024,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 326,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 486,
+          "clicks": 3
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 5990,
+          "clicks": 26
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 772,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2414,
+          "clicks": 7
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 2019,
+          "clicks": 4
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4086,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 734,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings40 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.40capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-RE"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings40 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.40capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-REVIEW-ACTION-FORM — Review the "
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T02:22:10.325Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-supplier-intake-portal-bNcggx/supplier-intake-portal",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/supplier-intake-portal",
+      "timeToProductProofMs": 13252,
+      "scenarioSummary": {
+        "scenarioCount": 6,
+        "passedCount": 6,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T02:22:30.467Z",
+      "durationMs": 20142,
+      "scores": {
+        "problemValue": 8,
+        "differentiation": 8,
+        "productProof": 8,
+        "pilotReadiness": 8,
+        "selfService": 7,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 8,
+        "scalableRevenue": 7,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 7
+      }
+    },
+    {
+      "slug": "requirements-impact-workbench",
+      "product": "Requirements Change-Impact Workbench",
+      "category": "Change control",
+      "buyer": "Systems engineering or configuration management lead",
+      "commercialJob": "Reduce change-analysis time and prevent missed downstream work.",
+      "useFrequency": "Daily on active programmes",
+      "passed": true,
+      "packaged": true,
+      "clicks": 66,
+      "screenshots": [
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/02-project-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/03-plan-input.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/05-plan-approved.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/05a-application-workflow.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/05b-system-structure.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/06-application-workflow-component.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/06-application-workflow-activity.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/06-application-workflow-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/06-application-workflow-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/06-application-workflow-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/07-application-workflow-approved.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/08-build-applied.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/10-product-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/11-product-action.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/12-product-protected-action.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/13-product-command-menu.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/14-product-mobile.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/16-connect-verified.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/17-verify-passed.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/18-evidence-trace.png",
+        "docs/product-trials/2026-07-30/evidence/requirements-impact-workbench/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 747,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1252,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 1012,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 364,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 468,
+          "clicks": 3
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 6268,
+          "clicks": 26
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 809,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2356,
+          "clicks": 7
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1641,
+          "clicks": 4
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4134,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 751,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings39 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.39capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-RE"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings39 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.39capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-REVIEW-ACTION-FORM — Review the "
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T02:24:45.157Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-requirements-impact-workbench-pF1Ar2/requirements-impact-workbench",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/requirements-impact-workbench",
+      "timeToProductProofMs": 13526,
+      "scenarioSummary": {
+        "scenarioCount": 6,
+        "passedCount": 6,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T02:25:05.270Z",
+      "durationMs": 20113,
+      "scores": {
+        "problemValue": 9,
+        "differentiation": 9,
+        "productProof": 8,
+        "pilotReadiness": 8,
+        "selfService": 7,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 9,
+        "scalableRevenue": 7,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 7
+      }
+    },
+    {
+      "slug": "avionics-load-manager",
+      "product": "Avionics Software Load Manager",
+      "category": "Configuration control",
+      "buyer": "Configuration management or fleet engineering lead",
+      "commercialJob": "Prevent incompatible loads and automate as-loaded evidence.",
+      "useFrequency": "At every software release and installation",
+      "passed": true,
+      "packaged": true,
+      "clicks": 66,
+      "screenshots": [
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/02-project-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/03-plan-input.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/05-plan-approved.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/05a-application-workflow.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/05b-system-structure.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-application-workflow-component.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-application-workflow-activity.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-application-workflow-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-application-workflow-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-application-workflow-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/07-application-workflow-approved.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/08-build-applied.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/10-product-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/11-product-action.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/12-product-protected-action.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/13-product-command-menu.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/14-product-mobile.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/16-connect-verified.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/17-verify-passed.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/18-evidence-trace.png",
+        "docs/product-trials/2026-07-30/evidence/avionics-load-manager/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 730,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1260,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 1038,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 365,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 447,
+          "clicks": 3
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 6133,
+          "clicks": 26
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 815,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2285,
+          "clicks": 7
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1921,
+          "clicks": 4
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 3992,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 724,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings37 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.37capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-RE"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings37 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.37capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-REVIEW-ACTION-FORM — Review the "
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T02:22:41.992Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-avionics-load-manager-sjLW2y/avionics-load-manager",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/avionics-load-manager",
+      "timeToProductProofMs": 13286,
+      "scenarioSummary": {
+        "scenarioCount": 6,
+        "passedCount": 6,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T02:23:01.985Z",
+      "durationMs": 19993,
+      "scores": {
+        "problemValue": 10,
+        "differentiation": 9,
+        "productProof": 8,
+        "pilotReadiness": 7,
+        "selfService": 6,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 9,
+        "scalableRevenue": 6,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 7
+      }
+    },
+    {
+      "slug": "fracas-investigation",
+      "product": "Reliability and FRACAS Investigation System",
+      "category": "Reliability",
+      "buyer": "Reliability, quality, or safety manager",
+      "commercialJob": "Shorten failure closure and detect recurrence before it becomes systemic.",
+      "useFrequency": "Daily",
+      "passed": true,
+      "packaged": true,
+      "clicks": 66,
+      "screenshots": [
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/02-project-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/03-plan-input.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/05-plan-approved.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/05a-application-workflow.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/05b-system-structure.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-application-workflow-component.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-application-workflow-activity.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-application-workflow-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-application-workflow-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-application-workflow-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/07-application-workflow-approved.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/08-build-applied.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/10-product-dashboard.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/11-product-action.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/12-product-protected-action.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/13-product-command-menu.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/14-product-mobile.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/16-connect-verified.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/17-verify-passed.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/18-evidence-trace.png",
+        "docs/product-trials/2026-07-30/evidence/fracas-investigation/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 665,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1249,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 984,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 306,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 461,
+          "clicks": 3
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 6228,
+          "clicks": 26
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 774,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2269,
+          "clicks": 7
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1992,
+          "clicks": 4
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 3947,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 680,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings43 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.43capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-RE"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings43 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.43capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-REVIEW-ACTION-FORM — Review the "
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T02:23:02.139Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-fracas-investigation-MYtjNp/fracas-investigation",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/fracas-investigation",
+      "timeToProductProofMs": 13218,
+      "scenarioSummary": {
+        "scenarioCount": 6,
+        "passedCount": 6,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T02:23:22.052Z",
+      "durationMs": 19913,
+      "scores": {
+        "problemValue": 9,
+        "differentiation": 8,
+        "productProof": 8,
+        "pilotReadiness": 8,
+        "selfService": 7,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 9,
+        "scalableRevenue": 7,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 7
+      }
+    }
+  ]
+}

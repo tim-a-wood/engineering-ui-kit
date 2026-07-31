@@ -1,0 +1,187 @@
+{
+  "slug": "avionics-load-manager",
+  "name": "Avionics Software Load Manager",
+  "shortName": "Load Manager",
+  "category": "Configuration control",
+  "description": "Control load identity, compatibility, release authorization, installation, and as-loaded evidence.",
+  "workDescription": "A configuration manager authorizes software loads and verifies installed aircraft configurations.",
+  "examples": [
+    "Register software load",
+    "Check hardware compatibility",
+    "Authorize load release",
+    "Record aircraft installation",
+    "Verify loaded configuration"
+  ],
+  "prohibited": "Never use incompatible load",
+  "failureScenario": "Reject incompatible load",
+  "layout": "load",
+  "accent": "#3b82f6",
+  "accentRgb": "59, 130, 246",
+  "homeTitle": "Load control",
+  "eyebrow": "LOAD FCS-24.8.3 · RELEASE CANDIDATE",
+  "headline": "Verify this release",
+  "subhead": "Protect aircraft compatibility and retain the exact as-loaded configuration.",
+  "nav": [
+    "Load control",
+    "Software loads",
+    "Aircraft fleet",
+    "Install records"
+  ],
+  "metrics": [
+    [
+      "Release checks",
+      "11 / 12",
+      "Independent check open"
+    ],
+    [
+      "Compatible aircraft",
+      "18",
+      "Tail block 410–427"
+    ],
+    [
+      "Installations",
+      "6",
+      "Two scheduled today"
+    ],
+    [
+      "Rollback ready",
+      "Yes",
+      "Load FCS-24.7.9"
+    ]
+  ],
+  "panels": [
+    {
+      "type": "release",
+      "title": "Release path",
+      "subtitle": "Each gate preserves a signed configuration record.",
+      "items": [
+        [
+          "Load identity",
+          "Complete"
+        ],
+        [
+          "Compatibility",
+          "Complete"
+        ],
+        [
+          "Verification",
+          "In review"
+        ],
+        [
+          "Release authority",
+          "Waiting"
+        ],
+        [
+          "Fleet installation",
+          "Waiting"
+        ]
+      ]
+    },
+    {
+      "type": "compatibility",
+      "title": "Compatibility matrix",
+      "subtitle": "Load FCS-24.8.3 against installed hardware.",
+      "headers": [
+        "LRU part",
+        "Hardware rev",
+        "Bootloader",
+        "Result"
+      ],
+      "rows": [
+        [
+          "FCCA-410",
+          "H",
+          "3.12",
+          "Compatible"
+        ],
+        [
+          "FCCA-411",
+          "H",
+          "3.12",
+          "Compatible"
+        ],
+        [
+          "FCCA-392",
+          "F",
+          "2.80",
+          "Blocked"
+        ],
+        [
+          "FCCA-425",
+          "J",
+          "3.14",
+          "Compatible"
+        ]
+      ]
+    },
+    {
+      "type": "timeline",
+      "title": "Configuration record",
+      "subtitle": "Immutable release history.",
+      "items": [
+        [
+          "08:04",
+          "Registered",
+          "Manifest hash 8a2f…31c0 recorded."
+        ],
+        [
+          "08:22",
+          "Compared",
+          "Hardware compatibility rule set 14 passed."
+        ],
+        [
+          "09:10",
+          "Verified",
+          "Automated evidence set completed."
+        ],
+        [
+          "Now",
+          "Awaiting review",
+          "Independent verifier must approve."
+        ]
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Register software load",
+      "actionId": "register-software-load",
+      "result": "Software load FCS-24.8.3 registered",
+      "target": "loads"
+    },
+    {
+      "name": "Check hardware compatibility",
+      "actionId": "check-hardware-compatibility",
+      "result": "Hardware compatibility checked",
+      "target": "fleet"
+    },
+    {
+      "name": "Authorize load release",
+      "actionId": "authorize-load-release",
+      "result": "Load release authorized",
+      "target": "loads"
+    },
+    {
+      "name": "Record aircraft installation",
+      "actionId": "record-aircraft-installation",
+      "result": "Aircraft installation recorded",
+      "target": "install"
+    },
+    {
+      "name": "Verify loaded configuration",
+      "actionId": "verify-loaded-configuration",
+      "result": "Loaded configuration verified",
+      "target": "install"
+    },
+    {
+      "name": "Reject incompatible load",
+      "actionId": "reject-incompatible-load",
+      "result": "Incompatible load rejected",
+      "target": "fleet"
+    }
+  ],
+  "reward": "Configuration secured",
+  "buyer": "Configuration management or fleet engineering lead",
+  "commercialJob": "Prevent incompatible loads and automate as-loaded evidence.",
+  "useFrequency": "At every software release and installation"
+}

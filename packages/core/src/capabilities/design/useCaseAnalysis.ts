@@ -291,7 +291,7 @@ function withNextRevision(analysis: UseCaseAnalysis, patch: Partial<UseCaseAnaly
 }
 
 const ACTOR_ACTION =
-  'needs?|wants?|can|must|should|shall|runs?|uses?|reviews?|creates?|approves?|validates?|submits?|opens?|views?|manages?|tracks?|configures?|records?|checks?|uploads?|downloads?|requests?|starts?|performs?|refreshes?'
+  'needs?|wants?|can|must|should|shall|runs?|uses?|writes?|compares?|reviews?|creates?|approves?|validates?|submits?|opens?|views?|manages?|tracks?|configures?|records?|checks?|uploads?|downloads?|requests?|starts?|performs?|refreshes?'
 
 function sentenceFragments(text: string): string[] {
   return (text.match(/[^.!?]+[.!?]?/g) ?? [])

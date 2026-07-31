@@ -1,0 +1,156 @@
+{
+  "slug": "technical-writing-desk",
+  "name": "Technical Writing and Review Desk",
+  "shortName": "Writing Desk",
+  "category": "Daily productivity",
+  "description": "Draft technical content, enforce ASD-STE100, manage comments, and approve controlled documents.",
+  "workDescription": "A technical author writes controlled documents and resolves review comments.",
+  "examples": [
+    "Draft technical note",
+    "Check STE wording",
+    "Compare document revision",
+    "Record review comment",
+    "Export approved document"
+  ],
+  "prohibited": "Never use prohibited term",
+  "failureScenario": "Reject prohibited term",
+  "layout": "writing",
+  "accent": "#06b6d4",
+  "accentRgb": "6, 182, 212",
+  "homeTitle": "Writing desk",
+  "eyebrow": "DESIGN NOTE · DN-FCS-042 · REVISION 7",
+  "headline": "Four sentences fail",
+  "subhead": "Write clear technical content and resolve review comments without leaving the document.",
+  "nav": [
+    "Writing desk",
+    "Documents",
+    "Review comments",
+    "Terminology"
+  ],
+  "metrics": [
+    [
+      "STE score",
+      "96",
+      "+8 this revision"
+    ],
+    [
+      "Open comments",
+      "4",
+      "One blocks approval"
+    ],
+    [
+      "Changed clauses",
+      "12",
+      "48 words changed"
+    ],
+    [
+      "Review state",
+      "Draft",
+      "Ready after one fix"
+    ]
+  ],
+  "panels": [
+    {
+      "type": "editor",
+      "title": "Flight control monitoring",
+      "subtitle": "Section 4.2 · Source selection",
+      "paragraphs": [
+        "The monitor compares each source with the selected reference.",
+        "If the source is stale, the monitor rejects the update.",
+        "The monitor records the source identity and the rejection reason."
+      ],
+      "highlight": "The monitor records the source identity and the rejection reason."
+    },
+    {
+      "type": "diagnostics",
+      "title": "Writing checks",
+      "subtitle": "One blocker and three review items.",
+      "items": [
+        [
+          "STE-TERM-014",
+          "Use “start” instead of “initiate”.",
+          "Blocker"
+        ],
+        [
+          "STE-LEN-006",
+          "Split this sentence after 25 words.",
+          "Review"
+        ],
+        [
+          "LEX-FCS-021",
+          "Confirm “reference source”.",
+          "Review"
+        ],
+        [
+          "TRACE-008",
+          "Add the linked system requirement.",
+          "Review"
+        ]
+      ]
+    },
+    {
+      "type": "comments",
+      "title": "Review thread",
+      "subtitle": "Independent review · Mina Patel",
+      "items": [
+        [
+          "Mina",
+          "Does the monitor record the rejected value?",
+          "09:42"
+        ],
+        [
+          "Tim",
+          "Yes. I added the value to the rejection record.",
+          "10:03"
+        ],
+        [
+          "Mina",
+          "Resolved. Keep the trace to SYS-FCS-118.",
+          "10:11"
+        ]
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Draft technical note",
+      "actionId": "draft-technical-note",
+      "result": "Technical note draft saved",
+      "target": "documents"
+    },
+    {
+      "name": "Check STE wording",
+      "actionId": "check-ste-wording",
+      "result": "STE check completed with four items",
+      "target": "terminology"
+    },
+    {
+      "name": "Compare document revision",
+      "actionId": "compare-document-revision",
+      "result": "Revision comparison opened",
+      "target": "documents"
+    },
+    {
+      "name": "Record review comment",
+      "actionId": "record-review-comment",
+      "result": "Review comment recorded",
+      "target": "comments"
+    },
+    {
+      "name": "Export approved document",
+      "actionId": "export-approved-document",
+      "result": "Approved document package exported",
+      "target": "documents"
+    },
+    {
+      "name": "Reject prohibited term",
+      "actionId": "reject-prohibited-term",
+      "result": "Prohibited term rejected",
+      "target": "terminology"
+    }
+  ],
+  "reward": "Clarity increased",
+  "buyer": "Technical author or engineering organisation",
+  "commercialJob": "Reduce document review cycles and enforce controlled writing policy.",
+  "useFrequency": "Daily"
+}

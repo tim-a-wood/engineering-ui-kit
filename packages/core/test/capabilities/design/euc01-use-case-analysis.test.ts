@@ -104,6 +104,29 @@ describe('EUC-01 createUseCaseDraft', () => {
     expect(evaluatePlanGate(analysis).passed).toBe(true)
   })
 
+  it('recognizes a technical author before the verb writes', () => {
+    const { analysis } = createUseCaseDraft({
+      projectId: 'proj-writing',
+      workDescription: 'A technical author writes controlled documents and resolves review comments.',
+      examples: ['Draft technical note', 'Check STE wording'],
+    })
+
+    expect(analysis.actors[0]?.text).toBe('Technical author')
+    expect(analysis.useCases[0]?.trigger).toBe('Technical author needs to draft technical note.')
+    expect(evaluatePlanGate(analysis).passed).toBe(true)
+  })
+
+  it('recognizes a performance engineer before the verb compares', () => {
+    const { analysis } = createUseCaseDraft({
+      projectId: 'proj-trade-study',
+      workDescription: 'A performance engineer compares aircraft options and approves a study baseline.',
+      examples: ['Define study case', 'Compare design options'],
+    })
+
+    expect(analysis.actors[0]?.text).toBe('Performance engineer')
+    expect(evaluatePlanGate(analysis).passed).toBe(true)
+  })
+
   it('produces a material question and needsInput status when the work description is empty (CAP-PLAN-001)', () => {
     const { analysis } = createUseCaseDraft({ projectId: 'proj-1', workDescription: '' })
     expect(analysis.status).toBe('needsInput')

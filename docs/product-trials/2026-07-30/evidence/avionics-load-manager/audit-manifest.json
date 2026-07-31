@@ -1,0 +1,135 @@
+{
+  "slug": "avionics-load-manager",
+  "product": "Avionics Software Load Manager",
+  "category": "Configuration control",
+  "buyer": "Configuration management or fleet engineering lead",
+  "commercialJob": "Prevent incompatible loads and automate as-loaded evidence.",
+  "useFrequency": "At every software release and installation",
+  "passed": true,
+  "packaged": true,
+  "clicks": 66,
+  "screenshots": [
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/02-project-dashboard.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/03-plan-input.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/05-plan-approved.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/05a-application-workflow.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/05b-system-structure.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-application-workflow-component.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-application-workflow-activity.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-application-workflow-state-machine.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-application-workflow-sequence.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-application-workflow-use-case.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/07-application-workflow-approved.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-user-workspace-component.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-user-workspace-activity.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-user-workspace-state-machine.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-user-workspace-sequence.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/06-user-workspace-use-case.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/07-user-workspace-approved.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/08-build-applied.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/10-product-dashboard.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/11-product-action.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/12-product-protected-action.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/13-product-command-menu.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/14-product-mobile.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/16-connect-verified.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/17-verify-passed.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/18-evidence-trace.png",
+    "docs/product-trials/2026-07-30/evidence/avionics-load-manager/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 730,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1260,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 1038,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 365,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 447,
+      "clicks": 3
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 6133,
+      "clicks": 26
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 815,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 2285,
+      "clicks": 7
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 1921,
+      "clicks": 4
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 3992,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 724,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings37 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.37capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-RE"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings37 warnings in 1 group.AI-HANDOFF-STE-REVIEW-001line 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.37capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 17, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 19, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 21, element <button>: STE-REVIEW-ACTION-FORM — Review the label. Use the form VERB + OBJECT.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <button>: STE-REVIEW-ACTION-FORM — Review the "
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T02:22:41.992Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-avionics-load-manager-sjLW2y/avionics-load-manager",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/avionics-load-manager",
+  "timeToProductProofMs": 13286,
+  "scenarioSummary": {
+    "scenarioCount": 6,
+    "passedCount": 6,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T02:23:01.985Z",
+  "durationMs": 19993
+}

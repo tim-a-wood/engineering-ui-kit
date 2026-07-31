@@ -1,0 +1,115 @@
+const config = JSON.parse(document.querySelector('#product-config').textContent)
+const shell = document.querySelector('.app-shell')
+const viewTitle = document.querySelector('[data-view-title]')
+const navButtons = [...document.querySelectorAll('[data-nav-target]')]
+const scenarioButtons = [...document.querySelectorAll('[data-scenario-action]')]
+const results = [...document.querySelectorAll('[data-scenario-result]')]
+const reward = document.querySelector('.reward-toast[data-reward]')
+const rewardLabel = document.querySelector('[data-reward-label]')
+const rewardCount = document.querySelector('[data-reward-count]')
+const rewardBar = document.querySelector('[data-reward-bar]')
+const commandDialog = document.querySelector('[data-command-dialog]')
+const commandInput = document.querySelector('[data-command-input]')
+const commandItems = [...document.querySelectorAll('[data-command-item]')]
+const activity = document.querySelector('[data-activity]')
+let completedActions = 0
+let rewardTimer
+
+function setActiveView(view) {
+  const normalizedView = String(view || '').replace(/[^a-z0-9]+/gi, '').toLowerCase()
+  const selected = navButtons.find((button) => button.dataset.navTarget === view)
+    ?? navButtons.find((button) => {
+      const normalizedTarget = String(button.dataset.navTarget || '').replace(/[^a-z0-9]+/gi, '').toLowerCase()
+      return normalizedView.includes(normalizedTarget) || normalizedTarget.includes(normalizedView)
+    })
+    ?? navButtons[0]
+  navButtons.forEach((button) => {
+    const active = button === selected
+    button.classList.toggle('active', active)
+    if (active) button.setAttribute('aria-current', 'page')
+    else button.removeAttribute('aria-current')
+  })
+  if (selected) viewTitle.textContent = selected.dataset.navTitle
+  shell.classList.remove('menu-open')
+}
+
+function showResult(id, actionName) {
+  results.forEach((item) => item.classList.remove('is-visible'))
+  const result = results.find((item) => item.dataset.scenarioResult === id)
+  if (!result) return
+  result.classList.add('is-visible')
+  completedActions = Math.min(config.scenarios.length, completedActions + 1)
+  rewardLabel.textContent = result.dataset.reward || config.reward
+  rewardCount.textContent = `${completedActions} of ${config.scenarios.length} actions evidenced`
+  rewardBar.style.width = `${Math.round((completedActions / config.scenarios.length) * 100)}%`
+  reward.classList.remove('show')
+  requestAnimationFrame(() => reward.classList.add('show'))
+  clearTimeout(rewardTimer)
+  rewardTimer = window.setTimeout(() => reward.classList.remove('show'), 4200)
+
+  const row = document.createElement('li')
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  row.innerHTML = `<span>${time}</span><b>${actionName}</b><small>${result.textContent.trim()}</small>`
+  activity.prepend(row)
+}
+
+navButtons.forEach((button) => {
+  button.addEventListener('click', () => setActiveView(button.dataset.navTarget))
+})
+
+scenarioButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    setActiveView(button.dataset.target || navButtons[0]?.dataset.navTarget)
+    showResult(button.dataset.scenarioAction, button.textContent.trim())
+  })
+})
+
+document.querySelector('[data-mobile-menu]').addEventListener('click', () => {
+  shell.classList.toggle('menu-open')
+})
+
+function openCommands() {
+  commandDialog.hidden = false
+  commandInput.value = ''
+  commandItems.forEach((item) => { item.hidden = false })
+  commandInput.focus()
+}
+
+function closeCommands() {
+  commandDialog.hidden = true
+}
+
+document.querySelector('[data-open-commands]').addEventListener('click', openCommands)
+document.querySelector('[data-close-commands]').addEventListener('click', closeCommands)
+
+commandInput.addEventListener('input', () => {
+  const query = commandInput.value.trim().toLowerCase()
+  commandItems.forEach((item) => {
+    item.hidden = query && !item.textContent.toLowerCase().includes(query)
+  })
+})
+
+commandItems.forEach((item) => {
+  item.addEventListener('click', () => {
+    const action = scenarioButtons.find((button) => button.dataset.scenarioAction === item.dataset.commandItem)
+    closeCommands()
+    action?.click()
+  })
+})
+
+document.addEventListener('keydown', (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault()
+    openCommands()
+  }
+  if (event.key === 'Escape') {
+    closeCommands()
+    shell.classList.remove('menu-open')
+  }
+})
+
+commandDialog.addEventListener('click', (event) => {
+  if (event.target === commandDialog) closeCommands()
+})
+
+setActiveView(navButtons[0]?.dataset.navTarget)

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" style="--accent:#ef4444;--accent-rgb:239, 68, 68">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reliability and FRACAS Investigation System</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">F</span>
+          <span class="brand-copy"><b>FRACAS</b><small>Reliability</small></span>
+        </div>
+        <nav aria-label="Primary navigation">
+          <button class="nav-item active" type="button" aria-label="Open reliability control" data-nav-target="reliability-control" data-nav-title="Reliability control">
+            <span class="nav-icon">01</span>Reliability control
+          </button><button class="nav-item " type="button" aria-label="Open failure reports" data-nav-target="failure-reports" data-nav-title="Failure reports">
+            <span class="nav-icon">02</span>Failure reports
+          </button><button class="nav-item " type="button" aria-label="Open investigations" data-nav-target="investigations" data-nav-title="Investigations">
+            <span class="nav-icon">03</span>Investigations
+          </button><button class="nav-item " type="button" aria-label="Open corrective actions" data-nav-target="corrective-actions" data-nav-title="Corrective actions">
+            <span class="nav-icon">04</span>Corrective actions
+          </button>
+        </nav>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-summary"><span>Current focus</span><strong>2</strong><small>Both contained</small></div>
+        <div class="user-row"><span class="avatar">TW</span><span><b>Tim Wood</b><small>Local engineering workspace</small></span></div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button>
+            <h1 data-view-title>Reliability control</h1>
+          </div>
+          <button class="command-button" type="button" data-open-commands aria-label="Open command menu">
+            <span>Find or run an action</span><kbd>⌘ K</kbd>
+          </button>
+        </header>
+
+        <main>
+          <section class="hero">
+            <div>
+              <p class="eyebrow">FRACAS · AIR-DATA SYSTEM · LAST 90 DAYS</p>
+              <h2>Connector faults increase</h2>
+              <p class="hero-copy">Connect failure evidence, causal analysis, action ownership, and recurrence monitoring.</p>
+            </div>
+            <div class="hero-status"><span class="status-orb"></span>Workspace data is current</div>
+          </section>
+
+          <section class="metrics" aria-label="Current measures">
+            <article class="metric"><span>Open reports</span><strong>24</strong><small>+4 this month</small></article><article class="metric"><span>Critical</span><strong>2</strong><small>Both contained</small></article><article class="metric"><span>Actions overdue</span><strong>3</strong><small>Oldest is 11 days</small></article><article class="metric"><span>Repeat rate</span><strong>8.2%</strong><small>+1.4 points</small></article>
+          </section>
+
+          <section class="action-deck" aria-label="Scenario actions">
+            <span>Prove the next task</span>
+            <button class="scenario-action" type="button" data-scenario-action="record-failure-report" data-target="reports">Record failure report</button><button class="scenario-action" type="button" data-scenario-action="classify-failure-mode" data-target="reports">Classify failure mode</button><button class="scenario-action" type="button" data-scenario-action="analyze-root-cause" data-target="investigations">Analyze root cause</button><button class="scenario-action" type="button" data-scenario-action="assign-corrective-action" data-target="actions">Assign corrective action</button><button class="scenario-action" type="button" data-scenario-action="verify-action-closure" data-target="actions">Verify action closure</button><button class="scenario-action" type="button" data-scenario-action="reject-open-corrective-action" data-target="actions">Reject open corrective action</button>
+          </section>
+
+          <section class="scenario-results" aria-live="polite">
+            <div class="scenario-result " data-scenario-result="record-failure-report" data-reward="Reliability improved">Failure report FR-2026-118 recorded</div><div class="scenario-result " data-scenario-result="classify-failure-mode" data-reward="Reliability improved">Failure mode classified</div><div class="scenario-result " data-scenario-result="analyze-root-cause" data-reward="Reliability improved">Root cause analysis opened</div><div class="scenario-result " data-scenario-result="assign-corrective-action" data-reward="Reliability improved">Corrective action assigned</div><div class="scenario-result " data-scenario-result="verify-action-closure" data-reward="Reliability improved">Action closure verified</div><div class="scenario-result is-failure" data-scenario-result="reject-open-corrective-action" data-reward="Reliability improved">Open corrective action retained</div>
+          </section>
+
+          <section class="panel-grid">
+            <article class="panel panel-bars">
+    <header class="panel-header"><div><h3>Failure modes</h3><p>Pareto view · 90-day rolling window.</p></div></header>
+    <div class="panel-body bars"><div class="bar-row"><span>Connector intermittency</span><div class="bar-track"><i style="width:84%"></i></div><b>18</b></div><div class="bar-row"><span>Sensor drift</span><div class="bar-track"><i style="width:58%"></i></div><b>12</b></div><div class="bar-row"><span>Power transient</span><div class="bar-track"><i style="width:39%"></i></div><b>8</b></div><div class="bar-row"><span>Software timeout</span><div class="bar-track"><i style="width:28%"></i></div><b>6</b></div><div class="bar-row"><span>Unknown</span><div class="bar-track"><i style="width:18%"></i></div><b>4</b></div></div>
+  </article><article class="panel panel-investigation">
+    <header class="panel-header"><div><h3>Selected investigation</h3><p>FR-2026-118 · Connector intermittency</p></div></header>
+    <div class="panel-body investigation"><div class="investigation-row"><span>Problem</span><p>ADC-B data drops during high vibration.</p></div><div class="investigation-row"><span>Containment</span><p>Inspect and reseat connector before flight.</p></div><div class="investigation-row"><span>Root cause</span><p>Backshell torque below process limit.</p></div><div class="investigation-row"><span>Correction</span><p>Update assembly tool and inspection step.</p></div></div>
+  </article><article class="panel panel-table">
+    <header class="panel-header"><div><h3>Corrective actions</h3><p>Ownership and recurrence evidence.</p></div></header>
+    <div class="panel-body" style="padding:0;overflow:auto">
+    <table class="data-table">
+      <thead><tr><th>Action</th><th>Owner</th><th>Due</th><th>State</th></tr></thead>
+      <tbody><tr><td>Update torque tool</td><td>Manufacturing</td><td>01 Aug</td><td>In work</td></tr><tr><td>Revise assembly step</td><td>Process Eng.</td><td>02 Aug</td><td>Review</td></tr><tr><td>Inspect fleet sample</td><td>Quality</td><td>04 Aug</td><td>Planned</td></tr><tr><td>Monitor recurrence</td><td>Reliability</td><td>30 Sep</td><td>Running</td></tr></tbody>
+    </table>
+  </div>
+  </article>
+          </section>
+
+          <details class="activity-drawer">
+            <summary>Session activity</summary>
+            <ol class="activity-list" data-activity>
+              <li><span>Now</span><b>Workspace opened</b><small>Capture failures, analyse causes, control corrective actions, and verify closure.</small></li>
+            </ol>
+          </details>
+        </main>
+      </section>
+    </div>
+
+    <aside class="reward-toast" data-reward aria-live="polite">
+      <div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>Reliability improved</b><small data-reward-count>0 of 6 actions evidenced</small></span></div>
+      <div class="reward-track"><i data-reward-bar></i></div>
+    </aside>
+
+    <div class="command-dialog" data-command-dialog hidden>
+      <section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu">
+        <div class="command-search">
+          <input data-command-input aria-label="Find an action" placeholder="Find an action…" />
+          <button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button>
+        </div>
+        <ul class="command-list">
+          <li data-command-item="record-failure-report"><button type="button"><span>Record failure report</span><small>reports</small></button></li><li data-command-item="classify-failure-mode"><button type="button"><span>Classify failure mode</span><small>reports</small></button></li><li data-command-item="analyze-root-cause"><button type="button"><span>Analyze root cause</span><small>investigations</small></button></li><li data-command-item="assign-corrective-action"><button type="button"><span>Assign corrective action</span><small>actions</small></button></li><li data-command-item="verify-action-closure"><button type="button"><span>Verify action closure</span><small>actions</small></button></li><li data-command-item="reject-open-corrective-action"><button type="button"><span>Reject open corrective action</span><small>actions</small></button></li>
+        </ul>
+      </section>
+    </div>
+
+    <script id="product-config" type="application/json">{"name":"Reliability and FRACAS Investigation System","reward":"Reliability improved","scenarios":[{"name":"Record failure report","actionId":"record-failure-report","result":"Failure report FR-2026-118 recorded","target":"reports"},{"name":"Classify failure mode","actionId":"classify-failure-mode","result":"Failure mode classified","target":"reports"},{"name":"Analyze root cause","actionId":"analyze-root-cause","result":"Root cause analysis opened","target":"investigations"},{"name":"Assign corrective action","actionId":"assign-corrective-action","result":"Corrective action assigned","target":"actions"},{"name":"Verify action closure","actionId":"verify-action-closure","result":"Action closure verified","target":"actions"},{"name":"Reject open corrective action","actionId":"reject-open-corrective-action","result":"Open corrective action retained","target":"actions"}]}</script>
+    <script src="./runtime.js"></script>
+  </body>
+</html>
