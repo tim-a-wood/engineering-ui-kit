@@ -181,6 +181,8 @@ describe('JointJS + ELK UML layout adapter', () => {
     const outboundStart = outbound.points[0]!
     expect(Math.hypot(inboundEnd.x - provided.x, inboundEnd.y - provided.y)).toBeLessThanOrEqual(9)
     expect(Math.hypot(outboundStart.x - required.x, outboundStart.y - required.y)).toBeLessThanOrEqual(9)
+    expect(inbound.points).toHaveLength(2)
+    expect(outbound.points).toHaveLength(2)
     for (const connector of layout.edges) {
       for (let index = 1; index < connector.points.length - 1; index += 1) {
         const before = connector.points[index - 1]!

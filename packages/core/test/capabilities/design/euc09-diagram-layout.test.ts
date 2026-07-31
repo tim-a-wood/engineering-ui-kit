@@ -490,30 +490,68 @@ describe('EUC-09 layoutDiagram — layout quality', () => {
     }
   })
 
-  it('uses straight interface connectors and only necessary bends in the Finding Review component diagram', () => {
+  it('uses direct-first routing in every compact bundled component topology', () => {
     const sample = buildSampleAuditHub()
-    const findingReview = sample.approvedModuleDesigns['mod.finding-review']!
-    const projection = sample.diagrams.find((candidate) =>
-      candidate.kind === 'component' && candidate.sourceRecordId === findingReview.id)!
-    const layout = layoutDiagram(projection, 'wide', { nodeWidth: 180, nodeHeight: 68 })
-    const edgeById = new Map(layout.edges.map((edge) => [edge.relationshipId, edge]))
-    const interfaceRelationships = projection.relationships.filter((relationship) =>
-      relationship.kind === 'provides' || relationship.kind === 'requires')
+    let checked = 0
+    for (const projection of sample.diagrams.filter((candidate) => candidate.kind === 'component')) {
+      const elementById = new Map(projection.elements.map((element) => [element.id, element]))
+      const components = projection.elements.filter((element) => element.kind === 'component')
+      const main = components.find((element) => element.sourceElementRef === 'module')
+      if (!main) continue
+      const consumerIds = new Set(projection.relationships
+        .filter((relationship) =>
+          relationship.toId === main.id
+          && elementById.get(relationship.fromId)?.kind === 'component')
+        .map((relationship) => relationship.fromId))
+      const dependencyIds = new Set(projection.relationships
+        .filter((relationship) =>
+          relationship.fromId === main.id
+          && elementById.get(relationship.toId)?.kind === 'component')
+        .map((relationship) => relationship.toId))
+      const remainingCount = components.filter((component) =>
+        component.id !== main.id
+        && !consumerIds.has(component.id)
+        && !dependencyIds.has(component.id)).length
+      if (consumerIds.size > 4 || dependencyIds.size + remainingCount > 4) continue
 
-    for (const relationship of interfaceRelationships) {
-      const route = edgeById.get(relationship.id)!.points
-      expect(route, relationship.id).toHaveLength(2)
-      expect(route[0]!.y, relationship.id).toBe(route[1]!.y)
+      checked += 1
+      const layout = layoutDiagram(projection, 'wide', { nodeWidth: 180, nodeHeight: 68 })
+      const edgeById = new Map(layout.edges.map((edge) => [edge.relationshipId, edge]))
+      const interfaceRelationships = projection.relationships.filter((relationship) =>
+        relationship.kind === 'provides' || relationship.kind === 'requires')
+      for (const relationship of interfaceRelationships) {
+        const route = edgeById.get(relationship.id)!.points
+        expect(route, `${projection.diagramId}: ${relationship.id}`).toHaveLength(2)
+        expect(route[0]!.y, `${projection.diagramId}: ${relationship.id}`)
+          .toBe(route[1]!.y)
+      }
+
+      for (const edge of layout.edges) {
+        for (let index = 1; index < edge.points.length - 1; index += 1) {
+          const before = edge.points[index - 1]!
+          const point = edge.points[index]!
+          const after = edge.points[index + 1]!
+          expect(
+            (before.x === point.x && point.x === after.x)
+            || (before.y === point.y && point.y === after.y),
+            `${projection.diagramId}: ${edge.relationshipId}`,
+          ).toBe(false)
+        }
+      }
+
+      const componentRelationshipCount = projection.relationships.filter((relationship) =>
+        elementById.get(relationship.fromId)?.kind === 'component'
+        && elementById.get(relationship.toId)?.kind === 'component').length
+      const quality = analyzeLayoutQuality(layout, projection)
+      expect(quality.crossingCount, projection.diagramId).toBe(0)
+      expect(quality.overlappingEdgePairs, projection.diagramId).toBe(0)
+      expect(quality.edgeNodeClearanceViolations, projection.diagramId).toBe(0)
+      expect(quality.labelNodeOverlaps, projection.diagramId).toBe(0)
+      expect(quality.labelLabelOverlaps, projection.diagramId).toBe(0)
+      expect(quality.bendCount, projection.diagramId)
+        .toBeLessThanOrEqual(componentRelationshipCount * 2)
     }
-
-    const quality = analyzeLayoutQuality(layout, projection)
-    expect(quality.crossingCount).toBe(0)
-    expect(quality.overlappingEdgePairs).toBe(0)
-    expect(quality.edgeNodeClearanceViolations).toBe(0)
-    expect(quality.labelNodeOverlaps).toBe(0)
-    expect(quality.labelLabelOverlaps).toBe(0)
-    expect(quality.bendCount).toBeLessThanOrEqual(4)
-    expect(quality.totalEdgeLength).toBeLessThanOrEqual(1200)
+    expect(checked).toBeGreaterThanOrEqual(10)
   })
 
   it('keeps every actor association on a distinct attachment and routing corridor', () => {

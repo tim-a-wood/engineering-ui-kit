@@ -38,6 +38,19 @@ describe('UML product robustness matrix', () => {
       expect(quality.connectorLabelOverlaps).toBe(0)
       expect(quality.portAlignmentViolations).toBe(0)
       expect(quality.canvasBoundsViolations).toBe(0)
+      expect(quality.bends).toBeLessThanOrEqual(fixture.projection.edges.length * 3)
+      for (const connector of first.edges) {
+        for (let index = 1; index < connector.points.length - 1; index += 1) {
+          const before = connector.points[index - 1]!
+          const point = connector.points[index]!
+          const after = connector.points[index + 1]!
+          expect(
+            (before.x === point.x && point.x === after.x)
+            || (before.y === point.y && point.y === after.y),
+            `${fixture.context}: ${connector.id}`,
+          ).toBe(false)
+        }
+      }
     })
   }
 })

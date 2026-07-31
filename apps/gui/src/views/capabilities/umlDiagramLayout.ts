@@ -1494,11 +1494,15 @@ function layoutQuality(result: ElkNode): [number, number, number, number, number
     }, 0), 0)
   const bendCount = routes.reduce((total, points) => total + Math.max(0, points.length - 2), 0)
   const crossingMetrics = orthogonalCrossingMetrics(result)
+  // Compare layout candidates lexicographically. Once crossings and their
+  // clearance are equal, prefer fewer direction changes before shorter total
+  // wire length; Manhattan routes can have the same length with very
+  // different visual complexity.
   return [
     crossingMetrics.count,
     crossingMetrics.count ? -crossingMetrics.minimumClearance : 0,
-    routeLength,
     bendCount,
+    routeLength,
     normalizedWidth * normalizedHeight * (1 + aspectPenalty * 0.25),
   ]
 }
@@ -1557,14 +1561,22 @@ async function layoutWithElk(diagram: DiagramProjection): Promise<UmlDiagramLayo
     | undefined
 
   for (const partition of partitions) {
-    for (const variant of layoutVariants) {
+    for (let variantIndex = 0; variantIndex < layoutVariants.length; variantIndex += 1) {
+      const variant = layoutVariants[variantIndex]!
       const built = buildElkGraph(diagram, partition, variant)
       const result = await elk.layout(built.graph)
       const quality = layoutQuality(result)
       if (!selected || isBetterQuality(quality, selected.quality)) {
         selected = { result, ...built, quality }
       }
-      if (diagram.kind === 'component' && quality[0] === 0) break
+      // Compare every rightward node-placement strategy before accepting a
+      // zero-crossing component layout. The first valid candidate can still
+      // contain avoidable bends even when its crossing count is zero.
+      if (
+        diagram.kind === 'component'
+        && variantIndex === 3
+        && selected.quality[0] === 0
+      ) break
     }
     if (diagram.kind === 'component' && selected?.quality[0] === 0) break
   }
