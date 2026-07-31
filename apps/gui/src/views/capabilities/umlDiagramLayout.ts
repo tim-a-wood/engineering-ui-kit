@@ -313,17 +313,34 @@ function useCaseActorPartitions(diagram: DiagramProjection): ActorPartition[] {
     return partitions
   }
 
-  // Bound layout work for unusually large actor sets while still offering ELK
-  // several balanced, deterministic partitions to compare.
-  return [0, 1, 2, 3].map((offset) => {
-    const right = new Set(actors.filter((_actor, index) => (index + offset) % 4 < 2))
-    if (!right.size) right.add(actors[0]!)
-    if (right.size === actors.length) right.delete(actors.at(-1)!)
-    return {
-      right,
-      left: new Set(actors.filter((actor) => !right.has(actor))),
-    }
-  })
+  // Bound layout work for unusually large actor sets. Preserve the
+  // connectivity order, then compare contiguous, alternating, and interleaved
+  // partitions. The prior four modulo-only candidates missed common cases
+  // where actors that use adjacent use cases belong on the same side.
+  const rightSets: Set<string>[] = []
+  const addRightSet = (ids: readonly string[]) => {
+    const right = new Set(ids)
+    if (!right.size || right.size === actors.length) return
+    const key = actors.map((actor) => right.has(actor) ? '1' : '0').join('')
+    if (rightSets.some((candidate) =>
+      actors.map((actor) => candidate.has(actor) ? '1' : '0').join('') === key)) return
+    rightSets.push(right)
+  }
+  for (let split = 1; split < actors.length; split += 1) {
+    addRightSet(actors.slice(split))
+  }
+  addRightSet(actors.filter((_actor, index) => index % 2 === 0))
+  addRightSet(actors.filter((_actor, index) => index % 2 === 1))
+  for (let offset = 0; offset < 4; offset += 1) {
+    addRightSet(actors.filter((_actor, index) => (index + offset) % 4 < 2))
+  }
+  addRightSet(actors.filter((_actor, index) =>
+    index < Math.ceil(actors.length / 4)
+    || index >= actors.length - Math.floor(actors.length / 4)))
+  return rightSets.map((right) => ({
+    right,
+    left: new Set(actors.filter((actor) => !right.has(actor))),
+  }))
 }
 
 function buildElkGraph(
@@ -423,6 +440,9 @@ function buildElkGraph(
     const useCases = diagram.nodes.filter((node) =>
       node.kind === 'use-case' && node.parentId === boundary?.id)
     if (boundary && useCases.length) {
+      const nestedLayoutOverrides = Object.fromEntries(
+        Object.entries(layoutOverrides).filter(([key]) => key !== 'elk.direction'),
+      )
       children.push({
         id: boundary.id,
         children: useCases.map((node) => {
@@ -442,6 +462,7 @@ function buildElkGraph(
           'elk.spacing.labelLabel': '14',
           'elk.layered.spacing.nodeNodeBetweenLayers': '62',
           'elk.layered.spacing.edgeNodeBetweenLayers': '30',
+          ...nestedLayoutOverrides,
         },
       })
     }
@@ -879,6 +900,41 @@ export function analyzeUmlLayoutQuality(
     totalConnectorLength,
     canvasOccupancy: semanticArea / Math.max(1, layout.width * layout.height),
   }
+}
+
+function renderedLayoutQuality(
+  layout: UmlDiagramLayout,
+  diagram: DiagramProjection,
+): readonly number[] {
+  const quality = analyzeUmlLayoutQuality(layout, diagram)
+  const hardDefects = quality.nodeOverlaps
+    + quality.overlappingConnectorPairs
+    + quality.edgeNodeClearanceViolations
+    + quality.labelNodeOverlaps
+    + quality.labelLabelOverlaps
+    + quality.connectorLabelOverlaps
+    + quality.portAlignmentViolations
+    + quality.canvasBoundsViolations
+  return [
+    hardDefects,
+    quality.crossings,
+    quality.bends,
+    quality.totalConnectorLength,
+    layout.width * layout.height,
+  ]
+}
+
+function isBetterRenderedLayout(
+  candidate: UmlDiagramLayout,
+  current: UmlDiagramLayout,
+  diagram: DiagramProjection,
+): boolean {
+  const candidateQuality = renderedLayoutQuality(candidate, diagram)
+  const currentQuality = renderedLayoutQuality(current, diagram)
+  return candidateQuality.some((value, index) =>
+    value < currentQuality[index]! && candidateQuality.slice(0, index).every(
+      (prior, priorIndex) => prior === currentQuality[priorIndex],
+    ))
 }
 
 function swimlaneNodeSize(node: DiagramProjectionNode): { width: number; height: number } {
@@ -1430,170 +1486,20 @@ function layoutRankedActivity(diagram: DiagramProjection): UmlDiagramLayout {
   }
 }
 
-function orthogonalCrossingMetrics(result: ElkNode): {
-  count: number
-  minimumClearance: number
-} {
-  const aligned = (left: number, right: number) => Math.abs(left - right) < 0.01
-  const segments = (result.edges ?? []).flatMap((edge) => {
-    const points = pointsForEdge(edge)
-    return points.slice(0, -1).map((start, index) => ({
-      edgeId: edge.id,
-      start,
-      end: points[index + 1]!,
-    }))
-  })
-  let crossings = 0
-  let minimumClearance = Number.POSITIVE_INFINITY
-  for (let leftIndex = 0; leftIndex < segments.length; leftIndex += 1) {
-    for (let rightIndex = leftIndex + 1; rightIndex < segments.length; rightIndex += 1) {
-      const left = segments[leftIndex]!
-      const right = segments[rightIndex]!
-      if (left.edgeId === right.edgeId) continue
-      const horizontal = aligned(left.start.y, left.end.y)
-        ? left
-        : aligned(right.start.y, right.end.y) ? right : undefined
-      const vertical = aligned(left.start.x, left.end.x)
-        ? left
-        : aligned(right.start.x, right.end.x) ? right : undefined
-      if (!horizontal || !vertical || horizontal === vertical) continue
-      const crossingX = vertical.start.x
-      const crossingY = horizontal.start.y
-      if (
-        crossingX > Math.min(horizontal.start.x, horizontal.end.x)
-        && crossingX < Math.max(horizontal.start.x, horizontal.end.x)
-        && crossingY > Math.min(vertical.start.y, vertical.end.y)
-        && crossingY < Math.max(vertical.start.y, vertical.end.y)
-      ) {
-        crossings += 1
-        minimumClearance = Math.min(
-          minimumClearance,
-          Math.abs(crossingX - horizontal.start.x),
-          Math.abs(crossingX - horizontal.end.x),
-          Math.abs(crossingY - vertical.start.y),
-          Math.abs(crossingY - vertical.end.y),
-        )
-      }
-    }
-  }
-  return { count: crossings, minimumClearance }
-}
-
-function layoutQuality(result: ElkNode): [number, number, number, number, number] {
-  const width = result.width ?? MIN_CANVAS_WIDTH
-  const height = result.height ?? MIN_CANVAS_HEIGHT
-  const normalizedWidth = Math.max(width, MIN_CANVAS_WIDTH)
-  const normalizedHeight = Math.max(height, MIN_CANVAS_HEIGHT)
-  const targetAspect = MIN_CANVAS_WIDTH / MIN_CANVAS_HEIGHT
-  const aspectPenalty = Math.abs(Math.log((normalizedWidth / normalizedHeight) / targetAspect))
-  const routes = (result.edges ?? []).map(pointsForEdge)
-  const routeLength = routes.reduce((total, points) =>
-    total + points.slice(0, -1).reduce((length, point, index) => {
-      const next = points[index + 1]!
-      return length + Math.abs(next.x - point.x) + Math.abs(next.y - point.y)
-    }, 0), 0)
-  const bendCount = routes.reduce((total, points) => total + Math.max(0, points.length - 2), 0)
-  const crossingMetrics = orthogonalCrossingMetrics(result)
-  // Compare layout candidates lexicographically. Once crossings and their
-  // clearance are equal, prefer fewer direction changes before shorter total
-  // wire length; Manhattan routes can have the same length with very
-  // different visual complexity.
-  return [
-    crossingMetrics.count,
-    crossingMetrics.count ? -crossingMetrics.minimumClearance : 0,
-    bendCount,
-    routeLength,
-    normalizedWidth * normalizedHeight * (1 + aspectPenalty * 0.25),
-  ]
-}
-
-function isBetterQuality(
-  candidate: ReturnType<typeof layoutQuality>,
-  current: ReturnType<typeof layoutQuality>,
-): boolean {
-  return candidate.some((value, index) =>
-    value < current[index]! && candidate.slice(0, index).every((prior, priorIndex) =>
-      prior === current[priorIndex]))
-}
-
-async function layoutWithElk(diagram: DiagramProjection): Promise<UmlDiagramLayout> {
-  const partitions = diagram.kind === 'use-case'
-    ? useCaseActorPartitions(diagram)
-    : [{ left: new Set<string>(), right: new Set<string>() }]
-  const layoutVariants: Record<string, string>[] = diagram.kind === 'component'
-    ? [
-      ...['RIGHT', 'DOWN'].flatMap((direction, directionIndex) =>
-        ['NETWORK_SIMPLEX', 'BRANDES_KOEPF', 'LINEAR_SEGMENTS', 'SIMPLE'].map((strategy, index) => ({
-          'elk.direction': direction,
-          'elk.randomSeed': String(directionIndex * 4 + index + 1),
-          'elk.layered.nodePlacement.strategy': strategy,
-        }))),
-      ...(diagram.nodes.length >= 15 && diagram.edges.length >= diagram.nodes.length
-        ? [
-          ...['3', '4', '5'].flatMap((layerBound, boundIndex) =>
-            ['NETWORK_SIMPLEX', 'BRANDES_KOEPF'].map((strategy, strategyIndex) => ({
-              'elk.direction': 'RIGHT',
-              'elk.randomSeed': String(9 + boundIndex * 2 + strategyIndex),
-              'elk.layered.layering.strategy': 'COFFMAN_GRAHAM',
-              'elk.layered.layering.coffmanGraham.layerBound': layerBound,
-              'elk.layered.nodePlacement.strategy': strategy,
-            }))),
-          {
-            'elk.direction': 'RIGHT',
-            'elk.randomSeed': '22',
-            'elk.layered.layering.strategy': 'MIN_WIDTH',
-            'elk.layered.layering.minWidth.upperBoundOnWidth': '4',
-            'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
-            'elk.layered.nodePlacement.strategy': 'LINEAR_SEGMENTS',
-          },
-        ]
-        : []),
-    ]
-    : [{}]
-  let selected:
-    | {
-      result: ElkNode
-      sizedNodes: Map<string, SizedNode>
-      portsByParent: Map<string, DiagramProjectionNode[]>
-      reversedEdgeIds: Set<string>
-      quality: ReturnType<typeof layoutQuality>
-    }
-    | undefined
-
-  for (const partition of partitions) {
-    for (let variantIndex = 0; variantIndex < layoutVariants.length; variantIndex += 1) {
-      const variant = layoutVariants[variantIndex]!
-      const built = buildElkGraph(diagram, partition, variant)
-      const result = await elk.layout(built.graph)
-      const quality = layoutQuality(result)
-      if (!selected || isBetterQuality(quality, selected.quality)) {
-        selected = { result, ...built, quality }
-      }
-      // Compare every rightward node-placement strategy before accepting a
-      // zero-crossing component layout. The first valid candidate can still
-      // contain avoidable bends even when its crossing count is zero.
-      if (
-        diagram.kind === 'component'
-        && variantIndex === 3
-        && selected.quality[0] === 0
-      ) break
-    }
-    if (diagram.kind === 'component' && selected?.quality[0] === 0) break
-  }
-
-  const {
-    result,
-    sizedNodes,
-    portsByParent,
-    reversedEdgeIds,
-  } = selected!
+function layoutFromElkResult(
+  diagram: DiagramProjection,
+  result: ElkNode,
+  built: ReturnType<typeof buildElkGraph>,
+): UmlDiagramLayout {
+  const { sizedNodes, portsByParent, reversedEdgeIds } = built
   const nodes: UmlLayoutNode[] = []
   const visitNode = (node: ElkNode, parentX = 0, parentY = 0) => {
     const semantic = sizedNodes.get(node.id)!
     const x = parentX + (node.x ?? 0)
     const y = parentY + (node.y ?? 0)
     const ports = (node.ports ?? []).map((port): UmlLayoutPort => {
-      const definition = (portsByParent.get(node.id) ?? []).find((candidate) => candidate.id === port.id)!
+      const definition = (portsByParent.get(node.id) ?? [])
+        .find((candidate) => candidate.id === port.id)!
       return {
         id: definition.id,
         kind: definition.kind as UmlLayoutPort['kind'],
@@ -1655,6 +1561,153 @@ async function layoutWithElk(diagram: DiagramProjection): Promise<UmlDiagramLayo
     }
   })
   return normalizeLayout(nodes, laidOutEdges, 'elk-layered')
+}
+
+async function layoutWithElk(diagram: DiagramProjection): Promise<UmlDiagramLayout> {
+  const partitions = diagram.kind === 'use-case'
+    ? useCaseActorPartitions(diagram)
+    : [{ left: new Set<string>(), right: new Set<string>() }]
+  const placementVariants = (
+    directions: readonly ('RIGHT' | 'DOWN')[],
+    strategies: readonly string[],
+    seedOffset = 0,
+  ) => directions.flatMap((direction, directionIndex) =>
+    strategies.map((strategy, index) => ({
+      'elk.direction': direction,
+      'elk.randomSeed': String(seedOffset + directionIndex * strategies.length + index + 1),
+      'elk.layered.nodePlacement.strategy': strategy,
+    })))
+  const stateLayeringVariants = ['RIGHT', 'DOWN'].flatMap((direction, directionIndex) =>
+    ['NETWORK_SIMPLEX', 'LONGEST_PATH', 'COFFMAN_GRAHAM', 'MIN_WIDTH'].flatMap(
+      (layering, layeringIndex) =>
+        ['NETWORK_SIMPLEX', 'BRANDES_KOEPF'].map((placement, placementIndex) => ({
+          'elk.direction': direction,
+          'elk.randomSeed': String(20 + directionIndex * 8 + layeringIndex * 2 + placementIndex),
+          'elk.layered.layering.strategy': layering,
+          ...(layering === 'COFFMAN_GRAHAM'
+            ? { 'elk.layered.layering.coffmanGraham.layerBound': '4' }
+            : {}),
+          ...(layering === 'MIN_WIDTH'
+            ? { 'elk.layered.layering.minWidth.upperBoundOnWidth': '4' }
+            : {}),
+          'elk.layered.nodePlacement.strategy': placement,
+        })),
+    ))
+  const stateCycleVariants = ['RIGHT', 'DOWN'].flatMap((direction, directionIndex) =>
+    ['GREEDY', 'DEPTH_FIRST', 'MODEL_ORDER', 'GREEDY_MODEL_ORDER'].flatMap(
+      (cycleBreaking, cycleIndex) =>
+        ['NETWORK_SIMPLEX', 'BRANDES_KOEPF'].map((placement, placementIndex) => ({
+          'elk.direction': direction,
+          'elk.randomSeed': String(40 + directionIndex * 8 + cycleIndex * 2 + placementIndex),
+          'elk.layered.cycleBreaking.strategy': cycleBreaking,
+          'elk.layered.nodePlacement.strategy': placement,
+        })),
+    ))
+  const layoutVariants: Record<string, string>[] = diagram.kind === 'component'
+    ? [
+      ...['RIGHT', 'DOWN'].flatMap((direction, directionIndex) =>
+        ['NETWORK_SIMPLEX', 'BRANDES_KOEPF', 'LINEAR_SEGMENTS', 'SIMPLE'].map((strategy, index) => ({
+          'elk.direction': direction,
+          'elk.randomSeed': String(directionIndex * 4 + index + 1),
+          'elk.layered.nodePlacement.strategy': strategy,
+        }))),
+      ...(diagram.nodes.length >= 15 && diagram.edges.length >= diagram.nodes.length
+        ? [
+          ...['3', '4', '5'].flatMap((layerBound, boundIndex) =>
+            ['NETWORK_SIMPLEX', 'BRANDES_KOEPF'].map((strategy, strategyIndex) => ({
+              'elk.direction': 'RIGHT',
+              'elk.randomSeed': String(9 + boundIndex * 2 + strategyIndex),
+              'elk.layered.layering.strategy': 'COFFMAN_GRAHAM',
+              'elk.layered.layering.coffmanGraham.layerBound': layerBound,
+              'elk.layered.nodePlacement.strategy': strategy,
+            }))),
+          {
+            'elk.direction': 'RIGHT',
+            'elk.randomSeed': '22',
+            'elk.layered.layering.strategy': 'MIN_WIDTH',
+            'elk.layered.layering.minWidth.upperBoundOnWidth': '4',
+            'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
+            'elk.layered.nodePlacement.strategy': 'LINEAR_SEGMENTS',
+          },
+        ]
+        : []),
+    ]
+    : diagram.kind === 'state-machine'
+      ? [
+        ...placementVariants(
+          ['RIGHT', 'DOWN'],
+          ['NETWORK_SIMPLEX', 'BRANDES_KOEPF', 'LINEAR_SEGMENTS', 'SIMPLE'],
+        ),
+        ...stateLayeringVariants,
+        ...stateCycleVariants,
+      ]
+      : diagram.kind === 'use-case'
+        ? placementVariants(
+          ['RIGHT'],
+          ['BRANDES_KOEPF', 'NETWORK_SIMPLEX', 'LINEAR_SEGMENTS', 'SIMPLE'],
+        )
+        : [{}]
+  let selected:
+    | {
+      layout: UmlDiagramLayout
+      quality: readonly number[]
+    }
+    | undefined
+  let lastLayoutError: unknown
+
+  for (const partition of partitions) {
+    for (let variantIndex = 0; variantIndex < layoutVariants.length; variantIndex += 1) {
+      const variant = layoutVariants[variantIndex]!
+      const built = buildElkGraph(diagram, partition, variant)
+      try {
+        const result = await elk.layout(built.graph)
+        const layout = layoutFromElkResult(diagram, result, built)
+        const quality = renderedLayoutQuality(layout, diagram)
+        if (!selected || quality.some((value, index) =>
+          value < selected!.quality[index]!
+          && quality.slice(0, index).every(
+            (prior, priorIndex) => prior === selected!.quality[priorIndex],
+          ))) {
+          selected = { layout, quality }
+        }
+      } catch (error) {
+        // ELK strategies have different applicability constraints. One invalid
+        // candidate must not discard a valid layout from another strategy.
+        lastLayoutError = error
+        continue
+      }
+      // Compare every rightward node-placement strategy before accepting a
+      // zero-crossing component layout. The first valid candidate can still
+      // contain avoidable bends even when its crossing count is zero.
+      if (
+        diagram.kind === 'component'
+        && variantIndex === 3
+        && selected?.quality[0] === 0
+        && selected.quality[1] === 0
+      ) break
+      if (
+        diagram.kind === 'use-case'
+        && selected?.quality[0] === 0
+        && (selected.quality[1] ?? Number.POSITIVE_INFINITY) <= 1
+      ) break
+    }
+    if (
+      diagram.kind === 'component'
+      && selected?.quality[0] === 0
+      && selected.quality[1] === 0
+    ) break
+    if (
+      diagram.kind === 'use-case'
+      && selected?.quality[0] === 0
+      && (selected.quality[1] ?? Number.POSITIVE_INFINITY) <= 1
+    ) break
+  }
+
+  if (!selected) {
+    if (lastLayoutError instanceof Error) throw lastLayoutError
+    throw new Error(`No ELK layout candidate succeeded for ${diagram.id}.`)
+  }
+  return selected.layout
 }
 
 function sequenceEdgePoints(
@@ -2042,11 +2095,15 @@ export async function layoutUmlDiagram(diagram: DiagramProjection): Promise<UmlD
   const stateOrder = linearStateOrder(diagram)
   if (stateOrder) return layoutLinearStateMachine(diagram, stateOrder)
   if (diagram.kind === 'state-machine') {
+    const deterministicFallback = layoutNonlinearStateMachine(diagram)
     try {
       const result = await layoutWithElk(diagram)
-      return { ...result, engine: 'balanced-state' }
+      const elkLayout = { ...result, engine: 'balanced-state' } as const
+      return isBetterRenderedLayout(deterministicFallback, elkLayout, diagram)
+        ? deterministicFallback
+        : elkLayout
     } catch {
-      return layoutNonlinearStateMachine(diagram)
+      return deterministicFallback
     }
   }
   return layoutWithElk(diagram)

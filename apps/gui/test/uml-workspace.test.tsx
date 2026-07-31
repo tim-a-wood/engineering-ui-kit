@@ -207,13 +207,13 @@ describe('record-driven JointJS UML workspace', () => {
     const connector = container.querySelector('.uml-joint-link-line')
     expect(connector?.getAttribute('d')).toMatch(/^M /)
     expect(connector?.getAttribute('stroke-dasharray')).toBe('7 5')
-    expect(screen.getAllByText('ELK orthogonal layout')).toHaveLength(1)
+    expect(screen.getAllByText('Orthogonal UML layout')).toHaveLength(1)
     expect(screen.queryByRole('complementary', { name: 'Diagram element details' })).toBeNull()
   })
 
   it('selects semantic ports and connectors through the accessible inspector', async () => {
     render(<UmlDiagramWorkspace diagrams={[componentProjection()]} />)
-    expect((await screen.findAllByText('ELK orthogonal layout')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('Orthogonal UML layout')).length).toBeGreaterThan(0)
     await waitFor(() => expect(document.querySelector('[port="provided:workflow:start"]')).toBeTruthy())
 
     fireEvent.change(screen.getByLabelText('Inspect diagram element'), {
