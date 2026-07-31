@@ -21,7 +21,7 @@ Guide generation or refinement of reusable Engineering UI Kit components.
 - Use one technical term for one concept. Do not use contractions, semicolons, or em dashes.
 - Implement light and dark modes. Add a labeled mode button.
 - Apply the selected palette, font, density, and view layout.
-- Use white-dominant light surfaces and Gulfstream-blue-dominant dark surfaces for the default palette.
+- Start in dark mode. Use a deep navy canvas, layered navy surfaces, light text, and a clear blue accent in the default palette.
 - Do not invent a metric or KPI. Add a measure only when it changes a task decision.
 - Use Lucide icons only. Follow `FND-ICON-001`.
 - Add accessible tooltips and contextual help. Follow `FND-HELP-001`.

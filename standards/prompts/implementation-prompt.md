@@ -75,7 +75,7 @@ Hard requirements:
 - Add a labeled mode button. Store the user choice.
 - Use the system mode before the user selects a mode.
 - Apply the selected palette, font, density, and view layout.
-- Use white-dominant light surfaces and Gulfstream-blue-dominant dark surfaces for the default palette.
+- Start in dark mode. Use a deep navy canvas, layered navy surfaces, light text, and a clear blue accent in the default palette.
 - Do not invent a metric or KPI. Add a measure only when it changes a task decision.
 - Use Lucide icons only. Add tooltips to icon-only controls.
 - Add contextual help for complex domain terms.

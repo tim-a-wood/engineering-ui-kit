@@ -618,7 +618,7 @@ function ModuleWorkspace(props: {
   const [frontendBrief, setFrontendBrief] = useState<FrontendBrief>()
   const [frontendFields, setFrontendFields] = useState<TaskPacketFields>()
   const [frontendDesign, setFrontendDesign] = useState<FrontendDesignPreferences>({
-    paletteId: 'gulfstream',
+    paletteId: 'midnight',
     fontId: 'inter',
     defaultMode: 'system',
     density: 'compact',
@@ -1322,7 +1322,7 @@ function ModuleWorkspace(props: {
               <label>
                 <span>Color palette</span>
                 <select
-                  value={frontendDesign.paletteId ?? 'gulfstream'}
+                  value={frontendDesign.paletteId ?? 'midnight'}
                   onChange={(event) => setFrontendDesign((current) => ({
                     ...current,
                     paletteId: event.target.value as Exclude<FrontendDesignPreferences['paletteId'], undefined>,

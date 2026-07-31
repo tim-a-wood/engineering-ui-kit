@@ -143,8 +143,8 @@ export const STANDARD_TOKEN_ROWS: TaskDefinition['tokenRows'] = buildStandardTok
 
 export const STANDARD_APPROVED_GUIDANCE = [
   'Modern enterprise workbench.',
-  'White-dominant light mode with Gulfstream blue as the default accent.',
-  'Dark mode with Gulfstream blue #003767 as the base field and white interaction highlights.',
+  'Dark mode is the default start mode.',
+  'The default palette uses a deep navy canvas, layered navy surfaces, light text, and a clear blue accent.',
   'A project-selected palette applied through the same semantic roles in both modes.',
   'Equal quality in light and dark modes.',
   'A labeled mode button that stores the user choice.',
@@ -266,7 +266,7 @@ export const STANDARD_CONSTRAINTS = [
   'Use the system color mode until the user selects a mode.',
   'Store the user color mode choice.',
   'Apply the configured palette and font through semantic tokens.',
-  'Use white-dominant light surfaces. Use Gulfstream blue #003767 as the dark base field and white for interaction highlights.',
+  'Start in dark mode. Use a deep navy canvas, layered navy surfaces, light text, and a clear blue accent.',
   'Use natural application names and page titles. Do not start a page title with a count.',
   'Do not invent metrics or KPI strips. Require a task decision for each measure.',
   'Use Lucide icons only. Follow the supplied icon geometry.',

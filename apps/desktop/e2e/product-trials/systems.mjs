@@ -987,24 +987,24 @@ const architecturePlans = {
 }
 
 const paletteProfiles = {
-  gulfstream: {
-    palette: 'Gulfstream blue',
-    darkCanvas: '#003767',
-    darkSurface: '#063c6b',
-    darkSurfaceSubtle: '#0d416f',
-    darkSurfaceRaised: '#144773',
-    darkBorder: '#4d7394',
-    darkBorderStrong: '#809bb3',
-    lightNavigation: '#003767',
-    darkNavigation: '#003767',
-    darkNavigationMuted: '#d8e1e9',
-    darkOnAccent: '#003767',
-    lightAccent: '#003767',
-    darkAccent: '#ffffff',
-    lightSoft: '#e2eef5',
-    darkSoft: '#164a75',
-    lightRgb: '0, 55, 103',
-    darkRgb: '255, 255, 255',
+  midnight: {
+    palette: 'Midnight blue',
+    darkCanvas: '#0b1628',
+    darkSurface: '#10213a',
+    darkSurfaceSubtle: '#142943',
+    darkSurfaceRaised: '#19314f',
+    darkBorder: '#334b69',
+    darkBorderStrong: '#5e7899',
+    lightNavigation: '#145ea8',
+    darkNavigation: '#08101e',
+    darkNavigationMuted: '#c5d0de',
+    darkOnAccent: '#0b1628',
+    lightAccent: '#145ea8',
+    darkAccent: '#78b7ff',
+    lightSoft: '#e4eef9',
+    darkSoft: '#183657',
+    lightRgb: '20, 94, 168',
+    darkRgb: '120, 183, 255',
   },
   graphite: {
     palette: 'Graphite',
@@ -1093,16 +1093,16 @@ const fontProfiles = {
 }
 
 const productDesignProfiles = {
-  review: { paletteId: 'gulfstream', fontId: 'inter', defaultMode: 'system', density: 'compact' },
-  sessions: { paletteId: 'gulfstream', fontId: 'source', defaultMode: 'dark', density: 'comfortable' },
-  writing: { paletteId: 'gulfstream', fontId: 'plex', defaultMode: 'light', density: 'comfortable' },
-  telemetry: { paletteId: 'gulfstream', fontId: 'inter', defaultMode: 'dark', density: 'compact' },
-  trade: { paletteId: 'gulfstream', fontId: 'source', defaultMode: 'system', density: 'compact' },
-  hil: { paletteId: 'gulfstream', fontId: 'plex', defaultMode: 'dark', density: 'compact' },
-  supplier: { paletteId: 'gulfstream', fontId: 'atkinson', defaultMode: 'light', density: 'comfortable' },
-  impact: { paletteId: 'gulfstream', fontId: 'inter', defaultMode: 'system', density: 'compact' },
-  load: { paletteId: 'gulfstream', fontId: 'system', defaultMode: 'dark', density: 'compact' },
-  fracas: { paletteId: 'gulfstream', fontId: 'atkinson', defaultMode: 'system', density: 'comfortable' },
+  review: { paletteId: 'midnight', fontId: 'inter', defaultMode: 'dark', density: 'compact' },
+  sessions: { paletteId: 'midnight', fontId: 'source', defaultMode: 'dark', density: 'comfortable' },
+  writing: { paletteId: 'midnight', fontId: 'plex', defaultMode: 'dark', density: 'comfortable' },
+  telemetry: { paletteId: 'midnight', fontId: 'inter', defaultMode: 'dark', density: 'compact' },
+  trade: { paletteId: 'midnight', fontId: 'source', defaultMode: 'dark', density: 'compact' },
+  hil: { paletteId: 'midnight', fontId: 'plex', defaultMode: 'dark', density: 'compact' },
+  supplier: { paletteId: 'midnight', fontId: 'atkinson', defaultMode: 'dark', density: 'comfortable' },
+  impact: { paletteId: 'midnight', fontId: 'inter', defaultMode: 'dark', density: 'compact' },
+  load: { paletteId: 'midnight', fontId: 'system', defaultMode: 'dark', density: 'compact' },
+  fracas: { paletteId: 'midnight', fontId: 'atkinson', defaultMode: 'dark', density: 'comfortable' },
 }
 
 export const productTrialSystems = productTrialSystemsBase.map((system) => {

@@ -25,7 +25,7 @@ const expectedLayouts = [
   'load',
   'fracas',
 ]
-const configurablePaletteIds = ['gulfstream', 'graphite', 'teal', 'violet', 'amber']
+const configurablePaletteIds = ['midnight', 'graphite', 'teal', 'violet', 'amber']
 const expectedFonts = ['system', 'inter', 'plex', 'source', 'atkinson']
 const fontMap = {
   system: 'system',
@@ -78,9 +78,9 @@ if (productTrialSystems.length !== 10) {
   throw new Error(`The stress set has ${productTrialSystems.length} products. Expected 10.`)
 }
 assertSet(productTrialSystems.map((system) => system.layout), expectedLayouts, 'Layout')
-assertSet(productTrialSystems.map((system) => system.design.paletteId), ['gulfstream'], 'Default palette')
+assertSet(productTrialSystems.map((system) => system.design.paletteId), ['midnight'], 'Default palette')
 assertSet(productTrialSystems.map((system) => system.design.fontId), expectedFonts, 'Font')
-assertSet(productTrialSystems.map((system) => system.design.defaultMode), ['system', 'light', 'dark'], 'Start mode')
+assertSet(productTrialSystems.map((system) => system.design.defaultMode), ['dark'], 'Start mode')
 assertSet(productTrialSystems.map((system) => system.design.density), ['compact', 'comfortable'], 'Density')
 
 const configurablePalettes = configurablePaletteIds.map((paletteId) =>
@@ -88,31 +88,31 @@ const configurablePalettes = configurablePaletteIds.map((paletteId) =>
 if (new Set(configurablePalettes.map((palette) => palette.dark.canvas)).size !== configurablePalettes.length) {
   throw new Error('Two configurable palettes use the same dark canvas.')
 }
-const gulfstreamPalette = configurablePalettes.find((palette) => palette.id === 'gulfstream')
+const midnightPalette = configurablePalettes.find((palette) => palette.id === 'midnight')
 if (
-  gulfstreamPalette?.light.surface !== '#ffffff'
-  || gulfstreamPalette.dark.canvas !== '#003767'
-  || gulfstreamPalette.dark.surface !== '#063c6b'
-  || gulfstreamPalette.dark.text !== '#ffffff'
-  || gulfstreamPalette.dark.accent !== '#ffffff'
+  midnightPalette?.light.surface !== '#ffffff'
+  || midnightPalette.dark.canvas !== '#0b1628'
+  || midnightPalette.dark.surface !== '#10213a'
+  || midnightPalette.dark.text !== '#f7f9fc'
+  || midnightPalette.dark.accent !== '#78b7ff'
 ) {
-  throw new Error('The default Gulfstream palette does not preserve white-led light mode and blue-led dark mode.')
+  throw new Error('The default Midnight palette does not preserve the approved dark-blue theme.')
 }
-const gulfstreamContrast = {
-  textOnCanvas: contrastRatio(gulfstreamPalette.dark.text, gulfstreamPalette.dark.canvas),
-  mutedTextOnSurface: contrastRatio(gulfstreamPalette.dark.textMuted, gulfstreamPalette.dark.surface),
-  quietTextOnSurface: contrastRatio(gulfstreamPalette.dark.textQuiet, gulfstreamPalette.dark.surface),
-  strongBorderOnSurface: contrastRatio(gulfstreamPalette.dark.borderStrong, gulfstreamPalette.dark.surface),
-  accentOnCanvas: contrastRatio(gulfstreamPalette.dark.accent, gulfstreamPalette.dark.canvas),
+const midnightContrast = {
+  textOnCanvas: contrastRatio(midnightPalette.dark.text, midnightPalette.dark.canvas),
+  mutedTextOnSurface: contrastRatio(midnightPalette.dark.textMuted, midnightPalette.dark.surface),
+  quietTextOnSurface: contrastRatio(midnightPalette.dark.textQuiet, midnightPalette.dark.surface),
+  strongBorderOnSurface: contrastRatio(midnightPalette.dark.borderStrong, midnightPalette.dark.surface),
+  accentOnCanvas: contrastRatio(midnightPalette.dark.accent, midnightPalette.dark.canvas),
 }
-if (gulfstreamContrast.textOnCanvas < 7 || gulfstreamContrast.accentOnCanvas < 7) {
-  throw new Error('The Gulfstream dark palette does not meet the 7:1 enhanced contrast target for white content.')
+if (midnightContrast.textOnCanvas < 7 || midnightContrast.accentOnCanvas < 7) {
+  throw new Error('The Midnight dark palette does not meet the 7:1 enhanced contrast target for primary content.')
 }
-if (gulfstreamContrast.mutedTextOnSurface < 4.5 || gulfstreamContrast.quietTextOnSurface < 4.5) {
-  throw new Error('The Gulfstream dark palette does not meet the 4.5:1 contrast target for secondary text.')
+if (midnightContrast.mutedTextOnSurface < 4.5 || midnightContrast.quietTextOnSurface < 4.5) {
+  throw new Error('The Midnight dark palette does not meet the 4.5:1 contrast target for secondary text.')
 }
-if (gulfstreamContrast.strongBorderOnSurface < 3) {
-  throw new Error('The Gulfstream dark palette does not meet the 3:1 non-text contrast target for strong boundaries.')
+if (midnightContrast.strongBorderOnSurface < 3) {
+  throw new Error('The Midnight dark palette does not meet the 3:1 non-text contrast target for strong boundaries.')
 }
 
 const sharedSources = {
@@ -239,8 +239,8 @@ const report = {
   layouts: sortedUnique(results.map((result) => result.productKind)),
   defaultPalettes: sortedUnique(productTrialSystems.map((system) => system.design.paletteId)),
   configurablePalettes: configurablePalettes.map((palette) => palette.id),
-  gulfstreamContrast: Object.fromEntries(
-    Object.entries(gulfstreamContrast).map(([key, value]) => [key, Number(value.toFixed(2))]),
+  midnightContrast: Object.fromEntries(
+    Object.entries(midnightContrast).map(([key, value]) => [key, Number(value.toFixed(2))]),
   ),
   productsWithMetrics: results.filter((result) => result.metricSurfaceCount > 0).length,
   productsWithoutMetrics: results.filter((result) => result.metricSurfaceCount === 0).length,

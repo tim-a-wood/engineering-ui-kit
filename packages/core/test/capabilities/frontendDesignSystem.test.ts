@@ -24,21 +24,21 @@ function contrastRatio(foreground: string, background: string): number {
 }
 
 describe('frontend design system', () => {
-  it('resolves the Gulfstream enterprise defaults', () => {
+  it('resolves the Midnight enterprise defaults', () => {
     const config = resolveFrontendDesignSystem()
 
     expect(config.contractId).toBe('EUIT-FRONTEND-001')
     expect(config.writingProfileId).toBe('EUIT-STE-001')
-    expect(config.palette.id).toBe('gulfstream')
+    expect(config.palette.id).toBe('midnight')
     expect(config.typography.id).toBe('inter')
-    expect(config.defaultMode).toBe('system')
+    expect(config.defaultMode).toBe('dark')
     expect(config.modeToggle).toBe(true)
     expect(config.palette.light.surface).toBe('#ffffff')
-    expect(config.palette.light.accent).toBe('#003767')
-    expect(config.palette.dark.canvas).toBe('#003767')
-    expect(config.palette.dark.surface).toBe('#063c6b')
-    expect(config.palette.dark.text).toBe('#ffffff')
-    expect(config.palette.dark.accent).toBe('#ffffff')
+    expect(config.palette.light.accent).toBe('#145ea8')
+    expect(config.palette.dark.canvas).toBe('#0b1628')
+    expect(config.palette.dark.surface).toBe('#10213a')
+    expect(config.palette.dark.text).toBe('#f7f9fc')
+    expect(config.palette.dark.accent).toBe('#78b7ff')
     expect(config.icons).toEqual(expect.objectContaining({
       family: 'lucide',
       viewBox: '0 0 24 24',
@@ -47,8 +47,8 @@ describe('frontend design system', () => {
     }))
   })
 
-  it('uses white Gulfstream highlights with accessible contrast', () => {
-    const { dark } = FRONTEND_PALETTES.gulfstream
+  it('uses accessible contrast in the Midnight dark palette', () => {
+    const { dark } = FRONTEND_PALETTES.midnight
 
     expect(contrastRatio(dark.text, dark.canvas)).toBeGreaterThanOrEqual(7)
     expect(contrastRatio(dark.textMuted, dark.surface)).toBeGreaterThanOrEqual(4.5)
@@ -63,7 +63,7 @@ describe('frontend design system', () => {
     expect(palettes.map((palette) => palette.id).sort()).toEqual([
       'amber',
       'graphite',
-      'gulfstream',
+      'midnight',
       'teal',
       'violet',
     ])
@@ -135,8 +135,8 @@ describe('frontend design system', () => {
     expect(prompt).toContain('Do not put the complete action catalog in the page header.')
     expect(prompt).toContain('Do not put an overflow menu on every panel.')
     expect(prompt).toContain('Do not cover the workspace with a fixed toast.')
-    expect(prompt).toContain('make white dominant in light mode.')
-    expect(prompt).toContain('use Gulfstream blue #003767 as the base field and white as the interaction highlight.')
+    expect(prompt).toContain('use a restrained dark-blue canvas and layered navy surfaces.')
+    expect(prompt).toContain('Use a clear blue accent for actions, focus, selection, and data emphasis.')
     expect(prompt).toContain('Do not write a count-led headline')
     expect(prompt).toContain('Do not invent a metric, KPI, score, trend, or count.')
     expect(prompt).toContain('Do not add a default metric strip.')

@@ -6,7 +6,7 @@
  */
 
 export const FRONTEND_PALETTE_IDS = [
-  'gulfstream',
+  'midnight',
   'graphite',
   'teal',
   'violet',
@@ -147,48 +147,48 @@ export type FrontendDesignFinding = {
   message: string
 }
 
-const gulfstreamLight: FrontendColorMode = {
-  canvas: '#f5f8fa',
+const midnightLight: FrontendColorMode = {
+  canvas: '#f6f8fa',
   surface: '#ffffff',
-  surfaceSubtle: '#edf3f6',
+  surfaceSubtle: '#eef2f6',
   surfaceRaised: '#ffffff',
-  text: '#102536',
-  textMuted: '#526978',
-  textQuiet: '#6d808c',
-  border: '#c8d5dc',
-  borderStrong: '#8da2ae',
-  accent: '#003767',
-  accentHover: '#004b87',
-  accentActive: '#002846',
-  accentSoft: '#e2eef5',
-  focus: '#0069aa',
+  text: '#182536',
+  textMuted: '#536579',
+  textQuiet: '#6b7d90',
+  border: '#cbd5e1',
+  borderStrong: '#8da0b5',
+  accent: '#145ea8',
+  accentHover: '#1b6fbe',
+  accentActive: '#0f4d8b',
+  accentSoft: '#e4eef9',
+  focus: '#1f6feb',
   success: '#176b3a',
   warning: '#805400',
   danger: '#b42318',
-  info: '#005c96',
-  shadow: '0 12px 32px rgba(16, 37, 54, 0.12)',
+  info: '#145ea8',
+  shadow: '0 12px 32px rgba(24, 37, 54, 0.12)',
 }
 
-const gulfstreamDark: FrontendColorMode = {
-  canvas: '#003767',
-  surface: '#063c6b',
-  surfaceSubtle: '#0d416f',
-  surfaceRaised: '#144773',
-  text: '#ffffff',
-  textMuted: '#d8e1e9',
-  textQuiet: '#b3c3d0',
-  border: '#4d7394',
-  borderStrong: '#809bb3',
-  accent: '#ffffff',
-  accentHover: '#f2f6f8',
-  accentActive: '#d8e1e9',
-  accentSoft: '#164a75',
-  focus: '#ffffff',
-  success: '#63d69b',
-  warning: '#f2c46d',
-  danger: '#ff8c85',
-  info: '#ffffff',
-  shadow: '0 18px 48px rgba(0, 0, 0, 0.32)',
+const midnightDark: FrontendColorMode = {
+  canvas: '#0b1628',
+  surface: '#10213a',
+  surfaceSubtle: '#142943',
+  surfaceRaised: '#19314f',
+  text: '#f7f9fc',
+  textMuted: '#c5d0de',
+  textQuiet: '#9aacc0',
+  border: '#334b69',
+  borderStrong: '#5e7899',
+  accent: '#78b7ff',
+  accentHover: '#9acaff',
+  accentActive: '#4c9cf5',
+  accentSoft: '#183657',
+  focus: '#9acaff',
+  success: '#57c785',
+  warning: '#e5b95c',
+  danger: '#ff7b72',
+  info: '#79c0ff',
+  shadow: '0 18px 48px rgba(1, 7, 18, 0.4)',
 }
 
 function palette(
@@ -202,16 +202,16 @@ function palette(
     id,
     name,
     description,
-    light: { ...gulfstreamLight, ...light },
-    dark: { ...gulfstreamDark, ...dark },
+    light: { ...midnightLight, ...light },
+    dark: { ...midnightDark, ...dark },
   }
 }
 
 export const FRONTEND_PALETTES: Readonly<Record<Exclude<FrontendPaletteId, 'custom'>, FrontendPalette>> = {
-  gulfstream: palette(
-    'gulfstream',
-    'Gulfstream blue',
-    'Blue and white enterprise palette.',
+  midnight: palette(
+    'midnight',
+    'Midnight blue',
+    'Dark-blue enterprise palette with clear blue accents.',
     {},
     {},
   ),
@@ -555,7 +555,7 @@ function uniqueViewKinds(values: FrontendViewKind[] | undefined): FrontendViewKi
 export function resolveFrontendDesignSystem(
   preferences: FrontendDesignPreferences = {},
 ): FrontendDesignSystemConfig {
-  const paletteId = preferences.paletteId ?? 'gulfstream'
+  const paletteId = preferences.paletteId ?? 'midnight'
   const fontId = preferences.fontId ?? 'inter'
   const viewKinds = uniqueViewKinds(preferences.viewKinds)
   const paletteValue = paletteId === 'custom'
@@ -567,7 +567,7 @@ export function resolveFrontendDesignSystem(
     writingProfileId: 'EUIT-STE-001',
     palette: paletteValue,
     typography: FRONTEND_FONTS[fontId],
-    defaultMode: preferences.defaultMode ?? 'system',
+    defaultMode: preferences.defaultMode ?? 'dark',
     density: preferences.density ?? 'compact',
     modeToggle: true,
     icons: FRONTEND_ICON_GUIDE,
@@ -692,10 +692,10 @@ export function buildFrontendDesignPrompt(config: FrontendDesignSystemConfig): s
     '- Provide light and dark modes.',
     '- Provide a labeled mode button.',
     '- Store the user mode choice.',
-    '- Use the system mode before the user selects a mode.',
+    '- Start in the configured mode before the user selects a mode.',
     '- Keep one visual identity in both modes.',
-    '- In the default Gulfstream palette, make white dominant in light mode.',
-    '- In the default dark mode, use Gulfstream blue #003767 as the base field and white as the interaction highlight.',
+    '- In the default Midnight palette, use a restrained dark-blue canvas and layered navy surfaces.',
+    '- Use a clear blue accent for actions, focus, selection, and data emphasis.',
     '- Treat the selected palette as project configuration. Do not replace it with an inferred palette.',
     '- Use short labels and direct instructions.',
     '- Use natural application names and page titles. Do not write a count-led headline such as “Three sessions wait”.',

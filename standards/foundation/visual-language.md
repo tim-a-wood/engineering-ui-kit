@@ -10,11 +10,11 @@ The guidance applies to app shells, panels, forms, tables, charts, overlays, and
 
 ## Visual Direction Summary
 
-The visual language is a modern enterprise workbench. It is restrained, structured, technical, and polished. Gulfstream blue and white are the default.
+The visual language is a modern enterprise workbench. It is restrained, structured, technical, and polished. A midnight-blue dark theme is the default.
 
 ## FND-VIS-001: Dual-mode surface hierarchy
 
-Use semantic surface tokens to create hierarchy. Keep equal visual quality in light and dark modes. The default light mode shall use white as the dominant surface and Gulfstream blue as the accent. The default dark mode shall use Gulfstream blue `#003767` as the base field and white for text, selected controls, focus, and primary action highlights. Dark surface layers shall stay close to the Gulfstream hue. They shall not replace it with cyan or generic navy. A project can select another approved palette before generation. The selected palette shall control the same semantic roles in both modes.
+Use semantic surface tokens to create hierarchy. Keep equal visual quality in light and dark modes. Start in dark mode unless a project selects another start mode. The default dark mode shall use a deep navy canvas, adjacent navy surfaces, light text, and a clear blue accent. The light mode shall use white as the dominant surface and a dark-blue accent. A project can select another approved palette before generation. The selected palette shall control the same semantic roles in both modes.
 
 ## FND-VIS-002: Restrained technical accent usage
 

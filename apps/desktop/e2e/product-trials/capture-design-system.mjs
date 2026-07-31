@@ -7,8 +7,8 @@ import { productTrialSystems } from './systems.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(here, '../../../..')
-const outputRoot = path.join(repoRoot, 'docs/design-system/2026-07-31-gulfstream-palette/screenshots')
-const reportPath = path.join(repoRoot, 'docs/design-system/2026-07-31-gulfstream-palette/browser-validation.json')
+const outputRoot = path.join(repoRoot, 'docs/design-system/2026-07-31-midnight-default/screenshots')
+const reportPath = path.join(repoRoot, 'docs/design-system/2026-07-31-midnight-default/browser-validation.json')
 const failures = []
 const screenshots = []
 const browserResults = []
@@ -76,22 +76,22 @@ async function assertPaletteMode(page, system, mode) {
       accent: style.getPropertyValue('--eui-color-accent').trim().toLowerCase(),
     }
   })
-  if (system.design.paletteId !== 'gulfstream') {
+  if (system.design.paletteId !== 'midnight') {
     throw new Error(`The default product palette is ${system.design.paletteId}.`)
   }
-  if (mode === 'light' && (colors.surface !== '#ffffff' || colors.accent !== '#003767')) {
-    throw new Error(`Light mode is not white-led Gulfstream: ${JSON.stringify(colors)}.`)
+  if (mode === 'light' && (colors.surface !== '#ffffff' || colors.accent !== '#145ea8')) {
+    throw new Error(`Light mode does not use the approved white and dark-blue theme: ${JSON.stringify(colors)}.`)
   }
   if (
     mode === 'dark'
     && (
       colors.canvas !== system.design.darkCanvas
       || colors.surface !== system.design.darkSurface
-      || colors.text !== '#ffffff'
-      || colors.accent !== '#ffffff'
+      || colors.text !== '#f7f9fc'
+      || colors.accent !== '#78b7ff'
     )
   ) {
-    throw new Error(`Dark mode is not Gulfstream-blue-led: ${JSON.stringify(colors)}.`)
+    throw new Error(`Dark mode does not use the approved Midnight palette: ${JSON.stringify(colors)}.`)
   }
   return colors
 }

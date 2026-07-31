@@ -803,7 +803,8 @@
   grid-template-columns: 232px minmax(500px, 1fr) 342px;
   grid-template-rows: auto minmax(420px, calc(100vh - 440px)) 190px;
   gap: 1px;
-  background: var(--line);
+  padding: 0;
+  background: var(--bg);
 }
 
 .telemetry-head {
@@ -1105,7 +1106,8 @@
   grid-template-columns: 168px minmax(420px, .95fr) minmax(380px, 1.05fr);
   grid-template-rows: auto 270px minmax(360px, calc(100vh - 450px)) auto;
   gap: 1px;
-  background: var(--line);
+  padding: 0;
+  background: var(--bg);
 }
 
 .hil-head {
@@ -1346,7 +1348,8 @@
   grid-template-columns: 260px minmax(560px, 1fr) 330px;
   grid-template-rows: auto minmax(720px, calc(100vh - 180px));
   gap: 1px;
-  background: var(--line);
+  padding: 0;
+  background: var(--bg);
 }
 
 .impact-head {
@@ -1514,7 +1517,7 @@
   align-content: start;
   gap: 1px;
   overflow: auto;
-  background: var(--line);
+  background: var(--bg);
 }
 
 .impact-decision .panel {
