@@ -4,7 +4,7 @@
   color-scheme: light;
   --eui-color-canvas: #f6f8fa;
   --eui-color-surface: #ffffff;
-  --eui-color-surface-subtle: #eef2f6;
+  --eui-color-surface-subtle: #ffffff;
   --eui-color-surface-raised: #ffffff;
   --eui-color-text: #182536;
   --eui-color-text-muted: #536579;
@@ -30,57 +30,57 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --eui-color-canvas: var(--eui-brand-canvas-dark, #0b1628);
-  --eui-color-surface: var(--eui-brand-surface-dark, #10213a);
-  --eui-color-surface-subtle: var(--eui-brand-surface-subtle-dark, #142943);
-  --eui-color-surface-raised: var(--eui-brand-surface-raised-dark, #19314f);
-  --eui-color-text: var(--eui-brand-text-dark, #f7f9fc);
-  --eui-color-text-muted: var(--eui-brand-text-muted-dark, #c5d0de);
-  --eui-color-text-quiet: var(--eui-brand-text-quiet-dark, #9aacc0);
-  --eui-color-border: var(--eui-brand-border-dark, #334b69);
-  --eui-color-border-strong: var(--eui-brand-border-strong-dark, #5e7899);
-  --eui-color-accent: var(--eui-brand-accent-dark, #78b7ff);
+  --eui-color-canvas: var(--eui-brand-canvas-dark, #080d14);
+  --eui-color-surface: var(--eui-brand-surface-dark, #111923);
+  --eui-color-surface-subtle: var(--eui-brand-surface-subtle-dark, #111923);
+  --eui-color-surface-raised: var(--eui-brand-surface-raised-dark, #111923);
+  --eui-color-text: var(--eui-brand-text-dark, #f4f6f8);
+  --eui-color-text-muted: var(--eui-brand-text-muted-dark, #b8c0ca);
+  --eui-color-text-quiet: var(--eui-brand-text-quiet-dark, #8994a2);
+  --eui-color-border: var(--eui-brand-border-dark, #263344);
+  --eui-color-border-strong: var(--eui-brand-border-strong-dark, #5d6c7e);
+  --eui-color-accent: var(--eui-brand-accent-dark, #70a0cf);
   --eui-color-accent-hover: color-mix(in srgb, var(--eui-color-accent) 84%, white);
   --eui-color-accent-active: color-mix(in srgb, var(--eui-color-accent) 82%, black);
-  --eui-color-accent-soft: var(--eui-brand-soft-dark, #183657);
-  --eui-color-on-accent: var(--eui-brand-on-accent-dark, #0b1628);
-  --eui-color-navigation: var(--eui-brand-navigation-dark, #08101e);
-  --eui-color-navigation-muted: var(--eui-brand-navigation-muted-dark, #c5d0de);
-  --eui-color-focus: #9acaff;
+  --eui-color-accent-soft: var(--eui-brand-soft-dark, #111923);
+  --eui-color-on-accent: var(--eui-brand-on-accent-dark, #080d14);
+  --eui-color-navigation: var(--eui-brand-navigation-dark, #080d14);
+  --eui-color-navigation-muted: var(--eui-brand-navigation-muted-dark, #b8c0ca);
+  --eui-color-focus: #83add6;
   --eui-color-success: #57c785;
   --eui-color-warning: #e5b95c;
   --eui-color-danger: #ff7b72;
   --eui-color-info: #79c0ff;
-  --eui-shadow-raised: 0 18px 48px rgba(1, 7, 18, 0.4);
-  --eui-accent-rgb: var(--eui-brand-rgb-dark, 120, 183, 255);
+  --eui-shadow-raised: 0 18px 48px rgba(0, 0, 0, 0.42);
+  --eui-accent-rgb: var(--eui-brand-rgb-dark, 112, 160, 207);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     color-scheme: dark;
-    --eui-color-canvas: var(--eui-brand-canvas-dark, #0b1628);
-    --eui-color-surface: var(--eui-brand-surface-dark, #10213a);
-    --eui-color-surface-subtle: var(--eui-brand-surface-subtle-dark, #142943);
-    --eui-color-surface-raised: var(--eui-brand-surface-raised-dark, #19314f);
-    --eui-color-text: var(--eui-brand-text-dark, #f7f9fc);
-    --eui-color-text-muted: var(--eui-brand-text-muted-dark, #c5d0de);
-    --eui-color-text-quiet: var(--eui-brand-text-quiet-dark, #9aacc0);
-    --eui-color-border: var(--eui-brand-border-dark, #334b69);
-    --eui-color-border-strong: var(--eui-brand-border-strong-dark, #5e7899);
-    --eui-color-accent: var(--eui-brand-accent-dark, #78b7ff);
+    --eui-color-canvas: var(--eui-brand-canvas-dark, #080d14);
+    --eui-color-surface: var(--eui-brand-surface-dark, #111923);
+    --eui-color-surface-subtle: var(--eui-brand-surface-subtle-dark, #111923);
+    --eui-color-surface-raised: var(--eui-brand-surface-raised-dark, #111923);
+    --eui-color-text: var(--eui-brand-text-dark, #f4f6f8);
+    --eui-color-text-muted: var(--eui-brand-text-muted-dark, #b8c0ca);
+    --eui-color-text-quiet: var(--eui-brand-text-quiet-dark, #8994a2);
+    --eui-color-border: var(--eui-brand-border-dark, #263344);
+    --eui-color-border-strong: var(--eui-brand-border-strong-dark, #5d6c7e);
+    --eui-color-accent: var(--eui-brand-accent-dark, #70a0cf);
     --eui-color-accent-hover: color-mix(in srgb, var(--eui-color-accent) 84%, white);
     --eui-color-accent-active: color-mix(in srgb, var(--eui-color-accent) 82%, black);
-    --eui-color-accent-soft: var(--eui-brand-soft-dark, #183657);
-    --eui-color-on-accent: var(--eui-brand-on-accent-dark, #0b1628);
-    --eui-color-navigation: var(--eui-brand-navigation-dark, #08101e);
-    --eui-color-navigation-muted: var(--eui-brand-navigation-muted-dark, #c5d0de);
-    --eui-color-focus: #9acaff;
+    --eui-color-accent-soft: var(--eui-brand-soft-dark, #111923);
+    --eui-color-on-accent: var(--eui-brand-on-accent-dark, #080d14);
+    --eui-color-navigation: var(--eui-brand-navigation-dark, #080d14);
+    --eui-color-navigation-muted: var(--eui-brand-navigation-muted-dark, #b8c0ca);
+    --eui-color-focus: #83add6;
     --eui-color-success: #57c785;
     --eui-color-warning: #e5b95c;
     --eui-color-danger: #ff7b72;
     --eui-color-info: #79c0ff;
-    --eui-shadow-raised: 0 18px 48px rgba(1, 7, 18, 0.4);
-    --eui-accent-rgb: var(--eui-brand-rgb-dark, 120, 183, 255);
+    --eui-shadow-raised: 0 18px 48px rgba(0, 0, 0, 0.42);
+    --eui-accent-rgb: var(--eui-brand-rgb-dark, 112, 160, 207);
   }
 }
 

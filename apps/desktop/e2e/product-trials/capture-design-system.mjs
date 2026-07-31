@@ -7,8 +7,8 @@ import { productTrialSystems } from './systems.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(here, '../../../..')
-const outputRoot = path.join(repoRoot, 'docs/design-system/2026-07-31-midnight-default/screenshots')
-const reportPath = path.join(repoRoot, 'docs/design-system/2026-07-31-midnight-default/browser-validation.json')
+const outputRoot = path.join(repoRoot, 'docs/design-system/2026-07-31-flat-dark-default/screenshots')
+const reportPath = path.join(repoRoot, 'docs/design-system/2026-07-31-flat-dark-default/browser-validation.json')
 const failures = []
 const screenshots = []
 const browserResults = []
@@ -72,6 +72,8 @@ async function assertPaletteMode(page, system, mode) {
     return {
       canvas: style.getPropertyValue('--eui-color-canvas').trim().toLowerCase(),
       surface: style.getPropertyValue('--eui-color-surface').trim().toLowerCase(),
+      surfaceSubtle: style.getPropertyValue('--eui-color-surface-subtle').trim().toLowerCase(),
+      surfaceRaised: style.getPropertyValue('--eui-color-surface-raised').trim().toLowerCase(),
       text: style.getPropertyValue('--eui-color-text').trim().toLowerCase(),
       accent: style.getPropertyValue('--eui-color-accent').trim().toLowerCase(),
     }
@@ -87,11 +89,13 @@ async function assertPaletteMode(page, system, mode) {
     && (
       colors.canvas !== system.design.darkCanvas
       || colors.surface !== system.design.darkSurface
-      || colors.text !== '#f7f9fc'
-      || colors.accent !== '#78b7ff'
+      || colors.surfaceSubtle !== system.design.darkSurface
+      || colors.surfaceRaised !== system.design.darkSurface
+      || colors.text !== '#f4f6f8'
+      || colors.accent !== '#70a0cf'
     )
   ) {
-    throw new Error(`Dark mode does not use the approved Midnight palette: ${JSON.stringify(colors)}.`)
+    throw new Error(`Dark mode does not use the approved flat Midnight palette: ${JSON.stringify(colors)}.`)
   }
   return colors
 }

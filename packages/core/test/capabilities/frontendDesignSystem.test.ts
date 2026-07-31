@@ -35,10 +35,12 @@ describe('frontend design system', () => {
     expect(config.modeToggle).toBe(true)
     expect(config.palette.light.surface).toBe('#ffffff')
     expect(config.palette.light.accent).toBe('#145ea8')
-    expect(config.palette.dark.canvas).toBe('#0b1628')
-    expect(config.palette.dark.surface).toBe('#10213a')
-    expect(config.palette.dark.text).toBe('#f7f9fc')
-    expect(config.palette.dark.accent).toBe('#78b7ff')
+    expect(config.palette.dark.canvas).toBe('#080d14')
+    expect(config.palette.dark.surface).toBe('#111923')
+    expect(config.palette.dark.surfaceSubtle).toBe('#111923')
+    expect(config.palette.dark.surfaceRaised).toBe('#111923')
+    expect(config.palette.dark.text).toBe('#f4f6f8')
+    expect(config.palette.dark.accent).toBe('#70a0cf')
     expect(config.icons).toEqual(expect.objectContaining({
       family: 'lucide',
       viewBox: '0 0 24 24',
@@ -50,6 +52,7 @@ describe('frontend design system', () => {
   it('uses accessible contrast in the Midnight dark palette', () => {
     const { dark } = FRONTEND_PALETTES.midnight
 
+    expect(new Set([dark.surface, dark.surfaceSubtle, dark.surfaceRaised]).size).toBe(1)
     expect(contrastRatio(dark.text, dark.canvas)).toBeGreaterThanOrEqual(7)
     expect(contrastRatio(dark.textMuted, dark.surface)).toBeGreaterThanOrEqual(4.5)
     expect(contrastRatio(dark.textQuiet, dark.surface)).toBeGreaterThanOrEqual(4.5)
@@ -70,8 +73,10 @@ describe('frontend design system', () => {
     expect(new Set(palettes.map((palette) => palette.dark.canvas)).size).toBe(palettes.length)
     for (const palette of palettes) {
       expect(palette.light.surface).toBe('#ffffff')
+      expect(new Set([palette.light.surface, palette.light.surfaceSubtle, palette.light.surfaceRaised]).size).toBe(1)
       expect(palette.dark.canvas).not.toBe(palette.light.canvas)
       expect(palette.dark.surface).not.toBe(palette.light.surface)
+      expect(new Set([palette.dark.surface, palette.dark.surfaceSubtle, palette.dark.surfaceRaised, palette.dark.accentSoft]).size).toBe(1)
     }
   })
 
@@ -135,8 +140,9 @@ describe('frontend design system', () => {
     expect(prompt).toContain('Do not put the complete action catalog in the page header.')
     expect(prompt).toContain('Do not put an overflow menu on every panel.')
     expect(prompt).toContain('Do not cover the workspace with a fixed toast.')
-    expect(prompt).toContain('use a restrained dark-blue canvas and layered navy surfaces.')
-    expect(prompt).toContain('Use a clear blue accent for actions, focus, selection, and data emphasis.')
+    expect(prompt).toContain('use one near-black navy canvas and one subtly lighter component surface.')
+    expect(prompt).toContain('Do not create extra background tiers, blue panel bands, or decorative gradients.')
+    expect(prompt).toContain('Use a restrained blue accent only for actions, focus, selection, and data emphasis.')
     expect(prompt).toContain('Do not write a count-led headline')
     expect(prompt).toContain('Do not invent a metric, KPI, score, trend, or count.')
     expect(prompt).toContain('Do not add a default metric strip.')

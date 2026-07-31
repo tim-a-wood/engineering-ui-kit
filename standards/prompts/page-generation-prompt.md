@@ -21,7 +21,9 @@ Guide generation or refinement of Engineering UI Kit page layouts.
 - Use one technical term for one concept. Do not use contractions, semicolons, or em dashes.
 - Implement light and dark modes. Add a labeled mode button.
 - Apply the selected palette, font, density, and view layout.
-- Start in dark mode. Use a deep navy canvas, layered navy surfaces, light text, and a clear blue accent in the default palette.
+- Start in dark mode. Use one near-black navy canvas and one subtly lighter component surface in the default palette.
+- Do not add more background tiers, blue panel bands, or decorative gradients.
+- Use a subdued blue accent only for actions, focus, selection, and data emphasis.
 - Do not invent a metric or KPI. Add a measure only when it changes a task decision.
 - Use Lucide icons only. Add accessible tooltips and contextual help.
 - Do not use accent-strip tiles, ornamental sparkles, card walls, glass effects, or vague promotional copy.

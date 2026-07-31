@@ -88,15 +88,30 @@ const configurablePalettes = configurablePaletteIds.map((paletteId) =>
 if (new Set(configurablePalettes.map((palette) => palette.dark.canvas)).size !== configurablePalettes.length) {
   throw new Error('Two configurable palettes use the same dark canvas.')
 }
+for (const palette of configurablePalettes) {
+  if (new Set([palette.light.surface, palette.light.surfaceSubtle, palette.light.surfaceRaised]).size !== 1) {
+    throw new Error(`${palette.name} must use one component background value in light mode.`)
+  }
+  if (new Set([palette.dark.surface, palette.dark.surfaceSubtle, palette.dark.surfaceRaised, palette.dark.accentSoft]).size !== 1) {
+    throw new Error(`${palette.name} must use one component background value in dark mode.`)
+  }
+}
 const midnightPalette = configurablePalettes.find((palette) => palette.id === 'midnight')
 if (
   midnightPalette?.light.surface !== '#ffffff'
-  || midnightPalette.dark.canvas !== '#0b1628'
-  || midnightPalette.dark.surface !== '#10213a'
-  || midnightPalette.dark.text !== '#f7f9fc'
-  || midnightPalette.dark.accent !== '#78b7ff'
+  || midnightPalette.dark.canvas !== '#080d14'
+  || midnightPalette.dark.surface !== '#111923'
+  || midnightPalette.dark.text !== '#f4f6f8'
+  || midnightPalette.dark.accent !== '#70a0cf'
 ) {
-  throw new Error('The default Midnight palette does not preserve the approved dark-blue theme.')
+  throw new Error('The default Midnight palette does not preserve the approved flat dark theme.')
+}
+if (new Set([
+  midnightPalette.dark.surface,
+  midnightPalette.dark.surfaceSubtle,
+  midnightPalette.dark.surfaceRaised,
+]).size !== 1) {
+  throw new Error('The default Midnight palette must use one component background value.')
 }
 const midnightContrast = {
   textOnCanvas: contrastRatio(midnightPalette.dark.text, midnightPalette.dark.canvas),

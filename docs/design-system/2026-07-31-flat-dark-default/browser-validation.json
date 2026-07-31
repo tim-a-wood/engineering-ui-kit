@@ -1,0 +1,338 @@
+{
+  "generatedAt": "2026-07-31T13:37:44.728Z",
+  "products": 10,
+  "engines": [
+    "chromium",
+    "chromium-mobile"
+  ],
+  "desktopStatesPerProduct": [
+    "light",
+    "dark",
+    "help"
+  ],
+  "phoneStatesPerProduct": [
+    "workspace",
+    "open navigation"
+  ],
+  "safariCheck": {
+    "staticFiles": true,
+    "runtimeDependencies": 0,
+    "status": "Not executed. The interactive browser environment was not available."
+  },
+  "screenshots": [
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/01-do178-review-workbench-light.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/02-do178-review-workbench-dark.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/03-do178-review-workbench-help.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/04-copilot-session-hub-light.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/05-copilot-session-hub-dark.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/06-copilot-session-hub-help.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/07-technical-writing-desk-light.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/08-technical-writing-desk-dark.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/09-technical-writing-desk-help.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/10-flight-test-telemetry-light.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/11-flight-test-telemetry-dark.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/12-flight-test-telemetry-help.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/13-aircraft-trade-study-light.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/14-aircraft-trade-study-dark.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/15-aircraft-trade-study-help.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/16-hil-campaign-orchestrator-light.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/17-hil-campaign-orchestrator-dark.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/18-hil-campaign-orchestrator-help.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/19-supplier-intake-portal-light.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/20-supplier-intake-portal-dark.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/21-supplier-intake-portal-help.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/22-requirements-impact-workbench-light.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/23-requirements-impact-workbench-dark.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/24-requirements-impact-workbench-help.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/25-avionics-load-manager-light.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/26-avionics-load-manager-dark.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/27-avionics-load-manager-help.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/28-fracas-investigation-light.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/29-fracas-investigation-dark.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/30-fracas-investigation-help.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/31-do178-review-workbench-phone.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/32-do178-review-workbench-phone-menu.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/33-copilot-session-hub-phone.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/34-copilot-session-hub-phone-menu.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/35-technical-writing-desk-phone.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/36-technical-writing-desk-phone-menu.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/37-flight-test-telemetry-phone.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/38-flight-test-telemetry-phone-menu.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/39-aircraft-trade-study-phone.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/40-aircraft-trade-study-phone-menu.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/41-hil-campaign-orchestrator-phone.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/42-hil-campaign-orchestrator-phone-menu.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/43-supplier-intake-portal-phone.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/44-supplier-intake-portal-phone-menu.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/45-requirements-impact-workbench-phone.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/46-requirements-impact-workbench-phone-menu.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/47-avionics-load-manager-phone.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/48-avionics-load-manager-phone-menu.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/49-fracas-investigation-phone.png",
+    "docs/design-system/2026-07-31-flat-dark-default/screenshots/50-fracas-investigation-phone-menu.png"
+  ],
+  "checks": [
+    {
+      "engine": "chromium",
+      "product": "do178-review-workbench",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": true,
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium",
+      "product": "copilot-session-hub",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": true,
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium",
+      "product": "technical-writing-desk",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": true,
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium",
+      "product": "flight-test-telemetry",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": true,
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium",
+      "product": "aircraft-trade-study",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": true,
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium",
+      "product": "hil-campaign-orchestrator",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": true,
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium",
+      "product": "supplier-intake-portal",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": true,
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium",
+      "product": "requirements-impact-workbench",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": true,
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium",
+      "product": "avionics-load-manager",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": true,
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium",
+      "product": "fracas-investigation",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": true,
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium-mobile",
+      "product": "do178-review-workbench",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": "covered in Chromium",
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium-mobile",
+      "product": "copilot-session-hub",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": "covered in Chromium",
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium-mobile",
+      "product": "technical-writing-desk",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": "covered in Chromium",
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium-mobile",
+      "product": "flight-test-telemetry",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": "covered in Chromium",
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium-mobile",
+      "product": "aircraft-trade-study",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": "covered in Chromium",
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium-mobile",
+      "product": "hil-campaign-orchestrator",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": "covered in Chromium",
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium-mobile",
+      "product": "supplier-intake-portal",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": "covered in Chromium",
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium-mobile",
+      "product": "requirements-impact-workbench",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": "covered in Chromium",
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium-mobile",
+      "product": "avionics-load-manager",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": "covered in Chromium",
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    },
+    {
+      "engine": "chromium-mobile",
+      "product": "fracas-investigation",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "iconButtons": 5,
+      "tooltipKeyboardDismissal": "covered in Chromium",
+      "contextualHelp": true,
+      "scenarioAction": true,
+      "horizontalOverflow": 0
+    }
+  ],
+  "failures": [],
+  "passed": true
+}

@@ -1,0 +1,285 @@
+{
+  "generatedAt": "2026-07-31T13:37:29.401Z",
+  "contractId": "EUIT-FRONTEND-001",
+  "writingProfileId": "EUIT-STE-001",
+  "products": 10,
+  "layouts": [
+    "fracas",
+    "hil",
+    "impact",
+    "load",
+    "review",
+    "sessions",
+    "supplier",
+    "telemetry",
+    "trade",
+    "writing"
+  ],
+  "defaultPalettes": [
+    "midnight"
+  ],
+  "configurablePalettes": [
+    "midnight",
+    "graphite",
+    "teal",
+    "violet",
+    "amber"
+  ],
+  "midnightContrast": {
+    "textOnCanvas": 17.98,
+    "mutedTextOnSurface": 9.63,
+    "quietTextOnSurface": 5.75,
+    "strongBorderOnSurface": 3.3,
+    "accentOnCanvas": 7.07
+  },
+  "productsWithMetrics": 5,
+  "productsWithoutMetrics": 5,
+  "fonts": [
+    "atkinson",
+    "inter",
+    "plex",
+    "source",
+    "system"
+  ],
+  "startModes": [
+    "dark"
+  ],
+  "densities": [
+    "comfortable",
+    "compact"
+  ],
+  "blockingFindings": 0,
+  "warningFindings": 0,
+  "results": [
+    {
+      "slug": "do178-review-workbench",
+      "productKind": "review",
+      "architecture": "layered review system",
+      "moduleCount": 4,
+      "scenarioCount": 8,
+      "visibleActionCount": 2,
+      "commandActionCount": 8,
+      "shellMode": "review",
+      "composition": "review-compact",
+      "primaryActionIcon": "circle-check",
+      "metricSurfaceCount": 1,
+      "metricPurpose": "Show review readiness and independence before approval.",
+      "design": {
+        "palette": "Midnight blue",
+        "font": "inter",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "1407b060a32c239ac2efbdaeff36b567c2b732a271c7ade9521eadc32952eb13",
+      "findings": []
+    },
+    {
+      "slug": "copilot-session-hub",
+      "productKind": "sessions",
+      "architecture": "event-driven work tracker",
+      "moduleCount": 4,
+      "scenarioCount": 9,
+      "visibleActionCount": 1,
+      "commandActionCount": 9,
+      "shellMode": "sessions",
+      "composition": "sessions-comfortable",
+      "primaryActionIcon": "play",
+      "metricSurfaceCount": 0,
+      "metricPurpose": null,
+      "design": {
+        "palette": "Midnight blue",
+        "font": "source",
+        "startMode": "dark",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "364eca4002f883351cc001006449437d6855e9d3d7cc465511e1a081c296a475",
+      "findings": []
+    },
+    {
+      "slug": "technical-writing-desk",
+      "productKind": "writing",
+      "architecture": "document-centered authoring system",
+      "moduleCount": 3,
+      "scenarioCount": 7,
+      "visibleActionCount": 2,
+      "commandActionCount": 7,
+      "shellMode": "editor",
+      "composition": "writing-comfortable",
+      "primaryActionIcon": "plus",
+      "metricSurfaceCount": 0,
+      "metricPurpose": null,
+      "design": {
+        "palette": "Midnight blue",
+        "font": "plex",
+        "startMode": "dark",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "6a2b6158961a12d22245ba1ffb0645bb545ef73aca2c4b0e3a4a5a7fccd72e0d",
+      "findings": []
+    },
+    {
+      "slug": "flight-test-telemetry",
+      "productKind": "telemetry",
+      "architecture": "stream-processing investigation system",
+      "moduleCount": 5,
+      "scenarioCount": 8,
+      "visibleActionCount": 3,
+      "commandActionCount": 8,
+      "shellMode": "instrument",
+      "composition": "telemetry-compact",
+      "primaryActionIcon": "play",
+      "metricSurfaceCount": 1,
+      "metricPurpose": "Show data health and triage scope for the selected flight.",
+      "design": {
+        "palette": "Midnight blue",
+        "font": "inter",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "a44bf293cc4799fb1400919b753e4bad52f4f35c4f94e3faa3d2f1a799b18165",
+      "findings": []
+    },
+    {
+      "slug": "aircraft-trade-study",
+      "productKind": "trade",
+      "architecture": "analysis pipeline",
+      "moduleCount": 4,
+      "scenarioCount": 6,
+      "visibleActionCount": 2,
+      "commandActionCount": 6,
+      "shellMode": "analysis",
+      "composition": "trade-compact",
+      "primaryActionIcon": "plus",
+      "metricSurfaceCount": 0,
+      "metricPurpose": null,
+      "design": {
+        "palette": "Midnight blue",
+        "font": "source",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "01a802c7100e673535317c8aba2284858dcfa6db39210ca13a27378cec73892f",
+      "findings": []
+    },
+    {
+      "slug": "hil-campaign-orchestrator",
+      "productKind": "hil",
+      "architecture": "distributed execution control",
+      "moduleCount": 5,
+      "scenarioCount": 9,
+      "visibleActionCount": 3,
+      "commandActionCount": 9,
+      "shellMode": "control",
+      "composition": "hil-compact",
+      "primaryActionIcon": "calendar",
+      "metricSurfaceCount": 1,
+      "metricPurpose": "Show campaign progress, bench state, and remaining test time.",
+      "design": {
+        "palette": "Midnight blue",
+        "font": "plex",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "13763c489557b2998a7dff85f685bf185e6a21aebb9716ea2ca004e492814b06",
+      "findings": []
+    },
+    {
+      "slug": "supplier-intake-portal",
+      "productKind": "supplier",
+      "architecture": "case-management portal",
+      "moduleCount": 4,
+      "scenarioCount": 7,
+      "visibleActionCount": 2,
+      "commandActionCount": 7,
+      "shellMode": "portal",
+      "composition": "supplier-comfortable",
+      "primaryActionIcon": "upload",
+      "metricSurfaceCount": 0,
+      "metricPurpose": null,
+      "design": {
+        "palette": "Midnight blue",
+        "font": "atkinson",
+        "startMode": "dark",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "42884340b28efac1648e39f03bd6f5cdc8c70de75010a3ae51cb33158d475020",
+      "findings": []
+    },
+    {
+      "slug": "requirements-impact-workbench",
+      "productKind": "impact",
+      "architecture": "graph-analysis decision system",
+      "moduleCount": 4,
+      "scenarioCount": 8,
+      "visibleActionCount": 2,
+      "commandActionCount": 8,
+      "shellMode": "graph",
+      "composition": "impact-compact",
+      "primaryActionIcon": "upload",
+      "metricSurfaceCount": 1,
+      "metricPurpose": "Show the change scope for planning and approval.",
+      "design": {
+        "palette": "Midnight blue",
+        "font": "inter",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "2b6fbb379939402044960cebbd693d7727e00a429136aa67778a08f9bd8a6b83",
+      "findings": []
+    },
+    {
+      "slug": "avionics-load-manager",
+      "productKind": "load",
+      "architecture": "transactional release system",
+      "moduleCount": 5,
+      "scenarioCount": 7,
+      "visibleActionCount": 3,
+      "commandActionCount": 7,
+      "shellMode": "secure",
+      "composition": "load-compact",
+      "primaryActionIcon": "upload",
+      "metricSurfaceCount": 0,
+      "metricPurpose": null,
+      "design": {
+        "palette": "Midnight blue",
+        "font": "system",
+        "startMode": "dark",
+        "density": "compact",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "5f91d73e73013de233593aaa6268567611f198ed88a86ac412d5ebf1f3174953",
+      "findings": []
+    },
+    {
+      "slug": "fracas-investigation",
+      "productKind": "fracas",
+      "architecture": "closed-loop reliability system",
+      "moduleCount": 5,
+      "scenarioCount": 9,
+      "visibleActionCount": 3,
+      "commandActionCount": 9,
+      "shellMode": "case",
+      "composition": "fracas-comfortable",
+      "primaryActionIcon": "plus",
+      "metricSurfaceCount": 1,
+      "metricPurpose": "Show reliability risk that changes case priority.",
+      "design": {
+        "palette": "Midnight blue",
+        "font": "atkinson",
+        "startMode": "dark",
+        "density": "comfortable",
+        "iconFamily": "lucide"
+      },
+      "sourceHash": "8966459f978d68049da3b366b9ea801d22bdb67c4bf050ccffc3ef8d784f664d",
+      "findings": []
+    }
+  ]
+}

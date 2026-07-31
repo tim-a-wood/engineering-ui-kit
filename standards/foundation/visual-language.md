@@ -14,7 +14,7 @@ The visual language is a modern enterprise workbench. It is restrained, structur
 
 ## FND-VIS-001: Dual-mode surface hierarchy
 
-Use semantic surface tokens to create hierarchy. Keep equal visual quality in light and dark modes. Start in dark mode unless a project selects another start mode. The default dark mode shall use a deep navy canvas, adjacent navy surfaces, light text, and a clear blue accent. The light mode shall use white as the dominant surface and a dark-blue accent. A project can select another approved palette before generation. The selected palette shall control the same semantic roles in both modes.
+Use semantic surface tokens to create hierarchy. Keep equal visual quality in light and dark modes. Start in dark mode unless a project selects another start mode. The default dark mode shall use one near-black navy canvas and one subtly lighter component surface. Do not add more background tiers, blue panel bands, or decorative gradients. Use a subdued blue accent only for actions, focus, selection, and data emphasis. The light mode shall use white as the dominant surface and a dark-blue accent. A project can select another approved palette before generation. The selected palette shall control the same semantic roles in both modes.
 
 ## FND-VIS-002: Restrained technical accent usage
 
