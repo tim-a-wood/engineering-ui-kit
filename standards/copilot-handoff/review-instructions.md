@@ -28,8 +28,9 @@ corrective-action output. Reusable prompt wording lives in
 Check all reviewed user-interface text, diagrams, and documents against the project
 Engineering UI Kit writing profile based on ASD-STE100 Issue 9. Require American English and active
 voice. Limit instructions to 20 words and descriptions to 25 words per sentence.
-Require names and diagram labels in `VERB + OBJECT` form with no more than four
-words. Require the same technical term for the same concept. Report contractions and
+Require use-case names, activity actions, sequence messages, and action labels in
+`VERB + OBJECT` form with no more than four words. Require natural application names
+and page titles. Reject count-led status slogans. Require the same technical term for the same concept. Report contractions and
 semicolons. Give each writing finding a direct correction.
 
 ### AI-REVIEW-001: Review only provided changed files and evidence

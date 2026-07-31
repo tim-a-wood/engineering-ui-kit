@@ -1,6 +1,6 @@
 {
   "slug": "technical-writing-desk",
-  "name": "Technical Writing and Review Desk",
+  "name": "Technical Writing",
   "shortName": "Writing Desk",
   "category": "Daily productivity",
   "description": "Draft technical content, enforce ASD-STE100, manage comments, and approve controlled documents.",
@@ -20,35 +20,13 @@
   "accentRgb": "6, 182, 212",
   "homeTitle": "Writing desk",
   "eyebrow": "DESIGN NOTE · DN-FCS-042 · REVISION 7",
-  "headline": "Four sentences fail",
+  "headline": "Edit flight control note",
   "subhead": "Write clear technical content and resolve review comments without leaving the document.",
   "nav": [
     "Writing desk",
     "Documents",
     "Review comments",
     "Terminology"
-  ],
-  "metrics": [
-    [
-      "STE score",
-      "96",
-      "+8 this revision"
-    ],
-    [
-      "Open comments",
-      "4",
-      "One blocks approval"
-    ],
-    [
-      "Changed clauses",
-      "12",
-      "48 words changed"
-    ],
-    [
-      "Review state",
-      "Draft",
-      "Ready after one fix"
-    ]
   ],
   "panels": [
     {
@@ -212,6 +190,15 @@
     "defaultMode": "light",
     "density": "comfortable",
     "palette": "Gulfstream blue",
+    "darkCanvas": "#002846",
+    "darkSurface": "#003767",
+    "darkSurfaceSubtle": "#084671",
+    "darkSurfaceRaised": "#105680",
+    "darkBorder": "#2d688f",
+    "darkBorderStrong": "#6091ae",
+    "lightNavigation": "#003767",
+    "darkNavigation": "#00213b",
+    "darkNavigationMuted": "#b5cfdd",
     "lightAccent": "#003767",
     "darkAccent": "#70b7e6",
     "lightSoft": "#e2eef5",

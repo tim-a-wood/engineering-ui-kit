@@ -1,4 +1,4 @@
-# HIL Test Campaign Orchestrator
+# HIL Test Campaign
 
 Reserve benches, load configurations, execute procedures, manage failures, and preserve campaign evidence.
 

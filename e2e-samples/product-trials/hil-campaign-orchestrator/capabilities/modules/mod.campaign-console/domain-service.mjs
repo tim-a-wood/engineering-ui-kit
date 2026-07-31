@@ -75,7 +75,7 @@ const transitions = new Map([
 
 export function createProductState() {
   return {
-    product: "HIL Test Campaign Orchestrator",
+    product: "HIL Test Campaign",
     revision: 0,
     completed: [],
     lastResult: '',

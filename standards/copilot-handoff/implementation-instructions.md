@@ -28,8 +28,9 @@ Reusable prompt wording lives in `standards/prompts/implementation-prompt.md`.
 Apply the Engineering UI Kit writing profile based on ASD-STE100 Issue 9 to all generated
 user-interface text, source-code text, diagrams, and documents. Use American English
 and active voice. Limit instructions to 20 words and descriptions to 25 words per
-sentence. Write names and diagram labels as `VERB + OBJECT` with no more than four
-words. Use the same technical term for the same concept. Do not use contractions or
+sentence. Write use-case names, activity actions, sequence messages, and action labels
+as `VERB + OBJECT` with no more than four words. Write application names and page titles
+as short natural noun phrases or task labels. Use the same technical term for the same concept. Do not use contractions or
 semicolons or em dashes. Check all generated text before returning the overlay.
 
 ### AI-IMPL-001: Inspect all three inputs first

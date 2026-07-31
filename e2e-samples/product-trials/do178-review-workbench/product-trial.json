@@ -21,7 +21,7 @@
   "accentRgb": "124, 140, 255",
   "homeTitle": "Review control",
   "eyebrow": "SOFTWARE REVIEW · SRR-24-017",
-  "headline": "Two findings wait",
+  "headline": "Review software design data",
   "subhead": "Review the change set, record objective evidence, and protect reviewer independence.",
   "nav": [
     "Review control",
@@ -29,6 +29,7 @@
     "Findings",
     "Review records"
   ],
+  "metricPurpose": "Show review readiness and independence before approval.",
   "metrics": [
     [
       "Review coverage",
@@ -242,6 +243,15 @@
     "defaultMode": "system",
     "density": "compact",
     "palette": "Gulfstream blue",
+    "darkCanvas": "#002846",
+    "darkSurface": "#003767",
+    "darkSurfaceSubtle": "#084671",
+    "darkSurfaceRaised": "#105680",
+    "darkBorder": "#2d688f",
+    "darkBorderStrong": "#6091ae",
+    "lightNavigation": "#003767",
+    "darkNavigation": "#00213b",
+    "darkNavigationMuted": "#b5cfdd",
     "lightAccent": "#003767",
     "darkAccent": "#70b7e6",
     "lightSoft": "#e2eef5",

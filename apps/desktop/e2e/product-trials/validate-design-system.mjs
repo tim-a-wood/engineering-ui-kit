@@ -25,7 +25,7 @@ const expectedLayouts = [
   'load',
   'fracas',
 ]
-const expectedPalettes = ['gulfstream', 'graphite', 'teal', 'violet', 'amber']
+const configurablePaletteIds = ['gulfstream', 'graphite', 'teal', 'violet', 'amber']
 const expectedFonts = ['system', 'inter', 'plex', 'source', 'atkinson']
 const fontMap = {
   system: 'system',
@@ -62,10 +62,25 @@ if (productTrialSystems.length !== 10) {
   throw new Error(`The stress set has ${productTrialSystems.length} products. Expected 10.`)
 }
 assertSet(productTrialSystems.map((system) => system.layout), expectedLayouts, 'Layout')
-assertSet(productTrialSystems.map((system) => system.design.paletteId), expectedPalettes, 'Palette')
+assertSet(productTrialSystems.map((system) => system.design.paletteId), ['gulfstream'], 'Default palette')
 assertSet(productTrialSystems.map((system) => system.design.fontId), expectedFonts, 'Font')
 assertSet(productTrialSystems.map((system) => system.design.defaultMode), ['system', 'light', 'dark'], 'Start mode')
 assertSet(productTrialSystems.map((system) => system.design.density), ['compact', 'comfortable'], 'Density')
+
+const configurablePalettes = configurablePaletteIds.map((paletteId) =>
+  resolveFrontendDesignSystem({ paletteId }).palette)
+if (new Set(configurablePalettes.map((palette) => palette.dark.canvas)).size !== configurablePalettes.length) {
+  throw new Error('Two configurable palettes use the same dark canvas.')
+}
+const gulfstreamPalette = configurablePalettes.find((palette) => palette.id === 'gulfstream')
+if (
+  gulfstreamPalette?.light.surface !== '#ffffff'
+  || gulfstreamPalette.dark.canvas !== '#002846'
+  || gulfstreamPalette.dark.surface !== '#003767'
+  || gulfstreamPalette.dark.text !== '#ffffff'
+) {
+  throw new Error('The default Gulfstream palette does not preserve white-led light mode and blue-led dark mode.')
+}
 
 const sharedSources = {
   'styles.css': fs.readFileSync(path.join(sharedUiRoot, 'styles.css'), 'utf8'),
@@ -105,6 +120,7 @@ for (const system of productTrialSystems) {
   const moreActionCount = (renderedHtml.match(/class="more-actions"/g) ?? []).length
   const commandActionCount = (renderedHtml.match(/data-command-item=/g) ?? []).length
   const primaryActionIcon = renderedHtml.match(/class="primary-action"[^>]*data-scenario-action[^>]*>[\s\S]{0,180}?lucide-([a-z-]+)/)?.[1]
+  const metricSurfaceCount = (renderedHtml.match(/data-metric-purpose=/g) ?? []).length
   if (!shellMode) throw new Error(`${system.slug} has no shell mode.`)
   if (!composition) throw new Error(`${system.slug} has no composition identity.`)
   if (visibleActionCount < 1 || visibleActionCount > 3) {
@@ -120,6 +136,18 @@ for (const system of productTrialSystems) {
     throw new Error(`${system.slug} does not use the current outcome grammar.`)
   }
   if (!primaryActionIcon) throw new Error(`${system.slug} has no semantic icon on its primary action.`)
+  if (/^\s*(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b/i.test(system.headline)) {
+    throw new Error(`${system.slug} has a count-led page title.`)
+  }
+  if (!system.metricPurpose && system.metrics?.length) {
+    throw new Error(`${system.slug} defines measures without a decision purpose.`)
+  }
+  if (system.metricPurpose && (!Array.isArray(system.metrics) || system.metrics.length < 1)) {
+    throw new Error(`${system.slug} declares a metric purpose without a measure.`)
+  }
+  if (metricSurfaceCount !== (system.metricPurpose ? 1 : 0)) {
+    throw new Error(`${system.slug} does not match its declared metric purpose.`)
+  }
   if (/Open panel menu/.test(renderedHtml)) {
     throw new Error(`${system.slug} contains a generic panel menu.`)
   }
@@ -140,6 +168,8 @@ for (const system of productTrialSystems) {
     shellMode,
     composition,
     primaryActionIcon,
+    metricSurfaceCount,
+    metricPurpose: system.metricPurpose ?? null,
     design: {
       palette: system.design.palette,
       font: system.design.fontId,
@@ -164,6 +194,9 @@ if (new Set(results.map((result) => result.composition)).size !== results.length
 if (new Set(results.map((result) => result.primaryActionIcon)).size < 5) {
   throw new Error('The primary actions do not use enough semantic icon meanings.')
 }
+if (results.filter((result) => result.metricSurfaceCount === 0).length < 4) {
+  throw new Error('Too many product views add a metric surface by default.')
+}
 
 const report = {
   generatedAt: new Date().toISOString(),
@@ -171,7 +204,10 @@ const report = {
   writingProfileId: 'EUIT-STE-001',
   products: results.length,
   layouts: sortedUnique(results.map((result) => result.productKind)),
-  palettes: sortedUnique(productTrialSystems.map((system) => system.design.paletteId)),
+  defaultPalettes: sortedUnique(productTrialSystems.map((system) => system.design.paletteId)),
+  configurablePalettes: configurablePalettes.map((palette) => palette.id),
+  productsWithMetrics: results.filter((result) => result.metricSurfaceCount > 0).length,
+  productsWithoutMetrics: results.filter((result) => result.metricSurfaceCount === 0).length,
   fonts: sortedUnique(productTrialSystems.map((system) => system.design.fontId)),
   startModes: sortedUnique(productTrialSystems.map((system) => system.design.defaultMode)),
   densities: sortedUnique(productTrialSystems.map((system) => system.design.density)),

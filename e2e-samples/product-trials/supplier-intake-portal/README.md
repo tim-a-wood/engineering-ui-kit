@@ -1,4 +1,4 @@
-# Supplier Deliverable Intake Portal
+# Supplier Deliveries
 
 Validate supplier packages, record gaps, coordinate correction, and control acceptance.
 

@@ -75,7 +75,7 @@ const transitions = new Map([
 
 export function createProductState() {
   return {
-    product: "Reliability and FRACAS Investigation System",
+    product: "FRACAS Investigations",
     revision: 0,
     completed: [],
     lastResult: '',

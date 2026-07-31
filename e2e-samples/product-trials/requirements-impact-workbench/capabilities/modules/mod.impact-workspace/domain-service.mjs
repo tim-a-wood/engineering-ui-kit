@@ -67,7 +67,7 @@ const transitions = new Map([
 
 export function createProductState() {
   return {
-    product: "Requirements Change-Impact Workbench",
+    product: "Requirement Change Impact",
     revision: 0,
     completed: [],
     lastResult: '',

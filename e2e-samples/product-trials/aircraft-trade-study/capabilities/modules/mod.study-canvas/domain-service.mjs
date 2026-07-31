@@ -51,7 +51,7 @@ const transitions = new Map([
 
 export function createProductState() {
   return {
-    product: "Aircraft Performance Trade-Study Workbench",
+    product: "Aircraft Trade Study",
     revision: 0,
     completed: [],
     lastResult: '',

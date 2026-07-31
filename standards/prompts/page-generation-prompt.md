@@ -16,10 +16,13 @@ Guide generation or refinement of Engineering UI Kit page layouts.
 - Apply the Engineering UI Kit writing profile based on ASD-STE100 Issue 9 to all human-facing output.
 - Use American English, active voice, simple verb forms, and one action per sentence.
 - Limit instructions to 20 words and descriptions to 25 words per sentence.
-- Write names and diagram labels as `VERB + OBJECT` with no more than four words.
+- Write use-case names, activity actions, sequence messages, and action labels as `VERB + OBJECT` with no more than four words.
+- Write application names and page titles as short natural noun phrases or task labels. Do not start a page title with a count.
 - Use one technical term for one concept. Do not use contractions, semicolons, or em dashes.
 - Implement light and dark modes. Add a labeled mode button.
 - Apply the selected palette, font, density, and view layout.
+- Use white-dominant light surfaces and Gulfstream-blue-dominant dark surfaces for the default palette.
+- Do not invent a metric or KPI. Add a measure only when it changes a task decision.
 - Use Lucide icons only. Add accessible tooltips and contextual help.
 - Do not use accent-strip tiles, ornamental sparkles, card walls, glass effects, or vague promotional copy.
 - Follow the source-of-truth hierarchy.

@@ -59,7 +59,7 @@ const transitions = new Map([
 
 export function createProductState() {
   return {
-    product: "Supplier Deliverable Intake Portal",
+    product: "Supplier Deliveries",
     revision: 0,
     completed: [],
     lastResult: '',

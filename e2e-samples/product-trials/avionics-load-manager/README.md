@@ -1,4 +1,4 @@
-# Avionics Software Load Manager
+# Software Load Control
 
 Control load identity, compatibility, release authorization, installation, and as-loaded evidence.
 

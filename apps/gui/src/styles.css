@@ -8319,9 +8319,13 @@ code.path-wrap {
   color: var(--semantic-text-secondary);
   font-size: 12px;
 }
+.frontend-palette-previews {
+  display: flex;
+  gap: var(--semantic-spacing-1);
+}
 .frontend-palette-preview {
   display: flex;
-  width: 94px;
+  width: 72px;
   height: 32px;
   overflow: hidden;
   border: 1px solid var(--semantic-border-subtle);

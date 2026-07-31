@@ -1,6 +1,6 @@
 {
   "slug": "supplier-intake-portal",
-  "name": "Supplier Deliverable Intake Portal",
+  "name": "Supplier Deliveries",
   "shortName": "Supplier Intake",
   "category": "Supply-chain assurance",
   "description": "Validate supplier packages, record gaps, coordinate correction, and control acceptance.",
@@ -20,35 +20,13 @@
   "accentRgb": "236, 72, 153",
   "homeTitle": "Supplier intake",
   "eyebrow": "DELIVERY SUP-ACU-241 · REVISION 03",
-  "headline": "Correct one package",
+  "headline": "Validate supplier delivery",
   "subhead": "Check identity, completeness, compliance, and provenance before acceptance.",
   "nav": [
     "Supplier intake",
     "Deliveries",
     "Compliance gaps",
     "Suppliers"
-  ],
-  "metrics": [
-    [
-      "Received today",
-      "7",
-      "Five suppliers"
-    ],
-    [
-      "Ready to accept",
-      "4",
-      "All checks pass"
-    ],
-    [
-      "Need correction",
-      "2",
-      "Three open gaps"
-    ],
-    [
-      "Quarantined",
-      "1",
-      "Signature missing"
-    ]
   ],
   "panels": [
     {
@@ -254,6 +232,15 @@
     "defaultMode": "light",
     "density": "comfortable",
     "palette": "Gulfstream blue",
+    "darkCanvas": "#002846",
+    "darkSurface": "#003767",
+    "darkSurfaceSubtle": "#084671",
+    "darkSurfaceRaised": "#105680",
+    "darkBorder": "#2d688f",
+    "darkBorderStrong": "#6091ae",
+    "lightNavigation": "#003767",
+    "darkNavigation": "#00213b",
+    "darkNavigationMuted": "#b5cfdd",
     "lightAccent": "#003767",
     "darkAccent": "#70b7e6",
     "lightSoft": "#e2eef5",

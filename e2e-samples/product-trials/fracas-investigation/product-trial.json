@@ -1,6 +1,6 @@
 {
   "slug": "fracas-investigation",
-  "name": "Reliability and FRACAS Investigation System",
+  "name": "FRACAS Investigations",
   "shortName": "FRACAS",
   "category": "Reliability",
   "description": "Capture failures, analyse causes, control corrective actions, and verify closure.",
@@ -22,7 +22,7 @@
   "accentRgb": "239, 68, 68",
   "homeTitle": "Reliability control",
   "eyebrow": "FRACAS · AIR-DATA SYSTEM · LAST 90 DAYS",
-  "headline": "Connector faults increase",
+  "headline": "Investigate connector failures",
   "subhead": "Connect failure evidence, causal analysis, action ownership, and recurrence monitoring.",
   "nav": [
     "Reliability control",
@@ -30,6 +30,7 @@
     "Investigations",
     "Corrective actions"
   ],
+  "metricPurpose": "Show reliability risk that changes case priority.",
   "metrics": [
     [
       "Open reports",
@@ -270,17 +271,26 @@
   "design": {
     "contractId": "EUIT-FRONTEND-001",
     "iconFamily": "lucide",
-    "paletteId": "teal",
+    "paletteId": "gulfstream",
     "fontId": "atkinson",
     "defaultMode": "system",
     "density": "comfortable",
-    "palette": "Deep teal",
-    "lightAccent": "#075e61",
-    "darkAccent": "#62d0ca",
-    "lightSoft": "#e0f1f0",
-    "darkSoft": "#103c3d",
-    "lightRgb": "7, 94, 97",
-    "darkRgb": "98, 208, 202",
+    "palette": "Gulfstream blue",
+    "darkCanvas": "#002846",
+    "darkSurface": "#003767",
+    "darkSurfaceSubtle": "#084671",
+    "darkSurfaceRaised": "#105680",
+    "darkBorder": "#2d688f",
+    "darkBorderStrong": "#6091ae",
+    "lightNavigation": "#003767",
+    "darkNavigation": "#00213b",
+    "darkNavigationMuted": "#b5cfdd",
+    "lightAccent": "#003767",
+    "darkAccent": "#70b7e6",
+    "lightSoft": "#e2eef5",
+    "darkSoft": "#0d3854",
+    "lightRgb": "0, 55, 103",
+    "darkRgb": "112, 183, 230",
     "fontStack": "\"Atkinson Hyperlegible\", Inter, ui-sans-serif, system-ui, sans-serif"
   }
 }

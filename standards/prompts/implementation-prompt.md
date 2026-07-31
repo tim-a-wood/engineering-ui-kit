@@ -31,7 +31,8 @@ documents, module descriptions, and implementation guidance.
 
 - Use American English, active voice, simple verb forms, and one action per sentence.
 - Limit instructions to 20 words and descriptions to 25 words per sentence.
-- Write names and diagram labels as `VERB + OBJECT` with no more than four words.
+- Write use-case names, activity actions, sequence messages, and action labels as `VERB + OBJECT` with no more than four words.
+- Write application names and page titles as short natural noun phrases or task labels. Do not start a page title with a count.
 - Use one technical term for one concept. Do not use contractions, semicolons, or em dashes.
 - Check all generated text against these rules before you return the result.
 
@@ -74,6 +75,8 @@ Hard requirements:
 - Add a labeled mode button. Store the user choice.
 - Use the system mode before the user selects a mode.
 - Apply the selected palette, font, density, and view layout.
+- Use white-dominant light surfaces and Gulfstream-blue-dominant dark surfaces for the default palette.
+- Do not invent a metric or KPI. Add a measure only when it changes a task decision.
 - Use Lucide icons only. Add tooltips to icon-only controls.
 - Add contextual help for complex domain terms.
 - Reject common generated-interface tropes.

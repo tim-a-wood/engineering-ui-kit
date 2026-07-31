@@ -59,7 +59,7 @@ const transitions = new Map([
 
 export function createProductState() {
   return {
-    product: "Avionics Software Load Manager",
+    product: "Software Load Control",
     revision: 0,
     completed: [],
     lastResult: '',

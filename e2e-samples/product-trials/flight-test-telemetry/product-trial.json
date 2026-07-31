@@ -1,6 +1,6 @@
 {
   "slug": "flight-test-telemetry",
-  "name": "Flight-Test Telemetry Triage Console",
+  "name": "Flight Test Telemetry",
   "shortName": "Telemetry Triage",
   "category": "Flight test",
   "description": "Triage recorded telemetry, exceedances, analysis intervals, and investigation evidence.",
@@ -21,7 +21,7 @@
   "accentRgb": "249, 115, 22",
   "homeTitle": "Telemetry triage",
   "eyebrow": "FLIGHT FT-284 · LEG 03 · 46 MINUTES",
-  "headline": "Analyze one exceedance",
+  "headline": "Review acceleration exceedance",
   "subhead": "Correlate aircraft state, mark the valid interval, and preserve the source samples.",
   "nav": [
     "Telemetry triage",
@@ -29,6 +29,7 @@
     "Events",
     "Investigations"
   ],
+  "metricPurpose": "Show data health and triage scope for the selected flight.",
   "metrics": [
     [
       "Channels",
@@ -250,17 +251,26 @@
   "design": {
     "contractId": "EUIT-FRONTEND-001",
     "iconFamily": "lucide",
-    "paletteId": "graphite",
+    "paletteId": "gulfstream",
     "fontId": "inter",
     "defaultMode": "dark",
     "density": "compact",
-    "palette": "Graphite",
-    "lightAccent": "#24292f",
-    "darkAccent": "#58a6ff",
-    "lightSoft": "#eaeef2",
-    "darkSoft": "#132f4c",
-    "lightRgb": "36, 41, 47",
-    "darkRgb": "88, 166, 255",
+    "palette": "Gulfstream blue",
+    "darkCanvas": "#002846",
+    "darkSurface": "#003767",
+    "darkSurfaceSubtle": "#084671",
+    "darkSurfaceRaised": "#105680",
+    "darkBorder": "#2d688f",
+    "darkBorderStrong": "#6091ae",
+    "lightNavigation": "#003767",
+    "darkNavigation": "#00213b",
+    "darkNavigationMuted": "#b5cfdd",
+    "lightAccent": "#003767",
+    "darkAccent": "#70b7e6",
+    "lightSoft": "#e2eef5",
+    "darkSoft": "#0d3854",
+    "lightRgb": "0, 55, 103",
+    "darkRgb": "112, 183, 230",
     "fontStack": "Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
   }
 }

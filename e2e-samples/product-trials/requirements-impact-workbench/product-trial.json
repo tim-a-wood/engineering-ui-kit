@@ -1,6 +1,6 @@
 {
   "slug": "requirements-impact-workbench",
-  "name": "Requirements Change-Impact Workbench",
+  "name": "Requirement Change Impact",
   "shortName": "Impact Workbench",
   "category": "Change control",
   "description": "Trace requirement changes through design, interfaces, implementation, verification, and approval.",
@@ -21,7 +21,7 @@
   "accentRgb": "20, 184, 166",
   "homeTitle": "Change impact",
   "eyebrow": "CHANGE CR-1187 · SYS-NAV-142 · REVISION 6",
-  "headline": "Seven artifacts wait",
+  "headline": "Assess requirement change",
   "subhead": "Follow the change from system intent to affected software and verification evidence.",
   "nav": [
     "Change impact",
@@ -29,6 +29,7 @@
     "Affected artifacts",
     "Decisions"
   ],
+  "metricPurpose": "Show the change scope for planning and approval.",
   "metrics": [
     [
       "Affected artifacts",
@@ -257,17 +258,26 @@
   "design": {
     "contractId": "EUIT-FRONTEND-001",
     "iconFamily": "lucide",
-    "paletteId": "violet",
+    "paletteId": "gulfstream",
     "fontId": "inter",
     "defaultMode": "system",
     "density": "compact",
-    "palette": "Technical violet",
-    "lightAccent": "#4f3698",
-    "darkAccent": "#b5a0f4",
-    "lightSoft": "#eee9f8",
-    "darkSoft": "#2a2245",
-    "lightRgb": "79, 54, 152",
-    "darkRgb": "181, 160, 244",
+    "palette": "Gulfstream blue",
+    "darkCanvas": "#002846",
+    "darkSurface": "#003767",
+    "darkSurfaceSubtle": "#084671",
+    "darkSurfaceRaised": "#105680",
+    "darkBorder": "#2d688f",
+    "darkBorderStrong": "#6091ae",
+    "lightNavigation": "#003767",
+    "darkNavigation": "#00213b",
+    "darkNavigationMuted": "#b5cfdd",
+    "lightAccent": "#003767",
+    "darkAccent": "#70b7e6",
+    "lightSoft": "#e2eef5",
+    "darkSoft": "#0d3854",
+    "lightRgb": "0, 55, 103",
+    "darkRgb": "112, 183, 230",
     "fontStack": "Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
   }
 }

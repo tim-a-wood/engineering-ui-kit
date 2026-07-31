@@ -34,7 +34,8 @@ to all reviewed user-interface text and diagram labels.
 
 - Use American English, active voice, simple verb forms, and one action per sentence.
 - Limit instructions to 20 words and descriptions to 25 words per sentence.
-- Require names and diagram labels in `VERB + OBJECT` form with no more than four words.
+- Require use-case names, activity actions, sequence messages, and action labels in `VERB + OBJECT` form with no more than four words.
+- Require natural application names and page titles. Reject count-led status slogans.
 - Require one technical term for one concept. Reject contractions, semicolons, and em dashes.
 - Report each writing defect as a finding with a direct correction.
 

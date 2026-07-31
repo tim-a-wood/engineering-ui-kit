@@ -1,6 +1,6 @@
 {
   "slug": "copilot-session-hub",
-  "name": "Copilot Session Operations Hub",
+  "name": "Copilot Sessions",
   "shortName": "Session Hub",
   "category": "Daily productivity",
   "description": "Track Copilot sessions, progress, issues, outputs, and next actions across engineering projects.",
@@ -21,36 +21,14 @@
   "accent": "#8b5cf6",
   "accentRgb": "139, 92, 246",
   "homeTitle": "Session command",
-  "eyebrow": "TODAY · 12 ACTIVE SESSIONS",
-  "headline": "Three sessions wait",
+  "eyebrow": "ACTIVE COPILOT SESSIONS · TODAY",
+  "headline": "Review active sessions",
   "subhead": "Keep every agent run connected to its objective, branch, evidence, and next action.",
   "nav": [
     "Session command",
     "Active sessions",
     "Issues",
     "History"
-  ],
-  "metrics": [
-    [
-      "Active now",
-      "12",
-      "Across five projects"
-    ],
-    [
-      "Need review",
-      "3",
-      "Two code, one design"
-    ],
-    [
-      "Blocked",
-      "2",
-      "18 minutes waiting"
-    ],
-    [
-      "Closed today",
-      "9",
-      "+3 from average"
-    ]
   ],
   "panels": [
     {
@@ -257,17 +235,26 @@
   "design": {
     "contractId": "EUIT-FRONTEND-001",
     "iconFamily": "lucide",
-    "paletteId": "violet",
+    "paletteId": "gulfstream",
     "fontId": "source",
     "defaultMode": "dark",
     "density": "comfortable",
-    "palette": "Technical violet",
-    "lightAccent": "#4f3698",
-    "darkAccent": "#b5a0f4",
-    "lightSoft": "#eee9f8",
-    "darkSoft": "#2a2245",
-    "lightRgb": "79, 54, 152",
-    "darkRgb": "181, 160, 244",
+    "palette": "Gulfstream blue",
+    "darkCanvas": "#002846",
+    "darkSurface": "#003767",
+    "darkSurfaceSubtle": "#084671",
+    "darkSurfaceRaised": "#105680",
+    "darkBorder": "#2d688f",
+    "darkBorderStrong": "#6091ae",
+    "lightNavigation": "#003767",
+    "darkNavigation": "#00213b",
+    "darkNavigationMuted": "#b5cfdd",
+    "lightAccent": "#003767",
+    "darkAccent": "#70b7e6",
+    "lightSoft": "#e2eef5",
+    "darkSoft": "#0d3854",
+    "lightRgb": "0, 55, 103",
+    "darkRgb": "112, 183, 230",
     "fontStack": "\"Source Sans 3\", Inter, ui-sans-serif, system-ui, sans-serif"
   }
 }

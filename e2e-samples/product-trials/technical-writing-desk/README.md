@@ -1,4 +1,4 @@
-# Technical Writing and Review Desk
+# Technical Writing
 
 Draft technical content, enforce ASD-STE100, manage comments, and approve controlled documents.
 

@@ -67,7 +67,7 @@ const transitions = new Map([
 
 export function createProductState() {
   return {
-    product: "Flight-Test Telemetry Triage Console",
+    product: "Flight Test Telemetry",
     revision: 0,
     completed: [],
     lastResult: '',

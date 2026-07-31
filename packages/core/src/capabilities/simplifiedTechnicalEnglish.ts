@@ -692,7 +692,8 @@ ${JSON.stringify({
 - For instructions, use one imperative action and no more than 20 words in each sentence.
 - For descriptions, use one topic and no more than 25 words in each sentence.
 - Use no more than six sentences in each paragraph.
-- For names and diagram labels, use one action in the form VERB + OBJECT.
+- For use-case names, activity actions, sequence messages, and action labels, use one action in the form VERB + OBJECT.
+- For application names and page titles, use a short natural noun phrase or task label. Do not start a page title with a count.
 - Use no more than four words in an action label and three words in a technical noun.
 - Do not join label actions with “and,” “&,” “/,” or a comma.
 - Put details in the description, not in the label.

@@ -1299,18 +1299,23 @@ function ModuleWorkspace(props: {
                 <h3 id="frontend-design-title">Frontend design</h3>
                 <p>Set the visual contract for this frontend.</p>
               </div>
-              <div
-                className="frontend-palette-preview"
-                aria-label={`${frontendBrief.designSystem.palette.name} preview`}
-                style={{
-                  '--preview-canvas': frontendBrief.designSystem.palette.light.canvas,
-                  '--preview-surface': frontendBrief.designSystem.palette.light.surface,
-                  '--preview-accent': frontendBrief.designSystem.palette.light.accent,
-                } as CSSProperties}
-              >
-                <span />
-                <span />
-                <span />
+              <div className="frontend-palette-previews" role="img" aria-label={`${frontendBrief.designSystem.palette.name} light and dark preview`}>
+                {(['light', 'dark'] as const).map((mode) => (
+                  <div
+                    key={mode}
+                    className="frontend-palette-preview"
+                    title={`${mode === 'light' ? 'Light' : 'Dark'} mode`}
+                    style={{
+                      '--preview-canvas': frontendBrief.designSystem.palette[mode].canvas,
+                      '--preview-surface': frontendBrief.designSystem.palette[mode].surface,
+                      '--preview-accent': frontendBrief.designSystem.palette[mode].accent,
+                    } as CSSProperties}
+                  >
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                ))}
               </div>
             </div>
             <div className="frontend-design-fields">

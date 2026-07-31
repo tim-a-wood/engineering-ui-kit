@@ -170,15 +170,15 @@ const gulfstreamLight: FrontendColorMode = {
 }
 
 const gulfstreamDark: FrontendColorMode = {
-  canvas: '#071521',
-  surface: '#0c2030',
-  surfaceSubtle: '#112a3d',
-  surfaceRaised: '#153247',
-  text: '#f4f8fb',
-  textMuted: '#adc0cb',
-  textQuiet: '#8299a7',
-  border: '#29475a',
-  borderStrong: '#4e6d7e',
+  canvas: '#002846',
+  surface: '#003767',
+  surfaceSubtle: '#084671',
+  surfaceRaised: '#105680',
+  text: '#ffffff',
+  textMuted: '#c8dce8',
+  textQuiet: '#a4bfce',
+  border: '#2d688f',
+  borderStrong: '#6091ae',
   accent: '#70b7e6',
   accentHover: '#98cef0',
   accentActive: '#4c99ce',
@@ -265,6 +265,15 @@ export const FRONTEND_PALETTES: Readonly<Record<Exclude<FrontendPaletteId, 'cust
       info: '#075e61',
     },
     {
+      canvas: '#062a2b',
+      surface: '#0a3a3b',
+      surfaceSubtle: '#10494a',
+      surfaceRaised: '#185958',
+      text: '#f5fffe',
+      textMuted: '#b9d8d5',
+      textQuiet: '#91b7b4',
+      border: '#2c6866',
+      borderStrong: '#5b9692',
       accent: '#62d0ca',
       accentHover: '#8fe0dc',
       accentActive: '#3fb2ad',
@@ -286,6 +295,15 @@ export const FRONTEND_PALETTES: Readonly<Record<Exclude<FrontendPaletteId, 'cust
       info: '#4f3698',
     },
     {
+      canvas: '#1d1438',
+      surface: '#2a1d4a',
+      surfaceSubtle: '#37265d',
+      surfaceRaised: '#44316d',
+      text: '#fdfbff',
+      textMuted: '#d6cced',
+      textQuiet: '#afa1cf',
+      border: '#5b477e',
+      borderStrong: '#8975ab',
       accent: '#b5a0f4',
       accentHover: '#cbbcf8',
       accentActive: '#9176e0',
@@ -307,6 +325,15 @@ export const FRONTEND_PALETTES: Readonly<Record<Exclude<FrontendPaletteId, 'cust
       info: '#005c96',
     },
     {
+      canvas: '#2b1d08',
+      surface: '#3b290d',
+      surfaceSubtle: '#4b3613',
+      surfaceRaised: '#5b441a',
+      text: '#fffaf1',
+      textMuted: '#e2d0af',
+      textQuiet: '#baa57e',
+      border: '#735a31',
+      borderStrong: '#a58a5b',
       accent: '#f0bd62',
       accentHover: '#f7d08a',
       accentActive: '#d99a36',
@@ -667,7 +694,11 @@ export function buildFrontendDesignPrompt(config: FrontendDesignSystemConfig): s
     '- Store the user mode choice.',
     '- Use the system mode before the user selects a mode.',
     '- Keep one visual identity in both modes.',
+    '- In the default Gulfstream palette, make white dominant in light mode and Gulfstream blue dominant in dark mode.',
+    '- Treat the selected palette as project configuration. Do not replace it with an inferred palette.',
     '- Use short labels and direct instructions.',
+    '- Use natural application names and page titles. Do not write a count-led headline such as “Three sessions wait”.',
+    '- Use a short task label or object name for each page title.',
     '- Apply the approved STE profile to all visible text.',
     '- Use Lucide icons only.',
     '- Use a 24 pixel icon grid and a 2 pixel stroke.',
@@ -689,6 +720,9 @@ export function buildFrontendDesignPrompt(config: FrontendDesignSystemConfig): s
     '- Select the layout from the user task.',
     '- Let the task control the shell. Do not reuse one shell for every product.',
     '- Do not use a dashboard unless measures are the main task.',
+    '- Do not invent a metric, KPI, score, trend, or count.',
+    '- Add a measure only when it changes a decision in the current task.',
+    '- Put an approved measure beside the work that it explains. Do not add a default metric strip.',
     '- Put the main task before support data.',
     '- Show one primary page action and no more than two secondary page actions.',
     '- Put other actions in a command menu or next to the selected object.',
@@ -831,6 +865,18 @@ export function evaluateFrontendDesignSources(
     !visibleEmDash,
     'FRONTEND-DESIGN-EM-DASH',
     'The frontend must not use an em dash in visible text.',
+  )
+  const countLedHeading = /<h[12][^>]*>\s*(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b/iu.test(markup)
+  require(
+    !countLedHeading,
+    'FRONTEND-DESIGN-COUNT-HEADLINE',
+    'Use a natural task or object title. Do not start a page title with a count.',
+  )
+  const hasMetricSurface = /<(?:section|div|aside)[^>]+class\s*=\s*["'][^"']*\b(?:metrics|metric-grid|metric-strip)\b/iu.test(markup)
+  require(
+    !hasMetricSurface || /data-metric-purpose\s*=\s*["'][^"']{8,}["']/iu.test(markup),
+    'FRONTEND-DESIGN-METRIC-PURPOSE',
+    'Each metric surface must state the task decision that the measures support.',
   )
   const tropeChecks: [RegExp, string, string][] = [
     [

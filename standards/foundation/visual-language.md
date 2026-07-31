@@ -14,7 +14,7 @@ The visual language is a modern enterprise workbench. It is restrained, structur
 
 ## FND-VIS-001: Dual-mode surface hierarchy
 
-Use semantic surface tokens to create hierarchy. Keep equal visual quality in light and dark modes.
+Use semantic surface tokens to create hierarchy. Keep equal visual quality in light and dark modes. The default light mode shall use white as the dominant surface and Gulfstream blue as the accent. The default dark mode shall use Gulfstream blue as the dominant surface and white for text and contrast. A project can select another approved palette before generation. The selected palette shall control the same semantic roles in both modes.
 
 ## FND-VIS-002: Restrained technical accent usage
 
@@ -76,6 +76,10 @@ Use text of 13 pixels or larger for normal interface content. Reserve text from 
 
 Match each action icon to its verb and keep that meaning stable. Do not reuse a generic plus or arrow for unrelated actions. Confirm a routine completed action beside the action or object that changed. Do not cover the workspace with a fixed success toast. Add a panel overflow menu only when that panel has real secondary commands.
 
+## FND-VIS-017: Natural titles and justified measures
+
+Use a short natural noun phrase for an application name. Use a short task label or object name for a page title. Do not start a page title with a count or turn a status count into a dramatic headline. Do not invent a metric, KPI, score, trend, or count. Add a measure only when it changes a decision in the current task, and state that purpose in the design specification. Put the measure beside the work that it explains.
+
 ## Approved Visual Patterns
 
 | Pattern | Rule |
@@ -95,6 +99,8 @@ Match each action icon to its verb and keep that meaning stable. Do not reuse a 
 | Consistent Lucide icons | Icons use one family, one geometry, and one meaning for each action. |
 | Accessible contextual help | Icon-only controls have tooltips. Complex terms have help triggers or persistent helper text. |
 | Local action confirmation | Routine success appears beside the action or affected object and does not cover the workspace. |
+| Natural task title | A page title identifies the task or selected object without a count-led slogan. |
+| Decision measure | A measure appears only when it changes a task decision and its purpose is explicit. |
 
 ## Rejected Visual Patterns
 
@@ -120,6 +126,8 @@ Match each action icon to its verb and keep that meaning stable. Do not reuse a 
 | Generic icon reused for unrelated actions | Hides action meaning and makes the interface look templated. |
 | Overflow menu on every panel | Advertises commands that do not exist and adds repeated visual noise. |
 | Fixed toast for routine success | Separates feedback from its cause and can cover active work. |
+| Count-led page title | Turns queue state into a strange slogan and weakens orientation. |
+| Default KPI or metric strip | Adds dashboard noise when the task does not use the measure. |
 
 ## Mockup Calibration Notes
 

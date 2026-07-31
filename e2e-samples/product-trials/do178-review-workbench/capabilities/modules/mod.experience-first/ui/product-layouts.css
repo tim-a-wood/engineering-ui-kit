@@ -2528,4 +2528,27 @@
   .intake-stepper li {
     min-width: 130px;
   }
+
+  .product-load .release-path {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .product-load .load-stepper .panel {
+    min-height: 0;
+    margin-bottom: 12px;
+  }
+
+  .product-load .release-step {
+    min-height: 104px;
+    padding: 10px 7px;
+  }
+
+  .product-load .release-step::after {
+    display: none;
+  }
+
+  .product-load .release-step b {
+    font-size: 9px;
+    line-height: 1.25;
+  }
 }

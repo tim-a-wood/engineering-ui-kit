@@ -254,7 +254,8 @@ function actions(system, className = 'domain-actions', visibleCount = 3) {
 }
 
 function metricStrip(system, className = '') {
-  return `<div class="metric-strip ${className}" aria-label="Current measures">${system.metrics.map(([label, value, detail]) =>
+  if (!system.metricPurpose) return ''
+  return `<div class="metric-strip ${className}" aria-label="Current measures" data-metric-purpose="${escapeHtml(system.metricPurpose)}">${system.metrics.map(([label, value, detail]) =>
     `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(detail)}</small></div>`).join('')}</div>`
 }
 
@@ -434,7 +435,7 @@ export function renderProductDocument(system) {
     design,
   }).replaceAll('<', '\\u003c')
   return `<!doctype html>
-<html lang="en" data-design-contract="EUIT-FRONTEND-001" style="--eui-brand-accent-light:${design.lightAccent};--eui-brand-accent-dark:${design.darkAccent};--eui-brand-soft-light:${design.lightSoft};--eui-brand-soft-dark:${design.darkSoft};--eui-brand-rgb-light:${design.lightRgb};--eui-brand-rgb-dark:${design.darkRgb};--eui-font-config:${escapeHtml(design.fontStack)}">
+<html lang="en" data-design-contract="EUIT-FRONTEND-001" style="--eui-brand-accent-light:${design.lightAccent};--eui-brand-accent-dark:${design.darkAccent};--eui-brand-soft-light:${design.lightSoft};--eui-brand-soft-dark:${design.darkSoft};--eui-brand-rgb-light:${design.lightRgb};--eui-brand-rgb-dark:${design.darkRgb};--eui-brand-canvas-dark:${design.darkCanvas};--eui-brand-surface-dark:${design.darkSurface};--eui-brand-surface-subtle-dark:${design.darkSurfaceSubtle};--eui-brand-surface-raised-dark:${design.darkSurfaceRaised};--eui-brand-border-dark:${design.darkBorder};--eui-brand-border-strong-dark:${design.darkBorderStrong};--eui-brand-navigation-light:${design.lightNavigation};--eui-brand-navigation-dark:${design.darkNavigation};--eui-brand-navigation-muted-dark:${design.darkNavigationMuted};--eui-font-config:${escapeHtml(design.fontStack)}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

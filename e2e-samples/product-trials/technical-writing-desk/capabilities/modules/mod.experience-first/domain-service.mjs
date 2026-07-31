@@ -59,7 +59,7 @@ const transitions = new Map([
 
 export function createProductState() {
   return {
-    product: "Technical Writing and Review Desk",
+    product: "Technical Writing",
     revision: 0,
     completed: [],
     lastResult: '',

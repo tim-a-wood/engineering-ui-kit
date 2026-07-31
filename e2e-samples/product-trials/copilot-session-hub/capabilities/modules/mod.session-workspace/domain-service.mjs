@@ -75,7 +75,7 @@ const transitions = new Map([
 
 export function createProductState() {
   return {
-    product: "Copilot Session Operations Hub",
+    product: "Copilot Sessions",
     revision: 0,
     completed: [],
     lastResult: '',

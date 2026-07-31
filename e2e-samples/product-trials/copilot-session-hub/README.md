@@ -1,4 +1,4 @@
-# Copilot Session Operations Hub
+# Copilot Sessions
 
 Track Copilot sessions, progress, issues, outputs, and next actions across engineering projects.
 

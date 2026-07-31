@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  FRONTEND_PALETTES,
   buildFrontendDesignPrompt,
   evaluateFrontendDesignSources,
   frontendPreferencesFromConfig,
@@ -18,12 +19,35 @@ describe('frontend design system', () => {
     expect(config.typography.id).toBe('inter')
     expect(config.defaultMode).toBe('system')
     expect(config.modeToggle).toBe(true)
+    expect(config.palette.light.surface).toBe('#ffffff')
+    expect(config.palette.light.accent).toBe('#003767')
+    expect(config.palette.dark.canvas).toBe('#002846')
+    expect(config.palette.dark.surface).toBe('#003767')
+    expect(config.palette.dark.text).toBe('#ffffff')
     expect(config.icons).toEqual(expect.objectContaining({
       family: 'lucide',
       viewBox: '0 0 24 24',
       strokeWidth: 2,
       helpIcon: 'circle-help',
     }))
+  })
+
+  it('keeps every approved palette configurable in both modes', () => {
+    const palettes = Object.values(FRONTEND_PALETTES)
+
+    expect(palettes.map((palette) => palette.id).sort()).toEqual([
+      'amber',
+      'graphite',
+      'gulfstream',
+      'teal',
+      'violet',
+    ])
+    expect(new Set(palettes.map((palette) => palette.dark.canvas)).size).toBe(palettes.length)
+    for (const palette of palettes) {
+      expect(palette.light.surface).toBe('#ffffff')
+      expect(palette.dark.canvas).not.toBe(palette.light.canvas)
+      expect(palette.dark.surface).not.toBe(palette.light.surface)
+    }
   })
 
   it('round trips a selected design profile', () => {
@@ -86,6 +110,10 @@ describe('frontend design system', () => {
     expect(prompt).toContain('Do not put the complete action catalog in the page header.')
     expect(prompt).toContain('Do not put an overflow menu on every panel.')
     expect(prompt).toContain('Do not cover the workspace with a fixed toast.')
+    expect(prompt).toContain('make white dominant in light mode and Gulfstream blue dominant in dark mode.')
+    expect(prompt).toContain('Do not write a count-led headline')
+    expect(prompt).toContain('Do not invent a metric, KPI, score, trend, or count.')
+    expect(prompt).toContain('Do not add a default metric strip.')
     expect(prompt).toContain('Use 13 pixel or larger text for normal interface content.')
   })
 
@@ -119,6 +147,8 @@ describe('frontend design system', () => {
         '<html data-design-contract="EUIT-FRONTEND-001">',
         '<button aria-label="Change theme"><i class="fa fa-moon"></i></button>',
         '<svg class="lucide"></svg>',
+        '<h1>Three sessions wait</h1>',
+        '<section class="metric-strip"><strong>12</strong></section>',
         '<p>Review — approve</p>',
         '</html>',
       ].join(''),
@@ -143,6 +173,8 @@ describe('frontend design system', () => {
       'FRONTEND-DESIGN-TOOLTIP',
       'FRONTEND-DESIGN-HELP',
       'FRONTEND-DESIGN-EM-DASH',
+      'FRONTEND-DESIGN-COUNT-HEADLINE',
+      'FRONTEND-DESIGN-METRIC-PURPOSE',
       'FRONTEND-DESIGN-ACCENT-STRIP',
       'FRONTEND-DESIGN-EFFECT',
     ]))

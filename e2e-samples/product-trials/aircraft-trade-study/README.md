@@ -1,4 +1,4 @@
-# Aircraft Performance Trade-Study Workbench
+# Aircraft Trade Study
 
 Run MATLAB-backed analyses, compare options, review sensitivity, and approve study baselines.
 
