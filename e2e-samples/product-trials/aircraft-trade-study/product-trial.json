@@ -192,5 +192,60 @@
   "reward": "Decision confidence gained",
   "buyer": "Performance engineering manager",
   "commercialJob": "Make engineering analyses repeatable, comparable, and reviewable.",
-  "useFrequency": "Weekly and at design gates"
+  "useFrequency": "Weekly and at design gates",
+  "architecture": {
+    "structure": "Domain-centered",
+    "seedModule": "Core domain",
+    "uiModuleId": "mod.study-canvas",
+    "style": "analysis pipeline",
+    "modules": [
+      [
+        "mod.study-canvas",
+        "Study canvas",
+        "experience",
+        "Owns parameter editing, result comparison, and decision views."
+      ],
+      [
+        "mod.case-control",
+        "Case control",
+        "domain",
+        "Owns cases, assumptions, units, and approved baselines."
+      ],
+      [
+        "mod.model-runner",
+        "Model runner",
+        "connection",
+        "Runs the approved analysis model and captures execution data."
+      ],
+      [
+        "mod.trade-engine",
+        "Trade engine",
+        "domain",
+        "Computes comparison, sensitivity, margin, and rank."
+      ]
+    ],
+    "dependencies": [
+      [
+        "mod.study-canvas",
+        "mod.case-control",
+        "The canvas edits controlled study cases."
+      ],
+      [
+        "mod.study-canvas",
+        "mod.trade-engine",
+        "The canvas requests traceable comparison results."
+      ],
+      [
+        "mod.case-control",
+        "mod.model-runner",
+        "Approved case inputs start model runs."
+      ],
+      [
+        "mod.model-runner",
+        "mod.trade-engine",
+        "Model outputs enter the trade calculation."
+      ]
+    ]
+  },
+  "productKind": "trade"
 }

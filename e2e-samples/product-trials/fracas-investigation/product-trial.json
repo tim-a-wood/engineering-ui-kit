@@ -8,9 +8,12 @@
   "examples": [
     "Record failure report",
     "Classify failure mode",
+    "Record containment action",
     "Analyze root cause",
+    "Link causal evidence",
     "Assign corrective action",
-    "Verify action closure"
+    "Verify action closure",
+    "Monitor failure recurrence"
   ],
   "prohibited": "Never delete open corrective action",
   "failureScenario": "Reject open corrective action",
@@ -157,9 +160,21 @@
       "target": "reports"
     },
     {
+      "name": "Record containment action",
+      "actionId": "record-containment-action",
+      "result": "Containment action recorded",
+      "target": "actions"
+    },
+    {
       "name": "Analyze root cause",
       "actionId": "analyze-root-cause",
       "result": "Root cause analysis opened",
+      "target": "investigations"
+    },
+    {
+      "name": "Link causal evidence",
+      "actionId": "link-causal-evidence",
+      "result": "Causal evidence linked",
       "target": "investigations"
     },
     {
@@ -175,6 +190,12 @@
       "target": "actions"
     },
     {
+      "name": "Monitor failure recurrence",
+      "actionId": "monitor-failure-recurrence",
+      "result": "Recurrence monitor started",
+      "target": "reports"
+    },
+    {
       "name": "Reject open corrective action",
       "actionId": "reject-open-corrective-action",
       "result": "Open corrective action retained",
@@ -184,5 +205,66 @@
   "reward": "Reliability improved",
   "buyer": "Reliability, quality, or safety manager",
   "commercialJob": "Shorten failure closure and detect recurrence before it becomes systemic.",
-  "useFrequency": "Daily"
+  "useFrequency": "Daily",
+  "architecture": {
+    "structure": "Domain-centered",
+    "seedModule": "Core domain",
+    "uiModuleId": "mod.case-workspace",
+    "style": "closed-loop reliability system",
+    "modules": [
+      [
+        "mod.case-workspace",
+        "Case workspace",
+        "experience",
+        "Combines failure evidence, analysis, actions, and recurrence."
+      ],
+      [
+        "mod.failure-ledger",
+        "Failure ledger",
+        "domain",
+        "Owns failure reports, classifications, assets, and occurrence data."
+      ],
+      [
+        "mod.cause-analysis",
+        "Cause analysis",
+        "domain",
+        "Owns hypotheses, evidence, causal links, and conclusions."
+      ],
+      [
+        "mod.action-control",
+        "Action control",
+        "workflow",
+        "Owns containment, correction, verification, and overdue work."
+      ],
+      [
+        "mod.trend-service",
+        "Trend service",
+        "platform",
+        "Computes Pareto, repeat rate, exposure, and recurrence signals."
+      ]
+    ],
+    "dependencies": [
+      [
+        "mod.case-workspace",
+        "mod.failure-ledger",
+        "The case view reads controlled failure data."
+      ],
+      [
+        "mod.failure-ledger",
+        "mod.cause-analysis",
+        "Classified failures start causal analysis."
+      ],
+      [
+        "mod.cause-analysis",
+        "mod.action-control",
+        "Verified causes create corrective work."
+      ],
+      [
+        "mod.action-control",
+        "mod.trend-service",
+        "Closed actions enter recurrence monitoring."
+      ]
+    ]
+  },
+  "productKind": "fracas"
 }

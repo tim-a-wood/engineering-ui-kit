@@ -1,0 +1,147 @@
+{
+  "slug": "requirements-impact-workbench",
+  "product": "Requirements Change-Impact Workbench",
+  "category": "Change control",
+  "buyer": "Systems engineering or configuration management lead",
+  "commercialJob": "Reduce change-analysis time and prevent missed downstream work.",
+  "useFrequency": "Daily on active programmes",
+  "passed": true,
+  "packaged": true,
+  "clicks": 111,
+  "screenshots": [
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/02-project-dashboard.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/03-plan-input.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/05-plan-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/05a-application-workflow.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/05b-system-structure-refined.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-trace-index-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-trace-index-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-trace-index-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-trace-index-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-trace-index-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/07-trace-index-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-decision-control-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-decision-control-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-decision-control-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-decision-control-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-decision-control-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/07-decision-control-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-engine-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-engine-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-engine-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-engine-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-engine-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/07-impact-engine-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-workspace-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-workspace-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-workspace-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-workspace-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-workspace-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/07-impact-workspace-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/08-build-applied.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/10-impact-workspace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/11-product-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/12-product-protected-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/13-product-command-menu.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/14-product-mobile.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/16-connect-verified.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/17-verify-passed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/18-evidence-trace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 734,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1243,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 959,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 331,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 1680,
+      "clicks": 11
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 12371,
+      "clicks": 60
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 830,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 3074,
+      "clicks": 9
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 1525,
+      "clicks": 5
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 5191,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 761,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings16 warnings in 2 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.impact-workspace/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 18, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary wi"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings16 warnings in 2 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.impact-workspace/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 18, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 53, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 56, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 61, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 67, element <summary>: STE-LEXICON-REVIEW — Rev"
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T03:34:46.269Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-requirements-impact-workbench-34bMlY/requirements-impact-workbench",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/requirements-impact-workbench",
+  "timeToProductProofMs": 21413,
+  "scenarioSummary": {
+    "scenarioCount": 8,
+    "passedCount": 8,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T03:35:15.237Z",
+  "durationMs": 28968
+}

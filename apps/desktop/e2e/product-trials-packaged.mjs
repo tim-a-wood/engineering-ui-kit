@@ -16,10 +16,45 @@ import { productTrialSystems } from './product-trials/systems.mjs'
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const SAMPLE_TEMPLATE_ROOT = path.join(REPO_ROOT, 'e2e-samples/product-trials')
 const OVERLAY_ROOT = SAMPLE_TEMPLATE_ROOT
-const OUTPUT_ROOT = path.join(REPO_ROOT, 'docs/product-trials/2026-07-30/evidence')
-const APP_RELATIVE_PATH = 'capabilities/modules/mod.experience-first/ui/index.html'
+const OUTPUT_ROOT = path.join(REPO_ROOT, 'docs/product-trials/2026-07-31-diverse/evidence')
 const TIMEOUT = Number(process.env.EUIK_PRODUCT_TRIAL_TIMEOUT_MS ?? 70_000)
 const JOURNEY_TIMEOUT = Number(process.env.EUIK_PRODUCT_TRIAL_JOURNEY_TIMEOUT_MS ?? 720_000)
+
+function appRelativePath(system) {
+  return `capabilities/modules/${system.architecture.uiModuleId}/ui/index.html`
+}
+
+function exactText(value) {
+  return new RegExp(`^${String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
+}
+
+function designModuleOrder(system) {
+  const modules = [
+    ...system.architecture.modules.map((module) => ({ id: module[0], name: module[1], responsibility: module[3] })),
+    ...(system.architecture.structure === 'Experience-first'
+      ? [{ id: 'mod.experience-first', name: 'User workspace', responsibility: 'Presents the approved user tasks and visible results.' }]
+      : []),
+  ]
+  const byId = new Map(modules.map((module) => [module.id, module]))
+  const targets = new Map()
+  for (const [fromModuleId, toModuleId] of system.architecture.dependencies) {
+    targets.set(fromModuleId, [...(targets.get(fromModuleId) ?? []), toModuleId])
+  }
+  const result = []
+  const visited = new Set()
+  const active = new Set()
+  const visit = (moduleId) => {
+    if (visited.has(moduleId) || active.has(moduleId)) return
+    active.add(moduleId)
+    for (const targetId of targets.get(moduleId) ?? []) visit(targetId)
+    active.delete(moduleId)
+    visited.add(moduleId)
+    const module = byId.get(moduleId)
+    if (module) result.push(module)
+  }
+  for (const module of modules) visit(module.id)
+  return result
+}
 
 function selectedSystems() {
   const requested = new Set(
@@ -151,7 +186,8 @@ async function closePackagedApp(app) {
   }
 }
 
-async function completeModuleDesign(page, outputDir, audit, moduleName) {
+async function completeModuleDesign(page, outputDir, audit, system, module) {
+  const moduleName = module.name
   const moduleSlug = moduleName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   await click(page.getByRole('button', { name: 'Create module draft' }), 'Create module draft', audit)
   await visible(
@@ -165,6 +201,8 @@ async function completeModuleDesign(page, outputDir, audit, moduleName) {
     const currentText = (await currentStep.textContent())?.trim() ?? ''
 
     if (/Review diagrams/i.test(currentText)) {
+      const fullScreen = page.getByRole('button', { name: 'Full screen', exact: true })
+      if (await fullScreen.count()) await click(fullScreen, `Open ${moduleName} diagram review`, audit)
       for (const diagramName of ['Component', 'Activity', 'State machine', 'Sequence', 'Use case']) {
         const tab = page.getByRole('tab', { name: diagramName })
         if (!await tab.count()) continue
@@ -176,6 +214,8 @@ async function completeModuleDesign(page, outputDir, audit, moduleName) {
           audit,
         )
       }
+      const exitFullScreen = page.getByRole('button', { name: 'Exit full screen', exact: true })
+      if (await exitFullScreen.count()) await click(exitFullScreen, `Close ${moduleName} diagram review`, audit)
     }
 
     if (/Approve module/i.test(currentText)) break
@@ -186,7 +226,7 @@ async function completeModuleDesign(page, outputDir, audit, moduleName) {
       for (let index = 0; index < count; index += 1) {
         const question = questions.nth(index)
         await question.locator('textarea').fill(
-          'Use the repository path. Show a clear result. Keep the approved state after a failure.',
+          `${module.responsibility} Use the approved repository path. Show a clear result. Preserve the last approved state after a failure.`,
         )
         await click(question.getByRole('button', { name: 'Save answer' }), 'Save module answer', audit)
       }
@@ -214,7 +254,7 @@ async function completeModuleDesign(page, outputDir, audit, moduleName) {
 }
 
 async function captureProductUi(chromium, outputDir, audit, sampleRoot, system) {
-  const appPath = path.join(sampleRoot, APP_RELATIVE_PATH)
+  const appPath = path.join(sampleRoot, appRelativePath(system))
   if (!fs.existsSync(appPath)) throw new Error(`The applied app is missing: ${appPath}`)
 
   const browser = await chromium.launch({
@@ -237,9 +277,9 @@ async function captureProductUi(chromium, outputDir, audit, sampleRoot, system) 
 
   try {
     await page.goto(pathToFileURL(appPath).href, { waitUntil: 'domcontentloaded' })
-    await visible(page.getByRole('heading', { name: system.headline }), `${system.shortName} dashboard`)
-    const dashboard = await shot(page, outputDir, '10-product-dashboard', audit)
-    fs.copyFileSync(dashboard, path.join(sampleRoot, 'scenario-proof.png'))
+    await visible(page.getByRole('heading', { name: system.headline }), `${system.shortName} primary workspace`)
+    const workspace = await shot(page, outputDir, `10-${system.layout}-workspace`, audit)
+    fs.copyFileSync(workspace, path.join(sampleRoot, 'scenario-proof.png'))
 
     for (let index = 0; index < system.scenarios.length; index += 1) {
       const scenario = system.scenarios[index]
@@ -406,10 +446,71 @@ async function runJourney(electron, chromium, system) {
     await runPhase(audit, 'Approve system design', async () => {
       await click(page.locator('#design-workspace-tab-design'), 'Design stage', audit)
       await visible(page.getByRole('heading', { name: 'Choose system structure' }), 'system structure choices')
-      await page.getByRole('radio', { name: /Experience-first/ }).check()
+      await page.getByRole('radio', { name: new RegExp(system.architecture.structure, 'i') }).check()
       await click(page.getByRole('button', { name: 'Create this design' }), 'Create system design', audit)
       await visible(page.getByRole('heading', { name: 'Review system structure' }), 'system structure review')
-      await shot(page, outputDir, '05b-system-structure', audit)
+
+      const inspector = page.locator('.design-structure-editor')
+      await inspector.locator('header select').first().selectOption({ label: system.architecture.seedModule })
+      await click(inspector.getByRole('button', { name: 'Split module' }), `Split ${system.architecture.seedModule}`, audit)
+      const boundaryEditor = page.locator('.design-boundary-editor')
+      await visible(boundaryEditor, 'module boundary editor')
+      while (await boundaryEditor.locator('.design-boundary-card').count() < system.architecture.modules.length) {
+        await click(boundaryEditor.getByRole('button', { name: 'Add boundary' }), 'Add architecture boundary', audit)
+      }
+      const boundaryCards = boundaryEditor.locator('.design-boundary-card')
+      for (let index = 0; index < system.architecture.modules.length; index += 1) {
+        const [moduleId, name, moduleType, responsibility] = system.architecture.modules[index]
+        const card = boundaryCards.nth(index)
+        await card.getByLabel('Module ID').fill(moduleId)
+        await card.getByLabel('Module name').fill(name)
+        await card.getByLabel('Module type').selectOption(moduleType)
+        await card.getByLabel('Responsibility').fill(responsibility)
+      }
+      const ownerFields = boundaryEditor.locator('.design-boundary-operations select')
+      for (let index = 0; index < await ownerFields.count(); index += 1) {
+        await ownerFields.nth(index).selectOption(system.architecture.modules[index % system.architecture.modules.length][0])
+      }
+      await click(boundaryEditor.getByRole('button', { name: 'Apply module split' }), 'Apply architecture boundaries', audit)
+
+      const expectedModuleCount = system.architecture.modules.length + (system.architecture.structure === 'Experience-first' ? 1 : 0)
+      const moduleSummary = page.locator('.design-structure-summary > div').filter({ hasText: 'Modules' }).first().locator('strong')
+      await page.waitForFunction(
+        ([selector, expected]) => Number(document.querySelector(selector)?.textContent) === expected,
+        ['.design-structure-summary > div:first-child strong', expectedModuleCount],
+        { timeout: TIMEOUT },
+      )
+      if (Number(await moduleSummary.textContent()) !== expectedModuleCount) {
+        throw new Error(`Expected ${expectedModuleCount} architecture modules.`)
+      }
+
+      const dependencyEditor = page.locator('.design-dependency-editor')
+      const removeButtons = dependencyEditor.getByRole('button', { name: /^Remove dependency / })
+      while (await removeButtons.count()) {
+        const before = await removeButtons.count()
+        await click(removeButtons.first(), 'Remove generated dependency', audit)
+        await page.waitForFunction(
+          ([selector, count]) => document.querySelectorAll(selector).length < count,
+          ['.design-dependency-list li', before],
+          { timeout: TIMEOUT },
+        )
+      }
+
+      for (const [fromModuleId, toModuleId, reason] of system.architecture.dependencies) {
+        await dependencyEditor.getByLabel('Dependency source').selectOption(fromModuleId)
+        await dependencyEditor.getByLabel('Dependency target').selectOption(toModuleId)
+        await dependencyEditor.getByLabel('Dependency reason').fill(reason)
+        const before = await dependencyEditor.locator('.design-dependency-list li').count()
+        await click(dependencyEditor.getByRole('button', { name: 'Add dependency' }), `Add ${fromModuleId} dependency`, audit)
+        await page.waitForFunction(
+          ([selector, count]) => document.querySelectorAll(selector).length > count,
+          ['.design-dependency-list li', before],
+          { timeout: TIMEOUT },
+        )
+      }
+
+      await page.locator('.main').evaluate((element) => element.scrollTo({ top: 0, behavior: 'instant' }))
+      await shot(page, outputDir, '05b-system-structure-refined', audit, { fullPage: true })
       const approval = page.getByRole('button', { name: 'Approve system structure' })
       await waitEnabled(approval, 'system structure approval')
       await click(approval, 'Approve system structure', audit)
@@ -417,13 +518,17 @@ async function runJourney(electron, chromium, system) {
     })
 
     await runPhase(audit, 'Design modules', async () => {
-      for (const moduleName of ['Application workflow', 'User workspace']) {
+      const modules = designModuleOrder(system)
+      for (const module of modules) {
+        const moduleRow = page.locator('.design-queue-row').filter({
+          has: page.locator('.design-queue-row-name', { hasText: exactText(module.name) }),
+        })
         await click(
-          page.locator('.design-queue-row-button').filter({ hasText: moduleName }),
-          `Select ${moduleName}`,
+          moduleRow.locator('.design-queue-row-button'),
+          `Select ${module.name}`,
           audit,
         )
-        await completeModuleDesign(page, outputDir, audit, moduleName)
+        await completeModuleDesign(page, outputDir, audit, system, module)
       }
     })
 
@@ -500,7 +605,7 @@ async function runJourney(electron, chromium, system) {
       await click(page.locator('#design-workspace-tab-connect'), 'Connect stage', audit)
       await visible(page.getByRole('heading', { name: 'Connect entry points' }), 'Connect workspace')
       await page.getByRole('radio', { name: /User interface/ }).check()
-      await page.getByLabel('Local UI').fill(APP_RELATIVE_PATH)
+      await page.getByLabel('Local UI').fill(appRelativePath(system))
       await page.getByLabel('Ready selector').fill('.app-shell')
       await page.getByLabel('Capture target').fill('main')
       await click(page.getByRole('button', { name: 'Suggest selectors' }), 'Suggest scenario selectors', audit)

@@ -10,6 +10,7 @@
     "Check STE wording",
     "Compare document revision",
     "Record review comment",
+    "Approve controlled revision",
     "Export approved document"
   ],
   "prohibited": "Never use prohibited term",
@@ -137,6 +138,12 @@
       "target": "comments"
     },
     {
+      "name": "Approve controlled revision",
+      "actionId": "approve-controlled-revision",
+      "result": "Controlled revision approved",
+      "target": "documents"
+    },
+    {
       "name": "Export approved document",
       "actionId": "export-approved-document",
       "result": "Approved document package exported",
@@ -152,5 +159,49 @@
   "reward": "Clarity increased",
   "buyer": "Technical author or engineering organisation",
   "commercialJob": "Reduce document review cycles and enforce controlled writing policy.",
-  "useFrequency": "Daily"
+  "useFrequency": "Daily",
+  "architecture": {
+    "structure": "Experience-first",
+    "seedModule": "Application workflow",
+    "uiModuleId": "mod.experience-first",
+    "style": "document-centered authoring system",
+    "modules": [
+      [
+        "mod.document-control",
+        "Document control",
+        "workflow",
+        "Coordinates drafts, revisions, reviews, and controlled export."
+      ],
+      [
+        "mod.ste-checker",
+        "STE checker",
+        "domain",
+        "Applies approved terminology and ASD-STE100 writing rules."
+      ],
+      [
+        "mod.comment-service",
+        "Comment service",
+        "domain",
+        "Owns review threads, decisions, and resolution state."
+      ]
+    ],
+    "dependencies": [
+      [
+        "mod.experience-first",
+        "mod.document-control",
+        "The editor starts document operations."
+      ],
+      [
+        "mod.document-control",
+        "mod.ste-checker",
+        "Drafts pass the writing policy before approval."
+      ],
+      [
+        "mod.document-control",
+        "mod.comment-service",
+        "Controlled revisions retain review comments."
+      ]
+    ]
+  },
+  "productKind": "writing"
 }

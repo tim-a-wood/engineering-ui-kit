@@ -1,0 +1,153 @@
+{
+  "slug": "supplier-intake-portal",
+  "product": "Supplier Deliverable Intake Portal",
+  "category": "Supply-chain assurance",
+  "buyer": "Supplier assurance or programme quality manager",
+  "commercialJob": "Shorten supplier acceptance while retaining defensible provenance.",
+  "useFrequency": "Several times each week",
+  "passed": true,
+  "packaged": true,
+  "clicks": 129,
+  "screenshots": [
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/02-project-dashboard.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/03-plan-input.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/05-plan-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/05a-application-workflow.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/05b-system-structure-refined.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-gap-control-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-gap-control-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-gap-control-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-gap-control-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-gap-control-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/07-gap-control-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-package-validator-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-package-validator-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-package-validator-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-package-validator-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-package-validator-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/07-package-validator-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-acceptance-records-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-acceptance-records-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-acceptance-records-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-acceptance-records-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-acceptance-records-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/07-acceptance-records-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-intake-flow-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-intake-flow-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-intake-flow-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-intake-flow-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-intake-flow-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/07-intake-flow-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-user-workspace-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-user-workspace-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-user-workspace-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-user-workspace-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-user-workspace-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/07-user-workspace-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/08-build-applied.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/10-supplier-workspace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/11-product-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/12-product-protected-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/13-product-command-menu.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/14-product-mobile.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/16-connect-verified.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/17-verify-passed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/18-evidence-trace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 746,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1268,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 1036,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 321,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 1872,
+      "clicks": 15
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 15422,
+      "clicks": 75
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 796,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 2240,
+      "clicks": 8
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 1414,
+      "clicks": 5
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 4234,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 753,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings21 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 25, element <h3>: STE-LEXICON-REVIEW — Review the vocabular"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings21 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 25, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 32, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 38, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 44, element <summary>: STE-LEXICON-REVIEW —"
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T03:34:15.724Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-supplier-intake-portal-lFNeyf/supplier-intake-portal",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/supplier-intake-portal",
+  "timeToProductProofMs": 23917,
+  "scenarioSummary": {
+    "scenarioCount": 7,
+    "passedCount": 7,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T03:34:46.097Z",
+  "durationMs": 30373
+}

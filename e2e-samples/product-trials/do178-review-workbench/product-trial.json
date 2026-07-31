@@ -10,7 +10,9 @@
     "Record review finding",
     "Assign finding owner",
     "Verify finding closure",
-    "Approve review record"
+    "Check objective coverage",
+    "Approve review record",
+    "Export review evidence"
   ],
   "prohibited": "Never use author approval",
   "failureScenario": "Reject author approval",
@@ -149,9 +151,21 @@
       "target": "findings"
     },
     {
+      "name": "Check objective coverage",
+      "actionId": "check-objective-coverage",
+      "result": "Objective coverage check passed",
+      "target": "artifacts"
+    },
+    {
       "name": "Approve review record",
       "actionId": "approve-review-record",
       "result": "Review record approved",
+      "target": "records"
+    },
+    {
+      "name": "Export review evidence",
+      "actionId": "export-review-evidence",
+      "result": "Review evidence package exported",
       "target": "records"
     },
     {
@@ -164,5 +178,60 @@
   "reward": "Assurance increased",
   "buyer": "Software verification lead",
   "commercialJob": "Reduce review effort and produce defensible review records.",
-  "useFrequency": "Daily during review and certification increments"
+  "useFrequency": "Daily during review and certification increments",
+  "architecture": {
+    "structure": "Experience-first",
+    "seedModule": "Application workflow",
+    "uiModuleId": "mod.experience-first",
+    "style": "layered review system",
+    "modules": [
+      [
+        "mod.review-control",
+        "Review control",
+        "workflow",
+        "Coordinates independent review tasks and review state."
+      ],
+      [
+        "mod.evidence-index",
+        "Evidence index",
+        "domain",
+        "Owns lifecycle data, trace links, revisions, and objective coverage."
+      ],
+      [
+        "mod.finding-control",
+        "Finding control",
+        "domain",
+        "Owns findings, ownership, closure evidence, and review rules."
+      ],
+      [
+        "mod.review-records",
+        "Review records",
+        "platform",
+        "Preserves approved review records and immutable evidence."
+      ]
+    ],
+    "dependencies": [
+      [
+        "mod.experience-first",
+        "mod.review-control",
+        "The reviewer workspace starts approved review operations."
+      ],
+      [
+        "mod.review-control",
+        "mod.evidence-index",
+        "Review tasks read controlled lifecycle evidence."
+      ],
+      [
+        "mod.review-control",
+        "mod.finding-control",
+        "Review tasks create and resolve formal findings."
+      ],
+      [
+        "mod.finding-control",
+        "mod.review-records",
+        "Verified closure creates an immutable review record."
+      ]
+    ]
+  },
+  "productKind": "review"
 }

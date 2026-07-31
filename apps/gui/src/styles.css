@@ -10766,7 +10766,9 @@ code.path-wrap {
 
 .design-structure-rationale,
 .design-structure-editor,
-.design-operation-allocation {
+.design-operation-allocation,
+.design-boundary-editor,
+.design-dependency-editor {
   display: grid;
   align-content: start;
   gap: var(--semantic-spacing-3);
@@ -10863,6 +10865,166 @@ code.path-wrap {
 }
 
 .design-operation-allocation :is(h3, p) { grid-column: 1 / -1; }
+
+.design-boundary-editor > header,
+.design-boundary-actions,
+.design-dependency-editor {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-3);
+}
+
+.design-boundary-editor > header :is(h3, p),
+.design-boundary-operations :is(h4, p),
+.design-dependency-editor :is(h3, p) {
+  margin: 0;
+}
+
+.design-boundary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--semantic-spacing-3);
+}
+
+.design-boundary-card {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  padding: var(--semantic-spacing-3);
+  background: var(--semantic-surface-panel);
+}
+
+.design-boundary-card legend {
+  padding: 0 var(--semantic-spacing-1);
+  color: var(--semantic-accent-primary);
+  font-weight: var(--semantic-typography-weight-bold);
+}
+
+.design-boundary-card label,
+.design-boundary-operations label,
+.design-dependency-form label {
+  display: grid;
+  gap: var(--semantic-spacing-1);
+  color: var(--semantic-text-secondary);
+  font-size: 0.74rem;
+  font-weight: var(--semantic-typography-weight-semibold);
+}
+
+.design-boundary-card :is(input, select, textarea),
+.design-boundary-operations select,
+.design-dependency-form :is(input, select) {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  color: var(--semantic-text-primary);
+  background: var(--semantic-surface-panel);
+}
+
+.design-boundary-card :is(input, select),
+.design-boundary-operations select,
+.design-dependency-form :is(input, select) {
+  min-height: 38px;
+  padding-inline: var(--semantic-spacing-2);
+}
+
+.design-boundary-card textarea {
+  resize: vertical;
+  padding: var(--semantic-spacing-2);
+}
+
+.design-add-boundary {
+  min-height: 11rem;
+  border: 1px dashed var(--semantic-border-strong);
+  border-radius: var(--semantic-radius-sm);
+  color: var(--semantic-accent-primary);
+  background: transparent;
+  font: inherit;
+  font-weight: var(--semantic-typography-weight-semibold);
+  cursor: pointer;
+}
+
+.design-add-boundary:hover {
+  border-color: var(--semantic-accent-primary);
+  background: var(--semantic-accent-primary-tint);
+}
+
+.design-boundary-operations {
+  display: grid;
+  gap: var(--semantic-spacing-2);
+  border-top: 1px solid var(--semantic-border-subtle);
+  padding-top: var(--semantic-spacing-3);
+}
+
+.design-boundary-operations label {
+  grid-template-columns: minmax(14rem, 1fr) minmax(14rem, .7fr);
+  align-items: center;
+}
+
+.design-boundary-actions {
+  align-items: center;
+  border-top: 1px solid var(--semantic-border-subtle);
+  padding-top: var(--semantic-spacing-3);
+  color: var(--semantic-text-muted);
+}
+
+.design-dependency-editor {
+  align-items: start;
+}
+
+.design-dependency-editor > div:first-child {
+  max-width: 24rem;
+}
+
+.design-dependency-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(10rem, 1fr));
+  gap: var(--semantic-spacing-2);
+  min-width: min(100%, 34rem);
+}
+
+.design-dependency-form label:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
+.design-dependency-form .btn {
+  justify-self: end;
+  grid-column: 1 / -1;
+}
+
+.design-dependency-list {
+  display: grid;
+  gap: var(--semantic-spacing-1);
+  flex: 1 1 20rem;
+  min-width: min(100%, 20rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.design-dependency-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--semantic-spacing-2);
+  border: 1px solid var(--semantic-border-subtle);
+  border-radius: var(--semantic-radius-sm);
+  padding: var(--semantic-spacing-2);
+  background: var(--semantic-surface-panel);
+}
+
+.design-dependency-list span,
+.design-dependency-list small {
+  display: block;
+}
+
+.design-dependency-list small {
+  margin-top: 0.2rem;
+  color: var(--semantic-text-muted);
+}
 
 .design-connect-layout {
   display: grid;
@@ -11847,7 +12009,8 @@ code.path-wrap {
   .design-plan-source-drafts li,
   .design-structure-options,
   .design-structure-review-grid,
-  .design-operation-allocation { grid-template-columns: 1fr; }
+  .design-operation-allocation,
+  .design-dependency-form { grid-template-columns: 1fr; }
   .design-structure-approved-module { grid-template-columns: 1fr; }
   .design-structure-approved-module > div + div {
     border-top: 1px solid var(--semantic-border-subtle);
@@ -11857,7 +12020,13 @@ code.path-wrap {
   .design-inline-gate,
   .design-structure-choice-summary,
   .design-system-gate-actions,
-  .design-structure-editor > header { align-items: stretch; flex-direction: column; }
+  .design-structure-editor > header,
+  .design-boundary-editor > header,
+  .design-boundary-actions,
+  .design-dependency-editor { align-items: stretch; flex-direction: column; }
+  .design-boundary-operations label { grid-template-columns: 1fr; }
+  .design-dependency-form label:nth-child(3),
+  .design-dependency-form .btn { grid-column: 1; }
   .design-structure-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

@@ -1,0 +1,147 @@
+{
+  "slug": "copilot-session-hub",
+  "product": "Copilot Session Operations Hub",
+  "category": "Daily productivity",
+  "buyer": "Engineering lead or senior individual contributor",
+  "commercialJob": "Control parallel AI work without losing decisions, blockers, or evidence.",
+  "useFrequency": "Multiple times each day",
+  "passed": true,
+  "packaged": true,
+  "clicks": 112,
+  "screenshots": [
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/02-project-dashboard.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/03-plan-input.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/05-plan-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/05a-application-workflow.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/05b-system-structure-refined.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-evidence-store-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-evidence-store-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-evidence-store-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-evidence-store-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-evidence-store-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/07-evidence-store-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-issue-queue-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-issue-queue-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-issue-queue-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-issue-queue-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-issue-queue-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/07-issue-queue-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-ledger-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-ledger-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-ledger-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-ledger-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-ledger-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/07-session-ledger-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-workspace-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-workspace-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-workspace-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-workspace-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-workspace-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/07-session-workspace-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/08-build-applied.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/10-sessions-workspace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/11-product-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/12-product-protected-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/13-product-command-menu.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/14-product-mobile.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/16-connect-verified.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/17-verify-passed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/18-evidence-trace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 754,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1252,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 988,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 336,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 1700,
+      "clicks": 11
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 12634,
+      "clicks": 60
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 803,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 2342,
+      "clicks": 10
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 1500,
+      "clicks": 5
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 5676,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 745,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings19 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.session-workspace/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 24, element <h3>: STE-LEXICON-REVIEW — Review the vocab"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings19 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.session-workspace/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 24, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 25, element <h4>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 27, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 28, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 31, element <h3>: STE-LEXICON-R"
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T03:31:48.696Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-copilot-session-hub-phNnn5/copilot-session-hub",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/copilot-session-hub",
+  "timeToProductProofMs": 21019,
+  "scenarioSummary": {
+    "scenarioCount": 9,
+    "passedCount": 9,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T03:32:17.691Z",
+  "durationMs": 28995
+}

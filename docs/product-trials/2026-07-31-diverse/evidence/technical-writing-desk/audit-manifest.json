@@ -1,0 +1,147 @@
+{
+  "slug": "technical-writing-desk",
+  "product": "Technical Writing and Review Desk",
+  "category": "Daily productivity",
+  "buyer": "Technical author or engineering organisation",
+  "commercialJob": "Reduce document review cycles and enforce controlled writing policy.",
+  "useFrequency": "Daily",
+  "passed": true,
+  "packaged": true,
+  "clicks": 111,
+  "screenshots": [
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/02-project-dashboard.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/03-plan-input.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/05-plan-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/05a-application-workflow.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/05b-system-structure-refined.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-ste-checker-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-ste-checker-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-ste-checker-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-ste-checker-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-ste-checker-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/07-ste-checker-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-comment-service-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-comment-service-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-comment-service-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-comment-service-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-comment-service-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/07-comment-service-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-document-control-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-document-control-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-document-control-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-document-control-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-document-control-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/07-document-control-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-user-workspace-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-user-workspace-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-user-workspace-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-user-workspace-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-user-workspace-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/07-user-workspace-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/08-build-applied.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/10-writing-workspace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/11-product-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/12-product-protected-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/13-product-command-menu.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/14-product-mobile.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/16-connect-verified.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/17-verify-passed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/18-evidence-trace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 686,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1262,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 995,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 322,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 1568,
+      "clicks": 12
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 12346,
+      "clicks": 60
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 774,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 2316,
+      "clicks": 8
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 1276,
+      "clicks": 5
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 4379,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 749,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings27 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 25, element <h3>: STE-LEXICON-REVIEW — Review the vocabular"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings27 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 25, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 26, element <h4>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 32, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 38, element <summary>: STE-LEXICON-REVIEW —"
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T03:32:17.857Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-technical-writing-desk-DyoiuX/technical-writing-desk",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/technical-writing-desk",
+  "timeToProductProofMs": 20542,
+  "scenarioSummary": {
+    "scenarioCount": 7,
+    "passedCount": 7,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T03:32:44.863Z",
+  "durationMs": 27006
+}

@@ -10,6 +10,7 @@
     "Validate package manifest",
     "Review compliance gap",
     "Request supplier correction",
+    "Verify corrected package",
     "Accept supplier delivery"
   ],
   "prohibited": "Never use unsigned package",
@@ -168,6 +169,12 @@
       "target": "gaps"
     },
     {
+      "name": "Verify corrected package",
+      "actionId": "verify-corrected-package",
+      "result": "Corrected package verification passed",
+      "target": "deliveries"
+    },
+    {
       "name": "Accept supplier delivery",
       "actionId": "accept-supplier-delivery",
       "result": "Supplier delivery accepted",
@@ -183,5 +190,60 @@
   "reward": "Supply risk reduced",
   "buyer": "Supplier assurance or programme quality manager",
   "commercialJob": "Shorten supplier acceptance while retaining defensible provenance.",
-  "useFrequency": "Several times each week"
+  "useFrequency": "Several times each week",
+  "architecture": {
+    "structure": "Experience-first",
+    "seedModule": "Application workflow",
+    "uiModuleId": "mod.experience-first",
+    "style": "case-management portal",
+    "modules": [
+      [
+        "mod.intake-flow",
+        "Intake flow",
+        "workflow",
+        "Coordinates submission, checks, correction, and acceptance."
+      ],
+      [
+        "mod.package-validator",
+        "Package validator",
+        "domain",
+        "Checks manifests, file integrity, metadata, and required content."
+      ],
+      [
+        "mod.gap-control",
+        "Gap control",
+        "domain",
+        "Owns gaps, supplier responses, due dates, and closure."
+      ],
+      [
+        "mod.acceptance-records",
+        "Acceptance records",
+        "platform",
+        "Preserves accepted packages and approval evidence."
+      ]
+    ],
+    "dependencies": [
+      [
+        "mod.experience-first",
+        "mod.intake-flow",
+        "The supplier portal starts intake tasks."
+      ],
+      [
+        "mod.intake-flow",
+        "mod.package-validator",
+        "Every submission passes deterministic checks."
+      ],
+      [
+        "mod.package-validator",
+        "mod.gap-control",
+        "Failed checks create controlled gaps."
+      ],
+      [
+        "mod.intake-flow",
+        "mod.acceptance-records",
+        "Accepted packages create immutable records."
+      ]
+    ]
+  },
+  "productKind": "supplier"
 }

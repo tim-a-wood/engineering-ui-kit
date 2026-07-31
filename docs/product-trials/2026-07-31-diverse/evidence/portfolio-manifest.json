@@ -1,0 +1,2272 @@
+{
+  "generatedAt": "2026-07-31T03:38:20.589Z",
+  "scope": "Ten packaged-app product trials",
+  "summary": {
+    "products": 10,
+    "productsPassed": 10,
+    "scenariosPassed": 78,
+    "screenshots": 436,
+    "averageClicks": 121.1,
+    "averageDurationMs": 30020,
+    "averageTimeToProductProofMs": 22993,
+    "rendererErrors": 0,
+    "productErrors": 0,
+    "modules": 46,
+    "dependencies": 39,
+    "structures": [
+      "Experience-first",
+      "Domain-centered",
+      "Focused core"
+    ],
+    "productKinds": [
+      "review",
+      "sessions",
+      "writing",
+      "telemetry",
+      "trade",
+      "hil",
+      "supplier",
+      "impact",
+      "load",
+      "fracas"
+    ],
+    "minimumScenarios": 6,
+    "maximumScenarios": 9
+  },
+  "portfolioScores": {
+    "problemValue": 8.8,
+    "differentiation": 8.1,
+    "productProof": 8,
+    "pilotReadiness": 7.5,
+    "selfService": 6.5,
+    "enterpriseReadiness": 5.7,
+    "longTermMonetization": 8.6,
+    "scalableRevenue": 6.5,
+    "usability": 8.2,
+    "efficiency": 8,
+    "presentation": 9,
+    "confidence": 8.6,
+    "delight": 7.6
+  },
+  "products": [
+    {
+      "slug": "do178-review-workbench",
+      "product": "DO-178C Review Workbench",
+      "category": "Design assurance",
+      "buyer": "Software verification lead",
+      "commercialJob": "Reduce review effort and produce defensible review records.",
+      "useFrequency": "Daily during review and certification increments",
+      "passed": true,
+      "packaged": true,
+      "clicks": 130,
+      "screenshots": [
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/02-project-dashboard.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/03-plan-input.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/05-plan-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/05a-application-workflow.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/05b-system-structure-refined.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-evidence-index-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-evidence-index-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-evidence-index-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-evidence-index-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-evidence-index-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/07-evidence-index-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-records-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-records-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-records-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-records-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-records-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/07-review-records-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-finding-control-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-finding-control-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-finding-control-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-finding-control-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-finding-control-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/07-finding-control-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-control-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-control-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-control-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-control-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-control-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/07-review-control-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/08-build-applied.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/10-review-workspace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/11-product-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/12-product-protected-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/13-product-command-menu.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/14-product-mobile.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/16-connect-verified.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/17-verify-passed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/18-evidence-trace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 706,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1266,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 1033,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 301,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 1914,
+          "clicks": 15
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 15562,
+          "clicks": 75
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 839,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2759,
+          "clicks": 9
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1454,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4778,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 747,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings25 warnings in 4 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.19capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 24, element <button>: STE-LEXICON-REVIEW — Review the vocab"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings25 warnings in 4 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.19capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 24, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 32, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 39, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 49, element <h3>: STE-LEXICON-REVIEW — "
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T03:31:16.847Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-do178-review-workbench-DFvBEq/do178-review-workbench",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/do178-review-workbench",
+      "timeToProductProofMs": 24607,
+      "scenarioSummary": {
+        "scenarioCount": 8,
+        "passedCount": 8,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T03:31:48.516Z",
+      "durationMs": 31669,
+      "architecture": {
+        "structure": "Experience-first",
+        "seedModule": "Application workflow",
+        "uiModuleId": "mod.experience-first",
+        "style": "layered review system",
+        "modules": [
+          [
+            "mod.review-control",
+            "Review control",
+            "workflow",
+            "Coordinates independent review tasks and review state."
+          ],
+          [
+            "mod.evidence-index",
+            "Evidence index",
+            "domain",
+            "Owns lifecycle data, trace links, revisions, and objective coverage."
+          ],
+          [
+            "mod.finding-control",
+            "Finding control",
+            "domain",
+            "Owns findings, ownership, closure evidence, and review rules."
+          ],
+          [
+            "mod.review-records",
+            "Review records",
+            "platform",
+            "Preserves approved review records and immutable evidence."
+          ]
+        ],
+        "dependencies": [
+          [
+            "mod.experience-first",
+            "mod.review-control",
+            "The reviewer workspace starts approved review operations."
+          ],
+          [
+            "mod.review-control",
+            "mod.evidence-index",
+            "Review tasks read controlled lifecycle evidence."
+          ],
+          [
+            "mod.review-control",
+            "mod.finding-control",
+            "Review tasks create and resolve formal findings."
+          ],
+          [
+            "mod.finding-control",
+            "mod.review-records",
+            "Verified closure creates an immutable review record."
+          ]
+        ]
+      },
+      "productKind": "review",
+      "scores": {
+        "problemValue": 10,
+        "differentiation": 9,
+        "productProof": 8,
+        "pilotReadiness": 7,
+        "selfService": 6,
+        "enterpriseReadiness": 5,
+        "longTermMonetization": 9,
+        "scalableRevenue": 6,
+        "usability": 8,
+        "efficiency": 7,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 7
+      }
+    },
+    {
+      "slug": "copilot-session-hub",
+      "product": "Copilot Session Operations Hub",
+      "category": "Daily productivity",
+      "buyer": "Engineering lead or senior individual contributor",
+      "commercialJob": "Control parallel AI work without losing decisions, blockers, or evidence.",
+      "useFrequency": "Multiple times each day",
+      "passed": true,
+      "packaged": true,
+      "clicks": 112,
+      "screenshots": [
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/02-project-dashboard.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/03-plan-input.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/05-plan-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/05a-application-workflow.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/05b-system-structure-refined.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-evidence-store-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-evidence-store-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-evidence-store-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-evidence-store-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-evidence-store-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/07-evidence-store-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-issue-queue-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-issue-queue-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-issue-queue-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-issue-queue-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-issue-queue-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/07-issue-queue-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-ledger-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-ledger-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-ledger-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-ledger-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-ledger-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/07-session-ledger-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-workspace-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-workspace-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-workspace-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-workspace-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/06-session-workspace-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/07-session-workspace-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/08-build-applied.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/10-sessions-workspace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/11-product-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/12-product-protected-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/13-product-command-menu.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/14-product-mobile.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/16-connect-verified.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/17-verify-passed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/18-evidence-trace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/copilot-session-hub/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 754,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1252,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 988,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 336,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 1700,
+          "clicks": 11
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 12634,
+          "clicks": 60
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 803,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2342,
+          "clicks": 10
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1500,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 5676,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 745,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings19 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.session-workspace/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 24, element <h3>: STE-LEXICON-REVIEW — Review the vocab"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings19 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.session-workspace/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 24, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 25, element <h4>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 27, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 28, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.session-workspace/ui/index.htmlline 31, element <h3>: STE-LEXICON-R"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T03:31:48.696Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-copilot-session-hub-phNnn5/copilot-session-hub",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/copilot-session-hub",
+      "timeToProductProofMs": 21019,
+      "scenarioSummary": {
+        "scenarioCount": 9,
+        "passedCount": 9,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T03:32:17.691Z",
+      "durationMs": 28995,
+      "architecture": {
+        "structure": "Domain-centered",
+        "seedModule": "Core domain",
+        "uiModuleId": "mod.session-workspace",
+        "style": "event-driven work tracker",
+        "modules": [
+          [
+            "mod.session-workspace",
+            "Session workspace",
+            "experience",
+            "Shows active agent work, decisions, issues, and next actions."
+          ],
+          [
+            "mod.session-ledger",
+            "Session ledger",
+            "domain",
+            "Owns session identity, state, progress, and history."
+          ],
+          [
+            "mod.issue-queue",
+            "Issue queue",
+            "workflow",
+            "Routes blockers, decisions, and review requests."
+          ],
+          [
+            "mod.evidence-store",
+            "Evidence store",
+            "platform",
+            "Preserves outputs, links, checks, and completion evidence."
+          ]
+        ],
+        "dependencies": [
+          [
+            "mod.session-workspace",
+            "mod.session-ledger",
+            "The workspace reads and updates session state."
+          ],
+          [
+            "mod.session-ledger",
+            "mod.issue-queue",
+            "Blocked sessions create queue items."
+          ],
+          [
+            "mod.session-ledger",
+            "mod.evidence-store",
+            "Completed sessions write evidence."
+          ],
+          [
+            "mod.issue-queue",
+            "mod.evidence-store",
+            "Resolved issues retain their decision evidence."
+          ]
+        ]
+      },
+      "productKind": "sessions",
+      "scores": {
+        "problemValue": 8,
+        "differentiation": 7,
+        "productProof": 8,
+        "pilotReadiness": 8,
+        "selfService": 7,
+        "enterpriseReadiness": 5,
+        "longTermMonetization": 8,
+        "scalableRevenue": 7,
+        "usability": 9,
+        "efficiency": 9,
+        "presentation": 9,
+        "confidence": 8,
+        "delight": 9
+      }
+    },
+    {
+      "slug": "technical-writing-desk",
+      "product": "Technical Writing and Review Desk",
+      "category": "Daily productivity",
+      "buyer": "Technical author or engineering organisation",
+      "commercialJob": "Reduce document review cycles and enforce controlled writing policy.",
+      "useFrequency": "Daily",
+      "passed": true,
+      "packaged": true,
+      "clicks": 111,
+      "screenshots": [
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/02-project-dashboard.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/03-plan-input.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/05-plan-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/05a-application-workflow.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/05b-system-structure-refined.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-ste-checker-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-ste-checker-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-ste-checker-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-ste-checker-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-ste-checker-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/07-ste-checker-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-comment-service-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-comment-service-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-comment-service-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-comment-service-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-comment-service-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/07-comment-service-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-document-control-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-document-control-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-document-control-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-document-control-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-document-control-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/07-document-control-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/08-build-applied.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/10-writing-workspace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/11-product-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/12-product-protected-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/13-product-command-menu.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/14-product-mobile.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/16-connect-verified.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/17-verify-passed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/18-evidence-trace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/technical-writing-desk/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 686,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1262,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 995,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 322,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 1568,
+          "clicks": 12
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 12346,
+          "clicks": 60
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 774,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2316,
+          "clicks": 8
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1276,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4379,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 749,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings27 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 25, element <h3>: STE-LEXICON-REVIEW — Review the vocabular"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings27 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 25, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 26, element <h4>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 32, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 38, element <summary>: STE-LEXICON-REVIEW —"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T03:32:17.857Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-technical-writing-desk-DyoiuX/technical-writing-desk",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/technical-writing-desk",
+      "timeToProductProofMs": 20542,
+      "scenarioSummary": {
+        "scenarioCount": 7,
+        "passedCount": 7,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T03:32:44.863Z",
+      "durationMs": 27006,
+      "architecture": {
+        "structure": "Experience-first",
+        "seedModule": "Application workflow",
+        "uiModuleId": "mod.experience-first",
+        "style": "document-centered authoring system",
+        "modules": [
+          [
+            "mod.document-control",
+            "Document control",
+            "workflow",
+            "Coordinates drafts, revisions, reviews, and controlled export."
+          ],
+          [
+            "mod.ste-checker",
+            "STE checker",
+            "domain",
+            "Applies approved terminology and ASD-STE100 writing rules."
+          ],
+          [
+            "mod.comment-service",
+            "Comment service",
+            "domain",
+            "Owns review threads, decisions, and resolution state."
+          ]
+        ],
+        "dependencies": [
+          [
+            "mod.experience-first",
+            "mod.document-control",
+            "The editor starts document operations."
+          ],
+          [
+            "mod.document-control",
+            "mod.ste-checker",
+            "Drafts pass the writing policy before approval."
+          ],
+          [
+            "mod.document-control",
+            "mod.comment-service",
+            "Controlled revisions retain review comments."
+          ]
+        ]
+      },
+      "productKind": "writing",
+      "scores": {
+        "problemValue": 8,
+        "differentiation": 8,
+        "productProof": 8,
+        "pilotReadiness": 8,
+        "selfService": 7,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 8,
+        "scalableRevenue": 7,
+        "usability": 9,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 8,
+        "delight": 8
+      }
+    },
+    {
+      "slug": "flight-test-telemetry",
+      "product": "Flight-Test Telemetry Triage Console",
+      "category": "Flight test",
+      "buyer": "Flight-test engineering lead",
+      "commercialJob": "Reduce time from flight data to a reviewable investigation.",
+      "useFrequency": "Daily during flight-test campaigns",
+      "passed": true,
+      "packaged": true,
+      "clicks": 127,
+      "screenshots": [
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/02-project-dashboard.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/03-plan-input.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/05-plan-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/05a-application-workflow.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/05b-system-structure-refined.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-flight-archive-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-flight-archive-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-flight-archive-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-flight-archive-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-flight-archive-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/07-flight-archive-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-investigation-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-investigation-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-investigation-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-investigation-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-investigation-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/07-investigation-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-signal-analysis-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-signal-analysis-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-signal-analysis-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-signal-analysis-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-signal-analysis-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/07-signal-analysis-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-run-ingest-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-run-ingest-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-run-ingest-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-run-ingest-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-run-ingest-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/07-run-ingest-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-telemetry-console-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-telemetry-console-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-telemetry-console-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-telemetry-console-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-telemetry-console-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/07-telemetry-console-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/08-build-applied.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/10-telemetry-workspace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/11-product-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/12-product-protected-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/13-product-command-menu.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/14-product-mobile.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/16-connect-verified.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/17-verify-passed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/18-evidence-trace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 837,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1241,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 1013,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 346,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 2053,
+          "clicks": 12
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 15576,
+          "clicks": 75
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 790,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2307,
+          "clicks": 9
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1422,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4668,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 730,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings16 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.12capabilities/modules/mod.telemetry-console/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 18, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabular"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings16 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.12capabilities/modules/mod.telemetry-console/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 18, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 36, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 40, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 46, element <summary>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 48, element <button>: STE-LEXICON-"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T03:32:45.038Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-flight-test-telemetry-kfp22J/flight-test-telemetry",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/flight-test-telemetry",
+      "timeToProductProofMs": 24406,
+      "scenarioSummary": {
+        "scenarioCount": 8,
+        "passedCount": 8,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T03:33:16.317Z",
+      "durationMs": 31279,
+      "architecture": {
+        "structure": "Focused core",
+        "seedModule": "Core workflow",
+        "uiModuleId": "mod.telemetry-console",
+        "style": "stream-processing investigation system",
+        "modules": [
+          [
+            "mod.telemetry-console",
+            "Telemetry console",
+            "experience",
+            "Synchronizes plots, events, intervals, and investigation controls."
+          ],
+          [
+            "mod.run-ingest",
+            "Run ingest",
+            "connection",
+            "Reads recorded channels and validates time and source identity."
+          ],
+          [
+            "mod.signal-analysis",
+            "Signal analysis",
+            "domain",
+            "Computes thresholds, dropouts, and correlated events."
+          ],
+          [
+            "mod.investigation",
+            "Investigation",
+            "workflow",
+            "Owns intervals, engineering notes, review, and export."
+          ],
+          [
+            "mod.flight-archive",
+            "Flight archive",
+            "platform",
+            "Preserves source samples and investigation packages."
+          ]
+        ],
+        "dependencies": [
+          [
+            "mod.telemetry-console",
+            "mod.run-ingest",
+            "The console requests a recorded flight run."
+          ],
+          [
+            "mod.run-ingest",
+            "mod.signal-analysis",
+            "Validated samples enter signal analysis."
+          ],
+          [
+            "mod.signal-analysis",
+            "mod.investigation",
+            "Verified events start an investigation."
+          ],
+          [
+            "mod.investigation",
+            "mod.flight-archive",
+            "The investigation retains source evidence."
+          ]
+        ]
+      },
+      "productKind": "telemetry",
+      "scores": {
+        "problemValue": 9,
+        "differentiation": 8,
+        "productProof": 8,
+        "pilotReadiness": 7,
+        "selfService": 6,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 9,
+        "scalableRevenue": 6,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 8,
+        "delight": 8
+      }
+    },
+    {
+      "slug": "aircraft-trade-study",
+      "product": "Aircraft Performance Trade-Study Workbench",
+      "category": "Engineering analysis",
+      "buyer": "Performance engineering manager",
+      "commercialJob": "Make engineering analyses repeatable, comparable, and reviewable.",
+      "useFrequency": "Weekly and at design gates",
+      "passed": true,
+      "packaged": true,
+      "clicks": 109,
+      "screenshots": [
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/02-project-dashboard.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/03-plan-input.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/05-plan-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/05a-application-workflow.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/05b-system-structure-refined.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-trade-engine-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-trade-engine-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-trade-engine-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-trade-engine-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-trade-engine-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/07-trade-engine-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-model-runner-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-model-runner-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-model-runner-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-model-runner-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-model-runner-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/07-model-runner-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-case-control-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-case-control-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-case-control-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-case-control-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-case-control-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/07-case-control-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-study-canvas-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-study-canvas-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-study-canvas-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-study-canvas-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/06-study-canvas-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/07-study-canvas-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/08-build-applied.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/10-trade-workspace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/11-product-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/12-product-protected-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/13-product-command-menu.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/14-product-mobile.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/16-connect-verified.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/17-verify-passed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/18-evidence-trace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/aircraft-trade-study/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 734,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1215,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 949,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 313,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 1603,
+          "clicks": 11
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 12511,
+          "clicks": 60
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 791,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2287,
+          "clicks": 7
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1337,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 3866,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 719,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings20 warnings in 2 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.study-canvas/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.study-canvas/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.study-canvas/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.study-canvas/ui/index.htmlline 23, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the offic"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings20 warnings in 2 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.study-canvas/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.study-canvas/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.study-canvas/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.study-canvas/ui/index.htmlline 23, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.study-canvas/ui/index.htmlline 25, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.study-canvas/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.study-canvas/ui/index.htmlline 33, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.study-canvas/ui/index.htmlline 36, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the offic"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T03:33:16.488Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-aircraft-trade-study-zfQler/aircraft-trade-study",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/aircraft-trade-study",
+      "timeToProductProofMs": 20611,
+      "scenarioSummary": {
+        "scenarioCount": 6,
+        "passedCount": 6,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T03:33:43.084Z",
+      "durationMs": 26596,
+      "architecture": {
+        "structure": "Domain-centered",
+        "seedModule": "Core domain",
+        "uiModuleId": "mod.study-canvas",
+        "style": "analysis pipeline",
+        "modules": [
+          [
+            "mod.study-canvas",
+            "Study canvas",
+            "experience",
+            "Owns parameter editing, result comparison, and decision views."
+          ],
+          [
+            "mod.case-control",
+            "Case control",
+            "domain",
+            "Owns cases, assumptions, units, and approved baselines."
+          ],
+          [
+            "mod.model-runner",
+            "Model runner",
+            "connection",
+            "Runs the approved analysis model and captures execution data."
+          ],
+          [
+            "mod.trade-engine",
+            "Trade engine",
+            "domain",
+            "Computes comparison, sensitivity, margin, and rank."
+          ]
+        ],
+        "dependencies": [
+          [
+            "mod.study-canvas",
+            "mod.case-control",
+            "The canvas edits controlled study cases."
+          ],
+          [
+            "mod.study-canvas",
+            "mod.trade-engine",
+            "The canvas requests traceable comparison results."
+          ],
+          [
+            "mod.case-control",
+            "mod.model-runner",
+            "Approved case inputs start model runs."
+          ],
+          [
+            "mod.model-runner",
+            "mod.trade-engine",
+            "Model outputs enter the trade calculation."
+          ]
+        ]
+      },
+      "productKind": "trade",
+      "scores": {
+        "problemValue": 8,
+        "differentiation": 7,
+        "productProof": 8,
+        "pilotReadiness": 7,
+        "selfService": 6,
+        "enterpriseReadiness": 5,
+        "longTermMonetization": 8,
+        "scalableRevenue": 6,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 8,
+        "delight": 8
+      }
+    },
+    {
+      "slug": "hil-campaign-orchestrator",
+      "product": "HIL Test Campaign Orchestrator",
+      "category": "Verification operations",
+      "buyer": "Verification or laboratory manager",
+      "commercialJob": "Increase expensive bench utilisation and preserve trustworthy evidence.",
+      "useFrequency": "Daily in verification laboratories",
+      "passed": true,
+      "packaged": true,
+      "clicks": 128,
+      "screenshots": [
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/02-project-dashboard.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/03-plan-input.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/05-plan-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/05a-application-workflow.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/05b-system-structure-refined.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-rig-adapter-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-rig-adapter-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-rig-adapter-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-rig-adapter-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-rig-adapter-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/07-rig-adapter-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-evidence-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-evidence-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-evidence-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-evidence-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-evidence-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/07-campaign-evidence-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-test-executor-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-test-executor-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-test-executor-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-test-executor-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-test-executor-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/07-test-executor-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-bench-scheduler-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-bench-scheduler-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-bench-scheduler-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-bench-scheduler-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-bench-scheduler-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/07-bench-scheduler-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-console-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-console-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-console-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-console-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-console-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/07-campaign-console-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/08-build-applied.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/10-hil-workspace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/11-product-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/12-product-protected-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/13-product-command-menu.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/14-product-mobile.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/16-connect-verified.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/17-verify-passed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/18-evidence-trace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 811,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1252,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 949,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 316,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 2130,
+          "clicks": 12
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 15609,
+          "clicks": 75
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 827,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2378,
+          "clicks": 10
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1481,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 5477,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 697,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings20 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.campaign-console/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 18, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabular"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings20 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.campaign-console/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 18, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 23, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 33, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 40, element <summary>: STE-LEXICON-REVIEW —"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T03:33:43.296Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-hil-campaign-orchestrator-J7AMyQ/hil-campaign-orchestrator",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/hil-campaign-orchestrator",
+      "timeToProductProofMs": 24529,
+      "scenarioSummary": {
+        "scenarioCount": 9,
+        "passedCount": 9,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T03:34:15.541Z",
+      "durationMs": 32245,
+      "architecture": {
+        "structure": "Focused core",
+        "seedModule": "Core workflow",
+        "uiModuleId": "mod.campaign-console",
+        "style": "distributed execution control",
+        "modules": [
+          [
+            "mod.campaign-console",
+            "Campaign console",
+            "experience",
+            "Shows reservations, execution state, failures, and evidence."
+          ],
+          [
+            "mod.bench-scheduler",
+            "Bench scheduler",
+            "domain",
+            "Owns reservations, conflicts, assets, and campaign windows."
+          ],
+          [
+            "mod.test-executor",
+            "Test executor",
+            "workflow",
+            "Loads configurations and controls procedure execution."
+          ],
+          [
+            "mod.rig-adapter",
+            "Rig adapter",
+            "connection",
+            "Isolates real-time bench commands and observations."
+          ],
+          [
+            "mod.campaign-evidence",
+            "Campaign evidence",
+            "platform",
+            "Stores results, logs, configurations, and approvals."
+          ]
+        ],
+        "dependencies": [
+          [
+            "mod.campaign-console",
+            "mod.bench-scheduler",
+            "The console reserves a valid test asset."
+          ],
+          [
+            "mod.bench-scheduler",
+            "mod.test-executor",
+            "A valid reservation permits campaign execution."
+          ],
+          [
+            "mod.test-executor",
+            "mod.rig-adapter",
+            "The executor controls the reserved rig."
+          ],
+          [
+            "mod.test-executor",
+            "mod.campaign-evidence",
+            "Each procedure writes time-linked evidence."
+          ]
+        ]
+      },
+      "productKind": "hil",
+      "scores": {
+        "problemValue": 9,
+        "differentiation": 8,
+        "productProof": 8,
+        "pilotReadiness": 7,
+        "selfService": 6,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 9,
+        "scalableRevenue": 6,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 8
+      }
+    },
+    {
+      "slug": "supplier-intake-portal",
+      "product": "Supplier Deliverable Intake Portal",
+      "category": "Supply-chain assurance",
+      "buyer": "Supplier assurance or programme quality manager",
+      "commercialJob": "Shorten supplier acceptance while retaining defensible provenance.",
+      "useFrequency": "Several times each week",
+      "passed": true,
+      "packaged": true,
+      "clicks": 129,
+      "screenshots": [
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/02-project-dashboard.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/03-plan-input.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/05-plan-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/05a-application-workflow.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/05b-system-structure-refined.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-gap-control-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-gap-control-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-gap-control-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-gap-control-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-gap-control-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/07-gap-control-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-package-validator-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-package-validator-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-package-validator-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-package-validator-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-package-validator-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/07-package-validator-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-acceptance-records-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-acceptance-records-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-acceptance-records-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-acceptance-records-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-acceptance-records-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/07-acceptance-records-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-intake-flow-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-intake-flow-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-intake-flow-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-intake-flow-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-intake-flow-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/07-intake-flow-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-user-workspace-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-user-workspace-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-user-workspace-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-user-workspace-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/06-user-workspace-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/07-user-workspace-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/08-build-applied.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/10-supplier-workspace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/11-product-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/12-product-protected-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/13-product-command-menu.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/14-product-mobile.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/16-connect-verified.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/17-verify-passed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/18-evidence-trace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/supplier-intake-portal/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 746,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1268,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 1036,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 321,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 1872,
+          "clicks": 15
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 15422,
+          "clicks": 75
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 796,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2240,
+          "clicks": 8
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1414,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4234,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 753,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings21 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 25, element <h3>: STE-LEXICON-REVIEW — Review the vocabular"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings21 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 25, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 32, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 38, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 44, element <summary>: STE-LEXICON-REVIEW —"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T03:34:15.724Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-supplier-intake-portal-lFNeyf/supplier-intake-portal",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/supplier-intake-portal",
+      "timeToProductProofMs": 23917,
+      "scenarioSummary": {
+        "scenarioCount": 7,
+        "passedCount": 7,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T03:34:46.097Z",
+      "durationMs": 30373,
+      "architecture": {
+        "structure": "Experience-first",
+        "seedModule": "Application workflow",
+        "uiModuleId": "mod.experience-first",
+        "style": "case-management portal",
+        "modules": [
+          [
+            "mod.intake-flow",
+            "Intake flow",
+            "workflow",
+            "Coordinates submission, checks, correction, and acceptance."
+          ],
+          [
+            "mod.package-validator",
+            "Package validator",
+            "domain",
+            "Checks manifests, file integrity, metadata, and required content."
+          ],
+          [
+            "mod.gap-control",
+            "Gap control",
+            "domain",
+            "Owns gaps, supplier responses, due dates, and closure."
+          ],
+          [
+            "mod.acceptance-records",
+            "Acceptance records",
+            "platform",
+            "Preserves accepted packages and approval evidence."
+          ]
+        ],
+        "dependencies": [
+          [
+            "mod.experience-first",
+            "mod.intake-flow",
+            "The supplier portal starts intake tasks."
+          ],
+          [
+            "mod.intake-flow",
+            "mod.package-validator",
+            "Every submission passes deterministic checks."
+          ],
+          [
+            "mod.package-validator",
+            "mod.gap-control",
+            "Failed checks create controlled gaps."
+          ],
+          [
+            "mod.intake-flow",
+            "mod.acceptance-records",
+            "Accepted packages create immutable records."
+          ]
+        ]
+      },
+      "productKind": "supplier",
+      "scores": {
+        "problemValue": 8,
+        "differentiation": 8,
+        "productProof": 8,
+        "pilotReadiness": 8,
+        "selfService": 7,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 8,
+        "scalableRevenue": 7,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 7
+      }
+    },
+    {
+      "slug": "requirements-impact-workbench",
+      "product": "Requirements Change-Impact Workbench",
+      "category": "Change control",
+      "buyer": "Systems engineering or configuration management lead",
+      "commercialJob": "Reduce change-analysis time and prevent missed downstream work.",
+      "useFrequency": "Daily on active programmes",
+      "passed": true,
+      "packaged": true,
+      "clicks": 111,
+      "screenshots": [
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/02-project-dashboard.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/03-plan-input.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/05-plan-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/05a-application-workflow.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/05b-system-structure-refined.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-trace-index-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-trace-index-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-trace-index-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-trace-index-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-trace-index-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/07-trace-index-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-decision-control-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-decision-control-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-decision-control-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-decision-control-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-decision-control-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/07-decision-control-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-engine-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-engine-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-engine-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-engine-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-engine-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/07-impact-engine-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-workspace-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-workspace-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-workspace-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-workspace-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/06-impact-workspace-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/07-impact-workspace-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/08-build-applied.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/10-impact-workspace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/11-product-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/12-product-protected-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/13-product-command-menu.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/14-product-mobile.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/16-connect-verified.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/17-verify-passed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/18-evidence-trace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/requirements-impact-workbench/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 734,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1243,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 959,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 331,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 1680,
+          "clicks": 11
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 12371,
+          "clicks": 60
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 830,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 3074,
+          "clicks": 9
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1525,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 5191,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 761,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings16 warnings in 2 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.impact-workspace/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 18, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary wi"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings16 warnings in 2 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.impact-workspace/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 18, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 53, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 56, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 61, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.impact-workspace/ui/index.htmlline 67, element <summary>: STE-LEXICON-REVIEW — Rev"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T03:34:46.269Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-requirements-impact-workbench-34bMlY/requirements-impact-workbench",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/requirements-impact-workbench",
+      "timeToProductProofMs": 21413,
+      "scenarioSummary": {
+        "scenarioCount": 8,
+        "passedCount": 8,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T03:35:15.237Z",
+      "durationMs": 28968,
+      "architecture": {
+        "structure": "Domain-centered",
+        "seedModule": "Core domain",
+        "uiModuleId": "mod.impact-workspace",
+        "style": "graph-analysis decision system",
+        "modules": [
+          [
+            "mod.impact-workspace",
+            "Impact workspace",
+            "experience",
+            "Shows change scope, trace paths, decisions, and review state."
+          ],
+          [
+            "mod.trace-index",
+            "Trace index",
+            "platform",
+            "Indexes requirements, design, code, tests, and approved revisions."
+          ],
+          [
+            "mod.impact-engine",
+            "Impact engine",
+            "domain",
+            "Traverses dependencies and classifies affected records."
+          ],
+          [
+            "mod.decision-control",
+            "Decision control",
+            "workflow",
+            "Owns dispositions, review assignments, and approval."
+          ]
+        ],
+        "dependencies": [
+          [
+            "mod.impact-workspace",
+            "mod.impact-engine",
+            "The workspace requests an impact calculation."
+          ],
+          [
+            "mod.impact-engine",
+            "mod.trace-index",
+            "The engine reads the approved trace graph."
+          ],
+          [
+            "mod.impact-engine",
+            "mod.decision-control",
+            "Affected records create disposition work."
+          ],
+          [
+            "mod.decision-control",
+            "mod.trace-index",
+            "Approved decisions update trace review state."
+          ]
+        ]
+      },
+      "productKind": "impact",
+      "scores": {
+        "problemValue": 9,
+        "differentiation": 9,
+        "productProof": 8,
+        "pilotReadiness": 8,
+        "selfService": 7,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 9,
+        "scalableRevenue": 7,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 7
+      }
+    },
+    {
+      "slug": "avionics-load-manager",
+      "product": "Avionics Software Load Manager",
+      "category": "Configuration control",
+      "buyer": "Configuration management or fleet engineering lead",
+      "commercialJob": "Prevent incompatible loads and automate as-loaded evidence.",
+      "useFrequency": "At every software release and installation",
+      "passed": true,
+      "packaged": true,
+      "clicks": 126,
+      "screenshots": [
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/02-project-dashboard.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/03-plan-input.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/05-plan-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/05a-application-workflow.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/05b-system-structure-refined.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-target-adapter-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-target-adapter-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-target-adapter-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-target-adapter-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-target-adapter-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/07-target-adapter-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-ledger-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-ledger-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-ledger-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-ledger-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-ledger-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/07-release-ledger-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-load-control-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-load-control-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-load-control-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-load-control-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-load-control-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/07-load-control-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-compatibility-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-compatibility-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-compatibility-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-compatibility-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-compatibility-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/07-compatibility-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-workspace-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-workspace-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-workspace-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-workspace-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-workspace-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/07-release-workspace-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/08-build-applied.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/10-load-workspace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/11-product-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/12-product-protected-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/13-product-command-menu.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/14-product-mobile.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/16-connect-verified.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/17-verify-passed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/18-evidence-trace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 734,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1264,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 1058,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 313,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 2116,
+          "clicks": 12
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 15447,
+          "clicks": 75
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 822,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2374,
+          "clicks": 8
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1333,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 4251,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 717,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings18 warnings in 2 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.15capabilities/modules/mod.release-workspace/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 24, element <h3>: STE-LEXICON-REVIEW — Review the vocab"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings18 warnings in 2 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.15capabilities/modules/mod.release-workspace/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 24, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 27, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 32, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 38, element <h3>: STE-LEXICON-REVIE"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T03:35:15.457Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-avionics-load-manager-0qVbKn/avionics-load-manager",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/avionics-load-manager",
+      "timeToProductProofMs": 24336,
+      "scenarioSummary": {
+        "scenarioCount": 7,
+        "passedCount": 7,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T03:35:46.160Z",
+      "durationMs": 30703,
+      "architecture": {
+        "structure": "Focused core",
+        "seedModule": "Core workflow",
+        "uiModuleId": "mod.release-workspace",
+        "style": "transactional release system",
+        "modules": [
+          [
+            "mod.release-workspace",
+            "Release workspace",
+            "experience",
+            "Guides package selection, checks, authorization, and load state."
+          ],
+          [
+            "mod.compatibility",
+            "Compatibility",
+            "domain",
+            "Owns hardware, software, aircraft, and configuration rules."
+          ],
+          [
+            "mod.load-control",
+            "Load control",
+            "workflow",
+            "Coordinates authorization, transfer, verification, and rollback."
+          ],
+          [
+            "mod.target-adapter",
+            "Target adapter",
+            "connection",
+            "Isolates aircraft or bench loading protocols."
+          ],
+          [
+            "mod.release-ledger",
+            "Release ledger",
+            "platform",
+            "Preserves package identity, signatures, and installation history."
+          ]
+        ],
+        "dependencies": [
+          [
+            "mod.release-workspace",
+            "mod.compatibility",
+            "The workspace checks the selected configuration."
+          ],
+          [
+            "mod.compatibility",
+            "mod.load-control",
+            "A compatible selection permits loading."
+          ],
+          [
+            "mod.load-control",
+            "mod.target-adapter",
+            "The controller transfers the approved package."
+          ],
+          [
+            "mod.load-control",
+            "mod.release-ledger",
+            "Each load writes an immutable result."
+          ]
+        ]
+      },
+      "productKind": "load",
+      "scores": {
+        "problemValue": 10,
+        "differentiation": 9,
+        "productProof": 8,
+        "pilotReadiness": 7,
+        "selfService": 6,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 9,
+        "scalableRevenue": 6,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 7
+      }
+    },
+    {
+      "slug": "fracas-investigation",
+      "product": "Reliability and FRACAS Investigation System",
+      "category": "Reliability",
+      "buyer": "Reliability, quality, or safety manager",
+      "commercialJob": "Shorten failure closure and detect recurrence before it becomes systemic.",
+      "useFrequency": "Daily",
+      "passed": true,
+      "packaged": true,
+      "clicks": 128,
+      "screenshots": [
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/02-project-dashboard.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/03-plan-input.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/04-plan-decomposed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/05-plan-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/05a-application-workflow.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/05b-system-structure-refined.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-trend-service-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-trend-service-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-trend-service-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-trend-service-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-trend-service-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/07-trend-service-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-action-control-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-action-control-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-action-control-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-action-control-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-action-control-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/07-action-control-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-cause-analysis-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-cause-analysis-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-cause-analysis-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-cause-analysis-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-cause-analysis-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/07-cause-analysis-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-failure-ledger-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-failure-ledger-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-failure-ledger-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-failure-ledger-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-failure-ledger-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/07-failure-ledger-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-case-workspace-component.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-case-workspace-activity.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-case-workspace-state-machine.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-case-workspace-sequence.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/06-case-workspace-use-case.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/07-case-workspace-approved.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/08-build-applied.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/10-fracas-workspace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/11-product-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/12-product-protected-action.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/13-product-command-menu.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/14-product-mobile.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/16-connect-verified.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/17-verify-passed.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/18-evidence-trace.png",
+        "docs/product-trials/2026-07-31-diverse/evidence/fracas-investigation/19-evidence-original.png"
+      ],
+      "phases": [
+        {
+          "name": "Create project",
+          "status": "passed",
+          "durationMs": 763,
+          "clicks": 3
+        },
+        {
+          "name": "Configure workflow",
+          "status": "passed",
+          "durationMs": 1249,
+          "clicks": 4
+        },
+        {
+          "name": "Define use cases",
+          "status": "passed",
+          "durationMs": 935,
+          "clicks": 4
+        },
+        {
+          "name": "Review application workflow",
+          "status": "passed",
+          "durationMs": 363,
+          "clicks": 1
+        },
+        {
+          "name": "Approve system design",
+          "status": "passed",
+          "durationMs": 2119,
+          "clicks": 12
+        },
+        {
+          "name": "Design modules",
+          "status": "passed",
+          "durationMs": 15689,
+          "clicks": 75
+        },
+        {
+          "name": "Build product",
+          "status": "passed",
+          "durationMs": 775,
+          "clicks": 8
+        },
+        {
+          "name": "Exercise product UI",
+          "status": "passed",
+          "durationMs": 2438,
+          "clicks": 10
+        },
+        {
+          "name": "Connect entry point",
+          "status": "passed",
+          "durationMs": 1559,
+          "clicks": 5
+        },
+        {
+          "name": "Verify scenarios",
+          "status": "passed",
+          "durationMs": 5507,
+          "clicks": 3
+        },
+        {
+          "name": "Review evidence",
+          "status": "passed",
+          "durationMs": 683,
+          "clicks": 3
+        }
+      ],
+      "findings": [
+        {
+          "id": "BUILD-OVERLAY-WARNING",
+          "severity": "medium",
+          "area": "Build",
+          "title": "The implementation required a manual warning acceptance.",
+          "evidence": "Overlay warnings24 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.case-workspace/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.case-workspace/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.case-workspace/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.case-workspace/ui/index.htmlline 23, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with t"
+        }
+      ],
+      "warningReview": {
+        "status": "accepted-for-product-trial",
+        "evidence": "Overlay warnings24 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.17capabilities/modules/mod.case-workspace/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.case-workspace/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.case-workspace/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.case-workspace/ui/index.htmlline 23, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.case-workspace/ui/index.htmlline 25, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.case-workspace/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.case-workspace/ui/index.htmlline 32, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.case-workspace/ui/index.htmlline 38, element <h3>: STE-LEXICON-REVIEW — Review the vocabular"
+      },
+      "rendererErrors": [],
+      "productErrors": [],
+      "startedAt": "2026-07-31T03:35:46.324Z",
+      "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-fracas-investigation-zBuzNH/fracas-investigation",
+      "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/fracas-investigation",
+      "timeToProductProofMs": 24549,
+      "scenarioSummary": {
+        "scenarioCount": 9,
+        "passedCount": 9,
+        "failedCount": 0
+      },
+      "completedAt": "2026-07-31T03:36:18.688Z",
+      "durationMs": 32364,
+      "architecture": {
+        "structure": "Domain-centered",
+        "seedModule": "Core domain",
+        "uiModuleId": "mod.case-workspace",
+        "style": "closed-loop reliability system",
+        "modules": [
+          [
+            "mod.case-workspace",
+            "Case workspace",
+            "experience",
+            "Combines failure evidence, analysis, actions, and recurrence."
+          ],
+          [
+            "mod.failure-ledger",
+            "Failure ledger",
+            "domain",
+            "Owns failure reports, classifications, assets, and occurrence data."
+          ],
+          [
+            "mod.cause-analysis",
+            "Cause analysis",
+            "domain",
+            "Owns hypotheses, evidence, causal links, and conclusions."
+          ],
+          [
+            "mod.action-control",
+            "Action control",
+            "workflow",
+            "Owns containment, correction, verification, and overdue work."
+          ],
+          [
+            "mod.trend-service",
+            "Trend service",
+            "platform",
+            "Computes Pareto, repeat rate, exposure, and recurrence signals."
+          ]
+        ],
+        "dependencies": [
+          [
+            "mod.case-workspace",
+            "mod.failure-ledger",
+            "The case view reads controlled failure data."
+          ],
+          [
+            "mod.failure-ledger",
+            "mod.cause-analysis",
+            "Classified failures start causal analysis."
+          ],
+          [
+            "mod.cause-analysis",
+            "mod.action-control",
+            "Verified causes create corrective work."
+          ],
+          [
+            "mod.action-control",
+            "mod.trend-service",
+            "Closed actions enter recurrence monitoring."
+          ]
+        ]
+      },
+      "productKind": "fracas",
+      "scores": {
+        "problemValue": 9,
+        "differentiation": 8,
+        "productProof": 8,
+        "pilotReadiness": 8,
+        "selfService": 7,
+        "enterpriseReadiness": 6,
+        "longTermMonetization": 9,
+        "scalableRevenue": 7,
+        "usability": 8,
+        "efficiency": 8,
+        "presentation": 9,
+        "confidence": 9,
+        "delight": 7
+      }
+    }
+  ]
+}

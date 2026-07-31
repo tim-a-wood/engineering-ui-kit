@@ -8,8 +8,10 @@
   "examples": [
     "Import requirement change",
     "Trace affected design",
+    "Compare trace revision",
     "Review module impact",
     "Assign rework action",
+    "Estimate change effort",
     "Approve impact decision"
   ],
   "prohibited": "Never delete unreviewed impact",
@@ -157,6 +159,12 @@
       "target": "artifacts"
     },
     {
+      "name": "Compare trace revision",
+      "actionId": "compare-trace-revision",
+      "result": "Trace revision comparison opened",
+      "target": "artifacts"
+    },
+    {
       "name": "Review module impact",
       "actionId": "review-module-impact",
       "result": "Four module impacts opened",
@@ -167,6 +175,12 @@
       "actionId": "assign-rework-action",
       "result": "Rework action assigned",
       "target": "artifacts"
+    },
+    {
+      "name": "Estimate change effort",
+      "actionId": "estimate-change-effort",
+      "result": "Change effort estimate recorded",
+      "target": "decisions"
     },
     {
       "name": "Approve impact decision",
@@ -184,5 +198,60 @@
   "reward": "Change risk contained",
   "buyer": "Systems engineering or configuration management lead",
   "commercialJob": "Reduce change-analysis time and prevent missed downstream work.",
-  "useFrequency": "Daily on active programmes"
+  "useFrequency": "Daily on active programmes",
+  "architecture": {
+    "structure": "Domain-centered",
+    "seedModule": "Core domain",
+    "uiModuleId": "mod.impact-workspace",
+    "style": "graph-analysis decision system",
+    "modules": [
+      [
+        "mod.impact-workspace",
+        "Impact workspace",
+        "experience",
+        "Shows change scope, trace paths, decisions, and review state."
+      ],
+      [
+        "mod.trace-index",
+        "Trace index",
+        "platform",
+        "Indexes requirements, design, code, tests, and approved revisions."
+      ],
+      [
+        "mod.impact-engine",
+        "Impact engine",
+        "domain",
+        "Traverses dependencies and classifies affected records."
+      ],
+      [
+        "mod.decision-control",
+        "Decision control",
+        "workflow",
+        "Owns dispositions, review assignments, and approval."
+      ]
+    ],
+    "dependencies": [
+      [
+        "mod.impact-workspace",
+        "mod.impact-engine",
+        "The workspace requests an impact calculation."
+      ],
+      [
+        "mod.impact-engine",
+        "mod.trace-index",
+        "The engine reads the approved trace graph."
+      ],
+      [
+        "mod.impact-engine",
+        "mod.decision-control",
+        "Affected records create disposition work."
+      ],
+      [
+        "mod.decision-control",
+        "mod.trace-index",
+        "Approved decisions update trace review state."
+      ]
+    ]
+  },
+  "productKind": "impact"
 }

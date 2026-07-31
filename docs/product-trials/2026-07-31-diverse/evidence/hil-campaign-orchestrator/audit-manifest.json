@@ -1,0 +1,153 @@
+{
+  "slug": "hil-campaign-orchestrator",
+  "product": "HIL Test Campaign Orchestrator",
+  "category": "Verification operations",
+  "buyer": "Verification or laboratory manager",
+  "commercialJob": "Increase expensive bench utilisation and preserve trustworthy evidence.",
+  "useFrequency": "Daily in verification laboratories",
+  "passed": true,
+  "packaged": true,
+  "clicks": 128,
+  "screenshots": [
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/02-project-dashboard.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/03-plan-input.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/05-plan-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/05a-application-workflow.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/05b-system-structure-refined.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-rig-adapter-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-rig-adapter-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-rig-adapter-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-rig-adapter-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-rig-adapter-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/07-rig-adapter-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-evidence-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-evidence-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-evidence-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-evidence-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-evidence-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/07-campaign-evidence-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-test-executor-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-test-executor-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-test-executor-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-test-executor-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-test-executor-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/07-test-executor-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-bench-scheduler-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-bench-scheduler-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-bench-scheduler-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-bench-scheduler-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-bench-scheduler-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/07-bench-scheduler-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-console-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-console-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-console-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-console-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/06-campaign-console-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/07-campaign-console-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/08-build-applied.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/10-hil-workspace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/11-product-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/12-product-protected-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/13-product-command-menu.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/14-product-mobile.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/16-connect-verified.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/17-verify-passed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/18-evidence-trace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/hil-campaign-orchestrator/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 811,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1252,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 949,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 316,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 2130,
+      "clicks": 12
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 15609,
+      "clicks": 75
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 827,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 2378,
+      "clicks": 10
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 1481,
+      "clicks": 5
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 5477,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 697,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings20 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.campaign-console/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 18, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabular"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings20 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.14capabilities/modules/mod.campaign-console/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 18, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 23, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 33, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.campaign-console/ui/index.htmlline 40, element <summary>: STE-LEXICON-REVIEW —"
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T03:33:43.296Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-hil-campaign-orchestrator-J7AMyQ/hil-campaign-orchestrator",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/hil-campaign-orchestrator",
+  "timeToProductProofMs": 24529,
+  "scenarioSummary": {
+    "scenarioCount": 9,
+    "passedCount": 9,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T03:34:15.541Z",
+  "durationMs": 32245
+}

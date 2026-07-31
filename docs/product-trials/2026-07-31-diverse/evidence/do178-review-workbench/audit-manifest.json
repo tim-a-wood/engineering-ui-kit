@@ -1,0 +1,153 @@
+{
+  "slug": "do178-review-workbench",
+  "product": "DO-178C Review Workbench",
+  "category": "Design assurance",
+  "buyer": "Software verification lead",
+  "commercialJob": "Reduce review effort and produce defensible review records.",
+  "useFrequency": "Daily during review and certification increments",
+  "passed": true,
+  "packaged": true,
+  "clicks": 130,
+  "screenshots": [
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/02-project-dashboard.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/03-plan-input.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/05-plan-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/05a-application-workflow.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/05b-system-structure-refined.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-evidence-index-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-evidence-index-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-evidence-index-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-evidence-index-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-evidence-index-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/07-evidence-index-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-records-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-records-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-records-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-records-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-records-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/07-review-records-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-finding-control-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-finding-control-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-finding-control-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-finding-control-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-finding-control-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/07-finding-control-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-control-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-control-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-control-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-control-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-review-control-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/07-review-control-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-user-workspace-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-user-workspace-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-user-workspace-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-user-workspace-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/06-user-workspace-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/07-user-workspace-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/08-build-applied.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/10-review-workspace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/11-product-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/12-product-protected-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/13-product-command-menu.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/14-product-mobile.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/16-connect-verified.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/17-verify-passed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/18-evidence-trace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/do178-review-workbench/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 706,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1266,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 1033,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 301,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 1914,
+      "clicks": 15
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 15562,
+      "clicks": 75
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 839,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 2759,
+      "clicks": 9
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 1454,
+      "clicks": 5
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 4778,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 747,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings25 warnings in 4 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.19capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 24, element <button>: STE-LEXICON-REVIEW — Review the vocab"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings25 warnings in 4 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.19capabilities/modules/mod.experience-first/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 23, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 24, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 32, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 39, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.experience-first/ui/index.htmlline 49, element <h3>: STE-LEXICON-REVIEW — "
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T03:31:16.847Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-do178-review-workbench-DFvBEq/do178-review-workbench",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/do178-review-workbench",
+  "timeToProductProofMs": 24607,
+  "scenarioSummary": {
+    "scenarioCount": 8,
+    "passedCount": 8,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T03:31:48.516Z",
+  "durationMs": 31669
+}

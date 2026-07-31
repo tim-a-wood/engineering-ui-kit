@@ -5,105 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Technical Writing and Review Desk</title>
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./product-layouts.css" />
   </head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar">
-        <div class="brand">
-          <span class="brand-mark">WD</span>
-          <span class="brand-copy"><b>Writing Desk</b><small>Daily productivity</small></span>
-        </div>
-        <nav aria-label="Primary navigation">
-          <button class="nav-item active" type="button" aria-label="Open writing desk" data-nav-target="writing-desk" data-nav-title="Writing desk">
-            <span class="nav-icon">01</span>Writing desk
-          </button><button class="nav-item " type="button" aria-label="Open documents" data-nav-target="documents" data-nav-title="Documents">
-            <span class="nav-icon">02</span>Documents
-          </button><button class="nav-item " type="button" aria-label="Open review comments" data-nav-target="review-comments" data-nav-title="Review comments">
-            <span class="nav-icon">03</span>Review comments
-          </button><button class="nav-item " type="button" aria-label="Open terminology" data-nav-target="terminology" data-nav-title="Terminology">
-            <span class="nav-icon">04</span>Terminology
-          </button>
-        </nav>
-        <div class="sidebar-spacer"></div>
-        <div class="sidebar-summary"><span>Current focus</span><strong>4</strong><small>One blocks approval</small></div>
-        <div class="user-row"><span class="avatar">TW</span><span><b>Tim Wood</b><small>Local engineering workspace</small></span></div>
-      </aside>
-
-      <section class="workspace">
-        <header class="topbar">
-          <div class="topbar-left">
-            <button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button>
-            <h1 data-view-title>Writing desk</h1>
-          </div>
-          <button class="command-button" type="button" data-open-commands aria-label="Open command menu">
-            <span>Find or run an action</span><kbd>⌘ K</kbd>
-          </button>
-        </header>
-
-        <main>
-          <section class="hero">
-            <div>
-              <p class="eyebrow">DESIGN NOTE · DN-FCS-042 · REVISION 7</p>
-              <h2>Four sentences fail</h2>
-              <p class="hero-copy">Write clear technical content and resolve review comments without leaving the document.</p>
-            </div>
-            <div class="hero-status"><span class="status-orb"></span>Workspace data is current</div>
-          </section>
-
-          <section class="metrics" aria-label="Current measures">
-            <article class="metric"><span>STE score</span><strong>96</strong><small>+8 this revision</small></article><article class="metric"><span>Open comments</span><strong>4</strong><small>One blocks approval</small></article><article class="metric"><span>Changed clauses</span><strong>12</strong><small>48 words changed</small></article><article class="metric"><span>Review state</span><strong>Draft</strong><small>Ready after one fix</small></article>
-          </section>
-
-          <section class="action-deck" aria-label="Scenario actions">
-            <span>Prove the next task</span>
-            <button class="scenario-action" type="button" data-scenario-action="draft-technical-note" data-target="documents">Draft technical note</button><button class="scenario-action" type="button" data-scenario-action="check-ste-wording" data-target="terminology">Check STE wording</button><button class="scenario-action" type="button" data-scenario-action="compare-document-revision" data-target="documents">Compare document revision</button><button class="scenario-action" type="button" data-scenario-action="record-review-comment" data-target="comments">Record review comment</button><button class="scenario-action" type="button" data-scenario-action="export-approved-document" data-target="documents">Export approved document</button><button class="scenario-action" type="button" data-scenario-action="reject-prohibited-term" data-target="terminology">Reject prohibited term</button>
-          </section>
-
-          <section class="scenario-results" aria-live="polite">
-            <div class="scenario-result " data-scenario-result="draft-technical-note" data-reward="Clarity increased">Technical note draft saved</div><div class="scenario-result " data-scenario-result="check-ste-wording" data-reward="Clarity increased">STE check completed with four items</div><div class="scenario-result " data-scenario-result="compare-document-revision" data-reward="Clarity increased">Revision comparison opened</div><div class="scenario-result " data-scenario-result="record-review-comment" data-reward="Clarity increased">Review comment recorded</div><div class="scenario-result " data-scenario-result="export-approved-document" data-reward="Clarity increased">Approved document package exported</div><div class="scenario-result is-failure" data-scenario-result="reject-prohibited-term" data-reward="Clarity increased">Prohibited term rejected</div>
-          </section>
-
-          <section class="panel-grid">
-            <article class="panel panel-editor">
-    <header class="panel-header"><div><h3>Flight control monitoring</h3><p>Section 4.2 · Source selection</p></div></header>
-    <div class="panel-body"><article class="editor-sheet"><h4>Flight control monitoring</h4><p class="">The monitor compares each source with the selected reference.</p><p class="">If the source is stale, the monitor rejects the update.</p><p class="highlight">The monitor records the source identity and the rejection reason.</p></article></div>
-  </article><article class="panel panel-diagnostics">
-    <header class="panel-header"><div><h3>Writing checks</h3><p>One blocker and three review items.</p></div></header>
+  <body class="product-v2 product-writing">
+    <div class="app-shell"><aside class="sidebar product-nav nav-documents" data-product-nav>
+    <div class="brand"><span class="brand-mark">WD</span><span class="brand-copy"><b>Writing Desk</b><small>Daily productivity</small></span></div>
+    <nav aria-label="Primary navigation"><button class="nav-item active" type="button" data-nav-target="writing-desk" data-nav-title="Writing desk"><span>01</span><b>Writing desk</b></button><button class="nav-item " type="button" data-nav-target="documents" data-nav-title="Documents"><span>02</span><b>Documents</b></button><button class="nav-item " type="button" data-nav-target="review-comments" data-nav-title="Review comments"><span>03</span><b>Review comments</b></button><button class="nav-item " type="button" data-nav-target="terminology" data-nav-title="Terminology"><span>04</span><b>Terminology</b></button></nav>
+    <div class="nav-foot"><span class="presence-dot"></span><span>Local workspace</span><b>TW</b></div>
+  </aside>
+    <section class="product-workspace">
+      <header class="product-topbar">
+    <div><button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button><span class="crumb">Writing Desk</span><span class="crumb-divider">/</span><h1 data-view-title>Writing desk</h1></div>
+    <div class="topbar-tools"><span class="save-state">Saved 10:18</span><button class="command-button" type="button" data-open-commands aria-label="Open command menu"><span>Search or run</span><kbd>⌘ K</kbd></button><span class="user-chip">TW</span></div>
+  </header>
+      <main class="writing-layout">
+        <header class="writing-toolbar"><div><p class="eyebrow">DESIGN NOTE · DN-FCS-042 · REVISION 7</p><h2>Four sentences fail</h2></div><div class="writing-actions" aria-label="Product actions"><button class="primary-action " type="button" data-scenario-action="draft-technical-note" data-target="documents"><span>+</span>Draft technical note</button><button class=" " type="button" data-scenario-action="check-ste-wording" data-target="terminology"><span>→</span>Check STE wording</button><button class=" " type="button" data-scenario-action="compare-document-revision" data-target="documents"><span>→</span>Compare document revision</button><button class=" " type="button" data-scenario-action="record-review-comment" data-target="comments"><span>→</span>Record review comment</button><button class=" " type="button" data-scenario-action="approve-controlled-revision" data-target="documents"><span>→</span>Approve controlled revision</button><button class=" " type="button" data-scenario-action="export-approved-document" data-target="documents"><span>→</span>Export approved document</button><button class=" protected-action" type="button" data-scenario-action="reject-prohibited-term" data-target="terminology"><span>◇</span>Reject prohibited term</button></div></header>
+        <aside class="document-outline"><b>Document outline</b><ol><li>1 Purpose</li><li>2 References</li><li>3 Architecture</li><li class="active">4 Source selection</li><li>5 Failure response</li><li>6 Verification</li></ol><div class="metric-strip writing-stats" aria-label="Current measures"><div><span>STE score</span><strong>96</strong><small>+8 this revision</small></div><div><span>Open comments</span><strong>4</strong><small>One blocks approval</small></div><div><span>Changed clauses</span><strong>12</strong><small>48 words changed</small></div><div><span>Review state</span><strong>Draft</strong><small>Ready after one fix</small></div></div></aside>
+        <section class="document-canvas"><article class="panel panel-editor editor-panel">
+    <header class="panel-header"><div><h3>Flight control monitoring</h3><p>Section 4.2 · Source selection</p></div><button type="button" aria-label="Open panel menu">•••</button></header>
+    <div class="panel-body editor-body"><article class="editor-sheet"><p class="doc-kicker">4.2 SOURCE SELECTION</p><h4>Flight control monitoring</h4><p class="">The monitor compares each source with the selected reference.</p><p class="">If the source is stale, the monitor rejects the update.</p><p class="highlight">The monitor records the source identity and the rejection reason.</p><span class="text-caret" aria-hidden="true"></span></article></div>
+  </article></section>
+        <aside class="writing-inspector"><div class="inspector-tabs"><b>Writing</b><span>Comments</span></div><article class="panel panel-diagnostics diagnostic-panel">
+    <header class="panel-header"><div><h3>Writing checks</h3><p>One blocker and three review items.</p></div><button type="button" aria-label="Open panel menu">•••</button></header>
     <div class="panel-body"><ul class="diagnostics"><li><code>STE-TERM-014</code><span>Use “start” instead of “initiate”.</span><b class="severity">Blocker</b></li><li><code>STE-LEN-006</code><span>Split this sentence after 25 words.</span><b class="severity">Review</b></li><li><code>LEX-FCS-021</code><span>Confirm “reference source”.</span><b class="severity">Review</b></li><li><code>TRACE-008</code><span>Add the linked system requirement.</span><b class="severity">Review</b></li></ul></div>
-  </article><article class="panel panel-comments">
-    <header class="panel-header"><div><h3>Review thread</h3><p>Independent review · Mina Patel</p></div></header>
+  </article><article class="panel panel-comments comment-panel">
+    <header class="panel-header"><div><h3>Review thread</h3><p>Independent review · Mina Patel</p></div><button type="button" aria-label="Open panel menu">•••</button></header>
     <div class="panel-body"><ol class="comment-list"><li><span class="comment-author">MI</span><p><b>Mina</b><br>Does the monitor record the rejected value?</p><time>09:42</time></li><li><span class="comment-author">TI</span><p><b>Tim</b><br>Yes. I added the value to the rejection record.</p><time>10:03</time></li><li><span class="comment-author">MI</span><p><b>Mina</b><br>Resolved. Keep the trace to SYS-FCS-118.</p><time>10:11</time></li></ol></div>
-  </article>
-          </section>
-
-          <details class="activity-drawer">
-            <summary>Session activity</summary>
-            <ol class="activity-list" data-activity>
-              <li><span>Now</span><b>Workspace opened</b><small>Draft technical content, enforce ASD-STE100, manage comments, and approve controlled documents.</small></li>
-            </ol>
-          </details>
-        </main>
-      </section>
-    </div>
-
-    <aside class="reward-toast" data-reward aria-live="polite">
-      <div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>Clarity increased</b><small data-reward-count>0 of 6 actions evidenced</small></span></div>
-      <div class="reward-track"><i data-reward-bar></i></div>
-    </aside>
-
-    <div class="command-dialog" data-command-dialog hidden>
-      <section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu">
-        <div class="command-search">
-          <input data-command-input aria-label="Find an action" placeholder="Find an action…" />
-          <button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button>
-        </div>
-        <ul class="command-list">
-          <li data-command-item="draft-technical-note"><button type="button"><span>Draft technical note</span><small>documents</small></button></li><li data-command-item="check-ste-wording"><button type="button"><span>Check STE wording</span><small>terminology</small></button></li><li data-command-item="compare-document-revision"><button type="button"><span>Compare document revision</span><small>documents</small></button></li><li data-command-item="record-review-comment"><button type="button"><span>Record review comment</span><small>comments</small></button></li><li data-command-item="export-approved-document"><button type="button"><span>Export approved document</span><small>documents</small></button></li><li data-command-item="reject-prohibited-term"><button type="button"><span>Reject prohibited term</span><small>terminology</small></button></li>
-        </ul>
-      </section>
-    </div>
-
-    <script id="product-config" type="application/json">{"name":"Technical Writing and Review Desk","reward":"Clarity increased","scenarios":[{"name":"Draft technical note","actionId":"draft-technical-note","result":"Technical note draft saved","target":"documents"},{"name":"Check STE wording","actionId":"check-ste-wording","result":"STE check completed with four items","target":"terminology"},{"name":"Compare document revision","actionId":"compare-document-revision","result":"Revision comparison opened","target":"documents"},{"name":"Record review comment","actionId":"record-review-comment","result":"Review comment recorded","target":"comments"},{"name":"Export approved document","actionId":"export-approved-document","result":"Approved document package exported","target":"documents"},{"name":"Reject prohibited term","actionId":"reject-prohibited-term","result":"Prohibited term rejected","target":"terminology"}]}</script>
+  </article></aside>
+      </main>
+    </section></div>
+    <section class="scenario-results" aria-live="polite"><div class="scenario-result " data-scenario-result="draft-technical-note" data-reward="Clarity increased">Technical note draft saved</div><div class="scenario-result " data-scenario-result="check-ste-wording" data-reward="Clarity increased">STE check completed with four items</div><div class="scenario-result " data-scenario-result="compare-document-revision" data-reward="Clarity increased">Revision comparison opened</div><div class="scenario-result " data-scenario-result="record-review-comment" data-reward="Clarity increased">Review comment recorded</div><div class="scenario-result " data-scenario-result="approve-controlled-revision" data-reward="Clarity increased">Controlled revision approved</div><div class="scenario-result " data-scenario-result="export-approved-document" data-reward="Clarity increased">Approved document package exported</div><div class="scenario-result is-failure" data-scenario-result="reject-prohibited-term" data-reward="Clarity increased">Prohibited term rejected</div></section>
+    <details class="activity-drawer"><summary>Activity</summary><ol class="activity-list" data-activity><li><span>Now</span><b>Workspace opened</b><small>Draft technical content, enforce ASD-STE100, manage comments, and approve controlled documents.</small></li></ol></details>
+    <aside class="reward-toast" data-reward aria-live="polite"><div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>Clarity increased</b><small data-reward-count>0 of 7 actions evidenced</small></span></div><div class="reward-track"><i data-reward-bar></i></div></aside>
+    <div class="command-dialog" data-command-dialog hidden><section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu"><div class="command-search"><input data-command-input aria-label="Find an action" placeholder="Find an action…" /><button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button></div><ul class="command-list"><li data-command-item="draft-technical-note"><button type="button"><span>Draft technical note</span><small>documents</small></button></li><li data-command-item="check-ste-wording"><button type="button"><span>Check STE wording</span><small>terminology</small></button></li><li data-command-item="compare-document-revision"><button type="button"><span>Compare document revision</span><small>documents</small></button></li><li data-command-item="record-review-comment"><button type="button"><span>Record review comment</span><small>comments</small></button></li><li data-command-item="approve-controlled-revision"><button type="button"><span>Approve controlled revision</span><small>documents</small></button></li><li data-command-item="export-approved-document"><button type="button"><span>Export approved document</span><small>documents</small></button></li><li data-command-item="reject-prohibited-term"><button type="button"><span>Reject prohibited term</span><small>terminology</small></button></li></ul></section></div>
+    <script id="product-config" type="application/json">{"name":"Technical Writing and Review Desk","reward":"Clarity increased","scenarios":[{"name":"Draft technical note","actionId":"draft-technical-note","result":"Technical note draft saved","target":"documents"},{"name":"Check STE wording","actionId":"check-ste-wording","result":"STE check completed with four items","target":"terminology"},{"name":"Compare document revision","actionId":"compare-document-revision","result":"Revision comparison opened","target":"documents"},{"name":"Record review comment","actionId":"record-review-comment","result":"Review comment recorded","target":"comments"},{"name":"Approve controlled revision","actionId":"approve-controlled-revision","result":"Controlled revision approved","target":"documents"},{"name":"Export approved document","actionId":"export-approved-document","result":"Approved document package exported","target":"documents"},{"name":"Reject prohibited term","actionId":"reject-prohibited-term","result":"Prohibited term rejected","target":"terminology"}],"architecture":{"structure":"Experience-first","seedModule":"Application workflow","uiModuleId":"mod.experience-first","style":"document-centered authoring system","modules":[["mod.document-control","Document control","workflow","Coordinates drafts, revisions, reviews, and controlled export."],["mod.ste-checker","STE checker","domain","Applies approved terminology and ASD-STE100 writing rules."],["mod.comment-service","Comment service","domain","Owns review threads, decisions, and resolution state."]],"dependencies":[["mod.experience-first","mod.document-control","The editor starts document operations."],["mod.document-control","mod.ste-checker","Drafts pass the writing policy before approval."],["mod.document-control","mod.comment-service","Controlled revisions retain review comments."]]}}</script>
     <script src="./runtime.js"></script>
   </body>
 </html>

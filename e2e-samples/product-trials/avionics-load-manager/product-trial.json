@@ -9,6 +9,7 @@
     "Register software load",
     "Check hardware compatibility",
     "Authorize load release",
+    "Schedule aircraft load",
     "Record aircraft installation",
     "Verify loaded configuration"
   ],
@@ -162,6 +163,12 @@
       "target": "loads"
     },
     {
+      "name": "Schedule aircraft load",
+      "actionId": "schedule-aircraft-load",
+      "result": "Aircraft load scheduled",
+      "target": "fleet"
+    },
+    {
       "name": "Record aircraft installation",
       "actionId": "record-aircraft-installation",
       "result": "Aircraft installation recorded",
@@ -183,5 +190,66 @@
   "reward": "Configuration secured",
   "buyer": "Configuration management or fleet engineering lead",
   "commercialJob": "Prevent incompatible loads and automate as-loaded evidence.",
-  "useFrequency": "At every software release and installation"
+  "useFrequency": "At every software release and installation",
+  "architecture": {
+    "structure": "Focused core",
+    "seedModule": "Core workflow",
+    "uiModuleId": "mod.release-workspace",
+    "style": "transactional release system",
+    "modules": [
+      [
+        "mod.release-workspace",
+        "Release workspace",
+        "experience",
+        "Guides package selection, checks, authorization, and load state."
+      ],
+      [
+        "mod.compatibility",
+        "Compatibility",
+        "domain",
+        "Owns hardware, software, aircraft, and configuration rules."
+      ],
+      [
+        "mod.load-control",
+        "Load control",
+        "workflow",
+        "Coordinates authorization, transfer, verification, and rollback."
+      ],
+      [
+        "mod.target-adapter",
+        "Target adapter",
+        "connection",
+        "Isolates aircraft or bench loading protocols."
+      ],
+      [
+        "mod.release-ledger",
+        "Release ledger",
+        "platform",
+        "Preserves package identity, signatures, and installation history."
+      ]
+    ],
+    "dependencies": [
+      [
+        "mod.release-workspace",
+        "mod.compatibility",
+        "The workspace checks the selected configuration."
+      ],
+      [
+        "mod.compatibility",
+        "mod.load-control",
+        "A compatible selection permits loading."
+      ],
+      [
+        "mod.load-control",
+        "mod.target-adapter",
+        "The controller transfers the approved package."
+      ],
+      [
+        "mod.load-control",
+        "mod.release-ledger",
+        "Each load writes an immutable result."
+      ]
+    ]
+  },
+  "productKind": "load"
 }

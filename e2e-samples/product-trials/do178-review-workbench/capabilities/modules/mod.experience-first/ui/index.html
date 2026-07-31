@@ -5,114 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DO-178C Review Workbench</title>
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./product-layouts.css" />
   </head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar">
-        <div class="brand">
-          <span class="brand-mark">RW</span>
-          <span class="brand-copy"><b>Review Workbench</b><small>Design assurance</small></span>
-        </div>
-        <nav aria-label="Primary navigation">
-          <button class="nav-item active" type="button" aria-label="Open review control" data-nav-target="review-control" data-nav-title="Review control">
-            <span class="nav-icon">01</span>Review control
-          </button><button class="nav-item " type="button" aria-label="Open artifact sets" data-nav-target="artifact-sets" data-nav-title="Artifact sets">
-            <span class="nav-icon">02</span>Artifact sets
-          </button><button class="nav-item " type="button" aria-label="Open findings" data-nav-target="findings" data-nav-title="Findings">
-            <span class="nav-icon">03</span>Findings
-          </button><button class="nav-item " type="button" aria-label="Open review records" data-nav-target="review-records" data-nav-title="Review records">
-            <span class="nav-icon">04</span>Review records
-          </button>
-        </nav>
-        <div class="sidebar-spacer"></div>
-        <div class="sidebar-summary"><span>Current focus</span><strong>2</strong><small>One high priority</small></div>
-        <div class="user-row"><span class="avatar">TW</span><span><b>Tim Wood</b><small>Local engineering workspace</small></span></div>
-      </aside>
-
-      <section class="workspace">
-        <header class="topbar">
-          <div class="topbar-left">
-            <button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button>
-            <h1 data-view-title>Review control</h1>
-          </div>
-          <button class="command-button" type="button" data-open-commands aria-label="Open command menu">
-            <span>Find or run an action</span><kbd>⌘ K</kbd>
-          </button>
+  <body class="product-v2 product-review">
+    <div class="app-shell"><aside class="sidebar product-nav nav-review" data-product-nav>
+    <div class="brand"><span class="brand-mark">RW</span><span class="brand-copy"><b>Review Workbench</b><small>Design assurance</small></span></div>
+    <nav aria-label="Primary navigation"><button class="nav-item active" type="button" data-nav-target="review-control" data-nav-title="Review control"><span>01</span><b>Review control</b></button><button class="nav-item " type="button" data-nav-target="artifact-sets" data-nav-title="Artifact sets"><span>02</span><b>Artifact sets</b></button><button class="nav-item " type="button" data-nav-target="findings" data-nav-title="Findings"><span>03</span><b>Findings</b></button><button class="nav-item " type="button" data-nav-target="review-records" data-nav-title="Review records"><span>04</span><b>Review records</b></button></nav>
+    <div class="nav-foot"><span class="presence-dot"></span><span>Local workspace</span><b>TW</b></div>
+  </aside>
+    <section class="product-workspace">
+      <header class="product-topbar">
+    <div><button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button><span class="crumb">Review Workbench</span><span class="crumb-divider">/</span><h1 data-view-title>Review control</h1></div>
+    <div class="topbar-tools"><span class="independence-pill">✓ Independent reviewer</span><button class="command-button" type="button" data-open-commands aria-label="Open command menu"><span>Search or run</span><kbd>⌘ K</kbd></button><span class="user-chip">TW</span></div>
+  </header>
+      <main class="review-layout">
+        <header class="review-context">
+          <div><p class="eyebrow">SOFTWARE REVIEW · SRR-24-017</p><h2>Two findings wait</h2><p>Review the change set, record objective evidence, and protect reviewer independence.</p></div>
+          <div class="review-actions" aria-label="Product actions"><button class="primary-action " type="button" data-scenario-action="review-requirement-set" data-target="artifacts"><span>+</span>Review requirement set</button><button class=" " type="button" data-scenario-action="record-review-finding" data-target="findings"><span>→</span>Record review finding</button><button class=" " type="button" data-scenario-action="assign-finding-owner" data-target="findings"><span>→</span>Assign finding owner</button><button class=" " type="button" data-scenario-action="verify-finding-closure" data-target="findings"><span>→</span>Verify finding closure</button><button class=" " type="button" data-scenario-action="check-objective-coverage" data-target="artifacts"><span>→</span>Check objective coverage</button><button class=" " type="button" data-scenario-action="approve-review-record" data-target="records"><span>→</span>Approve review record</button><button class=" " type="button" data-scenario-action="export-review-evidence" data-target="records"><span>→</span>Export review evidence</button><button class=" protected-action" type="button" data-scenario-action="reject-author-approval" data-target="records"><span>◇</span>Reject author approval</button></div>
         </header>
-
-        <main>
-          <section class="hero">
-            <div>
-              <p class="eyebrow">SOFTWARE REVIEW · SRR-24-017</p>
-              <h2>Two findings wait</h2>
-              <p class="hero-copy">Review the change set, record objective evidence, and protect reviewer independence.</p>
-            </div>
-            <div class="hero-status"><span class="status-orb"></span>Workspace data is current</div>
-          </section>
-
-          <section class="metrics" aria-label="Current measures">
-            <article class="metric"><span>Review coverage</span><strong>92%</strong><small>148 of 161 objectives</small></article><article class="metric"><span>Open findings</span><strong>2</strong><small>One high priority</small></article><article class="metric"><span>Independence</span><strong>Pass</strong><small>All assignments valid</small></article><article class="metric"><span>Due date</span><strong>02 Aug</strong><small>Three workdays</small></article>
-          </section>
-
-          <section class="action-deck" aria-label="Scenario actions">
-            <span>Prove the next task</span>
-            <button class="scenario-action" type="button" data-scenario-action="review-requirement-set" data-target="artifacts">Review requirement set</button><button class="scenario-action" type="button" data-scenario-action="record-review-finding" data-target="findings">Record review finding</button><button class="scenario-action" type="button" data-scenario-action="assign-finding-owner" data-target="findings">Assign finding owner</button><button class="scenario-action" type="button" data-scenario-action="verify-finding-closure" data-target="findings">Verify finding closure</button><button class="scenario-action" type="button" data-scenario-action="approve-review-record" data-target="records">Approve review record</button><button class="scenario-action" type="button" data-scenario-action="reject-author-approval" data-target="records">Reject author approval</button>
-          </section>
-
-          <section class="scenario-results" aria-live="polite">
-            <div class="scenario-result " data-scenario-result="review-requirement-set" data-reward="Assurance increased">Requirement set opened</div><div class="scenario-result " data-scenario-result="record-review-finding" data-reward="Assurance increased">Finding REV-218 recorded</div><div class="scenario-result " data-scenario-result="assign-finding-owner" data-reward="Assurance increased">Finding assigned to Navigation team</div><div class="scenario-result " data-scenario-result="verify-finding-closure" data-reward="Assurance increased">Closure evidence verified</div><div class="scenario-result " data-scenario-result="approve-review-record" data-reward="Assurance increased">Review record approved</div><div class="scenario-result is-failure" data-scenario-result="reject-author-approval" data-reward="Assurance increased">Author approval rejected</div>
-          </section>
-
-          <section class="panel-grid">
-            <article class="panel panel-table">
-    <header class="panel-header"><div><h3>Review queue</h3><p>Objective evidence grouped by lifecycle artifact.</p></div></header>
-    <div class="panel-body" style="padding:0;overflow:auto">
+        <aside class="artifact-browser">
+          <header><b>Lifecycle data</b><span>161 objectives</span></header>
+          <article class="panel panel-table embedded-panel">
+    <header class="panel-header"><div><h3>Review queue</h3><p>Objective evidence grouped by lifecycle artifact.</p></div><button type="button" aria-label="Open panel menu">•••</button></header>
+    <div class="panel-body table-scroll ">
     <table class="data-table">
       <thead><tr><th>Artifact</th><th>Revision</th><th>Coverage</th><th>State</th></tr></thead>
-      <tbody><tr><td>Low-level requirements</td><td>LLR-18</td><td>48 / 48</td><td>Ready</td></tr><tr><td>Software design data</td><td>SDD-12</td><td>31 / 34</td><td>Needs review</td></tr><tr><td>Source code</td><td>BLD-241</td><td>52 / 55</td><td>In review</td></tr><tr><td>Verification cases</td><td>SVCP-09</td><td>17 / 24</td><td>Blocked</td></tr></tbody>
+      <tbody><tr><td><b>Low-level requirements</b></td><td>LLR-18</td><td>48 / 48</td><td>Ready</td></tr><tr><td><b>Software design data</b></td><td>SDD-12</td><td>31 / 34</td><td>Needs review</td></tr><tr><td><b>Source code</b></td><td>BLD-241</td><td>52 / 55</td><td>In review</td></tr><tr><td><b>Verification cases</b></td><td>SVCP-09</td><td>17 / 24</td><td>Blocked</td></tr></tbody>
     </table>
   </div>
-  </article><article class="panel panel-diff">
-    <header class="panel-header"><div><h3>Selected change</h3><p>LLR-NAV-142 · Prevent stale altitude source</p></div></header>
+  </article>
+        </aside>
+        <section class="review-document"><article class="panel panel-diff document-diff">
+    <header class="panel-header"><div><h3>Selected change</h3><p>LLR-NAV-142 · Prevent stale altitude source</p></div><button type="button" aria-label="Open panel menu">•••</button></header>
     <div class="panel-body diff">
-      <div class="diff-line before">− IF source_age &gt; 500 ms THEN use cached altitude.</div>
-      <div class="diff-line after">+ IF source_age &gt; 500 ms THEN reject the altitude update.</div>
+      <div class="diff-line before"><span>−</span>IF source_age &gt; 500 ms THEN use cached altitude.</div>
+      <div class="diff-line after"><span>+</span>IF source_age &gt; 500 ms THEN reject the altitude update.</div>
       <p class="diff-note">The new rule removes an ambiguous fallback and links to test SVT-NAV-388.</p>
     </div>
-  </article><article class="panel panel-checklist">
-    <header class="panel-header"><div><h3>Review objectives</h3><p>6 of 8 objectives complete.</p></div></header>
-    <div class="panel-body"><ul class="check-list"><li><span class="check-mark done">✓</span><span>The requirement is accurate.</span></li><li><span class="check-mark done">✓</span><span>The requirement is consistent.</span></li><li><span class="check-mark done">✓</span><span>The requirement is verifiable.</span></li><li><span class="check-mark ">·</span><span>The derived requirement is identified.</span></li><li><span class="check-mark ">·</span><span>The trace is complete.</span></li></ul></div>
+  </article></section>
+        <aside class="objective-inspector">
+          <div class="metric-strip review-measures" aria-label="Current measures"><div><span>Review coverage</span><strong>92%</strong><small>148 of 161 objectives</small></div><div><span>Open findings</span><strong>2</strong><small>One high priority</small></div><div><span>Independence</span><strong>Pass</strong><small>All assignments valid</small></div><div><span>Due date</span><strong>02 Aug</strong><small>Three workdays</small></div></div>
+          <article class="panel panel-checklist objective-panel">
+    <header class="panel-header"><div><h3>Review objectives</h3><p>6 of 8 objectives complete.</p></div><button type="button" aria-label="Open panel menu">•••</button></header>
+    <div class="panel-body"><ul class="check-list"><li><span class="check-mark done">✓</span><span>The requirement is accurate.</span></li><li><span class="check-mark done">✓</span><span>The requirement is consistent.</span></li><li><span class="check-mark done">✓</span><span>The requirement is verifiable.</span></li><li><span class="check-mark "></span><span>The derived requirement is identified.</span></li><li><span class="check-mark "></span><span>The trace is complete.</span></li></ul></div>
   </article>
-          </section>
-
-          <details class="activity-drawer">
-            <summary>Session activity</summary>
-            <ol class="activity-list" data-activity>
-              <li><span>Now</span><b>Workspace opened</b><small>Run independent reviews of software lifecycle data and preserve review evidence.</small></li>
-            </ol>
-          </details>
-        </main>
-      </section>
-    </div>
-
-    <aside class="reward-toast" data-reward aria-live="polite">
-      <div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>Assurance increased</b><small data-reward-count>0 of 6 actions evidenced</small></span></div>
-      <div class="reward-track"><i data-reward-bar></i></div>
-    </aside>
-
-    <div class="command-dialog" data-command-dialog hidden>
-      <section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu">
-        <div class="command-search">
-          <input data-command-input aria-label="Find an action" placeholder="Find an action…" />
-          <button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button>
-        </div>
-        <ul class="command-list">
-          <li data-command-item="review-requirement-set"><button type="button"><span>Review requirement set</span><small>artifacts</small></button></li><li data-command-item="record-review-finding"><button type="button"><span>Record review finding</span><small>findings</small></button></li><li data-command-item="assign-finding-owner"><button type="button"><span>Assign finding owner</span><small>findings</small></button></li><li data-command-item="verify-finding-closure"><button type="button"><span>Verify finding closure</span><small>findings</small></button></li><li data-command-item="approve-review-record"><button type="button"><span>Approve review record</span><small>records</small></button></li><li data-command-item="reject-author-approval"><button type="button"><span>Reject author approval</span><small>records</small></button></li>
-        </ul>
-      </section>
-    </div>
-
-    <script id="product-config" type="application/json">{"name":"DO-178C Review Workbench","reward":"Assurance increased","scenarios":[{"name":"Review requirement set","actionId":"review-requirement-set","result":"Requirement set opened","target":"artifacts"},{"name":"Record review finding","actionId":"record-review-finding","result":"Finding REV-218 recorded","target":"findings"},{"name":"Assign finding owner","actionId":"assign-finding-owner","result":"Finding assigned to Navigation team","target":"findings"},{"name":"Verify finding closure","actionId":"verify-finding-closure","result":"Closure evidence verified","target":"findings"},{"name":"Approve review record","actionId":"approve-review-record","result":"Review record approved","target":"records"},{"name":"Reject author approval","actionId":"reject-author-approval","result":"Author approval rejected","target":"records"}]}</script>
+        </aside>
+      </main>
+    </section></div>
+    <section class="scenario-results" aria-live="polite"><div class="scenario-result " data-scenario-result="review-requirement-set" data-reward="Assurance increased">Requirement set opened</div><div class="scenario-result " data-scenario-result="record-review-finding" data-reward="Assurance increased">Finding REV-218 recorded</div><div class="scenario-result " data-scenario-result="assign-finding-owner" data-reward="Assurance increased">Finding assigned to Navigation team</div><div class="scenario-result " data-scenario-result="verify-finding-closure" data-reward="Assurance increased">Closure evidence verified</div><div class="scenario-result " data-scenario-result="check-objective-coverage" data-reward="Assurance increased">Objective coverage check passed</div><div class="scenario-result " data-scenario-result="approve-review-record" data-reward="Assurance increased">Review record approved</div><div class="scenario-result " data-scenario-result="export-review-evidence" data-reward="Assurance increased">Review evidence package exported</div><div class="scenario-result is-failure" data-scenario-result="reject-author-approval" data-reward="Assurance increased">Author approval rejected</div></section>
+    <details class="activity-drawer"><summary>Activity</summary><ol class="activity-list" data-activity><li><span>Now</span><b>Workspace opened</b><small>Run independent reviews of software lifecycle data and preserve review evidence.</small></li></ol></details>
+    <aside class="reward-toast" data-reward aria-live="polite"><div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>Assurance increased</b><small data-reward-count>0 of 8 actions evidenced</small></span></div><div class="reward-track"><i data-reward-bar></i></div></aside>
+    <div class="command-dialog" data-command-dialog hidden><section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu"><div class="command-search"><input data-command-input aria-label="Find an action" placeholder="Find an action…" /><button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button></div><ul class="command-list"><li data-command-item="review-requirement-set"><button type="button"><span>Review requirement set</span><small>artifacts</small></button></li><li data-command-item="record-review-finding"><button type="button"><span>Record review finding</span><small>findings</small></button></li><li data-command-item="assign-finding-owner"><button type="button"><span>Assign finding owner</span><small>findings</small></button></li><li data-command-item="verify-finding-closure"><button type="button"><span>Verify finding closure</span><small>findings</small></button></li><li data-command-item="check-objective-coverage"><button type="button"><span>Check objective coverage</span><small>artifacts</small></button></li><li data-command-item="approve-review-record"><button type="button"><span>Approve review record</span><small>records</small></button></li><li data-command-item="export-review-evidence"><button type="button"><span>Export review evidence</span><small>records</small></button></li><li data-command-item="reject-author-approval"><button type="button"><span>Reject author approval</span><small>records</small></button></li></ul></section></div>
+    <script id="product-config" type="application/json">{"name":"DO-178C Review Workbench","reward":"Assurance increased","scenarios":[{"name":"Review requirement set","actionId":"review-requirement-set","result":"Requirement set opened","target":"artifacts"},{"name":"Record review finding","actionId":"record-review-finding","result":"Finding REV-218 recorded","target":"findings"},{"name":"Assign finding owner","actionId":"assign-finding-owner","result":"Finding assigned to Navigation team","target":"findings"},{"name":"Verify finding closure","actionId":"verify-finding-closure","result":"Closure evidence verified","target":"findings"},{"name":"Check objective coverage","actionId":"check-objective-coverage","result":"Objective coverage check passed","target":"artifacts"},{"name":"Approve review record","actionId":"approve-review-record","result":"Review record approved","target":"records"},{"name":"Export review evidence","actionId":"export-review-evidence","result":"Review evidence package exported","target":"records"},{"name":"Reject author approval","actionId":"reject-author-approval","result":"Author approval rejected","target":"records"}],"architecture":{"structure":"Experience-first","seedModule":"Application workflow","uiModuleId":"mod.experience-first","style":"layered review system","modules":[["mod.review-control","Review control","workflow","Coordinates independent review tasks and review state."],["mod.evidence-index","Evidence index","domain","Owns lifecycle data, trace links, revisions, and objective coverage."],["mod.finding-control","Finding control","domain","Owns findings, ownership, closure evidence, and review rules."],["mod.review-records","Review records","platform","Preserves approved review records and immutable evidence."]],"dependencies":[["mod.experience-first","mod.review-control","The reviewer workspace starts approved review operations."],["mod.review-control","mod.evidence-index","Review tasks read controlled lifecycle evidence."],["mod.review-control","mod.finding-control","Review tasks create and resolve formal findings."],["mod.finding-control","mod.review-records","Verified closure creates an immutable review record."]]}}</script>
     <script src="./runtime.js"></script>
   </body>
 </html>

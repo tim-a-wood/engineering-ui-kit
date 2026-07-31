@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { productTrialSystems } from './systems.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
-const reportRoot = path.join(repoRoot, 'docs/product-trials/2026-07-30')
+const reportRoot = path.join(repoRoot, 'docs/product-trials/2026-07-31-diverse')
 const evidenceRoot = path.join(reportRoot, 'evidence')
 
 const scorecards = {
@@ -43,7 +43,7 @@ const manifests = productTrialSystems.map((system) => {
   const values = scorecards[system.slug]
   if (!values) throw new Error(`Missing scorecard: ${system.slug}`)
   const scores = Object.fromEntries(scoreKeys.map((key, index) => [key, values[index]]))
-  return { ...audit, scores }
+  return { ...audit, architecture: system.architecture, productKind: system.productKind, scores }
 })
 
 const average = (values) => values.reduce((sum, value) => sum + value, 0) / values.length
@@ -60,6 +60,13 @@ const summary = {
   averageTimeToProductProofMs: Math.round(average(manifests.map((item) => item.timeToProductProofMs))),
   rendererErrors: manifests.reduce((sum, item) => sum + item.rendererErrors.length, 0),
   productErrors: manifests.reduce((sum, item) => sum + item.productErrors.length, 0),
+  modules: productTrialSystems.reduce((sum, system) =>
+    sum + system.architecture.modules.length + (system.architecture.structure === 'Experience-first' ? 1 : 0), 0),
+  dependencies: productTrialSystems.reduce((sum, system) => sum + system.architecture.dependencies.length, 0),
+  structures: [...new Set(productTrialSystems.map((system) => system.architecture.structure))],
+  productKinds: [...new Set(productTrialSystems.map((system) => system.productKind))],
+  minimumScenarios: Math.min(...manifests.map((item) => item.scenarioSummary?.scenarioCount ?? 0)),
+  maximumScenarios: Math.max(...manifests.map((item) => item.scenarioSummary?.scenarioCount ?? 0)),
 }
 
 const aggregate = {
@@ -79,13 +86,15 @@ const seconds = (value) => `${(value / 1000).toFixed(1)} s`
 const commercialAverage = (scores) => average(scoreKeys.slice(0, 8).map((key) => scores[key]))
 const qualityAverage = (scores) => average(scoreKeys.slice(8).map((key) => scores[key]))
 
-const report = `# Ten-product portfolio trial
+const report = `# Diverse product trial
 
 ## Outcome
 
-All ${summary.products} products completed the packaged workflow. All ${summary.scenariosPassed} approved scenarios passed. The trials produced ${summary.screenshots} retained screenshots, with ${summary.rendererErrors} packaged-app renderer errors and ${summary.productErrors} built-product renderer errors.
+All ${summary.products} products completed the packaged workflow. All ${summary.scenariosPassed} approved scenarios passed. The trial produced ${summary.modules} approved modules, ${summary.dependencies} directed dependencies, and ${summary.screenshots} retained screenshots. It reported ${summary.rendererErrors} packaged-app renderer errors and ${summary.productErrors} built-product renderer errors.
 
-These are working UI-led vertical reference implementations. They prove the platform chain from approved intent to a rendered interface and immutable browser evidence. They do not yet prove production persistence, identity, external integrations, operational security, or regulatory tool qualification for the ten products.
+This trial supersedes the first portfolio run. That run reused one product shell and one two-module architecture. This run uses ${summary.structures.length} starting structures, ${summary.productKinds.length} interaction models, and scenario sets that range from ${summary.minimumScenarios} to ${summary.maximumScenarios}.
+
+These are working vertical reference implementations with domain-state services and protected-result tests. They prove the platform chain from approved intent, through system and module design, to a rendered interface, connected scenarios, and immutable evidence. They do not prove production persistence, identity, live external integrations, operational security, or regulatory tool qualification.
 
 ## Measured journey
 
@@ -96,23 +105,26 @@ These are working UI-led vertical reference implementations. They prove the plat
 | Average packaged journey | ${seconds(summary.averageDurationMs)} |
 | Average time to rendered product proof | ${seconds(summary.averageTimeToProductProofMs)} |
 | Average rendered-control clicks | ${summary.averageClicks} |
+| Approved modules | ${summary.modules} |
+| Directed dependencies | ${summary.dependencies} |
 | Screenshots retained | ${summary.screenshots} |
 | Renderer errors | ${summary.rendererErrors} |
 
-Module design was the largest interaction block: it used 26 of approximately 66 clicks in each trial. Scenario verification was the longest machine-bound wait after design. Connect originally required 18 selector/text entries for six scenarios.
+Module design remains the largest interaction block. The journey now designs four or five modules per product, so a complete run uses approximately 109–130 rendered-control clicks. This is honest coverage, but it also exposes the next usability target: batch confirmation for unchanged design facts and provider-first queue guidance.
 
 ## Changes made during the trial
 
-- Added two missing domain verbs, “writes” and “compares,” to actor inference. Added regression coverage.
-- Corrected portfolio headings and UI copy that violated the enforced writing policy.
-- Added stable Connect selector suggestions from approved action names.
-- Added a one-click “Suggest selectors” recovery action.
-- Reduced a six-scenario UI mapping from 18 manual selector/text entries to six expected-text entries.
-- Split Build warnings by their actual STE review reason.
-- Removed decorative navigation numbers from action-label evaluation through explicit accessible names.
-- Added a responsive product shell, command palette, progress feedback, protected-action feedback, and contextual activity history to all ten product implementations.
-
-The DO-178C and Copilot products completed fresh packaged journeys after these shared changes.
+- Added a module-boundary editor to the system-design gate.
+- Added operation ownership to each proposed boundary.
+- Added dependency creation and removal before system approval.
+- Tested focused-core, domain-centered, and experience-first structures.
+- Designed 46 frontend, workflow, domain, connection, and platform modules.
+- Replaced the shared dashboard with ten task-specific interaction models.
+- Added stateful product services, module-owned operation files, and protected-state tests.
+- Varied the approved scenario sets instead of repeating one fixed script.
+- Designed modules in provider-first dependency order.
+- Captured every UML type in full-screen review.
+- Fixed compressed metrics, document contrast, trace-graph alignment, and overlong dynamic action labels during visual QA.
 
 ## Commercial score
 
@@ -120,14 +132,14 @@ The DO-178C and Copilot products completed fresh packaged journeys after these s
 | --- | ---: | --- |
 | Problem value | ${score(portfolioScores.problemValue)} | The portfolio targets expensive engineering review, change, test, configuration, and reliability work. |
 | Differentiation | ${score(portfolioScores.differentiation)} | Approved intent traces through design, implementation, scenario proof, and evidence. Generic UML tools do not provide this chain. |
-| Product proof | ${score(portfolioScores.productProof)} | Ten products and 60 browser scenarios pass, but product backends remain reference-level. |
+| Product proof | ${score(portfolioScores.productProof)} | Ten products, 46 modules, and ${summary.scenariosPassed} connected scenarios pass. Services remain reference-level. |
 | Pilot readiness | ${score(portfolioScores.pilotReadiness)} | A design partner can trial the packaged workflow, but generation still depends on an external handoff. |
 | Self-service | ${score(portfolioScores.selfService)} | Guidance is strong and selector work is lower. The workflow still has about 66 clicks and policy review. |
 | Enterprise readiness | ${score(portfolioScores.enterpriseReadiness)} | Immutable evidence exists. SSO, RBAC, shared review, signed distribution, administration, and deployment controls do not. |
 | Long-term monetization | ${score(portfolioScores.longTermMonetization)} | The strongest wedge is a durable software design-assurance layer, not diagram creation alone. |
-| Scalable revenue | ${score(portfolioScores.scalableRevenue)} | The trial runner is reusable for developers. The equivalent portfolio/template capability is not yet a user-facing product feature. |
+| Scalable revenue | ${score(portfolioScores.scalableRevenue)} | Architecture refinement is now a user-facing workflow. Product generation is still a developer-run handoff. |
 
-Commercial potential is approximately **8.5 / 10**. Scalable product readiness is approximately **6.5 / 10**. The evidence supports a paid design-partner pilot now, but not a low-touch enterprise rollout.
+Commercial potential remains approximately **8.5 / 10**. Scalable product readiness improves to approximately **7 / 10** because the same packaged workflow now handles materially different architectures and interfaces. The evidence supports a paid design-partner pilot, but not a low-touch enterprise rollout.
 
 ## Product and UX score
 
@@ -135,7 +147,7 @@ Commercial potential is approximately **8.5 / 10**. Scalable product readiness i
 | --- | ---: | --- |
 | Usability | ${score(portfolioScores.usability)} | The six-stage workflow is understandable and state is visible. Module review remains repetitive. |
 | Efficiency | ${score(portfolioScores.efficiency)} | Selector suggestions remove substantial typing. Approval and module-review clicks remain high. |
-| Presentation | ${score(portfolioScores.presentation)} | The built products and UML workspace are credible in a customer review. |
+| Presentation | ${score(portfolioScores.presentation)} | Ten task-specific workspaces and full-screen UML evidence are credible in a customer review. |
 | Confidence | ${score(portfolioScores.confidence)} | Gates, approvals, source traces, scenario runs, and original screenshots make proof inspectable. |
 | Delight | ${score(portfolioScores.delight)} | Command search, clear progress, responsive layouts, and earned completion feedback add momentum without trivializing assurance decisions. |
 
@@ -143,11 +155,12 @@ The best “dopamine” pattern is earned progress: show a visible increase in c
 
 ## Product comparison
 
-| Product | Commercial | UX | Best role |
-| --- | ---: | ---: | --- |
+| Product | Structure | Modules | Scenarios | Interaction model |
+| --- | --- | ---: | ---: | --- |
 ${productTrialSystems.map((system) => {
   const item = manifests.find((candidate) => candidate.slug === system.slug)
-  return `| ${system.name} | ${score(commercialAverage(item.scores))} | ${score(qualityAverage(item.scores))} | ${system.commercialJob} |`
+  const moduleCount = system.architecture.modules.length + (system.architecture.structure === 'Experience-first' ? 1 : 0)
+  return `| ${system.name} | ${system.architecture.structure} | ${moduleCount} | ${item.scenarioSummary.scenarioCount} | ${system.architecture.style} |`
 }).join('\n')}
 
 The strongest regulated wedges are the DO-178C Review Workbench, Requirements Change-Impact Workbench, and Avionics Software Load Manager. The Copilot Session Hub and Technical Writing Desk are the best daily-use adoption wedges. They can create habit and internal advocacy before the buyer expands into controlled assurance workflows.
@@ -156,8 +169,8 @@ The strongest regulated wedges are the DO-178C Review Workbench, Requirements Ch
 
 ### High
 
-1. Integrate generation. Replace the external Copilot/ZIP round trip with an in-product, policy-controlled generation session. This is the largest self-service and scalable-revenue gap.
-2. Prove domain depth. Add persistence, authentication, audit history, real adapters, and domain operations to the first commercial wedge. Current trials prove UI contracts and evidence, not production operations.
+1. Integrate generation. Replace the external handoff/ZIP round trip with an in-product, policy-controlled generation session. This is the largest self-service and scalable-revenue gap.
+2. Prove domain depth. Add persistence, authentication, audit history, and live adapters to the first commercial wedge. Current services prove state transitions and protected outcomes, not production operations.
 3. Add enterprise control. Implement SSO, RBAC, shared review, electronic approval, signed installers, updates, deployment policy, backup, and administration.
 4. Turn the developer portfolio runner into a user feature. Add product templates, repeatable project creation, saved organization standards, and a visible multi-project trial dashboard.
 
@@ -165,7 +178,7 @@ The strongest regulated wedges are the DO-178C Review Workbench, Requirements Ch
 
 1. Reduce module-review effort. Collapse unchanged design facts, support batch confirmation, and keep detailed inspection available on demand.
 2. Add STE lexicon onboarding. Let an organization select and approve its general-word and technical-term policy during setup. This will replace approximately 30 generic lexicon-review warnings with actionable exceptions.
-3. Deepen architecture inference. Derive domain, connection, platform, and deployable boundaries from sources and external-system evidence. All ten UI-led trials correctly selected experience-first, but the generated secondary boundary stayed generic.
+3. Deepen architecture inference. The new editor can express the right boundaries, but the user still supplies the 3–5 module plan. Derive domain, connection, platform, and deployable candidates from sources and external-system evidence.
 4. Complete Connect discovery. Inspect the local UI, confirm suggested selectors, and capture expected result text without manual entry.
 5. Add a value dashboard. Show time saved, coverage gained, risks closed, evidence freshness, and the next highest-value action.
 
@@ -196,20 +209,27 @@ A score of ten requires proof, not more visual polish alone:
 
 fs.writeFileSync(path.join(reportRoot, 'PORTFOLIO-REPORT.md'), report)
 
+const fileSlug = (value) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+const productWorkspaceFile = (system) => `10-${system.layout}-workspace.png`
+const representativeModule = (system) =>
+  system.architecture.modules.find((module) => module[2] === 'domain')
+  ?? system.architecture.modules.find((module) => module[2] === 'workflow')
+  ?? system.architecture.modules[0]
+
 const galleryCards = productTrialSystems.map((system, index) => `
   <article>
-    <a href="./evidence/${system.slug}/10-product-dashboard.png">
-      <img src="./evidence/${system.slug}/10-product-dashboard.png" alt="${system.name} dashboard" />
+    <a href="./evidence/${system.slug}/${productWorkspaceFile(system)}">
+      <img src="./evidence/${system.slug}/${productWorkspaceFile(system)}" alt="${system.name} primary workspace" />
     </a>
     <div>
       <span>${String(index + 1).padStart(2, '0')} · ${system.category}</span>
       <h2>${system.name}</h2>
       <p>${system.description}</p>
       <nav>
-        <a href="./evidence/${system.slug}/06-application-workflow-component.png">Component</a>
-        <a href="./evidence/${system.slug}/06-application-workflow-activity.png">Activity</a>
-        <a href="./evidence/${system.slug}/06-user-workspace-sequence.png">Sequence</a>
-        <a href="./evidence/${system.slug}/06-user-workspace-use-case.png">Use case</a>
+        <a href="./evidence/${system.slug}/05b-system-structure-refined.png">Structure</a>
+        <a href="./evidence/${system.slug}/06-${fileSlug(representativeModule(system)[1])}-component.png">Component</a>
+        <a href="./evidence/${system.slug}/06-${fileSlug(representativeModule(system)[1])}-activity.png">Activity</a>
+        <a href="./evidence/${system.slug}/06-${fileSlug(representativeModule(system)[1])}-sequence.png">Sequence</a>
         <a href="./evidence/${system.slug}/17-verify-passed.png">Evidence</a>
       </nav>
     </div>
@@ -237,23 +257,27 @@ const gallery = `<!doctype html>
   </style>
 </head>
 <body>
-  <header><span>Packaged application · verified portfolio</span><h1>Ten products from approved intent to evidence</h1><p>Each product starts with a brief, passes use-case and design approval, receives an implementation through Build, maps six real UI scenarios, and retains immutable evidence.</p></header>
+  <header><span>Packaged application · verified portfolio</span><h1>Ten distinct products from intent to evidence</h1><p>Each product starts with its own brief, approves its own use cases and architecture, designs every module, applies a task-specific frontend and state service, connects varied UI scenarios, and retains immutable evidence.</p></header>
   <main>${galleryCards}</main>
 </body>
 </html>`
 
 fs.writeFileSync(path.join(reportRoot, 'GALLERY.html'), gallery)
 
-const umlCards = productTrialSystems.map((system, index) => `
+const umlCards = productTrialSystems.map((system, index) => {
+  const moduleName = representativeModule(system)[1]
+  const moduleSlug = fileSlug(moduleName)
+  return `
   <section>
-    <header><span>${String(index + 1).padStart(2, '0')} · ${system.category}</span><h2>${system.name}</h2></header>
+    <header><span>${String(index + 1).padStart(2, '0')} · ${system.category} · ${system.architecture.structure}</span><h2>${system.name}</h2><p>${system.architecture.modules.length + (system.architecture.structure === 'Experience-first' ? 1 : 0)} modules · Representative module: ${moduleName}</p></header>
     <div>
-      <figure><a href="./evidence/${system.slug}/06-application-workflow-component.png"><img src="./evidence/${system.slug}/06-application-workflow-component.png" alt="${system.name} component diagram" /></a><figcaption>Application component</figcaption></figure>
-      <figure><a href="./evidence/${system.slug}/06-application-workflow-activity.png"><img src="./evidence/${system.slug}/06-application-workflow-activity.png" alt="${system.name} activity diagram" /></a><figcaption>Application activity</figcaption></figure>
-      <figure><a href="./evidence/${system.slug}/06-user-workspace-sequence.png"><img src="./evidence/${system.slug}/06-user-workspace-sequence.png" alt="${system.name} sequence diagram" /></a><figcaption>Workspace sequence</figcaption></figure>
-      <figure><a href="./evidence/${system.slug}/06-user-workspace-use-case.png"><img src="./evidence/${system.slug}/06-user-workspace-use-case.png" alt="${system.name} use-case diagram" /></a><figcaption>Workspace use case</figcaption></figure>
+      <figure><a href="./evidence/${system.slug}/06-${moduleSlug}-component.png"><img src="./evidence/${system.slug}/06-${moduleSlug}-component.png" alt="${system.name} component diagram" /></a><figcaption>${moduleName} · component</figcaption></figure>
+      <figure><a href="./evidence/${system.slug}/06-${moduleSlug}-activity.png"><img src="./evidence/${system.slug}/06-${moduleSlug}-activity.png" alt="${system.name} activity diagram" /></a><figcaption>${moduleName} · activity</figcaption></figure>
+      <figure><a href="./evidence/${system.slug}/06-${moduleSlug}-sequence.png"><img src="./evidence/${system.slug}/06-${moduleSlug}-sequence.png" alt="${system.name} sequence diagram" /></a><figcaption>${moduleName} · sequence</figcaption></figure>
+      <figure><a href="./evidence/${system.slug}/06-${moduleSlug}-use-case.png"><img src="./evidence/${system.slug}/06-${moduleSlug}-use-case.png" alt="${system.name} use-case diagram" /></a><figcaption>${moduleName} · use case</figcaption></figure>
     </div>
-  </section>`).join('')
+  </section>`
+}).join('')
 
 const umlGallery = `<!doctype html>
 <html lang="en">
@@ -266,7 +290,7 @@ const umlGallery = `<!doctype html>
     *{box-sizing:border-box}body{margin:0;background:#07101e}body>header{max-width:1600px;margin:auto;padding:54px 28px 30px}
     span{color:#8796b1;font-size:12px;letter-spacing:.12em;text-transform:uppercase}h1{font-size:48px;margin:10px 0}body>header p{color:#aab7cc;max-width:760px;line-height:1.6}
     main{max-width:1600px;margin:auto;padding:0 28px 80px;display:grid;gap:28px}
-    section{border:1px solid #273753;border-radius:18px;background:#0b1526;overflow:hidden}section>header{padding:20px 22px;border-bottom:1px solid #273753}h2{margin:7px 0 0;font-size:22px}
+    section{border:1px solid #273753;border-radius:18px;background:#0b1526;overflow:hidden}section>header{padding:20px 22px;border-bottom:1px solid #273753}h2{margin:7px 0 0;font-size:22px}section>header p{margin:6px 0 0;color:#8796b1;font-size:12px}
     section>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#273753}
     figure{margin:0;background:#07101e}figure a{display:block;aspect-ratio:16/10;overflow:hidden}img{display:block;width:100%;height:100%;object-fit:cover;object-position:top}
     figcaption{padding:10px 14px;color:#aab7cc;background:#0b1526;font-size:12px}
@@ -274,7 +298,7 @@ const umlGallery = `<!doctype html>
   </style>
 </head>
 <body>
-  <header><span>40 retained diagram views</span><h1>UML portfolio gallery</h1><p>Representative component, activity, sequence, and use-case views from each approved product design. Each image links to the original screenshot.</p></header>
+  <header><span>Full-screen approved views</span><h1>UML portfolio gallery</h1><p>Representative component, activity, sequence, and use-case views from ten different approved architectures. Each image links to the original screenshot.</p></header>
   <main>${umlCards}</main>
 </body>
 </html>`

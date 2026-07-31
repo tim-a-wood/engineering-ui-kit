@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en" style="--accent:#14b8a6;--accent-rgb:20, 184, 166">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Requirements Change-Impact Workbench</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./product-layouts.css" />
+  </head>
+  <body class="product-v2 product-impact">
+    <div class="app-shell"><section class="product-workspace impact-shell">
+      <header class="product-topbar">
+    <div><button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button><span class="crumb">Impact Workbench</span><span class="crumb-divider">/</span><h1 data-view-title>Change impact</h1></div>
+    <div class="topbar-tools"><span class="graph-state">TRACE INDEX · CURRENT</span><button class="command-button" type="button" data-open-commands aria-label="Open command menu"><span>Search or run</span><kbd>⌘ K</kbd></button><span class="user-chip">TW</span></div>
+  </header>
+      <main class="impact-layout">
+        <header class="impact-head"><div><p class="eyebrow">CHANGE CR-1187 · SYS-NAV-142 · REVISION 6</p><h2>Seven artifacts wait</h2><p>Follow the change from system intent to affected software and verification evidence.</p></div><div class="impact-actions" aria-label="Product actions"><button class="primary-action " type="button" data-scenario-action="import-requirement-change" data-target="changes"><span>+</span>Import requirement change</button><button class=" " type="button" data-scenario-action="trace-affected-design" data-target="artifacts"><span>→</span>Trace affected design</button><button class=" " type="button" data-scenario-action="compare-trace-revision" data-target="artifacts"><span>→</span>Compare trace revision</button><button class=" " type="button" data-scenario-action="review-module-impact" data-target="artifacts"><span>→</span>Review module impact</button><button class=" " type="button" data-scenario-action="assign-rework-action" data-target="artifacts"><span>→</span>Assign rework action</button><button class=" " type="button" data-scenario-action="estimate-change-effort" data-target="decisions"><span>→</span>Estimate change effort</button><button class=" " type="button" data-scenario-action="approve-impact-decision" data-target="decisions"><span>→</span>Approve impact decision</button><button class=" protected-action" type="button" data-scenario-action="reject-unreviewed-impact" data-target="decisions"><span>◇</span>Reject unreviewed impact</button></div></header>
+        <aside class="change-rail sidebar" data-product-nav><h3>Change set</h3><b>CR-2026-044</b><p>Change altitude source timeout from 500 ms to 300 ms.</p><dl><div><dt>Source</dt><dd>SYS-NAV-118</dd></div><div><dt>Revision</dt><dd>R18 → R19</dd></div><div><dt>Owner</dt><dd>Navigation</dd></div></dl><div class="metric-strip impact-metrics" aria-label="Current measures"><div><span>Affected artifacts</span><strong>17</strong><small>Seven need action</small></div><div><span>Affected modules</span><strong>4</strong><small>One safety critical</small></div><div><span>Test impact</span><strong>6</strong><small>Two new cases</small></div><div><span>Decision state</span><strong>Review</strong><small>Three owners pending</small></div></div></aside>
+        <section class="impact-graph"><article class="panel panel-graph graph-panel">
+    <header class="panel-header"><div><h3>Impact path</h3><p>The selected path reaches implementation and verification.</p></div><button type="button" aria-label="Open panel menu">•••</button></header>
+    <div class="panel-body graph-body"><svg class="impact-svg" viewBox="0 0 800 470" role="img" aria-label="Impact path">
+      <defs><marker id="impact-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" /></marker></defs>
+      <g class="impact-links"><path d="M 235 105 H 300" /><path d="M 500 105 H 565" /><path d="M 400 165 V 285" /><path d="M 665 165 V 285" /><path d="M 500 345 H 565" /></g>
+      <g class="impact-node changed" transform="translate(35 45)">
+          <rect width="200" height="120" rx="8" />
+          <text class="impact-node-id" x="16" y="27">SYS-NAV-142</text>
+          <text class="impact-node-name" x="16" y="61">System requirement</text>
+          <text class="impact-node-state" x="16" y="94">CHANGED</text>
+        </g><g class="impact-node " transform="translate(300 45)">
+          <rect width="200" height="120" rx="8" />
+          <text class="impact-node-id" x="16" y="27">SWR-NAV-388</text>
+          <text class="impact-node-name" x="16" y="61">Software requirement</text>
+          <text class="impact-node-state" x="16" y="94">AFFECTED</text>
+        </g><g class="impact-node " transform="translate(565 45)">
+          <rect width="200" height="120" rx="8" />
+          <text class="impact-node-id" x="16" y="27">NAV Monitor</text>
+          <text class="impact-node-name" x="16" y="61">Software module</text>
+          <text class="impact-node-state" x="16" y="94">AFFECTED</text>
+        </g><g class="impact-node " transform="translate(300 285)">
+          <rect width="200" height="120" rx="8" />
+          <text class="impact-node-id" x="16" y="27">LLR-NAV-142</text>
+          <text class="impact-node-name" x="16" y="61">Low-level requirement</text>
+          <text class="impact-node-state" x="16" y="94">AFFECTED</text>
+        </g><g class="impact-node " transform="translate(565 285)">
+          <rect width="200" height="120" rx="8" />
+          <text class="impact-node-id" x="16" y="27">SVT-NAV-388</text>
+          <text class="impact-node-name" x="16" y="61">Verification case</text>
+          <text class="impact-node-state" x="16" y="94">AFFECTED</text>
+        </g>
+    </svg></div>
+  </article></section>
+        <aside class="impact-decision"><article class="panel panel-table decision-panel">
+    <header class="panel-header"><div><h3>Affected artifacts</h3><p>Ownership and required action.</p></div><button type="button" aria-label="Open panel menu">•••</button></header>
+    <div class="panel-body table-scroll ">
+    <table class="data-table">
+      <thead><tr><th>Artifact</th><th>Owner</th><th>Impact</th><th>Action</th></tr></thead>
+      <tbody><tr><td><b>SWR-NAV-388</b></td><td>Navigation</td><td>Content</td><td>Revise</td></tr><tr><td><b>ICD-ADC-014</b></td><td>Air data</td><td>Interface</td><td>Review</td></tr><tr><td><b>MON-NAV</b></td><td>Navigation</td><td>Behavior</td><td>Revise</td></tr><tr><td><b>SVT-NAV-388</b></td><td>Verification</td><td>Coverage</td><td>Add cases</td></tr></tbody>
+    </table>
+  </div>
+  </article><article class="panel panel-decision affected-panel">
+    <header class="panel-header"><div><h3>Decision summary</h3><p>Proposed scope for approval.</p></div><button type="button" aria-label="Open panel menu">•••</button></header>
+    <div class="panel-body decision-list"><div class="decision-row"><span>Change class</span><b>Software behavior</b></div><div class="decision-row"><span>Safety effect</span><b>No increase</b></div><div class="decision-row"><span>Reapproval</span><b>Four baselines</b></div><div class="decision-row"><span>Estimated work</span><b>14 engineer-days</b></div></div>
+  </article></aside>
+      </main>
+    </section></div>
+    <section class="scenario-results" aria-live="polite"><div class="scenario-result " data-scenario-result="import-requirement-change" data-reward="Change risk contained">Requirement change CR-1187 imported</div><div class="scenario-result " data-scenario-result="trace-affected-design" data-reward="Change risk contained">Seventeen affected artifacts traced</div><div class="scenario-result " data-scenario-result="compare-trace-revision" data-reward="Change risk contained">Trace revision comparison opened</div><div class="scenario-result " data-scenario-result="review-module-impact" data-reward="Change risk contained">Four module impacts opened</div><div class="scenario-result " data-scenario-result="assign-rework-action" data-reward="Change risk contained">Rework action assigned</div><div class="scenario-result " data-scenario-result="estimate-change-effort" data-reward="Change risk contained">Change effort estimate recorded</div><div class="scenario-result " data-scenario-result="approve-impact-decision" data-reward="Change risk contained">Impact decision approved</div><div class="scenario-result is-failure" data-scenario-result="reject-unreviewed-impact" data-reward="Change risk contained">Unreviewed impact kept open</div></section>
+    <details class="activity-drawer"><summary>Activity</summary><ol class="activity-list" data-activity><li><span>Now</span><b>Workspace opened</b><small>Trace requirement changes through design, interfaces, implementation, verification, and approval.</small></li></ol></details>
+    <aside class="reward-toast" data-reward aria-live="polite"><div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>Change risk contained</b><small data-reward-count>0 of 8 actions evidenced</small></span></div><div class="reward-track"><i data-reward-bar></i></div></aside>
+    <div class="command-dialog" data-command-dialog hidden><section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu"><div class="command-search"><input data-command-input aria-label="Find an action" placeholder="Find an action…" /><button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button></div><ul class="command-list"><li data-command-item="import-requirement-change"><button type="button"><span>Import requirement change</span><small>changes</small></button></li><li data-command-item="trace-affected-design"><button type="button"><span>Trace affected design</span><small>artifacts</small></button></li><li data-command-item="compare-trace-revision"><button type="button"><span>Compare trace revision</span><small>artifacts</small></button></li><li data-command-item="review-module-impact"><button type="button"><span>Review module impact</span><small>artifacts</small></button></li><li data-command-item="assign-rework-action"><button type="button"><span>Assign rework action</span><small>artifacts</small></button></li><li data-command-item="estimate-change-effort"><button type="button"><span>Estimate change effort</span><small>decisions</small></button></li><li data-command-item="approve-impact-decision"><button type="button"><span>Approve impact decision</span><small>decisions</small></button></li><li data-command-item="reject-unreviewed-impact"><button type="button"><span>Reject unreviewed impact</span><small>decisions</small></button></li></ul></section></div>
+    <script id="product-config" type="application/json">{"name":"Requirements Change-Impact Workbench","reward":"Change risk contained","scenarios":[{"name":"Import requirement change","actionId":"import-requirement-change","result":"Requirement change CR-1187 imported","target":"changes"},{"name":"Trace affected design","actionId":"trace-affected-design","result":"Seventeen affected artifacts traced","target":"artifacts"},{"name":"Compare trace revision","actionId":"compare-trace-revision","result":"Trace revision comparison opened","target":"artifacts"},{"name":"Review module impact","actionId":"review-module-impact","result":"Four module impacts opened","target":"artifacts"},{"name":"Assign rework action","actionId":"assign-rework-action","result":"Rework action assigned","target":"artifacts"},{"name":"Estimate change effort","actionId":"estimate-change-effort","result":"Change effort estimate recorded","target":"decisions"},{"name":"Approve impact decision","actionId":"approve-impact-decision","result":"Impact decision approved","target":"decisions"},{"name":"Reject unreviewed impact","actionId":"reject-unreviewed-impact","result":"Unreviewed impact kept open","target":"decisions"}],"architecture":{"structure":"Domain-centered","seedModule":"Core domain","uiModuleId":"mod.impact-workspace","style":"graph-analysis decision system","modules":[["mod.impact-workspace","Impact workspace","experience","Shows change scope, trace paths, decisions, and review state."],["mod.trace-index","Trace index","platform","Indexes requirements, design, code, tests, and approved revisions."],["mod.impact-engine","Impact engine","domain","Traverses dependencies and classifies affected records."],["mod.decision-control","Decision control","workflow","Owns dispositions, review assignments, and approval."]],"dependencies":[["mod.impact-workspace","mod.impact-engine","The workspace requests an impact calculation."],["mod.impact-engine","mod.trace-index","The engine reads the approved trace graph."],["mod.impact-engine","mod.decision-control","Affected records create disposition work."],["mod.decision-control","mod.trace-index","Approved decisions update trace review state."]]}}</script>
+    <script src="./runtime.js"></script>
+  </body>
+</html>

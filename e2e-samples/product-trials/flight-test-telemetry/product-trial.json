@@ -9,6 +9,8 @@
     "Load telemetry run",
     "Review exceedance event",
     "Mark analysis interval",
+    "Compare sensor source",
+    "Annotate data dropout",
     "Record engineering note",
     "Export investigation package"
   ],
@@ -150,6 +152,18 @@
       "target": "events"
     },
     {
+      "name": "Compare sensor source",
+      "actionId": "compare-sensor-source",
+      "result": "Sensor source comparison opened",
+      "target": "events"
+    },
+    {
+      "name": "Annotate data dropout",
+      "actionId": "annotate-data-dropout",
+      "result": "Data dropout annotation recorded",
+      "target": "runs"
+    },
+    {
       "name": "Record engineering note",
       "actionId": "record-engineering-note",
       "result": "Engineering note linked to EVT-391",
@@ -171,5 +185,66 @@
   "reward": "Signal understood",
   "buyer": "Flight-test engineering lead",
   "commercialJob": "Reduce time from flight data to a reviewable investigation.",
-  "useFrequency": "Daily during flight-test campaigns"
+  "useFrequency": "Daily during flight-test campaigns",
+  "architecture": {
+    "structure": "Focused core",
+    "seedModule": "Core workflow",
+    "uiModuleId": "mod.telemetry-console",
+    "style": "stream-processing investigation system",
+    "modules": [
+      [
+        "mod.telemetry-console",
+        "Telemetry console",
+        "experience",
+        "Synchronizes plots, events, intervals, and investigation controls."
+      ],
+      [
+        "mod.run-ingest",
+        "Run ingest",
+        "connection",
+        "Reads recorded channels and validates time and source identity."
+      ],
+      [
+        "mod.signal-analysis",
+        "Signal analysis",
+        "domain",
+        "Computes thresholds, dropouts, and correlated events."
+      ],
+      [
+        "mod.investigation",
+        "Investigation",
+        "workflow",
+        "Owns intervals, engineering notes, review, and export."
+      ],
+      [
+        "mod.flight-archive",
+        "Flight archive",
+        "platform",
+        "Preserves source samples and investigation packages."
+      ]
+    ],
+    "dependencies": [
+      [
+        "mod.telemetry-console",
+        "mod.run-ingest",
+        "The console requests a recorded flight run."
+      ],
+      [
+        "mod.run-ingest",
+        "mod.signal-analysis",
+        "Validated samples enter signal analysis."
+      ],
+      [
+        "mod.signal-analysis",
+        "mod.investigation",
+        "Verified events start an investigation."
+      ],
+      [
+        "mod.investigation",
+        "mod.flight-archive",
+        "The investigation retains source evidence."
+      ]
+    ]
+  },
+  "productKind": "telemetry"
 }

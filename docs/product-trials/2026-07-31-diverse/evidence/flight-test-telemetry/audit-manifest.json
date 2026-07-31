@@ -1,0 +1,153 @@
+{
+  "slug": "flight-test-telemetry",
+  "product": "Flight-Test Telemetry Triage Console",
+  "category": "Flight test",
+  "buyer": "Flight-test engineering lead",
+  "commercialJob": "Reduce time from flight data to a reviewable investigation.",
+  "useFrequency": "Daily during flight-test campaigns",
+  "passed": true,
+  "packaged": true,
+  "clicks": 127,
+  "screenshots": [
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/02-project-dashboard.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/03-plan-input.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/05-plan-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/05a-application-workflow.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/05b-system-structure-refined.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-flight-archive-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-flight-archive-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-flight-archive-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-flight-archive-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-flight-archive-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/07-flight-archive-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-investigation-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-investigation-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-investigation-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-investigation-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-investigation-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/07-investigation-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-signal-analysis-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-signal-analysis-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-signal-analysis-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-signal-analysis-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-signal-analysis-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/07-signal-analysis-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-run-ingest-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-run-ingest-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-run-ingest-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-run-ingest-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-run-ingest-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/07-run-ingest-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-telemetry-console-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-telemetry-console-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-telemetry-console-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-telemetry-console-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/06-telemetry-console-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/07-telemetry-console-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/08-build-applied.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/10-telemetry-workspace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/11-product-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/12-product-protected-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/13-product-command-menu.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/14-product-mobile.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/16-connect-verified.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/17-verify-passed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/18-evidence-trace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/flight-test-telemetry/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 837,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1241,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 1013,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 346,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 2053,
+      "clicks": 12
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 15576,
+      "clicks": 75
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 790,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 2307,
+      "clicks": 9
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 1422,
+      "clicks": 5
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 4668,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 730,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings16 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.12capabilities/modules/mod.telemetry-console/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 18, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabular"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings16 warnings in 3 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.12capabilities/modules/mod.telemetry-console/ui/index.htmlline 13, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 17, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 18, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 20, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 36, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 40, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 46, element <summary>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.telemetry-console/ui/index.htmlline 48, element <button>: STE-LEXICON-"
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T03:32:45.038Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-flight-test-telemetry-kfp22J/flight-test-telemetry",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/flight-test-telemetry",
+  "timeToProductProofMs": 24406,
+  "scenarioSummary": {
+    "scenarioCount": 8,
+    "passedCount": 8,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T03:33:16.317Z",
+  "durationMs": 31279
+}

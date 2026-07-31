@@ -9,8 +9,11 @@
     "Start Copilot session",
     "Update session progress",
     "Record session issue",
+    "Link branch output",
+    "Record next action",
     "Review active sessions",
-    "Close completed session"
+    "Close completed session",
+    "Reopen paused session"
   ],
   "prohibited": "Never delete unresolved session",
   "failureScenario": "Reject unresolved session",
@@ -156,6 +159,18 @@
       "target": "issues"
     },
     {
+      "name": "Link branch output",
+      "actionId": "link-branch-output",
+      "result": "Branch output linked to the session",
+      "target": "active"
+    },
+    {
+      "name": "Record next action",
+      "actionId": "record-next-action",
+      "result": "Next action added to the session",
+      "target": "active"
+    },
+    {
       "name": "Review active sessions",
       "actionId": "review-active-sessions",
       "result": "Twelve active sessions shown",
@@ -168,6 +183,12 @@
       "target": "history"
     },
     {
+      "name": "Reopen paused session",
+      "actionId": "reopen-paused-session",
+      "result": "Paused session returned to active work",
+      "target": "active"
+    },
+    {
       "name": "Reject unresolved session",
       "actionId": "reject-unresolved-session",
       "result": "Unresolved session kept open",
@@ -177,5 +198,60 @@
   "reward": "Momentum gained",
   "buyer": "Engineering lead or senior individual contributor",
   "commercialJob": "Control parallel AI work without losing decisions, blockers, or evidence.",
-  "useFrequency": "Multiple times each day"
+  "useFrequency": "Multiple times each day",
+  "architecture": {
+    "structure": "Domain-centered",
+    "seedModule": "Core domain",
+    "uiModuleId": "mod.session-workspace",
+    "style": "event-driven work tracker",
+    "modules": [
+      [
+        "mod.session-workspace",
+        "Session workspace",
+        "experience",
+        "Shows active agent work, decisions, issues, and next actions."
+      ],
+      [
+        "mod.session-ledger",
+        "Session ledger",
+        "domain",
+        "Owns session identity, state, progress, and history."
+      ],
+      [
+        "mod.issue-queue",
+        "Issue queue",
+        "workflow",
+        "Routes blockers, decisions, and review requests."
+      ],
+      [
+        "mod.evidence-store",
+        "Evidence store",
+        "platform",
+        "Preserves outputs, links, checks, and completion evidence."
+      ]
+    ],
+    "dependencies": [
+      [
+        "mod.session-workspace",
+        "mod.session-ledger",
+        "The workspace reads and updates session state."
+      ],
+      [
+        "mod.session-ledger",
+        "mod.issue-queue",
+        "Blocked sessions create queue items."
+      ],
+      [
+        "mod.session-ledger",
+        "mod.evidence-store",
+        "Completed sessions write evidence."
+      ],
+      [
+        "mod.issue-queue",
+        "mod.evidence-store",
+        "Resolved issues retain their decision evidence."
+      ]
+    ]
+  },
+  "productKind": "sessions"
 }

@@ -1,0 +1,153 @@
+{
+  "slug": "avionics-load-manager",
+  "product": "Avionics Software Load Manager",
+  "category": "Configuration control",
+  "buyer": "Configuration management or fleet engineering lead",
+  "commercialJob": "Prevent incompatible loads and automate as-loaded evidence.",
+  "useFrequency": "At every software release and installation",
+  "passed": true,
+  "packaged": true,
+  "clicks": 126,
+  "screenshots": [
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/02-project-dashboard.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/03-plan-input.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/04-plan-decomposed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/05-plan-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/05a-application-workflow.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/05b-system-structure-refined.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-target-adapter-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-target-adapter-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-target-adapter-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-target-adapter-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-target-adapter-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/07-target-adapter-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-ledger-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-ledger-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-ledger-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-ledger-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-ledger-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/07-release-ledger-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-load-control-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-load-control-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-load-control-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-load-control-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-load-control-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/07-load-control-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-compatibility-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-compatibility-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-compatibility-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-compatibility-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-compatibility-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/07-compatibility-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-workspace-component.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-workspace-activity.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-workspace-state-machine.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-workspace-sequence.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/06-release-workspace-use-case.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/07-release-workspace-approved.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/08-build-applied.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/10-load-workspace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/11-product-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/12-product-protected-action.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/13-product-command-menu.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/14-product-mobile.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/16-connect-verified.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/17-verify-passed.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/18-evidence-trace.png",
+    "docs/product-trials/2026-07-31-diverse/evidence/avionics-load-manager/19-evidence-original.png"
+  ],
+  "phases": [
+    {
+      "name": "Create project",
+      "status": "passed",
+      "durationMs": 734,
+      "clicks": 3
+    },
+    {
+      "name": "Configure workflow",
+      "status": "passed",
+      "durationMs": 1264,
+      "clicks": 4
+    },
+    {
+      "name": "Define use cases",
+      "status": "passed",
+      "durationMs": 1058,
+      "clicks": 4
+    },
+    {
+      "name": "Review application workflow",
+      "status": "passed",
+      "durationMs": 313,
+      "clicks": 1
+    },
+    {
+      "name": "Approve system design",
+      "status": "passed",
+      "durationMs": 2116,
+      "clicks": 12
+    },
+    {
+      "name": "Design modules",
+      "status": "passed",
+      "durationMs": 15447,
+      "clicks": 75
+    },
+    {
+      "name": "Build product",
+      "status": "passed",
+      "durationMs": 822,
+      "clicks": 8
+    },
+    {
+      "name": "Exercise product UI",
+      "status": "passed",
+      "durationMs": 2374,
+      "clicks": 8
+    },
+    {
+      "name": "Connect entry point",
+      "status": "passed",
+      "durationMs": 1333,
+      "clicks": 5
+    },
+    {
+      "name": "Verify scenarios",
+      "status": "passed",
+      "durationMs": 4251,
+      "clicks": 3
+    },
+    {
+      "name": "Review evidence",
+      "status": "passed",
+      "durationMs": 717,
+      "clicks": 3
+    }
+  ],
+  "findings": [
+    {
+      "id": "BUILD-OVERLAY-WARNING",
+      "severity": "medium",
+      "area": "Build",
+      "title": "The implementation required a manual warning acceptance.",
+      "evidence": "Overlay warnings18 warnings in 2 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.15capabilities/modules/mod.release-workspace/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 24, element <h3>: STE-LEXICON-REVIEW — Review the vocab"
+    }
+  ],
+  "warningReview": {
+    "status": "accepted-for-product-trial",
+    "evidence": "Overlay warnings18 warnings in 2 groups.STE-LEXICON-REVIEWReview the vocabulary with the official standard and a project-selected checker.15capabilities/modules/mod.release-workspace/ui/index.htmlline 13, element <button>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 18, element <h1>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 22, element <h2>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 24, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 27, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 29, element <h3>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 32, element <th>: STE-LEXICON-REVIEW — Review the vocabulary with the official standard and a project-selected checker.capabilities/modules/mod.release-workspace/ui/index.htmlline 38, element <h3>: STE-LEXICON-REVIE"
+  },
+  "rendererErrors": [],
+  "productErrors": [],
+  "startedAt": "2026-07-31T03:35:15.457Z",
+  "repositoryRoot": "/var/folders/kb/xp52r2rd1mv2hqnz6d4nz8lc0000gn/T/euik-avionics-load-manager-0qVbKn/avionics-load-manager",
+  "sampleTemplateRoot": "/Users/timwood/Documents/UI Framework/e2e-samples/product-trials/avionics-load-manager",
+  "timeToProductProofMs": 24336,
+  "scenarioSummary": {
+    "scenarioCount": 7,
+    "passedCount": 7,
+    "failedCount": 0
+  },
+  "completedAt": "2026-07-31T03:35:46.160Z",
+  "durationMs": 30703
+}

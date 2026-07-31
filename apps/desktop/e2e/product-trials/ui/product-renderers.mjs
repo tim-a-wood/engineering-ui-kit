@@ -1,0 +1,378 @@
+const escapeHtml = (value) => String(value)
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#039;')
+
+const slug = (value) => String(value)
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-|-$/g, '')
+
+function table(panel, compact = false) {
+  const headers = panel.headers ?? ['Resource', 'Assignment', 'Remaining', 'State']
+  return `<div class="panel-body table-scroll ${compact ? 'is-compact' : ''}">
+    <table class="data-table">
+      <thead><tr>${headers.map((item) => `<th>${escapeHtml(item)}</th>`).join('')}</tr></thead>
+      <tbody>${panel.rows.map((row) => `<tr>${row.map((item, index) => `<td>${index === 0 ? '<b>' : ''}${escapeHtml(item)}${index === 0 ? '</b>' : ''}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>
+  </div>`
+}
+
+function lineChart(panel) {
+  const width = 880
+  const height = 286
+  const max = Math.max(...panel.series, panel.threshold ?? 0) * 1.12
+  const points = panel.series.map((value, index) => {
+    const x = (index / (panel.series.length - 1)) * width
+    const y = height - (value / max) * height
+    return [x, y]
+  })
+  const pointText = points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')
+  const areaText = `0,${height} ${pointText} ${width},${height}`
+  const thresholdY = height - ((panel.threshold ?? 0) / max) * height
+  return `<div class="panel-body chart-body">
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(panel.title)} trend">
+      <g class="chart-grid">
+        ${[0, 1, 2, 3, 4].map((index) => `<line x1="0" y1="${index * 71.5}" x2="${width}" y2="${index * 71.5}" />`).join('')}
+        ${[0, 1, 2, 3, 4].map((index) => `<line x1="${index * 220}" y1="0" x2="${index * 220}" y2="${height}" />`).join('')}
+      </g>
+      <polygon class="chart-fill" points="${areaText}" />
+      <polyline class="chart-path" points="${pointText}" />
+      ${panel.threshold ? `<line class="chart-threshold" x1="0" y1="${thresholdY}" x2="${width}" y2="${thresholdY}" />` : ''}
+      <line class="chart-cursor" x1="486" y1="0" x2="486" y2="${height}" />
+    </svg>
+    <div class="chart-labels">${panel.labels.map((item) => `<span>${escapeHtml(item)}</span>`).join('')}</div>
+  </div>`
+}
+
+function panelBody(panel) {
+  if (['table', 'matrix', 'compatibility', 'schedule'].includes(panel.type)) return table(panel)
+  if (panel.type === 'diff') {
+    return `<div class="panel-body diff">
+      <div class="diff-line before"><span>−</span>${escapeHtml(panel.before)}</div>
+      <div class="diff-line after"><span>+</span>${escapeHtml(panel.after)}</div>
+      <p class="diff-note">${escapeHtml(panel.note)}</p>
+    </div>`
+  }
+  if (panel.type === 'checklist') {
+    return `<div class="panel-body"><ul class="check-list">${panel.items.map(([label, done]) =>
+      `<li><span class="check-mark ${done ? 'done' : ''}">${done ? '✓' : ''}</span><span>${escapeHtml(label)}</span></li>`).join('')}</ul></div>`
+  }
+  if (panel.type === 'kanban') {
+    return `<div class="panel-body board-scroll"><div class="kanban">${panel.columns.map(([title, cards]) =>
+      `<section class="kanban-column"><h4>${escapeHtml(title)}<span>${cards.length}</span></h4>${cards.map((card, index) =>
+        `<div class="kanban-card"><span class="card-signal signal-${index % 3}"></span><b>${escapeHtml(card)}</b><small>${index % 2 ? 'Needs evidence' : 'In progress'}</small></div>`).join('')}</section>`).join('')}</div></div>`
+  }
+  if (panel.type === 'timeline') {
+    return `<div class="panel-body"><ol class="timeline">${panel.items.map(([time, title, detail]) =>
+      `<li><time>${escapeHtml(time)}</time><span><b>${escapeHtml(title)}</b><small>${escapeHtml(detail)}</small></span></li>`).join('')}</ol></div>`
+  }
+  if (panel.type === 'list') {
+    return `<div class="panel-body"><ul class="simple-list">${panel.items.map(([title, detail, state]) =>
+      `<li><span><b>${escapeHtml(title)}</b><small>${escapeHtml(detail)}</small></span><em>${escapeHtml(state)}</em></li>`).join('')}</ul></div>`
+  }
+  if (panel.type === 'editor') {
+    return `<div class="panel-body editor-body"><article class="editor-sheet"><p class="doc-kicker">4.2 SOURCE SELECTION</p><h4>${escapeHtml(panel.title)}</h4>${panel.paragraphs.map((paragraph) =>
+      `<p class="${paragraph === panel.highlight ? 'highlight' : ''}">${escapeHtml(paragraph)}</p>`).join('')}<span class="text-caret" aria-hidden="true"></span></article></div>`
+  }
+  if (panel.type === 'diagnostics') {
+    return `<div class="panel-body"><ul class="diagnostics">${panel.items.map(([code, message, severity]) =>
+      `<li><code>${escapeHtml(code)}</code><span>${escapeHtml(message)}</span><b class="severity">${escapeHtml(severity)}</b></li>`).join('')}</ul></div>`
+  }
+  if (panel.type === 'comments') {
+    return `<div class="panel-body"><ol class="comment-list">${panel.items.map(([author, comment, time]) =>
+      `<li><span class="comment-author">${escapeHtml(author.slice(0, 2).toUpperCase())}</span><p><b>${escapeHtml(author)}</b><br>${escapeHtml(comment)}</p><time>${escapeHtml(time)}</time></li>`).join('')}</ol></div>`
+  }
+  if (panel.type === 'chart') return lineChart(panel)
+  if (panel.type === 'events') {
+    return `<div class="panel-body"><ol class="event-list">${panel.items.map(([time, event, state], index) =>
+      `<li class="${index === 0 ? 'selected' : ''}"><time>${escapeHtml(time)}</time><span><b>${escapeHtml(event)}</b></span><span class="event-state">${escapeHtml(state)}</span></li>`).join('')}</ol></div>`
+  }
+  if (panel.type === 'scatter') {
+    return `<div class="panel-body scatter-body"><div class="scatter"><span class="scatter-axis axis-y">Range</span><span class="scatter-axis axis-x">Weight</span>${panel.points.map(([label, x, y, note]) =>
+      `<span class="scatter-point" style="left:${x}%;bottom:${y}%"><b>${escapeHtml(label)}</b><small>${escapeHtml(note)}</small></span>`).join('')}</div></div>`
+  }
+  if (panel.type === 'sensitivity') {
+    return `<div class="panel-body sensitivity">${panel.items.map(([label, value, amount]) =>
+      `<div class="sensitivity-row"><span>${escapeHtml(label)}</span><div class="sensitivity-track"><i style="width:${amount}%"></i></div><b>${escapeHtml(value)}</b></div>`).join('')}</div>`
+  }
+  if (panel.type === 'pipeline') {
+    return `<div class="panel-body"><ol class="pipeline">${panel.items.map(([label, state], index) => {
+      const stateClass = /complete/i.test(state) ? 'complete' : /running|review/i.test(state) ? 'running' : ''
+      return `<li><span class="pipeline-dot ${stateClass}">${stateClass === 'complete' ? '✓' : index + 1}</span><b>${escapeHtml(label)}</b><small>${escapeHtml(state)}</small></li>`
+    }).join('')}</ol></div>`
+  }
+  if (panel.type === 'console') {
+    return `<div class="panel-body"><div class="console"><div class="console-head"><i></i><i></i><i></i><span>LIVE · BENCH 04</span></div>${panel.items.map((item) => `<span>${escapeHtml(item)}</span>`).join('')}</div></div>`
+  }
+  if (panel.type === 'intake') {
+    return `<div class="panel-body intake-list">${panel.items.map(([name, detail, result], index) =>
+      `<div class="intake-row ${index === 1 ? 'selected' : ''}"><span class="file-mark">ZIP</span><b>${escapeHtml(name)}</b><span>${escapeHtml(detail)}</span><em class="result-chip ${slug(result)}">${escapeHtml(result)}</em></div>`).join('')}</div>`
+  }
+  if (panel.type === 'graph') {
+    const positions = [[35, 45], [300, 45], [565, 45], [300, 285], [565, 285]]
+    const paths = [
+      'M 235 105 H 300',
+      'M 500 105 H 565',
+      'M 400 165 V 285',
+      'M 665 165 V 285',
+      'M 500 345 H 565',
+    ]
+    return `<div class="panel-body graph-body"><svg class="impact-svg" viewBox="0 0 800 470" role="img" aria-label="${escapeHtml(panel.title)}">
+      <defs><marker id="impact-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" /></marker></defs>
+      <g class="impact-links">${paths.map((path) => `<path d="${path}" />`).join('')}</g>
+      ${panel.nodes.map(([id, name], index) => {
+        const [x, y] = positions[index] ?? [35 + (index % 3) * 265, 285]
+        return `<g class="impact-node ${index === 0 ? 'changed' : ''}" transform="translate(${x} ${y})">
+          <rect width="200" height="120" rx="8" />
+          <text class="impact-node-id" x="16" y="27">${escapeHtml(id)}</text>
+          <text class="impact-node-name" x="16" y="61">${escapeHtml(name)}</text>
+          <text class="impact-node-state" x="16" y="94">${index ? 'AFFECTED' : 'CHANGED'}</text>
+        </g>`
+      }).join('')}
+    </svg></div>`
+  }
+  if (panel.type === 'decision') {
+    return `<div class="panel-body decision-list">${panel.items.map(([label, value]) =>
+      `<div class="decision-row"><span>${escapeHtml(label)}</span><b>${escapeHtml(value)}</b></div>`).join('')}</div>`
+  }
+  if (panel.type === 'release') {
+    return `<div class="panel-body"><div class="release-path">${panel.items.map(([label, state], index) =>
+      `<article class="release-step ${index === 2 ? 'current' : ''}"><span>${index + 1}</span><b>${escapeHtml(label)}</b><small>${escapeHtml(state)}</small></article>`).join('')}</div></div>`
+  }
+  if (panel.type === 'bars') {
+    return `<div class="panel-body bars">${panel.items.map(([label, width, count]) =>
+      `<div class="bar-row"><span>${escapeHtml(label)}</span><div class="bar-track"><i style="width:${width}%"></i></div><b>${escapeHtml(count)}</b></div>`).join('')}</div>`
+  }
+  if (panel.type === 'investigation') {
+    return `<div class="panel-body investigation">${panel.items.map(([label, text], index) =>
+      `<div class="investigation-row ${index === 2 ? 'active' : ''}"><span>${escapeHtml(label)}</span><p>${escapeHtml(text)}</p></div>`).join('')}</div>`
+  }
+  throw new Error(`Unknown product-trial panel: ${panel.type}`)
+}
+
+function panel(panel, className = '') {
+  return `<article class="panel panel-${escapeHtml(panel.type)} ${className}">
+    <header class="panel-header"><div><h3>${escapeHtml(panel.title)}</h3><p>${escapeHtml(panel.subtitle)}</p></div><button type="button" aria-label="Open panel menu">•••</button></header>
+    ${panelBody(panel)}
+  </article>`
+}
+
+function nav(system, mode = 'rail') {
+  const initials = system.shortName.split(/\s+/).map((word) => word[0]).join('').slice(0, 2)
+  return `<aside class="sidebar product-nav nav-${mode}" data-product-nav>
+    <div class="brand"><span class="brand-mark">${escapeHtml(initials)}</span><span class="brand-copy"><b>${escapeHtml(system.shortName)}</b><small>${escapeHtml(system.category)}</small></span></div>
+    <nav aria-label="Primary navigation">${system.nav.map((item, index) => `<button class="nav-item ${index === 0 ? 'active' : ''}" type="button" data-nav-target="${slug(item)}" data-nav-title="${escapeHtml(item)}"><span>${String(index + 1).padStart(2, '0')}</span><b>${escapeHtml(item)}</b></button>`).join('')}</nav>
+    <div class="nav-foot"><span class="presence-dot"></span><span>Local workspace</span><b>TW</b></div>
+  </aside>`
+}
+
+function topbar(system, extra = '') {
+  return `<header class="product-topbar">
+    <div><button class="mobile-menu" type="button" data-mobile-menu aria-label="Open menu">☰</button><span class="crumb">${escapeHtml(system.shortName)}</span><span class="crumb-divider">/</span><h1 data-view-title>${escapeHtml(system.homeTitle)}</h1></div>
+    <div class="topbar-tools">${extra}<button class="command-button" type="button" data-open-commands aria-label="Open command menu"><span>Search or run</span><kbd>⌘ K</kbd></button><span class="user-chip">TW</span></div>
+  </header>`
+}
+
+function actions(system, className = 'domain-actions') {
+  return `<div class="${className}" aria-label="Product actions">${system.scenarios.map((item, index) =>
+    `<button class="${index === 0 ? 'primary-action' : ''} ${index === system.scenarios.length - 1 ? 'protected-action' : ''}" type="button" data-scenario-action="${item.actionId}" data-target="${escapeHtml(item.target)}"><span>${index === 0 ? '+' : index === system.scenarios.length - 1 ? '◇' : '→'}</span>${escapeHtml(item.name)}</button>`).join('')}</div>`
+}
+
+function metricStrip(system, className = '') {
+  return `<div class="metric-strip ${className}" aria-label="Current measures">${system.metrics.map(([label, value, detail]) =>
+    `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(detail)}</small></div>`).join('')}</div>`
+}
+
+function reviewSurface(system) {
+  return `${nav(system, 'review')}
+    <section class="product-workspace">
+      ${topbar(system, '<span class="independence-pill">✓ Independent reviewer</span>')}
+      <main class="review-layout">
+        <header class="review-context">
+          <div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>
+          ${actions(system, 'review-actions')}
+        </header>
+        <aside class="artifact-browser">
+          <header><b>Lifecycle data</b><span>161 objectives</span></header>
+          ${panel(system.panels[0], 'embedded-panel')}
+        </aside>
+        <section class="review-document">${panel(system.panels[1], 'document-diff')}</section>
+        <aside class="objective-inspector">
+          ${metricStrip(system, 'review-measures')}
+          ${panel(system.panels[2], 'objective-panel')}
+        </aside>
+      </main>
+    </section>`
+}
+
+function sessionSurface(system) {
+  return `${nav(system, 'sessions')}
+    <section class="product-workspace">
+      ${topbar(system, '<span class="focus-clock">FOCUS · 42 MIN</span>')}
+      <main class="session-layout">
+        <header class="session-heading"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>${metricStrip(system, 'session-stats')}</header>
+        <section class="session-board">${panel(system.panels[0], 'board-panel')}</section>
+        <aside class="session-inspector">${actions(system, 'session-actions')}${panel(system.panels[1], 'timeline-panel')}${panel(system.panels[2], 'issues-panel')}</aside>
+      </main>
+    </section>`
+}
+
+function writingSurface(system) {
+  return `${nav(system, 'documents')}
+    <section class="product-workspace">
+      ${topbar(system, '<span class="save-state">Saved 10:18</span>')}
+      <main class="writing-layout">
+        <header class="writing-toolbar"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2></div>${actions(system, 'writing-actions')}</header>
+        <aside class="document-outline"><b>Document outline</b><ol><li>1 Purpose</li><li>2 References</li><li>3 Architecture</li><li class="active">4 Source selection</li><li>5 Failure response</li><li>6 Verification</li></ol>${metricStrip(system, 'writing-stats')}</aside>
+        <section class="document-canvas">${panel(system.panels[0], 'editor-panel')}</section>
+        <aside class="writing-inspector"><div class="inspector-tabs"><b>Writing</b><span>Comments</span></div>${panel(system.panels[1], 'diagnostic-panel')}${panel(system.panels[2], 'comment-panel')}</aside>
+      </main>
+    </section>`
+}
+
+function telemetrySurface(system) {
+  return `<section class="product-workspace telemetry-shell">
+      ${topbar(system, '<span class="recording-pill"><i></i> RECORDED DATA</span>')}
+      <main class="telemetry-layout">
+        <header class="telemetry-head"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2></div>${actions(system, 'telemetry-actions')}</header>
+        <aside class="channel-rail sidebar" data-product-nav><h3>Channels</h3><label>Find channel<input value="normal accel" readonly /></label><ul><li class="active"><b>NZ</b><span>Normal acceleration</span><em>2.61 g</em></li><li><b>ELE</b><span>Elevator position</span><em>8.4°</em></li><li><b>CAS</b><span>Calibrated airspeed</span><em>241 kt</em></li><li><b>AP</b><span>Autopilot state</span><em>OFF</em></li></ul>${metricStrip(system, 'channel-stats')}</aside>
+        <section class="telemetry-plot">${panel(system.panels[0], 'plot-panel')}</section>
+        <aside class="event-rail">${panel(system.panels[1], 'event-panel')}</aside>
+        <section class="investigation-strip">${panel(system.panels[2], 'investigation-status')}</section>
+      </main>
+    </section>`
+}
+
+function tradeSurface(system) {
+  return `${nav(system, 'study')}
+    <section class="product-workspace">
+      ${topbar(system, '<span class="model-state">MATLAB · READY</span>')}
+      <main class="trade-layout">
+        <header class="trade-head"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>${actions(system, 'trade-actions')}</header>
+        <aside class="parameter-drawer"><h3>Case inputs</h3><label>Gross weight<span><input value="18,240" readonly /> kg</span></label><label>Cruise altitude<span><input value="35,000" readonly /> ft</span></label><label>Drag factor<span><input value="1.012" readonly /></span></label><label>Fuel reserve<span><input value="45" readonly /> min</span></label><button type="button">Compare assumptions</button>${metricStrip(system, 'parameter-stats')}</aside>
+        <section class="trade-plot">${panel(system.panels[0], 'scatter-panel')}</section>
+        <aside class="trade-sensitivity">${panel(system.panels[2], 'sensitivity-panel')}</aside>
+        <section class="trade-matrix">${panel(system.panels[1], 'matrix-panel')}</section>
+      </main>
+    </section>`
+}
+
+function hilSurface(system) {
+  return `<section class="product-workspace hil-shell">
+      ${topbar(system, '<span class="rig-health">● 4 / 5 rigs online</span>')}
+      <main class="hil-layout">
+        <header class="hil-head"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>${actions(system, 'hil-actions')}</header>
+        <nav class="bench-tabs sidebar" data-product-nav aria-label="Bench navigation">${system.nav.map((item, index) => `<button class="nav-item ${index === 0 ? 'active' : ''}" data-nav-target="${slug(item)}" data-nav-title="${escapeHtml(item)}"><span>0${index + 1}</span>${escapeHtml(item)}</button>`).join('')}</nav>
+        <section class="bench-schedule">${panel(system.panels[0], 'schedule-panel')}</section>
+        <section class="procedure-run">${panel(system.panels[1], 'pipeline-panel')}</section>
+        <section class="rig-console">${panel(system.panels[2], 'console-panel')}</section>
+        ${metricStrip(system, 'hil-metrics')}
+      </main>
+    </section>`
+}
+
+function supplierSurface(system) {
+  return `${nav(system, 'portal')}
+    <section class="product-workspace">
+      ${topbar(system, '<span class="supplier-org">NORTHSTAR AVIONICS</span>')}
+      <main class="supplier-layout">
+        <header class="supplier-head"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>${actions(system, 'supplier-actions')}</header>
+        <ol class="intake-stepper"><li class="done"><span>1</span>Received</li><li class="current"><span>2</span>Validate</li><li><span>3</span>Resolve gaps</li><li><span>4</span>Accept</li></ol>
+        <section class="supplier-package">${panel(system.panels[0], 'intake-panel')}</section>
+        <aside class="supplier-checks">${panel(system.panels[1], 'check-panel')}</aside>
+        <aside class="supplier-summary">${metricStrip(system, 'supplier-metrics')}${panel(system.panels[2], 'summary-panel')}</aside>
+      </main>
+    </section>`
+}
+
+function impactSurface(system) {
+  return `<section class="product-workspace impact-shell">
+      ${topbar(system, '<span class="graph-state">TRACE INDEX · CURRENT</span>')}
+      <main class="impact-layout">
+        <header class="impact-head"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>${actions(system, 'impact-actions')}</header>
+        <aside class="change-rail sidebar" data-product-nav><h3>Change set</h3><b>CR-2026-044</b><p>Change altitude source timeout from 500 ms to 300 ms.</p><dl><div><dt>Source</dt><dd>SYS-NAV-118</dd></div><div><dt>Revision</dt><dd>R18 → R19</dd></div><div><dt>Owner</dt><dd>Navigation</dd></div></dl>${metricStrip(system, 'impact-metrics')}</aside>
+        <section class="impact-graph">${panel(system.panels[0], 'graph-panel')}</section>
+        <aside class="impact-decision">${panel(system.panels[1], 'decision-panel')}${panel(system.panels[2], 'affected-panel')}</aside>
+      </main>
+    </section>`
+}
+
+function loadSurface(system) {
+  return `${nav(system, 'release')}
+    <section class="product-workspace">
+      ${topbar(system, '<span class="secure-state">🔒 SECURE LOAD MODE</span>')}
+      <main class="load-layout">
+        <header class="load-head"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>${metricStrip(system, 'load-metrics')}</header>
+        <section class="load-stepper">${panel(system.panels[0], 'release-panel')}</section>
+        <aside class="package-card"><p class="overline">Selected package</p><span class="package-icon">SW</span><h3>FCS-OFP-24.8.2</h3><p>SHA-256 · Signature valid</p><dl><div><dt>Target</dt><dd>FCC-A</dd></div><div><dt>Aircraft</dt><dd>N812TX</dd></div><div><dt>Size</dt><dd>48.2 MB</dd></div></dl>${actions(system, 'load-actions')}</aside>
+        <section class="compatibility-view">${panel(system.panels[1], 'compatibility-panel')}</section>
+        <aside class="load-readiness">${panel(system.panels[2], 'readiness-panel')}</aside>
+      </main>
+    </section>`
+}
+
+function fracasSurface(system) {
+  return `${nav(system, 'cases')}
+    <section class="product-workspace">
+      ${topbar(system, '<span class="review-window">90 DAY WINDOW</span>')}
+      <main class="fracas-layout">
+        <header class="fracas-head"><div><p class="eyebrow">${escapeHtml(system.eyebrow)}</p><h2>${escapeHtml(system.headline)}</h2><p>${escapeHtml(system.subhead)}</p></div>${actions(system, 'fracas-actions')}</header>
+        <aside class="case-list"><h3>Failure cases</h3><label>Filter cases<input placeholder="Part, aircraft, or symptom" /></label><ul><li class="active"><b>FR-2026-118</b><span>ADC-B data dropout</span><em>Critical</em></li><li><b>FR-2026-116</b><span>Sensor bias drift</span><em>Open</em></li><li><b>FR-2026-109</b><span>Power transient</span><em>Action</em></li><li><b>FR-2026-104</b><span>Software timeout</span><em>Monitor</em></li></ul>${metricStrip(system, 'case-stats')}</aside>
+        <section class="case-analysis">${panel(system.panels[1], 'investigation-panel')}</section>
+        <aside class="case-actions">${panel(system.panels[2], 'actions-panel')}</aside>
+        <section class="reliability-trend">${panel(system.panels[0], 'pareto-panel')}</section>
+      </main>
+    </section>`
+}
+
+const renderers = {
+  review: reviewSurface,
+  sessions: sessionSurface,
+  writing: writingSurface,
+  telemetry: telemetrySurface,
+  trade: tradeSurface,
+  hil: hilSurface,
+  supplier: supplierSurface,
+  impact: impactSurface,
+  load: loadSurface,
+  fracas: fracasSurface,
+}
+
+function supportUi(system) {
+  return `<section class="scenario-results" aria-live="polite">${system.scenarios.map((item, index) =>
+      `<div class="scenario-result ${index === system.scenarios.length - 1 ? 'is-failure' : ''}" data-scenario-result="${item.actionId}" data-reward="${escapeHtml(system.reward)}">${escapeHtml(item.result)}</div>`).join('')}</section>
+    <details class="activity-drawer"><summary>Activity</summary><ol class="activity-list" data-activity><li><span>Now</span><b>Workspace opened</b><small>${escapeHtml(system.description)}</small></li></ol></details>
+    <aside class="reward-toast" data-reward aria-live="polite"><div class="reward-head"><span class="reward-spark">✦</span><span><b data-reward-label>${escapeHtml(system.reward)}</b><small data-reward-count>0 of ${system.scenarios.length} actions evidenced</small></span></div><div class="reward-track"><i data-reward-bar></i></div></aside>
+    <div class="command-dialog" data-command-dialog hidden><section class="command-card" role="dialog" aria-modal="true" aria-label="Command menu"><div class="command-search"><input data-command-input aria-label="Find an action" placeholder="Find an action…" /><button class="command-close" type="button" data-close-commands aria-label="Close command menu">×</button></div><ul class="command-list">${system.scenarios.map((item) => `<li data-command-item="${item.actionId}"><button type="button"><span>${escapeHtml(item.name)}</span><small>${escapeHtml(item.target)}</small></button></li>`).join('')}</ul></section></div>`
+}
+
+export function renderProductDocument(system) {
+  const render = renderers[system.layout]
+  if (!render) throw new Error(`No product renderer for ${system.layout}`)
+  const config = JSON.stringify({
+    name: system.name,
+    reward: system.reward,
+    scenarios: system.scenarios,
+    architecture: system.architecture,
+  }).replaceAll('<', '\\u003c')
+  return `<!doctype html>
+<html lang="en" style="--accent:${system.accent};--accent-rgb:${system.accentRgb}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escapeHtml(system.name)}</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./product-layouts.css" />
+  </head>
+  <body class="product-v2 product-${escapeHtml(system.layout)}">
+    <div class="app-shell">${render(system)}</div>
+    ${supportUi(system)}
+    <script id="product-config" type="application/json">${config}</script>
+    <script src="./runtime.js"></script>
+  </body>
+</html>
+`
+}
