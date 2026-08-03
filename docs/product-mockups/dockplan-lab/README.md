@@ -1,6 +1,6 @@
 # DockPlan Lab — Motion Planning Workbench
 
-[Open the interactive mockup](https://motion-planning-workbench-tw.tim-a-wood.chatgpt.site) · [Read the PRD](./product/PRD.md)
+[Open the public interactive mockup](https://tim-a-wood.github.io/engineering-ui-kit/mockups/dockplan-lab/) · [Read the PRD](./product/PRD.md)
 
 A desktop engineering workbench for authoring, refining, replaying and validating low-speed articulated yard-truck reverse-docking trajectories. The interface is grounded in a concrete warehouse dock scenario and exposes the quantities an engineer needs to inspect: vehicle articulation, collision clearance, steering and steering-rate limits, speed profile, terminal pose and feasibility checks.
 

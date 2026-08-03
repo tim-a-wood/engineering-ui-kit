@@ -1,6 +1,6 @@
 # Daybook — Teacher Planning Studio
 
-[Open the interactive mockup](https://wonderroom-lesson-studio.tim-a-wood.chatgpt.site) · [Read the PRD](./product/PRD.md)
+[Open the public interactive mockup](https://tim-a-wood.github.io/engineering-ui-kit/mockups/daybook/) · [Read the PRD](./product/PRD.md)
 
 A desktop-first early-years teaching studio for planning any kind of lesson, arranging the classroom provision around it, preparing printable resources, presenting a focused teaching view and reflecting after the session. The visual language is deliberately classroom- and teacher-derived rather than generic enterprise or AI software.
 

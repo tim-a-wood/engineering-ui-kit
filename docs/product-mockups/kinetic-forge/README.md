@@ -1,6 +1,6 @@
 # Kinetic Forge — Foundry Delivery
 
-[Open the interactive mockup](https://kinetic-forge-foundry-demo.tim-a-wood.chatgpt.site) · [Read the PRD](./product/PRD.md)
+[Open the public interactive mockup](https://tim-a-wood.github.io/engineering-ui-kit/mockups/kinetic-forge/) · [Read the PRD](./product/PRD.md)
 
 A cinematic browser-game concept demonstrating a six-wheel rover carrying an energy core across a foundry service bridge. The current motion revision replaces the earlier composited image treatment with a real-time Three.js scene: the rover, wheels, suspension response, bridge, platform, lighting, sparks, dust and camera movement are all rendered as 3D geometry.
 
