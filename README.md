@@ -18,6 +18,7 @@ screenshots → approve or iterate.
 | `packages/core` | GUI-independent workflow library + CLI: repo flatfile builder with deterministic exclusions, packet builders, zip-overlay inspector (hard blockers AI-HANDOFF-030…039), non-destructive applier, verification runner, persistence — 44 tests |
 | `apps/desktop` | Electron main + sandboxed preload exposing a narrow typed IPC bridge (no generic filesystem access) |
 | `apps/gui` | React renderer: five-step handoff workflow, task templates, recipes, component reference, projects, settings |
+| [`docs/product-mockups`](docs/product-mockups/) | Three openable product concepts—Kinetic Forge, DockPlan Lab and Daybook—with live prototypes, complete runnable source, PRDs and visual benchmarks |
 | `examples/` | Demo target apps: `xy-plot-sample` (restyle demo), `bench-monitor` (requirements-to-UI demo, built from its `REQUIREMENTS.md` alone), `work-orders-monolith` (PlantOps — a fully usable multi-page legacy monolith made to be restyled; ideal first target with ready-made evidence views like `#/orders`, `#/reports`), and `gauge-lab` (GaugeLab — a full monolithic web app, React frontend + Node JSON-API server with file persistence, produced end to end by the workbench's *Create a monolithic web app* handoff from its `REQUIREMENTS.md`; `npm run build` then `npm start` → http://127.0.0.1:5410) |
 | `trials/` | The evidence-first vertical-slice trial records (13/13 blocking acceptance criteria) |
 
