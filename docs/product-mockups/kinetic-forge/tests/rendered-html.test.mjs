@@ -42,11 +42,12 @@ test("server-renders the Foundry Blackout mission shell", async () => {
 });
 
 test("binds the detailed GLB hauler to the incident recovery sequence", async () => {
-  const [scene, css, page, layout] = await Promise.all([
+  const [scene, css, page, layout, pagesConfig] = await Promise.all([
     readFile(new URL("../app/FoundryScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../github-pages.vite.config.ts", import.meta.url), "utf8"),
     access(new URL("../public/models/perseverance-rover.glb", import.meta.url)),
     access(new URL("../public/draco/draco_decoder.wasm", import.meta.url)),
   ]);
@@ -80,4 +81,5 @@ test("binds the detailed GLB hauler to the incident recovery sequence", async ()
   assert.match(page, /00:36\.00/);
   assert.match(page, /RAPIER PHYSICS ADAPTER TARGET/);
   assert.match(layout, /Kinetic Forge · Foundry Blackout/);
+  assert.match(pagesConfig, /\/engineering-ui-kit\/mockups\/kinetic-forge\//);
 });
