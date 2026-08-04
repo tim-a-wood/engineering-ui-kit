@@ -1,10 +1,10 @@
-# Kinetic Forge — Foundry Delivery
+# Kinetic Forge — Foundry Blackout
 
 [Open the public interactive mockup](https://tim-a-wood.github.io/engineering-ui-kit/mockups/kinetic-forge/) · [Read the PRD](./product/PRD.md)
 
-A cinematic browser-game concept demonstrating a six-wheel rover carrying an energy core across a foundry service bridge. The current motion revision replaces the earlier composited image treatment with a real-time Three.js scene: the rover, wheels, suspension response, bridge, platform, lighting, sparks, dust and camera movement are all rendered as 3D geometry.
+A cinematic browser-game vertical slice in which a six-wheel recovery rover clears a collapsed gantry, crosses a moving transfer table, delivers an energy core and restarts an industrial foundry. The rover, wheels, suspension response, obstruction, winch cable, bridge, reactor, lighting, sparks, dust and camera movement are all rendered as live Three.js geometry.
 
-The prototype demonstrates authored vehicle motion and game presentation. It does not yet claim rigid-body physics, collision solving or deformable suspension simulation.
+The prototype demonstrates authored interaction choreography and game presentation. It does not yet claim a connected rigid-body solver; Rapier remains the target physics adapter for production behavior.
 
 The visible vehicle is real Three.js geometry. Its detailed mechanical chassis is derived from NASA/JPL-Caltech's public Mars 2020 Perseverance Rover GLB, then re-skinned and combined at runtime with Kinetic Forge cargo bodywork, containment hardware, lights, wheels and suspension geometry. NASA does not endorse this prototype. See `ATTRIBUTION.md`.
 
@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-Use **Engage Drive** to run the crossing. **Replay** repeats it. The interface is desktop-first and also supports iPhone portrait and landscape viewing.
+Use **Begin Core Delivery**, then respond to the gantry incident and authorize the final core transfer. **Replay** runs the complete 32-second cinematic sequence. The interface is desktop-first and also supports iPhone portrait and landscape viewing.
 
 ## Reference material
 

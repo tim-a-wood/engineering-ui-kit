@@ -20,20 +20,20 @@ export async function generateMetadata(): Promise<Metadata> {
   const origin = `${protocol}://${host}`;
 
   return {
-    title: "Kinetic Forge · Foundry Delivery",
-    description: "A cinematic visual gameplay prototype for the Kinetic Forge rover construction game.",
+    title: "Kinetic Forge · Foundry Blackout",
+    description: "Clear a collapsed gantry, cross a moving transfer table, and restart an industrial foundry in this real-time Three.js rover prototype.",
     openGraph: {
-      title: "Kinetic Forge · Foundry Delivery",
-      description: "Build. Simulate. Replay. A cinematic browser-game concept demo.",
+      title: "Kinetic Forge · Foundry Blackout",
+      description: "Recover the route. Deliver the core. Bring Foundry Node 7 back online.",
       type: "website",
       url: origin,
-      images: [{ url: `${origin}/og.png`, width: 1672, height: 876, alt: "Kinetic Forge Foundry Delivery rover" }],
+      images: [{ url: `${origin}/og-foundry-blackout.png`, width: 1731, height: 909, alt: "Kinetic Forge rover carrying a power core through Foundry Node 7" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "Kinetic Forge · Foundry Delivery",
-      description: "Build. Simulate. Replay. A cinematic browser-game concept demo.",
-      images: [`${origin}/og.png`],
+      title: "Kinetic Forge · Foundry Blackout",
+      description: "Recover the route. Deliver the core. Bring Foundry Node 7 back online.",
+      images: [`${origin}/og-foundry-blackout.png`],
     },
   };
 }

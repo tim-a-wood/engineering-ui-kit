@@ -6,7 +6,7 @@ Three product concepts created to demonstrate the range of applications the fram
 
 | Product | Purpose | Open |
 |---|---|---|
-| **Kinetic Forge** | Browser-based 3D rover construction game. The current revision uses a real-time Three.js foundry scene with an independently modelled six-wheel rover. | [Launch interactive mockup](https://tim-a-wood.github.io/engineering-ui-kit/mockups/kinetic-forge/) · [Source](./kinetic-forge/) · [PRD](./kinetic-forge/product/PRD.md) |
+| **Kinetic Forge** | Browser-based 3D rover game. The Foundry Blackout slice adds a gantry collapse, winch recovery, moving transfer table, core handoff and foundry restart to the detailed real-time Three.js rover. | [Launch interactive mockup](https://tim-a-wood.github.io/engineering-ui-kit/mockups/kinetic-forge/) · [Source](./kinetic-forge/) · [PRD](./kinetic-forge/product/PRD.md) |
 | **DockPlan Lab** | Engineering workbench for planning and validating low-speed articulated reverse-docking trajectories. | [Launch interactive mockup](https://tim-a-wood.github.io/engineering-ui-kit/mockups/dockplan-lab/) · [Source](./dockplan-lab/) · [PRD](./dockplan-lab/product/PRD.md) |
 | **Daybook** | Desktop-first early-years lesson planning, classroom resource and teaching-view studio. | [Launch interactive mockup](https://tim-a-wood.github.io/engineering-ui-kit/mockups/daybook/) · [Source](./daybook/) · [PRD](./daybook/product/PRD.md) |
 

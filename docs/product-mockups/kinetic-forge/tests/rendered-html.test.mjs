@@ -23,23 +23,25 @@ async function render() {
   );
 }
 
-test("server-renders the Kinetic Forge gameplay shell", async () => {
+test("server-renders the Foundry Blackout mission shell", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Kinetic Forge · Foundry Delivery<\/title>/i);
-  assert.match(html, /aria-label="Foundry Delivery gameplay scene"/);
+  assert.match(html, /<title>Kinetic Forge · Foundry Blackout<\/title>/i);
+  assert.match(html, /aria-label="Foundry Blackout gameplay scene"/);
   assert.match(html, /aria-label="Kinetic Forge home"/);
-  assert.match(html, /FOUNDry Delivery/i);
-  assert.match(html, /ENGAGE DRIVE/);
+  assert.match(html, /FOUNDry[\s\S]*BLACKOUT/i);
+  assert.match(html, /BEGIN CORE DELIVERY/);
+  assert.match(html, /CLEAR COLLAPSED BEAM/);
+  assert.match(html, /RESTART FOUNDRY NODE/);
   assert.match(html, /data-renderer="threejs-real-geometry"/);
   assert.doesNotMatch(html, /foundry-background-v2|hauler-sprite-v2/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
-test("binds a genuine GLB hauler and collision-clear live foundry", async () => {
+test("binds the detailed GLB hauler to the incident recovery sequence", async () => {
   const [scene, css, page, layout] = await Promise.all([
     readFile(new URL("../app/FoundryScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -58,10 +60,14 @@ test("binds a genuine GLB hauler and collision-clear live foundry", async () => 
   assert.match(scene, /gantrySupportStations\.some/);
   assert.match(scene, /Gantry support entered the drive corridor/);
   assert.match(scene, /wheel\.rotation\.x = wheelTurn/);
+  assert.match(scene, /winchCable/);
+  assert.match(scene, /turntable/);
+  assert.match(scene, /coreDockPosition/);
+  assert.match(scene, /currentPower/);
   assert.doesNotMatch(scene, /THREE\.Sprite|backgroundImage|hauler-sprite|foundry-background/);
   assert.match(css, /\.scene-canvas canvas/);
-  assert.match(page, /Foundry Delivery/);
-  assert.match(page, /ENGAGE DRIVE/);
-  assert.match(page, /NASA\/JPL MECHANICAL DONOR/);
-  assert.match(layout, /Kinetic Forge · Foundry Delivery/);
+  assert.match(page, /Foundry Blackout/);
+  assert.match(page, /CLEAR GANTRY/);
+  assert.match(page, /RAPIER PHYSICS ADAPTER TARGET/);
+  assert.match(layout, /Kinetic Forge · Foundry Blackout/);
 });

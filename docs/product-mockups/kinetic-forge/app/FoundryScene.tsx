@@ -10,21 +10,23 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 
-type MotionState = "ready" | "running" | "complete";
+export type MissionPhase = "ready" | "transit" | "blocked" | "winching" | "crossing" | "dock_ready" | "docking" | "complete";
 
 type FoundrySceneProps = {
-  motionState: MotionState;
+  phase: MissionPhase;
+  replayMode: boolean;
   replayPlaying: boolean;
+  replayProgress: number;
 };
 
-type MotionClock = {
-  state: MotionState;
+type MissionClock = {
+  phase: MissionPhase;
+  replayMode: boolean;
   replay: boolean;
+  replayProgress: number;
   startedAt: number;
 };
 
-const RUN_DURATION = 9_320;
-const RUN_DISTANCE = 18.4;
 const START_Z = 5.2;
 const WHEEL_RADIUS = 0.93;
 const WHEEL_CENTER_Y = 1.19;
@@ -32,13 +34,44 @@ const DECK_TOP_Y = 0.18;
 const RAIL_X = 5.18;
 const VEHICLE_HALF_WIDTH = 2.5;
 
-export default function FoundryScene({ motionState, replayPlaying }: FoundrySceneProps) {
+const PHASE_DURATION: Partial<Record<MissionPhase, number>> = {
+  transit: 6_000,
+  winching: 4_600,
+  crossing: 8_500,
+  docking: 5_200,
+};
+
+function ease(value: number) {
+  const t = THREE.MathUtils.clamp(value, 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+function replayPhase(progress: number): { phase: MissionPhase; local: number } {
+  const seconds = THREE.MathUtils.clamp(progress, 0, 100) * 0.32;
+  if (seconds < 1.2) return { phase: "ready", local: seconds / 1.2 };
+  if (seconds < 7.2) return { phase: "transit", local: (seconds - 1.2) / 6 };
+  if (seconds < 8.7) return { phase: "blocked", local: (seconds - 7.2) / 1.5 };
+  if (seconds < 13.3) return { phase: "winching", local: (seconds - 8.7) / 4.6 };
+  if (seconds < 21.8) return { phase: "crossing", local: (seconds - 13.3) / 8.5 };
+  if (seconds < 23.3) return { phase: "dock_ready", local: (seconds - 21.8) / 1.5 };
+  if (seconds < 28.5) return { phase: "docking", local: (seconds - 23.3) / 5.2 };
+  return { phase: "complete", local: (seconds - 28.5) / 3.5 };
+}
+
+export default function FoundryScene({ phase, replayMode, replayPlaying, replayProgress }: FoundrySceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const motionRef = useRef<MotionClock>({ state: motionState, replay: replayPlaying, startedAt: 0 });
+  const motionRef = useRef<MissionClock>({ phase, replayMode, replay: replayPlaying, replayProgress, startedAt: 0 });
 
   useEffect(() => {
-    motionRef.current = { state: motionState, replay: replayPlaying, startedAt: performance.now() };
-  }, [motionState, replayPlaying]);
+    const prior = motionRef.current;
+    motionRef.current = {
+      phase,
+      replayMode,
+      replay: replayPlaying,
+      replayProgress,
+      startedAt: prior.phase === phase && prior.replayMode === replayMode ? prior.startedAt : performance.now(),
+    };
+  }, [phase, replayMode, replayPlaying, replayProgress]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -57,7 +90,7 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.domElement.setAttribute(
       "aria-label",
-      "Real-time three-dimensional industrial hauler crossing a collision-clear foundry bridge",
+      "Real-time three-dimensional recovery rover clearing a collapsed gantry and restarting a foundry",
     );
     renderer.domElement.setAttribute("role", "img");
     mount.appendChild(renderer.domElement);
@@ -227,6 +260,13 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
       depthWrite: false,
     }));
     const coreWhite = trackMaterial(new THREE.MeshBasicMaterial({ color: 0xd9fbff }));
+    const reactorEnergy = trackMaterial(new THREE.MeshStandardMaterial({
+      color: 0x214247,
+      emissive: 0x2bd9f2,
+      emissiveIntensity: 0.04,
+      roughness: 0.22,
+      metalness: 0.68,
+    }));
     const arcMaterial = trackMaterial(new THREE.LineBasicMaterial({
       color: 0x8cf0ff,
       transparent: true,
@@ -385,21 +425,38 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
     bridgeBolts.receiveShadow = true;
     bridgeGroup.add(bridgeBolts);
 
+    const turntable = new THREE.Group();
+    turntable.position.set(0, 0, -10.4);
+    scene.add(turntable);
     const platform = new THREE.Mesh(trackGeometry(new THREE.CylinderGeometry(5.8, 5.8, 0.68, 64)), deckSteel);
-    platform.position.set(0, -0.08, -17.6);
+    platform.position.set(0, -0.08, 0);
     platform.receiveShadow = true;
-    scene.add(platform);
+    turntable.add(platform);
     for (const radius of [3.7, 4.65]) {
       const ring = new THREE.Mesh(trackGeometry(new THREE.TorusGeometry(radius, radius === 3.7 ? 0.105 : 0.045, 12, 96)), radius === 3.7 ? amber : edgeSteel);
-      ring.position.set(0, 0.27, -17.6);
+      ring.position.set(0, 0.27, 0);
       ring.rotation.x = Math.PI / 2;
-      scene.add(ring);
+      turntable.add(ring);
     }
     for (let index = 0; index < 12; index += 1) {
       const angle = index / 12 * Math.PI * 2;
-      const marker = addRoundedBox(scene, [0.18, 0.055, 0.86], 0.02, amber, [Math.sin(angle) * 4.15, 0.285, -17.6 + Math.cos(angle) * 4.15], false);
+      const marker = addRoundedBox(turntable, [0.18, 0.055, 0.86], 0.02, amber, [Math.sin(angle) * 4.15, 0.285, Math.cos(angle) * 4.15], false);
       marker.rotation.y = angle;
     }
+
+    // The incident is real scene geometry: it drops into the collision corridor and is winched clear.
+    const obstruction = new THREE.Group();
+    scene.add(obstruction);
+    addRoundedBox(obstruction, [9.1, 0.62, 0.78], 0.08, rustSteel, [0, 0, 0]);
+    addBox(obstruction, [8.35, 0.18, 0.84], edgeSteel, [0, 0.41, 0]);
+    for (const x of [-3.5, -1.75, 0, 1.75, 3.5]) addBox(obstruction, [0.14, 1.35, 0.92], darkSteel, [x, -0.18, 0]);
+    obstruction.position.set(0, 7.3, -1.3);
+
+    const cableMaterial = trackMaterial(new THREE.LineBasicMaterial({ color: 0xe8ece8, transparent: true, opacity: 0.9 }));
+    const cableGeometry = trackGeometry(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]));
+    const winchCable = new THREE.Line(cableGeometry, cableMaterial);
+    winchCable.visible = false;
+    scene.add(winchCable);
 
     // Guard rails and under-deck bracing stay outside the vehicle envelope.
     for (const side of [-1, 1]) {
@@ -502,6 +559,27 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
       haze.position.set(index % 2 ? 9.5 : -9.5, 1.2 + index * 0.55, -19 + index * 6.4);
       haze.rotation.y = (index % 2 ? -1 : 1) * 0.35;
       scene.add(haze);
+    }
+
+    // Node 7 reactor cradle provides a clear physical destination and a large restoration payoff.
+    const reactor = new THREE.Group();
+    reactor.position.set(0, 0, -20.4);
+    scene.add(reactor);
+    addRoundedBox(reactor, [8.6, 0.72, 3.5], 0.12, blackSteel, [0, 0.12, -0.85]);
+    addRoundedBox(reactor, [4.8, 2.35, 1.8], 0.16, armorPanel, [0, 1.3, -1.22]);
+    for (const side of [-1, 1]) {
+      addRoundedBox(reactor, [0.62, 7.4, 0.76], 0.1, edgeSteel, [side * 3.05, 3.48, -0.35]);
+      addBeam(reactor, new THREE.Vector3(side * 3.05, 6.85, -0.32), new THREE.Vector3(side * 1.35, 5.25, 0.24), 0.15, rustSteel, 14);
+      addBox(reactor, [0.13, 4.9, 0.16], reactorEnergy, [side * 2.08, 3.5, -0.12], false);
+      for (let y = 1.3; y < 6.1; y += 0.72) addBox(reactor, [0.5, 0.08, 0.18], reactorEnergy, [side * 2.08, y, -0.08], false);
+    }
+    const socketRings: THREE.Mesh[] = [];
+    for (let index = 0; index < 4; index += 1) {
+      const ring = new THREE.Mesh(trackGeometry(new THREE.TorusGeometry(1.02 + index * 0.17, 0.075, 12, 72)), reactorEnergy);
+      ring.position.set(0, 3.52, 0.08 - index * 0.14);
+      ring.rotation.x = Math.PI / 2;
+      reactor.add(ring);
+      socketRings.push(ring);
     }
 
     const rover = new THREE.Group();
@@ -671,6 +749,14 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
     addRoundedBox(rover, [2.56, 0.18, 1.25], 0.05, armorPanel, [0, 2.52, -2.7]);
     addBox(rover, [4.28, 0.22, 0.28], donorMetal, [0, 1.31, -3.35]);
     addRoundedBox(rover, [4.08, 0.12, 0.16], 0.03, amber, [0, 1.54, -3.43], false);
+    const winchDrum = new THREE.Mesh(trackGeometry(new THREE.CylinderGeometry(0.3, 0.3, 1.18, 24)), donorDetail);
+    winchDrum.position.set(0, 1.16, -3.42);
+    winchDrum.rotation.z = Math.PI / 2;
+    rover.add(winchDrum);
+    const winchHook = new THREE.Mesh(trackGeometry(new THREE.TorusGeometry(0.17, 0.05, 10, 24, Math.PI * 1.5)), amber);
+    winchHook.position.set(0, 1.14, -3.68);
+    winchHook.rotation.y = Math.PI / 2;
+    rover.add(winchHook);
     for (const x of [-1.37, 1.37]) {
       addRoundedBox(rover, [0.44, 0.24, 0.13], 0.05, paleLight, [x, 1.98, -3.36], false);
       addRoundedBox(rover, [0.4, 0.24, 0.13], 0.05, redLight, [x, 2.2, 3.16], false);
@@ -841,6 +927,7 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
       new THREE.Vector3(6.15, 0.82, 2.15),
       new THREE.Vector3(-8.25, 1.45, -1.9),
       new THREE.Vector3(7.65, 1.05, -9.7),
+      new THREE.Vector3(0, 0.52, -1.3),
     ];
     const sparkStates = Array.from({ length: sparkCount }, () => ({
       position: new THREE.Vector3(),
@@ -914,7 +1001,18 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
 
     const cameraTarget = new THREE.Vector3();
     const desiredCamera = new THREE.Vector3();
+    const desiredTarget = new THREE.Vector3();
+    const cableStart = new THREE.Vector3();
+    const cableEnd = new THREE.Vector3();
+    const coreDockPosition = new THREE.Vector3(-0.2, 3.52, -5.3);
+    const coldBackground = new THREE.Color(0x030505);
+    const poweredBackground = new THREE.Color(0x17100a);
+    const coldFurnace = new THREE.Color(0x4a160c);
+    const hotFurnace = new THREE.Color(0xffd38c);
     let previousTime = performance.now();
+    let previousRoverZ = START_Z;
+    let wheelTurn = 0;
+    let currentPower = 0;
     let frame = 0;
     let firstFrame = true;
     const resize = () => {
@@ -935,28 +1033,79 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
     observer.observe(mount);
     resize();
 
+    function resolveMission(now: number) {
+      const clock = motionRef.current;
+      if (clock.replayMode) return replayPhase(clock.replayProgress);
+      const duration = PHASE_DURATION[clock.phase];
+      const local = duration ? THREE.MathUtils.clamp((now - clock.startedAt) / duration, 0, 1) : clock.phase === "complete" ? 1 : 0;
+      return { phase: clock.phase, local };
+    }
+
     const animate = (now: number) => {
       frame = requestAnimationFrame(animate);
       const delta = Math.min((now - previousTime) / 1000, 0.05);
       previousTime = now;
-      const clock = motionRef.current;
-      let raw = 0;
-      if (clock.replay) raw = ((now - clock.startedAt) % RUN_DURATION) / RUN_DURATION;
-      else if (clock.state === "running") raw = Math.min((now - clock.startedAt) / RUN_DURATION, 1);
-      else if (clock.state === "complete") raw = 1;
+      const mission = resolveMission(now);
+      const local = ease(mission.local);
+      let roverZ = START_Z;
+      let roverX = 0.2;
+      if (mission.phase === "transit") roverZ = THREE.MathUtils.lerp(START_Z, 2.3, local);
+      else if (mission.phase === "blocked") roverZ = 2.3;
+      else if (mission.phase === "winching") roverZ = THREE.MathUtils.lerp(2.3, 2.55, local);
+      else if (mission.phase === "crossing") {
+        const crossingTravel = THREE.MathUtils.smoothstep(mission.local, 0.17, 0.98);
+        roverZ = THREE.MathUtils.lerp(2.55, -15.2, ease(crossingTravel));
+        roverX += Math.sin(ease(crossingTravel) * Math.PI) * 0.12;
+      } else if (["dock_ready", "docking", "complete"].includes(mission.phase)) roverZ = -15.2;
 
-      const travel = raw * raw * (3 - 2 * raw);
-      const moving = clock.replay || clock.state === "running";
-      rover.position.z = START_Z - travel * RUN_DISTANCE;
-      rover.position.x = 0.2 + Math.sin(raw * Math.PI) * 0.08;
+      const moving = mission.phase === "transit" || mission.phase === "crossing";
+      const winchLoad = mission.phase === "winching" ? Math.sin(Math.min(mission.local * 1.3, 1) * Math.PI) : 0;
+      rover.position.z = roverZ;
+      rover.position.x = roverX;
       rover.position.y = moving ? Math.sin(now * 0.011) * 0.012 : 0;
-      rover.rotation.y = Math.sin(raw * Math.PI * 2) * 0.009;
-      rover.rotation.z = moving ? Math.sin(now * 0.008) * 0.0023 : 0;
-      const wheelTurn = -(travel * RUN_DISTANCE) / WHEEL_RADIUS;
+      rover.rotation.y = moving ? Math.sin(now * 0.0015) * 0.009 : winchLoad * -0.008;
+      rover.rotation.z = moving ? Math.sin(now * 0.008) * 0.0023 : winchLoad * 0.006;
+      wheelTurn += (roverZ - previousRoverZ) / WHEEL_RADIUS;
+      previousRoverZ = roverZ;
       wheels.forEach((wheel, index) => {
         wheel.rotation.x = wheelTurn;
-        wheel.position.y = wheel.userData.baseY + (moving ? Math.sin(now * 0.013 + index * 0.86) * 0.012 : 0);
+        wheel.position.y = wheel.userData.baseY + (moving ? Math.sin(now * 0.013 + index * 0.86) * 0.012 : 0) - winchLoad * (index % 3 === 0 ? 0.012 : -0.006);
       });
+      winchDrum.rotation.x += mission.phase === "winching" ? delta * 5.4 : 0;
+
+      let beamFall = 0;
+      if (mission.phase === "transit") beamFall = THREE.MathUtils.smoothstep(mission.local, 0.4, 0.78);
+      else if (mission.phase !== "ready") beamFall = 1;
+      const beamPull = mission.phase === "winching" ? ease(mission.local) : ["crossing", "dock_ready", "docking", "complete"].includes(mission.phase) ? 1 : 0;
+      obstruction.position.set(
+        THREE.MathUtils.lerp(0, 6.9, beamPull),
+        THREE.MathUtils.lerp(7.3, 0.86, ease(beamFall)),
+        THREE.MathUtils.lerp(-1.3, -0.1, beamPull),
+      );
+      obstruction.rotation.set(
+        THREE.MathUtils.lerp(0, 0.07, beamFall),
+        THREE.MathUtils.lerp(0.025, 0.68, beamPull),
+        THREE.MathUtils.lerp(0, -0.13, beamFall) + beamPull * 0.07,
+      );
+
+      winchCable.visible = mission.phase === "winching";
+      if (winchCable.visible) {
+        rover.updateMatrixWorld();
+        obstruction.updateMatrixWorld();
+        cableStart.set(0, 1.14, -3.67).applyMatrix4(rover.matrixWorld);
+        cableEnd.set(-3.45, 0.04, 0).applyMatrix4(obstruction.matrixWorld);
+        const cablePositions = cableGeometry.attributes.position.array as Float32Array;
+        cablePositions.set([cableStart.x, cableStart.y, cableStart.z, cableEnd.x, cableEnd.y, cableEnd.z]);
+        cableGeometry.attributes.position.needsUpdate = true;
+        cableGeometry.computeBoundingSphere();
+      }
+
+      const tableAlignment = mission.phase === "crossing" ? THREE.MathUtils.smoothstep(mission.local, 0.02, 0.3) : ["dock_ready", "docking", "complete"].includes(mission.phase) ? 1 : 0;
+      turntable.rotation.y = THREE.MathUtils.lerp(0.47, 0, tableAlignment);
+
+      const dockTravel = mission.phase === "docking" ? ease(THREE.MathUtils.smoothstep(mission.local, 0.1, 0.82)) : mission.phase === "complete" ? 1 : 0;
+      coreAssembly.position.copy(cageCenter).lerp(coreDockPosition, dockTravel);
+      coreAssembly.position.y += mission.phase === "docking" ? Math.sin(dockTravel * Math.PI) * 1.35 : 0;
       core.rotation.x += delta * 0.72;
       core.rotation.y += delta * 1.05;
       const corePulse = 1 + Math.sin(now * 0.0042) * 0.045;
@@ -987,9 +1136,22 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
         line.visible = Math.sin(now * 0.012 + phase) > -0.72;
       });
 
-      dust.visible = moving && raw > 0.015 && raw < 0.96;
+      const targetPower = mission.phase === "docking"
+        ? THREE.MathUtils.smoothstep(mission.local, 0.42, 0.94)
+        : mission.phase === "complete" ? 1 : 0;
+      currentPower = THREE.MathUtils.lerp(currentPower, targetPower, 1 - Math.pow(0.001, delta));
+      renderer.toneMappingExposure = 0.88 + currentPower * 0.22;
+      (scene.background as THREE.Color).copy(coldBackground).lerp(poweredBackground, currentPower * 0.68);
+      furnace.emissiveIntensity = 0.16 + currentPower * 4.45;
+      furnaceWhite.color.copy(coldFurnace).lerp(hotFurnace, currentPower);
+      reactorEnergy.emissiveIntensity = 0.04 + currentPower * 4.7;
+      socketRings.forEach((ring, index) => {
+        ring.rotation.z += delta * (0.3 + index * 0.17) * (index % 2 ? -1 : 1);
+      });
+
+      dust.visible = moving && mission.local > 0.015 && mission.local < 0.98;
       for (let index = 0; index < dustCount; index += 1) {
-        const phase = (raw * 8 + index / dustCount) % 1;
+        const phase = (mission.local * 8 + index / dustCount) % 1;
         dustPositions[index * 3] = ((index * 19) % 31) / 31 * 4.25 - 2.125;
         dustPositions[index * 3 + 1] = 0.2 + phase * 0.52;
         dustPositions[index * 3 + 2] = 2.75 + phase * 3.1;
@@ -1014,6 +1176,8 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
         sparkDirection.copy(state.velocity).normalize();
         sparkQuaternion.setFromUnitVectors(sparkUp, sparkDirection);
         sparkScale.set(0.42 + fade * 0.35, 0.48 + state.velocity.length() * 0.09, 0.42 + fade * 0.35);
+        const incidentSparks = mission.phase === "winching" || (mission.phase === "transit" && mission.local > 0.52);
+        if (index % sparkEmitters.length === 3 && !incidentSparks) sparkScale.setScalar(0);
         sparkMatrix.compose(state.position, sparkQuaternion, sparkScale);
         sparks.setMatrixAt(index, sparkMatrix);
       });
@@ -1022,19 +1186,58 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
       const portrait = mount.clientWidth / Math.max(mount.clientHeight, 1) < 0.72;
       const vehicleZ = rover.position.z;
       const cameraBreath = moving ? Math.sin(now * 0.01) * 0.026 : Math.sin(now * 0.00045) * 0.045;
-      desiredCamera.set(
-        portrait ? 7.85 : 8.3 - travel * 0.48 + cameraBreath,
-        portrait ? 5.25 : 4.16 - travel * 0.1,
-        vehicleZ - (portrait ? 11.35 : 7.9),
-      );
-      if (firstFrame) camera.position.copy(desiredCamera);
-      else camera.position.lerp(desiredCamera, 1 - Math.exp(-delta * 3.8));
-      cameraTarget.set(portrait ? 0 : -0.16, portrait ? 2.02 : 2.02, vehicleZ + (portrait ? 0.35 : 0.28));
+      if (mission.phase === "ready") {
+        desiredCamera.set(8.35 + cameraBreath, 4.35, -2.65);
+        desiredTarget.set(0, 2.05, 3.95);
+      } else if (mission.phase === "transit") {
+        desiredCamera.set(8.25, 4.15, vehicleZ - 7.7);
+        desiredTarget.set(0, 2.0, vehicleZ + 0.3);
+        if (mission.local > 0.4) {
+          desiredCamera.set(8.7, 4.35, 5.6);
+          desiredTarget.set(0, 1.25, -1.25);
+        }
+      } else if (mission.phase === "blocked") {
+        desiredCamera.set(8.8, 4.35, 5.3);
+        desiredTarget.set(0, 1.25, -1.1);
+      } else if (mission.phase === "winching") {
+        desiredCamera.set(9.4 - local * 1.9, 3.9 + local * 0.45, 4.6 - local * 1.1);
+        desiredTarget.set(1.3 + local * 2.2, 1.05, -0.65);
+      } else if (mission.phase === "crossing") {
+        desiredCamera.set(-9.2 + local * 1.4, 6.6 - local * 0.8, -3.4 - local * 5.6);
+        desiredTarget.set(rover.position.x, 1.85, vehicleZ - 1.4);
+      } else if (mission.phase === "dock_ready") {
+        desiredCamera.set(8.25, 4.95, -9.6);
+        desiredTarget.set(0, 2.6, -18.25);
+      } else if (mission.phase === "docking") {
+        desiredCamera.set(7.8 - local * 1.8, 4.8 + local * 1.25, -10.8 - local * 1.7);
+        desiredTarget.set(0, 2.85 + local * 0.4, -18.5 - local * 1.2);
+      } else {
+        desiredCamera.set(10.7, 7.7, -8.2);
+        desiredTarget.set(0, 2.75, -18.1);
+      }
+      if (portrait) {
+        desiredCamera.x *= 1.08;
+        desiredCamera.y += 1.45;
+        desiredCamera.z += 2.6;
+      }
+      const impactShake = mission.phase === "transit" ? Math.max(0, 1 - Math.abs(mission.local - 0.78) * 10) * 0.1 : 0;
+      desiredCamera.x += Math.sin(now * 0.16) * impactShake;
+      desiredCamera.y += Math.cos(now * 0.21) * impactShake;
+      if (firstFrame) {
+        camera.position.copy(desiredCamera);
+        cameraTarget.copy(desiredTarget);
+      } else {
+        camera.position.lerp(desiredCamera, 1 - Math.exp(-delta * 3.8));
+        cameraTarget.lerp(desiredTarget, 1 - Math.exp(-delta * 4.5));
+      }
       camera.lookAt(cameraTarget);
-      furnaceLight.intensity = 13.4 + Math.sin(now * 0.006) * 2.2 + Math.sin(now * 0.017) * 0.8;
-      oppositeFurnaceLight.intensity = 9.4 + Math.sin(now * 0.005 + 1.4) * 1.5;
-      platformLight.intensity = 10.5 + Math.sin(now * 0.004 + 1) * 1.1;
-      coreHalo.intensity = 6.5 + Math.sin(now * 0.005) * 1.1;
+      const tableActive = mission.phase === "crossing" ? 1 : 0;
+      furnaceLight.intensity = 0.45 + currentPower * (13 + Math.sin(now * 0.006) * 2.2);
+      oppositeFurnaceLight.intensity = 0.35 + currentPower * (9.2 + Math.sin(now * 0.005 + 1.4) * 1.5);
+      platformLight.position.z = -10.4;
+      platformLight.intensity = 0.6 + tableActive * 7.8 + currentPower * 5.4;
+      coreHalo.intensity = 6.5 + Math.sin(now * 0.005) * 1.1 + currentPower * 3.5;
+      bloomPass.strength = (portrait ? 0.36 : 0.46) + currentPower * 0.12;
       composer.render(delta);
       if (firstFrame) {
         firstFrame = false;
