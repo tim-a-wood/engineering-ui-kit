@@ -10,7 +10,7 @@
 }
 
 * { box-sizing: border-box; }
-html, body { width: 100%; min-height: 100%; margin: 0; background: #100d0a; color: #f7f4e9; }
+html, body { width: 100%; min-height: 100%; margin: 0; background: #040606; color: #f7f4e9; }
 body { font-family: var(--font-geist-sans, Arial), sans-serif; overflow: hidden; }
 button { font: inherit; color: inherit; }
 button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
@@ -22,30 +22,26 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
   min-height: 680px;
   overflow: hidden;
   isolation: isolate;
-  background: #17130f;
+  background: #050706;
 }
 
 .scene, .scene-drift, .scene-glow, .scanlines, .vignette { position: absolute; inset: 0; }
-.scene { z-index: -2; overflow: hidden; background: #17130f; }
-.scene-canvas { position: absolute; inset: 0; z-index: 0; overflow: hidden; background-color: #17130f; }
-.scene-canvas canvas { display: block; width: 100%; height: 100%; filter: saturate(1.02) contrast(1.065) brightness(.98); transition: filter .45s ease; }
+.scene { z-index: -2; overflow: hidden; background: #050706; }
+.scene-canvas { position: absolute; inset: 0; z-index: 0; overflow: hidden; background-color: #050706; }
+.scene-canvas canvas { display: block; width: 100%; height: 100%; filter: saturate(1.07) contrast(1.09) brightness(1.01); transition: filter .45s ease; }
 .scene-loading { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; color: rgba(255,255,255,.45); background: #050606; font: 8px var(--font-geist-mono); letter-spacing: .18em; transition: opacity .35s ease; pointer-events: none; }
 .scene-loading i { width: 28px; height: 28px; border: 1px solid rgba(102,231,255,.2); border-top-color: var(--cyan); transform: rotate(45deg); animation: scene-loader 1.2s linear infinite; }
 .scene-canvas:has(canvas) .scene-loading { opacity: 0; }
 .mode-build .scene-canvas canvas { filter: saturate(.9) contrast(1.04) brightness(.94); }
 .mode-replay .scene-canvas canvas { filter: saturate(1.02) contrast(1.06) brightness(1.02); }
-.scene-drift,.scene-glow,.scanlines,.vignette,.sparks { pointer-events: none; }
+.scene-drift,.scene-glow,.scanlines,.vignette { pointer-events: none; }
 .scene-drift { z-index: 1; }
-.scene-glow,.sparks { z-index: 2; }
+.scene-glow { z-index: 2; }
 .scanlines,.vignette { z-index: 3; }
-.scene-drift { background: radial-gradient(circle at 72% 27%, rgba(255,139,55,.12), transparent 25%), radial-gradient(circle at 37% 56%, rgba(76,219,255,.07), transparent 27%); mix-blend-mode: screen; opacity: .28; animation: haze 8s ease-in-out infinite alternate; }
-.scene-glow { background: linear-gradient(180deg, rgba(0,0,0,.18), transparent 24%, transparent 74%, rgba(0,0,0,.38)), radial-gradient(ellipse at 50% 100%, rgba(255,128,35,.1), transparent 45%); }
-.scanlines { opacity: .032; background: repeating-linear-gradient(180deg, transparent 0, transparent 3px, rgba(255,255,255,.16) 4px); pointer-events: none; }
-.vignette { box-shadow: inset 0 0 120px 18px rgba(0,0,0,.32); pointer-events: none; }
-
-.sparks { position: absolute; inset: 0; overflow: hidden; opacity: .72; }
-.sparks i { position: absolute; left: var(--spark-x); top: var(--spark-y); width: var(--spark-size); height: calc(var(--spark-size) * 3.4); border-radius: 99px; background: #ffd36f; box-shadow: 0 0 9px #ff7018; opacity: 0; transform: rotate(36deg); animation: spark-rise 2.4s var(--spark-delay) ease-out infinite; }
-.run-running .sparks { opacity: 1; }
+.scene-drift { background: radial-gradient(circle at 18% 78%, rgba(255,100,28,.12), transparent 24%), radial-gradient(circle at 62% 48%, rgba(62,205,238,.095), transparent 20%); mix-blend-mode: screen; opacity: .16; animation: haze 9s ease-in-out infinite alternate; }
+.scene-glow { background: linear-gradient(180deg, rgba(0,0,0,.28), transparent 24%, transparent 67%, rgba(0,0,0,.52)), radial-gradient(ellipse at 12% 88%, rgba(255,91,18,.09), transparent 34%); }
+.scanlines { opacity: .018; background: repeating-linear-gradient(180deg, transparent 0, transparent 3px, rgba(255,255,255,.14) 4px); pointer-events: none; }
+.vignette { box-shadow: inset 0 0 150px 30px rgba(0,0,0,.48); pointer-events: none; }
 
 .topbar {
   position: absolute; z-index: 10; top: 18px; left: 20px; right: 20px; height: 64px;
@@ -150,7 +146,6 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .concept-note { position: absolute; z-index: 10; right: 30px; bottom: 7px; color: rgba(255,255,255,.44); font: 6px var(--font-geist-mono); letter-spacing: .17em; }
 .mobile-note { display: none; }
 
-@keyframes spark-rise { 0% { opacity: 0; transform: translate(0,18px) rotate(36deg); } 20% { opacity: .9; } 100% { opacity: 0; transform: translate(34px,-115px) rotate(36deg); } }
 @keyframes haze { from { transform: translateX(-1.5%) scale(1.01); opacity: .28; } to { transform: translateX(1.5%) scale(1.04); opacity: .55; } }
 @keyframes signal-pulse { 50% { opacity: .38; } }
 @keyframes scene-loader { to { transform: rotate(405deg); } }

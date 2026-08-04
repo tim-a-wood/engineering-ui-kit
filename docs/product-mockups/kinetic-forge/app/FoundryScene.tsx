@@ -45,10 +45,10 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
     if (!mount) return;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x080908);
-    scene.fog = new THREE.FogExp2(0x17110d, 0.017);
+    scene.background = new THREE.Color(0x030505);
+    scene.fog = new THREE.FogExp2(0x080b0b, 0.016);
 
-    const camera = new THREE.PerspectiveCamera(37, 1, 0.1, 150);
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 150);
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.AgXToneMapping;
@@ -64,7 +64,7 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
 
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.36, 0.32, 1.02);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.48, 0.3, 1.08);
     composer.addPass(bloomPass);
     composer.addPass(new OutputPass());
 
@@ -205,23 +205,34 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
       metalness: 0.55,
     }));
     const cyan = trackMaterial(new THREE.MeshStandardMaterial({
-      color: 0x41cbe5,
-      emissive: 0x037b9c,
-      emissiveIntensity: 2.35,
+      color: 0x2da8c1,
+      emissive: 0x02647c,
+      emissiveIntensity: 1.65,
       roughness: 0.08,
       metalness: 0.12,
     }));
-    const coreWhite = trackMaterial(new THREE.MeshBasicMaterial({ color: 0x9cecff }));
-    const cyanGlass = trackMaterial(new THREE.MeshPhysicalMaterial({
-      color: 0x5edff7,
-      emissive: 0x0a6a87,
-      emissiveIntensity: 1.4,
+    const coreShell = trackMaterial(new THREE.MeshStandardMaterial({
+      color: 0x35c2da,
+      emissive: 0x005c70,
+      emissiveIntensity: 1.55,
+      metalness: 0.3,
+      roughness: 0.16,
+      wireframe: true,
+    }));
+    const coreEnergy = trackMaterial(new THREE.MeshBasicMaterial({
+      color: 0x3bcbe5,
       transparent: true,
-      opacity: 0.17,
+      opacity: 0.82,
+      blending: THREE.AdditiveBlending,
       depthWrite: false,
-      transmission: 0.2,
-      roughness: 0.08,
-      side: THREE.DoubleSide,
+    }));
+    const coreWhite = trackMaterial(new THREE.MeshBasicMaterial({ color: 0xd9fbff }));
+    const arcMaterial = trackMaterial(new THREE.LineBasicMaterial({
+      color: 0x8cf0ff,
+      transparent: true,
+      opacity: 0.88,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     }));
     const furnace = trackMaterial(new THREE.MeshStandardMaterial({
       color: 0xff9b37,
@@ -589,34 +600,68 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
     const cagePoints = addFramedModule(rover, cageCenter, 3.48, 1.82, 2.35, donorDetail, 0.074);
     addBeam(rover, cagePoints[0], cagePoints[7], 0.061, donorDetail, 12);
     addBeam(rover, cagePoints[1], cagePoints[6], 0.061, donorDetail, 12);
-    addBeam(rover, cagePoints[2], cagePoints[5], 0.061, donorDetail, 12);
-    addBeam(rover, cagePoints[3], cagePoints[4], 0.061, donorDetail, 12);
-    const coreShield = addRoundedBox(rover, [3.03, 1.4, 0.045], 0.02, cyanGlass, [0, 2.4, -1.02], false);
-    coreShield.rotation.y = Math.PI / 2;
-
     const coreAssembly = new THREE.Group();
     coreAssembly.position.copy(cageCenter);
     rover.add(coreAssembly);
-    const core = new THREE.Mesh(trackGeometry(new THREE.IcosahedronGeometry(0.64, 4)), cyan);
-    core.scale.set(0.82, 1.08, 0.82);
+
+    const pedestal = new THREE.Mesh(trackGeometry(new THREE.CylinderGeometry(0.5, 0.62, 0.18, 24)), blackSteel);
+    pedestal.position.y = -0.82;
+    pedestal.castShadow = true;
+    coreAssembly.add(pedestal);
+    const pedestalRing = new THREE.Mesh(trackGeometry(new THREE.TorusGeometry(0.48, 0.035, 10, 48)), cyan);
+    pedestalRing.position.y = -0.71;
+    pedestalRing.rotation.x = Math.PI / 2;
+    coreAssembly.add(pedestalRing);
+
+    const core = new THREE.Mesh(trackGeometry(new THREE.DodecahedronGeometry(0.53, 0)), coreShell);
+    core.scale.set(0.74, 1.1, 0.74);
     core.castShadow = true;
     coreAssembly.add(core);
-    const coreInner = new THREE.Mesh(trackGeometry(new THREE.IcosahedronGeometry(0.18, 2)), coreWhite);
+    const coreInner = new THREE.Mesh(trackGeometry(new THREE.IcosahedronGeometry(0.19, 3)), coreEnergy);
     coreAssembly.add(coreInner);
-    const coreRings: THREE.Mesh[] = [];
+    const coreHot = new THREE.Mesh(trackGeometry(new THREE.IcosahedronGeometry(0.06, 2)), coreWhite);
+    coreAssembly.add(coreHot);
+
+    const coreRings: THREE.Group[] = [];
     for (const rotation of [[0, 0, 0], [0, Math.PI / 2, 0], [Math.PI / 2, 0, 0]] as const) {
-      const ring = new THREE.Mesh(trackGeometry(new THREE.TorusGeometry(0.94, 0.035, 12, 72)), cyan);
-      ring.rotation.set(...rotation);
-      coreAssembly.add(ring);
-      coreRings.push(ring);
+      const ringGroup = new THREE.Group();
+      ringGroup.rotation.set(...rotation);
+      const frameRing = new THREE.Mesh(trackGeometry(new THREE.TorusGeometry(0.94, 0.052, 12, 80)), donorDetail);
+      frameRing.castShadow = true;
+      ringGroup.add(frameRing);
+      ringGroup.add(new THREE.Mesh(trackGeometry(new THREE.TorusGeometry(0.94, 0.012, 8, 80)), coreEnergy));
+      for (let nodeIndex = 0; nodeIndex < 6; nodeIndex += 1) {
+        const angle = nodeIndex / 6 * Math.PI * 2;
+        const node = new THREE.Mesh(trackGeometry(new THREE.IcosahedronGeometry(0.052, 1)), nodeIndex % 2 ? cyan : brass);
+        node.position.set(Math.cos(angle) * 0.94, Math.sin(angle) * 0.94, 0);
+        ringGroup.add(node);
+      }
+      coreAssembly.add(ringGroup);
+      coreRings.push(ringGroup);
     }
+
     for (let index = 0; index < 6; index += 1) {
       const angle = index / 6 * Math.PI * 2;
-      const electrode = addRoundedBox(coreAssembly, [0.15, 0.15, 0.42], 0.04, donorDetail, [Math.sin(angle) * 1.25, Math.cos(angle) * 0.76, 0]);
+      const electrode = addRoundedBox(coreAssembly, [0.15, 0.15, 0.46], 0.04, donorDetail, [Math.sin(angle) * 1.18, Math.cos(angle) * 0.72, 0]);
       electrode.rotation.z = -angle;
-      addBeam(coreAssembly, new THREE.Vector3(Math.sin(angle) * 1.17, Math.cos(angle) * 0.69, 0), new THREE.Vector3(Math.sin(angle) * 0.78, Math.cos(angle) * 0.46, 0), 0.025, cyan, 8);
+      const tip = new THREE.Mesh(trackGeometry(new THREE.IcosahedronGeometry(0.07, 1)), cyan);
+      tip.position.set(Math.sin(angle) * 0.84, Math.cos(angle) * 0.51, 0);
+      coreAssembly.add(tip);
+      addBeam(coreAssembly, new THREE.Vector3(Math.sin(angle) * 1.1, Math.cos(angle) * 0.67, 0), new THREE.Vector3(Math.sin(angle) * 0.82, Math.cos(angle) * 0.5, 0), 0.028, donorDetail, 8);
     }
-    const coreHalo = new THREE.PointLight(0x41dfff, 3.2, 7, 2);
+
+    const arcLines: { line: THREE.Line; positions: Float32Array; phase: number }[] = [];
+    for (let arcIndex = 0; arcIndex < 4; arcIndex += 1) {
+      const positions = new Float32Array(22 * 3);
+      const geometry = trackGeometry(new THREE.BufferGeometry());
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const line = new THREE.Line(geometry, arcMaterial);
+      line.frustumCulled = false;
+      coreAssembly.add(line);
+      arcLines.push({ line, positions, phase: arcIndex / 4 * Math.PI * 2 });
+    }
+
+    const coreHalo = new THREE.PointLight(0x39dfff, 7, 6.5, 2);
     coreAssembly.add(coreHalo);
     addTube(rover, [new THREE.Vector3(-1.42, 1.8, -1.9), new THREE.Vector3(-1.52, 2.05, -0.2), new THREE.Vector3(-1.55, 2.1, 1.08)], 0.055, cyan, 32);
     addTube(rover, [new THREE.Vector3(1.42, 1.8, -1.9), new THREE.Vector3(1.52, 2.05, -0.2), new THREE.Vector3(1.55, 2.1, 1.08)], 0.055, cyan, 32);
@@ -731,25 +776,103 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
     const dustPositions = new Float32Array(dustCount * 3);
     const dustGeometry = trackGeometry(new THREE.BufferGeometry());
     dustGeometry.setAttribute("position", new THREE.BufferAttribute(dustPositions, 3));
-    const dustMaterial = trackMaterial(new THREE.PointsMaterial({ color: 0xc98348, size: 0.14, transparent: true, opacity: 0, depthWrite: false }));
+    const softParticleVertex = `
+      uniform float uSize;
+      void main() {
+        vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = clamp(uSize * (270.0 / max(1.0, -viewPosition.z)), 1.0, 8.0);
+        gl_Position = projectionMatrix * viewPosition;
+      }
+    `;
+    const softParticleFragment = `
+      uniform vec3 uColor;
+      uniform float uOpacity;
+      void main() {
+        float radius = distance(gl_PointCoord, vec2(0.5));
+        float alpha = smoothstep(0.5, 0.08, radius) * uOpacity;
+        gl_FragColor = vec4(uColor, alpha);
+      }
+    `;
+    const dustMaterial = trackMaterial(new THREE.ShaderMaterial({
+      uniforms: {
+        uColor: { value: new THREE.Color(0xb87543) },
+        uOpacity: { value: 0 },
+        uSize: { value: 0.12 },
+      },
+      vertexShader: softParticleVertex,
+      fragmentShader: softParticleFragment,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.NormalBlending,
+    }));
     const dust = new THREE.Points(dustGeometry, dustMaterial);
     rover.add(dust);
 
-    const sparkCount = 180;
-    const sparkPositions = new Float32Array(sparkCount * 3);
-    for (let index = 0; index < sparkCount; index += 1) {
-      sparkPositions[index * 3] = (index % 2 ? 1 : -1) * (6.3 + ((index * 31) % 72) / 12);
-      sparkPositions[index * 3 + 1] = ((index * 17) % 104) / 12;
-      sparkPositions[index * 3 + 2] = -22 + ((index * 43) % 410) / 12;
+    const moteCount = 150;
+    const motePositions = new Float32Array(moteCount * 3);
+    for (let index = 0; index < moteCount; index += 1) {
+      motePositions[index * 3] = -14 + ((index * 47) % 280) / 10;
+      motePositions[index * 3 + 1] = 0.2 + ((index * 29) % 88) / 10;
+      motePositions[index * 3 + 2] = -24 + ((index * 73) % 360) / 10;
     }
-    const sparkGeometry = trackGeometry(new THREE.BufferGeometry());
-    sparkGeometry.setAttribute("position", new THREE.BufferAttribute(sparkPositions, 3));
-    const sparkMaterial = trackMaterial(new THREE.PointsMaterial({ color: 0xffb14b, size: 0.065, transparent: true, opacity: 0.86, depthWrite: false }));
-    scene.add(new THREE.Points(sparkGeometry, sparkMaterial));
+    const moteGeometry = trackGeometry(new THREE.BufferGeometry());
+    moteGeometry.setAttribute("position", new THREE.BufferAttribute(motePositions, 3));
+    const moteMaterial = trackMaterial(new THREE.ShaderMaterial({
+      uniforms: {
+        uColor: { value: new THREE.Color(0xd98a45) },
+        uOpacity: { value: 0.17 },
+        uSize: { value: 0.075 },
+      },
+      vertexShader: softParticleVertex,
+      fragmentShader: softParticleFragment,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }));
+    scene.add(new THREE.Points(moteGeometry, moteMaterial));
 
-    scene.add(new THREE.HemisphereLight(0x8ba5a6, 0x361405, 0.72));
-    scene.add(new THREE.AmbientLight(0x6c7770, 0.16));
-    const key = new THREE.DirectionalLight(0xffd0a2, 2.35);
+    const sparkCount = 88;
+    const sparkGeometry = trackGeometry(new RoundedBoxGeometry(0.017, 0.13, 0.017, 2, 0.006));
+    const sparkMaterial = trackMaterial(new THREE.MeshBasicMaterial({ color: 0xff8c27, toneMapped: false }));
+    const sparks = new THREE.InstancedMesh(sparkGeometry, sparkMaterial, sparkCount);
+    sparks.frustumCulled = false;
+    scene.add(sparks);
+    const sparkEmitters = [
+      new THREE.Vector3(6.15, 0.82, 2.15),
+      new THREE.Vector3(-8.25, 1.45, -1.9),
+      new THREE.Vector3(7.65, 1.05, -9.7),
+    ];
+    const sparkStates = Array.from({ length: sparkCount }, () => ({
+      position: new THREE.Vector3(),
+      velocity: new THREE.Vector3(),
+      life: 0,
+      maxLife: 1,
+    }));
+    const sparkMatrix = new THREE.Matrix4();
+    const sparkQuaternion = new THREE.Quaternion();
+    const sparkScale = new THREE.Vector3();
+    const sparkDirection = new THREE.Vector3();
+    const sparkUp = new THREE.Vector3(0, 1, 0);
+    const resetSpark = (index: number, prewarm = false) => {
+      const state = sparkStates[index];
+      const emitter = sparkEmitters[index % sparkEmitters.length];
+      const angle = ((index * 2.399) % (Math.PI * 2)) + Math.random() * 0.35;
+      const speed = 1.6 + Math.random() * 2.8;
+      state.position.copy(emitter).add(new THREE.Vector3((Math.random() - 0.5) * 0.28, Math.random() * 0.2, (Math.random() - 0.5) * 0.34));
+      state.velocity.set(Math.cos(angle) * speed * 0.42, speed, Math.sin(angle) * speed * 0.55);
+      state.maxLife = 0.48 + Math.random() * 0.62;
+      state.life = prewarm ? Math.random() * state.maxLife : state.maxLife;
+      if (prewarm) {
+        const age = state.maxLife - state.life;
+        state.position.addScaledVector(state.velocity, age);
+        state.position.y -= 2.2 * age * age;
+      }
+    };
+    sparkStates.forEach((_, index) => resetSpark(index, true));
+
+    scene.add(new THREE.HemisphereLight(0x57767b, 0x120603, 0.54));
+    scene.add(new THREE.AmbientLight(0x647572, 0.095));
+    const key = new THREE.DirectionalLight(0xc5d7d4, 2.25);
     key.position.set(-7, 13, 10);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
@@ -759,25 +882,35 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
     key.shadow.camera.bottom = -7;
     key.shadow.bias = -0.00025;
     scene.add(key);
-    const cyanFill = new THREE.DirectionalLight(0x5ddfff, 1.85);
+    const cyanFill = new THREE.DirectionalLight(0x4dcce8, 0.72);
     cyanFill.position.set(9, 7, 8);
     scene.add(cyanFill);
-    const orangeRim = new THREE.DirectionalLight(0xff7929, 2.55);
+    const orangeRim = new THREE.DirectionalLight(0xff6c1e, 1.15);
     orangeRim.position.set(-5, 7, -11);
     scene.add(orangeRim);
-    const furnaceLight = new THREE.PointLight(0xff5c19, 11.5, 29, 1.6);
+    const furnaceLight = new THREE.PointLight(0xff5817, 14, 18, 1.7);
     furnaceLight.position.set(-10.8, 2.8, -1.4);
     scene.add(furnaceLight);
-    const oppositeFurnaceLight = new THREE.PointLight(0xff812d, 8.5, 24, 1.7);
+    const oppositeFurnaceLight = new THREE.PointLight(0xff7623, 10, 16, 1.8);
     oppositeFurnaceLight.position.set(11.2, 2.3, -10.2);
     scene.add(oppositeFurnaceLight);
-    const platformLight = new THREE.PointLight(0xffb34a, 10.5, 22, 1.8);
+    const platformLight = new THREE.PointLight(0xffa43a, 11, 14, 1.85);
     platformLight.position.set(0, 3.2, -17.4);
     scene.add(platformLight);
-    const roverRim = new THREE.SpotLight(0x6ee8ff, 11.5, 32, Math.PI / 4.4, 0.55, 1.25);
+    const roverRim = new THREE.SpotLight(0x5edfff, 7.2, 30, Math.PI / 4.8, 0.58, 1.35);
     roverRim.position.set(7, 10, 7);
     roverRim.target = rover;
     scene.add(roverRim);
+    const roverKey = new THREE.SpotLight(0xffa461, 3.8, 24, Math.PI / 4.7, 0.62, 1.25);
+    roverKey.position.set(-7, 7, -6);
+    roverKey.target = rover;
+    roverKey.castShadow = true;
+    roverKey.shadow.mapSize.set(1024, 1024);
+    scene.add(roverKey);
+    const cameraKey = new THREE.SpotLight(0xc8e1df, 10.5, 32, Math.PI / 4.0, 0.7, 1.15);
+    cameraKey.position.set(10, 8, 8);
+    cameraKey.target = rover;
+    scene.add(cameraKey);
 
     const cameraTarget = new THREE.Vector3();
     const desiredCamera = new THREE.Vector3();
@@ -793,9 +926,9 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
       renderer.setSize(width, height, false);
       composer.setPixelRatio(pixelRatio);
       composer.setSize(width, height);
-      bloomPass.strength = portrait ? 0.31 : 0.36;
+      bloomPass.strength = portrait ? 0.38 : 0.48;
       camera.aspect = width / height;
-      camera.fov = portrait ? 48 : 37;
+      camera.fov = portrait ? 48 : 35;
       camera.updateProjectionMatrix();
     };
     const observer = new ResizeObserver(resize);
@@ -824,16 +957,35 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
         wheel.rotation.x = wheelTurn;
         wheel.position.y = wheel.userData.baseY + (moving ? Math.sin(now * 0.013 + index * 0.86) * 0.012 : 0);
       });
-      coreAssembly.rotation.x += delta * 0.32;
-      coreAssembly.rotation.y += delta * 0.52;
       core.rotation.x += delta * 0.72;
       core.rotation.y += delta * 1.05;
-      const corePulse = 1 + Math.sin(now * 0.0042) * 0.035;
-      core.scale.set(0.82 * corePulse, 1.08 * corePulse, 0.82 * corePulse);
-      coreInner.scale.setScalar(0.95 + Math.sin(now * 0.006) * 0.13);
-      coreRings[0].rotation.z += delta * 0.48;
-      coreRings[1].rotation.x += delta * 0.42;
-      coreRings[2].rotation.y += delta * 0.37;
+      const corePulse = 1 + Math.sin(now * 0.0042) * 0.045;
+      core.scale.set(0.74 * corePulse, 1.1 * corePulse, 0.74 * corePulse);
+      coreInner.rotation.x -= delta * 1.15;
+      coreInner.rotation.y += delta * 1.65;
+      coreInner.scale.setScalar(0.96 + Math.sin(now * 0.006) * 0.11);
+      coreHot.scale.setScalar(0.9 + Math.sin(now * 0.009) * 0.24);
+      coreRings[0].rotation.z += delta * 0.31;
+      coreRings[1].rotation.x += delta * 0.25;
+      coreRings[2].rotation.y += delta * 0.2;
+      arcLines.forEach(({ line, positions, phase }, arcIndex) => {
+        const angle = phase + now * 0.00024 * (arcIndex % 2 ? -1 : 1);
+        const start = new THREE.Vector3(Math.sin(angle) * 0.84, Math.cos(angle) * 0.51, Math.sin(angle * 1.7) * 0.08);
+        const end = new THREE.Vector3(Math.sin(angle + 0.52) * 0.34, Math.cos(angle + 0.52) * 0.45, Math.cos(angle * 1.3) * 0.2);
+        for (let pointIndex = 0; pointIndex < 22; pointIndex += 1) {
+          const fraction = pointIndex / 21;
+          const turbulence = Math.sin(fraction * Math.PI) * (0.08 + arcIndex * 0.012);
+          const index = pointIndex * 3;
+          positions[index] = THREE.MathUtils.lerp(start.x, end.x, fraction)
+            + Math.sin(fraction * 17 + now * 0.012 + phase) * turbulence;
+          positions[index + 1] = THREE.MathUtils.lerp(start.y, end.y, fraction)
+            + Math.cos(fraction * 13 - now * 0.01 + phase) * turbulence;
+          positions[index + 2] = THREE.MathUtils.lerp(start.z, end.z, fraction)
+            + Math.sin(fraction * 19 + now * 0.008 + phase) * turbulence * 1.4;
+        }
+        line.geometry.attributes.position.needsUpdate = true;
+        line.visible = Math.sin(now * 0.012 + phase) > -0.72;
+      });
 
       dust.visible = moving && raw > 0.015 && raw < 0.96;
       for (let index = 0; index < dustCount; index += 1) {
@@ -843,30 +995,46 @@ export default function FoundryScene({ motionState, replayPlaying }: FoundryScen
         dustPositions[index * 3 + 2] = 2.75 + phase * 3.1;
       }
       dustGeometry.attributes.position.needsUpdate = true;
-      dustMaterial.opacity = moving ? 0.13 + Math.sin(now * 0.004) * 0.025 : 0;
+      dustMaterial.uniforms.uOpacity.value = moving ? 0.2 + Math.sin(now * 0.004) * 0.035 : 0;
 
-      const sparkArray = sparkGeometry.attributes.position.array as Float32Array;
-      for (let index = 0; index < sparkCount; index += 1) {
-        sparkArray[index * 3 + 1] += delta * (0.55 + (index % 7) * 0.16);
-        if (sparkArray[index * 3 + 1] > 10.5) sparkArray[index * 3 + 1] = -0.45;
+      const moteArray = moteGeometry.attributes.position.array as Float32Array;
+      for (let index = 0; index < moteCount; index += 1) {
+        moteArray[index * 3 + 1] += delta * (0.045 + (index % 5) * 0.014);
+        moteArray[index * 3] += Math.sin(now * 0.0003 + index) * delta * 0.018;
+        if (moteArray[index * 3 + 1] > 9.2) moteArray[index * 3 + 1] = 0.12;
       }
-      sparkGeometry.attributes.position.needsUpdate = true;
+      moteGeometry.attributes.position.needsUpdate = true;
+
+      sparkStates.forEach((state, index) => {
+        state.life -= delta;
+        if (state.life <= 0 || state.position.y < -0.2) resetSpark(index);
+        state.velocity.y -= delta * 4.8;
+        state.position.addScaledVector(state.velocity, delta);
+        const fade = THREE.MathUtils.clamp(state.life / state.maxLife, 0, 1);
+        sparkDirection.copy(state.velocity).normalize();
+        sparkQuaternion.setFromUnitVectors(sparkUp, sparkDirection);
+        sparkScale.set(0.42 + fade * 0.35, 0.48 + state.velocity.length() * 0.09, 0.42 + fade * 0.35);
+        sparkMatrix.compose(state.position, sparkQuaternion, sparkScale);
+        sparks.setMatrixAt(index, sparkMatrix);
+      });
+      sparks.instanceMatrix.needsUpdate = true;
 
       const portrait = mount.clientWidth / Math.max(mount.clientHeight, 1) < 0.72;
       const vehicleZ = rover.position.z;
+      const cameraBreath = moving ? Math.sin(now * 0.01) * 0.026 : Math.sin(now * 0.00045) * 0.045;
       desiredCamera.set(
-        portrait ? 7.9 : 8.35 - travel * 0.65,
-        portrait ? 5.35 : 4.82 - travel * 0.18,
-        vehicleZ - (portrait ? 11.3 : 7.75),
+        portrait ? 7.85 : 8.3 - travel * 0.48 + cameraBreath,
+        portrait ? 5.25 : 4.16 - travel * 0.1,
+        vehicleZ - (portrait ? 11.35 : 7.9),
       );
       if (firstFrame) camera.position.copy(desiredCamera);
       else camera.position.lerp(desiredCamera, 1 - Math.exp(-delta * 3.8));
-      cameraTarget.set(0, portrait ? 2.02 : 1.98, vehicleZ + (portrait ? 0.35 : 0.2));
+      cameraTarget.set(portrait ? 0 : -0.16, portrait ? 2.02 : 2.02, vehicleZ + (portrait ? 0.35 : 0.28));
       camera.lookAt(cameraTarget);
-      furnaceLight.intensity = 11 + Math.sin(now * 0.006) * 1.3 + Math.sin(now * 0.017) * 0.5;
-      oppositeFurnaceLight.intensity = 8.2 + Math.sin(now * 0.005 + 1.4) * 1.1;
-      platformLight.intensity = 10 + Math.sin(now * 0.004 + 1) * 0.8;
-      coreHalo.intensity = 3 + Math.sin(now * 0.005) * 0.45;
+      furnaceLight.intensity = 13.4 + Math.sin(now * 0.006) * 2.2 + Math.sin(now * 0.017) * 0.8;
+      oppositeFurnaceLight.intensity = 9.4 + Math.sin(now * 0.005 + 1.4) * 1.5;
+      platformLight.intensity = 10.5 + Math.sin(now * 0.004 + 1) * 1.1;
+      coreHalo.intensity = 6.5 + Math.sin(now * 0.005) * 1.1;
       composer.render(delta);
       if (firstFrame) {
         firstFrame = false;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import FoundryScene from "./FoundryScene";
 
 type Mode = "build" | "simulate" | "replay";
@@ -87,21 +87,6 @@ export default function Home() {
         <FoundryScene motionState={runState} replayPlaying={replayPlaying} />
         <div className="scene-drift" />
         <div className="scene-glow" />
-        <div className="sparks" aria-hidden="true">
-          {Array.from({ length: 18 }, (_, index) => (
-            <i
-              key={index}
-              style={
-                {
-                  "--spark-x": `${24 + ((index * 17) % 72)}%`,
-                  "--spark-y": `${58 + ((index * 11) % 35)}%`,
-                  "--spark-delay": `${(index % 7) * -0.31}s`,
-                  "--spark-size": `${2 + (index % 3)}px`,
-                } as CSSProperties
-              }
-            />
-          ))}
-        </div>
         <div className="scanlines" />
         <div className="vignette" />
       </section>
