@@ -8,6 +8,7 @@
 | Product type | Browser-based 3D physics construction game |
 | Primary technology | TypeScript, React, Three.js, existing browser physics engine |
 | Purpose | Public demonstration of the UI Framework's ability to generate a visually impressive, non-business application with explicit ports and adapters |
+| Interactive mockup status | Approved art-direction reference and minimum graphical-fidelity floor; not a representation of final product scope or depth |
 
 ## 1. Product summary
 
@@ -16,11 +17,53 @@ builds and tunes one modular six-wheel rover, drives it through contained
 industrial challenges, observes physically legible success or failure, and
 iterates using replay evidence.
 
-The initial product is deliberately narrow. It has one rover family, one
-foundry environment, one cargo-delivery challenge, and a bounded catalog of
-parts. Visual spectacle comes from convincing weight, suspension, traction,
-lighting, camera direction, and a few authored physical events—not from a
-general destruction system or an unbounded game engine.
+The initial production vertical slice is deliberately bounded relative to a
+general-purpose game. It has one rover family, one foundry environment, a
+substantial cargo-delivery challenge, and a bounded catalog of parts. It must,
+however, be materially more substantial than the current interactive mockup in
+play duration, player agency, systemic behavior, environment depth, audiovisual
+production, and replay value. Visual spectacle comes from convincing weight,
+suspension, traction, lighting, camera direction, and authored physical
+events—not from a general destruction system or an unbounded game engine.
+
+### 1.1 Interactive mockup role and fidelity contract
+
+The deployed **Foundry Blackout** interactive mockup is an approved visual and
+experience benchmark. It exists to communicate the general art direction,
+presentation language, rover-focused composition, cinematic camera intent, and
+minimum acceptable live graphical fidelity.
+
+The mockup is **normative** for:
+
+- the worn industrial-science-fiction art direction;
+- the material, lighting, atmosphere, contrast, color, and effects hierarchy;
+- the visual prominence and mechanical readability of the rover;
+- the integration of a sparse game HUD with a dominant real-time 3D viewport;
+- the expectation that important actions are visually supported by credible
+  mechanisms rather than unexplained animation; and
+- the minimum graphical fidelity that the running product must sustain on the
+  agreed reference desktop hardware.
+
+The mockup is **not normative** for:
+
+- final product scope, content volume, scenario duration, level size, or number
+  of meaningful interactions;
+- final vehicle construction depth, part catalog, progression, scoring, or
+  replay functionality;
+- physics authenticity, collision behavior, constraint solving, or simulation
+  architecture;
+- final assets, animation, audio, controls, performance, accessibility, or
+  production code quality; or
+- the completeness of any Build, Simulate, Replay, sharing, or failure-analysis
+  workflow.
+
+The mockup uses authored choreography and prototype geometry to express the
+intended experience. The final product must replace those shortcuts with the
+real domain behavior and adapters required by this PRD. It must meet or exceed
+the mockup's live graphical fidelity during ordinary gameplay—not only in a
+single hero camera—and should materially improve its asset quality, environment
+density, lighting nuance, animation, effects, sound, physical response, and
+overall sense of scale.
 
 ## 2. Product outcome
 
@@ -67,6 +110,9 @@ ports-and-adapters workflow can produce:
 6. **Build the game before extracting an engine.** Reusable engine boundaries
    may emerge from the vertical slice; a general-purpose game engine is not the
    initial deliverable.
+7. **The mockup is the floor, not the product.** Production work must preserve
+   its approved art direction and minimum live fidelity while delivering the
+   substantially deeper playable system defined by this PRD.
 
 ## 5. Core player loop
 
@@ -187,6 +233,15 @@ speed, suspension, balance, and cargo placement. Nothing breaks.
 
 ## 9. Visual direction
 
+The running Foundry Blackout interactive mockup is the primary reference for
+general art direction and the minimum live graphical-fidelity floor. It is not
+a feature inventory, level-design specification, physics proof, or estimate of
+the final product's substance. Where a static concept render and the running
+mockup differ, the running mockup defines the minimum feasible live floor and
+the selected render defines the higher aspirational direction. The production
+game is expected to exceed the mockup and move toward the renders while
+remaining performant and physically legible.
+
 The product uses worn industrial science fiction rather than fantasy,
 military, or glossy space-opera imagery:
 
@@ -198,7 +253,7 @@ military, or glossy space-opera imagery:
 - cinematic but physically believable cameras; and
 - modest dust, sparks, and debris tied to specific events.
 
-The following renders are the normative concept references:
+The following renders are approved aspirational concept references:
 
 ### Foundry Delivery — initial gameplay target
 
@@ -238,6 +293,22 @@ expand the approved scope.
 - Capture/export adapters for still images and replay artifacts.
 - A headless or reduced-presentation test adapter where needed for behavioral
   verification.
+
+### Framework feasibility and production expectation
+
+The UI Framework is expected to generate and maintain the application shell,
+domain workflows, ports, adapters, tests, and integration code for this
+product. Three.js and the selected physics engine remain the specialist runtime
+providers for rendering and simulation. The target is feasible with this
+architecture, but it is a staged production effort rather than a one-pass mockup
+generation task.
+
+Production delivery requires an iterative asset pipeline, real physics tuning,
+animation and audio passes, level authoring, performance profiling, browser and
+device testing, and repeated visual review against the approved references.
+Success therefore demonstrates that the framework can coordinate and evolve a
+substantial technical product; it does not imply that high-end game content can
+be produced without those disciplines.
 
 ### Three.js owns
 
@@ -324,6 +395,9 @@ The vertical slice succeeds when:
   80% of observed trial runs;
 - the approved rover, environment, lighting, and material hierarchy are
   recognizably reproduced by the running application;
+- representative ordinary-gameplay frames meet or exceed the live interactive
+  mockup's graphical fidelity, with the final product materially improving its
+  environment density, asset finish, animation, effects, and scale;
 - every visible gameplay claim in public screenshots is backed by running
   behavior;
 - the application meets the agreed performance budget on reference hardware;
