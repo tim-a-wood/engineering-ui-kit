@@ -6,6 +6,8 @@ A cinematic browser-game concept demonstrating a six-wheel rover carrying an ene
 
 The prototype demonstrates authored vehicle motion and game presentation. It does not yet claim rigid-body physics, collision solving or deformable suspension simulation.
 
+The visible vehicle is real Three.js geometry. Its detailed mechanical chassis is derived from NASA/JPL-Caltech's public Mars 2020 Perseverance Rover GLB, then re-skinned and combined at runtime with Kinetic Forge cargo bodywork, containment hardware, lights, wheels and suspension geometry. NASA does not endorse this prototype. See `ATTRIBUTION.md`.
+
 ## Run locally
 
 ```bash

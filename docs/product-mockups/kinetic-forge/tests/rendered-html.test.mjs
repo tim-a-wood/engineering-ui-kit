@@ -34,28 +34,34 @@ test("server-renders the Kinetic Forge gameplay shell", async () => {
   assert.match(html, /aria-label="Kinetic Forge home"/);
   assert.match(html, /FOUNDry Delivery/i);
   assert.match(html, /ENGAGE DRIVE/);
-  assert.match(html, /background-image:url\(\.\/foundry-background-v2\.png\)/);
+  assert.match(html, /data-renderer="threejs-real-geometry"/);
+  assert.doesNotMatch(html, /foundry-background-v2|hauler-sprite-v2/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
-test("binds the authored hauler and cleared foundry presentation", async () => {
+test("binds a genuine GLB hauler and collision-clear live foundry", async () => {
   const [scene, css, page, layout] = await Promise.all([
     readFile(new URL("../app/FoundryScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    access(new URL("../public/foundry-background-v2.png", import.meta.url)),
-    access(new URL("../public/hauler-sprite-v2.png", import.meta.url)),
+    access(new URL("../public/models/perseverance-rover.glb", import.meta.url)),
+    access(new URL("../public/draco/draco_decoder.wasm", import.meta.url)),
   ]);
 
   assert.match(scene, /from "three"/);
-  assert.match(scene, /hauler-sprite-v2\.png/);
-  assert.match(scene, /WHEEL_CENTER_Y = 1\.1/);
-  assert.match(scene, /const laneX = portrait/);
-  assert.match(scene, /RUN_DISTANCE = 14\.7/);
-  assert.match(css, /background-size:\s*cover/);
-  assert.match(css, /background-position:\s*61% center/);
+  assert.match(scene, /GLTFLoader/);
+  assert.match(scene, /DRACOLoader/);
+  assert.match(scene, /perseverance-rover\.glb/);
+  assert.match(scene, /WHEEL_CENTER_Y = 1\.19/);
+  assert.match(scene, /RAIL_X - VEHICLE_HALF_WIDTH/);
+  assert.match(scene, /gantrySupportStations\.some/);
+  assert.match(scene, /Gantry support entered the drive corridor/);
+  assert.match(scene, /wheel\.rotation\.x = wheelTurn/);
+  assert.doesNotMatch(scene, /THREE\.Sprite|backgroundImage|hauler-sprite|foundry-background/);
+  assert.match(css, /\.scene-canvas canvas/);
   assert.match(page, /Foundry Delivery/);
   assert.match(page, /ENGAGE DRIVE/);
+  assert.match(page, /NASA\/JPL MECHANICAL DONOR/);
   assert.match(layout, /Kinetic Forge · Foundry Delivery/);
 });

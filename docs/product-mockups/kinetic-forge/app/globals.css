@@ -27,7 +27,7 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 
 .scene, .scene-drift, .scene-glow, .scanlines, .vignette { position: absolute; inset: 0; }
 .scene { z-index: -2; overflow: hidden; background: #17130f; }
-.scene-canvas { position: absolute; inset: 0; z-index: 0; overflow: hidden; background-color: #17130f; background-size: cover; background-position: center; background-repeat: no-repeat; }
+.scene-canvas { position: absolute; inset: 0; z-index: 0; overflow: hidden; background-color: #17130f; }
 .scene-canvas canvas { display: block; width: 100%; height: 100%; filter: saturate(1.08) contrast(1.015) brightness(1.08); transition: filter .45s ease; }
 .scene-loading { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; color: rgba(255,255,255,.45); background: #050606; font: 8px var(--font-geist-mono); letter-spacing: .18em; transition: opacity .35s ease; pointer-events: none; }
 .scene-loading i { width: 28px; height: 28px; border: 1px solid rgba(102,231,255,.2); border-top-color: var(--cyan); transform: rotate(45deg); animation: scene-loader 1.2s linear infinite; }
@@ -165,7 +165,6 @@ button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 @media (max-width: 720px) and (orientation: portrait) {
   body { overflow: hidden; }
   .game-shell { width: 100vw; height: 100svh; min-height: 0; }
-  .scene-canvas { background-position: 61% center; }
   .vignette { box-shadow: inset 0 0 72px 10px rgba(0,0,0,.34); }
   .topbar {
     top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; height: 104px;

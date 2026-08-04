@@ -219,7 +219,7 @@ export default function Home() {
         <i />
         <span><small>REAL-TIME 3D SCENE</small><strong>{runState === "running" || replayPlaying ? "ROVER IN TRANSIT" : runState === "complete" ? "PLATFORM REACHED" : "READY TO DRIVE"}</strong></span>
       </div>
-      <div className="concept-note">THREE.JS PROTOTYPE · AUTHORED VEHICLE DYNAMICS · PHYSICS SOLVER NOT CONNECTED</div>
+      <div className="concept-note">LIVE THREE.JS GEOMETRY · NASA/JPL MECHANICAL DONOR · PHYSICS SOLVER NOT CONNECTED</div>
       <div className="mobile-note">Rotate to landscape for the full cockpit view</div>
     </main>
   );
