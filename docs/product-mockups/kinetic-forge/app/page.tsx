@@ -5,7 +5,7 @@ import FoundryScene, { type MissionPhase } from "./FoundryScene";
 
 type Mode = "build" | "simulate" | "replay";
 
-const REPLAY_DURATION = 32_000;
+const REPLAY_DURATION = 36_000;
 
 const parts = [
   { code: "WHL-06", name: "All-terrain wheel", detail: "6 fitted", icon: "◉" },
@@ -33,7 +33,7 @@ const phaseConfig: Record<MissionPhase, {
   winching: { progress: 52, label: "RECOVERY WINCH", status: "80 kN LOAD", duration: 4_600, next: "crossing" },
   crossing: { progress: 76, label: "TURNTABLE CROSSING", status: "BALANCING", duration: 8_500, next: "dock_ready" },
   dock_ready: { progress: 86, label: "REACTOR ALIGNED", status: "DOCK READY" },
-  docking: { progress: 96, label: "CORE TRANSFER", status: "COUPLING", duration: 5_200, next: "complete" },
+  docking: { progress: 96, label: "CRANE CORE TRANSFER", status: "HANDLING", duration: 8_800, next: "complete" },
   complete: { progress: 100, label: "FOUNDRY ONLINE", status: "DELIVERED" },
 };
 
@@ -44,7 +44,7 @@ const phaseCopy: Record<MissionPhase, string> = {
   winching: "Winch under load. Hold position while the beam clears the wheel path.",
   crossing: "The transfer table is moving. Keep the core inside the stability envelope.",
   dock_ready: "Vehicle aligned. Authorize the core transfer into the reactor cradle.",
-  docking: "Core handoff in progress. Maintain containment until the coupler locks.",
+  docking: "Overhead handler engaged. Hold the exclusion zone through capture, lift and socket lock.",
   complete: "Node 7 restored. Thermal systems and production machinery are coming online.",
 };
 
@@ -131,7 +131,7 @@ export default function Home() {
     : phase === "blocked"
       ? { label: "CLEAR GANTRY", detail: "ENGAGE 80 kN WINCH", icon: "⊕" }
       : phase === "dock_ready"
-        ? { label: "TRANSFER CORE", detail: "AUTHORIZE COUPLING", icon: "◇" }
+        ? { label: "TRANSFER CORE", detail: "AUTHORIZE CRANE HANDOFF", icon: "◇" }
         : null;
 
   function chooseMode(next: Mode) {
@@ -292,12 +292,12 @@ export default function Home() {
       {mode === "replay" && (
         <section className="replay-dock" aria-label="Replay controls">
           <button className="replay-play" onClick={() => { if (replayProgress >= 100) setReplayProgress(0); setReplayPlaying((value) => !value); }}>{replayPlaying ? "Ⅱ" : "▶"}</button>
-          <div className="replay-time"><strong>00:{String(Math.round((replayProgress / 100) * 32)).padStart(2, "0")}.00</strong><span>/ 00:32.00</span></div>
+          <div className="replay-time"><strong>00:{String(Math.round((replayProgress / 100) * 36)).padStart(2, "0")}.00</strong><span>/ 00:36.00</span></div>
           <div className="timeline">
             <div className="timeline-track"><i style={{ width: `${replayProgress}%` }} /><b style={{ left: `${replayProgress}%` }} /></div>
             <span className="event event-a">IMPACT</span>
             <span className="event event-b">WINCH CLEAR</span>
-            <span className="event event-c">IGNITION</span>
+            <span className="event event-c">SOCKET LOCK</span>
           </div>
           <button className="speed-button">1.0×</button>
           <button className="capture-button">CAPTURE FRAME</button>

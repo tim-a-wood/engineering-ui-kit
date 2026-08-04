@@ -38,7 +38,7 @@ const PHASE_DURATION: Partial<Record<MissionPhase, number>> = {
   transit: 6_000,
   winching: 4_600,
   crossing: 8_500,
-  docking: 5_200,
+  docking: 8_800,
 };
 
 function ease(value: number) {
@@ -47,15 +47,15 @@ function ease(value: number) {
 }
 
 function replayPhase(progress: number): { phase: MissionPhase; local: number } {
-  const seconds = THREE.MathUtils.clamp(progress, 0, 100) * 0.32;
+  const seconds = THREE.MathUtils.clamp(progress, 0, 100) * 0.36;
   if (seconds < 1.2) return { phase: "ready", local: seconds / 1.2 };
   if (seconds < 7.2) return { phase: "transit", local: (seconds - 1.2) / 6 };
   if (seconds < 8.7) return { phase: "blocked", local: (seconds - 7.2) / 1.5 };
   if (seconds < 13.3) return { phase: "winching", local: (seconds - 8.7) / 4.6 };
   if (seconds < 21.8) return { phase: "crossing", local: (seconds - 13.3) / 8.5 };
   if (seconds < 23.3) return { phase: "dock_ready", local: (seconds - 21.8) / 1.5 };
-  if (seconds < 28.5) return { phase: "docking", local: (seconds - 23.3) / 5.2 };
-  return { phase: "complete", local: (seconds - 28.5) / 3.5 };
+  if (seconds < 32.1) return { phase: "docking", local: (seconds - 23.3) / 8.8 };
+  return { phase: "complete", local: (seconds - 32.1) / 3.9 };
 }
 
 export default function FoundryScene({ phase, replayMode, replayPlaying, replayProgress }: FoundrySceneProps) {
@@ -582,6 +582,50 @@ export default function FoundryScene({ phase, replayMode, replayPlaying, replayP
       socketRings.push(ring);
     }
 
+    const socketLocks: { group: THREE.Group; direction: THREE.Vector3 }[] = [];
+    for (let index = 0; index < 4; index += 1) {
+      const angle = index / 4 * Math.PI * 2;
+      const direction = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
+      const group = new THREE.Group();
+      group.position.copy(direction).multiplyScalar(1.62).add(new THREE.Vector3(0, 3.52, 0));
+      group.rotation.y = angle;
+      reactor.add(group);
+      addRoundedBox(group, [0.42, 0.34, 0.78], 0.08, darkSteel, [0, 0, 0]);
+      addRoundedBox(group, [0.18, 0.12, 0.34], 0.04, amber, [0, 0.12, -0.32], false);
+      socketLocks.push({ group, direction });
+    }
+
+    // A real overhead handling system owns the entire core transfer. The trolley,
+    // hoist lines, capture head and socket locks remain visible throughout the handoff.
+    const craneBridge = new THREE.Group();
+    scene.add(craneBridge);
+    for (const x of [-1.72, 1.72]) {
+      addRoundedBox(craneBridge, [0.34, 0.42, 9.2], 0.06, edgeSteel, [x, 8.18, -18.05]);
+      addBox(craneBridge, [0.08, 0.08, 8.86], amber, [x, 7.95, -18.05], false);
+    }
+    for (const z of [-22.3, -20.1, -17.9, -15.7, -13.7]) {
+      addBeam(craneBridge, new THREE.Vector3(-1.72, 8.18, z), new THREE.Vector3(1.72, 8.18, z), 0.075, rustSteel, 10);
+    }
+
+    const craneTrolley = new THREE.Group();
+    craneTrolley.position.set(0, 7.78, -20.32);
+    scene.add(craneTrolley);
+    addRoundedBox(craneTrolley, [3.46, 0.46, 1.18], 0.1, darkSteel, [0, 0, 0]);
+    addRoundedBox(craneTrolley, [1.42, 0.4, 0.76], 0.08, armorPanel, [0, -0.37, 0]);
+    const craneDrum = new THREE.Mesh(trackGeometry(new THREE.CylinderGeometry(0.28, 0.28, 1.3, 24)), donorDetail);
+    craneDrum.rotation.z = Math.PI / 2;
+    craneDrum.position.y = -0.48;
+    craneTrolley.add(craneDrum);
+    for (const x of [-1.48, 1.48]) {
+      for (const z of [-0.38, 0.38]) {
+        const wheel = new THREE.Mesh(trackGeometry(new THREE.CylinderGeometry(0.17, 0.17, 0.18, 18)), blackSteel);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(x, 0.14, z);
+        craneTrolley.add(wheel);
+      }
+      addRoundedBox(craneTrolley, [0.22, 0.12, 0.18], 0.035, amber, [x, -0.31, -0.52], false);
+    }
+
     const rover = new THREE.Group();
     rover.position.set(0.2, 0, START_Z);
     rover.userData.collisionEnvelope = {
@@ -678,6 +722,20 @@ export default function FoundryScene({ phase, replayMode, replayPlaying, replayP
     const cagePoints = addFramedModule(rover, cageCenter, 3.48, 1.82, 2.35, donorDetail, 0.074);
     addBeam(rover, cagePoints[0], cagePoints[7], 0.061, donorDetail, 12);
     addBeam(rover, cagePoints[1], cagePoints[6], 0.061, donorDetail, 12);
+    const cageLatches: { group: THREE.Group; base: THREE.Vector3; direction: THREE.Vector3; angle: number }[] = [];
+    for (let index = 0; index < 4; index += 1) {
+      const angle = index / 4 * Math.PI * 2;
+      const direction = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
+      const base = cageCenter.clone().addScaledVector(direction, 1.18);
+      const group = new THREE.Group();
+      group.position.copy(base);
+      group.rotation.y = angle;
+      rover.add(group);
+      addRoundedBox(group, [0.3, 0.62, 0.52], 0.06, darkSteel, [0, 0.24, 0]);
+      addRoundedBox(group, [0.17, 0.18, 0.38], 0.045, amber, [0, 0.2, -0.3], false);
+      addBeam(group, new THREE.Vector3(0, -0.15, 0.1), new THREE.Vector3(0, -0.48, 0.48), 0.06, donorDetail, 10);
+      cageLatches.push({ group, base, direction, angle });
+    }
     const coreAssembly = new THREE.Group();
     coreAssembly.position.copy(cageCenter);
     rover.add(coreAssembly);
@@ -741,6 +799,55 @@ export default function FoundryScene({ phase, replayMode, replayPlaying, replayP
 
     const coreHalo = new THREE.PointLight(0x39dfff, 7, 6.5, 2);
     coreAssembly.add(coreHalo);
+
+    const clampRig = new THREE.Group();
+    clampRig.visible = false;
+    scene.add(clampRig);
+    const clampRing = new THREE.Mesh(trackGeometry(new THREE.TorusGeometry(1.38, 0.11, 14, 72)), donorMetal);
+    clampRing.rotation.x = Math.PI / 2;
+    clampRing.castShadow = true;
+    clampRig.add(clampRing);
+    const clampSignalRing = new THREE.Mesh(trackGeometry(new THREE.TorusGeometry(1.38, 0.025, 8, 72)), amber);
+    clampSignalRing.rotation.x = Math.PI / 2;
+    clampSignalRing.position.y = -0.03;
+    clampRig.add(clampSignalRing);
+    addRoundedBox(clampRig, [1.42, 0.28, 0.84], 0.07, armorPanel, [0, 0.34, 0]);
+    addBeam(clampRig, new THREE.Vector3(-1.25, 0.02, 0), new THREE.Vector3(1.25, 0.02, 0), 0.065, donorDetail, 10);
+    addBeam(clampRig, new THREE.Vector3(0, 0.02, -1.25), new THREE.Vector3(0, 0.02, 1.25), 0.065, donorDetail, 10);
+    const clampJaws: THREE.Group[] = [];
+    for (let index = 0; index < 4; index += 1) {
+      const angle = index / 4 * Math.PI * 2;
+      const jaw = new THREE.Group();
+      jaw.rotation.y = angle;
+      clampRig.add(jaw);
+      addRoundedBox(jaw, [0.28, 1.38, 0.3], 0.065, edgeSteel, [0, -0.68, 0]);
+      addRoundedBox(jaw, [0.46, 0.3, 0.46], 0.07, amber, [0, -1.31, -0.08], false);
+      addBeam(jaw, new THREE.Vector3(0, -0.05, 0), new THREE.Vector3(0, -0.72, -0.18), 0.065, suspensionMetal, 10);
+      clampJaws.push(jaw);
+    }
+    const clampBeacon = new THREE.PointLight(0xffa12b, 0, 5.5, 2);
+    clampBeacon.position.y = -0.55;
+    clampRig.add(clampBeacon);
+
+    const craneCables: {
+      line: THREE.Line;
+      geometry: THREE.BufferGeometry;
+      trolleyAnchor: THREE.Vector3;
+      clampAnchor: THREE.Vector3;
+    }[] = [];
+    for (const [x, z] of [[-0.72, -0.36], [0.72, -0.36], [-0.72, 0.36], [0.72, 0.36]] as const) {
+      const geometry = trackGeometry(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]));
+      const line = new THREE.Line(geometry, cableMaterial);
+      line.frustumCulled = false;
+      line.visible = false;
+      scene.add(line);
+      craneCables.push({
+        line,
+        geometry,
+        trolleyAnchor: new THREE.Vector3(x, -0.58, z),
+        clampAnchor: new THREE.Vector3(x * 0.9, 0.37, z * 0.9),
+      });
+    }
     addTube(rover, [new THREE.Vector3(-1.42, 1.8, -1.9), new THREE.Vector3(-1.52, 2.05, -0.2), new THREE.Vector3(-1.55, 2.1, 1.08)], 0.055, cyan, 32);
     addTube(rover, [new THREE.Vector3(1.42, 1.8, -1.9), new THREE.Vector3(1.52, 2.05, -0.2), new THREE.Vector3(1.55, 2.1, 1.08)], 0.055, cyan, 32);
 
@@ -1005,6 +1112,15 @@ export default function FoundryScene({ phase, replayMode, replayPlaying, replayP
     const cableStart = new THREE.Vector3();
     const cableEnd = new THREE.Vector3();
     const coreDockPosition = new THREE.Vector3(-0.2, 3.52, -5.3);
+    const coreSocketWorld = new THREE.Vector3(0, 3.52, -20.5);
+    const finalCageWorld = new THREE.Vector3(0.2, 2.4, -16.22);
+    const coreCageWorld = new THREE.Vector3();
+    const coreWorld = new THREE.Vector3();
+    const trolleyCableWorld = new THREE.Vector3();
+    const clampCableWorld = new THREE.Vector3();
+    const CLAMP_PARK_Y = 6.68;
+    const CLAMP_OFFSET_Y = 1.35;
+    const CORE_LIFT_Y = 5.55;
     const coldBackground = new THREE.Color(0x030505);
     const poweredBackground = new THREE.Color(0x17100a);
     const coldFurnace = new THREE.Color(0x4a160c);
@@ -1103,9 +1219,94 @@ export default function FoundryScene({ phase, replayMode, replayPlaying, replayP
       const tableAlignment = mission.phase === "crossing" ? THREE.MathUtils.smoothstep(mission.local, 0.02, 0.3) : ["dock_ready", "docking", "complete"].includes(mission.phase) ? 1 : 0;
       turntable.rotation.y = THREE.MathUtils.lerp(0.47, 0, tableAlignment);
 
-      const dockTravel = mission.phase === "docking" ? ease(THREE.MathUtils.smoothstep(mission.local, 0.1, 0.82)) : mission.phase === "complete" ? 1 : 0;
-      coreAssembly.position.copy(cageCenter).lerp(coreDockPosition, dockTravel);
-      coreAssembly.position.y += mission.phase === "docking" ? Math.sin(dockTravel * Math.PI) * 1.35 : 0;
+      rover.updateMatrixWorld(true);
+      coreCageWorld.copy(cageCenter).applyMatrix4(rover.matrixWorld);
+      coreWorld.copy(coreCageWorld);
+
+      const craneArriving = mission.phase === "crossing"
+        ? ease(THREE.MathUtils.smoothstep(mission.local, 0.66, 0.96))
+        : ["dock_ready", "docking", "complete"].includes(mission.phase) ? 1 : 0;
+      const craneActive = craneArriving > 0.01;
+      let clampGrip = 0;
+      let cageRelease = mission.phase === "complete" ? 1 : 0;
+      let socketLock = mission.phase === "complete" ? 1 : 0;
+      let hoistMoving = false;
+
+      craneTrolley.position.x = 0;
+      craneTrolley.position.z = THREE.MathUtils.lerp(coreSocketWorld.z, finalCageWorld.z, craneArriving);
+      clampRig.position.set(craneTrolley.position.x, CLAMP_PARK_Y, craneTrolley.position.z);
+
+      if (mission.phase === "docking") {
+        const capture = ease(THREE.MathUtils.smoothstep(mission.local, 0.04, 0.2));
+        const gripIn = ease(THREE.MathUtils.smoothstep(mission.local, 0.16, 0.27));
+        const lift = ease(THREE.MathUtils.smoothstep(mission.local, 0.27, 0.45));
+        const transfer = ease(THREE.MathUtils.smoothstep(mission.local, 0.45, 0.68));
+        const lower = ease(THREE.MathUtils.smoothstep(mission.local, 0.68, 0.84));
+        const release = ease(THREE.MathUtils.smoothstep(mission.local, 0.84, 0.92));
+        const retract = ease(THREE.MathUtils.smoothstep(mission.local, 0.92, 1));
+
+        clampGrip = gripIn * (1 - release);
+        cageRelease = gripIn;
+        socketLock = ease(THREE.MathUtils.smoothstep(mission.local, 0.84, 0.96));
+        hoistMoving = (mission.local > 0.04 && mission.local < 0.45)
+          || (mission.local > 0.68 && mission.local < 0.84)
+          || mission.local > 0.92;
+
+        coreWorld.y = THREE.MathUtils.lerp(coreCageWorld.y, CORE_LIFT_Y, lift);
+        coreWorld.x = THREE.MathUtils.lerp(coreCageWorld.x, coreSocketWorld.x, transfer);
+        coreWorld.z = THREE.MathUtils.lerp(coreCageWorld.z, coreSocketWorld.z, transfer);
+        coreWorld.y = THREE.MathUtils.lerp(coreWorld.y, coreSocketWorld.y, lower);
+        coreAssembly.position.copy(coreWorld);
+        rover.worldToLocal(coreAssembly.position);
+
+        craneTrolley.position.x = coreWorld.x;
+        craneTrolley.position.z = coreWorld.z;
+        const attachedClampY = coreWorld.y + CLAMP_OFFSET_Y;
+        clampRig.position.set(
+          coreWorld.x,
+          THREE.MathUtils.lerp(THREE.MathUtils.lerp(CLAMP_PARK_Y, attachedClampY, capture), CLAMP_PARK_Y, retract),
+          coreWorld.z,
+        );
+      } else if (mission.phase === "complete") {
+        coreAssembly.position.copy(coreDockPosition);
+        craneTrolley.position.set(coreSocketWorld.x, 7.78, coreSocketWorld.z);
+        clampRig.position.set(coreSocketWorld.x, CLAMP_PARK_Y, coreSocketWorld.z);
+      } else {
+        coreAssembly.position.copy(cageCenter);
+      }
+
+      clampRig.visible = craneActive;
+      clampSignalRing.rotation.z += delta * (0.5 + clampGrip * 1.7);
+      clampBeacon.intensity = craneActive ? 2.3 + clampGrip * 4.2 : 0;
+      craneDrum.rotation.x += hoistMoving ? delta * 5.2 : 0;
+      clampJaws.forEach((jaw, index) => {
+        const angle = index / 4 * Math.PI * 2;
+        const radius = THREE.MathUtils.lerp(1.52, 1.08, clampGrip);
+        jaw.position.set(Math.sin(angle) * radius, 0, Math.cos(angle) * radius);
+      });
+      cageLatches.forEach(({ group, base, direction, angle }, index) => {
+        group.position.copy(base).addScaledVector(direction, cageRelease * 0.46);
+        group.rotation.y = angle;
+        group.rotation.z = (index % 2 ? 1 : -1) * cageRelease * 0.34;
+      });
+      socketLocks.forEach(({ group, direction }, index) => {
+        group.position.copy(direction).multiplyScalar(THREE.MathUtils.lerp(1.62, 1.26, socketLock));
+        group.position.y = 3.52;
+        group.rotation.y = index / 4 * Math.PI * 2;
+      });
+      craneTrolley.updateMatrixWorld(true);
+      clampRig.updateMatrixWorld(true);
+      craneCables.forEach(({ line, geometry, trolleyAnchor, clampAnchor }) => {
+        line.visible = craneActive;
+        trolleyCableWorld.copy(trolleyAnchor).applyMatrix4(craneTrolley.matrixWorld);
+        clampCableWorld.copy(clampAnchor).applyMatrix4(clampRig.matrixWorld);
+        const positions = geometry.attributes.position.array as Float32Array;
+        positions.set([
+          trolleyCableWorld.x, trolleyCableWorld.y, trolleyCableWorld.z,
+          clampCableWorld.x, clampCableWorld.y, clampCableWorld.z,
+        ]);
+        geometry.attributes.position.needsUpdate = true;
+      });
       core.rotation.x += delta * 0.72;
       core.rotation.y += delta * 1.05;
       const corePulse = 1 + Math.sin(now * 0.0042) * 0.045;
@@ -1137,7 +1338,7 @@ export default function FoundryScene({ phase, replayMode, replayPlaying, replayP
       });
 
       const targetPower = mission.phase === "docking"
-        ? THREE.MathUtils.smoothstep(mission.local, 0.42, 0.94)
+        ? THREE.MathUtils.smoothstep(mission.local, 0.9, 1)
         : mission.phase === "complete" ? 1 : 0;
       currentPower = THREE.MathUtils.lerp(currentPower, targetPower, 1 - Math.pow(0.001, delta));
       renderer.toneMappingExposure = 0.88 + currentPower * 0.22;
@@ -1209,8 +1410,8 @@ export default function FoundryScene({ phase, replayMode, replayPlaying, replayP
         desiredCamera.set(8.25, 4.95, -9.6);
         desiredTarget.set(0, 2.6, -18.25);
       } else if (mission.phase === "docking") {
-        desiredCamera.set(7.8 - local * 1.8, 4.8 + local * 1.25, -10.8 - local * 1.7);
-        desiredTarget.set(0, 2.85 + local * 0.4, -18.5 - local * 1.2);
+        desiredCamera.set(8.6 - local * 1.8, 6.1 + local * 0.8, -10.5 - local * 2.2);
+        desiredTarget.set(0, 4.15 - local * 0.38, -17.1 - local * 2.45);
       } else {
         desiredCamera.set(10.7, 7.7, -8.2);
         desiredTarget.set(0, 2.75, -18.1);
