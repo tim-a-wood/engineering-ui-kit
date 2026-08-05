@@ -1,0 +1,7 @@
+{
+  "name": "dockplan-workbench-v2-mockup",
+  "private": true,
+  "version": "2.0.0",
+  "type": "commonjs",
+  "description": "Static interactive mockup of the DockPlan Workbench desktop application. Open index.html in a browser. No build step and no dependencies."
+}
