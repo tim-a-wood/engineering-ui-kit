@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Final v1.3 — requirements baseline and approved master visual direction |
+| Status | Final v1.4 — requirements baseline and approved master visual direction |
 | Date | 2026-08-03, amended 2026-08-05 (Section 24) |
 | Portfolio position | Application 3 of 3 |
 | Product | Daybook |
@@ -578,6 +578,23 @@ The interactive mockup is **not normative** for:
   govern; and
 - sample content, which is illustrative unless identified as reference-fixture
   data in Section 7 or Section 13.
+
+### 12.2.1 v2 interactive mockup
+
+The [v2 interactive mockup](../v2/) is a second repository mockup that
+carries the classroom-atelier direction into one interactive desktop shell:
+the five workspaces, Teaching View with a working phase timer, and the
+complete Section 7 Rowan reference fixture, with interface text in the
+repository writing profile.
+
+Until it receives its own approval review, the v2 mockup is a candidate
+reference: where v1 and v2 differ in structure or promised features, the
+approved v1 benchmark and this PRD govern. The v2 mockup demonstrates, and
+its README states, the same simulation limits as Section 12.2. Its working
+behaviors follow the requirement rules directly: the timer resets on an
+explicit phase change (TEA-007), timer expiry is a prompt only (TEA-013),
+readiness is a deliberate action (RES-008), and duration totals carry the
+guide-not-score wording (WKB-007).
 
 ### 12.3 Conflict resolution and review
 
@@ -1296,6 +1313,7 @@ weaken a P0/P1 requirement without a PRD amendment:
 | --- | --- | --- |
 | v1.0–v1.2 | 2026-08-03 | Requirements baseline, reference hierarchy, and approved master visual direction. |
 | v1.3 | 2026-08-05 | Made the repository copy of the interactive mockup the canonical structural benchmark; external hosted builds are convenience mirrors. Corrected the resource contact-sheet path to `../public/resource-samples.png`. Added the not-normative list for the interactive mockup in Section 12.2. Added this change record. |
+| v1.4 | 2026-08-05 | Added the v2 interactive mockup (Section 12.2.1) as a candidate reference: the classroom-atelier direction in one interactive shell with the full Rowan fixture and a working Teaching View timer. The approved v1 benchmark and the PRD govern where they differ, until the v2 review. |
 
 Open decision: this document and the Daybook interface use British English
 (for example "colour", "favourites"), which suits the England market, while

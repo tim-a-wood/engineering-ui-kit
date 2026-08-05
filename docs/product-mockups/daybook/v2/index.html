@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Daybook v2 interactive mockup. Desktop planning and teaching studio for early-years educators.">
+  <title>Daybook v2 · Interactive Mockup</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="zoomHost">
+<div class="app" id="app">
+
+  <header class="topbar">
+    <span class="brand"><span class="logo" aria-hidden="true"></span><b>Daybook</b></span>
+    <span class="context">
+      <span class="room" id="ctxRoom"></span>
+      <span class="term" id="ctxTerm"></span>
+    </span>
+    <span class="mid">
+      <span class="savestate"><i aria-hidden="true"></i><span>Saved just now</span></span>
+      <span class="zoomer" role="group" aria-label="Zoom">
+        <button id="zoomFit">Fit view</button>
+        <button id="zoomOut" aria-label="Zoom out">−</button>
+        <button id="zoomIn" aria-label="Zoom in">+</button>
+      </span>
+      <button class="abtn" title="This control is not in the v2 mockup.">Print week</button>
+      <button class="abtn" title="This control is not in the v2 mockup.">Share week</button>
+      <button class="abtn primary" id="openTeach">Open teaching view</button>
+    </span>
+  </header>
+
+  <div class="frame">
+    <nav class="nav" aria-label="Workspaces">
+      <button data-ws="week" class="active"><span class="glyph" aria-hidden="true"></span>Week Book</button>
+      <button data-ws="plans"><span class="glyph" aria-hidden="true"></span>Plans</button>
+      <button data-ws="classroom"><span class="glyph" aria-hidden="true"></span>Classroom</button>
+      <button data-ws="resources"><span class="glyph" aria-hidden="true"></span>Resources</button>
+      <button data-ws="reflections"><span class="glyph" aria-hidden="true"></span>Reflections</button>
+      <div class="foot">Rowan &amp; Foxes<br>v2 mockup</div>
+    </nav>
+
+    <aside class="sider" aria-label="Context list">
+      <div class="sider-h" id="siderTitle">This week</div>
+      <div class="sider-body" id="siderBody"></div>
+    </aside>
+
+    <main class="canvas"><div class="canvas-inner" id="canvasInner"></div></main>
+
+    <aside class="prep" id="prepRail" aria-label="Preparation"></aside>
+  </div>
+
+</div>
+</div>
+
+<div class="teach" id="teach" role="dialog" aria-label="Teaching view">
+  <div class="teach-top">
+    <span class="t" id="teachTitle"></span>
+    <span class="m" id="teachMeta"></span>
+    <button class="abtn close" id="teachClose">Close teaching view</button>
+  </div>
+  <div class="teach-main">
+    <div class="teach-stage" id="teachStage"></div>
+    <div class="teach-side">
+      <div class="timer" id="timerBox">
+        <div class="clock" id="clock">00:00</div>
+        <div class="state" id="clockState">Ready</div>
+        <div class="row">
+          <button class="abtn" id="tStart">Start timer</button>
+          <button class="abtn" id="tPause">Pause timer</button>
+          <button class="abtn" id="tPlus">Add 2 minutes</button>
+        </div>
+      </div>
+      <div class="prep-block">
+        <h4>At hand</h4>
+        <div id="teachResources"></div>
+      </div>
+      <div class="prep-block">
+        <h4>Quick note</h4>
+        <div class="qnote">
+          <input id="qnoteInput" placeholder="Type what you saw" aria-label="Quick note">
+          <button class="abtn" id="qnoteAdd">Add note</button>
+        </div>
+        <div id="qnoteList"></div>
+      </div>
+    </div>
+  </div>
+  <div class="teach-foot">
+    <button class="abtn" id="tPrev">Previous phase</button>
+    <button class="abtn" id="tNext">Next phase</button>
+    <span class="spacer"></span>
+    <button class="abtn primary" id="tFinish">Finish lesson</button>
+  </div>
+</div>
+
+<script src="model.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
