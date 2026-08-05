@@ -2,8 +2,8 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Final v1.2 — requirements baseline and approved master visual direction |
-| Date | 2026-08-03 |
+| Status | Final v1.3 — requirements baseline and approved master visual direction |
+| Date | 2026-08-03, amended 2026-08-05 (Section 24) |
 | Portfolio position | Application 3 of 3 |
 | Product | Daybook |
 | Product type | Desktop-first early-years planning, teaching, classroom-provision, resource, and reflection studio |
@@ -13,7 +13,7 @@
 | Secondary access | iPhone Safari can open and inspect the complete desktop workspace using explicit Fit and zoom controls; mobile-first authoring is not an initial target |
 | Purpose | Demonstrate that the UI Framework can generate a credible, humane professional tool outside software engineering and game development, with explicit ports, adapters, artifact generation, and diverse specialist UI |
 | Normative visual reference | [Approved Week Book master direction](visual-benchmarks/01-week-book-master-direction.png) — the binding classroom-atelier art direction; coordinated workspace renders remain required |
-| Normative structural reference | [Daybook interactive mockup](https://wonderroom-lesson-studio.tim-a-wood.chatgpt.site), baseline implementation commit `f916bbe0a23e8ae753d5f18bcea8473151f52dbb`, defining structure, content, navigation, and interaction promises |
+| Normative structural reference | [Daybook interactive mockup source](../) in this repository, defining structure, content, navigation, and interaction promises (Section 12.2); hosted builds are convenience mirrors |
 
 ## 1. Product summary
 
@@ -542,11 +542,17 @@ acceptance.
 
 ### 12.2 Interactive structural and content benchmark
 
-The [Daybook interactive mockup](https://wonderroom-lesson-studio.tim-a-wood.chatgpt.site)
-at baseline commit `f916bbe0a23e8ae753d5f18bcea8473151f52dbb`
-defines the approved desktop composition, navigation model, content hierarchy,
-workspace relationships, interaction patterns, states, and visible feature
-promises for:
+The canonical Daybook interactive mockup is the source in this repository at
+[`docs/product-mockups/daybook/`](../), versioned together with this PRD.
+Hosted builds, including the public gallery build and the original
+externally hosted mockup (baseline implementation commit
+`f916bbe0a23e8ae753d5f18bcea8473151f52dbb`), are convenience mirrors of the
+repository source; where a mirror and the repository source differ, the
+repository source governs.
+
+The interactive mockup defines the approved desktop composition, navigation
+model, content hierarchy, workspace relationships, interaction patterns,
+states, and visible feature promises for:
 
 1. Week Book and Planning Sheet.
 2. Classroom Setup within a lesson.
@@ -559,9 +565,19 @@ promises for:
 9. Narrow-screen desktop Fit/zoom controls.
 
 The rendered resource contact sheet at
-`../2026-08-03-wonderroom-lesson-studio/public/resource-samples.png` is normative
+[`../public/resource-samples.png`](../public/resource-samples.png) is normative
 for the level of realism and feasibility expected from sample resources, but
 not for literal owl count, exact materials, or exact crop.
+
+The interactive mockup is **not normative** for:
+
+- functional completeness: persistence, sharing, printing, notifications,
+  collaboration, and assistance are simulated, and the simulation defines the
+  intended interaction shape, not the implementation;
+- visual fidelity, which Section 12.1 and the coordinated workspace renders
+  govern; and
+- sample content, which is illustrative unless identified as reference-fixture
+  data in Section 7 or Section 13.
 
 ### 12.3 Conflict resolution and review
 
@@ -1273,3 +1289,16 @@ weaken a P0/P1 requirement without a PRD amendment:
 - [PlayPlan — weekly planning, continuous provision, resources, and printables](https://playplan.uk/)
 - [PlanPad — classroom context, resource library, and lesson planning](https://www.planpad.org/)
 - [MyTeachingStrategies — teacher planning guide](https://teachingstrategies.com/wp-content/uploads/2021/08/MyTeachingStrategies-Guide-for-Teachers.pdf)
+
+## 24. Change record
+
+| Version | Date | Change |
+| --- | --- | --- |
+| v1.0–v1.2 | 2026-08-03 | Requirements baseline, reference hierarchy, and approved master visual direction. |
+| v1.3 | 2026-08-05 | Made the repository copy of the interactive mockup the canonical structural benchmark; external hosted builds are convenience mirrors. Corrected the resource contact-sheet path to `../public/resource-samples.png`. Added the not-normative list for the interactive mockup in Section 12.2. Added this change record. |
+
+Open decision: this document and the Daybook interface use British English
+(for example "colour", "favourites"), which suits the England market, while
+the repository writing profile based on ASD-STE100 requires American English.
+The resolution for Daybook interface text and PRD prose is recorded here and
+remains open.

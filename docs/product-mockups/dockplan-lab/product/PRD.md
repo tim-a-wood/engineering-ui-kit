@@ -2,8 +2,9 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Final v1.0 — requirements baseline |
-| Date | 2026-08-03 |
+| Status | Final v1.1 — requirements baseline with interactive-mockup contract |
+| Date | 2026-08-03, amended 2026-08-05 (Section 24) |
+| Interactive mockup | [`../v2/`](../v2/) — normative shell and interaction reference, Section 12.1 |
 | Portfolio position | Application 2 of 3 |
 | Product | DockPlan Workbench (working title) |
 | Product type | Desktop articulated-vehicle motion-planning and validation workbench |
@@ -191,16 +192,21 @@ The initial scenario contains:
 
 The reference model is a low-speed articulated kinematic model with:
 
-- tractor wheelbase and body envelope;
+- tractor wheelbase and body envelope (reference: 3.80 m wheelbase, 2.50 m width,
+  1.40 m front overhang, 1.00 m rear overhang);
 - steerable front axle;
-- hitch offset;
-- kingpin-to-trailer-axle distance;
-- trailer body envelope;
-- maximum steering angle;
-- maximum steering rate;
-- maximum articulation angle;
-- reverse-speed and acceleration limits; and
-- terminal position and yaw tolerances.
+- hitch offset (reference: 0.42 m behind the rear axle);
+- kingpin-to-trailer-axle distance (reference: 8.10 m kingpin to bogie center);
+- trailer body envelope (reference: 13.60 m × 2.55 m, 1.70 m ahead of the
+  kingpin, 3.80 m behind the bogie center);
+- maximum steering angle (35.0°);
+- maximum steering rate (18.0°/s);
+- maximum articulation angle (42.0°);
+- reverse-speed and acceleration limits (2.5 m/s, 1.5 m/s²); and
+- terminal position and yaw tolerances (0.10 m, 1.0°).
+
+The reference dimensions above were selected under Section 22 and are
+implemented by the v2 interactive-mockup fixture (Section 12.1).
 
 The model explicitly excludes tire slip, suspension, load transfer, surface
 friction variation, and high-speed dynamics.
@@ -322,16 +328,22 @@ The initial scenario policy contains eight required checks. These checks match
 the approved Validation Review mockup. Composite checks retain their individual
 observations and may not hide a failing subcheck behind a passing aggregate.
 
+The reference observed values below come from the v2 interactive-mockup
+fixture (Section 12.1), which computes them from the reference vehicle and
+path. They are fixture results, not acceptance targets; the requirement
+column defines acceptance, and the values change only when the fixture is
+regenerated.
+
 | ID | Check | Dock D-17 requirement | Reference observed value | Required evidence |
 | --- | --- | --- | --- | --- |
 | VAL-CHECK-001 | Swept-body clearance | Minimum distance to classified obstacles ≥ 0.30 m | 0.34 m; margin +0.04 m | Critical vehicle pose, obstacle identity, witness geometry, station, distance, calculation interval |
 | VAL-CHECK-002 | Boundary or road compliance | Zero vehicle-envelope boundary violations | 0 violations | Boundary layer identity and violating geometry if present |
-| VAL-CHECK-003 | Kinematic feasibility | Articulation ≤ 42.0° and road-wheel steering ≤ 35.0° | Articulation 27.7°; steering 29.1° | Reconstructed articulated state, steering trace, extrema, station/time |
-| VAL-CHECK-004 | Reconstructed control limits | Steering rate ≤ 18.0°/s and acceleration ≤ 1.5 m/s² | Steering rate 4.4°/s; acceleration 0.62 m/s² | Time-parameterized controls, extrema, station/time |
-| VAL-CHECK-005 | Trajectory continuity | No position or yaw gaps; curvature-rate proxy ≤ 0.200 1/m² | 0 gaps; 0.036 1/m² | Node interval, continuity result, curvature and curvature-rate traces |
-| VAL-CHECK-006 | Terminal pose accuracy | Trailer lateral/longitudinal error ≤ 0.10 m and yaw error ≤ 1.0° | 0.04 m and 0.3° | Final and target poses, signed component errors, goal envelope |
-| VAL-CHECK-007 | Reverse-motion ODD | Reverse speed ≤ 2.5 m/s and acceleration within configured bound | Speed 2.1 m/s; acceleration 0.62 m/s² | Velocity/acceleration traces and extrema |
-| VAL-CHECK-008 | Cost evaluation | Total configured scenario cost ≤ 200.0 | 132.6; margin +67.4 | Cost policy version, weighted term table, total, comparison run |
+| VAL-CHECK-003 | Kinematic feasibility | Articulation ≤ 42.0° and road-wheel steering ≤ 35.0° | Articulation 30.0°; steering 15.0° | Reconstructed articulated state, steering trace, extrema, station/time |
+| VAL-CHECK-004 | Reconstructed control limits | Steering rate ≤ 18.0°/s and acceleration ≤ 1.5 m/s² | Steering rate 10.0°/s; acceleration 0.57 m/s² | Time-parameterized controls, extrema, station/time |
+| VAL-CHECK-005 | Trajectory continuity | No position or yaw gaps; curvature-rate proxy ≤ 0.200 1/m² | 0 gaps; 0.015 1/m² | Node interval, continuity result, curvature and curvature-rate traces |
+| VAL-CHECK-006 | Terminal pose accuracy | Trailer lateral/longitudinal error ≤ 0.10 m and yaw error ≤ 1.0° | 0.03 m and 0.3° | Final and target poses, signed component errors, goal envelope |
+| VAL-CHECK-007 | Reverse-motion ODD | Reverse speed ≤ 2.5 m/s and acceleration within configured bound | Speed 2.10 m/s; acceleration 0.57 m/s² | Velocity/acceleration traces and extrema |
+| VAL-CHECK-008 | Cost evaluation | Total configured scenario cost ≤ 200.0 | 129.4; margin +70.6 | Cost policy version, weighted term table, total, comparison run |
 
 Optimizer convergence is a prerequisite gate rather than a ninth validation
 row. A run cannot enter validation unless the planner reports an accepted
@@ -414,6 +426,39 @@ They are normative for product planning, not literal pixel specifications.
 The earlier mobile and cinematic concepts are non-normative and must not be
 used to guide the product.
 
+### 12.1 Interactive mockup role and fidelity contract
+
+The [v2 interactive mockup](../v2/) is an approved, runnable reference for the
+desktop shell. It implements the Dock D-17 reference fixture with computed
+articulated kinematics, computed swept geometry, and computed validation
+values, so its numbers and the tables in this PRD agree.
+
+The interactive mockup is **normative** for:
+
+- the shell composition of all three workspaces and the placement of the
+  canvas, playback row, panels, dock, and status bar;
+- the context rule in APP-013: which toolbar verbs, tree contents, and status
+  facts belong to each workspace;
+- synchronized selection between canvas, playback, plots, and the validation
+  matrix, including evidence navigation from a matrix row to its critical
+  station and witness geometry;
+- run switching, baseline comparison presentation, and the verdict strip with
+  its scope statement; and
+- the truthful-state conventions: absent versus disabled controls, playback
+  locked during a run, and no editable affordances beside immutable evidence.
+
+The interactive mockup is **not normative** for:
+
+- functional completeness: it does not import files, edit geometry, export
+  bundles, or run a live planner;
+- the Hybrid A* search cloud, the SQP iteration history, and the event log,
+  which are authored replays with consistent numbers; and
+- final visual assets, performance, or production code quality.
+
+Where the static renders in Section 12 and the interactive mockup differ in
+layout detail, the interactive mockup defines the shell; the renders remain
+the reference for density and visual language.
+
 ## 13. Requirements baseline and visual-promise register
 
 ### 13.1 Requirement contract
@@ -463,6 +508,7 @@ The following governance rules apply:
 | APP-010 | P0 | Bind every visible metric, layer, plot, table row, log event, and verdict to the active project or immutable run; placeholder demo values cannot appear as computed results. | Data-lineage inspection using two materially different runs. |
 | APP-011 | P1 | Print the active dimensioned plan, diagnostic view, or review report with project/run identity, scale where applicable, and provenance. | Print preview and PDF printer output review. |
 | APP-012 | P1 | Provide configurable keyboard shortcuts and a searchable command surface for primary actions. | Shortcut remap and command-search test. |
+| APP-013 | P0 | Keep the shared shell spine fixed across workspaces (canvas, playback row, view tools, panel geometry) and rotate the periphery by context: toolbar verbs, tree contents, inspector detail, dock tabs, and status facts are workspace-specific. A control that is meaningless in a workspace is absent; a control that is situationally unavailable is disabled with an explanation. Editable affordances must not appear in the same context as an immutable verdict, and trajectory playback is disabled while a planning run is in progress. | Chrome inventory per workspace against the v2 interactive mockup (Section 12.1) and the three normative compositions; wrong-context control audit; playback-lock test during a run. |
 
 ### 13.3 Scenario Definition + Swept-Path Authoring requirements
 
@@ -919,3 +965,16 @@ cannot remove or weaken a P0/P1 requirement without a PRD amendment.
 - [Autoware — planning validator](https://autowarefoundation.github.io/autoware_universe/main/planning/planning_validator/autoware_planning_validator/)
 - [CommonRoad Drivability Checker](https://commonroad.in.tum.de/tools/drivability-checker)
 - [MathWorks Automated Driving Toolbox — planning and control](https://www.mathworks.com/help/driving/planning-and-control.html)
+
+## 24. Change record
+
+| Version | Date | Change |
+| --- | --- | --- |
+| v1.0 | 2026-08-03 | Requirements baseline from the three approved mockups. |
+| v1.1 | 2026-08-05 | Added the v2 interactive mockup as a normative shell reference with a fidelity contract (Section 12.1). Added APP-013: fixed shell spine, workspace-specific periphery, absent-versus-disabled rule, no editable affordances beside immutable evidence, playback lock during a run. Recorded the Section 22 reference vehicle dimensions in Section 7.2. Replaced the Section 10 reference observed values with the computed v2 fixture results; requirement limits are unchanged. |
+
+Open decision: this document uses British English spellings (for example
+"manoeuvre", "kerb"), while the repository writing profile based on
+ASD-STE100 requires American English. Product interface text follows the
+writing profile. A decision on the PRD prose spelling is recorded here and
+remains open.
