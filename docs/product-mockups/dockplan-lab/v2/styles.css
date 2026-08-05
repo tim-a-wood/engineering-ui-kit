@@ -78,6 +78,10 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 1
 }
 .toolbar .spacer { flex: 1; }
 .ws-label { color: var(--faint); font-family: var(--mono); font-size: 11px; letter-spacing: .06em; }
+.tgroup { display: none; align-items: center; gap: 4px; }
+.app[data-ws="scenario"] .tgroup[data-set="scenario"],
+.app[data-ws="planner"] .tgroup[data-set="planner"],
+.app[data-ws="validation"] .tgroup[data-set="validation"] { display: flex; }
 
 /* ---- workspace tabs ---- */
 .tabstrip { display: flex; align-items: stretch; background: var(--bg-panel); border-bottom: 1px solid var(--line); padding: 0 8px; }

@@ -353,6 +353,7 @@ function setStation(s, fromPlot) {
   const q = sampleNear(run, state.station)
   drawVehicle(q)
   scrubber.value = Math.round((state.station / sMax) * 1000)
+  const sb = $('sbSim'); if (sb) sb.textContent = `Sim time: ${q.t.toFixed(1)} s`
   $('readout').innerHTML =
     `s <b>${f2(q.s)} m</b> · t <b>${f1(q.t)} s</b> · v <b>${f2(q.v)} m/s</b> · ` +
     `steering <b>${f1(q.steering * DEG)} deg</b> · articulation <b>${f1(q.articulation * DEG)} deg</b> · ` +
@@ -470,6 +471,11 @@ function updatePlotCursors() {
 function redrawPlots() { for (const p of plots) p.draw(); updatePlotCursors() }
 
 // ============================================================== panels ====
+const LEFT_PANEL = {
+  scenario: { title: 'Model', tab: 'Model tree' },
+  planner: { title: 'Experiments', tab: 'Experiments' },
+  validation: { title: 'Runs and evidence', tab: 'Evidence' },
+}
 function buildTree() {
   const host = $('treeHost')
   host.innerHTML = ''
@@ -484,32 +490,59 @@ function buildTree() {
     if (opts.id) n.id = opts.id
     return n
   }
-  node(0, 'Dock D-17 reverse')
-  node(1, 'Site')
-  node(2, 'yard-plan.geojson', { leaf: true, onclick: () => selectFile('yard-plan.geojson', '48 KB', 'Imported site geometry, frame: yard, units: m') })
-  node(2, 'costmap.yaml', { leaf: true, onclick: () => selectFile('costmap.yaml', '6 KB', 'Occupancy grid metadata, resolution 0.10 m') })
-  node(1, 'Vehicle')
-  node(2, 'YT-1 yard tractor', { leaf: true, onclick: () => selectObject('vehicle') })
-  node(2, 'T-136 semitrailer', { leaf: true, onclick: () => selectObject('vehicle') })
-  node(1, 'Path')
-  node(2, 'Reference path, 8 points', { leaf: true })
-  node(2, 'Start pose', { leaf: true })
-  node(2, 'Goal pose, D-17', { leaf: true })
-  node(1, 'Runs')
-  node(2, 'run-014 baseline', {
-    leaf: true, id: 'tree-run-014',
-    status: ['REJECTED', 'bad'],
-    onclick: () => setRun('run-014'),
-  })
-  node(2, 'run-015 refined', {
-    leaf: true, id: 'tree-run-015',
-    status: ['PASS', 'ok'],
-    onclick: () => setRun('run-015'),
-  })
-  node(1, 'Reports')
-  node(2, 'validation.json', { leaf: true, onclick: () => selectFile('validation.json', '64 KB', 'Validation matrix result for run-015, policy v1.2') })
-  node(2, 'solver-trace.log', { leaf: true, onclick: () => selectFile('solver-trace.log', '512 KB', 'Hybrid A* and SQP iteration trace for run-015') })
-  node(2, 'parameters.yaml', { leaf: true, onclick: () => selectFile('parameters.yaml', '23 KB', 'Planner, costmap, and policy parameter snapshot') })
+  const runNodes = (depth) => {
+    node(depth, 'run-014 baseline', {
+      leaf: true, id: 'tree-run-014', status: ['REJECTED', 'bad'],
+      onclick: () => setRun('run-014'),
+    })
+    node(depth, 'run-015 refined', {
+      leaf: true, id: 'tree-run-015', status: ['PASS', 'ok'],
+      onclick: () => setRun('run-015'),
+    })
+  }
+  const m = SCENE.runs['run-015'].metrics
+
+  if (state.ws === 'scenario') {
+    node(0, 'Dock D-17 reverse')
+    node(1, 'Site')
+    node(2, 'yard-plan.geojson', { leaf: true, onclick: () => selectFile('yard-plan.geojson', '48 KB', 'Imported site geometry, frame: yard, units: m') })
+    node(2, 'costmap.yaml', { leaf: true, onclick: () => selectFile('costmap.yaml', '6 KB', 'Occupancy grid metadata, resolution 0.10 m') })
+    node(1, 'Vehicle')
+    node(2, 'YT-1 yard tractor', { leaf: true, onclick: () => selectObject('vehicle') })
+    node(2, 'T-136 semitrailer', { leaf: true, onclick: () => selectObject('vehicle') })
+    node(1, 'Path')
+    node(2, 'Reference path, 8 points', { leaf: true })
+    node(2, 'Start pose', { leaf: true })
+    node(2, 'Goal pose, D-17', { leaf: true })
+    node(1, 'Results')
+    node(2, 'Minimum clearance', { leaf: true, status: [`${m.minClearance.toFixed(2)} m`, 'ok'] })
+    node(2, 'Maximum articulation', { leaf: true, status: [`${m.maxArticulationDeg.toFixed(1)} deg`, 'ok'] })
+  } else if (state.ws === 'planner') {
+    node(0, 'Reverse-docking experiments')
+    node(1, 'Runs')
+    runNodes(2)
+    node(1, 'Parameters')
+    node(2, 'planner.yaml', { leaf: true, onclick: () => selectFile('planner.yaml', '9 KB', 'Hybrid A* search settings') })
+    node(2, 'costmap.yaml', { leaf: true, onclick: () => selectFile('costmap.yaml', '6 KB', 'Grid resolution and obstacle inflation') })
+    node(2, 'sqp.yaml', { leaf: true, onclick: () => selectFile('sqp.yaml', '4 KB', 'Refinement tolerances and weights') })
+    node(1, 'Data sources')
+    node(2, 'odom.bag, ROS 2', { leaf: true, status: ['imported', 'ok'], onclick: () => selectFile('odom.bag', '2.1 MB', 'Offline ROS 2 import, topics and frames retained') })
+    node(2, 'scenario.xml, CR', { leaf: true, status: ['imported', 'ok'], onclick: () => selectFile('scenario.xml', '31 KB', 'CommonRoad scenario import') })
+  } else {
+    node(0, 'Dock D-17 reverse')
+    node(1, 'Runs')
+    runNodes(2)
+    node(1, 'Evidence files')
+    node(2, 'solution.json', { leaf: true, status: ['18 KB', 'ok'], onclick: () => selectFile('solution.json', '18 KB', 'Trajectory artifact, hash verified') })
+    node(2, 'validation.json', { leaf: true, status: ['64 KB', 'ok'], onclick: () => selectFile('validation.json', '64 KB', 'Validation matrix result, policy v1.2') })
+    node(2, 'solver-trace.log', { leaf: true, status: ['512 KB', 'ok'], onclick: () => selectFile('solver-trace.log', '512 KB', 'Hybrid A* and SQP iteration trace') })
+    node(2, 'parameters.yaml', { leaf: true, status: ['23 KB', 'ok'], onclick: () => selectFile('parameters.yaml', '23 KB', 'Parameter snapshot, hash verified') })
+    node(2, 'manifest.json', { leaf: true, status: ['5 KB', 'ok'], onclick: () => selectFile('manifest.json', '5 KB', 'Run manifest with content hashes') })
+    node(1, 'Reports')
+    node(2, 'report.html', { leaf: true, onclick: () => selectFile('report.html', '210 KB', 'Review report for run-015') })
+  }
+  $('leftTitle').textContent = LEFT_PANEL[state.ws].title
+  $('tabTree').textContent = LEFT_PANEL[state.ws].tab
   markTreeRun()
 }
 function markTreeRun() {
@@ -937,14 +970,6 @@ function buildVerdict() {
   el('span', 'counts', `${passCount} of 8 required checks pass`, v)
   el('span', 'scope',
     'Scope: scenario dock-d17-reverse, vehicle YT-1 + T-136, planner DockPlan 2.4.1, policy v1.2.', v)
-  const cmp = el('label', 'cmp', null, v)
-  const cb = document.createElement('input')
-  cb.type = 'checkbox'; cb.checked = state.compare
-  cmp.appendChild(cb)
-  el('span', null, 'Compare runs', cmp)
-  cb.addEventListener('change', () => { state.compare = cb.checked; applyLayerVisibility(); redrawPlots() })
-  const exp = el('button', 'tbtn', 'Export bundle', v)
-  exp.title = 'This control is not in the v2 mockup.'
 }
 
 // check selection -----------------------------------------------------------
@@ -994,6 +1019,7 @@ function setRun(id) {
   buildVerdict()
   buildInspector()
   buildDock()
+  updateStatusFacts()
   applyLayerVisibility()
   setStation(Math.min(state.station, runOf().metrics.pathLength))
   setStatus(`${runOf().label} active`)
@@ -1010,14 +1036,33 @@ function setWs(ws) {
   $('app').dataset.ws = ws
   document.querySelectorAll('.wstab').forEach((t) => t.classList.toggle('active', t.dataset.ws === ws))
   $('wsLabel').textContent = WS_LABEL[ws]
+  buildTree()
   buildLegend()
   buildInspector()
   buildDock()
   buildVerdict()
+  updateStatusFacts()
   applyLayerVisibility()
   updatePlotCursors()
   if (ws !== 'validation' && state.run !== 'run-015') setRun('run-015')
   setStatus(ws === 'planner' ? 'CONVERGED' : 'Ready', ws === 'planner')
+}
+
+function updateStatusFacts() {
+  const host = $('statusFacts')
+  if (state.ws === 'scenario') {
+    host.innerHTML = '<span>Frame: yard</span><span>Grid: 1.00 m</span><span>Snap: off</span>'
+      + '<span>Ortho: on</span><span>Units: m, deg</span><span>Result: current</span>'
+  } else if (state.ws === 'planner') {
+    host.innerHTML = '<span>Frame: yard</span><span id="sbSim">Sim time: 0.0 s</span>'
+      + '<span>Replay rate: 2.4x</span><span>Convergence: CONVERGED</span><span>Units: m, deg</span>'
+    const q = sampleNear(runOf(), state.station)
+    const sb = $('sbSim'); if (sb) sb.textContent = `Sim time: ${q.t.toFixed(1)} s`
+  } else {
+    host.innerHTML = '<span>Map: yard-plan v1</span><span>Vehicle: YT-1 + T-136</span>'
+      + '<span>Planner: DockPlan 2.4.1</span><span>Policy: v1.2</span>'
+      + `<span id="sbRun">Run: ${state.run}</span>`
+  }
 }
 document.querySelectorAll('.wstab').forEach((t) => {
   t.addEventListener('click', () => setWs(t.dataset.ws))
@@ -1060,8 +1105,10 @@ function runPlannerReplay() {
   if (replayBusy) return
   replayBusy = true
   if (state.ws !== 'planner') setWs('planner')
+  stopPlay()
   const btn = $('runPlanner'), stop = $('stopRun')
   btn.disabled = true; stop.disabled = false
+  scrubber.disabled = true; $('playBtn').disabled = true
   setStatus('Planning', false)
   const log = document.getElementById('plannerLog')
   if (log) log.innerHTML = ''
@@ -1086,6 +1133,7 @@ function runPlannerReplay() {
       G.path.style.opacity = 1
       drawConvergence(1)
       btn.disabled = false; stop.disabled = true
+      scrubber.disabled = false; $('playBtn').disabled = false
       replayBusy = false
       setStatus('CONVERGED', true)
     }
@@ -1101,6 +1149,13 @@ function setStatus(text, good) {
 }
 $('fitView').addEventListener('click', () => setView(WORLD))
 $('fitPath').addEventListener('click', () => setView({ x0: 24, y0: -1.5, w: 34, h: 24.5 }))
+$('cmpBtn').addEventListener('click', () => {
+  state.compare = !state.compare
+  $('cmpBtn').classList.toggle('active', state.compare)
+  applyLayerVisibility()
+  redrawPlots()
+  setStatus(state.compare ? 'Run comparison on' : 'Run comparison off')
+})
 $('tabTree').addEventListener('click', () => {
   $('tabTree').classList.add('active'); $('tabLayers').classList.remove('active')
   $('treeHost').hidden = false; $('layersHost').hidden = true
@@ -1135,6 +1190,7 @@ buildLegend()
 buildVerdict()
 buildInspector()
 buildDock()
+updateStatusFacts()
 applyLayerVisibility()
 setStation(0)
 setStatus('Ready')

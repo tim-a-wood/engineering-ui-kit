@@ -35,11 +35,31 @@
     <button class="tbtn" id="fitView">Fit view</button>
     <button class="tbtn" id="fitPath">Fit path</button>
     <span class="sep"></span>
-    <span class="tfield">Calculation interval <span class="val">0.25 m</span></span>
-    <span class="tfield">Clearance envelope <span class="val">0.30 m</span></span>
-    <span class="sep"></span>
-    <button class="tbtn primary" id="runPlanner">Run planner</button>
-    <button class="tbtn" id="stopRun" disabled>Stop run</button>
+
+    <span class="tgroup" data-set="scenario">
+      <button class="tbtn" disabled title="This control is not in the v2 mockup.">Undo</button>
+      <button class="tbtn" disabled title="This control is not in the v2 mockup.">Redo</button>
+      <span class="sep"></span>
+      <button class="tbtn" title="This control is not in the v2 mockup.">Set start pose</button>
+      <button class="tbtn" title="This control is not in the v2 mockup.">Set goal pose</button>
+      <button class="tbtn" title="This control is not in the v2 mockup.">Edit path</button>
+      <span class="sep"></span>
+      <span class="tfield">Calculation interval <span class="val">0.25 m</span></span>
+      <span class="tfield">Clearance envelope <span class="val">0.30 m</span></span>
+    </span>
+
+    <span class="tgroup" data-set="planner">
+      <button class="tbtn primary" id="runPlanner">Run planner</button>
+      <button class="tbtn" id="stopRun" disabled>Stop run</button>
+      <button class="tbtn" disabled title="This control is not in the v2 mockup.">Step iteration</button>
+    </span>
+
+    <span class="tgroup" data-set="validation">
+      <button class="tbtn" id="cmpBtn">Compare runs</button>
+      <button class="tbtn" disabled title="This control is not in the v2 mockup.">Sync views</button>
+      <button class="tbtn" title="This control is not in the v2 mockup.">Export bundle</button>
+    </span>
+
     <span class="spacer"></span>
     <span class="ws-label" id="wsLabel">SCENARIO DEFINITION</span>
   </div>
@@ -54,7 +74,7 @@
   <div class="main">
 
     <aside class="panel" aria-label="Project">
-      <div class="panel-h">Project<span class="right" id="projName">dock-d17-reverse</span></div>
+      <div class="panel-h"><span id="leftTitle">Model</span><span class="right" id="projName">dock-d17-reverse</span></div>
       <div class="panel-body" id="treeHost"></div>
       <div class="panel-body" id="layersHost" hidden></div>
       <div class="subtabs">
@@ -93,10 +113,7 @@
   <div class="statusbar">
     <span class="state" id="statusState">Ready</span>
     <span id="statusCursor">E - m · S - m</span>
-    <span class="right">
-      <span>Frame: yard</span><span>Grid: 1.00 m</span><span>Snap: off</span>
-      <span>Ortho: on</span><span>Units: m, deg</span><span id="statusResult">Result: current</span>
-    </span>
+    <span class="right" id="statusFacts"></span>
   </div>
 
 </div>
