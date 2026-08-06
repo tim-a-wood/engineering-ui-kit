@@ -581,20 +581,25 @@ The interactive mockup is **not normative** for:
 
 ### 12.2.1 v2 interactive mockup
 
-The [v2 interactive mockup](../v2/) is a second repository mockup that
-carries the classroom-atelier direction into one interactive desktop shell:
-the five workspaces, Teaching View with a working phase timer, and the
-complete Section 7 Rowan reference fixture, with interface text in the
-repository writing profile.
+The [v2 interactive mockup](../v2/) is the v1 mockup taken forward. It is
+built from the v1 source and keeps the v1 structure, content, and visual
+language without change, so everything Section 12.2 approves remains true of
+v2. On top of that baseline it adds a bounded set of behaviors from the
+requirement tables:
 
-Until it receives its own approval review, the v2 mockup is a candidate
-reference: where v1 and v2 differ in structure or promised features, the
-approved v1 benchmark and this PRD govern. The v2 mockup demonstrates, and
-its README states, the same simulation limits as Section 12.2. Its working
-behaviors follow the requirement rules directly: the timer resets on an
-explicit phase change (TEA-007), timer expiry is a prompt only (TEA-013),
-readiness is a deliberate action (RES-008), and duration totals carry the
-guide-not-score wording (WKB-007).
+- Finish & reflect closes Teaching View and opens the reflection for the
+  taught lesson (TEA-008, REF-001).
+- Quick notes are captured in Teaching View with a phase-relative time
+  stamp (TEA-009) and reappear beside that lesson's reflection.
+- The phase timer adds two minutes at any time, and expiry reads as a
+  prompt, not a rule (TEA-006, TEA-013).
+- Room display is a real full-screen projection that shows only the
+  approved child-facing prompt, with an explicit exit (TEA-011).
+- The half-term map marks where reflection carry-forwards land (REF-008).
+
+Because v2 is derived from the v1 source, the v1 benchmark and v2 cannot
+diverge structurally except through these listed additions. The simulation
+limits in Section 12.2 apply to v2 unchanged.
 
 ### 12.3 Conflict resolution and review
 
@@ -1313,7 +1318,8 @@ weaken a P0/P1 requirement without a PRD amendment:
 | --- | --- | --- |
 | v1.0–v1.2 | 2026-08-03 | Requirements baseline, reference hierarchy, and approved master visual direction. |
 | v1.3 | 2026-08-05 | Made the repository copy of the interactive mockup the canonical structural benchmark; external hosted builds are convenience mirrors. Corrected the resource contact-sheet path to `../public/resource-samples.png`. Added the not-normative list for the interactive mockup in Section 12.2. Added this change record. |
-| v1.4 | 2026-08-05 | Added the v2 interactive mockup (Section 12.2.1) as a candidate reference: the classroom-atelier direction in one interactive shell with the full Rowan fixture and a working Teaching View timer. The approved v1 benchmark and the PRD govern where they differ, until the v2 review. |
+| v1.4 | 2026-08-05 | Added a v2 interactive mockup as a candidate reference. Superseded by v1.5 on the same day. |
+| v1.5 | 2026-08-05 | Replaced the v1.4 candidate mockup with a v2 derived directly from the v1 source (Section 12.2.1). v2 keeps the approved v1 structure, content, and visual language and adds only the listed behaviors: the finish-to-reflection flow, captured quick notes with reflection recall, timer additions, a real room-display projection, and the carry-forward mark on the term map. |
 
 Open decision: this document and the Daybook interface use British English
 (for example "colour", "favourites"), which suits the England market, while

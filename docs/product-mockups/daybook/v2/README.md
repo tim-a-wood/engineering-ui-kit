@@ -1,47 +1,51 @@
 # Daybook v2 interactive mockup
 
-This folder contains the v2 interactive mockup of Daybook. The mockup shows
-the intended desktop product with the PRD Section 7 reference fixture: the
-Rowan & Foxes Reception class, the week of 12 to 16 October 2026, and five
-different lesson types. It is a visual representation of the final product.
-It does not implement the full product.
+Daybook v2 is the v1 interactive mockup, taken forward. It keeps the v1
+source, design language, content, and workspaces without change, and adds a
+small set of behaviors from the PRD requirement tables. It is a visual
+representation of the intended product. It does not implement the full
+product.
+
+## What v2 adds to v1
+
+- **Finish & reflect completes the loop.** The final teaching phase now
+  closes Teaching View and opens the reflection for that lesson (TEA-008,
+  REF-001).
+- **Quick notes are captured, not simulated.** A note field in Teaching View
+  saves timestamped notes against the current phase (TEA-009). The captured
+  notes appear in a "Notes from teaching" panel beside that lesson's
+  reflection.
+- **The phase timer gains Add 2 minutes at any time**, and timer expiry
+  reads "Time · a prompt, not a rule" (TEA-006, TEA-013).
+- **Room display is real.** The Room display action opens a full-screen
+  child-facing projection that shows only the approved current-phase prompt,
+  with an explicit exit (TEA-011).
+- **Carry-forward decisions are visible on the term map.** Week 1 of the
+  half-term map marks where the two reflection carry-forwards land (REF-008).
+
+Everything else is v1 as approved.
 
 ## Open the mockup
 
-Open `index.html` in a desktop browser. No build step and no dependencies
-are necessary. The top bar has Fit view, zoom out, and zoom in controls for
-inspection on a narrow screen.
+The built copy is in `dist/`. Serve it from any static server:
 
-## What the mockup contains
+```bash
+python3 -m http.server 8000 --directory dist
+```
 
-- The five workspaces on the bottle-green rail: Week Book, Plans, Classroom,
-  Resources, and Reflections.
-- The Week Book planning sheet with flexible phases, the classroom-setup tab,
-  and the resources tab for each of the five reference lessons.
-- The half-term map with week focus, curriculum threads, and the plan library.
-- A selectable room plan with area invitations, readiness, adult deployment,
-  and linked plans.
-- Resource packs with physical checklists, printable provenance labels, and a
-  working print queue count.
-- Three completed reflections with child voice, Keep, Change, and Try Next
-  decisions, a team response, and attached carry-forward decisions.
-- Teaching View with a working phase timer: start, pause, add two minutes,
-  phase change resets to the planned duration, and quick notes with a
-  phase-relative time stamp.
+Then open `http://127.0.0.1:8000/`.
+
+To rebuild from source:
+
+```bash
+npm install
+npx vite build --config vite.pages.config.ts
+```
 
 ## What is real and what is simulated
 
-- The timer, the phase navigation, the quick notes, the readiness toggles,
-  the print-queue counts, and the planned-duration totals are computed by the
-  running page.
-- Persistence, sharing, printing, autosave, and collaboration are simulated.
-  The simulation defines the intended interaction shape, not the
-  implementation.
-- All names in the fixture are pseudonyms from the PRD reference week.
-
-## Limits
-
-- Controls marked with a tooltip are not functional.
-- The mockup follows the repository writing profile based on ASD-STE100 for
-  interface text, with American spellings. The PRD change record holds the
-  open decision on British spellings for the England market.
+The timer, phase navigation, quick notes, readiness toggles, and the
+finish-to-reflection flow run in the page. Persistence, sharing, printing,
+autosave, and collaboration are simulated, and the simulation defines the
+intended interaction shape, not the implementation. All names are pseudonyms
+from the PRD reference week.
