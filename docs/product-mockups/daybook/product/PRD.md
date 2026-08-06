@@ -601,6 +601,17 @@ Because v2 is derived from the v1 source, the v1 benchmark and v2 cannot
 diverge structurally except through these listed additions. The simulation
 limits in Section 12.2 apply to v2 unchanged.
 
+v2 also carries a visual pass that moves the interactive mockup toward the
+Section 12.1 master direction, as VIS-001 requires of the production Week
+Book: the dark bottle-green primary rail with the cream week panel and woven
+index tabs, the editorial serif lesson headline with the brush underline,
+the connected day ribbon, the horizontal phase path that flows into the
+sage phase card with three icon-labelled columns, the illustrated room
+preview with the adult route, clipped adult briefing slips, the resource
+readiness meter, and the handwritten class note. The Section 12.1 render
+remains the visual authority; the v2 pass is an interactive step toward it,
+not a replacement for the coordinated workspace renders.
+
 ### 12.3 Conflict resolution and review
 
 When the references differ:
@@ -1320,6 +1331,7 @@ weaken a P0/P1 requirement without a PRD amendment:
 | v1.3 | 2026-08-05 | Made the repository copy of the interactive mockup the canonical structural benchmark; external hosted builds are convenience mirrors. Corrected the resource contact-sheet path to `../public/resource-samples.png`. Added the not-normative list for the interactive mockup in Section 12.2. Added this change record. |
 | v1.4 | 2026-08-05 | Added a v2 interactive mockup as a candidate reference. Superseded by v1.5 on the same day. |
 | v1.5 | 2026-08-05 | Replaced the v1.4 candidate mockup with a v2 derived directly from the v1 source (Section 12.2.1). v2 keeps the approved v1 structure, content, and visual language and adds only the listed behaviors: the finish-to-reflection flow, captured quick notes with reflection recall, timer additions, a real room-display projection, and the carry-forward mark on the term map. |
+| v1.6 | 2026-08-05 | Added the v2 visual pass toward the Section 12.1 master direction (Section 12.2.1): dark primary rail, woven week tabs, editorial serif headline, connected day ribbon and phase path, sage phase card with icon columns, illustrated room preview, clipped adult slips, readiness meter, and handwritten class note. Structure and content are unchanged from v1. |
 
 Open decision: this document and the Daybook interface use British English
 (for example "colour", "favourites"), which suits the England market, while

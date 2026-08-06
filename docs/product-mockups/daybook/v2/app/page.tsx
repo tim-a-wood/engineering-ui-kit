@@ -261,7 +261,8 @@ export default function Home() {
               <div className="rail-section">
                 <div className="rail-label"><span>This week</span><button aria-label="Add lesson" onClick={() => showToast("A blank lesson page is ready.")}>＋</button></div>
                 {lessons.map((item) => (
-                  <button className={`rail-lesson ${item.id === lesson.id ? "active" : ""}`} key={item.id} onClick={() => chooseLesson(item.id)}>
+                  <button className={`rail-lesson ${item.colour} ${item.id === lesson.id ? "active" : ""}`} key={item.id} onClick={() => chooseLesson(item.id)}>
+                    <i className="tab-cloth" aria-hidden="true" />
                     <span className={`lesson-dot ${item.colour}`} />
                     <span><strong>{item.day.slice(0, 3)} · {item.time.split("–")[0]}</strong><small>{item.title}</small></span>
                   </button>
@@ -291,9 +292,10 @@ export default function Home() {
 
               <div className="week-strip" aria-label="Week lessons">
                 {lessons.map((item) => (
-                  <button className={`day-column ${item.id === lesson.id ? "selected" : ""}`} key={item.id} onClick={() => chooseLesson(item.id)}>
+                  <button className={`day-column ${item.colour} ${item.id === lesson.id ? "selected" : ""}`} key={item.id} onClick={() => chooseLesson(item.id)}>
                     <span className="day-date"><strong>{item.day.slice(0, 3)}</strong><small>{item.date.split(" ")[0]}</small></span>
                     <span className={`day-lesson ${item.colour}`}><small>{item.time}</small><strong>{item.kind}</strong></span>
+                    <i className="day-dot" aria-hidden="true" />
                   </button>
                 ))}
               </div>
@@ -343,23 +345,44 @@ export default function Home() {
                         <div><span>Step {selectedPhase + 1}</span><h3>{phase.name}</h3></div>
                         <div className="minute-stepper"><button aria-label="Reduce time">−</button><strong>{phase.minutes} min</strong><button aria-label="Increase time">＋</button></div>
                       </div>
-                      <div className="detail-columns">
-                        <div><span className="detail-label">What children are doing</span><p contentEditable suppressContentEditableWarning>{phase.children}</p></div>
-                        <div><span className="detail-label">Adult role & language</span><p contentEditable suppressContentEditableWarning>{phase.adult}</p></div>
+                      <div className="detail-columns three-up">
+                        <div><span className="detail-label"><i className="d-ico child" aria-hidden="true" />What children are doing</span><p contentEditable suppressContentEditableWarning>{phase.children}</p></div>
+                        <div><span className="detail-label"><i className="d-ico speech" aria-hidden="true" />Adult role & language</span><p contentEditable suppressContentEditableWarning>{phase.adult}</p></div>
+                        <div className="notice-column"><span className="detail-label"><i className="d-ico eye" aria-hidden="true" />Listen and look for</span><p contentEditable suppressContentEditableWarning>{phase.notice}</p></div>
                       </div>
-                      <div className="notice-strip"><span>Listen and look for</span><p contentEditable suppressContentEditableWarning>{phase.notice}</p></div>
                     </section>
                   </article>
 
                   <aside className="lesson-sidebar">
                     <section className="sidebar-block room-plan-block">
                       <div className="sidebar-title"><span>In the room</span><button onClick={() => setView("room")}>Edit setup</button></div>
-                      <div className="mini-room" aria-label="Simple classroom layout preview">
-                        <div className="room-label carpet">Carpet<br /><small>launch</small></div>
-                        <div className="room-label table-one">Table 1</div>
-                        <div className="room-label table-two">Table 2</div>
-                        <div className="room-label shelf">Resources</div>
-                        <div className="door-mark">door</div>
+                      <div className="mini-room illustrated" aria-label="Illustrated classroom layout preview">
+                        <svg viewBox="0 0 200 120" role="img" aria-hidden="true">
+                          <rect x="1.5" y="1.5" width="197" height="117" rx="5" fill="#f6efdf" stroke="#c9b98f" strokeWidth="2" />
+                          <rect x="8" y="8" width="184" height="10" rx="3" fill="#e8ddc2" />
+                          <text x="100" y="15.5" textAnchor="middle" fontSize="6.5" fill="#8a7b54" fontFamily="Inter, Arial" letterSpacing="1.4">WINDOWS · GARDEN</text>
+                          <ellipse cx="52" cy="52" rx="34" ry="22" fill="#dfe8dc" stroke="#a8bba1" strokeWidth="1.6" strokeDasharray="none" />
+                          <text x="52" y="50" textAnchor="middle" fontSize="8" fill="#48604a" fontFamily="Georgia, serif" fontStyle="italic">Carpet</text>
+                          <text x="52" y="60" textAnchor="middle" fontSize="5.5" fill="#7c8f7a">launch circle</text>
+                          <g fill="#e7cf9f" stroke="#b99b57" strokeWidth="1.4">
+                            <rect x="120" y="30" width="34" height="20" rx="4" />
+                            <rect x="120" y="70" width="34" height="20" rx="4" />
+                          </g>
+                          <g fill="#f6efdf" stroke="#b99b57" strokeWidth="1.1">
+                            <circle cx="116" cy="34" r="3.4" /><circle cx="116" cy="46" r="3.4" />
+                            <circle cx="158" cy="34" r="3.4" /><circle cx="158" cy="46" r="3.4" />
+                            <circle cx="116" cy="74" r="3.4" /><circle cx="116" cy="86" r="3.4" />
+                            <circle cx="158" cy="74" r="3.4" /><circle cx="158" cy="86" r="3.4" />
+                          </g>
+                          <text x="137" y="42" textAnchor="middle" fontSize="6" fill="#7a642f" fontFamily="Inter, Arial">Table 1</text>
+                          <text x="137" y="82" textAnchor="middle" fontSize="6" fill="#7a642f" fontFamily="Inter, Arial">Table 2</text>
+                          <rect x="168" y="26" width="10" height="68" rx="2" fill="#d9c9a4" stroke="#b99b57" strokeWidth="1.2" />
+                          <text x="173" y="62" textAnchor="middle" fontSize="5" fill="#7a642f" transform="rotate(90 173 60)">resources</text>
+                          <path d="M22 108 a14 14 0 0 1 14 -14" fill="none" stroke="#a09274" strokeWidth="1.4" strokeDasharray="2.5 2" />
+                          <text x="18" y="114" fontSize="5.5" fill="#8a7b54">door</text>
+                          <path d="M60 66 C 82 84, 96 56, 116 44" fill="none" stroke="#cf9c33" strokeWidth="2.2" strokeDasharray="5 4" strokeLinecap="round" />
+                          <path d="M112 48 l5 -4.5 l-6.6 -1.4" fill="none" stroke="#cf9c33" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
                       </div>
                       <p>{lesson.setup}</p>
                     </section>
@@ -370,8 +393,12 @@ export default function Home() {
                     </section>
 
                     <section className="sidebar-block">
-                      <div className="sidebar-title"><span>Resources</span><small>{ready.length}/{lesson.resources.length} ready</small></div>
+                      <div className="sidebar-title"><span>Resources</span><small>{ready.length} of {lesson.resources.length} ready</small></div>
                       <div className={`resource-sample-crop sample-${lessonSampleIndex}`}><span>Pack preview</span></div>
+                      <div className="ready-meter" aria-hidden="true">
+                        <span className="ready-fill" style={{ width: `${(ready.length / lesson.resources.length) * 100}%` }} />
+                        <span className="ready-scale">{lesson.resources.map((_, index) => <i key={index}>{index + 1}</i>)}</span>
+                      </div>
                       <div className="resource-list">{lesson.resources.map((item) => <button key={item} onClick={() => toggleReady(item)} className={ready.includes(item) ? "ready" : ""}><span>{ready.includes(item) ? "✓" : ""}</span>{item}</button>)}</div>
                     </section>
 
