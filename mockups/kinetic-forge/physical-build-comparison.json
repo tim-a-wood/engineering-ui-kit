@@ -1,0 +1,139 @@
+{
+  "method": {
+    "physics": "Rapier 3D",
+    "stepRateHz": 60,
+    "durationSeconds": 6,
+    "throttlePercent": 100,
+    "steeringPercent": 0,
+    "startPositionZ": 5.2
+  },
+  "results": {
+    "efficientStandard": {
+      "label": "EFFICIENT / STANDARD",
+      "setup": {
+        "configurationId": "rover.rf06.stage1.efficient.standard.restraint48",
+        "grossMassKg": 3508,
+        "cargoMassKg": 420,
+        "engineForce": 680,
+        "suspensionRestLength": 0.48,
+        "maximumSuspensionTravel": 0.24,
+        "suspensionStiffness": 46,
+        "suspensionCompression": 5.2,
+        "suspensionRelaxation": 5.6,
+        "maximumSuspensionForce": 24000,
+        "frictionSlip": 2.65
+      },
+      "samples": [
+        {
+          "second": 1,
+          "distanceM": 0.357,
+          "speedMps": 0.742,
+          "averageSuspensionM": 0.455,
+          "groundedWheels": 6
+        },
+        {
+          "second": 2,
+          "distanceM": 1.341,
+          "speedMps": 1.139,
+          "averageSuspensionM": 0.444,
+          "groundedWheels": 4
+        },
+        {
+          "second": 3,
+          "distanceM": 2.682,
+          "speedMps": 1.611,
+          "averageSuspensionM": 0.446,
+          "groundedWheels": 6
+        },
+        {
+          "second": 4,
+          "distanceM": 4.658,
+          "speedMps": 2.096,
+          "averageSuspensionM": 0.446,
+          "groundedWheels": 4
+        },
+        {
+          "second": 5,
+          "distanceM": 6.772,
+          "speedMps": 2.314,
+          "averageSuspensionM": 0.445,
+          "groundedWheels": 4
+        },
+        {
+          "second": 6,
+          "distanceM": 9.217,
+          "speedMps": 2.4,
+          "averageSuspensionM": 0.458,
+          "groundedWheels": 5
+        }
+      ]
+    },
+    "torqueLongTravel": {
+      "label": "HIGH-TORQUE / LONG-TRAVEL",
+      "setup": {
+        "configurationId": "rover.rf06.stage1.high-torque.long-travel.restraint48",
+        "grossMassKg": 3604,
+        "cargoMassKg": 420,
+        "engineForce": 800,
+        "suspensionRestLength": 0.56,
+        "maximumSuspensionTravel": 0.35,
+        "suspensionStiffness": 38,
+        "suspensionCompression": 4.4,
+        "suspensionRelaxation": 4.8,
+        "maximumSuspensionForce": 26000,
+        "frictionSlip": 2.8
+      },
+      "samples": [
+        {
+          "second": 1,
+          "distanceM": 0.465,
+          "speedMps": 0.997,
+          "averageSuspensionM": 0.518,
+          "groundedWheels": 6
+        },
+        {
+          "second": 2,
+          "distanceM": 1.989,
+          "speedMps": 1.774,
+          "averageSuspensionM": 0.516,
+          "groundedWheels": 4
+        },
+        {
+          "second": 3,
+          "distanceM": 4.038,
+          "speedMps": 2.39,
+          "averageSuspensionM": 0.51,
+          "groundedWheels": 4
+        },
+        {
+          "second": 4,
+          "distanceM": 6.547,
+          "speedMps": 2.77,
+          "averageSuspensionM": 0.515,
+          "groundedWheels": 4
+        },
+        {
+          "second": 5,
+          "distanceM": 9.577,
+          "speedMps": 3.225,
+          "averageSuspensionM": 0.519,
+          "groundedWheels": 6
+        },
+        {
+          "second": 6,
+          "distanceM": 13.074,
+          "speedMps": 3.705,
+          "averageSuspensionM": 0.518,
+          "groundedWheels": 6
+        }
+      ]
+    }
+  },
+  "deltaAtSixSeconds": {
+    "distanceM": 3.857,
+    "distancePercent": 41.8,
+    "speedMps": 1.305,
+    "speedPercent": 54.4,
+    "averageSuspensionM": 0.06
+  }
+}
