@@ -1,0 +1,175 @@
+{
+  "acceptedRuntimeCeilings": {
+    "frameTimeP95Ms": 40,
+    "drawCalls": 2000,
+    "triangles": 1000000,
+    "textureMemoryMb": 80,
+    "physicsBodies": 6,
+    "physicsColliders": 12,
+    "resourceGrowth": 0
+  },
+  "path": {
+    "initial": {
+      "mode": "mode-build",
+      "phase": "ready",
+      "outcome": "active",
+      "reducedMotion": "false",
+      "reducedEffects": "false",
+      "configurationId": "rover.rf06.stage1.high-torque.long-travel.restraint48",
+      "positionZ": 5.188062545776368,
+      "speedMps": 0.1,
+      "suspensionTravelPercent": 12,
+      "groundedWheelCount": 6,
+      "frameTimeP95Ms": 33.8,
+      "resourceGrowth": 0
+    },
+    "preferences": {
+      "motion": "true",
+      "effects": "true",
+      "switches": [
+        {
+          "label": "Reduced camera motionRemoves camera breath and impact shake.ON",
+          "checked": "true"
+        },
+        {
+          "label": "Reduced visual effectsDisables particles, bloom, and screen overlays.ON",
+          "checked": "true"
+        }
+      ]
+    },
+    "blocked": {
+      "mode": "mode-build",
+      "phase": "ready",
+      "outcome": "active",
+      "reducedMotion": "true",
+      "reducedEffects": "true",
+      "configurationId": "rover.rf06.stage1.high-torque.long-travel.no-restraint",
+      "positionZ": 5.192855272293204,
+      "speedMps": 0,
+      "suspensionTravelPercent": 15,
+      "groundedWheelCount": 6,
+      "frameTimeP95Ms": 34.8,
+      "resourceGrowth": 0,
+      "deployDisabled": true
+    },
+    "restored": {
+      "mode": "mode-build",
+      "phase": "ready",
+      "outcome": "active",
+      "reducedMotion": "true",
+      "reducedEffects": "true",
+      "configurationId": "rover.rf06.stage1.high-torque.long-travel.restraint48",
+      "positionZ": 5.193632030487061,
+      "speedMps": 0.1,
+      "suspensionTravelPercent": 15,
+      "groundedWheelCount": 6,
+      "frameTimeP95Ms": 35.1,
+      "resourceGrowth": 0,
+      "deployDisabled": false
+    },
+    "deployed": {
+      "mode": "mode-simulate",
+      "phase": "ready",
+      "outcome": "active",
+      "reducedMotion": "true",
+      "reducedEffects": "true",
+      "configurationId": "rover.rf06.stage1.high-torque.long-travel.restraint48",
+      "positionZ": 5.189092662811279,
+      "speedMps": 0.1,
+      "suspensionTravelPercent": 12,
+      "groundedWheelCount": 6,
+      "frameTimeP95Ms": 35.1,
+      "resourceGrowth": 0
+    },
+    "crossing": {
+      "mode": "mode-simulate",
+      "phase": "crossing",
+      "outcome": "active",
+      "reducedMotion": "true",
+      "reducedEffects": "true",
+      "configurationId": "rover.rf06.stage1.high-torque.long-travel.restraint48",
+      "positionZ": 2.4362974176406866,
+      "speedMps": 1.9,
+      "suspensionTravelPercent": 12,
+      "groundedWheelCount": 6,
+      "frameTimeP95Ms": 34.5,
+      "resourceGrowth": 0
+    },
+    "dockReady": {
+      "mode": "mode-simulate",
+      "phase": "dock_ready",
+      "outcome": "active",
+      "reducedMotion": "true",
+      "reducedEffects": "true",
+      "configurationId": "rover.rf06.stage1.high-torque.long-travel.restraint48",
+      "positionZ": -14.310135093688963,
+      "speedMps": 1.3,
+      "suspensionTravelPercent": 12,
+      "groundedWheelCount": 6,
+      "frameTimeP95Ms": 34.8,
+      "resourceGrowth": 0
+    },
+    "complete": {
+      "mode": "mode-simulate",
+      "phase": "complete",
+      "outcome": "complete",
+      "reducedMotion": "true",
+      "reducedEffects": "true",
+      "configurationId": "rover.rf06.stage1.high-torque.long-travel.restraint48",
+      "positionZ": -14.593616676330566,
+      "speedMps": 0.1,
+      "suspensionTravelPercent": 11,
+      "groundedWheelCount": 6,
+      "frameTimeP95Ms": 33.4,
+      "resourceGrowth": 0
+    },
+    "replay": {
+      "mode": "mode-replay",
+      "phase": "transit",
+      "outcome": "complete",
+      "reducedMotion": "true",
+      "reducedEffects": "true",
+      "configurationId": "rover.rf06.stage1.high-torque.long-travel.restraint48",
+      "positionZ": 2.86407751941681,
+      "speedMps": 1.9,
+      "suspensionTravelPercent": 8,
+      "groundedWheelCount": 2,
+      "frameTimeP95Ms": 34.5,
+      "resourceGrowth": 0
+    },
+    "retry": {
+      "mode": "mode-simulate",
+      "phase": "ready",
+      "outcome": "active",
+      "reducedMotion": "true",
+      "reducedEffects": "true",
+      "configurationId": "rover.rf06.stage1.efficient.standard.restraint48",
+      "positionZ": 5.185063759803771,
+      "speedMps": 0.1,
+      "suspensionTravelPercent": 10,
+      "groundedWheelCount": 6,
+      "frameTimeP95Ms": 34.3,
+      "resourceGrowth": 0
+    }
+  },
+  "evidence": {
+    "video": "kinetic-forge-stage1-completion-gate-iphone.mp4",
+    "contactSheet": "kinetic-forge-stage1-completion-gate-contact-sheet.jpg",
+    "screenshots": [
+      "31-stage1-completion-build-ready.png",
+      "32-stage1-completion-settings.png",
+      "33-stage1-completion-settings-reduced.png",
+      "34-stage1-completion-build-blocked.png",
+      "35-stage1-completion-build-restored.png",
+      "36-stage1-completion-crossing.png",
+      "37-stage1-completion-delivered.png",
+      "38-stage1-completion-replay.png",
+      "39-stage1-completion-retry-build.png",
+      "40-stage1-completion-retry-deployed.png"
+    ],
+    "frameCount": 42,
+    "fps": 5,
+    "durationSeconds": 8.4
+  },
+  "browserErrors": []
+}
