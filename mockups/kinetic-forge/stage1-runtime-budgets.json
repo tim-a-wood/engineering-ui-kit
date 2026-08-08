@@ -1,0 +1,109 @@
+{
+  "reference": {
+    "hardware": "Apple M4 / 16 GB",
+    "viewport": "1600 × 1000",
+    "runtime": "Electron Chromium",
+    "measuredAt": "2026-08-08T17:59:20.624Z"
+  },
+  "samples": [
+    {
+      "label": "Build Bay stable",
+      "phase": "ready",
+      "frameTimeP95Ms": 34.3,
+      "drawCalls": 1908,
+      "triangles": 946488,
+      "textureCount": 18,
+      "geometryCount": 866,
+      "estimatedTextureMemoryMb": 70.67,
+      "physicsBodyCount": 4,
+      "physicsColliderCount": 8,
+      "resourceGrowth": 0
+    },
+    {
+      "label": "Delivery run",
+      "phase": "crossing",
+      "frameTimeP95Ms": 33.4,
+      "drawCalls": 1861,
+      "triangles": 942452,
+      "textureCount": 18,
+      "geometryCount": 881,
+      "estimatedTextureMemoryMb": 70.67,
+      "physicsBodyCount": 4,
+      "physicsColliderCount": 8,
+      "resourceGrowth": 0
+    },
+    {
+      "label": "Reset 1",
+      "phase": "ready",
+      "frameTimeP95Ms": 33.4,
+      "drawCalls": 1598,
+      "triangles": 860204,
+      "textureCount": 18,
+      "geometryCount": 881,
+      "estimatedTextureMemoryMb": 70.67,
+      "physicsBodyCount": 4,
+      "physicsColliderCount": 8,
+      "resourceGrowth": 0
+    },
+    {
+      "label": "Reset 2",
+      "phase": "ready",
+      "frameTimeP95Ms": 33.4,
+      "drawCalls": 1600,
+      "triangles": 862140,
+      "textureCount": 18,
+      "geometryCount": 881,
+      "estimatedTextureMemoryMb": 70.67,
+      "physicsBodyCount": 4,
+      "physicsColliderCount": 8,
+      "resourceGrowth": 0
+    },
+    {
+      "label": "Reset 3",
+      "phase": "ready",
+      "frameTimeP95Ms": 33.4,
+      "drawCalls": 1601,
+      "triangles": 862152,
+      "textureCount": 18,
+      "geometryCount": 881,
+      "estimatedTextureMemoryMb": 70.67,
+      "physicsBodyCount": 4,
+      "physicsColliderCount": 8,
+      "resourceGrowth": 0
+    }
+  ],
+  "observedMaxima": {
+    "frameTimeP95Ms": 34.3,
+    "drawCalls": 1908,
+    "triangles": 946488,
+    "estimatedTextureMemoryMb": 70.67,
+    "physicsBodyCount": 4,
+    "physicsColliderCount": 8,
+    "resourceGrowth": 0
+  },
+  "proposedStage1Ceilings": {
+    "frameTimeP95Ms": 40,
+    "drawCalls": 2000,
+    "triangles": 1000000,
+    "estimatedTextureMemoryMb": 80,
+    "physicsBodyCount": 6,
+    "physicsColliderCount": 12,
+    "resourceGrowth": 0
+  },
+  "stage1Verdicts": {
+    "frameTimeP95Ms": "pass",
+    "drawCalls": "pass",
+    "triangles": "pass",
+    "estimatedTextureMemoryMb": "pass",
+    "physicsBodyCount": "pass",
+    "physicsColliderCount": "pass",
+    "resourceGrowth": "pass"
+  },
+  "stage2Targets": {
+    "frameTimeP95Ms": 20,
+    "drawCalls": 900,
+    "triangles": 650000,
+    "estimatedTextureMemoryMb": 64,
+    "resourceGrowth": 0
+  }
+}
